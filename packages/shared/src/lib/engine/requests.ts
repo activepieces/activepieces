@@ -71,9 +71,7 @@ export const GetFlowVersionForWorkerRequest = Type.Object({
 export type GetFlowVersionForWorkerRequest = Static<typeof GetFlowVersionForWorkerRequest>
 
 export type UpdateRunProgressRequest = {
-    projectId: string
-    flowRunId: string
-    flowRun?: FlowRun
+    flowRun: Omit<FlowRun, 'steps'>
     step?: {
         name: string
         path: readonly [string, number][]

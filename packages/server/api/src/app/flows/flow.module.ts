@@ -37,11 +37,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.UPDATE_RUN_PROGRESS, (socket) => {
         return async (data: UpdateRunProgressRequest, _principal, _projectId, callback?: (data?: unknown) => void): Promise<void> => {
-            data.flowRun = await flowRunService(app.log).upsert({
-                id: data.flowRunId,
-                projectId: data.projectId,
-            })
-            socket.to(data.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, data)
+            socket.to(data.flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, data)
             callback?.()
         }
     })

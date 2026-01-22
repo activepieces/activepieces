@@ -1,5 +1,5 @@
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -39,13 +39,24 @@ export const progressService = {
             }
 
             await sendUpdateProgress({
-                projectId: engineConstants.projectId,
                 step: {
                     name: stepNameToUpdate,
                     path: flowExecutorContext.currentPath.path,
                     output: step,
                 },
-                flowRunId: engineConstants.flowRunId,
+                flowRun: {
+                    projectId: engineConstants.projectId,
+                    flowId: engineConstants.flowId,
+                    flowVersionId: engineConstants.flowVersionId,
+                    id: engineConstants.flowRunId,
+                    created: dayjs().toISOString(),
+                    updated: dayjs().toISOString(),
+                    status: flowExecutorContext.verdict.status,
+                    environment: RunEnvironment.TESTING,
+                    failParentOnFailure: false,
+                    triggeredBy: engineConstants.triggerPieceName,
+                    tags: Array.from(flowExecutorContext.tags),
+                },
             })
         })
     },
