@@ -8,12 +8,12 @@ import { useDebounce } from 'use-debounce';
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { SearchInput } from '@/components/ui/search-input';
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
@@ -40,6 +41,7 @@ import {
   ProjectType,
   ProjectWithLimits,
   TeamProjectsLimit,
+  TemplateTelemetryEventType,
 } from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
@@ -152,6 +154,13 @@ export function ProjectDashboardSidebar() {
     return true;
   };
 
+  const handleExploreClick = useCallback(() => {
+    templatesTelemetryApi.sendEvent({
+      eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
+      userId: currentUser?.id,
+    });
+  }, []);
+
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
@@ -160,6 +169,7 @@ export function ProjectDashboardSidebar() {
     icon: Compass,
     hasPermission: true,
     isSubItem: false,
+    onClick: handleExploreClick,
   };
 
   const impactLink: SidebarItemType = {
@@ -291,10 +301,10 @@ export function ProjectDashboardSidebar() {
                         side="right"
                         sideOffset={8}
                       >
-                        <Input
+                        <SearchInput
                           placeholder={t('Search projects...')}
                           value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onChange={(e) => setSearchQuery(e)}
                           className="h-9"
                           autoFocus
                         />

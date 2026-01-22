@@ -10,6 +10,7 @@ const propsResolverService = createPropsResolver({
     engineToken: 'WORKER_TOKEN',
     apiUrl: 'http://127.0.0.1:3000',
     contextVersion: LATEST_CONTEXT_VERSION,
+    stepNames: ['trigger', 'step_1', 'step_2', 'step_3', 'step_4', 'step_5', 'step_6', 'step_7', 'step_8'],
 })
 
 const executionState = FlowExecutorContext.empty()

@@ -22,15 +22,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  FlowOperationType,
   PopulatedFlow,
   Template,
+  TemplateTelemetryEventType,
+  TemplateType,
   UncategorizedFolderId,
   isNil,
 } from '@activepieces/shared';
@@ -87,24 +89,11 @@ export const UseTemplateDialog = ({
         folderName = folder.displayName;
       }
 
-      return Promise.all(
-        flows.map(async (flowTemplate) => {
-          const newFlow = await flowsApi.create({
-            displayName: flowTemplate.displayName,
-            projectId: projectId,
-            folderName: folderName,
-          });
-
-          return flowsApi.update(newFlow.id, {
-            type: FlowOperationType.IMPORT_FLOW,
-            request: {
-              displayName: flowTemplate.displayName,
-              trigger: flowTemplate.trigger,
-              schemaVersion: flowTemplate.schemaVersion,
-            },
-          });
-        }),
-      );
+      return await flowHooks.importFlowsFromTemplates({
+        templates: [template],
+        projectId,
+        folderName,
+      });
     },
     onSuccess: (flows) => {
       onOpenChange(false);
@@ -132,6 +121,16 @@ export const UseTemplateDialog = ({
       return;
     }
     createFlow({ projectId: selectedProjectId, folderId: selectedFolderId });
+
+    const userId = authenticationSession.getCurrentUserId();
+
+    if (template.type === TemplateType.OFFICIAL && userId) {
+      templatesTelemetryApi.sendEvent({
+        eventType: TemplateTelemetryEventType.INSTALL,
+        templateId: template.id,
+        userId,
+      });
+    }
   };
 
   const flowCount = template.flows?.length || 0;

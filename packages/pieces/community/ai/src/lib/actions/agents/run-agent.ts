@@ -13,11 +13,11 @@ import {
   AgentTool,
   TASK_COMPLETION_TOOL_NAME,
   AIProviderName,
+  AgentProviderModel,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel } from '../../common/ai-sdk';
-import { aiProps } from '../../common/props';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
 import { constructAgentTools } from './tools';
@@ -68,8 +68,10 @@ export const runAgent = createAction({
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
-    [AgentPieceProps.AI_PROVIDER]: aiProps({ modelType: 'text' }).provider,
-    [AgentPieceProps.AI_MODEL]: aiProps({ modelType: 'text' }).model,
+    [AgentPieceProps.AI_PROVIDER_MODEL]: Property.Object({
+      displayName: 'AI Model',
+      required: true,
+    }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',
       required: false,
@@ -102,10 +104,12 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, model: modelId, provider } = context.propsValue;
+    const { prompt, maxSteps, aiProviderModel } = context.propsValue;
+    const agentProviderModel = aiProviderModel as AgentProviderModel
+
     const model = await createAIModel({
-      modelId,
-      provider: provider as AIProviderName,
+      modelId: agentProviderModel.model,
+      provider: agentProviderModel.provider as AIProviderName,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
       projectId: context.project.id,
@@ -199,12 +203,13 @@ export const runAgent = createAction({
         }
       }
 
-      const { status } = outputBuilder.build();
-      if (errors.length > 0 || status === AgentTaskStatus.IN_PROGRESS) {
+      if (errors.length > 0) {
         const errorSummary = errors.map(e => `${e.type}: ${e.message}`).join('\n');
         outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
         outputBuilder.fail({ message: 'Agent completed with errors' });
         await context.output.update({ data: outputBuilder.build() });
+      } else {
+        outputBuilder.setStatus(AgentTaskStatus.COMPLETED)
       }
 
     } catch (error) {

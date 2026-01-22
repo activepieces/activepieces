@@ -11,6 +11,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import {
@@ -120,8 +121,14 @@ const StepSettingsContainer = () => {
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
-  const showGenerateSampleData = !readonly;
-  const showStepInputOutFromRun = !isNil(run);
+  const isManualTrigger =
+    modifiedStep.type === FlowTriggerType.PIECE &&
+    pieceSelectorUtils.isManualTrigger(
+      modifiedStep.settings.pieceName,
+      modifiedStep.settings.triggerName ?? '',
+    );
+  const showGenerateSampleData = !readonly && !isManualTrigger;
+  const showStepInputOutFromRun = !isNil(run) && !isManualTrigger;
 
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
@@ -188,7 +195,7 @@ const StepSettingsContainer = () => {
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
-                <div className="flex flex-col gap-2 px-4 pb-6">
+                <div className="flex flex-col gap-3 px-4 pb-6">
                   <StepInfo step={modifiedStep}></StepInfo>
 
                   {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
@@ -256,7 +263,10 @@ const StepSettingsContainer = () => {
                   onResize={(size) => setHeight(size)}
                   className="min-h-[130px]"
                 >
-                  <ScrollArea className="h-[calc(100%-35px)]  ">
+                  <ScrollArea
+                    className="h-[calc(100%-35px)]"
+                    viewPortClassName="h-full"
+                  >
                     {showGenerateSampleData && (
                       <TestStepContainer
                         type={modifiedStep.type}

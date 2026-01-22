@@ -32,11 +32,9 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  FlowOperationType,
   isNil,
   PopulatedFlow,
   TelemetryEventName,
@@ -45,7 +43,7 @@ import {
 } from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
-import { flowsApi } from '../lib/flows-api';
+import { flowHooks } from '../lib/flow-hooks';
 import { templateUtils } from '../lib/template-parser';
 
 export type ImportFlowDialogProps =
@@ -97,40 +95,27 @@ const ImportFlowDialog = (
     Template[]
   >({
     mutationFn: async (templates: Template[]) => {
-      const importPromises = templates.flatMap(async (template) => {
-        const flowImportPromises = (template.flows || []).map(
-          async (templateFlow) => {
-            let flow: PopulatedFlow | null = null;
-            if (props.insideBuilder) {
-              flow = await flowsApi.get(props.flowId);
-            } else {
-              const folder =
-                !isNil(selectedFolderId) &&
-                selectedFolderId !== UncategorizedFolderId
-                  ? await foldersApi.get(selectedFolderId)
-                  : undefined;
-              flow = await flowsApi.create({
-                displayName: templateFlow.displayName,
-                projectId: authenticationSession.getProjectId()!,
-                folderName: folder?.displayName,
-              });
-            }
-            return await flowsApi.update(flow.id, {
-              type: FlowOperationType.IMPORT_FLOW,
-              request: {
-                displayName: templateFlow.displayName,
-                trigger: templateFlow.trigger,
-                schemaVersion: templateFlow.schemaVersion,
-              },
-            });
-          },
-        );
+      if (props.insideBuilder) {
+        if (templates.length === 0) {
+          throw new Error('No template selected');
+        }
+        const flow = await flowHooks.importFlowIntoExisting({
+          template: templates[0],
+          existingFlowId: props.flowId,
+        });
+        return [flow];
+      }
 
-        return Promise.all(flowImportPromises);
+      const folder =
+        !isNil(selectedFolderId) && selectedFolderId !== UncategorizedFolderId
+          ? await foldersApi.get(selectedFolderId)
+          : undefined;
+
+      return flowHooks.importFlowsFromTemplates({
+        templates,
+        projectId: authenticationSession.getProjectId()!,
+        folderName: folder?.displayName,
       });
-
-      const results = await Promise.all(importPromises);
-      return results.flat();
     },
 
     onSuccess: (flows: PopulatedFlow[]) => {
@@ -143,7 +128,6 @@ const ImportFlowDialog = (
           multiple: flows.length > 1,
         },
       });
-      templatesApi.incrementUsageCount(templates[0].id);
 
       toast.success(
         t(`flowsImported`, {

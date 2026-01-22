@@ -64,7 +64,7 @@ export const McpAuthHeaders = Type.Object({
     headers: Type.Record(Type.String(), Type.String()),
 })
 
-export const McpAuthConfig = Type.Union([
+export const McpAuthConfig = DiscriminatedUnion('type', [
     McpAuthNone,
     McpAuthAccessToken,
     McpAuthApiKey,
@@ -72,7 +72,6 @@ export const McpAuthConfig = Type.Union([
 ])
 export type McpAuthConfig = Static<typeof McpAuthConfig>
 
-// Updated AgentPieceToolMetadata to use the new structure
 export const AgentPieceToolMetadata = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),

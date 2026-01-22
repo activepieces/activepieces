@@ -150,7 +150,6 @@ export const createMockTemplate = (
         tags: template?.tags ?? [],
         blogUrl: template?.blogUrl ?? faker.internet.url(),
         metadata: template?.metadata ?? null,
-        usageCount: template?.usageCount ?? 0,
         author: template?.author ?? faker.person.fullName(),
         categories: template?.categories ?? [],
         status: template?.status ?? TemplateStatus.PUBLISHED,
@@ -527,6 +526,7 @@ export const createMockFlowVersion = (
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
+        notes: flowVersion?.notes ?? [],
     }
 }
 

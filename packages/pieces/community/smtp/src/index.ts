@@ -84,7 +84,7 @@ export const smtp = createPiece({
   displayName: 'SMTP',
   description: 'Send emails using Simple Mail Transfer Protocol',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/smtp.svg',
   categories: [PieceCategory.CORE],
   authors: [
     'tahboubali',
