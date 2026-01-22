@@ -1,14 +1,14 @@
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
-import { EventDestinationDialog } from './components/event-destination-dialog';
-import { EventDestinationsTable } from './components/event-destinations-table';
-import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
-
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
+
+import { EventDestinationDialog } from './components/event-destination-dialog';
+import { EventDestinationsTable } from './components/event-destinations-table';
+import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
 
 const EventDestinationsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
