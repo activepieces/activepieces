@@ -66,6 +66,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Parent folder,like \"/demo/\" or \"/docs/assignment/\".Leave it default if you want to create folder at the root (**/**) level.": "Carpeta padre, como \"/demo/\" o \"/docs/assignment/\".Déjalo por defecto si quieres crear una carpeta en el nivel raíz (**/**).",
   "Item title to search": "Título del artículo a buscar",
   "The file or url you want to upload": "El archivo o url que quieres subir",
