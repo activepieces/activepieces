@@ -23,6 +23,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Raw content you want to remember - HTML, emails, transcripts, or simple notes.": "Roher Inhalt, den Sie sich merken möchten - HTML, E-Mails, Transkripte oder einfache Notizen.",
   "Optional guidance on how you want this content processed or remembered.": "Optionale Anleitung, wie Sie diesen Inhalt verarbeitet oder gespeichert haben möchten.",
   "Additional background information to relate this to your existing knowledge.": "Zusätzliche Hintergrundinformationen, um dies mit Ihrem vorhandenen Wissen in Verbindung zu bringen.",
