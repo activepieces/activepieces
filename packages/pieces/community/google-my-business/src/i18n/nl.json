@@ -14,6 +14,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "You can find the review name from new review trigger": "U vindt de naam van de review op de nieuwe beoordeling trigger",
   "Comment to be added to the review": "Opmerking om toe te voegen aan de review",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
