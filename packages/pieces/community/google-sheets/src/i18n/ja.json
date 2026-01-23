@@ -91,6 +91,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Turn this on to also see spreadsheets from Shared Drives.": "これをオンにすると、共有ドライブのスプレッドシートも表示されます。",
   "The ID of the spreadsheet to use.": "使用するスプレッドシートのID。",
   "The ID of the worksheet to use.": "使用するワークシートのID。",
