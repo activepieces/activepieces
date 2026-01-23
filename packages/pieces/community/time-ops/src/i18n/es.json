@@ -34,6 +34,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The name of the customer.": "El nombre del cliente.",
   "The VAT number of the customer.": "El número de IVA del cliente.",
   "The default hourly rate for this customer.": "La tarifa por hora por defecto para este cliente.",
