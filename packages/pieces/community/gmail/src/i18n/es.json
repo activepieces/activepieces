@@ -22,6 +22,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Body for the email you want to send": "Cuerpo para el correo electrónico que desea enviar",
   "Email address to set as the \"Reply-To\" header": "Dirección de correo electrónico a establecer como la cabecera \"Responder a\"",
   "The address must be listed in your GMail account's settings": "La dirección debe aparecer en la configuración de su cuenta de GMail",
