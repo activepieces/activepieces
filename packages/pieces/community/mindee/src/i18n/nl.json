@@ -16,6 +16,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Refers to your username or organization name with which you signed up with.": "Verwijst naar je gebruikersnaam of organisatienaam waarmee je je hebt aangemeld.",
   "Refers to the name of the API your are using.": "Refereert naar de naam van de API die je gebruikt.",
   "Remote file URL or Base64 string. We currently support .pdf (slower), .jpg, .png, .webp, .tiff and .heic formats": "Externe bestand URL of Base64 string. We ondersteunen momenteel .pdf (langzamer), .jpg, .png, .webp, .tiff en .heic formats",
