@@ -29,6 +29,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The URL of the meeting (e.g., https://zoom.us/j/123?pwd=456)": "L'URL de la réunion (par exemple, https://zoom.us/j/123?pwd=456)",
   "The name of the bot that will be displayed in the call (max 100 characters). Defaults to \"Meeting Notetaker\"": "Le nom du bot qui sera affiché dans l'appel (max 100 caractères). Par défaut \"Réunion Notetaker\"",
   "A UUID string identifying the bot": "Une chaîne UUID identifiant le bot",
