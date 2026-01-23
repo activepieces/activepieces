@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The ID of the team. Can be found in your browser's URL bar when viewing Team Settings, or use current_team_id from /me endpoint.": "Die ID des Teams. Kann in der URL-Leiste Ihres Browsers gefunden werden, wenn Sie die Team-Einstellungen ansehen, oder verwenden Sie current_team_id von /me Endpunkt.",
   "Filter projects from a specific group. Must be URL-encoded if the group name contains spaces.": "Projekte aus einer bestimmten Gruppe filtern. Muss URL-kodiert sein, wenn der Gruppenname Leerzeichen enthält.",
   "Filter projects where the head uses a specific model (e.g., gpt-4, claude-2, etc.).": "Projekte filtern, bei denen der Kopf ein bestimmtes Modell verwendet (z.B. gpt-4, claude-2, etc.).",
