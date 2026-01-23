@@ -38,6 +38,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Select the Quickbase app": "Wählen Sie die Quickbase-App",
   "Select the table": "Tabelle auswählen",
   "Select and set values for table fields": "Wählen und setzen Sie Werte für Tabellenfelder",
