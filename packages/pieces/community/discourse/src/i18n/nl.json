@@ -34,6 +34,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Content of the post": "Inhoud van het bericht",
   "ID of the topic to post in": "ID van het onderwerp om in te posten",
   "Title of the Topic": "Titel van het onderwerp",
