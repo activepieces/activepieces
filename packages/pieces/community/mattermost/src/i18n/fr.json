@@ -19,6 +19,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The channel to send the message to, get that ID by clicking on info near start call butto": "Le canal vers lequel envoyer le message, obtenez cet ID en cliquant sur les informations près de commencer l'appel mais à",
   "The text of the message to send": "Le texte du message à envoyer",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
