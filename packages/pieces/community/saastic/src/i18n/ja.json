@@ -23,6 +23,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The customer's first name.": "顧客の名",
   "The customer's last name.": "顧客の姓",
   "The customer's email address.": "顧客のメールアドレス",
