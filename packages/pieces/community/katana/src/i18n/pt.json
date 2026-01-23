@@ -51,6 +51,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Customer display name.": "Nome da exposição do cliente.",
   "Currency code (ISO 4217), e.g. USD, EUR, GBP.": "Código da moeda (ISO 4217), ex.: USD, EUR, GBP.",
   "External reference ID (max 100 characters).": "ID de referência externo (máx. 100 caracteres).",
