@@ -44,6 +44,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Array of URLs to crawl": "Array of URLs to crawl",
   "If true, returns full page text. If false, disables text return.": "Indien waar, retourneert de volledige pagina-tekst. Als onjuist, schakelt u de tekstretour uit.",
   "Options for livecrawling pages.": "Opties voor livecrawling pagina's.",
