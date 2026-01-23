@@ -34,6 +34,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The start date of the date range to query (in YYYY-MM-DD format).": "De startdatum van het datumbereik tot query (in JJJJJ-MM-DD formaat).",
   "The end date of the date range to query (in YYYY-MM-DD format).": "De einddatum van het datumbereik tot query (in JJJJJ-MM-DD formaat).",
   "The dimensions to group results by. For example: [\"query\", \"page\", \"country\", \"device\", \"searchAppearance\", \"date\"].": "De afmetingen om de resultaten te groeperen. Bijvoorbeeld: [\"query\", \"page\", \"land\", \"device\", \"searchAppearance\", \"datum\"].",
