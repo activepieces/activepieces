@@ -17,6 +17,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Copy it from room settings -> advanced -> room addresses -> main address": "Kopieer het vanuit ruimte instellingen -> geavanceerde -> ruimte adressen -> hoofdadres",
   "The message to send (markdown)": "Het te verzenden bericht (markdown)",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
