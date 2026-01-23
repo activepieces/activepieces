@@ -181,6 +181,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Choose the type of manual entry": "手動入力のタイプを選択してください",
   "Date of the booking (YYYY-MM-DD)": "予約日 (YYYY-MM-DD)",
   "Reference number for the booking": "予約の参照番号",
