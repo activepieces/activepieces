@@ -33,6 +33,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Select the team containing the database.": "Wählen Sie das Team, das die Datenbank enthält.",
   "Select the database containing the table.": "Wählen Sie die Datenbank, die die Tabelle enthält.",
   "Select the table": "Tabelle auswählen",
