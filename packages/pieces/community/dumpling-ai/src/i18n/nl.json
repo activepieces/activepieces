@@ -47,6 +47,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Two-letter country code for location bias (e.g., \"US\" for United States).": "Tweeletterige landcode voor locatievooroordelen (bijv. \"US\" voor Verenigde Staten).",
   "Specific location to focus the search (e.g., \"New York, NY\").": "Specifieke locatie om de zoekopdracht te focussen (bijv. \"New York, NY\").",
   "Language code for the search results (e.g., \"en\" for English).": "Taalcode voor de zoekresultaten (bijv. \"en\" voor Engels).",
