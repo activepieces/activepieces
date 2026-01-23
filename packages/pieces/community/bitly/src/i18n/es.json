@@ -63,6 +63,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The group where the item will be managed.": "El grupo donde se gestionará el artículo.",
   "Select the Bitlink to modify.": "Seleccione el Bitlink para modificar.",
   "The URL to shorten (must include http:// or https://).": "La URL para acortar (debe incluir http:// o https://).",
