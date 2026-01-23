@@ -17,6 +17,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Select the Bolna Voice AI agent": "Selecione o agente de voz da Bolna AI",
   "Phone number of the recipient with country code (E.164 format, e.g., +10123456789)": "Número de telefone do destinatário com código de país (formato 164, por exemplo, +10123456789)",
   "Phone number of the sender with country code (E.164 format, e.g., +19876543007). Optional.": "Número de telefone do remetente com código de país (formato 164, por exemplo, +19876543007). Opcional.",
