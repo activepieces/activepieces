@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the workflow to execute.": "Selecteer de workflow om uit te voeren.",
   "Input values for the workflow.": "Invoer waarden voor de workflow.",
   "Schema defining the workflow inputs (advanced).": "Schema die de workflow invoer definieert (geavanceerd).",
