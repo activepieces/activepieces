@@ -68,6 +68,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Customer email address": "Klant e-mail adres",
   "Customer first name": "Klant voornaam",
   "Customer last name": "Klant achternaam",
