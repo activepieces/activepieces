@@ -16,6 +16,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Please select assistant": "Selecteer assistent",
   "The input message to be processed by the assistant": "Het input bericht dat door de assistent wordt verwerkt",
   "The Conversation ID of the previous conversation. If empty, a new conversation will be created": "De gespreks-ID van het vorige gesprek. Indien leeg, zal een nieuw gesprek worden gemaakt",
