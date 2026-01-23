@@ -65,6 +65,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The name of the new folder": "El nombre de la nueva carpeta",
   "Determines if folders from Team Drives should be included in the results.": "Determina si las carpetas de Team Drives deben incluirse en los resultados.",
   "The name of the new text file": "El nombre del nuevo archivo de texto",
