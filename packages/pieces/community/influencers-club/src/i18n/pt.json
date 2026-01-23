@@ -31,6 +31,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The email address of the creator to enrich": "O endereço de e-mail do criador para enriquecer",
   "Platforms to exclude from enrichment (optional)": "Plataformas para excluir do enriquecimento (opcional)",
   "Minimum follower count filter (default: 1000)": "Mínimo da contagem de seguidores (padrão: 1000)",
