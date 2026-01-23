@@ -37,6 +37,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Duration in minutes.": "Durée en minutes.",
   "The names of the labels to be added to the task.": "Les noms des étiquettes à ajouter à la tâche.",
   "The names of the labels to be added to the task": "Les noms des étiquettes à ajouter à la tâche",
