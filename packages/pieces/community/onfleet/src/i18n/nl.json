@@ -117,6 +117,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The recipient's full name": "Volledige naam van de ontvanger",
   "A unique, valid phone number as per the organization's country if there's no leading + sign. If a phone number has a leading + sign, it will disregard the organization's country setting.": "Een uniek, geldig telefoonnummer zoals per land van de organisatie als er geen leading + teken is. Als een telefoonnummer een leidende + teken heeft, zal het de landinstelling van de organisatie negeren.",
   "Checking this option will default the Onfleet system to use a toll-free long code number for SMS communication.": "Het aanvinken van deze optie zal standaard het Onvlood-systeem gebruiken om een tolvrij lang code nummer te gebruiken voor SMS-communicatie.",
