@@ -37,6 +37,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Duration in minutes.": "Dauer in Minuten.",
   "The names of the labels to be added to the task.": "Die Namen der Labels, die der Aufgabe hinzugefügt werden sollen.",
   "The names of the labels to be added to the task": "Die Namen der Labels, die der Aufgabe hinzugefügt werden sollen",
