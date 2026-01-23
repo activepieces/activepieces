@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID number of the contact": "Het ID-nummer van de contactpersoon",
   "The Ticket ID to return status": "De Ticket ID om status terug te sturen",
   "Select one and provide the value.": "Selecteer één en voer de waarde in.",
