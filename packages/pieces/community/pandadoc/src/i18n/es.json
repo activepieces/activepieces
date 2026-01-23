@@ -80,6 +80,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select a template from your PandaDoc workspace": "Seleccione una plantilla de su área de trabajo PandaDoc",
   "Name the document you are creating": "Nombra el documento que está creando",
   "List of recipients to whom the document will be sent": "Lista de destinatarios a los que se enviará el documento",
