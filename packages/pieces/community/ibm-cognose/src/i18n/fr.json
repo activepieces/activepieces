@@ -52,6 +52,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Name for the new data source": "Nom de la nouvelle source de données",
   "JDBC URL or database connection string": "URL JDBC ou chaîne de connexion à la base de données",
   "Database driver class name": "Nom de la classe du pilote de la base de données",
