@@ -46,6 +46,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The email address of the new subscription.": "Het e-mailadres van het nieuwe abonnement.",
   "Whether to reactivate the subscription if they have already unsubscribed. Use only if the subscription is knowingly resubscribing.": "Of u het abonnement opnieuw activeert als ze al hebben afgemeld. Gebruik alleen als het abonnement bewust opnieuw wordt ingeschreven.",
   "Whether to send the default welcome email to the subscription.": "Of u de standaard welkomstmail naar het abonnement wilt sturen.",
