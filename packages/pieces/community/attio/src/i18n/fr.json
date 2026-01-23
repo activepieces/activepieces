@@ -31,6 +31,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The unique identifier of the record to update.": "L'identifiant unique de l'enregistrement à mettre à jour.",
   "The unique identifier of the entry to update.": "L'identifiant unique de l'entrée à mettre à jour.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
