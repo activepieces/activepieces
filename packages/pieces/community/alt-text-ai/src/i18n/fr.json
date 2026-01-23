@@ -16,6 +16,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "keywords / phrases to be considered when generating the alt text.": "mots-clés / phrases à considérer lors de la génération du texte alt.",
   "negative keywords / phrases to be removed from any generated alt text.": "mots clés / phrases négatifs à supprimer de tout texte alt généré.",
   "Text to use as the source of keywords for the alt text.": "Texte à utiliser comme source de mots-clés pour le texte alt.",
