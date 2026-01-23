@@ -47,6 +47,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Two-letter country code for location bias (e.g., \"US\" for United States).": "Code de pays à deux lettres pour le biais de localisation (par exemple, \"US\" pour les États-Unis).",
   "Specific location to focus the search (e.g., \"New York, NY\").": "Localisation spécifique de la recherche (par exemple, \"New York, New York\").",
   "Language code for the search results (e.g., \"en\" for English).": "Language code for the search results (e.g., \"fr\" for English).",
