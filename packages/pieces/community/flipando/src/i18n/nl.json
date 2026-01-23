@@ -25,6 +25,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "ID of the application to be completed.": "ID van de applicatie die moet worden voltooid.",
   "JSON string of key-value pairs for application input variables.": "JSON string van sleutel-waarde paren voor applicatie-invoervariabelen.",
   "File to be uploaded, if the application requires documents. Supports PDF, DOCX, images, and other document formats.": "Bestand te uploaden, als de applicatie documenten vereist. Ondersteunt PDF, DOCX, afbeeldingen en andere documentformaten.",
