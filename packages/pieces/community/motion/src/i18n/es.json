@@ -37,6 +37,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Duration in minutes.": "Duración en minutos.",
   "The names of the labels to be added to the task.": "Los nombres de las etiquetas que se añadirán a la tarea.",
   "The names of the labels to be added to the task": "Los nombres de las etiquetas a añadir a la tarea",
