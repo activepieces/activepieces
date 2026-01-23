@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Enter the ID of the entry you want to update.": "Geben Sie die ID des Eintrags ein, den Sie aktualisieren möchten.",
   "Enter the ID of the entry to delete.": "Geben Sie die ID des zu löschenden Eintrags ein.",
   "Enter the ID of the entry to retrieve.": "Geben Sie die ID des abzuholenden Eintrags ein.",
