@@ -22,6 +22,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Name of the dataset to create": "Nome do conjunto de dados a criar",
   "The mode of the dataset": "O modo do conjunto de dados",
   "Define the tables and their columns for the dataset (JSON format)": "Define as tabelas e suas colunas para o conjunto de dados (formato JSON)",
