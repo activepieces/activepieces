@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The model which will generate the completion.": "Het model dat de voltooiing zal genereren.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Bestuurt willekeurigheid: Het verlagen van de temperatuur resulteert in minder willekeurige aanvullingen. Zodra de temperatuur nul nadert, zal het model deterministisch en herhalend worden.",
   "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.": "Het maximale aantal tokens om te genereren. De totale lengte van de ingangstokens en gegenereerde tokens wordt beperkt door de context lengte van het model.",
