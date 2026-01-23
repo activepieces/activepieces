@@ -31,6 +31,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The content for generating the presentation": "Le contenu pour générer la présentation",
   "Instruction for generating the presentation (optional).": "Instruction pour générer la présentation (facultatif).",
   "Tone to use for the text": "Tonalité à utiliser pour le texte",
