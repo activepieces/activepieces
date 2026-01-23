@@ -32,6 +32,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The name or title of the new document.": "新規ドキュメントの名前またはタイトル。",
   "The text or HTML content to be added to the document. Max 768 KB.": "ドキュメントに追加するテキストまたはHTMLコンテンツ。最大768 KB。",
   "The file to upload (e.g., txt, md, rtf, pdf, ppt, docx).": "アップロードするファイル (例: txt, md, rtf, pdf, ppt, docx)",
