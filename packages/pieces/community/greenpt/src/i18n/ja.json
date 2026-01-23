@@ -30,6 +30,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The model to use ": "使用するモデル ",
   "Message to send": "送信するメッセージ",
   "Input text to embed. Can be a single string or multiple texts separated by newlines": "埋め込むテキストを入力してください。改行で区切られた単一の文字列または複数のテキストを使用できます。",
