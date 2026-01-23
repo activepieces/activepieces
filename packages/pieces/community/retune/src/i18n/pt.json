@@ -19,6 +19,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The thread you want to send the message to.": "Tópico para o qual você deseja enviar mensagem.",
   "The message you want to send.": "A mensagem que você deseja enviar.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
