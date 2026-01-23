@@ -72,6 +72,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "A unique task or ticket number that has not been used before in Invoice Ninja": "請求書忍者で以前に使用されていないユニークなタスクまたはチケット番号",
   "Client ID from Invoice Ninja (optional)": "請求書忍者からのクライアントID（任意）",
   "Project ID from Invoice Ninja (optional)": "請求書忍者のプロジェクトID（任意）",
