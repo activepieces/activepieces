@@ -93,6 +93,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "If the first row is headers": "Als de eerste rij headers zijn",
   "The values to insert": "De waarden om in te voegen",
   "Use below Filter properties to insert only the rows that meet your conditions.": "Gebruik de onderstaande Filtereigenschappen om alleen rijen in te voegen die aan uw voorwaarden voldoen.",
