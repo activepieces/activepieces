@@ -68,7 +68,7 @@ export function PlatformSidebar() {
           to: '/platform/analytics',
           label: t('Overview'),
           icon: LineChart,
-          show: isCloudPlatform,
+          show: true,
           locked: !platform.plan.analyticsEnabled,
         },
         {
