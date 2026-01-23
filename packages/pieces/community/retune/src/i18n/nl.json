@@ -19,6 +19,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The thread you want to send the message to.": "De thread waarnaar u het bericht wilt verzenden.",
   "The message you want to send.": "Het bericht dat u wilt verzenden.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
