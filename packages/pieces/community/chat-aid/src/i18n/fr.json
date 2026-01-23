@@ -23,6 +23,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "One or more files to upload (PDF, Word, Text, Markdown, HTML, Excel, CSV, PowerPoint, PNG, JPEG, GIF)": "Un ou plusieurs fichiers à télécharger (PDF, Word, Text, Markdown, HTML, Excel, CSV, PowerPoint, PNG, JPEG, GIF)",
   "Optional team ID (defaults to org-wide)": "ID d'équipe optionnel (par défaut à l'entière)",
   "The question to ask the knowledge base": "La question à poser à la base de connaissances",
