@@ -40,6 +40,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "First name of the contact": "Voornaam van de contactpersoon",
   "Last name of the contact": "Achternaam van de contactpersoon",
   "Designation of the contact in the account they belong to": "Designatie van het contact in het account waartoe ze behoren",
