@@ -26,6 +26,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The topic/channel to send the notification to, e.g. test1": "Het onderwerp/kanaal waar de notificatie naartoe moet worden gestuurd, b.v. test1",
   "The title of the notification": "De titel van de melding",
   "The message to send": "Het te verzenden bericht",
