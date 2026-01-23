@@ -21,6 +21,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Recipient phone number in E.164 format": "Numéro de téléphone du destinataire au format E.164",
   "Your leased phone number": "Votre numéro de téléphone loué",
   "Text message content": "Contenu du message texte",
