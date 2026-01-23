@@ -39,6 +39,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Encrypts the paste with this password": "Versleutel het plakken met dit wachtwoord",
   "A folder": "Een map",
   "Decrypts the paste with this password": "Decodeert het plakken met dit wachtwoord",
