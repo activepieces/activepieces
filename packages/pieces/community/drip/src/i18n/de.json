@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Email of the subscriber": "E-Mail des Abonnenten",
   "Tag to apply": "Tag zum Anwenden",
   "Tags to apply to subscriber": "Tags für Abonnenten",
