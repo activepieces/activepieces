@@ -24,6 +24,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The user's full name": "Nombre completo del usuario",
   "The user's email. Must be unique to the community": "El correo electrónico del usuario. Debe ser único para la comunidad",
   "The role the user should have": "El rol que el usuario debe tener",
