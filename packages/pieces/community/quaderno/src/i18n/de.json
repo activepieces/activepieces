@@ -65,6 +65,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The contact's first name (required for person contacts)": "Der Vorname des Kontakts (erforderlich für Personen Kontakte)",
   "The contact's last name (optional)": "Nachname des Kontakts (optional)",
   "The contact's email address": "Die E-Mail-Adresse des Kontakts",
