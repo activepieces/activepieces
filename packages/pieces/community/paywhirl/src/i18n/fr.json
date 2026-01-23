@@ -56,6 +56,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Customer ID (can be used instead of subscription_id)": "ID client (peut être utilisé à la place de subscription_id)",
   "First name": "Prénom",
   "Last name": "Nom de famille",
