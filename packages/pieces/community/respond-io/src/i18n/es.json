@@ -45,6 +45,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select the contact.": "Seleccione el contacto.",
   "The internal comment to add (max 1000 characters). You can mention users with {{@user.ID}} format where ID is the user ID.": "El comentario interno a añadir (máx. 1000 caracteres). Puede mencionar a los usuarios con el formato {{@user.ID}} donde ID es el ID del usuario.",
   "Tags to add to the contact (minimum 1, maximum 10 tags).": "Etiquetas para añadir al contacto (mínimo 1, máximo 10 etiquetas).",
