@@ -53,6 +53,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Number of domains to return per page (1-200).": "Aantal domeinen om terug te keren per pagina (1-200).",
   "Which page of results to return.": "Welke pagina met resultaten te retourneren.",
   "The domain name (e.g., example.com).": "De domeinnaam (bijv. voorbeeld.com).",
