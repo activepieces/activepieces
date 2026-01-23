@@ -39,6 +39,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Encrypts the paste with this password": "Criptografa a colar com esta senha",
   "A folder": "Uma pasta",
   "Decrypts the paste with this password": "Descriptografa a colar com esta senha",
