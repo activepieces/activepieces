@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select one of your SendPulse mailing lists": "Selecteer een van je SendPulse mailing lijsten",
   "Subscriber email address": "E-mailadres abonnee",
   "Optional subscriber variables (e.g., name, phone)": "Optionele abonnee variabelen (bijv. naam, telefoon)",
