@@ -67,6 +67,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "JSON data with overrides array to populate the template. Format: {\"overrides\": [{\"name\": \"object_name\", \"property\": \"value\"}]}.": "JSON-gegevens met overrides array om het sjabloon te vullen. Formaat: {\"overrides\": [{\"name\": \"object_name\", \"property\": \"value\"}}.",
   "Delay in milliseconds before PDF generation": "Vertraging in milliseconden voor PDF-generatie",
   "Specify an external reference ID for your own reference": "Geef een extern referentie-ID op voor uw eigen referentie",
