@@ -18,6 +18,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "Le modèle qui va générer la complétion. Certains modèles sont adaptés aux tâches de langage naturel, d'autres se spécialisent dans le code.",
   "The prompt to send to the model.": "L'invite à envoyer au modèle.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Contrôle aléatoirement : La baisse des résultats est moins aléatoire, alors que la température approche de zéro, le modèle devient déterministe et répétitif.",
