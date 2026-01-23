@@ -91,6 +91,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Turn this on to also see spreadsheets from Shared Drives.": "Schakel dit in om spreadsheets van gedeelde stations te bekijken.",
   "The ID of the spreadsheet to use.": "Het ID van het te gebruiken spreadsheet",
   "The ID of the worksheet to use.": "De ID van het te gebruiken werkblad.",
