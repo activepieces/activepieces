@@ -44,6 +44,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID of the item you want to retrieve from the list": "Het ID van het item dat u wilt ophalen uit de lijst",
   "Pattern to search": "Patroon om te zoeken",
   "Max number of results to return": "Max. aantal resultaten om terug te keren",
