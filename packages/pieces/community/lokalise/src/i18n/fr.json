@@ -72,6 +72,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select the Lokalise project": "Sélectionnez le projet Lokalise",
   "Select the key": "Sélectionnez la clé",
   "The comment text to add to the key": "Le texte du commentaire à ajouter à la clé",
