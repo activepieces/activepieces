@@ -42,6 +42,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select the category of posts to retrieve": "Seleccione la categoría de publicaciones a recuperar",
   "The subreddit to fetch posts from": "El subreddit para obtener mensajes de",
   "Number of posts to fetch (max 100)": "Número de publicaciones a buscar (máx. 100)",
