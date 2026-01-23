@@ -17,6 +17,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Select the Phantombuster agent to use": "使用するファントムバスターエージェントを選択してください",
   "Wait until the agent execution completes and output is available": "エージェントの実行が完了し、出力が可能になるまで待ちます。",
   "Optional argument to pass to the agent": "エージェントに渡すオプション引数",
