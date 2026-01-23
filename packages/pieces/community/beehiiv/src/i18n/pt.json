@@ -46,6 +46,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The email address of the new subscription.": "O endereço de e-mail da nova assinatura.",
   "Whether to reactivate the subscription if they have already unsubscribed. Use only if the subscription is knowingly resubscribing.": "Se é necessário reativar a subscrição se ela já tiver cancelado. Use somente se a subscrição for deliberadamente recrita.",
   "Whether to send the default welcome email to the subscription.": "Se você deseja enviar o e-mail de boas-vindas padrão para a inscrição.",
