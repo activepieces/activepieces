@@ -68,6 +68,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "How to import the file for conversion": "Hoe het bestand te importeren voor conversie",
   "File to upload and convert (select from your device)": "Bestand om te uploaden en converteren (selecteer op uw apparaat)",
   "URL of the file to convert": "URL van het te converteren bestand",
