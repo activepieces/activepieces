@@ -190,6 +190,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.": "Al menos uno de ellos: Nombre, Apellido, Correo Electrónico, Número de Móvil, Número de Inicio, Número de Trabajo es requerido.",
   "Will the customer receive notifications": "Recibirá notificaciones del cliente",
   "Array of tags to assign to the customer": "Arreglo de etiquetas para asignar al cliente",
