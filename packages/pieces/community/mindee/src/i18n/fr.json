@@ -16,6 +16,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Refers to your username or organization name with which you signed up with.": "Se rapporte à votre nom d'utilisateur ou de l'organisation avec laquelle vous vous êtes inscrit.",
   "Refers to the name of the API your are using.": "Se réfère au nom de l'API que vous utilisez.",
   "Remote file URL or Base64 string. We currently support .pdf (slower), .jpg, .png, .webp, .tiff and .heic formats": "URL de fichier distant ou chaîne de caractères Base64. Nous supportons actuellement les formats .pdf (plus lent), .jpg, .png, .webp, .tiff et .heic",
