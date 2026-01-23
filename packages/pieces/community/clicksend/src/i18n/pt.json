@@ -54,6 +54,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The phone number (with country code, e.g., +1234567890)": "O número de telefone (com código de país, por exemplo, +1234567890)",
   "The body of the message to send": "O corpo da mensagem a enviar",
   "The URL of the media file to send (image, video, etc.)": "A URL do arquivo de mídia a ser enviado (imagem, vídeo, etc.)",
