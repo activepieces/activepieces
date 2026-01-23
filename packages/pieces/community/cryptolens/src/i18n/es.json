@@ -41,6 +41,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The name of the customer (max 100 characters)": "El nombre del cliente (máximo 100 caracteres)",
   "The email of the customer (max 100 characters)": "El correo electrónico del cliente (máximo 100 caracteres)",
   "The company name the customer belongs to (max 100 characters)": "El nombre de la empresa al que pertenece el cliente (máximo 100 caracteres)",
