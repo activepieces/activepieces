@@ -38,6 +38,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The title of the post.": "Der Titel des Beitrags.",
   "Simple plain text content for the post. Used if 'Tiptap Body JSON' is not provided.": "Einfacher einfacher Textinhalt für den Beitrag. Wird verwendet, wenn 'Tiptap Body JSON' nicht bereitgestellt wird.",
   "Full TipTap JSON object for the post body. If provided, 'Post Body (Plain Text)' is ignored.": "Volle TipTippen JSON-Objekt für den Beitragskörper. Wenn vorhanden, wird 'Post-Body (Plain-Text)' ignoriert.",
