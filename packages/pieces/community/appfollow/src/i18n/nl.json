@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Name of the user to be added": "Naam van de toe te voegen gebruiker",
   "Email of the user to be added": "E-mail van de gebruiker die moet worden toegevoegd",
   "Role of the user to be added": "Rol van de gebruiker om toe te voegen",
