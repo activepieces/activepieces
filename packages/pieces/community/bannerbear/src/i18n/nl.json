@@ -19,6 +19,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The template to use in image creation.": "Het sjabloon dat gebruikt moet worden bij het maken van afbeeldingen.",
   "Create image based on a specific version of the template.": "Maak afbeelding aan op basis van een specifieke versie van de template.",
   "A list of modifications you want to make on the template.": "Een lijst van wijzigingen die je wilt aanbrengen op de template.",
