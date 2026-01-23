@@ -26,6 +26,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The event name": "Naam van de gebeurtenis",
   "User's Distinct Id": "Gebruiker's Distinct Id",
   "The event properties": "Eigenschappen van de gebeurtenis",
