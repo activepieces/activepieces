@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The first name of the contact": "Der Vorname des Kontakts",
   "The middle name of the contact": "Der mittlere Name des Kontakts",
   "The last name of the contact": "Der Nachname des Kontakts",
