@@ -92,6 +92,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the currency for historical price": "Selecteer de valuta voor historische prijs",
   "Provide YYYY-MM-DD format.": "Geef JJJJ-MM-DD formaat.",
   "The Bitcoin address to look up": "Het Bitcoin adres om op te zoeken",
