@@ -40,6 +40,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Unique identifier for the invoice": "請求書の一意の識別子",
   "Invoice number or reference": "請求書番号または参照",
   "Name of the contact/customer": "連絡先/顧客の名前",
