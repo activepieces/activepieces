@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The search query to find keywords for": "Die Suchabfrage für Suchbegriffe für",
   "Search engine to use for keyword analysis": "Suchmaschine für Keyword-Analyse",
   "List of keywords to exclude from the search": "Liste der Stichworte, die von der Suche ausgeschlossen werden sollen",
