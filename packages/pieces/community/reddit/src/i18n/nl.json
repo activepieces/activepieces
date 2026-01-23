@@ -42,6 +42,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the category of posts to retrieve": "Selecteer de categorie van berichten om op te halen",
   "The subreddit to fetch posts from": "De subreddit om posts van te halen",
   "Number of posts to fetch (max 100)": "Aantal berichten om op te halen (max 100)",
