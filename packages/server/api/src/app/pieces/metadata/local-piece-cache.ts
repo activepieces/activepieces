@@ -232,8 +232,9 @@ async function getOrCreateCache(): Promise<KVCacheInstance> {
             if (!isNil(cacheInstance)) {
                 return cacheInstance
             }
-            const baseDir = system.getOrThrow(AppSystemProp.CONFIG_PATH)
-            const dbPath = path.resolve(path.join(baseDir, 'pieces-cache-db.sqlite'))
+            const pm2Enabled = system.getBoolean(AppSystemProp.PM2_ENABLED) ?? false
+            const cacheId = pm2Enabled ? (process.env.NODE_APP_INSTANCE ?? '0') : 'default'
+            const dbPath = path.resolve(path.join(process.cwd(), `pieces-cache-db-${cacheId}.sqlite`))
             const db = new Keyv({
                 store: new KeyvSqlite(`sqlite://${dbPath}`),
             })
