@@ -53,6 +53,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Name of the campaign": "Naam van de campagne",
   "Start time in 24-hour format (e.g., \"09:00\")": "Start tijd in 24-uurs formaat (bijv. \"09:00\")",
   "End time in 24-hour format (e.g., \"17:00\")": "Eindtijd in 24-uurs formaat (bijv. \"17:00\")",
