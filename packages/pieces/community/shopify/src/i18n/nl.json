@@ -107,6 +107,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID of the inventory item.": "De ID van het voorraadselitem.",
   "The ID of the location.": "Het ID van de locatie.",
   "Positive values increase inventory, negative values decrease it.": "Positieve waarden verhogen inventarisatie, negatieve waarden verlagen deze.",
