@@ -1,3 +1,4 @@
+import { mkdir } from 'node:fs/promises'
 import path from 'path'
 import { pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, filePiecesUtils, memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
@@ -233,6 +234,7 @@ async function getOrCreateCache(): Promise<KVCacheInstance> {
                 return cacheInstance
             }
             const baseDir = system.getOrThrow(AppSystemProp.CONFIG_PATH)
+            await mkdir(baseDir, { recursive: true })
             const dbPath = path.resolve(path.join(baseDir, 'pieces-cache-db.sqlite'))
             const db = new Keyv({
                 store: new KeyvSqlite(`sqlite://${dbPath}`),
