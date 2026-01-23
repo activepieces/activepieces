@@ -22,6 +22,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The name of the session": "O nome da sessão",
   "Select a date and time": "Selecione uma data e hora",
   "The timezone which the session will take place.": "O fuso horário que a sessão terá lugar.",
