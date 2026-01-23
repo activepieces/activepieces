@@ -39,6 +39,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Additional information about the contact.": "Aanvullende informatie over het contact.",
   "Array of email addresses (optional, max 20)": "Reeks van e-mailadressen (optioneel, max 20)",
   "Filter by call direction": "Filter op oproeprichting",
