@@ -15,6 +15,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "You can obtain Bot ID from bot's settings menu.": "Je kunt Bot ID verkrijgen in het bot's instellingen menu.",
   "The chat session id to keep track of a unique conversation. If not provided, it will default to generate a new one each time.You can obtain it from URL after /chats/.": "De chat-sessie-id om een uniek gesprek bij te houden. Indien niet opgegeven, zal het standaard een nieuwe aanmaken elke keer. U kunt het verkrijgen via de URL na /chats/.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
