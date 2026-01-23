@@ -23,6 +23,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID of the template to use for the contract": "Het te gebruiken sjabloon voor het contract",
   "Unique title for the contract (defaults to template title if not specified)": "Unieke titel voor het contract (standaard template titel als niet opgegeven)",
   "Language setting for the signer page and emails": "Taalinstelling voor de ondertekenaar pagina en e-mails",
