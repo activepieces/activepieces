@@ -45,6 +45,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Pass `true` to only return active clients and `false` to return inactive clients.": "Pasa `true` para devolver clientes activos y `false` para devolver clientes inactivos.",
   "Only return clients that have been updated since the given date and time.": "Sólo devuelve clientes que han sido actualizados desde la fecha y hora dadas.",
   "DEPRECATED: The page number to use in pagination.": "DEPRECADO: El número de página a utilizar en la paginación.",
