@@ -40,6 +40,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Unique identifier for the invoice": "Identificador exclusivo para a fatura",
   "Invoice number or reference": "Número da fatura ou referência",
   "Name of the contact/customer": "Nome do contato/cliente",
