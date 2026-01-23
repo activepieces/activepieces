@@ -181,6 +181,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Choose the type of manual entry": "Choisissez le type de saisie manuelle",
   "Date of the booking (YYYY-MM-DD)": "Date de la réservation (AAAAA-MM-JJ)",
   "Reference number for the booking": "Numéro de référence pour la réservation",
