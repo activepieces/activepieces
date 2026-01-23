@@ -49,6 +49,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Hex color code (e.g., #FF0000)": "Hex kleurcode (bijv. #FF0000)",
   "URL of the file to attach": "URL van het toe te voegen bestand",
   "URL of the file to attach (used if creating)": "URL van het bij te voegen bestand (gebruikt bij aanmaken)",
