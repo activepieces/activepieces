@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The URL of the meeting (e.g., https://zoom.us/j/123?pwd=456)": "De URL van de vergadering (bijv. https://zoom.us/j/123?pwd=456)",
   "The name of the bot that will be displayed in the call (max 100 characters). Defaults to \"Meeting Notetaker\"": "De naam van de bot die zal worden weergegeven in de oproep (max 100 tekens). Standaard ingesteld op \"Vergadering Notetaker\"",
   "A UUID string identifying the bot": "Een UUID string die de bot identificeert",
