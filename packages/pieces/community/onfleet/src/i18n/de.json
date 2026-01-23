@@ -117,6 +117,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The recipient's full name": "Der vollständige Name des Empfängers",
   "A unique, valid phone number as per the organization's country if there's no leading + sign. If a phone number has a leading + sign, it will disregard the organization's country setting.": "Eine einzigartige, gültige Telefonnummer nach dem Land der Organisation, wenn es kein führendes + Zeichen gibt. Wenn eine Telefonnummer ein führendes + Zeichen hat, wird die Ländereinstellung der Organisation ignoriert.",
   "Checking this option will default the Onfleet system to use a toll-free long code number for SMS communication.": "Wenn Sie diese Option aktivieren, wird das Onfleet System standardmäßig eine gebührenfreie lange Codenummer für SMS-Kommunikation verwenden.",
