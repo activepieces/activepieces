@@ -31,6 +31,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The fields to add to the record.": "De velden om toe te voegen aan het record.",
   "The ID of the record to update.": "Het ID van het te updaten record",
   "The IDs of the records to find.": "De ID's van de records om te vinden.",
