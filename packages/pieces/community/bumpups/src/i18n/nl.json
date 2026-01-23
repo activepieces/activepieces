@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The YouTube video URL.": "De YouTube video URL.",
   "Whether to include emojis in the generated takeaways.": "Of emojis moeten worden opgenomen in het gegenereerde aftrek.",
   "Preferred length of each timestamp.": "Voorkeur lengte van elke tijdstempel.",
