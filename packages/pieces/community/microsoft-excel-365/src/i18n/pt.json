@@ -93,6 +93,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "If the first row is headers": "Se a primeira linha for o cabeçalho",
   "The values to insert": "Os valores a inserir",
   "Use below Filter properties to insert only the rows that meet your conditions.": "Use abaixo as propriedades do filtro para inserir apenas as linhas que atendem às suas condições.",
