@@ -28,6 +28,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Select or map the entity for which you want to create the record.": "Wählen Sie die Entität aus für die Sie den Datensatz erstellen möchten.",
   "Select or map the entity name whose records you want to delete.": "Wählen Sie den Entitätsnamen aus, dessen Datensätze Sie löschen möchten.",
   "Select or map the entity name whose records you want to retrieve.": "Wählen Sie den Entitätsnamen aus, dessen Datensätze Sie abfragen möchten.",
