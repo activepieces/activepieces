@@ -68,6 +68,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Customer email address": "E-Mail-Adresse des Kunden",
   "Customer first name": "Vorname des Kunden",
   "Customer last name": "Nachname des Kunden",
