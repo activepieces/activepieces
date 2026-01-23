@@ -35,6 +35,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Search text in name, email, or phone number": "Rechercher du texte dans le nom, l'e-mail ou le numéro de téléphone",
   "Filter by lead source (e.g., \"API\", \"Import\")": "Filtrer par source de plomb (par exemple, \"API\", \"Importer\")",
   "Filter by exact email address": "Filtrer par adresse e-mail exacte",
