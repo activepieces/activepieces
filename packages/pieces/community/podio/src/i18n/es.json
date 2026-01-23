@@ -82,6 +82,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select an organization to filter apps by workspace. Leave empty to see all apps.": "Seleccione una organización para filtrar aplicaciones por espacio de trabajo. Dejar vacío para ver todas las aplicaciones.",
   "Select a workspace to filter apps. Leave empty to see all apps in the organization.": "Seleccione un espacio de trabajo para filtrar aplicaciones. Deje en blanco para ver todas las aplicaciones de la organización.",
   "Select a Podio app": "Selecciona una aplicación de Podio",
