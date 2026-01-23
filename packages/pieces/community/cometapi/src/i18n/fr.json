@@ -19,6 +19,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The prompt to send to the AI model.": "L'invite à envoyer au modèle IA.",
   "Optional system message to set the behavior of the AI.": "Message système optionnel pour définir le comportement de l'IA.",
   "Controls randomness (0-2). Lower values make output more focused.": "Contrôle aléatoirement (0-2). Les valeurs inférieures rendent la sortie plus ciblée.",
