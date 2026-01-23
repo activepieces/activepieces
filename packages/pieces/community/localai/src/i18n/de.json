@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "Das Modell, das die Vervollständigung generiert. Einige Modelle eignen sich für Aufgaben der natürlichen Sprache, andere sind auf Code spezialisiert.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Kontrolliert Zufallszufälligkeit: Die Verringerung führt zu weniger zufälligen Vervollständigungen. Je näher die Temperatur Null rückt, desto deterministischer und sich wiederholender wird.",
   "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)": "Die maximale Anzahl der zu generierenden Token. Anfragen können bis zu 2.048 oder 4.096 Token verwenden, die zwischen Prompt und Fertigstellung geteilt werden, setzen Sie den Wert nicht auf maximal und lassen Sie einige Token für die Eingabe. Das genaue Limit variiert je nach Modell. (Ein Token ist ungefähr 4 Zeichen für den normalen englischen Text)",
