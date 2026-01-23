@@ -31,6 +31,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The fields to add to the record.": "Die Felder, die zum Datensatz hinzugefügt werden sollen.",
   "The ID of the record to update.": "Die ID des zu aktualisierenden Datensatzes.",
   "The IDs of the records to find.": "Die IDs der zu findenden Datensätze.",
