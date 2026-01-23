@@ -181,6 +181,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Choose the type of manual entry": "Kies het type handmatige invoer",
   "Date of the booking (YYYY-MM-DD)": "Datum van de boeking (JJJJ-MM-DD)",
   "Reference number for the booking": "Referentienummer voor de boeking",
