@@ -46,6 +46,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The email address of the new subscription.": "新しいサブスクリプションのメールアドレス",
   "Whether to reactivate the subscription if they have already unsubscribed. Use only if the subscription is knowingly resubscribing.": "すでに購読を解除している場合、購読を再開するかどうかを設定します。購読が意図的に再購読されている場合にのみ使用してください。",
   "Whether to send the default welcome email to the subscription.": "デフォルトのウェルカムメールをサブスクリプションに送信するかどうか。",
