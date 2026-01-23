@@ -34,6 +34,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select the parser": "Seleccione el analizador",
   "Select the document": "Seleccione el documento",
   "The subject of the document/email.": "El asunto del documento/correo electrónico.",
