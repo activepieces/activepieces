@@ -31,6 +31,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The fields to add to the record.": "Les champs à ajouter à l'enregistrement.",
   "The ID of the record to update.": "L'ID de l'enregistrement à mettre à jour.",
   "The IDs of the records to find.": "Les identifiants des enregistrements à trouver.",
