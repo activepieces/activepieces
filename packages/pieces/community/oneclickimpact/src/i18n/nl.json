@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The amount of carbon to capture in lbs (1 and 10,000,000)": "De hoeveelheid koolstof om op te vangen in lbs (1 en 10.000,000)",
   "The email of the customer on whose behalf the carbon is being captured": "De e-mail van de klant namens wie de koolstof wordt vastgelegd",
   "The name of the customer on whose behalf the carbon is being captured": "De naam van de klant namens wie de koolstof wordt genoteerd",
