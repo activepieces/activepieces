@@ -42,6 +42,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Select the template to generate the video.": "Selecione o modelo para gerar o vídeo.",
   "Title of the generated video.": "Título do vídeo gerado.",
   "Select the folder to store the video.": "Selecione a pasta para armazenar o vídeo.",
