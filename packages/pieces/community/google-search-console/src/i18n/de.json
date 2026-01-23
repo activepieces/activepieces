@@ -34,6 +34,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The start date of the date range to query (in YYYY-MM-DD format).": "Das Anfangsdatum des abzufragenden Datums (im YYYY-MM-DD Format).",
   "The end date of the date range to query (in YYYY-MM-DD format).": "Das Enddatum des abzufragenden Datums (im YYYY-MM-DD Format).",
   "The dimensions to group results by. For example: [\"query\", \"page\", \"country\", \"device\", \"searchAppearance\", \"date\"].": "Die Dimensionen, nach denen Ergebnisse gruppiert werden sollen. Zum Beispiel: [\"Abfrage\", \"Seite\", \"Land\", \"Gerät\", \"searchAppearance\", \"date\"].",
