@@ -31,6 +31,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The prompt to generate content from.": "コンテンツを生成するためのプロンプト。",
   "The model which will generate the completion": "完了を生成するモデル",
   "Select built-in tool to use with Gemini model.": "Geminiモデルで使用する組み込みツールを選択します。",
