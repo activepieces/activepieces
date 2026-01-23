@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Max number of submissions to retrieve (1-150).": "Max aantal op te halen uitwerkingen (1-150).",
   "Filter submissions after this date (YYYY-MM-DDTHH:mm:ss.sssZ).": "Filter uitwerkingen na deze datum (YYYY-MM-DDDH:mm:ss.sssZ).",
   "Filter submissions before this date (YYYY-MM-DDTHH:mm:ss.sssZ).": "Filter op inzendingen voor deze datum (YYYY-MM-DDDH:mm:ss.sssZ).",
