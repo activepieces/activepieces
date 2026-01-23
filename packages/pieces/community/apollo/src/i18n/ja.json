@@ -42,6 +42,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   " The email address of the person to be matched": " マッチング対象の人のメールアドレス",
   "Store the response in the project store for future use.": "今後使用するためにプロジェクトストアに応答を保存します。",
   "The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.": "検索結果に含めたい会社の Apollo ID です。ID を見つけるには、Organization Search エンドポイントに連絡してください。",
