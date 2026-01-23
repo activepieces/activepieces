@@ -15,6 +15,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The phone number to send the message to (e.g., 33600000001)": "Het telefoonnummer om het bericht naar te sturen (bijv. 33600000001)",
   "The content of the SMS message": "De inhoud van het SMS-bericht",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
