@@ -45,6 +45,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the contact.": "Selecteer de contactpersoon",
   "The internal comment to add (max 1000 characters). You can mention users with {{@user.ID}} format where ID is the user ID.": "De interne commentaar om toe te voegen (max 1000 tekens). U kunt gebruikers vermelden met {{@user.ID}} formaat waar ID de gebruikers-ID is.",
   "Tags to add to the contact (minimum 1, maximum 10 tags).": "Tags om aan de contactpersoon toe te voegen (minimaal 1, maximaal 10 tags).",
