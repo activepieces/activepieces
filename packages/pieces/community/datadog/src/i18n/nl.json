@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Logs to send to Datadog, must contain a `logs` key with an array of objects. Documentation: https://docs.datadoghq.com/api/latest/logs/#send-logs": "Logs om naar Datadog te versturen, moeten een `logs` sleutel bevatten met een array van objecten. Documentatie: https://docs.datadoghq.com/api/latest/logs/#send-logs",
   "The message to send to Datadog": "Het bericht om te verzenden naar Datadog",
   "The DD source to send to Datadog": "De DD-bron om naar Datadog te verzenden",
