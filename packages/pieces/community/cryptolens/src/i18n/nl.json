@@ -41,6 +41,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The name of the customer (max 100 characters)": "Naam van de klant (max 100 tekens)",
   "The email of the customer (max 100 characters)": "E-mail van de klant (max 100 tekens)",
   "The company name the customer belongs to (max 100 characters)": "De bedrijfsnaam waartoe de klant behoort (max 100 tekens)",
