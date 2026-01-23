@@ -46,6 +46,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The number you own in E.164 format. Must be a number purchased from Retell or imported to Retell.": "Le numéro que vous possédez au format E.164. Doit être un numéro acheté auprès de Retell ou importé à Retell.",
   "The number you want to call, in E.164 format. If using a number purchased from Retell, only US numbers are supported as destination.": "Le numéro que vous voulez appeler, au format E.164. Si vous utilisez un numéro acheté auprès de Retell, seuls les numéros US sont pris en charge comme destination.",
   "Select the Retell AI agent.": "Sélectionnez l'agent Retell AI (Retell AI Agent.",
