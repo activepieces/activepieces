@@ -44,6 +44,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The name of the secrets engine (mount path)": "De naam van de secrets engine (mount path)",
   "The path to the secret (e.g., myapp/database)": "Het pad naar het geheim (bijv. myapp/database)",
   "Version of the secret to read (0 for latest, KV v2 only)": "Versie van het geheim om te lezen (0 voor latest, alleen KV v2)",
