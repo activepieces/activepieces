@@ -24,6 +24,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The unique identifier of the campaign": "L'identifiant unique de la campagne",
   "The first name of the contact (max 150 characters)": "Le prénom du contact (max 150 caractères)",
   "The last name of the contact (max 150 characters)": "Le nom du contact (max 150 caractères)",
