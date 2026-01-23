@@ -44,6 +44,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The name of the secrets engine (mount path)": "El nombre del motor de secretos (montar ruta)",
   "The path to the secret (e.g., myapp/database)": "La ruta al secreto (por ejemplo, miapp/base de datos)",
   "Version of the secret to read (0 for latest, KV v2 only)": "Versión del secreto a leer (0 para más tarde, solo KV v2)",
