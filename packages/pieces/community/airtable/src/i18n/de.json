@@ -57,6 +57,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The ID of the record.": "Die ID des Datensatzes.",
   "The ID of the record to which you want to upload the file.": "Die ID des Datensatzes, in den Sie die Datei hochladen möchten.",
   "The file to be uploaded, which can be provided either as a public file URL or in Base64 encoded format.": "Die hochzuladende Datei, die entweder als öffentliche Datei-URL oder im Base64-kodierten Format zur Verfügung gestellt werden kann.",
