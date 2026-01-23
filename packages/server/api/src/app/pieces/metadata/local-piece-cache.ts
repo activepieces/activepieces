@@ -237,7 +237,8 @@ async function getOrCreateCache(): Promise<KVCacheInstance> {
             }
             const baseDir = system.getOrThrow(AppSystemProp.CONFIG_PATH)
             await mkdir(baseDir, { recursive: true })
-            const dbPath = path.resolve(path.join(baseDir, 'pieces-cache-db.sqlite'))
+            const instanceId = process.env.NODE_APP_INSTANCE || '0'
+            const dbPath = path.resolve(path.join(baseDir, `pieces-cache-db-${instanceId}.sqlite`))
             const db = new Keyv({
                 store: new KeyvSqlite(`sqlite://${dbPath}`),
             })
