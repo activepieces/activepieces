@@ -29,6 +29,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The title of the task": "El título de la tarea",
   "A URL associated with the task (e.g., link to a ticket or resource)": "Una URL asociada con la tarea (por ejemplo, enlace a un ticket o recurso)",
   "When the task is due": "Cuando la tarea vence",
