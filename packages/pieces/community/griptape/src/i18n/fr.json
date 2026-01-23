@@ -29,6 +29,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select the assistant": "Sélectionnez l'assistant",
   "Input to provide to the assistant": "Saisie à fournir à l'assistant",
   "Select knowledge bases to use": "Sélectionnez les bases de connaissances à utiliser",
