@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The goal or task description for Skyvern to accomplish.": "Het doel of taakbeschrijving voor Skyvern om te voltooien.",
   "The starting URL for the task.": "De start-URL voor de taak.",
   "URL to send task status updates to after a run is finished.": "URL om status updates te versturen naar nadat een opdracht is uitgevoerd.",
