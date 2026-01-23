@@ -19,6 +19,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Asana workspace to create the task in": "Asana workspace om een taak aan te maken in",
   "Asana Project to create the task in": "Asana project om de taak aan te maken in",
   "The name of the task to create": "De naam van de taak te maken",
