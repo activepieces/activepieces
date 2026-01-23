@@ -28,6 +28,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Provide the direct link to a publicly accessible resume file (PDF, DOC, or DOCX)": "Geben Sie den direkten Link zu einer öffentlich zugänglichen Lebenslaufdatei (PDF, DOC oder DOCX)",
   "If a previous run timed out, paste the Request ID here to get the result.": "Wenn eine vorherige Auslaufzeit abgelaufen ist, fügen Sie die Request-ID hier ein, um das Ergebnis zu erhalten.",
   "Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).": "Geben Sie eine direkte URL zu einer öffentlich zugänglichen Lebenslaufdatei (PDF, DOC oder DOCX) an.",
