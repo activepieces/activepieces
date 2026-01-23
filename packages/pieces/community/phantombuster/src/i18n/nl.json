@@ -17,6 +17,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the Phantombuster agent to use": "Selecteer de Phantombuster agent om te gebruiken",
   "Wait until the agent execution completes and output is available": "Wacht tot de agent uitvoert en uitvoer beschikbaar is",
   "Optional argument to pass to the agent": "Optioneel argument om door te geven aan de agent",
