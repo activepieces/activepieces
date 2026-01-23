@@ -57,6 +57,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Select the contact book where the contact will be created": "Wählen Sie das Kontaktbuch, in dem der Kontakt erstellt werden soll",
   "First name of the contact": "Vorname des Kontakts",
   "Last name of the contact": "Nachname des Kontakts",
