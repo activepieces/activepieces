@@ -29,6 +29,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The document file to upload (PDF, JPEG, PNG, or TIFF, max 6MB)": "アップロードするドキュメントファイル（PDF、JPEG、PNG、TIFF、最大6MB）",
   "The unique identifier of the document to parse": "解析するドキュメントの一意の識別子",
   "The unique identifier of the Workflow/template to use": "使用するワークフロー/テンプレートの一意の識別子",
