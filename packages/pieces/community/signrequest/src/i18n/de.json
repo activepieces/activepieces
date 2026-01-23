@@ -17,6 +17,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "JSON array of signer objects. Example: [{\"email\":\"john@example.com\",\"name\":\"John Doe\",\"role\":\"signer\"}]": "JSON-Array von Unterzeichnerobjekten. Beispiel: [{\"email\":\"john@example.com\",\"name\":\"John Doe\",\"role\":\"signer\"}]",
   "Optional JSON array describing files to attach. Use the shape expected by the Signrequest API (e.g. [{\"url\":\"https://...\"}])": "Optionales JSON-Array, das Dateien angehängt werden soll. Verwenden Sie die Form, die von der Signanforderungs-API erwartet wird (z.B. [{\"url\":\"https://...\"}])",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
