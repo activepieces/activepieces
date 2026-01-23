@@ -31,6 +31,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The prompt to generate content from.": "L'invite à générer du contenu.",
   "The model which will generate the completion": "Le modèle qui va générer la complétion",
   "Select built-in tool to use with Gemini model.": "Sélectionnez l'outil intégré à utiliser avec le modèle Gemini.",
