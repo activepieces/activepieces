@@ -114,6 +114,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "select a person": "sélectionner une personne",
   "select a Lead": "sélectionner un prospect",
   "select a Company": "sélectionner une entreprise",
