@@ -25,6 +25,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "ID of the application to be completed.": "ID der zu beendenden Bewerbung.",
   "JSON string of key-value pairs for application input variables.": "JSON-String mit Schlüsselwert-Paaren für Anwendungs-Eingabevariablen.",
   "File to be uploaded, if the application requires documents. Supports PDF, DOCX, images, and other document formats.": "Datei, die hochgeladen werden soll, wenn die Anwendung Dokumente benötigt. Unterstützt PDF, DOCX, Bilder und andere Dokumentenformate.",
