@@ -56,6 +56,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The search string. Must be at least 3 characters.": "La chaîne de recherche. Doit comporter au moins 3 caractères.",
   "The path to search in. If not specified, the search is performed from the root.": "Le chemin de recherche. Si non spécifié, la recherche est effectuée à partir de la racine.",
   "The maximum number of search results to return (up to 1000). Default is 100 if not specified.": "Le nombre maximum de résultats de recherche à retourner (jusqu'à 1000). La valeur par défaut est 100 si non spécifiée.",
