@@ -30,6 +30,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The fields to add to the record.": "Les champs à ajouter à l'enregistrement.",
   "How many records are returned in total.": "Combien d'enregistrements sont retournés au total.",
   "How many records are returned per page (max 1000).": "Combien d'enregistrements sont retournés par page (max 1000).",
