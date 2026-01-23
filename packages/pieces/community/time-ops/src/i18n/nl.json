@@ -34,6 +34,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The name of the customer.": "De naam van de klant.",
   "The VAT number of the customer.": "Het BTW-nummer van de klant.",
   "The default hourly rate for this customer.": "De standaard uurtarief voor deze klant.",
