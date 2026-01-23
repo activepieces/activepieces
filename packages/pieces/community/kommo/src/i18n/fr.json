@@ -43,6 +43,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Search query (Searches through the filled fields of the lead).": "Requête de recherche (recherche dans les champs remplis du plomb).",
   "List of tag names or IDs to add.": "Liste des noms de tags ou identifiants à ajouter.",
   "List of tag names or IDs to remove.": "Liste des noms de tags ou identifiants à supprimer.",
