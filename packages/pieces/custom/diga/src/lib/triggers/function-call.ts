@@ -3,10 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from "@activepieces/pieces-framework";
-
-// Diga backend API URL
-// TODO: Configure this for your environment
-const DIGA_API_URL = "http://localhost:3000";
+import { DIGA_API_URL, DIGA_AP_SECRET } from "../common/config";
 
 // Type for parameter definition from the form
 type ParameterDefinition = {
@@ -177,6 +174,7 @@ export const functionCall = createTrigger({
         method: "POST",
         headers: {
           "x-ap-project-id": projectId,
+          "x-ap-secret": DIGA_AP_SECRET,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -221,6 +219,7 @@ export const functionCall = createTrigger({
             method: "DELETE",
             headers: {
               "x-ap-project-id": projectId,
+              "x-ap-secret": DIGA_AP_SECRET,
             },
           }
         );
