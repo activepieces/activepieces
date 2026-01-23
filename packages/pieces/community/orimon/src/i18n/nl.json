@@ -15,6 +15,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "To get it: Login to your dashboard and click on the bot configuration page. At the top in the URL bar, copy the value starting after \"tenant/\" to the end.": "Om het te krijgen: Log in op je dashboard en klik op de bot configuratiepagina. Kopieer de waarde bovenaan in de URL-balk die begint na \"tenant/\" naar het einde.",
   "The message to send to the chatbot": "Het bericht dat moet worden verzonden naar de chatbot",
   "Unique identifier for this message": "Unieke identifier voor dit bericht",
