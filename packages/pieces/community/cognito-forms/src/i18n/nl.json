@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Enter the ID of the entry you want to update.": "Vul de ID in van het item dat u wilt bijwerken.",
   "Enter the ID of the entry to delete.": "Vul het ID van het te verwijderen item in.",
   "Enter the ID of the entry to retrieve.": "Voer het ID in van de op te halen invoer.",
