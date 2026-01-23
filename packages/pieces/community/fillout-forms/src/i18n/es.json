@@ -29,6 +29,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Max number of submissions to retrieve (1-150).": "Número máximo de envíos a recuperar (1-150).",
   "Filter submissions after this date (YYYY-MM-DDTHH:mm:ss.sssZ).": "Filtrar envíos después de esta fecha (AA-MM-DDTHH:mm:ss.sssZ).",
   "Filter submissions before this date (YYYY-MM-DDTHH:mm:ss.sssZ).": "Filtrar envíos antes de esta fecha (AA-MM-DDTHH:mm:ss.sssZ).",
