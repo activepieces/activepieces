@@ -44,6 +44,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Array of URLs to crawl": "クロールするURLの配列",
   "If true, returns full page text. If false, disables text return.": "true の場合、ページ全体のテキストを返します。false の場合、テキストを返すことはできません。",
   "Options for livecrawling pages.": "livecrawling ページのオプション。",
