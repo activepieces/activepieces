@@ -34,6 +34,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "What do you want to generate? (max 1000 characters)": "何を生成しますか？（最大 1000 文字）",
   "Additional context or background information (optional, max 1000 characters)": "追加のコンテキストまたは背景情報 (オプション、最大 1000 文字)",
   "How many outputs to generate (default: 1)": "生成する出力数 (デフォルト: 1)",
