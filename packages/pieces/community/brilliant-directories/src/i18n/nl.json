@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Email address for the users account": "E-mailadres voor het gebruikersaccount",
   "Password for the new user account": "Wachtwoord voor het nieuwe gebruikersaccount",
   "The subscription ID from your website": "Het abonnement-ID van uw website",
