@@ -31,6 +31,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Optional text data for training the chatbot.": "Dados de texto opcionais para treinar o Chatbot.",
   "Higher values = more random output. Between 0 and 1.": "Valores maiores = mais saídas aleatórias. Entre 0 e 1.",
   "Unique ID for saving this conversation in Chatbase dashboard.": "ID exclusivo para salvar esta conversa no Painel Chatbase.",
