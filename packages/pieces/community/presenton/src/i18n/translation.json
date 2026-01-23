@@ -31,6 +31,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The content for generating the presentation": "The content for generating the presentation",
   "Instruction for generating the presentation (optional).": "Instruction for generating the presentation (optional).",
   "Tone to use for the text": "Tone to use for the text",

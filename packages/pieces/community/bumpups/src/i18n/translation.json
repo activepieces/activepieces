@@ -29,6 +29,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The YouTube video URL.": "The YouTube video URL.",
   "Whether to include emojis in the generated takeaways.": "Whether to include emojis in the generated takeaways.",
   "Preferred length of each timestamp.": "Preferred length of each timestamp.",

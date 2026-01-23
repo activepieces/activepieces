@@ -338,6 +338,7 @@ import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres
 import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
 import { RefactorToolsDataModel1768988718314 } from './migration/postgres/1768988718314-refactorToolsDataModel'
 import { TestingMigration1769000338887 } from './migration/postgres/1769000338887-testing-migration'
+import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -686,6 +687,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddModelIdToSessionEntity1768745485957,
         AddSearchEnabledColumn1768836652533,
         AddCodeExecutionEnabledColumn1768836652534,
+        AddEventStreaming1769084311004,
         AddImageToUser1768502658760,
         RemoveUsageCountFromTemplates1768738475196,
         AddTablesIntoTemplateEntity1768306510367,

@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
+import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   Template,
+  TemplateTelemetryEventType,
   TemplateType,
   UncategorizedFolderId,
 } from '@activepieces/shared';
@@ -41,6 +43,12 @@ const TemplatesPage = () => {
 
   const handleTemplateSelect = (template: Template) => {
     navigate(`/templates/${template.id}`);
+    if (template.type === TemplateType.OFFICIAL) {
+      templatesTelemetryApi.sendEvent({
+        eventType: TemplateTelemetryEventType.VIEW,
+        templateId: template.id,
+      });
+    }
   };
 
   const templatesByCategory = useMemo(() => {
