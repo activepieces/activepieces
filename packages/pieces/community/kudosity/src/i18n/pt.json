@@ -38,6 +38,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Numeric ID of the recipient list (found in the list page URL).": "ID numérico da lista de destinatários (encontrado na página da página).",
   "Phone number with country code, e.g., +1234567890": "Número de telefone com código do país, por exemplo, +1234567890",
   "Phone number with country code (e.g., +1234567890)": "Número de telefone com código do país (por exemplo, +1234567890)",
