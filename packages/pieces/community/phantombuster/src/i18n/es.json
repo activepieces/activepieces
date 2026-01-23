@@ -17,6 +17,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select the Phantombuster agent to use": "Seleccione el agente de Phantombuster para usar",
   "Wait until the agent execution completes and output is available": "Espere hasta que se complete la ejecución del agente y la salida esté disponible",
   "Optional argument to pass to the agent": "Argumento opcional para pasar al agente",
