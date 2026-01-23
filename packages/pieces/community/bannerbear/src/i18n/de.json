@@ -19,6 +19,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The template to use in image creation.": "Die Vorlage, die bei der Erstellung von Bildern verwendet wird.",
   "Create image based on a specific version of the template.": "Erstellen Sie ein Bild basierend auf einer bestimmten Version der Vorlage.",
   "A list of modifications you want to make on the template.": "Eine Liste der Änderungen, die Sie im Template vornehmen möchten.",
