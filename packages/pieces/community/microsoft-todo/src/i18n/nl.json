@@ -46,6 +46,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The task list to create the task in.": "De takenlijst waarin de taak moet worden aangemaakt.",
   "The title of the task.": "De titel van de taak.",
   "The body or notes for the task.": "Het lichaam of notities van de taak.",
