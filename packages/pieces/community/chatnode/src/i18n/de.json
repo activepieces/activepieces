@@ -15,6 +15,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "You can obtain Bot ID from bot's settings menu.": "Sie können die Bot-ID aus dem Einstellungsmenü des Bots erhalten.",
   "The chat session id to keep track of a unique conversation. If not provided, it will default to generate a new one each time.You can obtain it from URL after /chats/.": "Die Chat-Session-ID, um eine einzigartige Unterhaltung zu verfolgen. Wenn nicht angegeben wird, wird standardmäßig jedes Mal ein neues generiert. Sie können es von der URL nach /chats/ erhalten.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
