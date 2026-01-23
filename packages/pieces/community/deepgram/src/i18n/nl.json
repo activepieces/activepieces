@@ -27,6 +27,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "en": "nl",
   "Return full transcript if summary is not available.": "Retourneer de volledige transcript als samenvatting niet beschikbaar is.",
   "URL to receive the transcription when ready.": "URL om de transcriptie te ontvangen wanneer je klaar bent.",
