@@ -67,6 +67,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "JSON data with overrides array to populate the template. Format: {\"overrides\": [{\"name\": \"object_name\", \"property\": \"value\"}]}.": "Datos JSON con matriz de sobreescritura para rellenar la plantilla. Formato: {\"overrides\": [{\"name\": \"object_name\", \"property\": \"value\"}]}.",
   "Delay in milliseconds before PDF generation": "Retraso en milisegundos antes de la generación de PDF",
   "Specify an external reference ID for your own reference": "Especifique un ID de referencia externa para su propia referencia",
