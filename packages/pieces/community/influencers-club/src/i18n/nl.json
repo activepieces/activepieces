@@ -31,6 +31,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The email address of the creator to enrich": "Het e-mailadres van de maker om te verrijken",
   "Platforms to exclude from enrichment (optional)": "Platforms om uit te sluiten van verrijking (optioneel)",
   "Minimum follower count filter (default: 1000)": "Minimaal aantal volgers filter (standaard: 1000)",
