@@ -50,6 +50,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Grok model to use for generating the response.": "Modelo Grok a ser usado para gerar a resposta.",
   "Conversation messages for multi-turn conversations.": "Mensagens de conversas para conversas multireversas.",
   "Simple text prompt for single-turn conversations. Ignored if Messages is provided.": "Solicitação de texto simples para conversas de virar único. Ignorado se as mensagens são fornecidas.",
