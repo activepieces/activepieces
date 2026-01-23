@@ -781,6 +781,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Charge Point": "Charge Punt",
   "Evse Network Id": "Gebeurtenis netwerk-ID",
   "Type": "Type",
