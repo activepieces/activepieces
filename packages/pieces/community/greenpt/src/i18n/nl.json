@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The model to use ": "Het te gebruiken model ",
   "Message to send": "Te verzenden bericht",
   "Input text to embed. Can be a single string or multiple texts separated by newlines": "Invoertekst om in te sluiten. Kan een enkele tekenreeks of meerdere teksten zijn, gescheiden door nieuwe regels",
