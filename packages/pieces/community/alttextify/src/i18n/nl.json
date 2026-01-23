@@ -16,6 +16,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Specifies the language for the alt text. Supported language codes are accepted.": "Geeft de taal van de alt-tekst weer. Ondersteunde taalcodes worden geaccepteerd.",
   "List of keywords/phrases for SEO-optimized alt text.": "Lijst met sleutelwoorden/zinnen voor SEO-geoptimaliseerde Alt-tekst.",
   "List of negative keywords/phrases for SEO-optimized alt text.": "Lijst met negatieve sleutelwoorden/zinnen voor SEO-geoptimaliseerde Alt-tekst.",
