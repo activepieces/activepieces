@@ -80,6 +80,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select a template from your PandaDoc workspace": "Selecteer een template uit uw PandaDoc werkruimte",
   "Name the document you are creating": "Benoem het document dat u maakt",
   "List of recipients to whom the document will be sent": "Lijst van geadresseerden naar wie het document wordt verzonden",
