@@ -40,6 +40,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "First name of the contact": "Nombre del contacto",
   "Last name of the contact": "Apellido del contacto",
   "Designation of the contact in the account they belong to": "Diseño del contacto en la cuenta a la que pertenecen",
