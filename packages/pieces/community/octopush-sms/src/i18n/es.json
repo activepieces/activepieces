@@ -32,6 +32,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The phone number in international format (e.g., +33612345678)": "El número de teléfono en formato internacional (por ejemplo, +33612345678)",
   "First name of the contact": "Nombre del contacto",
   "Last name of the contact": "Apellido del contacto",
