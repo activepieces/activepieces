@@ -31,6 +31,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Text to be translated. Only UTF-8-encoded plain text is supported.": "Te vertalen tekst. Alleen UTF-8-gecodeerde platte tekst wordt ondersteund.",
   "The language into which the text should be translated.": "De taal waarin de tekst moet worden vertaald.",
   "Language of the text to be translated": "Taal van de te vertalen tekst",
