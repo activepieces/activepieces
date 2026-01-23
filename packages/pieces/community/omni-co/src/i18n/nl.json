@@ -56,6 +56,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the model containing the database": "Selecteer het model dat de database bevat",
   "The name of the document": "De naam van het document",
   "An array of queryPresentation objects, each representing a query in the document's workbook": "Een reeks queryPresentation objecten, elk vertegenwoordigt een query in het werkboek van het document",
