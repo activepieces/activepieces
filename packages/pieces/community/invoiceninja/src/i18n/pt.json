@@ -72,6 +72,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "A unique task or ticket number that has not been used before in Invoice Ninja": "Uma tarefa ou tíquete única que não foi utilizada anteriormente na Invoice Ninja",
   "Client ID from Invoice Ninja (optional)": "ID do cliente a partir da fatura Ninja (opcional)",
   "Project ID from Invoice Ninja (optional)": "ID do Projeto da Fatura Ninja (opcional)",
