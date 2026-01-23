@@ -60,6 +60,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "ISO 3166-1 alpha-2 country code": "ISO 3166-1 alpha-2 landcode",
   "Valid 3-Letter ISO 4217 currency code.": "Geldige 3-Letter ISO 4217 valuta code.",
   "Exact match of a client name in your CRM": "Exacte match van een clientnaam in uw CRM",
