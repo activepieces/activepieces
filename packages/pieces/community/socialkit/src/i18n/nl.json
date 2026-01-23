@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The URL of the YouTube video you want to get details from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "De URL van de YouTube-video waarvan u meer informatie wilt krijgen. (bijv. https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to get the transcript from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "De URL van de YouTube-video waar de transcript vandaan moet komen (bijv. https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to summarize. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "De URL van de YouTube-video naar samenvatting. (bijv. https://www.youtube.com/watch?v=VIDEO_ID)",
