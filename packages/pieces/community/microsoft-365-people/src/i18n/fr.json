@@ -64,6 +64,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select a parent folder": "Sélectionnez un dossier parent",
   "Select a Contact": "Sélectionnez un contact",
   "Select a contact folder": "Sélectionnez un dossier de contact",
