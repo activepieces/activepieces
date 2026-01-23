@@ -38,6 +38,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Phone number in E.164 format without the plus sign (e.g. 14155553434)": "Numéro de téléphone au format E.164 sans le signe plus (par exemple 14155553434)",
   "First name of the contact": "Prénom du contact",
   "Last name of the contact": "Nom du contact",
