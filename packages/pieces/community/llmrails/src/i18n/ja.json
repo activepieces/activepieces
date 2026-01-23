@@ -17,6 +17,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Search query": "検索クエリ",
   "Hybrid search is combining dense and sparse embeddings.": "ハイブリッド検索は、緻密で疎な埋め込みを組み合わせたものです。",
   "Summarizes the datastore search results": "データストア検索結果をまとめます",
