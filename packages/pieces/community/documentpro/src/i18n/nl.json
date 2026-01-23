@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The document file to upload (PDF, JPEG, PNG, or TIFF, max 6MB)": "Het te uploaden documentbestand (PDF, JPEG, PNG, or TIFF, max 6MB)",
   "The unique identifier of the document to parse": "De unieke id van het document om te parsen",
   "The unique identifier of the Workflow/template to use": "De unieke id van de te gebruiken Workflow/template",
