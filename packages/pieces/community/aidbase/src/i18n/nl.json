@@ -35,6 +35,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The URL of the YouTube video to add as a knowledge source.": "De URL van de YouTube video die moet worden toegevoegd als kennisbron.",
   "The URL of the website to add as a knowledge source (e.g., https://www.example.com).": "De URL van de website om toe te voegen als kennisbron (bijv. https://www.voorbeeld.com).",
   "Select the FAQ to which the item will be added.": "Selecteer de FAQ waaraan het item zal worden toegevoegd.",
