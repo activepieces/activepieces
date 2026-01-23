@@ -14,6 +14,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Amount": "Cantidad",
   "Currency": "Moneda",
   "Reference ID": "ID de referencia",
