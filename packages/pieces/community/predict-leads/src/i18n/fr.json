@@ -56,6 +56,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "A min-max size range. Examples: \"11-50\"\". For now, only single range is supported.": "Une plage de taille minimale maximale. Exemples: \"11-50\"\". Pour l'instant, seule une seule plage est prise en charge.",
   "Page number of shown items": "Nombre de pages des éléments affichés",
   "Limit the number of shown items per page. Max 1000.": "Limite le nombre d'éléments affichés par page. Maximum 1000.",
