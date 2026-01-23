@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The document file to upload (PDF, JPEG, PNG, or TIFF, max 6MB)": "Die hochzuladende Dokumentdatei (PDF, JPEG, PNG, oder TIFF, max. 6MB)",
   "The unique identifier of the document to parse": "Der eindeutige Bezeichner des zu analysierenden Dokuments",
   "The unique identifier of the Workflow/template to use": "Der eindeutige Bezeichner der zu verwendenden Workflow/Vorlage",
