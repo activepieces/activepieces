@@ -23,6 +23,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The ID of the template to use for the contract": "Die ID der für den Vertrag zu verwendenden Vorlage",
   "Unique title for the contract (defaults to template title if not specified)": "Eindeutiger Titel für den Vertrag (Standardmäßig Template-Titel wenn nicht angegeben)",
   "Language setting for the signer page and emails": "Spracheinstellung für die Unterzeichnerseite und E-Mails",
