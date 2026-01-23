@@ -30,6 +30,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The fields to add to the record.": "Los campos a agregar al registro.",
   "How many records are returned in total.": "Cuántos registros se devuelven en total.",
   "How many records are returned per page (max 1000).": "Cuántos registros se devuelven por página (máx. 1000).",
