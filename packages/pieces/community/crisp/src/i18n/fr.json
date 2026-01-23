@@ -41,6 +41,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "You can obtain website ID by navigating to Settings -> Workspace Settings -> Setup & Integrations.": "Vous pouvez obtenir l'ID du site Web en accédant à Paramètres -> Paramètres de l'espace de travail -> Configuration et intégrations.",
   "You can obtain session from URL address bar.It starts with 'session_'.": "Vous pouvez obtenir une session à partir de la barre d'adresse d'URL. Il commence par 'session_'.",
   "The email address of the user to find.": "L'adresse email de l'utilisateur à trouver.",
