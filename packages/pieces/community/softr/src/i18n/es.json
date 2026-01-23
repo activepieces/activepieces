@@ -35,6 +35,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The email address of the new user.": "La dirección de correo electrónico del nuevo usuario.",
   "The full name of the new user.": "El nombre completo del nuevo usuario.",
   "The password for the new user.": "La contraseña para el nuevo usuario.",
