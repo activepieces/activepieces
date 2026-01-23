@@ -33,6 +33,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The mailing list to use.": "De mailinglijst om te gebruiken.",
   "The contact's email address.": "E-mailadres van de contactpersoon",
   "The contact's custom fields.": "Aangepaste velden van de contactpersoon",
