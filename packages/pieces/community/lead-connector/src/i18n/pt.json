@@ -63,6 +63,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "When using a dynamic value, make sure to use the ISO-2 country code, and not the country name.": "Ao usar um valor dinâmico, certifique-se de usar o código do país ISO-2, e não o nome do país.",
   "The ID of the contact.": "O ID do contato.",
   "The contact to use.": "O contato a ser usado",
