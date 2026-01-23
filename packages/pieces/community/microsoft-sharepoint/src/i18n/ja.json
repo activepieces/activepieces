@@ -66,6 +66,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Parent folder,like \"/demo/\" or \"/docs/assignment/\".Leave it default if you want to create folder at the root (**/**) level.": "親フォルダは、「/demo/」または「/docs/assignment/」のように、ルート(**/**)レベルにフォルダを作成する場合は、デフォルトのままにしておいてください。",
   "Item title to search": "検索するアイテムタイトル",
   "The file or url you want to upload": "アップロードしたいファイルまたはURL",
