@@ -43,6 +43,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Search query (Searches through the filled fields of the lead).": "Zoek query (door de gevulde velden van de lood).",
   "List of tag names or IDs to add.": "Lijst van toe te voegen tagnamen of ID's.",
   "List of tag names or IDs to remove.": "Lijst van tagnamen of ID's om te verwijderen.",
