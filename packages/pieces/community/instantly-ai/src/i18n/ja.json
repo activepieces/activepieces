@@ -53,6 +53,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Name of the campaign": "キャンペーン名",
   "Start time in 24-hour format (e.g., \"09:00\")": "24時間形式で開始時間（例：「09:00」）",
   "End time in 24-hour format (e.g., \"17:00\")": "終了時刻（例：\"17:00\"）",
