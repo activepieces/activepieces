@@ -21,6 +21,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Emails of the recipients": "E-mails des destinataires",
   "Sender name": "Nom de l'expéditeur",
   "Sender email": "E-mail de l'expéditeur",
