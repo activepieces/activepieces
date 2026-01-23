@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The note to add": "De toe te voegen notitie",
   "The date to add the note to. Format: YYYY-MM-DD": "De datum waarop de notitie moet worden toegevoegd. Formaat: JJJJ-MM-DD",
   "Whether or not the note should be starred": "Of de notitie al dan niet sterren moet zijn",
