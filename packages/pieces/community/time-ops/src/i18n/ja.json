@@ -34,6 +34,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The name of the customer.": "顧客の名前",
   "The VAT number of the customer.": "顧客のVAT番号。",
   "The default hourly rate for this customer.": "この顧客のデフォルトの時給。",
