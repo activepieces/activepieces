@@ -18,6 +18,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The Figma file key (copy from Figma file URL)": "La clave del archivo Figma (copiar desde la URL del archivo Figma)",
   "Your comment": "Tu comentario",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
