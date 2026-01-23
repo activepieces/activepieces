@@ -1,6 +1,26 @@
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import axios from 'axios'
+import * as os from 'os'
+import * as path from 'path'
 import { environmentMigrations } from './env-migrations'
+
+function expandPathVariables(value: string): string {
+    let expanded = value
+    
+    // Expand tilde
+    if (expanded.startsWith('~/')) {
+        expanded = path.join(os.homedir(), expanded.slice(2))
+    } else if (expanded === '~') {
+        expanded = os.homedir()
+    }
+    
+    // Expand $HOME
+    if (expanded.includes('$HOME')) {
+        expanded = expanded.replace(/\$HOME/g, os.homedir())
+    }
+    
+    return expanded
+}
 
 export const systemConstants = {
     ENGINE_EXECUTABLE_PATH: 'dist/packages/engine/main.js',
@@ -149,7 +169,8 @@ export const environmentVariables = {
     },
     getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
         const environmnetVariables = environmentMigrations.migrate()
-        return environmnetVariables['AP_' + prop]
+        const value = environmnetVariables['AP_' + prop]
+        return value ? expandPathVariables(value) : undefined
     },
     getEnvironmentOrThrow: (prop: WorkerSystemProp | AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)
