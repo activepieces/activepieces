@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The email address of the employee to look up": "Het e-mailadres van de medewerker om op te zoeken",
   "Select one or more status": "Selecteer een of meer status",
   "The system ID of the employee": "De systeem-ID van de medewerker",
