@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Please enter the table ID where the row must be created in. You can find the ID by clicking on the three dots next to the table. It's the number between brackets.": "Voer de tabel ID in waar de rij moet worden gemaakt. Je kunt het ID vinden door te klikken op de drie stippen naast de tabel. Het is het getal tussen haakjes.",
   "Please enter the table ID where the row must be deleted in.You can find the ID by clicking on the three dots next to the table. It's the number between brackets.": "Voer de tabelID in waar de rij moet worden verwijderd. U kunt het ID vinden door op de drie stippen naast de tafel te klikken. Het is het getal tussen haakjes.",
   "Please enter the row ID that needs to be deleted.": "Voer de rij ID in die verwijderd moet worden.",
