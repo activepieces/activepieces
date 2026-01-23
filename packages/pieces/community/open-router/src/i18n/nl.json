@@ -18,6 +18,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "Het model dat de voltooiing zal genereren. Sommige modellen zijn geschikt voor natuurlijke taaltaken, andere zijn gespecialiseerd in code.",
   "The prompt to send to the model.": "De prompt om naar het model te sturen.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Bestuurt willekeurigheid: Het verlagen van de temperatuur resulteert in minder willekeurige aanvullingen. Zodra de temperatuur nul nadert, zal het model deterministisch en herhalend worden.",
