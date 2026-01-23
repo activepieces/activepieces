@@ -48,7 +48,9 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         const { locale, platformId } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
-            return lastVersionOfEachPiece(pieces).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
+            return lastVersionOfEachPiece(pieces)
+                .filter((piece) => filterPieceBasedOnType(platformId, piece))
+                .map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
         }
         const cache = await getOrCreateCache()
         const list = (await cache.db.get(META_LIST_KEY(locale ?? DEFAULT_LOCALE))) as PieceMetadataSchema[] | undefined
