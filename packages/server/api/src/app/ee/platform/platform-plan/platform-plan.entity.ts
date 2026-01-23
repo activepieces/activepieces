@@ -119,7 +119,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         },
         tablesEnabled: {
             type: Boolean,
-            nullable: true,
         },
         activeFlowsLimit: {
             type: Number,
