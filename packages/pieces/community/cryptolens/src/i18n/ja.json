@@ -41,6 +41,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The name of the customer (max 100 characters)": "顧客の名前 (最大 100 文字)",
   "The email of the customer (max 100 characters)": "顧客のメールアドレス（最大100文字）",
   "The company name the customer belongs to (max 100 characters)": "顧客が属する会社名 (最大 100 文字)",
