@@ -16,6 +16,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Please select assistant": "Veuillez sélectionner l'assistant",
   "The input message to be processed by the assistant": "Le message d'entrée à traiter par l'assistant",
   "The Conversation ID of the previous conversation. If empty, a new conversation will be created": "L'ID de la conversation précédente. Si vide, une nouvelle conversation sera créée",
