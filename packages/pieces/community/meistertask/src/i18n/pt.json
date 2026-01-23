@@ -49,6 +49,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Hex color code (e.g., #FF0000)": "Código de cor hexadecimal (por exemplo, #FF0000)",
   "URL of the file to attach": "URL do arquivo a ser anexado",
   "URL of the file to attach (used if creating)": "URL do arquivo a ser anexado (usado ao criar)",
