@@ -16,6 +16,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "keywords / phrases to be considered when generating the alt text.": "Keywords / Phrasen bei der Generierung des alt-Textes.",
   "negative keywords / phrases to be removed from any generated alt text.": "negative Keywords / Phrasen aus jedem generierten Alt-Text zu entfernen.",
   "Text to use as the source of keywords for the alt text.": "Text der als Quelle von Schlüsselwörtern für den Alt-Text verwendet wird.",
