@@ -48,6 +48,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "ID of the file to be added to the conversation (takes precedence over Fragment)": "ID del archivo a agregar a la conversación (tiene precedencia sobre el fragmento)",
   "The ID of the document you want to insert or replace": "El ID del documento que desea insertar o reemplazar",
   "The text content of the document": "El contenido del texto del documento",
