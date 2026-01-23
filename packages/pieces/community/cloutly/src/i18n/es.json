@@ -22,6 +22,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The email of the customer to send the invite to (required if Phone Number is empty)": "El correo electrónico del cliente al que enviar la invitación (obligatorio si el número de teléfono está vacío)",
   "The phone number of the customer to send the invite to (required if Email is empty)": "El número de teléfono del cliente al que enviar la invitación (obligatorio si el correo electrónico está vacío)",
   "The number of days to delay the invite (i.e send after X days)": "El número de días para retrasar la invitación (es decir, enviar después de X días)",
