@@ -62,6 +62,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The start date and time for the block (ISO 8601 format).": "Das Startdatum und die Uhrzeit für den Block (ISO 8601 Format).",
   "The end date and time for the block (ISO 8601 format).": "Das Enddatum und die Uhrzeit für den Block (ISO 8601 Format).",
   "The numeric ID of the calendar to add this block to.": "Die numerische ID des Kalenders, der diesen Block hinzufügen soll.",
