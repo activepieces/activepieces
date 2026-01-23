@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The fields to add to the record.": "De velden om toe te voegen aan het record.",
   "How many records are returned in total.": "Hoeveel records worden geretourneerd in totaal.",
   "How many records are returned per page (max 1000).": "Hoeveel records worden geretourneerd per pagina (max 1000).",
