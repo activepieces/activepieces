@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The webpage URL to scrape.": "De URL van de webpagina om te scrapen.",
   "Describe what information you want to extract in natural language.": "Beschrijf welke informatie u in de natuurlijke taal wilt extraheren.",
   "Optional schema to structure the output data.": "Optioneel schema om de output data te structureren.",
