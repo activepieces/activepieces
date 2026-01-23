@@ -24,6 +24,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The amount of carbon to capture in lbs (1 and 10,000,000)": "ポンド（1,000,000,000）で捕獲する炭素の量",
   "The email of the customer on whose behalf the carbon is being captured": "お客様の代わりに炭素が取得されているメール",
   "The name of the customer on whose behalf the carbon is being captured": "炭素を取得している顧客の名前",
