@@ -28,6 +28,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Provide the direct link to a publicly accessible resume file (PDF, DOC, or DOCX)": "Voorzie de directe link naar een openbaar toegankelijk hervattingsbestand (PDF, DOC of DOCX)",
   "If a previous run timed out, paste the Request ID here to get the result.": "Als een eerdere run is verlopen, plak dan hier het verzoek-ID om het resultaat te krijgen.",
   "Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).": "Geef een directe URL op voor een openbaar toegankelijk hervattingsbestand (PDF, DOC of DOCX).",
