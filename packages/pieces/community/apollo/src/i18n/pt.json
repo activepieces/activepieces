@@ -42,6 +42,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   " The email address of the person to be matched": " O endereço de email da pessoa a ser correspondida",
   "Store the response in the project store for future use.": "Armazene a resposta na loja do projeto para uso futuro.",
   "The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.": "Os IDs Apollo para as empresas que você deseja incluir nos resultados da pesquisa. Para encontrar identificações, chame o ponto de procura de organização.",
