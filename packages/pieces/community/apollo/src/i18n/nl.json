@@ -42,6 +42,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   " The email address of the person to be matched": " Het e-mailadres van de persoon die moet worden gekoppeld",
   "Store the response in the project store for future use.": "Sla het antwoord op in de projectopslag op voor toekomstig gebruik.",
   "The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.": "De Apollo ID's voor de bedrijven die je wilt opnemen in je zoekresultaten. Om ID's te vinden, roep het organisatie zoekeindpunt op.",
