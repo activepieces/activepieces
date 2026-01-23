@@ -26,6 +26,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The topic/channel to send the notification to, e.g. test1": "El tema/canal al que enviar la notificación, p. ej., test1",
   "The title of the notification": "El título de la notificación",
   "The message to send": "El mensaje a enviar",
