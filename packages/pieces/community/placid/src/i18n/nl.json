@@ -38,6 +38,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select a Placid template for image generation": "Selecteer een Placid-sjabloon voor het genereren van afbeeldingen",
   "Optional webhook URL to receive notification when generation is complete.": "Optionele webhook URL om een melding te ontvangen als de generatie is voltooid.",
   "Whether to create the image immediately (synchronous) or queue it (asynchronous).": "Onmiddellijk de afbeelding aanmaken (gesynchroniseerd) of in de wachtrij (asynchroon gebruiken).",
