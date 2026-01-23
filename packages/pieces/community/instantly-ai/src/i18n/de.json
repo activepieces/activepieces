@@ -53,6 +53,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Name of the campaign": "Name der Kampagne",
   "Start time in 24-hour format (e.g., \"09:00\")": "Startzeit im 24-Stunden-Format (z.B. \"09:00\")",
   "End time in 24-hour format (e.g., \"17:00\")": "Endzeit im 24-Stunden-Format (z. B. \"17:00\")",
