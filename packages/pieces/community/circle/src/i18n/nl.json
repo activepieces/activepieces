@@ -38,6 +38,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The title of the post.": "De titel van het bericht.",
   "Simple plain text content for the post. Used if 'Tiptap Body JSON' is not provided.": "Eenvoudige tekst inhoud voor de post. Wordt gebruikt als 'Tiptap Body JSON' niet is verstrekt.",
   "Full TipTap JSON object for the post body. If provided, 'Post Body (Plain Text)' is ignored.": "Volledige TipTap JSON object voor de inhoud van het bericht. Indien opgegeven, wordt 'Body (Plain Tekst) genegeerd.",
