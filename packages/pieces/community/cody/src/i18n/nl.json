@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The name or title of the new document.": "De naam of titel van het nieuwe document.",
   "The text or HTML content to be added to the document. Max 768 KB.": "De tekst of HTML inhoud die aan het document moet worden toegevoegd. Maximaal 768 KB.",
   "The file to upload (e.g., txt, md, rtf, pdf, ppt, docx).": "Het te uploaden bestand (bijv. txt, md, rtf, pdf, ppt, docx).",
