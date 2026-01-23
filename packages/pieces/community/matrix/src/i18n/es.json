@@ -17,6 +17,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Copy it from room settings -> advanced -> room addresses -> main address": "Copiar desde la configuración de la habitación -> avanzado-> direcciones de la sala -> dirección principal",
   "The message to send (markdown)": "El mensaje a enviar (markdown)",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
