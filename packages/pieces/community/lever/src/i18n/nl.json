@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "If you select one, you must select an interview too": "Als je er één selecteert, moet je ook een interview selecteren",
   "Mandatory is you select an interview panel": "Verplicht is dat u een interview paneel selecteert",
   "Ignored if you select an interview panel and an interview": "Genegeerd als u een interview paneel en een interview selecteert",
