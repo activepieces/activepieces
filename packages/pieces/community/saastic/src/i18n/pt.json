@@ -23,6 +23,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The customer's first name.": "O primeiro nome do cliente.",
   "The customer's last name.": "O sobrenome do cliente.",
   "The customer's email address.": "E-mail do cliente",
