@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The name or title of the new document.": "Der Name oder der Titel des neuen Dokuments.",
   "The text or HTML content to be added to the document. Max 768 KB.": "Der Text oder HTML-Inhalt, der dem Dokument hinzugefügt werden soll. Max 768 KB.",
   "The file to upload (e.g., txt, md, rtf, pdf, ppt, docx).": "Die hochzuladende Datei (z.B. txt, md, rtf, pdf, ppt, docx).",
