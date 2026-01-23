@@ -65,6 +65,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The name of the new folder": "De naam van de nieuwe map",
   "Determines if folders from Team Drives should be included in the results.": "Bepaalt of mappen van Team Drives moeten worden opgenomen in de resultaten.",
   "The name of the new text file": "De naam van het nieuwe tekstbestand",
