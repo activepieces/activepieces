@@ -30,6 +30,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The model to use ": "El modelo a usar ",
   "Message to send": "Mensaje a enviar",
   "Input text to embed. Can be a single string or multiple texts separated by newlines": "Texto de entrada a incrustar. Puede ser una sola cadena o varios textos separados por nuevas líneas",
