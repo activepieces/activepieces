@@ -29,6 +29,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Please enter the table ID where the row must be created in. You can find the ID by clicking on the three dots next to the table. It's the number between brackets.": "Veuillez entrer l'ID de la table dans laquelle la ligne doit être créée. Vous pouvez trouver l'ID en cliquant sur les trois points à côté de la table. C'est le nombre entre parenthèses.",
   "Please enter the table ID where the row must be deleted in.You can find the ID by clicking on the three dots next to the table. It's the number between brackets.": "Veuillez entrer l'ID de la table dans laquelle la ligne doit être supprimée. ou peut trouver l'ID en cliquant sur les trois points à côté de la table. C'est le nombre entre parenthèses.",
   "Please enter the row ID that needs to be deleted.": "Veuillez entrer l'identifiant de ligne qui doit être supprimé.",
