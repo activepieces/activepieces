@@ -72,6 +72,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the Lokalise project": "Selecteer het lokalisatieproject",
   "Select the key": "Selecteer de sleutel",
   "The comment text to add to the key": "De commentaar tekst om toe te voegen aan de sleutel",
