@@ -48,6 +48,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "ID of the file to be added to the conversation (takes precedence over Fragment)": "ID van het bestand dat wordt toegevoegd aan het gesprek (krijgt voorrang op Fragment)",
   "The ID of the document you want to insert or replace": "Het ID van het document dat u wilt invoegen of vervangen",
   "The text content of the document": "De tekstinhoud van het document",
