@@ -51,6 +51,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Customer display name.": "Klantenscherm naam.",
   "Currency code (ISO 4217), e.g. USD, EUR, GBP.": "Valutacode (ISO 4217), bijvoorbeeld USD, EUR, GBP.",
   "External reference ID (max 100 characters).": "Externe referentie ID (max 100 tekens).",
