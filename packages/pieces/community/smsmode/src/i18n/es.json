@@ -15,6 +15,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The phone number to send the message to (e.g., 33600000001)": "El número de teléfono al que enviar el mensaje (por ejemplo, 3360000000001)",
   "The content of the SMS message": "El contenido del mensaje SMS",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
