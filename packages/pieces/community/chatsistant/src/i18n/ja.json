@@ -15,6 +15,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The UUID of the chatbot to send the message to": "メッセージを送信するチャットボットの UUID",
   "The message to send to the chatbot": "チャットボットに送信するメッセージ",
   "The UUID of the session to send the message to": "メッセージを送信するセッションの UUID",
