@@ -60,6 +60,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Choose a campaign from the list.": "Kies een campagne uit de lijst.",
   "Enter the email address for the lead": "Voer het e-mailadres van de lead in",
   "Enter the first name for the lead": "Vul de voornaam van de lead in",
