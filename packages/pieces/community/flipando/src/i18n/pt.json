@@ -25,6 +25,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "ID of the application to be completed.": "ID do aplicativo a ser completado.",
   "JSON string of key-value pairs for application input variables.": "String JSON de pares chave-valor para as variáveis de entrada do aplicativo.",
   "File to be uploaded, if the application requires documents. Supports PDF, DOCX, images, and other document formats.": "Arquivo a ser carregado, se o aplicativo exigir documentos. Suporta formato PDF, DOCX, imagens e outros formatos de documento.",
