@@ -17,6 +17,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Search query": "Zoek query",
   "Hybrid search is combining dense and sparse embeddings.": "Hybride zoekopdracht combineert dikke en spaarzame embedden.",
   "Summarizes the datastore search results": "Vat de datastore zoekresultaten samen",
