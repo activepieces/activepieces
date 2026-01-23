@@ -60,6 +60,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Choose a campaign from the list.": "Elija una campaña de la lista.",
   "Enter the email address for the lead": "Introduzca la dirección de correo electrónico para el cliente principal",
   "Enter the first name for the lead": "Introduzca el nombre del cliente principal",
