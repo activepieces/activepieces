@@ -19,6 +19,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The prompt to send to the AI model.": "De prompt om naar het AI-model te sturen.",
   "Optional system message to set the behavior of the AI.": "Optioneel systeembericht om het gedrag van de AI in te stellen.",
   "Controls randomness (0-2). Lower values make output more focused.": "Bepaalt willekeurigheid (0-2). Lagere waarden maken de uitvoer meer gefocust.",
