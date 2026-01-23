@@ -34,6 +34,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Content of the post": "Contenido del post",
   "ID of the topic to post in": "ID del tema en el que publicar",
   "Title of the Topic": "Título del tema",
