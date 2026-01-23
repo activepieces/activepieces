@@ -28,6 +28,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The phone number to send the message to (with country code)": "Die Telefonnummer, an die die Nachricht gesendet wird (mit Landesvorwahl)",
   "The body of the SMS message": "Der Text der SMS-Nachricht",
   "Your own identifier for the message (optional)": "Ihre eigene Kennung für die Nachricht (optional)",
