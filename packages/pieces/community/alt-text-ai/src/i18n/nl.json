@@ -16,6 +16,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "keywords / phrases to be considered when generating the alt text.": "trefwoorden / zinnen die in aanmerking worden genomen bij het genereren van de Alt-tekst.",
   "negative keywords / phrases to be removed from any generated alt text.": "negatieve sleutelwoorden / zinnen die verwijderd moeten worden uit elke gegenereerde Alt-tekst.",
   "Text to use as the source of keywords for the alt text.": "Tekst om te gebruiken als bron van trefwoorden voor de alt-tekst.",
