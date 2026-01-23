@@ -145,6 +145,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Unique client key to filter results.": "Clave de cliente única para filtrar los resultados.",
   "Array of client objects to create.": "Arreglo de objetos del cliente a crear.",
   "List of client IDs to delete.": "Lista de IDs de cliente a eliminar.",
