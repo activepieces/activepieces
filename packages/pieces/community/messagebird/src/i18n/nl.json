@@ -28,6 +28,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The phone number to send the message to (with country code)": "Het telefoonnummer om het bericht naar te sturen (met landcode)",
   "The body of the SMS message": "Het tekstgedeelte van het SMS-bericht",
   "Your own identifier for the message (optional)": "Uw eigen identificatie voor het bericht (optioneel)",
