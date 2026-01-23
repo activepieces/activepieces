@@ -22,6 +22,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Prompt to crawl data": "Demander aux données d'exploration",
   "The depth of the crawl 1 depth mean only the first level of links will be scraped": "La profondeur de la profondeur de la rampe 1 signifie que seul le premier niveau de liens sera parcouru",
   "The maximum number of pages to scrape": "Le nombre maximum de pages à griller",
