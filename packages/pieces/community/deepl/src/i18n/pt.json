@@ -31,6 +31,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Text to be translated. Only UTF-8-encoded plain text is supported.": "Texto a ser traduzido. Apenas texto sem codificação UTF-8 é suportado.",
   "The language into which the text should be translated.": "O idioma para o qual o texto deve ser traduzido.",
   "Language of the text to be translated": "Idioma do texto a ser traduzido",
