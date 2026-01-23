@@ -15,6 +15,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "You can find this by going to Dashworks > Bots, clicking on an existing Bot, and using the 'Copy Bot ID' button on the top right.": "U kunt dit vinden door naar Dashworks > Bots te gaan en te klikken op een bestaand Bot, en met behulp van de knop 'Bot ID' rechtsboven kopiëren.",
   "The message (e.g., a question or prompt) that you want a response to.": "Het bericht (bijv. een vraag of verzoek) waar je op wilt reageren.",
   "When true (default), sources will be cited inline in markdown formatting within the answer text.When false, the answer will not contain inline citations.": "Wanneer waar (standaard) zullen bronnen inline worden aangehaald in markdown opmaak binnen het antwoord tekst.Wanneer onwaar, zal het antwoord geen inline citaten bevatten.",
