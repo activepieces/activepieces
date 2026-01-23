@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings": "De unieke waarde die een persoon vertegenwoordigt. U kunt een persoon per id, e-mailadres of het cio_id (bij het bijwerken van mensen) identificeren, afhankelijk van uw workspace-instellingen",
   "The name of the event. This is how you'll reference the event in campaigns or segments": "De naam van het evenement. Dit is hoe je naar het evenement verwijst in campagnes of segmenten",
   "Event information to be sent to Customer.io": "Evenement informatie te worden verzonden naar klant.io",
