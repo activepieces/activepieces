@@ -20,6 +20,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Email address of the user. Mandatory if \"SMS\" field is not passed in \"attributes\" parameter. Mobile Number in SMS field should be passed with proper country code. For example: {\"SMS\":\"+91xxxxxxxxxx\"} or {\"SMS\":\"0091xxxxxxxxxx\"}": "Adresse e-mail de l'utilisateur. Obligatoire si le champ \"SMS\" n'est pas passé dans le paramètre \"attributs\". Le numéro de téléphone mobile dans le champ SMS doit être transmis avec le code de pays approprié. Par exemple: {\"SMS\":\"+91xxxxxxxx\"} ou {\"SMS\":\"0091xxxxxxxx\"}",
   "Pass your own Id to create a contact.": "Passez votre propre Id pour créer un contact.",
   "Pass the set of attributes and their values. The attribute's parameter should be passed in capital letter while creating a contact. These attributes must be present in your SendinBlue account. For eg:\n        {\"FNAME\":\"Elly\", \"LNAME\":\"Roger\"}": "Passer l'ensemble des attributs et leurs valeurs. Le paramètre de l'attribut doit être passé en majuscule lors de la création d'un contact. Ces attributs doivent être présents dans votre compte SendinBlue. Par exemple:\n        {\"FNAME\":\"Elly\", \"LNAME\":\"Roger\"}",
