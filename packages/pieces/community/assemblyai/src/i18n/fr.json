@@ -98,6 +98,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The File or URL of the audio or video file.": "Le fichier ou l'URL du fichier audio ou vidéo.",
   "The URL of the audio or video file to transcribe.": "L'URL du fichier audio ou vidéo à transcrire.",
   "The language of your audio file. Possible values are found in [Supported Languages](https://www.assemblyai.com/docs/concepts/supported-languages).\nThe default value is 'en_us'.\n": "La langue de votre fichier audio. Les valeurs possibles sont trouvées dans [Langues Supportées](https://www.assemblyai.com/docs/concepts/supported-languages).\nLa valeur par défaut est 'en_us'.\n",
