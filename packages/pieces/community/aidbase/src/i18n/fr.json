@@ -35,6 +35,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The URL of the YouTube video to add as a knowledge source.": "L'URL de la vidéo YouTube à ajouter comme source de connaissances.",
   "The URL of the website to add as a knowledge source (e.g., https://www.example.com).": "L'URL du site Web à ajouter en tant que source de connaissances (par exemple, https://www.example.com).",
   "Select the FAQ to which the item will be added.": "Sélectionnez la FAQ à laquelle l'élément sera ajouté.",
