@@ -24,6 +24,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Kimai project": "Proyecto Kimai",
   "Kimai activity": "Actividad Kimai",
   "Begin Date of Timesheet": "Fecha de inicio de la hoja de tiempo",
