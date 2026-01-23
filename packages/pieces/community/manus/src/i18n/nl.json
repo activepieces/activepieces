@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The task prompt or instruction for the Manus agent": "De taak vraagt of instructie voor de Manus agent",
   "The AI model profile to use for the task": "Het te gebruiken AI modelprofiel voor de taak",
   "The interaction mode for the task": "De interactiemodus voor de taak",
