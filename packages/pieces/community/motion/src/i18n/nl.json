@@ -37,6 +37,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Duration in minutes.": "Duur in minuten.",
   "The names of the labels to be added to the task.": "De namen van de labels die aan de taak moeten worden toegevoegd.",
   "The names of the labels to be added to the task": "De namen van de labels die aan de taak moeten worden toegevoegd",
