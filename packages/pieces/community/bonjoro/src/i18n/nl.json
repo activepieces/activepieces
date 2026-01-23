@@ -23,6 +23,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Note to send with the greet": "Notitie om te verzenden met de groet",
   "Email to send the greet to": "E-mail om de groet naar te sturen",
   "First name of the person to greet": "Voornaam van de begroeter",
