@@ -158,6 +158,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The email of the contact to add to the workflow.": "O e-mail do contato para adicionar ao fluxo de trabalho.",
   "The ID of the object being associated.": "A ID do objeto a ser associado.",
   "The type of the object being associated.": "O tipo do objeto a ser associado.",
