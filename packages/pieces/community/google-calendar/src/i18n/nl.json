@@ -52,6 +52,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Emails of the attendees (guests)": "Emails van de deelnemers (gasten)",
   "The text describing the event to be created": "De tekst die de te maken gebeurtenis beschrijft",
   "Guests who should receive notifications about the creation of the new event.": "Gasten die meldingen moeten ontvangen over de creatie van het nieuwe evenement.",
