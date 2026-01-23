@@ -34,6 +34,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Parameter defines the query you want to search. You can use anything that you would use in a regular Google search. e.g. inurl:, site:, intitle:. We also support advanced search query parameters such as as_dt and as_eq.": "Le paramètre définit la requête que vous souhaitez rechercher. Vous pouvez utiliser tout ce que vous utiliserez dans une recherche Google régulière. par exemple inurl:, site:, intitle:. Nous prenons également en charge les paramètres de recherche avancés tels que as_dt et as_eq.",
   "Parameter defines the language to use for the Google search. It's a two-letter language code. (e.g., en for English, es for Spanish, or fr for French).": "Le paramètre définit la langue à utiliser pour la recherche Google. C'est un code de langue à deux lettres (par exemple, en anglais pour l'espagnol, ou en français pour le français).",
   "Parameter defines the country to use for the Google search. It's a two-letter country code. (e.g., us for the United States, uk for United Kingdom, or fr for France).": "Le paramètre définit le pays à utiliser pour la recherche Google. C'est un code pays à deux lettres. (par exemple, nous pour les États-Unis, uk pour le Royaume-Uni ou fr pour la France).",
