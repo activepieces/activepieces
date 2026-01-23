@@ -111,6 +111,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The campaign member status (e.g., 'Sent', 'Responded').": "De campagne lid status (bijv. 'Sent', 'Responded').",
   "Select the Object": "Selecteer het object",
   "The record to select. The list shows the 20 most recently created records.": "Het te selecteren record. De lijst toont de 20 meest recent gemaakte records.",
