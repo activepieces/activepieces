@@ -22,6 +22,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Select the workflow to execute.": "Selecione o workflow a ser executado.",
   "Input values for the workflow.": "Valores de entrada para o workflow.",
   "Schema defining the workflow inputs (advanced).": "Esquema que define as entradas de fluxo de trabalho (avançado).",
