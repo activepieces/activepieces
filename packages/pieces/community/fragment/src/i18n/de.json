@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The title of the task": "Der Titel der Aufgabe",
   "A URL associated with the task (e.g., link to a ticket or resource)": "Eine URL, die der Aufgabe zugeordnet ist (z.B. Link zu einem Ticket oder einer Ressource)",
   "When the task is due": "Wenn die Aufgabe fällig ist",
