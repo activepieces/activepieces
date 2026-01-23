@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The unique identifier of the campaign": "De unieke id van de campagne",
   "The first name of the contact (max 150 characters)": "De voornaam van de contactpersoon (max. 150 tekens)",
   "The last name of the contact (max 150 characters)": "De achternaam van de contactpersoon (max. 150 tekens)",
