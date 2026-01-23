@@ -34,6 +34,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "What do you want to generate? (max 1000 characters)": "Wat wil je genereren? (max 1000 tekens)",
   "Additional context or background information (optional, max 1000 characters)": "Extra context of achtergrond informatie (optioneel, max 1000 tekens)",
   "How many outputs to generate (default: 1)": "Hoeveel outputs u wilt genereren (standaard: 1)",
