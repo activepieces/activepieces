@@ -38,6 +38,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Numeric ID of the recipient list (found in the list page URL).": "Numerieke ID van de ontvangerslijst (gevonden in de URL van de lijst met pagina's).",
   "Phone number with country code, e.g., +1234567890": "Telefoonnummer met landcode, b.v. +1234567890",
   "Phone number with country code (e.g., +1234567890)": "Telefoonnummer met landcode (bijv. +1234567890)",
