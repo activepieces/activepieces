@@ -14,6 +14,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "You can find the review name from new review trigger": "Vous pouvez trouver le nom de la revue à partir d'un nouveau déclencheur de révision",
   "Comment to be added to the review": "Commentaire à ajouter à la revue",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
