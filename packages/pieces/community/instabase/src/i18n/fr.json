@@ -37,6 +37,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Name of the conversation": "Nom de la conversation",
   "Description of the conversation": "Description de la conversation",
   "Files to upload to the conversation": "Fichiers à télécharger dans la conversation",
