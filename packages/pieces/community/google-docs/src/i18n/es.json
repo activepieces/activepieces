@@ -31,6 +31,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Text to append": "Texto a añadir",
   "The ID of the file to replace the values": "El ID del archivo para reemplazar los valores",
   "Dont include the placeholder format \"[[]]\" or \"{{}}\", only the key name and its value": "No incluir el formato de marcador de posición \"[[]]\" o \"{{}}\", sólo el nombre de la clave y su valor",
