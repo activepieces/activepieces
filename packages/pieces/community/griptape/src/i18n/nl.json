@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the assistant": "Selecteer de assistent",
   "Input to provide to the assistant": "Invoer om aan de assistent te geven",
   "Select knowledge bases to use": "Selecteer kennisbasis om te gebruiken",
