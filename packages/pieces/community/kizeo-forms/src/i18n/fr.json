@@ -44,6 +44,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The ID of the item you want to retrieve from the list": "L'ID de l'élément que vous voulez récupérer de la liste",
   "Pattern to search": "Schéma à rechercher",
   "Max number of results to return": "Nombre maximum de résultats à retourner",
