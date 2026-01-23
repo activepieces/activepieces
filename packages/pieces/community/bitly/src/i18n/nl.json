@@ -63,6 +63,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The group where the item will be managed.": "De groep waar het item wordt beheerd.",
   "Select the Bitlink to modify.": "Selecteer de Bitlink om aan te passen.",
   "The URL to shorten (must include http:// or https://).": "De URL om te verkorten (moet http:// of https://) bevatten.",
