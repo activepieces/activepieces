@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Query": "Zoekopdracht",
   "Parameters": "Parameters",
   "Mock Mode": "Modus nekken",
