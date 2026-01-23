@@ -37,6 +37,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The document number (DocNumber) of the invoice to search for.": "O número do documento (DocNumber) da fatura a ser pesquisada.",
   "The display name of the customer to search for.": "O nome de exibição do cliente a procurar",
   "The ID of the customer to find payments for.": "O ID do cliente para encontrar os pagamentos.",
