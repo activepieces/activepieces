@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The phone number in international format (e.g., +33612345678)": "Het telefoonnummer in internationaal formaat (bijv. +33612345678)",
   "First name of the contact": "Voornaam van de contactpersoon",
   "Last name of the contact": "Achternaam van de contactpersoon",
