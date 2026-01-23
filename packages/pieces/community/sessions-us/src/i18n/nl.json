@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The name of the session": "De naam van de sessie",
   "Select a date and time": "Selecteer een datum en tijd",
   "The timezone which the session will take place.": "De tijdzone die de zitting zal plaatsvinden.",
