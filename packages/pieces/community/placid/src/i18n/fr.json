@@ -38,6 +38,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select a Placid template for image generation": "Sélectionnez un modèle de Placide pour la génération d'images",
   "Optional webhook URL to receive notification when generation is complete.": "URL optionnelle du webhook pour recevoir une notification lorsque la génération est terminée.",
   "Whether to create the image immediately (synchronous) or queue it (asynchronous).": "Que ce soit pour créer immédiatement l'image (synchronisée) ou la mettre en file d'attente (asynchrone).",
