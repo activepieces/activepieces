@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The URL of the YouTube video you want to get details from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "Die URL des YouTube-Videos, von dem du Details erhalten möchtest. (z.B. https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to get the transcript from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "Die URL des YouTube-Videos, von dem das Transkript abgerufen werden soll. (z.B. https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to summarize. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "Die URL des zu treffenden YouTube-Videos (z.B. https://www.youtube.com/watch?v=VIDEO_ID)",
