@@ -29,6 +29,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The email address of the employee to look up": "検索する従業員のメールアドレス",
   "Select one or more status": "1つ以上のステータスを選択してください",
   "The system ID of the employee": "従業員のシステムID",
