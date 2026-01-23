@@ -29,6 +29,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The YouTube video URL.": "YouTube動画のURL。",
   "Whether to include emojis in the generated takeaways.": "生成された持ち帰りに絵文字を含めるかどうかを設定します。",
   "Preferred length of each timestamp.": "各タイムスタンプの優先される長さ。",
