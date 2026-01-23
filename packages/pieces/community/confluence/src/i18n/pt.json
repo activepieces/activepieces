@@ -29,6 +29,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Get this from the page URL of your Confluence Cloud": "Obter isto na URL da página de sua Nuvem de Confluência",
   "If checked, will fetch all child pages recursively.": "Se marcado, irá buscar todas as páginas filhas recursivamente.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
