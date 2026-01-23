@@ -32,6 +32,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Logs to send to Datadog, must contain a `logs` key with an array of objects. Documentation: https://docs.datadoghq.com/api/latest/logs/#send-logs": "Datadogに送信するログには、オブジェクトの配列を持つ「logs」キーを含める必要があります。ドキュメント: https://docs.datadoghq.com/api/latest/logs/#send-logs",
   "The message to send to Datadog": "Datadog に送信するメッセージ",
   "The DD source to send to Datadog": "Datadog に送信する DD ソース",
