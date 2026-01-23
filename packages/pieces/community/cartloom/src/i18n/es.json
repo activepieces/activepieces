@@ -50,6 +50,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The invoice ID for the order you want to retrieve": "ID de factura para el pedido que desea recuperar",
   "Enter the title of the discount": "Introduzca el título del descuento",
   "Is this discount enabled?": "¿Está activado este descuento?",
