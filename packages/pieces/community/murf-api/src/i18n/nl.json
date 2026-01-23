@@ -39,6 +39,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select your preferred language for the translated output.": "Selecteer uw voorkeurstaal voor de vertaalde uitvoer.",
   "Filter by style (optional)": "Filter op stijl (optioneel)",
   "List of texts to translate": "Lijst van te vertalen teksten",
