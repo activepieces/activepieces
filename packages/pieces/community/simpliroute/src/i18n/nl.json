@@ -145,6 +145,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Unique client key to filter results.": "Unieke klantsleutel om resultaten te filteren.",
   "Array of client objects to create.": "Array van te maken klantobjecten.",
   "List of client IDs to delete.": "Lijst met client IDs te verwijderen.",
