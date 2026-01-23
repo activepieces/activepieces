@@ -15,6 +15,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The UUID of the chatbot to send the message to": "De UUID van de chatbot om het bericht te sturen naar",
   "The message to send to the chatbot": "Het bericht dat moet worden verzonden naar de chatbot",
   "The UUID of the session to send the message to": "De UUID van de sessie om het bericht naar te sturen",
