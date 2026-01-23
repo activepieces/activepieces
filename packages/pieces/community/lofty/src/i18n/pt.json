@@ -76,6 +76,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Lead email address(s)": "Endereço(s) de e-mail principal",
   "YYYY-MM-DD": "AAAA-MM-DD",
   "Select a lead": "Selecionar um prospecto",
