@@ -529,6 +529,9 @@
       ],
       "@activepieces/piece-manual-trigger": [
         "packages/pieces/community/manual-trigger/src/index.ts"
+      ],
+      "@activepieces/piece-zeplin": [
+        "packages/pieces/community/zeplin/src/index.ts"
       ]
     },
     "resolveJsonModule": true
