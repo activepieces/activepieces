@@ -129,6 +129,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The ID of the ClickUp workspace": "L'ID de l'espace de travail ClickUp",
   "The ID of the ClickUp space to create the task in": "L'ID de l'espace ClickUp pour créer la tâche dans",
   "The name of task": "Le nom de la tâche",
