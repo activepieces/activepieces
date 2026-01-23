@@ -20,6 +20,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select a robot from your Browse AI account": "Selecteer een robot in uw account Blader AI",
   "Select a task associated with the selected robot": "Selecteer een taak gekoppeld aan de geselecteerde robot",
   "Try to record a video while running the task.": "Probeer een video op te nemen tijdens het uitvoeren van de taak.",
