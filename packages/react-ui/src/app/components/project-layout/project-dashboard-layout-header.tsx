@@ -75,7 +75,7 @@ export const ProjectDashboardLayoutHeader = () => {
     {
       to: authenticationSession.appendProjectRoutePrefix('/todos'),
       label: t('Todos'),
-      show: platform.plan.todosEnabled,
+      show: !platform.plan.embeddingEnabled,
       icon: ListTodo,
       hasPermission: checkAccess(Permission.READ_TODOS),
     },

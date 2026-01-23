@@ -22,6 +22,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Body for the email you want to send": "Body for the email you want to send",
   "Email address to set as the \"Reply-To\" header": "Email address to set as the \"Reply-To\" header",
   "The address must be listed in your GMail account's settings": "The address must be listed in your GMail account's settings",

@@ -138,6 +138,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Type of object to add the follower to.": "Type of object to add the follower to.",
   "ID of the object to add the follower to.": "ID of the object to add the follower to.",
   "You can use Find Deal action to retrieve deal ID.": "You can use Find Deal action to retrieve deal ID.",

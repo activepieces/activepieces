@@ -52,6 +52,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Emails of the attendees (guests)": "Emails of the attendees (guests)",
   "The text describing the event to be created": "The text describing the event to be created",
   "Guests who should receive notifications about the creation of the new event.": "Guests who should receive notifications about the creation of the new event.",

@@ -83,6 +83,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select scope": "Select scope",
   "Opt-in status true/false": "Opt-in status true/false",
   "Unsubscribe status true/false": "Unsubscribe status true/false",

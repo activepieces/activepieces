@@ -20,6 +20,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Output format for the screenshot.": "Output format for the screenshot.",
   "Custom CSS to apply.": "Custom CSS to apply.",
   "Custom JavaScript to apply.": "Custom JavaScript to apply.",
