@@ -126,6 +126,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID of the customer": "Het ID van de klant",
   "The ID of the project": "Het ID van het project",
   "The ID of the service": "Het ID van de dienst",
