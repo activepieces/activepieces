@@ -16,6 +16,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Specifies the language for the alt text. Supported language codes are accepted.": "Especifica el idioma para el texto alto. Se aceptan códigos de idioma compatibles.",
   "List of keywords/phrases for SEO-optimized alt text.": "Lista de palabras clave/frases para texto alt optimizado para SEO.",
   "List of negative keywords/phrases for SEO-optimized alt text.": "Lista de palabras clave/frases negativas para texto alt optimizado para SEO.",
