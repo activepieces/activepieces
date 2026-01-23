@@ -60,6 +60,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "ISO 3166-1 alpha-2 country code": "Code pays ISO 3166-1 alpha-2",
   "Valid 3-Letter ISO 4217 currency code.": "Code de devise ISO 4217 valide à 3 lettres.",
   "Exact match of a client name in your CRM": "Correspondance exacte d'un nom de client dans votre CRM",
