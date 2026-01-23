@@ -31,6 +31,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The unique identifier of the record to update.": "O identificador exclusivo do registro a ser atualizado.",
   "The unique identifier of the entry to update.": "O identificador exclusivo da entrada a ser atualizada.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
