@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "ID of the template to use for the page": "ID van het te gebruiken sjabloon voor de pagina",
   "Title of the page, visible as the browser page title": "Titel van de pagina, zichtbaar als de browserpaginatitel",
   "Whether the page is publicly available; false means the page will be in Draft status": "Of de pagina openbaar is beschikbaar; onjuist betekent dat de pagina in de ontwerpstatus is",
