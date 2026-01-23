@@ -27,6 +27,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "URL to a Gladia file or to an external audio or video file": "Gladiaファイルまたは外部オーディオまたはビデオファイルへのURL",
   "Select the language spoken in the audio for better transcription accuracy": "音声で話される言語を選択して、より正確な転写を行ってください",
   "Enable code switching to handle multiple languages in the audio": "オーディオ内の複数の言語を処理するコードの切り替えを有効にする",
