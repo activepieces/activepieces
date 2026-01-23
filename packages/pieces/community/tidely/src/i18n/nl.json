@@ -40,6 +40,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Unique identifier for the invoice": "Unieke identifier voor de factuur",
   "Invoice number or reference": "Factuur nummer of referentie",
   "Name of the contact/customer": "Naam van het contact/klant",
