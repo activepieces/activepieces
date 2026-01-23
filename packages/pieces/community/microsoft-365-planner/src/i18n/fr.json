@@ -45,6 +45,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select the Grroup": "Sélectionnez le Grroup",
   "The title of the plan": "Le titre du plan",
   "Select the plan": "Sélectionnez le plan",
