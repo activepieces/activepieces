@@ -31,6 +31,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Text to append": "追加するテキスト",
   "The ID of the file to replace the values": "値を置き換えるファイルの ID",
   "Dont include the placeholder format \"[[]]\" or \"{{}}\", only the key name and its value": "プレースホルダ形式\"[[]]\"または\"{{}}\"を含めないでください。キー名とその値のみです",
