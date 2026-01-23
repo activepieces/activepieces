@@ -17,6 +17,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Maximum number of companies to return. The maximum is 10000 results.": "Maximale Anzahl der zurückzugebenden Unternehmen. Das Maximum ist 10000 Ergebnisse.",
   "The JSON body for the search request. Do not include pagination (pages), it will be added automatically.": "Der JSON-Body für die Suchabfrage. Geben Sie keine Seitenangabe (Seiten) ein, wird er automatisch hinzugefügt.",
   "The results from the Search Companies step": "Die Ergebnisse der Suchfirmen Schritt",
