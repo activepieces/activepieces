@@ -89,6 +89,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Name of a profile to load into the session.": "Nome de um perfil para carregar na sessão.",
   "List of Chrome extension IDs from Google Web Store.": "Lista de IDs de extensões do Chrome do Google Web Store.",
   "Enable Airtop-provided proxy. If disabled, configure a custom proxy.": "Ativa o proxy fornecido pelo Airtop. Se desativado, configure um proxy personalizado.",
