@@ -63,6 +63,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Whether the coupon is enabled or not.": "クーポンが有効になっているかどうか。",
   "The target of the coupon.": "クーポンのターゲット。",
   "Choose between amount or percentage discount.": "金額またはパーセント割引のいずれかを選択します。",
