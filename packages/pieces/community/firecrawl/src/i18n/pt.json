@@ -42,6 +42,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The webpage URL to scrape.": "A URL da página web para scrape.",
   "Maximum time to wait for the page to load (in milliseconds).": "Tempo máximo de espera para carregar a página (em milissegundos)",
   "Enable to perform a sequence of actions on the page before scraping (like clicking buttons, filling forms, etc.). See [Firecrawl Actions Documentation](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) for details on available actions and their parameters.": "Ativar a execução de uma sequência de ações na página antes de saltar (como clicar nos botões, preencher formulários, etc.). Veja [Documentação do Firecrawl Acções](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) para detalhes sobre ações disponíveis e seus parâmetros.",
