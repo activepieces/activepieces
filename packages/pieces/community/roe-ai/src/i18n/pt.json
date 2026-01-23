@@ -24,6 +24,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Select Agent ": "Selecione Agente ",
   "Dynamic input fields based on agent configuration. Can include text or file inputs.": "Campos de entrada dinâmica baseados na configuração do agente. Pode incluir texto ou arquivo de entrada.",
   "Optional metadata as JSON object": "Metadados opcionais como objeto JSON",
