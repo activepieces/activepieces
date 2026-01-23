@@ -21,6 +21,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Email address for the users account": "Endereço de email para a conta dos usuários",
   "Password for the new user account": "Senha para a nova conta de usuário",
   "The subscription ID from your website": "O ID de assinatura do seu site",
