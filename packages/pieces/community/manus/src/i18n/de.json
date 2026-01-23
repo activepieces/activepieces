@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The task prompt or instruction for the Manus agent": "Die Aufgabenanfrage oder Anleitung für den Manus-Agenten",
   "The AI model profile to use for the task": "Das für die Aufgabe zu verwendende KI-Modellprofil",
   "The interaction mode for the task": "Der Interaktionsmodus für die Aufgabe",
