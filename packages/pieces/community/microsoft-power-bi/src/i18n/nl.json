@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Name of the dataset to create": "Naam van het te maken dataset",
   "The mode of the dataset": "De modus van de dataset",
   "Define the tables and their columns for the dataset (JSON format)": "Definieer de tabellen en hun kolommen voor het dataset (JSON formaat)",
