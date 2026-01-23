@@ -37,6 +37,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The document number (DocNumber) of the invoice to search for.": "Het documentnummer (DocNumber) van de te zoeken factuur",
   "The display name of the customer to search for.": "De weergavenaam van de klant om naar te zoeken",
   "The ID of the customer to find payments for.": "Het ID van de klant om betalingen voor te vinden.",
