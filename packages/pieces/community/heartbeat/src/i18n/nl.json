@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The user's full name": "Volledige naam van gebruiker",
   "The user's email. Must be unique to the community": "De e-mail van de gebruiker. Moet uniek zijn voor de community",
   "The role the user should have": "De rol die de gebruiker moet hebben",
