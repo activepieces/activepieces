@@ -15,6 +15,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The phone number to send the message to (e.g., 33600000001)": "メッセージを送信する電話番号（例：33600000001）",
   "The content of the SMS message": "SMSメッセージの内容",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
