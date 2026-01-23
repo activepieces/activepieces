@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Enter the Chatflow ID": "Chatflow ID eingeben",
   "Enter the Input/Question": "Geben Sie die Eingabe/Frage ein",
   "Enter the History": "Verlauf eingeben",
