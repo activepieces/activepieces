@@ -26,6 +26,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID of the record to delete.": "Het ID van het te verwijderen record",
   "Field to find the record by": "Veld om het record te vinden door",
   "The value to search for in the specified field.": "De waarde waarnaar gezocht moet worden in het opgegeven veld.",
