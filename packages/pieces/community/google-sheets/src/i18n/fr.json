@@ -91,6 +91,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Turn this on to also see spreadsheets from Shared Drives.": "Activez cette option pour voir également les feuilles de calcul des lecteurs partagés.",
   "The ID of the spreadsheet to use.": "L'ID de la feuille de calcul à utiliser.",
   "The ID of the worksheet to use.": "L'ID de la feuille à utiliser.",
