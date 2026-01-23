@@ -39,6 +39,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The number you own in E.164 format (e.g., +1234567890)": "Die Nummer, die Sie im E.164-Format besitzen (z.B. +1234567890)",
   "The number you want to call in E.164 format (e.g., +0987654321)": "Die Nummer, die Sie im E.164-Format anrufen möchten (z.B. +0987654321)",
   "The bot UID to override the default agent ": "Die Bot-UID, um den Standard-Agent zu überschreiben ",
