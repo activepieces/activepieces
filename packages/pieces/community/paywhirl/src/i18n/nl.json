@@ -56,6 +56,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Customer ID (can be used instead of subscription_id)": "Klant-ID (kan worden gebruikt in plaats van abonnement_id)",
   "First name": "Voornaam is vereist.",
   "Last name": "Achternaam is vereist.",
