@@ -34,6 +34,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "A clear, descriptive explanation of the desired audio effect. Concise prompts yield more accurate results.": "Eine klare, beschreibende Erklärung des gewünschten Audio-Effekts.",
   "The desired length of the audio in seconds (max 10). Defaults to 8 if not set.": "Die gewünschte Audiolänge in Sekunden (max 10). Standardmäßig 8 wenn nicht gesetzt.",
   "A memorable name for your project to help organize tasks in your Camb.ai workspace.": "Ein denkwürdiger Name für Ihr Projekt, um Aufgaben in Ihrem Camb.ai Arbeitsbereich zu organisieren.",
