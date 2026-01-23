@@ -117,6 +117,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The recipient's full name": "受取人のフルネーム",
   "A unique, valid phone number as per the organization's country if there's no leading + sign. If a phone number has a leading + sign, it will disregard the organization's country setting.": "主要な+記号がない場合、組織の国ごとに一意で有効な電話番号。 電話番号に先行+署名がある場合、組織の国設定は無視されます。",
   "Checking this option will default the Onfleet system to use a toll-free long code number for SMS communication.": "このオプションをチェックすると、SMS通信にフリーダイヤルのロングコード番号がデフォルトで使用されます。",
