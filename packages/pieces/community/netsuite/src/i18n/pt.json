@@ -30,6 +30,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The ID of the vendor to retrieve.": "O ID do fornecedor a recuperar.",
   "The ID of the customer to retrieve.": "O ID do cliente a recuperar.",
   "\n- **DO NOT** insert dynamic input directly into the query string. Instead, use :1, :2, :3 and add them in args for parameterized queries\n- Arguments are treated as string and inserted as a [Text Literal](https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/Literals.html)\n": "\n- **NÃO** insira a entrada dinâmica diretamente na string de consulta. Ao invés disso, use :1, :2, :3 e adicione-os em argumentos para consultas parametrizadas\n- Os argumentos são tratados como string e inseridos como um [Text Literal](https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/Literals.html)\n",
