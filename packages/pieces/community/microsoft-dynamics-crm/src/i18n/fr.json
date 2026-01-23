@@ -28,6 +28,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select or map the entity for which you want to create the record.": "Sélectionnez ou associez l'entité pour laquelle vous voulez créer l'enregistrement.",
   "Select or map the entity name whose records you want to delete.": "Sélectionnez ou associez le nom de l'entité dont vous souhaitez supprimer les enregistrements.",
   "Select or map the entity name whose records you want to retrieve.": "Sélectionnez ou associez le nom de l'entité dont vous souhaitez récupérer les enregistrements.",
