@@ -25,6 +25,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "ID of the application to be completed.": "完了するアプリケーションのID。",
   "JSON string of key-value pairs for application input variables.": "アプリケーション入力変数のキーと値のペアの JSON 文字列。",
   "File to be uploaded, if the application requires documents. Supports PDF, DOCX, images, and other document formats.": "アプリケーションがドキュメントを必要とする場合、アップロードするファイル。PDF、DOCX、画像、およびその他のドキュメント形式に対応しています。",
