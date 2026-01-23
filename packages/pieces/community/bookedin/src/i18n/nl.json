@@ -35,6 +35,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Search text in name, email, or phone number": "Zoek tekst in naam, e-mail of telefoonnummer",
   "Filter by lead source (e.g., \"API\", \"Import\")": "Filter op lead source (bijv. \"API\", \"Importeren\")",
   "Filter by exact email address": "Filter op precies e-mailadres",
