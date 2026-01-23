@@ -28,6 +28,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Provide the direct link to a publicly accessible resume file (PDF, DOC, or DOCX)": "一般にアクセス可能な履歴書ファイル（PDF、DOC、DOCX）への直接リンクを提供します",
   "If a previous run timed out, paste the Request ID here to get the result.": "以前の実行がタイムアウトした場合は、リクエストIDをここに貼り付け、結果を取得します。",
   "Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).": "一般にアクセス可能な履歴書ファイル(PDF、DOC、またはDOCX)に直接URLを提供します。",
