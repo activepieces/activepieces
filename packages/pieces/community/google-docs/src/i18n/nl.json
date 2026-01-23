@@ -31,6 +31,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Text to append": "Tekst toe te voegen",
   "The ID of the file to replace the values": "De ID van het bestand om de waarden te vervangen",
   "Dont include the placeholder format \"[[]]\" or \"{{}}\", only the key name and its value": "Niet de placeholder format \"[[]]\" of \"{{}}\", alleen de key naam en de waarde ervan",
