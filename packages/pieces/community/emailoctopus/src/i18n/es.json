@@ -33,6 +33,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The mailing list to use.": "La lista de correo a utilizar.",
   "The contact's email address.": "Dirección de correo electrónico del contacto.",
   "The contact's custom fields.": "Los campos personalizados del contacto.",
