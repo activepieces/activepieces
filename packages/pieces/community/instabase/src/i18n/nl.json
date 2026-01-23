@@ -37,6 +37,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Name of the conversation": "Naam van het gesprek",
   "Description of the conversation": "Beschrijving van het gesprek",
   "Files to upload to the conversation": "Bestanden om te uploaden naar het gesprek",
