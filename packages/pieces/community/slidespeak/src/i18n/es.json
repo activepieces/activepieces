@@ -34,6 +34,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Topic of presentation.": "Tema de presentación.",
   "Uploaded docuemts to use in presentation.": "Subidos tópicos a usar en la presentación.",
   "Whether to include stock images.": "Si incluir o no imágenes en stock.",
