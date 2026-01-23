@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The model which will generate the completion.": "Das Modell, das die Fertigstellung generiert.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Kontrolliert Zufallszufälligkeit: Die Verringerung führt zu weniger zufälligen Vervollständigungen. Je näher die Temperatur Null rückt, desto deterministischer und sich wiederholender wird.",
   "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.": "Die maximale Anzahl der zu generierenden Token. Die Gesamtlänge der Eingabe-Tokens und generierten Token wird durch die Kontextlänge des Modells begrenzt.",
