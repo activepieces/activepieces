@@ -37,6 +37,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Enter the Title of the post": "Titel des Beitrags eingeben",
   "Enter the description of the post": "Beschreibung des Beitrags eingeben",
   "Set Category": "Kategorie festlegen",
