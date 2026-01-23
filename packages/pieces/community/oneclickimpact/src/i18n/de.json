@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The amount of carbon to capture in lbs (1 and 10,000,000)": "Die Menge an Kohlenstoff, die in Pumpen erfasst werden (1 und 10.000 000)",
   "The email of the customer on whose behalf the carbon is being captured": "Die E-Mail des Kunden, in deren Namen der Kohlenstoff erfasst wird",
   "The name of the customer on whose behalf the carbon is being captured": "Der Name des Kunden, in dessen Namen der Kohlenstoff erfasst wird",
