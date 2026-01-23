@@ -52,6 +52,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Name for the new data source": "Naam voor de nieuwe gegevensbron",
   "JDBC URL or database connection string": "JDBC URL of database connectie string",
   "Database driver class name": "Database stuurprogramma klasse naam",
