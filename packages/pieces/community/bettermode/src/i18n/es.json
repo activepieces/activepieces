@@ -35,6 +35,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The space to create the discussion in": "El espacio en el que crear la discusión",
   "The title of the discussion": "El título de la discusión",
   "The content of the discussion": "El contenido de la discusión",
