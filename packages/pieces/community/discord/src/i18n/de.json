@@ -61,6 +61,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "List of channels": "Liste der Kanäle",
   "Message content to send.": "Zu sendende Nachrichteninhalte.",
   "The avatar url for webhook": "Die Avatar-URL für Webhook",
