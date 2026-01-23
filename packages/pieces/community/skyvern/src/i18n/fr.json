@@ -32,6 +32,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The goal or task description for Skyvern to accomplish.": "La description du but ou de la tâche à accomplir par Skyvern.",
   "The starting URL for the task.": "L'URL de départ de la tâche.",
   "URL to send task status updates to after a run is finished.": "URL pour envoyer les mises à jour du statut de la tâche après la fin d'une exécution.",
