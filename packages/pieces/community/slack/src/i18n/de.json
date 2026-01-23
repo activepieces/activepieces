@@ -100,6 +100,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Use user token": "Benutzer-Token verwenden",
   "\n\tPlease make sure add the bot to the channel by following these steps:\n\t  1. Type /invite in the channel's chat.\n\t  2. Click on Add apps to this channel.\n\t  3. Search for and add the bot.\n  \n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.\n  ": "\n\tBitte stelle sicher, dass du den Bot zum Kanal hinzufügst, indem du folgende Schritte folgst:\n\t  1. Geben Sie /invite in den Chat des Kanals ein.\n\t  2. Klicken Sie auf Apps zu diesem Kanal hinzufügen.\n\t  3. Suche und füge den Bot hinzu.\n  \n**Notiz**: Wenn du den Kanal in der Dropdown-Liste nicht finden kannst (welche bis zu 2000 Kanäle abruft) Bitte klicken Sie auf das **(F)** und geben Sie die Kanal-ID direkt ein.\n  ",
   "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'": "Sie können die Kanal-ID erhalten, indem Sie mit der rechten Maustaste auf den Kanal klicken und \"Kanaldetails anzeigen\" auswählen.",
