@@ -34,6 +34,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "What do you want to generate? (max 1000 characters)": "Que voulez-vous générer ? (max 1000 caractères)",
   "Additional context or background information (optional, max 1000 characters)": "Informations supplémentaires sur le contexte ou l'arrière-plan (optionnel, max 1000 caractères)",
   "How many outputs to generate (default: 1)": "Combien de sorties à générer (par défaut: 1)",
