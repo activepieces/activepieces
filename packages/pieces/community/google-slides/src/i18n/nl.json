@@ -19,6 +19,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID of the presentation": "Het ID van de presentatie",
   "The ID of the presentation, between /d and /edit": "Het ID van de presentatie, tussen /d en /edit",
   "The ID of the templated presentation": "De ID van de getemplated presentatie",
