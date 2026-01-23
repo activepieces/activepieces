@@ -38,6 +38,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the Quickbase app": "Selecteer de Quickbase app",
   "Select the table": "Selecteer de tabel",
   "Select and set values for table fields": "Selecteer en stel waarden in voor de tabelvelden",
