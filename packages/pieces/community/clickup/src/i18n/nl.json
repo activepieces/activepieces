@@ -129,6 +129,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The ID of the ClickUp workspace": "De ID van de ClickUp werkruimte",
   "The ID of the ClickUp space to create the task in": "Het ID van de ClickUp ruimte om de taak in te maken",
   "The name of task": "De naam van de taak",
