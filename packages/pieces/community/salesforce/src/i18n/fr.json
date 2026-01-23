@@ -111,6 +111,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The campaign member status (e.g., 'Sent', 'Responded').": "Le statut du membre de la campagne (par exemple, 'Envoyé', 'Répondu').",
   "Select the Object": "Sélectionner l'objet",
   "The record to select. The list shows the 20 most recently created records.": "L'enregistrement à sélectionner. La liste montre les 20 enregistrements les plus récents.",
