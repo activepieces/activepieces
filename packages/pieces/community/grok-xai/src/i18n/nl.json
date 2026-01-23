@@ -50,6 +50,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Grok model to use for generating the response.": "Grok model om te gebruiken voor het genereren van het antwoord.",
   "Conversation messages for multi-turn conversations.": "Gesprek berichten voor multi-turn gesprekken.",
   "Simple text prompt for single-turn conversations. Ignored if Messages is provided.": "Eenvoudige tekst prompt voor conversaties met een single turn . Genegeerd als berichten worden verstrekt.",
