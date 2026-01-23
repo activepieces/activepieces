@@ -63,6 +63,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Whether the coupon is enabled or not.": "Ob der Gutschein aktiviert ist oder nicht.",
   "The target of the coupon.": "Das Ziel des Gutscheins.",
   "Choose between amount or percentage discount.": "Wählen Sie zwischen Betrag oder prozentualem Rabatt.",
