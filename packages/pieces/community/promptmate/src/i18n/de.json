@@ -36,6 +36,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Select the PromptMate app to run": "Wählen Sie die zu startende PromptMate App aus",
   "Array of data objects to process. Each object must contain the required data fields for the selected app.": "Array von zu verarbeitenden Datenobjekten. Jedes Objekt muss die erforderlichen Datenfelder für die ausgewählte App enthalten.",
   "URL to which the result of the job will be sent (optional)": "URL an die das Ergebnis des Jobs gesendet wird (optional)",
