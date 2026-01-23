@@ -30,6 +30,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select one of your SendPulse mailing lists": "Sélectionnez une de vos listes de diffusion SendPulse",
   "Subscriber email address": "Adresse e-mail de l'abonné",
   "Optional subscriber variables (e.g., name, phone)": "Variables optionnelles d'abonné (par exemple, nom, téléphone)",
