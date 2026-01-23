@@ -45,6 +45,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Pass `true` to only return active clients and `false` to return inactive clients.": "Geef `true` door om alleen actieve cliënten en `false` terug te geven om inactieve cliënten te retourneren.",
   "Only return clients that have been updated since the given date and time.": "Alleen klanten die zijn bijgewerkt sinds de opgegeven datum en tijd retourneren.",
   "DEPRECATED: The page number to use in pagination.": "DEPRECATED: Het te gebruiken paginanummer.",
