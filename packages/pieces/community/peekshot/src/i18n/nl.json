@@ -20,6 +20,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Output format for the screenshot.": "Uitvoerformaat voor de schermafbeelding.",
   "Custom CSS to apply.": "Aangepaste CSS om toe te passen.",
   "Custom JavaScript to apply.": "Aangepaste JavaScript om toe te passen.",
