@@ -23,6 +23,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Raw content you want to remember - HTML, emails, transcripts, or simple notes.": "Ruwe inhoud die je wilt onthouden - HTML, e-mails, afschrijvingen of eenvoudige notities.",
   "Optional guidance on how you want this content processed or remembered.": "Optionele begeleiding over hoe u deze inhoud wilt verwerken of onthouden.",
   "Additional background information to relate this to your existing knowledge.": "Aanvullende achtergrondinformatie om dit te koppelen aan uw bestaande kennis.",
