@@ -19,6 +19,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The template to use in image creation.": "Le modèle à utiliser dans la création d'image.",
   "Create image based on a specific version of the template.": "Créer une image basée sur une version spécifique du modèle.",
   "A list of modifications you want to make on the template.": "Une liste de modifications que vous voulez faire sur le modèle.",
