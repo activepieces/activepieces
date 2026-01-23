@@ -56,6 +56,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The search string. Must be at least 3 characters.": "De zoekopdracht. Moet minstens 3 tekens bevatten.",
   "The path to search in. If not specified, the search is performed from the root.": "Het pad om in te zoeken. Indien niet opgegeven, wordt de zoekopdracht uitgevoerd vanuit de root.",
   "The maximum number of search results to return (up to 1000). Default is 100 if not specified.": "Het maximale aantal te retourneren zoekresultaten (tot 1000). Standaard is 100 indien niet opgegeven.",
