@@ -23,6 +23,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The ID of the template to use for the contract": "コントラクトに使用するテンプレートの ID",
   "Unique title for the contract (defaults to template title if not specified)": "コントラクトのユニークなタイトル (指定されていない場合、デフォルトのテンプレートタイトル)",
   "Language setting for the signer page and emails": "署名者ページとメールの言語設定",
