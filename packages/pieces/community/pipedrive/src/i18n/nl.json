@@ -138,6 +138,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Type of object to add the follower to.": "Type object waar de volger aan toe te voegen.",
   "ID of the object to add the follower to.": "ID van het object om de volger aan toe te voegen.",
   "You can use Find Deal action to retrieve deal ID.": "U kunt \"Zoek Deal action gebruiken\" om transactie-ID op te halen.",
