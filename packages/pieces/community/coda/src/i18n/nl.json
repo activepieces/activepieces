@@ -32,6 +32,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Define the data for the new row based on table columns.": "Definieer de gegevens voor de nieuwe rij gebaseerd op tabel kolommen.",
   "Maximum number of results to return.": "Maximum aantal resultaten om weer te geven.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
