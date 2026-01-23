@@ -92,6 +92,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select the currency for historical price": "Seleccione la moneda para el precio histórico",
   "Provide YYYY-MM-DD format.": "Proporcionar formato AAA-MM-DD.",
   "The Bitcoin address to look up": "La dirección de Bitcoin a buscar",
