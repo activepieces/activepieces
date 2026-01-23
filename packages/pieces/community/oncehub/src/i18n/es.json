@@ -31,6 +31,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Filter contacts by email address": "Filtrar contactos por dirección de email",
   "First name of the contact": "Nombre del contacto",
   "Last name of the contact": "Apellido del contacto",
