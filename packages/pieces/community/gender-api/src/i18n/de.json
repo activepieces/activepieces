@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The first name to query": "Der Vorname der Abfrage",
   "ISO 3166-1 alpha-2 country code to improve accuracy (e.g., \"US\", \"DE\")": "ISO 3166-1 alpha-2 Ländercode zur Verbesserung der Genauigkeit (z. B. \"USA\", \"DE\")",
   "Browser locale for localization (e.g., \"en-US\", \"de-DE\")": "Browser-Gebietsschema für die Lokalisierung (z.B. \"en-US\", \"de-DE\")",
