@@ -20,6 +20,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Automatically generate the crentials": "Gere automaticamente os crentials",
   "Automatically publish the crentials": "Publicar automaticamente as crentials",
   "Email address of the recipient": "Endereço de email do destinatário",
