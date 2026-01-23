@@ -68,6 +68,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Name of the customer": "Nome do cliente",
   "Type of the customer": "Tipo de cliente",
   "Customer VAT number": "Número VAT do Cliente",
