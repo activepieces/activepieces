@@ -53,6 +53,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Number of domains to return per page (1-200).": "Número de domínios a retornar por página (1-200).",
   "Which page of results to return.": "Que página de resultados retornar.",
   "The domain name (e.g., example.com).": "O nome de domínio (por exemplo, exemplo.com).",
