@@ -29,6 +29,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select a Mistral model. List is fetched live from your account.": "Seleccione un modelo Mistral. La lista se obtiene en vivo desde su cuenta.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Controles aleatorios: La reducción de resultados en terminaciones menos aleatorias. A medida que la temperatura se acerca a cero, el modelo se volverá determinista y repetitivo.",
   "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.": "Una alternativa al muestreo con temperatura, llamado muestreo de núcleos, donde el modelo considera los resultados de los tokens con masa de probabilidad superior_p. Por lo tanto, 0,1 significa que sólo se consideran las fichas que componen la masa superior del 10% de probabilidad.",
