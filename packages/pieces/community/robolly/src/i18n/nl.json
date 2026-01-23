@@ -17,6 +17,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select your template. (If you want to use Template ID. Click on the \"(x)\" above this field. Template ID can be found by opening a template and going to “Render”. Being there copy the template ID from the top right.)": "Selecteer uw sjabloon. (Als u gebruik wilt maken van Template ID. Klik op de \"(x)\" boven dit veld. Sjabloon-ID kan worden gevonden door een sjabloon te openen en naar \"Render\" te gaan. De sjabloon-ID kopiëren van rechtsboven.)",
   "The format of the image to generate.": "Het formaat van de te genereren afbeelding",
   "The values to apply to the fields in the template.": "De waarden die worden toegepast op de velden in de sjabloon.",
