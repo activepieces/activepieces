@@ -42,6 +42,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the template to generate the video.": "Selecteer de template om de video te genereren.",
   "Title of the generated video.": "Titel van de gegenereerde video.",
   "Select the folder to store the video.": "Selecteer de map om de video op te slaan.",
