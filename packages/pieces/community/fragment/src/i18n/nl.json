@@ -29,6 +29,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The title of the task": "De titel van de taak",
   "A URL associated with the task (e.g., link to a ticket or resource)": "Een URL die gekoppeld is aan de taak (bijv. link naar een ticket of bron)",
   "When the task is due": "Wanneer de taak klaar is",
