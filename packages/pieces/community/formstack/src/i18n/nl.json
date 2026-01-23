@@ -35,6 +35,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Browser user agent to record": "Browser gebruikersagent om te registreren",
   "IP address to record": "IP-adres om op te nemen",
   "Payment integration status": "Integratiestatus van betaling",
