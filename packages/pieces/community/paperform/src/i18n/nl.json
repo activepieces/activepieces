@@ -63,6 +63,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Whether the coupon is enabled or not.": "Of de coupon is ingeschakeld of niet.",
   "The target of the coupon.": "Het doel van de coupon.",
   "Choose between amount or percentage discount.": "Kies tussen bedrag of percentage korting.",
