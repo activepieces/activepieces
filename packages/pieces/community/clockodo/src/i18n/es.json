@@ -126,6 +126,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The ID of the customer": "El ID del cliente",
   "The ID of the project": "El ID del proyecto",
   "The ID of the service": "El ID del servicio",
