@@ -87,6 +87,8 @@ export * from './lib/flows/triggers/trigger'
 export * from './lib/trigger'
 export * from './lib/flows/triggers/trigger-run'
 export * from './lib/template'
+export * from './lib/template/template-telemetry'
+
 
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 import { TypeSystemPolicy } from '@sinclair/typebox/system'
