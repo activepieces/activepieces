@@ -27,6 +27,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "en": "de",
   "Return full transcript if summary is not available.": "Gibt das vollständige Transkript zurück, falls die Zusammenfassung nicht verfügbar ist.",
   "URL to receive the transcription when ready.": "URL, um die Transkription zu erhalten, wenn sie fertig ist.",
