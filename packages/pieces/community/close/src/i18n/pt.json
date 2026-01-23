@@ -50,6 +50,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The name of the lead/company.": "Por favor, forneça um nome.",
   "Array of contact details for this lead": "Array de detalhes de contato para este lead",
   "A descriptive name for the opportunity.": "Um nome descritivo para a oportunidade.",
