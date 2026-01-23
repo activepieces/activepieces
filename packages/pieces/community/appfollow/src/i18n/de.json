@@ -24,6 +24,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Name of the user to be added": "Name des hinzuzufügenden Benutzers",
   "Email of the user to be added": "E-Mail des hinzuzufügenden Benutzers",
   "Role of the user to be added": "Rolle des hinzuzufügenden Benutzers",
