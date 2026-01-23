@@ -158,6 +158,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The email of the contact to add to the workflow.": "Het e-mailadres van de contactpersoon die aan de workflow moet worden toegevoegd.",
   "The ID of the object being associated.": "Het ID van het object dat geassocieerd wordt.",
   "The type of the object being associated.": "Het type van het object dat gekoppeld wordt.",
