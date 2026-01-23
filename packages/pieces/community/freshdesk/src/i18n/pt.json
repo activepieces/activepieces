@@ -32,6 +32,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The ID number of the contact": "A ID do número do contato",
   "The Ticket ID to return status": "O ID do Ticket para devolver o status",
   "Select one and provide the value.": "Selecione um e forneça o valor.",
