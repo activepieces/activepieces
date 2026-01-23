@@ -48,6 +48,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Choose the Notion database you want to work with from your workspace": "Wählen Sie die Notion-Datenbank, mit der Sie arbeiten möchten, aus Ihrem Arbeitsbereich",
   "The content you want to append to your item.": "Der Inhalt, den Sie an Ihren Artikel anhängen möchten.",
   "Select the item you want to update": "Wählen Sie das Element, das Sie aktualisieren möchten",
