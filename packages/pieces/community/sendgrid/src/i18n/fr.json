@@ -24,6 +24,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Emails of the recipients": "E-mails des destinataires",
   "Sender email, must be on your SendGrid": "L'e-mail de l'expéditeur doit être sur votre SendGrid",
   "Sender name": "Nom de l'expéditeur",
