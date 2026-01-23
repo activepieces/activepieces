@@ -48,6 +48,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Choose the Notion database you want to work with from your workspace": "Kies de Notie database waarmee u wilt werken uit uw werkruimte",
   "The content you want to append to your item.": "De inhoud die je aan je item wilt toevoegen.",
   "Select the item you want to update": "Selecteer het item dat u wilt bijwerken",
