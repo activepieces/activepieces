@@ -45,6 +45,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The team to use.": "Het team dat gebruikt moet worden.",
   "The bot to use.": "De bot om te gebruiken.",
   "The question to ask the bot. 2 to 500 characters. Max increased to 8K tokens (roughtly 32k chars) when authenticated.": "De vraag om de bot te vragen. 2 tot 500 tekens. Maximale toename naar 8K tokens (ruwweg 32K karakters) bij verificatie.",
