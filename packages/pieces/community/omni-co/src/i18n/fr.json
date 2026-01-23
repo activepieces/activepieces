@@ -56,6 +56,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select the model containing the database": "Sélectionnez le modèle contenant la base de données",
   "The name of the document": "Le nom du document",
   "An array of queryPresentation objects, each representing a query in the document's workbook": "Un tableau d'objets queryPresentation, chacun représentant une requête dans le classeur du document",
