@@ -68,6 +68,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "How to import the file for conversion": "Cómo importar el archivo para la conversión",
   "File to upload and convert (select from your device)": "Archivo para cargar y convertir (seleccionar desde tu dispositivo)",
   "URL of the file to convert": "URL del archivo a convertir",
