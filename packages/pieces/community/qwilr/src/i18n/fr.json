@@ -21,6 +21,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "ID of the template to use for the page": "ID du modèle à utiliser pour la page",
   "Title of the page, visible as the browser page title": "Titre de la page, visible comme titre de la page du navigateur",
   "Whether the page is publicly available; false means the page will be in Draft status": "Si la page est disponible publiquement; faux signifie que la page sera dans le statut de brouillon",
