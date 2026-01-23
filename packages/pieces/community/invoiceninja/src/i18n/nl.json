@@ -72,6 +72,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "A unique task or ticket number that has not been used before in Invoice Ninja": "Een unieke taak of ticketnummer dat nog niet eerder is gebruikt in factuur Ninja",
   "Client ID from Invoice Ninja (optional)": "Client-ID van factuur Ninja (optioneel)",
   "Project ID from Invoice Ninja (optional)": "Project-ID van factuur Ninja (optioneel)",
