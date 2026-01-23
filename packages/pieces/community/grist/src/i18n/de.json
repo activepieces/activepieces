@@ -30,6 +30,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Enter the search text. The search operation is case sensitive, exact text match, and supports column-type Text only.": "Geben Sie den Suchtext ein. Groß-/Kleinschreibung und exakte Textpassung werden nur von einem Spalten unterstützt.",
   "In case you want to change the name of the attachment.": "Falls Sie den Namen des Anhangs ändern möchten.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
