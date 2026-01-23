@@ -43,6 +43,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The name or title of the opportunity.": "Le nom ou le titre de l'opportunité.",
   "Select the team": "Sélectionnez l'équipe",
   "Select the workspace": "Sélectionnez l'espace de travail",
