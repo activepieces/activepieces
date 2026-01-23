@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "The note to add": "Die Notiz hinzufügen",
   "The date to add the note to. Format: YYYY-MM-DD": "Das Datum, zu dem die Notiz hinzugefügt werden soll. Format: JJJJ-MM-TT",
   "Whether or not the note should be starred": "Ob die Notiz markiert werden soll oder nicht",
