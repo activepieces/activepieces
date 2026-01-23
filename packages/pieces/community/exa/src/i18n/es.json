@@ -44,6 +44,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Array of URLs to crawl": "Matriz de URLs a rascar",
   "If true, returns full page text. If false, disables text return.": "Si es verdadero, devuelve el texto de página completa. Si es falso, deshabilita el texto regresar.",
   "Options for livecrawling pages.": "Opciones para las páginas de livecrawling.",
