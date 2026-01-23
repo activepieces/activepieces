@@ -46,6 +46,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The email address of the new subscription.": "La dirección de correo electrónico de la nueva suscripción.",
   "Whether to reactivate the subscription if they have already unsubscribed. Use only if the subscription is knowingly resubscribing.": "Si quieres reactivar la suscripción si ya se han dado de baja. Úsalo sólo si la suscripción se vuelve a reenviar sabiamente.",
   "Whether to send the default welcome email to the subscription.": "Si enviar o no el correo electrónico de bienvenida por defecto a la suscripción.",
