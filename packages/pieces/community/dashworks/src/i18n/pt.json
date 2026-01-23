@@ -15,6 +15,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "You can find this by going to Dashworks > Bots, clicking on an existing Bot, and using the 'Copy Bot ID' button on the top right.": "Você pode encontrar isso indo para Dashworks > Bots, clicando em um bot existente, e usando o botão 'Copiar ID do Bot' no canto superior direito.",
   "The message (e.g., a question or prompt) that you want a response to.": "A mensagem (por exemplo, uma pergunta ou aviso) para a qual você deseja uma resposta.",
   "When true (default), sources will be cited inline in markdown formatting within the answer text.When false, the answer will not contain inline citations.": "Quando verdadeiro (padrão), fontes serão citadas em formatação em markdown dentro do texto de resposta. Quando falso, a resposta não conterá citações em linha.",
