@@ -19,6 +19,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The ID of the presentation": "O ID da apresentação",
   "The ID of the presentation, between /d and /edit": "O ID da apresentação, entre /d e /edit",
   "The ID of the templated presentation": "A ID da apresentação modelo",
