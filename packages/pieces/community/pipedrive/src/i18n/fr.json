@@ -138,6 +138,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Type of object to add the follower to.": "Type d'objet auquel ajouter le suiveur.",
   "ID of the object to add the follower to.": "ID de l'objet auquel ajouter le suiveur.",
   "You can use Find Deal action to retrieve deal ID.": "Vous pouvez utiliser l'action Trouver une offre pour récupérer l'ID de la transaction.",
