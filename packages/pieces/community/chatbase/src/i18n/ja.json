@@ -31,6 +31,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Optional text data for training the chatbot.": "チャットボットを訓練するための任意のテキストデータ。",
   "Higher values = more random output. Between 0 and 1.": "値が大きい=ランダム出力が多い。0から1の間。",
   "Unique ID for saving this conversation in Chatbase dashboard.": "チャットベースダッシュボードでこの会話を保存するためのユニークなID。",
