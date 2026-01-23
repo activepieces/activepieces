@@ -25,6 +25,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select a chatbot": "Selecteer een chatbot",
   "The message to send to the AI": "Het bericht dat naar de AI gestuurd moet worden",
   "Select the AI model to use": "Selecteer het AI-model dat u wilt gebruiken",
