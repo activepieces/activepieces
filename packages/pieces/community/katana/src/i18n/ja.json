@@ -51,6 +51,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Customer display name.": "カスタマーディスプレイ名。",
   "Currency code (ISO 4217), e.g. USD, EUR, GBP.": "通貨コード (ISO 4217) (例: USD, EUR, GBP).",
   "External reference ID (max 100 characters).": "外部参照ID（最大100文字）",
