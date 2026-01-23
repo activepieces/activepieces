@@ -29,6 +29,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The email address of the employee to look up": "O endereço de e-mail do funcionário para procurar",
   "Select one or more status": "Selecione um ou mais status",
   "The system ID of the employee": "A identificação do sistema do funcionário",
