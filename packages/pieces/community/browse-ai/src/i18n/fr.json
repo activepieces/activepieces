@@ -20,6 +20,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select a robot from your Browse AI account": "Sélectionnez un robot dans votre compte Parcourir les AI",
   "Select a task associated with the selected robot": "Sélectionnez une tâche associée au robot sélectionné",
   "Try to record a video while running the task.": "Essayez d'enregistrer une vidéo pendant l'exécution de la tâche.",
