@@ -13,6 +13,7 @@
   "Use Proxy": "プロキシを使用",
   "Proxy Settings": "プロキシ設定",
   "Timeout(in seconds)": "タイムアウト(秒単位)",
+  "Follow redirects": "リダイレクトをフォローする",
   "On Failure": "失敗時",
   "Enable for files like PDFs, images, etc. A base64 body will be returned.": "PDF、画像などのファイルを有効にする base64ボディが返されます。",
   "Use a proxy for this request": "このリクエストにプロキシを使用する",
