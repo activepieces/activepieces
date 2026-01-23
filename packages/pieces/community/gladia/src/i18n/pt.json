@@ -27,6 +27,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "URL to a Gladia file or to an external audio or video file": "URL para um arquivo Gladia ou para um arquivo de áudio ou vídeo externo",
   "Select the language spoken in the audio for better transcription accuracy": "Selecione o idioma falado no áudio para uma melhor precisão na transcrição",
   "Enable code switching to handle multiple languages in the audio": "Ative a troca de código para manipular vários idiomas no áudio",
