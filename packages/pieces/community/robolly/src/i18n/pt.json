@@ -17,6 +17,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Select your template. (If you want to use Template ID. Click on the \"(x)\" above this field. Template ID can be found by opening a template and going to “Render”. Being there copy the template ID from the top right.)": "Selecione seu modelo. (Se você quiser usar o ID do modelo. Clique no \"(x)\" acima deste campo. O modelo ID pode ser encontrado abrindo um modelo e indo para \"Renderizar\". Estando lá copie o ID do template no canto superior direito.)",
   "The format of the image to generate.": "O formato da imagem a ser gerada.",
   "The values to apply to the fields in the template.": "Os valores a serem aplicados aos campos no template.",
