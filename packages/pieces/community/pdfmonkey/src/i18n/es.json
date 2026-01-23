@@ -22,6 +22,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Data to use for the Document generation.": "Datos a utilizar para la generación de documentos.",
   "Meta-Data to attach to the Document.": "Meta-Datos para adjuntar al documento.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
