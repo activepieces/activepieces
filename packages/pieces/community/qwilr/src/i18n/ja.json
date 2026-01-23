@@ -21,6 +21,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "ID of the template to use for the page": "ページに使用するテンプレートの ID",
   "Title of the page, visible as the browser page title": "ページのタイトル、ブラウザーページのタイトルとして表示されます",
   "Whether the page is publicly available; false means the page will be in Draft status": "ページが公開されているかどうか; false は、ページがドラフト状態になることを意味します。",
