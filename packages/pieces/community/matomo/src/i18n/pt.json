@@ -22,6 +22,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The note to add": "A nota a adicionar",
   "The date to add the note to. Format: YYYY-MM-DD": "A data para adicionar a nota. Formato: YYYY-MM-DD",
   "Whether or not the note should be starred": "Se a nota deve ou não ser marcada como estrela",
