@@ -21,6 +21,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The webpage URL to scrape.": "La URL de la página web a scrape.",
   "Describe what information you want to extract in natural language.": "Describa qué información desea extraer en lenguaje natural.",
   "Optional schema to structure the output data.": "Esquema opcional para estructurar los datos de salida.",
