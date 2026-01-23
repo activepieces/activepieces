@@ -32,6 +32,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Logs to send to Datadog, must contain a `logs` key with an array of objects. Documentation: https://docs.datadoghq.com/api/latest/logs/#send-logs": "Logs à envoyer à Datadog, doit contenir une clé `logs` avec un tableau d'objets. Documentation : https://docs.datadoghq.com/api/latest/logs/#send-logs",
   "The message to send to Datadog": "Le message à envoyer à Datadog",
   "The DD source to send to Datadog": "La source DD à envoyer à Datadog",
