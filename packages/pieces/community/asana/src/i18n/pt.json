@@ -19,6 +19,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Asana workspace to create the task in": "Espaço de trabalho de Asana para criar a tarefa",
   "Asana Project to create the task in": "Projeto Asana para criar a tarefa em",
   "The name of the task to create": "O nome da tarefa a criar",
