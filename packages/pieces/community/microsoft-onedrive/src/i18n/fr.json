@@ -24,6 +24,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The name the file should be saved as (e.g. file.txt)": "Le nom du fichier doit être enregistré (par exemple file.txt)",
   "The file URL or base64 to upload": "L'URL du fichier ou base64 à télécharger",
   "**Note**: If you can't find the folder in the dropdown list (which fetches up to 1000 folders), please click on the **(F)** and type the folder ID directly.\n\n\n      you can find the folder ID in the OneDrive URL after **?id=**, e.g., \"onedrive.live.com/?id=**folder-id**&cid=some-other-id\"\n\n    ": "**Note**: Si vous ne trouvez pas le dossier dans la liste déroulante (qui récupère jusqu'à 1000 dossiers), cliquez sur le **(F)** et tapez l'ID du dossier directement.\n\n\n      vous pouvez trouver l'ID du dossier dans l'URL de OneDrive après **?id=**, e. ., \"onedrive.live.com/?id=**folder-id**&cid=une-other-id\"\n\n    ",
