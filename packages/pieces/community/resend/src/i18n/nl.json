@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Emails of the recipients": "E-mails van de ontvangers",
   "Sender name": "Naam afzender",
   "Sender email": "Afzender e-mail",
