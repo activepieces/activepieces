@@ -15,6 +15,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "To get it: Login to your dashboard and click on the bot configuration page. At the top in the URL bar, copy the value starting after \"tenant/\" to the end.": "Para obtenerlo: Inicia sesión en tu panel de control y haz clic en la página de configuración del bot. En la parte superior de la barra de URL, copie el valor a partir de \"inquilino/\" al final.",
   "The message to send to the chatbot": "El mensaje a enviar al chatbot",
   "Unique identifier for this message": "Identificador único para este mensaje",
