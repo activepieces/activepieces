@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "By default it'll be 30 min post start time": "Standardmäßig ist es 30 Minuten Beitragsstartzeit",
   "Search query filter, see: https://learn.microsoft.com/en-us/graph/filter-query-parameter": "Suchfilter sehen, siehe: https://learn.microsoft.com/en-us/graph/filter-query-parameter",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
