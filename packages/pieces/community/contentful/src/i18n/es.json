@@ -29,6 +29,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The query formula to use to search for records. See https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/search-parameters for more information": "La fórmula de consulta a usar para buscar registros. Vea https://www.contentful.com/developeropers/docs/references/content-delivery-api/#/reference/search-parameters para más información",
   "The maximum number of records to return": "El número máximo de registros a devolver",
   "The number of records to skip": "El número de registros a omitir",
