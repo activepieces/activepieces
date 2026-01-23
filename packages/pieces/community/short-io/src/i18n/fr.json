@@ -79,6 +79,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Select the domain to use for the link": "Sélectionnez le domaine à utiliser pour le lien",
   "Select the short link from the domain": "Sélectionnez le lien court du domaine",
   "ISO 3166-1 alpha-2 country code (e.g., US, GB, CA, IN). Must be exactly 2 characters.": "ISO 3166-1 alpha-2 code de pays (par exemple, US, GB, CA, IN). Doit faire exactement 2 caractères.",
