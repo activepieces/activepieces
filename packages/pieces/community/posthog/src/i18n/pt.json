@@ -26,6 +26,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "The event name": "Nome do evento",
   "User's Distinct Id": "Identificação distinta do usuário",
   "The event properties": "As propriedades do evento",
