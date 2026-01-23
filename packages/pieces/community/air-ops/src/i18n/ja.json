@@ -22,6 +22,7 @@
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Select the workflow to execute.": "実行するワークフローを選択します。",
   "Input values for the workflow.": "ワークフローの値を入力します。",
   "Schema defining the workflow inputs (advanced).": "ワークフロー入力を定義するスキーマ (高度)",
