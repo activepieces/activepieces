@@ -27,6 +27,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "URL to a Gladia file or to an external audio or video file": "URL naar een Gladia-bestand of naar een extern audio- of videobestand",
   "Select the language spoken in the audio for better transcription accuracy": "Selecteer de taal die in het audio wordt gesproken voor een betere nauwkeurigheid van de transcriptie",
   "Enable code switching to handle multiple languages in the audio": "Schakel de code in om meerdere talen in de audio te verwerken",
