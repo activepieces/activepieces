@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The email of the customer to send the invite to (required if Phone Number is empty)": "De e-mail van de klant om de uitnodiging naar te sturen (vereist als het telefoonnummer leeg is)",
   "The phone number of the customer to send the invite to (required if Email is empty)": "Het telefoonnummer van de klant om de uitnodiging naar te sturen (vereist dat E-mail leeg is)",
   "The number of days to delay the invite (i.e send after X days)": "Het aantal dagen om de uitnodiging te vertragen (dat wil zeggen na X dagen)",
