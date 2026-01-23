@@ -98,6 +98,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The File or URL of the audio or video file.": "Het bestand of URL van het audio of video bestand.",
   "The URL of the audio or video file to transcribe.": "De URL van het audio of video bestand om te overschrijven.",
   "The language of your audio file. Possible values are found in [Supported Languages](https://www.assemblyai.com/docs/concepts/supported-languages).\nThe default value is 'en_us'.\n": "De taal van uw audiobestand. Mogelijke waarden vindt u in [ondersteunde talen](https://www.assemblyai.com/docs/concepts/supported-languages).\nDe standaardwaarde is 'en_us'.\n",
