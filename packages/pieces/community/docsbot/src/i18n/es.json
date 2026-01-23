@@ -45,6 +45,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "The team to use.": "El equipo a utilizar.",
   "The bot to use.": "El bot a usar.",
   "The question to ask the bot. 2 to 500 characters. Max increased to 8K tokens (roughtly 32k chars) when authenticated.": "La pregunta para hacer al bot. 2 a 500 caracteres. Máximo aumentado a 8K tokens (ásperamente 32k caracteres) cuando está autenticado.",
