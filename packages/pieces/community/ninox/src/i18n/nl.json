@@ -33,6 +33,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the team containing the database.": "Selecteer het team dat de database bevat.",
   "Select the database containing the table.": "Selecteer de database met de tabel.",
   "Select the table": "Selecteer de tabel",
