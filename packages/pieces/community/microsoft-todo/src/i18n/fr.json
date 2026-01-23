@@ -46,6 +46,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The task list to create the task in.": "La liste de tâches dans laquelle créer la tâche.",
   "The title of the task.": "Le titre de la tâche.",
   "The body or notes for the task.": "Le corps ou les notes pour la tâche.",
