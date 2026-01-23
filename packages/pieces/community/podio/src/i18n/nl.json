@@ -82,6 +82,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select an organization to filter apps by workspace. Leave empty to see all apps.": "Selecteer een organisatie om apps te filteren op werkruimte. Laat leeg om alle apps te zien.",
   "Select a workspace to filter apps. Leave empty to see all apps in the organization.": "Selecteer een werkruimte om apps te filteren. Laat leeg om alle apps in de organisatie te zien.",
   "Select a Podio app": "Selecteer een Podio app",
