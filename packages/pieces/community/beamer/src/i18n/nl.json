@@ -37,6 +37,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Enter the Title of the post": "Voer de titel van de post in",
   "Enter the description of the post": "Voer de beschrijving in van het bericht",
   "Set Category": "Categorie instellen",
