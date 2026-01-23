@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Recipient phone number in E.164 format": "Ontvanger telefoonnummer in E.164 formaat",
   "Your leased phone number": "Jouw leased phone number",
   "Text message content": "Inhoud van tekstbericht",
