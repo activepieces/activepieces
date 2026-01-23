@@ -79,6 +79,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the domain to use for the link": "Selecteer het te gebruiken domein voor de link",
   "Select the short link from the domain": "Selecteer de korte link van het domein",
   "ISO 3166-1 alpha-2 country code (e.g., US, GB, CA, IN). Must be exactly 2 characters.": "ISO 3166-1 alpha-2 landcode (bijv. US, GB, CA, IN). Moet precies 2 tekens bevatten.",
