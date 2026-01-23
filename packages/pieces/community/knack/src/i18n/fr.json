@@ -26,6 +26,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The ID of the record to delete.": "L'ID de l'enregistrement à supprimer.",
   "Field to find the record by": "Champ de recherche de l'enregistrement par",
   "The value to search for in the specified field.": "La valeur à rechercher dans le champ spécifié.",
