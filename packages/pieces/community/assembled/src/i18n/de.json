@@ -21,6 +21,7 @@
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
+  "Follow redirects": "Weiterleitungen folgen",
   "Query": "Abfrage",
   "Parameters": "Parameter",
   "Mock Mode": "Mock-Modus",
