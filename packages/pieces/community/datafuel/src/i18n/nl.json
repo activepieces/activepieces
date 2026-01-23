@@ -22,6 +22,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Prompt to crawl data": "Vraag om gegevens te crawl",
   "The depth of the crawl 1 depth mean only the first level of links will be scraped": "De diepte van de kruk 1 diepte betekent dat alleen het eerste niveau van verbindingen zal worden gescrapt",
   "The maximum number of pages to scrape": "Het maximum aantal te scrape pagina's",
