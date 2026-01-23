@@ -52,6 +52,7 @@
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Emails of the attendees (guests)": "E-mails dos participantes (convidados)",
   "The text describing the event to be created": "O texto descrevendo o evento a ser criado",
   "Guests who should receive notifications about the creation of the new event.": "Convidados que devem receber notificações sobre a criação do novo evento.",
