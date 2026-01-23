@@ -8,6 +8,42 @@ import {
 // TODO: Configure this for your environment
 const DIGA_API_URL = "http://localhost:3000";
 
+// Type for parameter definition from the form
+type ParameterDefinition = {
+  name: string;
+  dataType: "string" | "number" | "boolean";
+  required: boolean;
+  description?: string;
+};
+
+// Convert form parameters to JSON Schema format
+function parametersToJsonSchema(parameters: ParameterDefinition[]): {
+  type: "object";
+  properties: Record<string, { type: string; description?: string }>;
+  required: string[];
+} {
+  const properties: Record<string, { type: string; description?: string }> = {};
+  const required: string[] = [];
+
+  for (const param of parameters) {
+    properties[param.name] = {
+      type: param.dataType,
+    };
+    if (param.description) {
+      properties[param.name].description = param.description;
+    }
+    if (param.required) {
+      required.push(param.name);
+    }
+  }
+
+  return {
+    type: "object",
+    properties,
+    required,
+  };
+}
+
 export const functionCall = createTrigger({
   name: "functionCall",
   displayName: "Function Call",
@@ -22,18 +58,69 @@ export const functionCall = createTrigger({
         "e intención del usuario (ej: 'Cuando el usuario quiera agendar una cita').",
       required: true,
     }),
-    parameters_schema: Property.Json({
-      displayName: "Parámetros (JSON Schema)",
+    parameters: Property.Array({
+      displayName: "Parámetros",
       description:
-        "JSON Schema que define los parámetros que la IA debe extraer de la conversación. " +
-        'Ejemplo: {"type":"object","properties":{"fecha":{"type":"string","description":"Fecha de la cita"},' +
-        '"hora":{"type":"string","description":"Hora preferida"}},"required":["fecha"]}',
+        "Define los parámetros que la IA debe extraer de la conversación.",
       required: false,
-      defaultValue: {
-        type: "object",
-        properties: {},
-        required: [],
+      properties: {
+        name: Property.ShortText({
+          displayName: "Nombre del parámetro",
+          description:
+            "Identificador único para este parámetro (ej: fecha, nombre, email).",
+          required: true,
+        }),
+        dataType: Property.StaticDropdown({
+          displayName: "Tipo de dato",
+          description: "El tipo de dato que acepta este parámetro.",
+          required: true,
+          defaultValue: "string",
+          options: {
+            disabled: false,
+            options: [
+              { label: "Texto", value: "string" },
+              { label: "Número", value: "number" },
+              { label: "Booleano", value: "boolean" },
+            ],
+          },
+        }),
+        required: Property.Checkbox({
+          displayName: "Parámetro obligatorio",
+          description: "Si está marcado, el agente debe extraer este valor.",
+          required: false,
+          defaultValue: false,
+        }),
+        description: Property.LongText({
+          displayName: "Descripción",
+          description:
+            "Una breve descripción para que el agente entienda cómo funciona este parámetro.",
+          required: false,
+        }),
       },
+    }),
+    execution_mode: Property.StaticDropdown({
+      displayName: "Modo de ejecución",
+      description:
+        "Síncrono: El agente espera la respuesta del workflow. " +
+        "IMPORTANTE: Debes añadir la acción 'Diga - Return Response' al final del flow para devolver la respuesta. " +
+        "Asíncrono: El agente continúa sin esperar la respuesta.",
+      required: true,
+      defaultValue: "sync",
+      options: {
+        disabled: false,
+        options: [
+          { label: "Síncrono (espera respuesta)", value: "sync" },
+          { label: "Asíncrono (no espera)", value: "async" },
+        ],
+      },
+    }),
+    require_user_confirmation: Property.Checkbox({
+      displayName: "Requiere confirmación del usuario",
+      description:
+        "Si está marcado, el agente pedirá confirmación al usuario antes de ejecutar esta función. " +
+        "Útil para acciones importantes como agendar citas, realizar compras, etc.",
+      required: false,
+      defaultValue: false,
     }),
   },
   sampleData: {
@@ -68,6 +155,22 @@ export const functionCall = createTrigger({
       flowName?.toLowerCase().replace(/\s+/g, "_") ||
       `function_${flowId.slice(0, 8)}`;
 
+    // Convert form parameters to JSON Schema
+    const parameters = (context.propsValue.parameters ||
+      []) as ParameterDefinition[];
+    const parametersSchema = parametersToJsonSchema(parameters);
+
+    // Get new configuration options
+    const executionMode = context.propsValue.execution_mode || "sync";
+    const requireUserConfirmation =
+      context.propsValue.require_user_confirmation || false;
+
+    // Append /sync to webhook URL for sync mode
+    const webhookUrl =
+      executionMode === "sync"
+        ? `${context.webhookUrl}/sync`
+        : context.webhookUrl;
+
     const response = await fetch(
       `${DIGA_API_URL}/internal/v1/ap/triggers/function-call`,
       {
@@ -78,11 +181,13 @@ export const functionCall = createTrigger({
         },
         body: JSON.stringify({
           flow_id: flowId,
-          webhook_url: context.webhookUrl,
+          webhook_url: webhookUrl,
           name: flowName,
           function_name: functionName,
           function_description: context.propsValue.function_description,
-          parameters_schema: context.propsValue.parameters_schema,
+          parameters_schema: parametersSchema,
+          execution_mode: executionMode,
+          require_user_confirmation: requireUserConfirmation,
         }),
       }
     );
@@ -98,10 +203,18 @@ export const functionCall = createTrigger({
 
   async onDisable(context) {
     const projectId = context.project.id;
-    const flowId = await context.store.get<string>("flow_id");
+    const flowId = context.flows.current.id;
 
-    if (flowId) {
-      try {
+    // Wait a short delay to let Activepieces complete any deletion
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // Check if the flow still exists in Activepieces
+    try {
+      const flowsPage = await context.flows.list();
+      const flowStillExists = flowsPage.data.some((f) => f.id === flowId);
+
+      if (!flowStillExists) {
+        // Flow was truly deleted from Activepieces, delete it from Diga too
         await fetch(
           `${DIGA_API_URL}/internal/v1/ap/triggers/function-call/${flowId}`,
           {
@@ -111,10 +224,13 @@ export const functionCall = createTrigger({
             },
           }
         );
-      } catch (error) {
-        // Ignore errors during cleanup
-        console.warn("Failed to unregister trigger:", error);
+        console.log(`Flow ${flowId} deleted from Diga (was deleted in Activepieces)`);
+      } else {
+        // Flow still exists, just disabled - don't delete to preserve relationships
+        console.log(`Flow ${flowId} disabled but not deleted (preserving relationships)`);
       }
+    } catch (error) {
+      console.warn("Error checking flow existence:", error);
     }
   },
 

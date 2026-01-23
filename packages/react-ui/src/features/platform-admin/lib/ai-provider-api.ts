@@ -1,11 +1,15 @@
-// Stub for removed platform-admin feature
 import { api } from '@/lib/api';
-import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
+import {
+  AIProviderWithoutSensitiveData,
+  CreateAIProviderRequest,
+  UpdateAIProviderRequest,
+} from '@activepieces/shared';
 
 export const aiProviderApi = {
-  list: () => api.get<AIProviderWithoutSensitiveData[]>('/v1/ai/providers'),
-  upsert: (_request: unknown) => api.post<void>('/v1/ai/providers', {}),
-  update: (_id: string, _request: unknown) =>
-    api.post<void>(`/v1/ai/providers/${_id}`, {}),
-  delete: (_id: string) => api.delete('/v1/ai/providers'),
+  list: () => api.get<AIProviderWithoutSensitiveData[]>('/v1/ai-providers'),
+  create: (request: CreateAIProviderRequest) =>
+    api.post<AIProviderWithoutSensitiveData>('/v1/ai-providers', request),
+  update: (id: string, request: UpdateAIProviderRequest) =>
+    api.post<AIProviderWithoutSensitiveData>(`/v1/ai-providers/${id}`, request),
+  delete: (id: string) => api.delete<void>(`/v1/ai-providers/${id}`),
 };

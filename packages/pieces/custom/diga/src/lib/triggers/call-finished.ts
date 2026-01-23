@@ -100,10 +100,18 @@ export const callFinished = createTrigger({
   },
   async onDisable(context) {
     const projectId = context.project.id;
-    const flowId = await context.store.get<string>("flow_id");
+    const flowId = context.flows.current.id;
 
-    if (flowId) {
-      try {
+    // Wait a short delay to let Activepieces complete any deletion
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // Check if the flow still exists in Activepieces
+    try {
+      const flowsPage = await context.flows.list();
+      const flowStillExists = flowsPage.data.some((f) => f.id === flowId);
+
+      if (!flowStillExists) {
+        // Flow was truly deleted from Activepieces, delete it from Diga too
         await fetch(
           `${DIGA_API_URL}/internal/v1/ap/triggers/call-finished/${flowId}`,
           {
@@ -113,10 +121,13 @@ export const callFinished = createTrigger({
             },
           }
         );
-      } catch (error) {
-        // Ignore errors during cleanup
-        console.warn("Failed to unregister trigger:", error);
+        console.log(`Flow ${flowId} deleted from Diga (was deleted in Activepieces)`);
+      } else {
+        // Flow still exists, just disabled - don't delete to preserve relationships
+        console.log(`Flow ${flowId} disabled but not deleted (preserving relationships)`);
       }
+    } catch (error) {
+      console.warn("Error checking flow existence:", error);
     }
   },
   async run(context) {

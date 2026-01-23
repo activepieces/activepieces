@@ -61,6 +61,18 @@ async function assertPrincipalAccessToProject({ principal, projectId }: { princi
     if (principal.type === PrincipalType.SERVICE) {
         return
     }
+    if (principal.type === PrincipalType.ENGINE) {
+        // Engine principals have projectId embedded in the token
+        if (principal.projectId === projectId) {
+            return
+        }
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'Engine does not have access to this project',
+            },
+        })
+    }
     if (principal.type === PrincipalType.USER) {
         const project = await projectService.getOneOrThrow(projectId)
         if (project.platformId !== principal.platform?.id) {

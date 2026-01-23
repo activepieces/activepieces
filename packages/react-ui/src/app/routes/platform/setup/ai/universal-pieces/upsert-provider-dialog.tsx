@@ -114,7 +114,7 @@ export const UpsertAIProviderDialog = ({
   ]);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (data: CreateAIProviderRequest): Promise<void> => {
+    mutationFn: (data: CreateAIProviderRequest) => {
       if (providerId) {
         const updateData: UpdateAIProviderRequest = {
           displayName: data.displayName,
@@ -123,7 +123,7 @@ export const UpsertAIProviderDialog = ({
         };
         return aiProviderApi.update(providerId, updateData);
       } else {
-        return aiProviderApi.upsert(data);
+        return aiProviderApi.create(data);
       }
     },
     onSuccess: () => {
