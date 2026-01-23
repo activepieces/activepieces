@@ -68,6 +68,7 @@
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "The title of the issue": "Le titre de la question",
   "The description of the issue": "La description du problème",
   "Labels for the Issue": "Étiquettes pour le problème",
