@@ -1,15 +1,15 @@
 {
-  "Calculate Average": "Calculate Average",
-  "Calculate Sum": "Calculate Sum",
+  "Calculate Average": "平均计算",
+  "Calculate Sum": "计算总和",
   "Count Uniques": "Count Uniques",
-  "Find Min and Max": "Find Min and Max",
-  "Calculates the average of a list of values.": "Calculates the average of a list of values.",
-  "Calculates the sum of a list of values.": "Calculates the sum of a list of values.",
-  "Counts the number of unique values for multiple fields": "Counts the number of unique values for multiple fields",
-  "Get the smallest and greatest values from a list of numeric values.": "Get the smallest and greatest values from a list of numeric values.",
+  "Find Min and Max": "查找最小和最大值",
+  "Calculates the average of a list of values.": "计算值列表的平均值。",
+  "Calculates the sum of a list of values.": "计算数值列表的总和。",
+  "Counts the number of unique values for multiple fields": "计数多个字段唯一值的数量",
+  "Get the smallest and greatest values from a list of numeric values.": "从数值列表中获取最小和最大的值。",
   "Markdown": "Markdown",
   "Values": "值",
-  "Fields": "Fields",
-  "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.": "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.",
-  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty."
+  "Fields": "字段",
+  "If you'd like to use the values with a previous step, click the (X) first, and then select the step you want to use.": "如果您想使用前一步的值，请先点击 (X)，然后选择您想要使用的步骤。",
+  "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.": "如果您通过的数据是一个对象，您可以指定某些字段进行过滤。 如果字段不存在，对象将被丢弃。否则，留空。"
 }
