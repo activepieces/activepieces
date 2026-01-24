@@ -96,8 +96,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
       if (
-        row.original.pieceType !== PieceType.CUSTOM ||
-        isNil(row.original.projectId)
+        row.original.pieceType !== PieceType.CUSTOM 
       ) {
         return null;
       }

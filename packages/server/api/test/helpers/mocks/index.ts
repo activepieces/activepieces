@@ -402,7 +402,6 @@ export const createMockPieceMetadata = (
         displayName: pieceMetadata?.displayName ?? faker.lorem.word(),
         logoUrl: pieceMetadata?.logoUrl ?? faker.image.urlPlaceholder(),
         description: pieceMetadata?.description ?? faker.lorem.sentence(),
-        projectId: pieceMetadata?.projectId,
         directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
         authors: pieceMetadata?.authors ?? [],
