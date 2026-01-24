@@ -13,7 +13,7 @@ export const campaignLinkClickedTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		const res = await client.subscribeWebhook({
 			name: `Activepieces Deal Task Completed Hook`,
 			url: context.webhookUrl,
@@ -30,7 +30,7 @@ export const campaignLinkClickedTrigger = createTrigger({
 			'activecampaign_campaign_link_clicked',
 		);
 		if (webhook != null) {
-			const client = makeClient(context.auth);
+			const client = makeClient(context.auth.props);
 			await client.unsubscribeWebhook(webhook.webhook.id);
 		}
 	},

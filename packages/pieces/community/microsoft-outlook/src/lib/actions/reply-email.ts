@@ -10,6 +10,7 @@ export const replyEmailAction = createAction({
   description: 'Reply to an outlook email.',
   props: {
     messageId: Property.Dropdown({
+      auth: microsoftOutlookAuth,
       displayName: 'Email',
       description: 'Select the email message to reply to.',
       required: true,

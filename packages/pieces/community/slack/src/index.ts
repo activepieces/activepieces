@@ -48,6 +48,7 @@ import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
 import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 import { listUsers } from './lib/actions/list-users';
+import { deleteMessageAction } from './lib/actions/delete-message';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -107,7 +108,7 @@ export const slack = createPiece({
             (payload.body as { payload: string }).payload
           ) as InteractionPayloadBody;
           if (interactionPayloadBody.type === 'block_actions') {
-            const action = interactionPayloadBody.actions?.at(0);
+            const action = interactionPayloadBody.actions?.[0];
             if (
               action &&
               action.type === 'button' &&
@@ -182,6 +183,7 @@ export const slack = createPiece({
     findUserByIdAction,
     listUsers,
     updateMessage,
+    deleteMessageAction,
     createChannelAction,
     updateProfileAction,
     getChannelHistory,

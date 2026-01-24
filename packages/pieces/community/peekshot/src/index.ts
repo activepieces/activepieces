@@ -17,7 +17,7 @@ export const peekshotAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         url: 'https://api.peekshot.com/api/v1/projects',
         headers: {
-          'x-api-key': auth as string,
+          'x-api-key': auth,
           'Content-Type': 'application/json',
         },
       });
@@ -42,7 +42,7 @@ export const peekshot = createPiece({
       baseUrl: () => 'https://api.peekshot.com/api/v1',
       authMapping: async (auth) => {
         return {
-          'x-api-key': auth as string,
+          'x-api-key': auth.secret_text,
         };
       },
     }),

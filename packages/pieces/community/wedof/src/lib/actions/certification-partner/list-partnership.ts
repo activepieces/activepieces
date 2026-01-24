@@ -139,7 +139,7 @@ export const listPartnerships = createAction({
         url: wedofCommon.baseUrl +'/certifications/'+ context.propsValue.certifInfo +`/partners?${queryParams.toString()}`,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

@@ -71,6 +71,7 @@ export const imageClassification = createAction({
       defaultValue: 'general',
     }),
     model: Property.Dropdown({
+      auth: huggingFaceAuth,
       displayName: 'Classification Model',
       description: 'Select the best model for your use case',
       required: true,
@@ -423,7 +424,7 @@ export const imageClassification = createAction({
       }
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
     const startTime = Date.now();
 
     try {

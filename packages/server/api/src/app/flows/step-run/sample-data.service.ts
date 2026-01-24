@@ -59,7 +59,8 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             if (response.metadata?.[DATA_TYPE_KEY_IN_FILE_METADATA] === SampleDataDataType.STRING) {
                 return response.data.toString('utf-8')
             }
-            return JSON.parse(response.data.toString('utf-8'))
+            const decodedData = new TextDecoder('utf-8').decode(response.data)
+            return JSON.parse(decodedData)
         }
         return undefined
 
@@ -105,7 +106,7 @@ export async function saveSampleData({
     const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
     const fileType = type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
     const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step, fileType, log)
-    const data = Buffer.from(JSON.stringify(payload))
+    const data = dataType === SampleDataDataType.STRING && typeof payload === 'string' ? Buffer.from(payload) : Buffer.from(JSON.stringify(payload))
     return fileService(log).save({
         projectId,
         fileId,

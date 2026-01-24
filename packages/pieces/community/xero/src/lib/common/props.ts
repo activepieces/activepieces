@@ -5,9 +5,12 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
+import { xeroAuth } from '../..';
 
 export const props = {
-  tenant_id: Property.Dropdown({
+  tenant_id:   Property.Dropdown({
+        auth: xeroAuth,
+
     displayName: 'Organization',
     refreshers: [],
     required: true,
@@ -60,7 +63,9 @@ export const props = {
     },
   }),
   invoice_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Invoice',
       description: 'Select an invoice',
       required,
@@ -120,7 +125,9 @@ export const props = {
       },
     }),
   payable_invoice_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Invoice (Authorised)',
       description: 'Select an authorised invoice (sales or bill) to apply payment to.',
       required,
@@ -186,7 +193,9 @@ export const props = {
       },
     }),
   sales_invoice_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Sales Invoice (Sendable)',
       description: 'Select a sales invoice with a valid status for sending email (SUBMITTED, AUTHORISED, or PAID).',
       required,
@@ -249,7 +258,9 @@ export const props = {
       },
     }),
   editable_sales_invoice_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Sales Invoice (Editable)',
       description: 'Select a sales invoice (ACCREC) with DRAFT or SUBMITTED status.',
       required,
@@ -320,7 +331,9 @@ export const props = {
       },
     }),
   credit_note_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Credit Note',
       description: 'Select a credit note to allocate from',
       required,
@@ -387,7 +400,9 @@ export const props = {
       required: required,
     }),
   contact_dropdown: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Contact',
       description: 'Select a contact',
       required,
@@ -458,7 +473,9 @@ export const props = {
       required: required,
     }),
   bank_account_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Bank Account',
       description: 'Select a bank account',
       required,
@@ -522,7 +539,9 @@ export const props = {
       },
     }),
   branding_theme_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Branding Theme',
       description: 'Select a branding theme',
       required,
@@ -577,7 +596,9 @@ export const props = {
       },
     }),
   purchase_order_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Purchase Order',
       description: 'Select a purchase order to update',
       required,
@@ -639,7 +660,9 @@ export const props = {
       },
     }),
   account_code: (allowedTypes: string[], required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Account',
       description: 'Select an account',
       required,
@@ -706,7 +729,9 @@ export const props = {
       },
     }),
   project_id: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Project',
       description: 'Select a project',
       required,
@@ -761,7 +786,9 @@ export const props = {
       },
     }),
   currency_code: (required = false) =>
-    Property.Dropdown({
+      Property.Dropdown({
+        auth: xeroAuth,
+
       displayName: 'Currency',
       description: 'Select a currency code',
       required,

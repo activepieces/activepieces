@@ -5,6 +5,7 @@ export enum AlertChannel {
     EMAIL = 'EMAIL',
 }
 
+
 export const Alert = Type.Object({
     ...BaseModelSchema,
     projectId: ApId,

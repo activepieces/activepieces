@@ -20,7 +20,7 @@ export const searchSubscriberByEmail = createAction({
     const email = propsValue.email;
 
     const response = await zagoMailApiService.searchSubscriberByEmail(
-      auth,
+      auth.secret_text,
       listUId,
       {
         email,

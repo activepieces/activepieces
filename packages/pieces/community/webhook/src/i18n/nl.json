@@ -1,5 +1,4 @@
 {
-  "Webhook": "Webhook",
   "Receive HTTP requests and trigger flows using unique URLs.": "Ontvang HTTP verzoeken en trigger flows met behulp van unieke URL's.",
   "Return Response": "Antwoord retour",
   "Respond and Wait for Next Webhook": "Reageer en wacht op de volgende Webhook",

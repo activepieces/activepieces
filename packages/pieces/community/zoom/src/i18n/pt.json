@@ -1,5 +1,4 @@
 {
-  "Zoom": "Ampliar",
   "Video conferencing, web conferencing, webinars, screen sharing": "Conferência de vídeo, conferência web, webinários, compartilhamento de tela",
   "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting** and **meeting:write:registrant** as scopes.": "\n  1. Vá para [marketplace.zoom.us](https://marketplace.zoom.us/) e faça login na sua conta.\n  2. No canto superior direito, clique em **Desenvolvimento** e depois em **Build App**.\n  3. Selecione **General App**.\n  4. Copie a ID do cliente e o segredo do cliente. Adicione o URL de redirecionamento e pressione continuar.\n  5. Vá para **Escopos** do lado esquerdo e adicione **reunião:write:reunião** e **reunião:write:registrant** como escopos.",
   "Create Zoom Meeting": "Criar reunião Zoom",

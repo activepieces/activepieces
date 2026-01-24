@@ -55,7 +55,7 @@ export const scrapeWebsite = createAction({
 			url: 'https://app.dumplingai.com/api/v1/scrape',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

@@ -51,7 +51,7 @@ export const prompthub = createPiece({
       baseUrl: () => 'https://app.prompthub.us/api/v1',
       authMapping: async (auth) => {
         return {
-          authorization: `Bearer ${auth as string}`,
+          authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

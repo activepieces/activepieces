@@ -30,13 +30,13 @@ export type ApErrorParams =
     | EmailIsNotVerifiedErrorParams
     | EngineOperationFailureParams
     | EntityNotFoundErrorParams
-    | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
     | FlowFormNotFoundError
     | FlowNotFoundErrorParams
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
+    | FlowOperationInProgressErrorParams
     | FlowRunNotFoundErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -55,7 +55,6 @@ export type ApErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
-    | ResourceLockedParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -73,6 +72,7 @@ export type ApErrorParams =
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
     | AIProviderModelNotSupportedParams
+    | AIProviderNotSupportedParams
     | AIRequestNotSupportedParams
     | AICreditLimitExceededParams
     | SessionExpiredParams
@@ -81,9 +81,10 @@ export type ApErrorParams =
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
-    | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
-    | MemoryIssueParams
+    | SandboxMemoryIssueParams
+    | SandboxExecutionTimeoutParams
+    | SandboxInternalErrorParams
     | InvalidCustomDomainErrorParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
@@ -92,6 +93,9 @@ export type ApErrorParams =
     | SubflowFailedParams
     | MachineNotAvailableParams
     | MachineNotConnectedParams
+    | DoesNotMeetBusinessRequirementsParams
+    | PieceSyncNotSupportedErrorParams
+
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -104,8 +108,20 @@ export type BaseErrorParams<T, V> = {
     params: V
 }
 
-export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
-    message?: string
+export type SandboxMemoryIssueParams = BaseErrorParams<ErrorCode.SANDBOX_MEMORY_ISSUE, {
+    standardOutput: string
+    standardError: string
+}>
+
+export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EXECUTION_TIMEOUT, {
+    standardOutput: string
+    standardError: string
+}>
+
+export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
+    standardOutput: string
+    standardError: string
+    reason: string
 }>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
@@ -284,6 +300,11 @@ ErrorCode.FLOW_OPERATION_INVALID,
 }
 >
 
+export type FlowOperationInProgressErrorParams = BaseErrorParams<
+ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
+    message: string
+}>
+
 export type FlowFormNotFoundError = BaseErrorParams<
 ErrorCode.FLOW_FORM_NOT_FOUND,
 {
@@ -328,13 +349,10 @@ ErrorCode.INVALID_CUSTOM_DOMAIN,
 }
 >
 
-export type ExecutionTimeoutErrorParams = BaseErrorParams<
-ErrorCode.EXECUTION_TIMEOUT,
-{
-    standardOutput: string
-    standardError: string
-}
->
+export type PieceSyncNotSupportedErrorParams = BaseErrorParams<ErrorCode.PIECE_SYNC_NOT_SUPPORTED, {
+    release: string
+    message: string
+}>
 
 export type ValidationErrorParams = BaseErrorParams<
 ErrorCode.VALIDATION,
@@ -346,6 +364,7 @@ ErrorCode.VALIDATION,
 export type TriggerUpdateStatusErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_UPDATE_STATUS,
 {
+    flowId?: FlowId
     flowVersionId?: FlowVersionId
     message?: string
     standardOutput?: string
@@ -385,12 +404,6 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
-export type ResourceLockedParams = BaseErrorParams<
-ErrorCode.RESOURCE_LOCKED,
-{
-    message: string
-}>
-
 export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
 ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
 {
@@ -406,6 +419,10 @@ ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
 export type AIProviderModelNotSupportedParams = BaseErrorParams<ErrorCode.AI_MODEL_NOT_SUPPORTED, {
     provider: string
     model: string
+}>
+
+export type AIProviderNotSupportedParams = BaseErrorParams<ErrorCode.AI_PROVIDER_NOT_SUPPORTED, {
+    provider: string
 }>
 
 export type AIRequestNotSupportedParams = BaseErrorParams<ErrorCode.AI_REQUEST_NOT_SUPPORTED, {
@@ -463,10 +480,6 @@ export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE
     message: string
 }>
 
-export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED, {
-    message: string
-}>
-
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
@@ -492,6 +505,9 @@ export type MachineNotAvailableParams = BaseErrorParams<ErrorCode.MACHINE_NOT_AV
 export type MachineNotConnectedParams = BaseErrorParams<ErrorCode.MACHINE_NOT_CONNECTED, {
     message: string
 }>
+export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS, {
+    message: string
+}>
 
 export enum ErrorCode {
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -503,14 +519,16 @@ export enum ErrorCode {
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     AI_MODEL_NOT_SUPPORTED = 'AI_MODEL_NOT_SUPPORTED',
+    AI_PROVIDER_NOT_SUPPORTED = 'AI_PROVIDER_NOT_SUPPORTED',
     AI_REQUEST_NOT_SUPPORTED = 'AI_REQUEST_NOT_SUPPORTED',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
-    EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
-    MEMORY_ISSUE = 'MEMORY_ISSUE',
+    SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
+    SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
+    SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
@@ -521,6 +539,7 @@ export enum ErrorCode {
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
+    FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',
@@ -541,7 +560,6 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-    RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
@@ -558,8 +576,10 @@ export enum ErrorCode {
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
-    COPILOT_FAILED = 'COPILOT_FAILED',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
+    DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
+    PIECE_SYNC_NOT_SUPPORTED = 'PIECE_SYNC_NOT_SUPPORTED',
 }
+

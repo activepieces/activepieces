@@ -8,9 +8,9 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { BulkAction } from '@/components/ui/data-table';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -23,9 +23,10 @@ import {
 
 import { MoveFlowDialog } from '../components/move-flow-dialog';
 
-import { CreateFlowDropdown } from './create-flow-dropdown';
+import { flowHooks } from './flow-hooks';
 import { flowsApi } from './flows-api';
-import { flowsHooks } from './flows-hooks';
+import { ImportFlowButton } from './Import-flow-button';
+import { NewFlowButton } from './new-flow-button';
 
 export const useFlowsBulkActions = ({
   selectedRows,
@@ -33,12 +34,14 @@ export const useFlowsBulkActions = ({
   setSelectedRows,
   setRefresh,
   refetch,
+  folderId,
 }: {
   selectedRows: PopulatedFlow[];
   refresh: number;
   setSelectedRows: (selectedRows: PopulatedFlow[]) => void;
   setRefresh: (refresh: number) => void;
   refetch: () => void;
+  folderId: string;
 }) => {
   const userHasPermissionToUpdateFlow = useAuthorization().checkAccess(
     Permission.WRITE_FLOW,
@@ -63,7 +66,7 @@ export const useFlowsBulkActions = ({
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const { mutate: exportFlows, isPending: isExportPending } =
-    flowsHooks.useExportFlows();
+    flowHooks.useExportFlows();
   return useMemo(() => {
     const showMoveFlow =
       !embedState.hideFolders &&
@@ -175,7 +178,8 @@ export const useFlowsBulkActions = ({
                   </ConfirmationDeleteDialog>
                 </PermissionNeededTooltip>
               )}
-              <CreateFlowDropdown />
+              <ImportFlowButton folderId={folderId} onRefresh={refetch} />
+              <NewFlowButton folderId={folderId} />
             </div>
           );
         },

@@ -8,6 +8,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { chatGemini } from './lib/actions/chat-gemini.action';
 import { generateContentFromImageAction } from './lib/actions/generate-content-from-image.action';
 import { generateContentAction } from './lib/actions/generate-content.action';
+import { textToSpeechAction } from './lib/actions/text-to-speech.action';
+import { generateContentWithFileSearchAction } from './lib/actions/generate-content-with-file-search';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -55,8 +57,10 @@ export const googleGemini = createPiece({
   authors: ["pfernandez98","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],
   actions: [
     generateContentAction,
+    generateContentWithFileSearchAction,
     generateContentFromImageAction,
     chatGemini,
+    textToSpeechAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://generativelanguage.googleapis.com/v1beta';
@@ -64,7 +68,7 @@ export const googleGemini = createPiece({
       auth: googleGeminiAuth,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

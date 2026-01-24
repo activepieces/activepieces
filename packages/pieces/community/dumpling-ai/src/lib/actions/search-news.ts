@@ -68,7 +68,7 @@ export const searchNews = createAction({
 			url: 'https://app.dumplingai.com/api/v1/search-news',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

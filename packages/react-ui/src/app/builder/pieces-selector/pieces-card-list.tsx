@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { agentHooks } from '@/features/agents/lib/agent-hooks';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
@@ -21,7 +20,6 @@ import {
 } from '@/lib/types';
 import {
   FlowActionType,
-  Agent,
   FlowOperationType,
   FlowTriggerType,
 } from '@activepieces/shared';
@@ -50,6 +48,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
   const { isLoading: isLoadingPieces, data: categories } =
     piecesHooks.usePiecesSearch({
+      shouldCaptureEvent: true,
       searchQuery,
       type:
         operation.type === FlowOperationType.UPDATE_TRIGGER
@@ -59,13 +58,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
 
   const noResultsFound = !isLoadingPieces && categories.length === 0;
   const [mouseMoved, setMouseMoved] = useState(false);
-  const { data: agentsPage, isLoading: isLoadingAgents } = agentHooks.useList();
   const showActionsOrTriggersInsidePiecesList =
     searchQuery.length > 0 || isMobile;
   const virtualizedItems = transformPiecesMetadataToVirtualizedItems(
     categories,
     showActionsOrTriggersInsidePiecesList,
-    agentsPage?.data,
   );
 
   const initialIndexToScrollToInPiecesList = virtualizedItems.findIndex(
@@ -73,11 +70,17 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
   const { selectedTab } = usePieceSelectorTabs();
 
-  const isLoading = isLoadingPieces || isLoadingAgents;
+  const isLoading = isLoadingPieces;
   const showActionsOrTriggersList =
     searchQuery.length === 0 && !isMobile && !noResultsFound && !isLoading;
   const showPiecesList = !noResultsFound && !isLoading;
-  if (selectedTab === PieceSelectorTabType.EXPLORE) {
+  if (
+    [
+      PieceSelectorTabType.EXPLORE,
+      PieceSelectorTabType.AI_AND_AGENTS,
+      PieceSelectorTabType.APPROVALS,
+    ].includes(selectedTab)
+  ) {
     return null;
   }
   return (
@@ -162,7 +165,6 @@ type VirtualizedItem = {
 const transformPiecesMetadataToVirtualizedItems = (
   searchResult: CategorizedStepMetadataWithSuggestions[],
   showActionsOrTriggersInsidePiecesList: boolean,
-  agents: Agent[] | undefined,
 ) => {
   return searchResult.reduce<VirtualizedItem[]>((result, category) => {
     if (!showActionsOrTriggersInsidePiecesList) {
@@ -179,7 +181,6 @@ const transformPiecesMetadataToVirtualizedItems = (
         height: getItemHeight(
           pieceMetadata,
           showActionsOrTriggersInsidePiecesList,
-          agents,
         ),
         isCategory: false,
         pieceMetadata,
@@ -193,7 +194,6 @@ const transformPiecesMetadataToVirtualizedItems = (
 const getItemHeight = (
   pieceMetadata: StepMetadataWithSuggestions,
   showActionsOrTriggersInsidePiecesList: boolean,
-  agents: Agent[] | undefined,
 ) => {
   const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
     PIECE_SELECTOR_ELEMENTS_HEIGHTS;
@@ -203,11 +203,9 @@ const getItemHeight = (
   ) {
     const actionsListWithoutHiddenActions =
       pieceSelectorUtils.removeHiddenActions(pieceMetadata);
-    const numberOfExtraActions = getNumberOfExtraActions(pieceMetadata, agents);
     return (
       ACTION_OR_TRIGGER_ITEM_HEIGHT *
-        (Object.values(actionsListWithoutHiddenActions).length +
-          numberOfExtraActions) +
+        Object.values(actionsListWithoutHiddenActions).length +
       PIECE_ITEM_HEIGHT
     );
   }
@@ -229,17 +227,4 @@ const getItemHeight = (
     return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
   }
   return PIECE_ITEM_HEIGHT;
-};
-
-const getNumberOfExtraActions = (
-  pieceMetadata: StepMetadataWithSuggestions,
-  agents: Agent[] | undefined,
-) => {
-  if (
-    pieceMetadata.type === FlowActionType.PIECE &&
-    pieceMetadata.pieceName === '@activepieces/piece-agent'
-  ) {
-    return agents?.length ?? 0;
-  }
-  return 0;
 };

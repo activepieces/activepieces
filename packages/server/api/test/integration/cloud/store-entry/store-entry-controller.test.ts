@@ -1,10 +1,10 @@
-import { apId, PlatformRole, PrincipalType, User } from '@activepieces/shared'
+import { apId, DefaultProjectRole, PlatformRole, PrincipalType, User } from '@activepieces/shared'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { createMockProjectMember, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -19,14 +19,13 @@ afterAll(async () => {
 })
 
 describe('Store-entries API', () => {
-    const projectId = apId()
     let engineToken: string
-    let userToken: string
-    let serviceToken: string
     let mockUser: User
+    let projectId: string
 
     beforeEach(async () => {
-        const { mockPlatform } = await mockAndSaveBasicSetup()
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        projectId = mockProject.id
 
         const { mockUser: user } = await mockBasicUser({
             user: {
@@ -36,25 +35,25 @@ describe('Store-entries API', () => {
         })
         mockUser = user
 
+        const projectRole = await databaseConnection()
+            .getRepository('project_role')
+            .findOneByOrFail({ name: DefaultProjectRole.ADMIN })
+
+        const mockProjectMember = createMockProjectMember({
+            userId: mockUser.id,
+            platformId: mockPlatform.id,
+            projectId,
+            projectRoleId: projectRole.id,
+        })
+        await databaseConnection().getRepository('project_member').save(mockProjectMember)
+
         engineToken = await generateMockToken({
             type: PrincipalType.ENGINE,
             id: apId(),
             projectId,
-        })
-
-        userToken = await generateMockToken({
-            type: PrincipalType.USER,
-            id: mockUser.id,
-            projectId,
             platform: {
                 id: mockPlatform.id,
             },
-        })
-
-        serviceToken = await generateMockToken({
-            type: PrincipalType.SERVICE,
-            id: apId(),
-            projectId,
         })
     })
 
@@ -63,18 +62,6 @@ describe('Store-entries API', () => {
             const key = 'new_key_1'
             const response = await makePostRequest(engineToken, key, 'random_value_0')
             expect(response?.statusCode).toBe(200)
-        })
-
-        it('should handle token type userToken correctly and return 200', async () => {
-            const key = 'new_key_2'
-            const response = await makePostRequest(userToken, key, 'random_value_0')
-            expect(response?.statusCode).toBe(200)
-        })
-
-        it('should handle token type serviceToken correctly and return 401', async () => {
-            const key = 'new_key_3'
-            const response = await makePostRequest(serviceToken, key, 'random_value_0')
-            expect(response?.statusCode).toBe(403)
         })
 
         it('should save and update the value', async () => {
@@ -127,7 +114,7 @@ describe('Store-entries API', () => {
     })
 })
 
-function makePostRequest(testToken: string, key: string, value: string): Promise<LightMyRequestResponse> | undefined {
+function makePostRequest(testToken: string, key: string, value: string, projectId?: string): Promise<LightMyRequestResponse> | undefined {
     return app?.inject({
         method: 'POST',
         url: '/v1/store-entries/',
@@ -135,6 +122,7 @@ function makePostRequest(testToken: string, key: string, value: string): Promise
             authorization: `Bearer ${testToken}`,
         },
         body: {
+            projectId,
             key,
             value,
         },

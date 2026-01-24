@@ -11,7 +11,7 @@ export const newTaskCreatedTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const webhook = await makeRequest(
       { subdomain, apiToken },
@@ -27,7 +27,7 @@ export const newTaskCreatedTrigger = createTrigger({
   },
 
   async onDisable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
     const webhookId = await context.store.get('webhookId');
 
     if (webhookId) {
@@ -41,7 +41,7 @@ export const newTaskCreatedTrigger = createTrigger({
   },
 
   async run(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const payload = context.payload.body as { task: { add: { id: number }[] } }
     const taskId = payload.task.add[0].id;

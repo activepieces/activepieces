@@ -20,9 +20,9 @@ export const renameSpace = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PATCH,
-      url: `${medullarCommon.exploratorUrl}/spaces/${context.propsValue.spaceId}/`,
+      url: `${medullarCommon.aiUrl}/spaces/${context.propsValue.spaceId}/`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
       body: {
         name: context.propsValue.space_name,

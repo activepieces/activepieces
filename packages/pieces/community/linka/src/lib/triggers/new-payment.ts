@@ -53,8 +53,8 @@ export const newPayment = createTrigger({
   async onEnable(context) {
     const webhookId = await linkaCommon.subscribeWebhook(
       'Payment.Created',
-      context.auth.base_url,
-      context.auth.api_key,
+      context.auth.props.base_url,
+      context.auth.props.api_key,
       context.webhookUrl
     );
 
@@ -69,8 +69,8 @@ export const newPayment = createTrigger({
 
     if (response !== null && response !== undefined) {
       await linkaCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
+        context.auth.props.base_url,
+        context.auth.props.api_key,
         response.webhookId
       );
     }

@@ -30,7 +30,12 @@ export const findDatabaseItem = createAction({
     for (const fieldKey in filterFields) {
       const fieldValue = filterFields[fieldKey];
       const fieldType = properties[fieldKey].type;
-      if (fieldValue === '' || fieldValue === undefined) {
+      if (
+        fieldValue === '' ||
+        fieldValue === undefined ||
+        fieldValue === null ||
+        (Array.isArray(fieldValue) && fieldValue.length === 0)
+      ) {
         continue;
       }
       switch (fieldType) {

@@ -27,7 +27,7 @@ export const deleteAppUser = createAction({
         method: HttpMethod.DELETE,
         url: `https://studio-api.softr.io/v1/api/users/${encodeURIComponent(email)}`,
         headers: {
-          'Softr-Api-Key': auth,
+          'Softr-Api-Key': auth.secret_text,
           'Softr-Domain': domain,
           'Content-Type': 'application/json',
         },

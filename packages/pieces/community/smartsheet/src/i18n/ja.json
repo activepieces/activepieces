@@ -1,5 +1,4 @@
 {
-  "Smartsheet": "Smartsheet",
   "Dynamic work execution platform for teams to plan, capture, manage, automate, and report on work at scale.": "チームが大規模に作業を計画、キャプチャ、管理、自動化、レポートするためのダイナミックな作業実行プラットフォーム。",
   "\nTo obtain your Smartsheet access token:\n\n1. Sign in to your Smartsheet account.\n2. Click on your profile picture in the top right corner.\n3. Select **Personal Settings** from the dropdown menu.\n4. In the left panel, click **API Access**.\n5. Click **Generate new access token**.\n6. Enter a name for your token (e.g., \"Activepieces Integration\").\n7. Click **OK** to generate the token..\n8. Copy the access token and paste it into the connection field.\n": "\nTo obtain your Smartsheet access token:\n\n1. Sign in to your Smartsheet account.\n2. Click on your profile picture in the top right corner.\n3. Select **Personal Settings** from the dropdown menu.\n4. In the left panel, click **API Access**.\n5. Click **Generate new access token**.\n6. Enter a name for your token (e.g., \"Activepieces Integration\").\n7. Click **OK** to generate the token..\n8. Copy the access token and paste it into the connection field.\n",
   "Add Row to Sheet": "シートに行を追加",

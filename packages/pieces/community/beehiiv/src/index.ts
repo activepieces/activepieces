@@ -30,7 +30,7 @@ export const beehiiv = createPiece({
 			baseUrl: () => BEEHIIV_API_URL,
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 				};
 			},
 		}),

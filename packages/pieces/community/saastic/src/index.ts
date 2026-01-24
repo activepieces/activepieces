@@ -23,7 +23,7 @@ export const saasticAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
+          token: auth.auth,
         },
       });
       return {
@@ -54,7 +54,7 @@ export const saastic = createPiece({
       baseUrl: () => 'https://api.saastic.com',
       auth: saasticAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

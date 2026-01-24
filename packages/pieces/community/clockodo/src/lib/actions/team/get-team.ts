@@ -11,7 +11,7 @@ export default createAction({
     team_id: clockodoCommon.team_id(),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.getTeam(propsValue.team_id as number);
     return res.team;
   },

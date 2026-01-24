@@ -20,7 +20,7 @@ export const getCadModelAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/user/text-to-cad/${propsValue.modelId}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

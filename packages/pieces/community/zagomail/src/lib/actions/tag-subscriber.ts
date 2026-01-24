@@ -29,7 +29,7 @@ export const tagSubscriber = createAction({
     if (providedTags.length < 1)
       throw new Error('You must provide atleast one tag');
 
-    const tags = (await zagoMailApiService.getTags(auth)) as Tag[];
+    const tags = (await zagoMailApiService.getTags(auth.secret_text)) as Tag[];
 
     return await Promise.all(
       providedTags.map(async (providedTag) => {
@@ -40,10 +40,10 @@ export const tagSubscriber = createAction({
         if (tagExists) {
           tag = tagExists;
         } else {
-          tag = (await zagoMailApiService.createTag(auth, providedTag)) as Tag;
+          tag = (await zagoMailApiService.createTag(auth.secret_text, providedTag)) as Tag;
         }
 
-        return await zagoMailApiService.addTagToSubscriber(auth, {
+        return await zagoMailApiService.addTagToSubscriber(auth.secret_text, {
           listUid: propsValue.listUId,
           subscriberUid: propsValue.subscriberUid,
           tagId: tag.ztag_id,

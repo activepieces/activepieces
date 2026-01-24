@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-fathom",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "fathom-typescript": "^0.0.36",
+    "tslib": "^2.3.0"
+  }
+}

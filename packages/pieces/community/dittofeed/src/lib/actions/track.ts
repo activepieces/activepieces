@@ -19,11 +19,11 @@ export const trackAction = createAction({
     properties: Property.Object({
       displayName: 'Event Properties',
       required: false,
-    }),
+    }), 
   },
   async run(context) {
     const { userId, event, properties } = context.propsValue;
-    const { apiKey, baseUrl } = context.auth;
+    const { apiKey, baseUrl } = context.auth.props;
 
     try {
       const response = await httpClient.sendRequest({

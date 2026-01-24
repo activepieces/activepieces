@@ -31,7 +31,7 @@ export const createProductFromUrl = createAction({
       method: HttpMethod.POST,
       url: 'https://api.jogg.ai/v1/product',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: {

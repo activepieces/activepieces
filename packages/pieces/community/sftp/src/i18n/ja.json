@@ -1,5 +1,4 @@
 {
-  "FTP/SFTP": "FTP/SFTP",
   "Connect to FTP, FTPS or SFTP servers": "FTP、FTPS、SFTPサーバーに接続",
   "Protocol": "Protocol",
   "Allow Unauthorized Certificates": "許可されていない証明書を許可",

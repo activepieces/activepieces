@@ -27,6 +27,7 @@ export const filterClickupWorkspaceTasks = createAction({
       'ID of assignee for Clickup Task'
     ),
     tags: Property.MultiSelectDropdown({
+      auth: clickupAuth,
       displayName: 'Tags',
       description: 'The tags to filter for',
       refreshers: ['space_id', 'workspace_id'],

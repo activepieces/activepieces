@@ -54,7 +54,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
 
   async onEnable(context) {
     const { group_guid } = context.propsValue;
-    const { accessToken } = context.auth;
+    const { accessToken } = context.auth.props;
 
     try {
       const response = await bitlyApiCall<{ links: BitlyLink[] }>({
@@ -96,7 +96,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
 
   async run(context) {
     const { group_guid, titleFilter, tagFilter, includeArchived } = context.propsValue;
-    const { accessToken } = context.auth;
+    const { accessToken } = context.auth.props;
     
     try {
       const previousLinkIds = await context.store.get<string[]>(LAST_BITLINK_IDS_KEY) || [];
@@ -188,7 +188,7 @@ export const newBitlinkCreatedTrigger = createTrigger({
 
   async test(context) {
     const { group_guid, includeArchived } = context.propsValue;
-    const { accessToken } = context.auth;
+    const { accessToken } = context.auth.props;
 
     try {
       const response = await bitlyApiCall<{ links: BitlyLink[] }>({

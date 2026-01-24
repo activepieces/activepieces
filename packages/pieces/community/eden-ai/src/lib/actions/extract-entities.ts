@@ -3,6 +3,7 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
+import { edenAiAuth } from '../..';
 
 const NER_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -72,6 +73,7 @@ export const extractEntitiesAction = createAction({
   description: 'Identify entities (names, places) in text using Eden AI. Supports multiple providers, languages, and models.',
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for named entity recognition.',
       required: true,
@@ -84,6 +86,7 @@ export const extractEntitiesAction = createAction({
       required: true,
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Text Language',
       description: 'The language of the input text. Choose "Auto Detection" if unsure.',
       required: false,
@@ -97,6 +100,7 @@ export const extractEntitiesAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -110,6 +114,7 @@ export const extractEntitiesAction = createAction({
       defaultValue: false,
     }),
   },
+  auth: edenAiAuth,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       provider: z.string().min(1, 'Provider is required'),
@@ -147,7 +152,7 @@ export const extractEntitiesAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/text/named_entity_recognition',
         body,

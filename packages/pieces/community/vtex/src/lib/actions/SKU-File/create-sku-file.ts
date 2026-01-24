@@ -37,7 +37,7 @@ export const createSkuFile = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const skuFile = new SkuFile(hostUrl, appKey, appToken);
 
     return await skuFile.createSkuFile(context.propsValue.SkuId, {

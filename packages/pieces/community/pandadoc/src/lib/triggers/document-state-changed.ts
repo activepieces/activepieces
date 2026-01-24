@@ -58,7 +58,7 @@ export const documentStateChanged = createTrigger({
       method: HttpMethod.POST,
       url: 'https://api.pandadoc.com/public/v1/webhook-subscriptions',
       headers: {
-        Authorization: `API-Key ${(context.auth as string)}`,
+        Authorization: `API-Key ${(context.auth.secret_text)}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -80,7 +80,7 @@ export const documentStateChanged = createTrigger({
           method: HttpMethod.DELETE,
           url: `https://api.pandadoc.com/public/v1/webhook-subscriptions/${webhookId}`,
           headers: {
-            Authorization: `API-Key ${(context.auth as string)}`,
+            Authorization: `API-Key ${(context.auth.secret_text)}`,
           },
         });
       } catch (error) {

@@ -1,5 +1,4 @@
 {
-  "Text Helper": "Ayuda de texto",
   "Tools for text processing": "Herramientas para procesamiento de texto",
   "Concatenate": "Concatenar",
   "Replace": "Reemplazar",
@@ -10,6 +9,7 @@
   "Remove HTML Tags": "Eliminar etiquetas HTML",
   "Slugify": "Slugify",
   "Use Default Value if Input is Empty": "Usar valor predeterminado si la entrada está vacía",
+  "List to Text Table": "Lista a Tabla de Texto",
   "Concatenate two or more texts": "Concatenar dos o más textos",
   "Replaces all instances of any word, character or phrase in text, with another.": "Reemplaza todas las instancias de cualquier palabra, carácter o frase en texto, con otra.",
   "Split a text by a delimiter": "Dividir un texto por un delimitador",
@@ -19,6 +19,7 @@
   "Removes every HTML tag and returns plain text": "Elimina cada etiqueta HTML y devuelve texto plano",
   "Slugifies strings.": "Slugifica las cadenas.",
   "Checks your input and returns the default value, if the input is an empty text or list": "Comprueba tu entrada y devuelve el valor predeterminado, si la entrada está vacía de texto o lista",
+  "Convert a list of items to a text table": "Convierte una lista de elementos a una tabla de texto",
   "Texts": "Textos",
   "Separator": "Separador",
   "Text": "Texto",
@@ -39,6 +40,7 @@
   "HTML content": "Contenido HTML",
   "Enter value": "Introducir valor",
   "Default Value": "Valor por defecto",
+  "List": "Lista",
   "The text that separates the texts you want to concatenate": "El texto que separa los textos que desea concatenar",
   "Can be plain text or a regex expression.": "Puede ser texto plano o expresión regex.",
   "Leave empty to delete found results.": "Dejar en blanco para eliminar los resultados encontrados.",
@@ -51,6 +53,7 @@
   "Whether to add an ID to headers during conversion": "Si agregar un ID a las cabeceras durante la conversión",
   "Parses line breaks as &lt;br&gt;, without needing 2 spaces at the end of the line": "Analiza los saltos de línea como &lt;br&gt;, sin necesidad de 2 espacios al final de la línea",
   "The HTML to convert to markdown": "El HTML para convertir a markdown",
+  "List of items to convert to a text table": "Lista de elementos a convertir a una tabla de texto",
   "Default": "Por defecto",
   "Original": "Original",
   "GitHub": "GitHub"

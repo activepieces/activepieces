@@ -1,27 +1,32 @@
 import { inspect } from 'util'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { triggerRunStats } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    EngineResponseStatus,
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
+    PieceTriggerSettings,
+    PlatformId,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
     TriggerRunStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService } from '../api/server-api.service'
-import { engineRunner } from '../runner'
+import { pieceWorkerCache } from '../cache/piece-worker-cache'
+
+import { operationHandler } from '../compute/operation-handler'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
+import { workerRedisConnections } from './worker-redis'
 
 export const triggerHooks = (log: FastifyBaseLogger) => ({
     extractPayloads: async (
         engineToken: string,
         params: ExecuteTrigger,
     ): Promise<ExtractPayloadsResult> => {
-        const { payload, flowVersion, simulate, jobId } = params
+        const { flowVersion, platformId } = params
         if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
@@ -32,14 +37,19 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
             }
         }
         const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
-        rejectedPromiseHandler(engineApiService(engineToken).createTriggerRun({
+
+        const triggerSettings = flowVersion.trigger.settings as PieceTriggerSettings
+        const triggerPiece = await pieceWorkerCache(log).getPiece({
+            engineToken,
+            pieceName: triggerSettings.pieceName,
+            pieceVersion: triggerSettings.pieceVersion,
+            platformId,
+        })
+        await triggerRunStats(log, await workerRedisConnections.useExisting()).save({
+            platformId,
+            pieceName: triggerPiece.pieceName,
             status,
-            payload,
-            flowId: flowVersion.flowId,
-            simulate,
-            jobId,
-            error: errorMessage,
-        }), log)
+        })
 
         return {
             status,
@@ -49,7 +59,6 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
     },
 })
 
-
 type ExtractPayloadsResult = {
     payloads: unknown[]
     status: TriggerRunStatus
@@ -57,9 +66,10 @@ type ExtractPayloadsResult = {
 }
 
 type ExecuteTrigger = {
-    flowVersion: FlowVersion
     jobId: string
+    flowVersion: FlowVersion
     projectId: ProjectId
+    platformId: PlatformId
     simulate: boolean
     payload: TriggerPayload
     timeoutInSeconds: number
@@ -72,10 +82,11 @@ async function getTriggerPayloadsAndStatus(
 ): Promise<ExtractPayloadsResult> {
     const { payload, flowVersion, projectId, simulate, timeoutInSeconds } = params
     try {
-        const { result } = await engineRunner(log).executeTrigger(engineToken, {
+        const { status, result, standardError } = await operationHandler(log).executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
             flowVersion,
             triggerPayload: payload,
+            platformId: params.platformId,
             webhookUrl: await webhookUtils(log).getWebhookUrl({
                 flowId: flowVersion.flowId,
                 simulate,
@@ -86,22 +97,20 @@ async function getTriggerPayloadsAndStatus(
             timeoutInSeconds,
         })
 
-        if (result.success) {
+        if (status === EngineResponseStatus.OK && result.success) {
             return {
                 payloads: result.output as unknown[],
                 status: TriggerRunStatus.COMPLETED,
             }
         }
-        else {
-            return {
-                payloads: [],
-                status: TriggerRunStatus.FAILED,
-                errorMessage: result.message,
-            }
+        return {
+            payloads: [],
+            status: TriggerRunStatus.FAILED,
+            errorMessage: result?.message ?? standardError,
         }
     }
     catch (e) {
-        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
+        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT
         if (isTimeoutError) {
             return {
                 payloads: [],

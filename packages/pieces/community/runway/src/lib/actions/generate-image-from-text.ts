@@ -102,7 +102,7 @@ export const generateImageFromText = createAction({
 			throw new Error('gen4_image_turbo requires at least one reference image');
 		}
 
-		const apiKey = auth as string;
+		const apiKey = auth.secret_text;
 		const client = new RunwayML({ apiKey });
 
 		const requestBody: any = {

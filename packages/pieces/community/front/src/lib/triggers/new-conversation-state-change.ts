@@ -4,6 +4,7 @@ import {
   Property,
   PiecePropValueSchema,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -35,12 +36,12 @@ const props = {
     },
   }),
 };
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof frontAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { conversation_id, desired_state } = propsValue;
     const conv = await makeRequest(
-      auth as unknown as string,
+      auth,
       HttpMethod.GET,
       `/conversations/${conversation_id}`
     );

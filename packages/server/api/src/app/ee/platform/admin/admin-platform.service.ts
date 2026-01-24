@@ -6,17 +6,20 @@ import {
     FlowRetryStrategy,
     FlowRun,
     FlowRunStatus,
+    IncreaseAICreditsForPlatformRequestBody,
     isNil,
     PlatformRole,
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { aiProviderService } from '../../../ai/ai-provider-service'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { platformRepo } from '../../../platform/platform.service'
 import { userRepo } from '../../../user/user-service'
 import { licenseKeysService } from '../../license-keys/license-keys-service'
+import { openRouterApi } from '../platform-plan/openrouter/openrouter-api'
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
@@ -89,6 +92,15 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             throw new Error('Invalid or expired license key')
         }
         await licenseKeysService(log).applyLimits(platform.id, key)
+    },
+    async increaseAiCredits({  amountInUsd, platformId }: IncreaseAICreditsForPlatformRequestBody): Promise<void> {
+        const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
+        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+        await openRouterApi.updateKey({
+            hash: apiKeyHash,
+            limit: key.limit! + amountInUsd,
+        })
     },
 
 })

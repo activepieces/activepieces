@@ -40,8 +40,8 @@ export const askSpace = createAction({
           {
             label: 'MedullaryAI Search Agent',
             value: '`search_agent`',
-          } 
-        ], 
+          }
+        ],
       },
     }),
     isReasoning: Property.Checkbox({
@@ -65,7 +65,7 @@ export const askSpace = createAction({
       // if no chatId is selected, create a new one
       const chatResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${medullarCommon.exploratorUrl}/chats/`,
+        url: `${medullarCommon.aiUrl}/chats/`,
         body: {
           name: 'activepieces automated',
           space: {
@@ -73,7 +73,7 @@ export const askSpace = createAction({
           },
         },
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
       chatId = chatResponse.body.uuid;
@@ -81,7 +81,7 @@ export const askSpace = createAction({
 
     const messageResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${medullarCommon.exploratorUrl}/messages/get_response/?chat=${chatId}`,
+      url: `${medullarCommon.aiUrl}/messages/get_response/?chat=${chatId}`,
       body: {
         chat: {
           uuid: chatId,
@@ -93,7 +93,7 @@ export const askSpace = createAction({
         source: 'external_api',
       },
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
     });
 

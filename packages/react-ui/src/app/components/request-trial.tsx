@@ -1,10 +1,8 @@
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
-import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -14,6 +12,7 @@ export type FeatureKey =
   | 'TEAM'
   | 'GLOBAL_CONNECTIONS'
   | 'USERS'
+  | 'EVENT_DESTINATIONS'
   | 'API'
   | 'SSO'
   | 'AUDIT_LOGS'
@@ -28,6 +27,7 @@ export type FeatureKey =
   | 'AGENTS'
   | 'TABLES'
   | 'TODOS'
+  | 'BILLING'
   | 'MCPS';
 
 type RequestTrialProps = {
@@ -40,11 +40,8 @@ export const RequestTrial = ({
   featureKey,
   buttonVariant = 'default',
 }: RequestTrialProps) => {
-  const openDialog = useManagePlanDialogStore((state) => state.openDialog);
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
-  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
-  const selfHosted = edition !== ApEdition.CLOUD;
 
   const createQueryParams = () => {
     const params = {
@@ -61,17 +58,15 @@ export const RequestTrial = ({
   };
 
   const handleClick = () =>
-    selfHosted
-      ? window.open(
-          `https://www.activepieces.com/sales?${createQueryParams()}`,
-          '_blank',
-          'noopener noreferrer',
-        )
-      : openDialog();
+    window.open(
+      `https://www.activepieces.com/sales?${createQueryParams()}`,
+      '_blank',
+      'noopener noreferrer',
+    );
 
   return (
     <Button variant={buttonVariant} onClick={handleClick}>
-      {selfHosted ? t('Contact Sales') : t('Upgrade Now')}
+      {t('Contact Sales')}
     </Button>
   );
 };

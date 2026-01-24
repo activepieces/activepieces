@@ -1,6 +1,7 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { respondIoApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
 // For typing purposes in the client
 export const RespondIoAuth = PieceAuth.SecretText({
@@ -27,7 +28,10 @@ export const respondIoAuth = PieceAuth.CustomAuth({
       await respondIoApiCall({
         method: HttpMethod.GET,
         url: '/space/user',
-        auth: auth,
+        auth: {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
       });
       return { valid: true };
     } catch (e) {

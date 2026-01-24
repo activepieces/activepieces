@@ -162,7 +162,7 @@ export const addOrUpdateSubscriber = createAction({
       body.customFields = customFields;
     }
 
-    const response = await makeRequest(auth, HttpMethod.POST, endpoint, body);
+    const response = await makeRequest(auth.secret_text, HttpMethod.POST, endpoint, body);
     return response;
   },
 });

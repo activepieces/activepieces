@@ -13,7 +13,7 @@ export const pieceTranslation = {
       if (!target) {
         return piece
       }
-      const translatedPiece: T = JSON.parse(JSON.stringify(piece))
+      const translatedPiece: T = structuredClone(piece)
       pieceTranslation.pathsToValuesToTranslate.forEach(key => {
         translateProperty(translatedPiece, key, target)
       })
@@ -107,7 +107,6 @@ async function fileExists(filePath: string) {
 const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   const filePath = path.join(pieceOutputPath, 'src', 'i18n', `${locale}.json`);
   if (!(await fileExists(filePath))) {
-    console.log(`readLocaleFile: ${filePath} does not exist`)
     return null;
   }
 

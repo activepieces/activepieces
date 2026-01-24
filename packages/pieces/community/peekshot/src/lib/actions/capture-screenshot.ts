@@ -67,7 +67,7 @@ export const captureScreenshot = createAction({
       method: HttpMethod.POST,
       url: 'https://api.peekshot.com/api/v1/screenshots',
       headers: {
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text as string,
         'Content-Type': 'application/json',
       },
       body: {
@@ -98,7 +98,7 @@ export const captureScreenshot = createAction({
         method: HttpMethod.GET,
         url: `https://api.peekshot.com/api/v1/screenshots/${requestId}`,
         headers: {
-          'x-api-key': auth as string,
+          'x-api-key': auth.secret_text,
           'Content-Type': 'application/json',
         },
       });

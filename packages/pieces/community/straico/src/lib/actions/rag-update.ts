@@ -63,7 +63,7 @@ export const updateRag = createAction({
       method: HttpMethod.PUT,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: formData,
       headers: {

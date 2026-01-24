@@ -23,7 +23,13 @@ export const snowflakeAuth = PieceAuth.CustomAuth({
     password: PieceAuth.SecretText({
       displayName: 'Password',
       description: 'Password for the user.',
-      required: true,
+      required: false,
+    }),
+    privateKey: PieceAuth.SecretText({
+      displayName: 'Private Key',
+      description:
+        'The private key to authenticate with. Either this or password is required',
+      required: false,
     }),
     database: Property.ShortText({
       displayName: 'Database',
@@ -45,7 +51,20 @@ export const snowflakeAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
+  validate: async ({ auth }) => {
+    if (!auth.password && !auth.privateKey) {
+      return {
+        valid: false,
+        error:
+          'Either password or private key must be provided for authentication.',
+      };
+    }
+    return {
+      valid: true,
+    };
+  },
 });
+
 export const snowflake = createPiece({
   displayName: 'Snowflake',
   description: 'Data warehouse built for the cloud',

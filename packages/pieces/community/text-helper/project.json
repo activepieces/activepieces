@@ -22,8 +22,13 @@
             "glob": "**/!(i18n.json)"
           }
         ],
-        "updateBuildableProjectDepsInPackageJson": true
-      }
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-string-utils {args.ver} {args.tag}",
@@ -35,6 +40,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/text-helper",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   },

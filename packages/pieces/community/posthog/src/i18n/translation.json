@@ -21,10 +21,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The event name": "The event name",
   "User's Distinct Id": "User's Distinct Id",
   "The event properties": "The event properties",
@@ -36,7 +38,7 @@
   "Whether to anonymize incoming IP addresses.": "Whether to anonymize incoming IP addresses.",
   "If this is a demo project": "If this is a demo project",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "Alias": "Alias",
   "Capture": "Capture",
   "Identify": "Identify",
@@ -47,5 +49,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

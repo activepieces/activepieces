@@ -1,0 +1,7 @@
+{
+  "New Submission": "New Submission",
+  "Triggers when form receives a new submission.": "Triggers when form receives a new submission.",
+  "Markdown": "Markdown",
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n",
+  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n"
+}

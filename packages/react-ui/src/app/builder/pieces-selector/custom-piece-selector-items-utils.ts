@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import {
   CORE_STEP_METADATA,
@@ -14,7 +14,6 @@ import {
 } from '@/lib/types';
 import {
   FlowActionType,
-  Agent,
   BranchExecutionType,
   BranchOperator,
   FlowOperationType,
@@ -44,7 +43,7 @@ const getActionFromPieceMetadata = (
     (action) => action.name === actionName,
   );
   if (isNil(result)) {
-    toast(INTERNAL_ERROR_TOAST);
+    internalErrorToast();
     console.error(`Action ${actionName} not found in piece metadata`);
     return null;
   }
@@ -185,30 +184,11 @@ export const createWaitForApprovalStep = ({
   });
 };
 
-export const overrideDisplayInfoForPieceSelectorItemWithAgentInfo = (
-  pieceSelectorItem: PieceSelectorPieceItem,
-  agent: Agent,
-): PieceSelectorPieceItem => {
-  const agentPieceSelectorItem: PieceSelectorPieceItem = JSON.parse(
-    JSON.stringify(pieceSelectorItem),
-  );
-  agentPieceSelectorItem.pieceMetadata.logoUrl = agent.profilePictureUrl;
-  agentPieceSelectorItem.actionOrTrigger.description = agent.description;
-  agentPieceSelectorItem.actionOrTrigger.displayName = agent.displayName;
-  return agentPieceSelectorItem;
-};
-
 export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
-  pieceSelectorItem: PieceSelectorPieceItem,
-  agent: Agent,
+  agentPieceSelectorItem: PieceSelectorPieceItem,
   operation: PieceSelectorOperation,
   handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep'],
 ) => {
-  const agentPieceSelectorItem =
-    overrideDisplayInfoForPieceSelectorItemWithAgentInfo(
-      pieceSelectorItem,
-      agent,
-    );
   const stepName = handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation,
@@ -218,7 +198,6 @@ export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
     stepName,
     pieceSelectorItem: agentPieceSelectorItem,
   });
-  defaultValues.settings.input.agentId = agent.externalId;
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation: {

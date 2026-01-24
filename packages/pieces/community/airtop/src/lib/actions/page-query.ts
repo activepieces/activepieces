@@ -143,7 +143,7 @@ export const pageQueryAction = createAction({
 		}
 
 		const response = await airtopApiCall({
-			apiKey: auth,
+			apiKey: auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/page-query`,
 			body,

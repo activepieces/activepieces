@@ -1,4 +1,4 @@
-import { BillingCycle, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -18,7 +18,6 @@ import {
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../ee/platform/platform-usage-service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
@@ -38,6 +37,7 @@ export const platformService = {
             const hasProjects = await projectService.userHasProjects({
                 platformId: user.platformId,
                 userId: user.id,
+                isPrivileged: userService.isUserPrivileged(user),
             })
             return hasProjects ? user.platformId : null
         }))
@@ -98,13 +98,8 @@ export const platformService = {
             ...platform.federatedAuthProviders,
             ...(params.federatedAuthProviders ?? {}),
         }
-        const copilotSettings = params.copilotSettings ? {
-            ...platform.copilotSettings,
-            ...params.copilotSettings,
-        } : platform.copilotSettings
         const updatedPlatform: Platform = {
             ...platform,
-            copilotSettings,
             federatedAuthProviders,
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
@@ -121,7 +116,6 @@ export const platformService = {
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
-            smtp: params.smtp,
         }
         if (!isNil(params.plan)) {
             await platformPlanService(system.globalLogger()).update({
@@ -156,7 +150,7 @@ export const platformService = {
         }
         return {
             ...platform,
-            usage: await platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id),
+            usage: await getUsage(platform),
             plan: await getPlan(platform),
         }
     },
@@ -187,7 +181,7 @@ async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> 
     if (edition === ApEdition.COMMUNITY) {
         return undefined
     }
-    return platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id)
+    return platformPlanService(system.globalLogger()).getUsage(platform.id)
 }
 
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
@@ -197,7 +191,6 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             ...OPEN_SOURCE_PLAN,
             stripeSubscriptionStartDate: 0,
             stripeSubscriptionEndDate: 0,
-            stripeBillingCycle: BillingCycle.MONTHLY,
         }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
@@ -217,6 +210,9 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     plan?: Partial<PlatformPlanLimits>
+    logoIconUrl?: string
+    fullLogoUrl?: string
+    favIconUrl?: string
 }
 
 type ListPlatformsForIdentityParams = {

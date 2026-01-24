@@ -42,6 +42,8 @@
   "The ID of the document to append text to": "Die ID des Dokuments, an das Text angehängt wird",
   "Curly Braces {{}}": "Geschwommene Klammern {{}}",
   "Square Brackets [[]]": "Quadratische Klammern [[]]",
+  "Single Curly Braces {}": "Einzelne geschwemmte Klammern {}",
+  "Single Square Brackets []": "Einzelquadratische Klammern []",
   "GET": "ERHALTEN",
   "POST": "POST",
   "PATCH": "PATCH",

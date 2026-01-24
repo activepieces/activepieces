@@ -62,7 +62,7 @@ export const addOrUpdateContact = createAction({
             body: body,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.auth,
+                token: context.auth.secret_text,
             },
         });
 

@@ -22,7 +22,7 @@ const OAuthProp = Type.Union([
 type OAuthProp =
   | ShortTextProperty<boolean>
   | SecretTextProperty<boolean>
-  | StaticDropdownProperty<any, true>;
+  | StaticDropdownProperty<any, boolean>;
 
 
 export const OAuth2Props = Type.Record(Type.String(), OAuthProp);
@@ -80,7 +80,7 @@ export const OAuth2Property = Type.Composite([
 
 export type OAuth2Property<
   T extends OAuth2Props
-> = BasePieceAuthSchema<OAuth2PropertyValue> &
+> = BasePieceAuthSchema<OAuth2PropertyValue<T>> &
   OAuth2ExtraProps &
   TPropertyValue<
     OAuth2PropertyValue<T>,

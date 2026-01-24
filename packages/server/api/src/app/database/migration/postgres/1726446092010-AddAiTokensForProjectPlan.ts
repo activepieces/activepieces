@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddAiTokensForProjectPlan1726446092010 implements MigrationInterface {
     name = 'AddAiTokensForProjectPlan1726446092010'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD COLUMN "aiTokens" integer
@@ -19,6 +24,9 @@ export class AddAiTokensForProjectPlan1726446092010 implements MigrationInterfac
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "aiTokens"
         `)

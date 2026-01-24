@@ -1,13 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ArrowDownZA,
-  ArrowUpAz,
-  Folder,
-  Shapes,
-  TableProperties,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Folder, Shapes, TableProperties } from 'lucide-react';
+import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -20,7 +14,12 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto, isNil, Permission } from '@activepieces/shared';
+import {
+  FolderDto,
+  isNil,
+  Permission,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 
 import { foldersHooks } from '../lib/folders-hooks';
 import { foldersUtils } from '../lib/folders-utils';
@@ -58,12 +57,12 @@ const FolderItem = ({
         onClick={() => updateSearchParams(folder.id)}
       >
         <TextWithIcon
-          className="flex-grow"
+          className="grow"
           icon={<FolderIcon />}
           text={
             <div
               className={cn(
-                'flex-grow max-w-[150px] text-start truncate whitespace-nowrap overflow-hidden',
+                'grow max-w-[150px] text-start truncate whitespace-nowrap overflow-hidden',
                 {
                   'font-medium': selectedFolderId === folder.id,
                 },
@@ -73,7 +72,11 @@ const FolderItem = ({
             </div>
           }
         >
-          <FolderActions folder={folder} refetch={refetch} />
+          <FolderActions
+            folder={folder}
+            refetch={refetch}
+            hideFlowCount={true}
+          />
         </TextWithIcon>
       </Button>
     </div>
@@ -86,10 +89,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
-  const [
-    sortedAlphabeticallyIncreasingly,
-    setSortedAlphabeticallyIncreasingly,
-  ] = useState(true);
 
   const updateSearchParams = (folderId: string | undefined) => {
     const newQueryParameters: URLSearchParams = new URLSearchParams(
@@ -113,25 +112,16 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
 
   const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
-    queryFn: flowsApi.count,
+    queryFn: () =>
+      flowsApi.count({ projectId: authenticationSession.getProjectId()! }),
   });
-
-  const sortedFolders = useMemo(() => {
-    return folders?.sort((a, b) => {
-      if (sortedAlphabeticallyIncreasingly) {
-        return a.displayName.localeCompare(b.displayName);
-      } else {
-        return b.displayName.localeCompare(a.displayName);
-      }
-    });
-  }, [folders, sortedAlphabeticallyIncreasingly]);
 
   useEffect(() => {
     refetchFolders();
     refetchAllFlowsCount();
   }, [refresh]);
 
-  const isInUncategorized = selectedFolderId === 'NULL';
+  const isInUncategorized = selectedFolderId === UncategorizedFolderId;
   const isInAllFlows = isNil(selectedFolderId);
 
   return (
@@ -140,21 +130,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         <span className="flex">{t('Folders')}</span>
         <div className="grow"></div>
         <div className="flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() =>
-              setSortedAlphabeticallyIncreasingly(
-                !sortedAlphabeticallyIncreasingly,
-              )
-            }
-          >
-            {sortedAlphabeticallyIncreasingly ? (
-              <ArrowUpAz className="w-4 h-4"></ArrowUpAz>
-            ) : (
-              <ArrowDownZA className="w-4 h-4"></ArrowDownZA>
-            )}
-          </Button>
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFolders}
           >
@@ -176,7 +151,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           <TextWithIcon
             icon={<TableProperties className="w-4 h-4"></TableProperties>}
             text={
-              <div className="flex-grow whitespace-break-spaces break-all text-start truncate">
+              <div className="grow whitespace-break-spaces break-all text-start truncate">
                 {t('All flows')}
               </div>
             }
@@ -193,12 +168,12 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
             'bg-accent dark:bg-accent/50': isInUncategorized,
           })}
-          onClick={() => updateSearchParams('NULL')}
+          onClick={() => updateSearchParams(UncategorizedFolderId)}
         >
           <TextWithIcon
             icon={<Shapes className="w-4 h-4"></Shapes>}
             text={
-              <div className="flex-grow whitespace-break-spaces break-all text-start truncate">
+              <div className="grow whitespace-break-spaces break-all text-start truncate">
                 {t('Uncategorized')}
               </div>
             }
@@ -220,8 +195,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 ))}
               </div>
             )}
-            {sortedFolders &&
-              sortedFolders.map((folder) => {
+            {folders &&
+              folders.map((folder) => {
                 return (
                   <FolderItem
                     key={folder.id}

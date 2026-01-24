@@ -3,6 +3,7 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/jira-cloud/src",
   "projectType": "library",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -23,34 +24,13 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
-      "dependsOn": ["prebuild", "^build"]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/jira-cloud",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-jira-cloud:prebuild",
-          "nx run pieces-jira-cloud:build",
-          "nx run pieces-jira-cloud:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/jira-cloud",
-        "command": "npm install"
-      }
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-jira-cloud {args.ver} {args.tag}",
@@ -66,11 +46,22 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
         "jestConfig": "packages/pieces/community/jira-cloud/jest.config.ts"
       }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/jira-cloud",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
-  },
-  "tags": []
+  }
 }

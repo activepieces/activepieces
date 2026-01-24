@@ -58,7 +58,7 @@ export const LanguageToggle = () => {
             variant="outline"
             role="combobox"
             className={cn(
-              'w-full justify-between h-9',
+              'w-full justify-between h-9 font-normal',
               !selectedLanguage && 'text-muted-foreground',
             )}
             disabled={isPending}
@@ -92,10 +92,7 @@ export const LanguageToggle = () => {
                       onSelect={(value) => mutate(value)}
                       className="flex items-center justify-between py-2 text-sm"
                     >
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" />
-                        {label}
-                      </div>
+                      <div className="flex items-center gap-2">{label}</div>
                       <Check
                         className={cn(
                           'h-4 w-4',

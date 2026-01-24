@@ -20,7 +20,7 @@ export const getUserApiCallAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/user/api-calls/${propsValue.callId}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

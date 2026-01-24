@@ -29,22 +29,35 @@ export const FlowRun = Type.Object({
     flowId: Type.String(),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Boolean(),
+    triggeredBy: Type.Optional(Type.String()),
     tags: Type.Optional(Type.Array(Type.String())),
     flowVersionId: Type.String(),
-    flowDisplayName: Type.String(),
+    flowVersion: Type.Optional(Type.Object({
+        displayName: Type.Optional(Type.String()),
+    })),
     logsFileId: Nullable(Type.String()),
-    tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),
-    duration: Type.Optional(Type.Number()),
-    startTime: Type.String(),
+    startTime: Type.Optional(Type.String()),
     finishTime: Type.Optional(Type.String()),
     environment: Type.Enum(RunEnvironment),
     pauseMetadata: Type.Optional(PauseMetadata),
     // The steps data may be missing if the flow has not started yet,
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
     steps: Nullable(Type.Record(Type.String(), Type.Unknown())),
-    failedStepName: Type.Optional(Type.String()),
+    failedStep: Type.Optional(Type.Object({
+        name: Type.String(),
+        displayName: Type.String(),
+    })),
     stepNameToTest: Type.Optional(Type.String()),
+    archivedAt: Nullable(Type.String({ default: null })),
+    stepsCount: Type.Optional(Type.Number()),
 })
+
+export const FailedStep = Type.Object({
+    name: Type.String(),
+    displayName: Type.String(),
+    message: Type.String(),
+})
+export type FailedStep = Static<typeof FailedStep>
 
 export type FlowRun = Static<typeof FlowRun> & ExecutionState

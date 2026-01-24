@@ -54,7 +54,7 @@ export const generateCreatorTitles = createAction({
       language: propsValue.language || 'en',
     };
     const response = await makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.POST,
       '/creator/titles',
       body

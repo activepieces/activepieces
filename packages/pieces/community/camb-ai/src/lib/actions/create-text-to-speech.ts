@@ -62,7 +62,7 @@ export const createTextToSpeech = createAction({
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/tts`,
-            headers: { 'x-api-key': auth, 'Content-Type': 'application/json' },
+            headers: { 'x-api-key': auth.secret_text, 'Content-Type': 'application/json' },
             body: payload,
         });
         const taskId = initialResponse.body.task_id;
@@ -73,7 +73,7 @@ export const createTextToSpeech = createAction({
             const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/tts/${taskId}`,
-                headers: { 'x-api-key': auth },
+                headers: { 'x-api-key': auth.secret_text },
             });
 
             if (statusResponse.body.status === 'SUCCESS') {
@@ -99,7 +99,7 @@ export const createTextToSpeech = createAction({
         const audioResponse: HttpResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/tts-result/${run_id}`,
-            headers: { 'x-api-key': auth },
+            headers: { 'x-api-key': auth.secret_text },
             responseType: 'arraybuffer',
         });
         

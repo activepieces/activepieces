@@ -3,6 +3,7 @@ import {
   createTrigger,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { xeroAuth } from '../..';
 import {
@@ -28,7 +29,7 @@ function parseXeroDateToEpoch(dateVal: unknown): number {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof xeroAuth>,
+  AppConnectionValueForAuthProperty<typeof xeroAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

@@ -1,5 +1,4 @@
-
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { smooveAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
@@ -25,7 +24,7 @@ interface LeadSubmission {
     customFields?: Record<string, any>;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, any> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, any> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, lastFetchEpochMS }) => {
         try {
@@ -50,7 +49,7 @@ const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, any> = {
                 
             } else if (monitoringMode === 'all') {
                 try {
-                    const landingPages = await makeRequest(auth, HttpMethod.GET, '/LandingPages');
+                    const landingPages = await makeRequest(auth.secret_text, HttpMethod.GET, '/LandingPages');
                     const pages = Array.isArray(landingPages) ? landingPages : [];
                     
                     const pagePromises = pages.slice(0, 10).map(async (page: any) => {
@@ -94,7 +93,7 @@ const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, any> = {
 };
 
 async function fetchSubmissionsForPage(
-    auth: string, 
+    auth: AppConnectionValueForAuthProperty<typeof smooveAuth>, 
     pageId: string, 
     includeCustomFields: boolean,
     includeContactDetails: boolean,
@@ -110,7 +109,7 @@ async function fetchSubmissionsForPage(
         ];
         
         const endpoint = `/LandingPages/${pageId}/Recipients?${queryParams.join('&')}`;
-        const response = await makeRequest(auth, HttpMethod.GET, endpoint);
+        const response = await makeRequest(auth.secret_text, HttpMethod.GET, endpoint);
         
         if (!response) return [];
         

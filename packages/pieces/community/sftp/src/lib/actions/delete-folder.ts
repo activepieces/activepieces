@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
-import { Client as FTPClient } from 'basic-ftp';
+import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
+import { getSftpError } from './common';
 
 async function deleteFolderFTP(client: FTPClient, directoryPath: string, recursive: boolean) {
   if (recursive) {
@@ -35,10 +36,10 @@ export const deleteFolderAction = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
+    const client = await getClient(context.auth.props);
     const directoryPath = context.propsValue.folderPath;
     const recursive = context.propsValue.recursive ?? false;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
@@ -54,14 +55,22 @@ export const deleteFolderAction = createAction({
       return {
         status: 'success',
       };
-    } catch (err) {
-      console.error(err);
-      return {
-        status: 'error',
-        error: err,
-      };
+    } 
+    catch (err) {
+      if (err instanceof FTPError) {
+        console.error(getSftpError(err.code));
+        return {
+          status: 'error',
+          error: getSftpError(err.code),
+        };
+      } else {
+        return {
+          status: 'error',
+          error: err
+        }
+      }
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.props.protocol);
     }
   },
 });

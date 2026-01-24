@@ -19,7 +19,7 @@ export const getBitlinkDetailsAction = createAction({
         try {
             return await bitlyApiCall({
                 method: HttpMethod.GET,
-                auth: context.auth,
+                auth: context.auth.props,
                 resourceUri: `/bitlinks/${bitlink}`,
             });
 

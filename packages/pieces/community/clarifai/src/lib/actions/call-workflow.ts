@@ -21,7 +21,7 @@ export const workflowPredictAction = createAction({
       displayName: 'Input URL or bytes',
       required: true,
     }),
-  },
+  },    
   async run(ctx) {
     const { auth } = ctx;
     const { workflowUrl, file } = ctx.propsValue;
@@ -29,7 +29,7 @@ export const workflowPredictAction = createAction({
     const input = fileToInput(file);
 
     const outputs = await callClarifaiWorkflow({
-      auth,
+      auth: auth.secret_text,
       workflowUrl,
       input,
     });

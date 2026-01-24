@@ -46,7 +46,7 @@ export const discordCreateGuildRole = createAction({
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/roles`,
       method: HttpMethod.POST,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
         'X-Audit-Log-Reason': `${configValue.propsValue.creation_reason}`,
       },

@@ -10,6 +10,7 @@ import { t } from 'i18next';
 import { FolderPlus } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,12 +23,12 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -47,6 +48,7 @@ type CreateFolderDialogProps = {
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter folder name'),
+    pattern: '.*\\S.*',
   }),
 });
 
@@ -71,7 +73,7 @@ export const CreateFolderDialog = ({
   >({
     mutationFn: async (data) => {
       return await foldersApi.create({
-        displayName: data.displayName,
+        displayName: data.displayName.trim(),
         projectId: authenticationSession.getProjectId()!,
       });
     },
@@ -80,9 +82,7 @@ export const CreateFolderDialog = ({
       setIsDialogOpen(false);
       updateSearchParams(folder.id);
       refetchFolders();
-      toast({
-        title: t('Added folder successfully'),
-      });
+      toast.success(t('Added folder successfully'));
     },
     onError: (error) => {
       if (api.isError(error)) {
@@ -94,7 +94,7 @@ export const CreateFolderDialog = ({
             break;
           }
           default: {
-            toast(INTERNAL_ERROR_TOAST);
+            internalErrorToast();
             break;
           }
         }

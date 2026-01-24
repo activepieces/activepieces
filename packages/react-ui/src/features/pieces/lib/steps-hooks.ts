@@ -1,11 +1,11 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowAction,
   FlowActionType,
   FlowTriggerType,
-  flowStructureUtil,
   LocalesEnum,
   SuggestionType,
   FlowTrigger,
@@ -60,6 +60,7 @@ export const stepsHooks = {
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
         const pieces = await piecesApi.list({
+          projectId: authenticationSession.getProjectId()!,
           searchQuery,
           suggestionType:
             type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
@@ -136,8 +137,7 @@ const getQueryKeyForStepMetadata = (
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   const customLogoUrl =
-    'customLogoUrl' in step ? step.customLogoUrl : undefined;
-  const agentId = flowStructureUtil.getExternalAgentId(step);
+    'customLogoUrl' in step ? (step.customLogoUrl as string) : undefined;
   const actionName =
     step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
   const triggerName =
@@ -148,7 +148,6 @@ const getQueryKeyForStepMetadata = (
     pieceName,
     pieceVersion,
     customLogoUrl,
-    agentId,
     locale,
     step.type,
   ];

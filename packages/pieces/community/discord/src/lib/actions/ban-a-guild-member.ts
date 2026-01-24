@@ -31,7 +31,7 @@ export const discordBanGuildMember = createAction({
       method: HttpMethod.PUT,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/bans/${configValue.propsValue.user_id}`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
         'X-Audit-Log-Reason': `${configValue.propsValue.ban_reason}`,
       },

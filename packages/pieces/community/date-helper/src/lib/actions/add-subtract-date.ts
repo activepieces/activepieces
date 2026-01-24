@@ -1,16 +1,17 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
 import {
-  getCorrectedFormat,
+  apDayjs,
+   getCorrectedFormat,
   optionalTimeFormats,
   parseDate,
   timeFormat,
   timeFormatDescription,
   timeParts,
+  timeZoneOptions,
 } from '../common';
-
-dayjs.extend(advancedFormat);
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const addSubtractDateAction = createAction({
   name: 'add_subtract_date',
@@ -54,19 +55,77 @@ export const addSubtractDateAction = createAction({
              \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute`,
       required: true,
     }),
+    timeZone: Property.StaticDropdown<string>({
+      displayName: 'Time Zone',
+      description: 'Optional: Set a timezone for the calculation to handle DST correctly',
+      options: {
+        options: timeZoneOptions,
+      },
+      required: false,
+    }),
+    setTime: Property.ShortText({
+      displayName: 'Set Time To (24h format)',
+      description: 'Optional: Set the result to a specific time (e.g., "10:00" or "14:30"). This allows scheduling at a specific time after adding/subtracting dates. Leave empty to keep the calculated time.',
+      required: false,
+    }),
+    useCurrentTime: Property.Checkbox({
+      displayName: 'Use Current Time',
+      description: 'If checked, the current time will be used instead of the time from "Set Time To" field.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
+    // Ensure all dayjs plugins are properly extended
+   
+    
     const inputDate = context.propsValue.inputDate;
     const inputDateFormat = getCorrectedFormat(context.propsValue.inputDateFormat);
-    const outputFormat = context.propsValue.outputFormat;
+    const outputFormat = getCorrectedFormat(context.propsValue.outputFormat);
     const expression = context.propsValue.expression;
+    const timeZone = context.propsValue.timeZone as string | undefined;
+    const setTime = context.propsValue.setTime as string | undefined;
+    const useCurrentTime = context.propsValue.useCurrentTime as boolean;
+
+    if (setTime && setTime.trim() !== '') {
+      await propsValidation.validateZod({ time: setTime }, {
+        time: z.string().regex(/^\d\d:\d\d$/),
+      });
+    }
+
     const BeforeDate = parseDate(inputDate, inputDateFormat);
-    const AfterDate = addSubtractTime(BeforeDate.toDate(), expression);
-    return { result: dayjs(AfterDate).format(outputFormat) };
+    let AfterDate = addSubtractTime(BeforeDate.toDate(), expression, timeZone);
+
+    if (timeZone && (setTime || useCurrentTime)) {
+      let timeToSet = setTime;
+      
+      if (useCurrentTime) {
+        const now = apDayjs().tz(timeZone);
+        timeToSet = `${now.hour().toString().padStart(2, '0')}:${now.minute().toString().padStart(2, '0')}`;
+      }
+
+      if (timeToSet && timeToSet.trim() !== '') {
+        const [hours, minutes] = timeToSet.split(':').map(Number);
+        
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+          throw new Error(
+            `Invalid time value - hours: ${hours} (must be 0-23), minutes: ${minutes} (must be 0-59)`
+          );
+        }
+
+        AfterDate = AfterDate.tz(timeZone).hour(hours).minute(minutes).second(0).millisecond(0);
+      }
+    }
+
+    if (timeZone) {
+      return { result: AfterDate.tz(timeZone).format(outputFormat) };
+    } else {
+      return { result: AfterDate.format(outputFormat) };
+    }
   },
 });
 
-function addSubtractTime(date: Date, expression: string) {
+function addSubtractTime(date: Date, expression: string, timeZone?: string): dayjs.Dayjs {
   // remove all the spaces and line breaks from the expression
   expression = expression.replace(/(\r\n|\n|\r)/gm, '').replace(/ /g, '');
   const parts = expression.split(/(\+|-)/);
@@ -100,10 +159,17 @@ function addSubtractTime(date: Date, expression: string) {
       units.push(unit);
     }
   }
-  let dayjsDate = dayjs(date);
+  
+  // Create timezone-aware dayjs object if timezone is provided
+  let dayjsDate = timeZone ? apDayjs(date).tz(timeZone) : apDayjs(date);
+  
   for (let i = 0; i < numbers.length; i++) {
-    const val = units[i].toLowerCase() as timeParts;
-    switch (val) {
+    let val = units[i].toLowerCase();
+    if (val.endsWith('s')) {
+      val = val.slice(0, -1);
+    }
+    const normalizedVal = val as timeParts;
+    switch (normalizedVal) {
       case timeParts.year:
         dayjsDate = dayjsDate.add(numbers[i], 'year');
         break;
@@ -127,10 +193,9 @@ function addSubtractTime(date: Date, expression: string) {
       case timeParts.unix_time:
         break;
       default: {
-        const nvr: never = val;
-        console.error(nvr, 'unhandled case was reached');
+        console.error(val, 'unhandled case was reached');
       }
     }
   }
-  return dayjsDate.toDate();
+  return dayjsDate;
 }
