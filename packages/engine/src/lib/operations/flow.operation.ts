@@ -27,10 +27,6 @@ export const flowOperation = {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await progressService.sendUpdate({
-            engineConstants: constants,
-            flowExecutorContext: output,
-        })
         await progressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,

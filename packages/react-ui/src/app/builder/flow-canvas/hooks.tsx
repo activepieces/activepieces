@@ -18,6 +18,7 @@ import {
   Permission,
   isNil,
   WebsocketClientEvent,
+  RunEnvironment,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -68,7 +69,7 @@ const useRefetchRun = () => {
       const flowRun = await flowRunsApi.getPopulated(run.id);
       return flowRun;
     },
-    enabled: !isNil(run),
+    enabled: !isNil(run) && run.environment === RunEnvironment.PRODUCTION,
     refetchInterval: 5000,
   });
 

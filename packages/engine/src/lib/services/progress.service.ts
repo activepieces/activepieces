@@ -29,60 +29,33 @@ export const progressService = {
         return updateLock.runExclusive(async () => {
             const { engineConstants, flowExecutorContext, stepNameToUpdate } = params
             latestUpdateParams = params
-            if (!engineConstants.isTestFlow) { // live runs are updated by backup job
+            if (!stepNameToUpdate || !engineConstants.isTestFlow) { // live runs are updated by backup job
                 return
             }
-
-            const contructedFlowRun: UpdateRunProgressRequest['flowRun'] = {
-                projectId: engineConstants.projectId,
-                flowId: engineConstants.flowId,
-                flowVersionId: engineConstants.flowVersionId,
-                id: engineConstants.flowRunId,
-                created: dayjs().toISOString(),
-                updated: dayjs().toISOString(),
-                status: flowExecutorContext.verdict.status,
-                environment: RunEnvironment.TESTING,
-                failParentOnFailure: false,
-                triggeredBy: engineConstants.triggerPieceName,
-                tags: Array.from(flowExecutorContext.tags),
-                startTime: params.startTime,
-            }
-
-            const isFinished = isFlowRunStateTerminal({
-                status: flowExecutorContext.verdict.status,
-                ignoreInternalError: false,
-            })
-
-            const step = stepNameToUpdate ? flowExecutorContext.getStepOutput(stepNameToUpdate) : undefined
-
-            if (isFinished) {
-                contructedFlowRun.finishTime = dayjs().toISOString()
-                await sendUpdateProgress({
-                    flowRun: contructedFlowRun,
-                    step: step ? {
-                        name: stepNameToUpdate!,
-                        path: flowExecutorContext.currentPath.path,
-                        output: step,
-                    } : undefined,
-                })
-                return
-            }
-
-            if (!stepNameToUpdate) {
-                return
-            }
-
+            const step = flowExecutorContext.getStepOutput(stepNameToUpdate)
             if (isNil(step)) {
                 return
             }
-
             await sendUpdateProgress({
                 step: {
                     name: stepNameToUpdate,
                     path: flowExecutorContext.currentPath.path,
                     output: step,
                 },
-                flowRun: contructedFlowRun,
+                flowRun: {
+                    projectId: engineConstants.projectId,
+                    flowId: engineConstants.flowId,
+                    flowVersionId: engineConstants.flowVersionId,
+                    id: engineConstants.flowRunId,
+                    created: dayjs().toISOString(),
+                    updated: dayjs().toISOString(),
+                    status: flowExecutorContext.verdict.status,
+                    environment: RunEnvironment.TESTING,
+                    failParentOnFailure: false,
+                    triggeredBy: engineConstants.triggerPieceName,
+                    tags: Array.from(flowExecutorContext.tags),
+                    startTime: params.startTime,
+                },
             })
         })
     },
