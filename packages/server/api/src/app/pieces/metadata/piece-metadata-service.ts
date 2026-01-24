@@ -38,11 +38,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const originalPieces = await localPieceCache(log).getList({
-                locale: params.locale ?? LocalesEnum.ENGLISH,
                 platformId: params.platformId,
             })
             const piecesWithTags = await enrichTags(params.platformId, originalPieces, params.includeTags)
-            const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, params.locale))
+            const locale = params.locale ?? LocalesEnum.ENGLISH
+            const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
             const filteredPieces = await pieceListUtils.filterPieces({
                 ...params,
                 pieces: translatedPieces,
@@ -93,7 +93,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            return pieceTranslation.translatePiece<PieceMetadataModel>(piece, locale)
+            const resolvedLocale = locale ?? LocalesEnum.ENGLISH
+            return pieceTranslation.translatePiece<PieceMetadataModel>(piece, resolvedLocale)
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
