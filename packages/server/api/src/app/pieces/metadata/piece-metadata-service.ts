@@ -38,11 +38,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const originalPieces = await localPieceCache(log).getList({
-                locale: params.locale ?? LocalesEnum.ENGLISH,
                 platformId: params.platformId,
             })
             const piecesWithTags = await enrichTags(params.platformId, originalPieces, params.includeTags)
-            const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, params.locale))
+            const locale = params.locale ?? LocalesEnum.ENGLISH
+            const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
             const filteredPieces = await pieceListUtils.filterPieces({
                 ...params,
                 pieces: translatedPieces,
@@ -66,7 +66,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             const piece = await localPieceCache(log).getPieceVersion({
                 pieceName: bestMatch.name,
                 version: bestMatch.version,
-                platformId,
+                platformId: bestMatch.platformId,
             })
 
             if (isNil(piece)) {
@@ -93,7 +93,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            return pieceTranslation.translatePiece<PieceMetadataModel>(piece, locale)
+            const resolvedLocale = locale ?? LocalesEnum.ENGLISH
+            return pieceTranslation.translatePiece<PieceMetadataModel>(piece, resolvedLocale)
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
@@ -273,7 +274,7 @@ const sortByVersionDescending = <T extends { version: string }>(a: T, b: T): num
 const findExactVersion = async (
     log: FastifyBaseLogger,
     params: { name: string, version: string | undefined, platformId: string | undefined },
-): Promise<{ name: string, version: string } | undefined> => {
+): Promise<{ name: string, version: string, platformId: string | undefined } | undefined> => {
     const { name, version, platformId } = params
     const versionToSearch = findNextExcludedVersion(version)
     const registry = await localPieceCache(log).getRegistry({ release: undefined, platformId })
@@ -293,7 +294,11 @@ const findExactVersion = async (
     }
 
     const sortedEntries = matchingRegistryEntries.sort(sortByVersionDescending)
-    return sortedEntries[0]
+    return {
+        name: sortedEntries[0].name,
+        version: sortedEntries[0].version,
+        platformId: sortedEntries[0].platformId,
+    }
 }
 
 const findNextExcludedVersion = (version: string | undefined): { baseVersion: string, nextExcludedVersion: string } | undefined => {
