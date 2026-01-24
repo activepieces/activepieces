@@ -28,7 +28,7 @@ let cacheInstance: KVCacheInstance | null = null
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         await getOrCreateCache()
-        rejectedPromiseHandler(updateCache(log), log)
+        await updateCache(log)
         cron.schedule('*/15 * * * *', () => {
             log.info('[localPieceCache] Refreshing pieces cache via cron job')
             rejectedPromiseHandler(updateCache(log), log)
@@ -172,8 +172,6 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
     for (const piece of sortedPieces) {
         await storePiece(piece)
     }
-    log.info({ sortedPieces: sortedPieces.length, duration: Date.now() - startTime }, '[populateCache] Stored pieces')
-
     const state: State = {
         recentUpdate: sortedPieces.length > 0 ? new Date(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).valueOf()))).toISOString() : undefined,
         count: sortedPieces.length.toString(),
@@ -181,6 +179,7 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
     await db.set(META_STATE_KEY, state)
     log.info({
         count: sortedPieces.length,
+        duration: Date.now() - startTime,
     }, '[populateCache] Stored pieces cache')
 }
 
