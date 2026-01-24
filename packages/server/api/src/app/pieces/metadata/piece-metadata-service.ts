@@ -59,25 +59,10 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             }))
         },
         async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
-            const versionToSearch = findNextExcludedVersion(version)
-            const registry = await localPieceCache(log).getRegistry({ release: undefined })
-            const matchingRegistryEntries = registry.filter((entry) => {
-                if (entry.name !== name) {
-                    return false
-                }
-                if (isNil(versionToSearch)) {
-                    return true
-                }
-                return semVer.compare(entry.version, versionToSearch.nextExcludedVersion) < 0
-                    && semVer.compare(entry.version, versionToSearch.baseVersion) >= 0
-            })
-
-            if (matchingRegistryEntries.length === 0) {
+            const bestMatch = await findExactVersion(log, { name, version, platformId })
+            if (isNil(bestMatch)) {
                 return undefined
             }
-
-            const sortedEntries = matchingRegistryEntries.sort(sortByVersionDescending)
-            const bestMatch = sortedEntries[0]
             const piece = await localPieceCache(log).getPieceVersion({
                 pieceName: bestMatch.name,
                 version: bestMatch.version,
@@ -283,6 +268,32 @@ const sortByVersionDescending = <T extends { version: string }>(a: T, b: T): num
         return -1
     }
     return semVer.rcompare(a.version, b.version)
+}
+
+const findExactVersion = async (
+    log: FastifyBaseLogger,
+    params: { name: string, version: string | undefined, platformId: string | undefined },
+): Promise<{ name: string, version: string } | undefined> => {
+    const { name, version, platformId } = params
+    const versionToSearch = findNextExcludedVersion(version)
+    const registry = await localPieceCache(log).getRegistry({ release: undefined, platformId })
+    const matchingRegistryEntries = registry.filter((entry) => {
+        if (entry.name !== name) {
+            return false
+        }
+        if (isNil(versionToSearch)) {
+            return true
+        }
+        return semVer.compare(entry.version, versionToSearch.nextExcludedVersion) < 0
+            && semVer.compare(entry.version, versionToSearch.baseVersion) >= 0
+    })
+
+    if (matchingRegistryEntries.length === 0) {
+        return undefined
+    }
+
+    const sortedEntries = matchingRegistryEntries.sort(sortByVersionDescending)
+    return sortedEntries[0]
 }
 
 const findNextExcludedVersion = (version: string | undefined): { baseVersion: string, nextExcludedVersion: string } | undefined => {
