@@ -168,9 +168,11 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
 
     await storePieces(sortedPieces)
     log.info({ sortedPieces: sortedPieces.length }, '[populateCache] Storing pieces')
+    const startTime = Date.now()
     for (const piece of sortedPieces) {
         await storePiece(piece)
     }
+    log.info({ sortedPieces: sortedPieces.length, duration: Date.now() - startTime }, '[populateCache] Stored pieces')
 
     const state: State = {
         recentUpdate: sortedPieces.length > 0 ? new Date(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).valueOf()))).toISOString() : undefined,
@@ -252,7 +254,7 @@ function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchem
     if (isNil(platformId)) {
         return false
     }
-    return piece.platformId === platformId  && piece.pieceType === PieceType.CUSTOM
+    return piece.platformId === platformId && piece.pieceType === PieceType.CUSTOM
 }
 
 
