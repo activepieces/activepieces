@@ -103,16 +103,13 @@ export const oracleFusionCloudErp = createPiece({
         updateJournalBatch,
         deleteJournalBatch,
         createCustomApiCallAction({
-            baseUrl: (auth) => {
-                const authValue = auth as { serverUrl: string };
-                return `${authValue.serverUrl}/fscmRestApi/resources/11.13.18.05`;
-            },
+            baseUrl: (auth) =>
+                `${(auth as { serverUrl: string }).serverUrl}/fscmRestApi/resources/11.13.18.05`,
             auth: oracleFusionCloudErpAuth,
             authMapping: async (auth) => {
-                const authValue = auth as { username: string; password: string };
-                const credentials = Buffer.from(`${authValue.username}:${authValue.password}`).toString('base64');
+                const { username, password } = auth as { username: string; password: string };
                 return {
-                    Authorization: `Basic ${credentials}`,
+                    Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
                 };
             },
         }),

@@ -1,4 +1,3 @@
-import { oracleFusionCloudErpAuth } from '../../index';
 import {
     HttpMessageBody,
     HttpMethod,
@@ -8,6 +7,9 @@ import {
     HttpHeaders,
 } from '@activepieces/pieces-common';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { oracleFusionCloudErpAuth } from '../../index';
+
+type OracleAuthValue = PiecePropValueSchema<typeof oracleFusionCloudErpAuth>;
 
 interface OracleAPIResponse<T> {
     items: T[];
@@ -127,9 +129,7 @@ export class OracleFusionAPIClient {
     }
 }
 
-export function makeClient(
-    auth: PiecePropValueSchema<typeof oracleFusionCloudErpAuth>
-) {
+export function makeClient(auth: OracleAuthValue) {
     const client = new OracleFusionAPIClient(
         auth.serverUrl,
         auth.username,
