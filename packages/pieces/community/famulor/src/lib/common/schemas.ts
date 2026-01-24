@@ -34,3 +34,27 @@ export const campaignControl = {
 export const deleteLead = {
   lead_id: z.number().int().positive('Lead ID must be a positive integer'),
 };
+
+export const getCurrentUser = {};
+
+export const generateAiReply = {
+  assistant_id: z.number().int().positive('Assistant ID must be a positive integer'),
+  customer_identifier: z.string().max(255, 'Customer identifier must be 255 characters or less'),
+  message: z.string().min(1, 'Message is required'),
+  variables: z.record(z.string(), z.any()).optional(),
+};
+
+export const createConversation = {
+  assistant_id: z.string().uuid('Assistant ID must be a valid UUID'),
+  type: z.enum(['widget', 'test']).optional().default('widget'),
+  variables: z.record(z.string(), z.any()).optional(),
+};
+
+export const getConversation = {
+  uuid: z.string().uuid('Conversation UUID must be a valid UUID'),
+};
+
+export const sendMessage = {
+  uuid: z.string().uuid('Conversation UUID must be a valid UUID'),
+  message: z.string().min(1, 'Message is required').max(2000, 'Message must be 2000 characters or less'),
+};
