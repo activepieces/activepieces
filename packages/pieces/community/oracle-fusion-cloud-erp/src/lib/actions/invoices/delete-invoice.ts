@@ -15,7 +15,7 @@ export const deleteInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { invoiceId } = context.propsValue;
 
         await client.deleteRecord(`/invoices/${invoiceId}`);

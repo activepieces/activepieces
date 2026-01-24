@@ -15,7 +15,7 @@ export const validateInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { invoiceId } = context.propsValue;
 
         const response = await client.executeAction('/invoices/action/validateInvoice', {

@@ -53,7 +53,7 @@ export const updateJournalBatch = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { jeBatchId, status, reversalFlag, reversalDate, reversalPeriod, reversalMethodMeaning } = context.propsValue;
 
         const payload: Record<string, unknown> = {};

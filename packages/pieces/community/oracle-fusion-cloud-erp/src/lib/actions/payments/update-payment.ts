@@ -30,7 +30,7 @@ export const updatePayment = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { checkId, paymentDescription, voidDate, voidAccountingDate } = context.propsValue;
 
         const payload: Record<string, unknown> = {};

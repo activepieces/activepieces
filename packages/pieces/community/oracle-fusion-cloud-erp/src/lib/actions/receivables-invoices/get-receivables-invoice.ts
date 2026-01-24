@@ -15,7 +15,7 @@ export const getReceivablesInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { customerTransactionId } = context.propsValue;
 
         const response = await client.getRecord(`/receivablesInvoices/${customerTransactionId}`);

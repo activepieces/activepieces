@@ -55,7 +55,7 @@ export const updateInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const {
             invoiceId,
             description,

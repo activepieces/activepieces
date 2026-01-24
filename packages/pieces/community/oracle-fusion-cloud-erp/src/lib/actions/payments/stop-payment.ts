@@ -25,7 +25,7 @@ export const stopPayment = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { checkId, stopReason, stopReference } = context.propsValue;
 
         const payload: Record<string, unknown> = {

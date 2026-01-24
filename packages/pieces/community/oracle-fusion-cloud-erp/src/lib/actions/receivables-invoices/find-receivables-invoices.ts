@@ -54,7 +54,7 @@ export const findReceivablesInvoices = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { transactionNumber, billToCustomerNumber, invoiceStatus, billingDateFrom, billingDateTo, limit, offset } = context.propsValue;
 
         const queryParams: Record<string, string | number> = {

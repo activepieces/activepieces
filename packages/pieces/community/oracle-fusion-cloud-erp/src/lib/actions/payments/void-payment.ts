@@ -25,7 +25,7 @@ export const voidPayment = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { checkId, voidDate, voidAccountingDate } = context.propsValue;
 
         const today = new Date().toISOString().split('T')[0];

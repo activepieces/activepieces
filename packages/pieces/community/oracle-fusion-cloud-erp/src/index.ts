@@ -104,10 +104,10 @@ export const oracleFusionCloudErp = createPiece({
         deleteJournalBatch,
         createCustomApiCallAction({
             baseUrl: (auth) =>
-                `${(auth as { serverUrl: string }).serverUrl}/fscmRestApi/resources/11.13.18.05`,
+                `${auth?.props.serverUrl}/fscmRestApi/resources/11.13.18.05`,
             auth: oracleFusionCloudErpAuth,
             authMapping: async (auth) => {
-                const { username, password } = auth as { username: string; password: string };
+                const { username, password } = auth.props;
                 return {
                     Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
                 };

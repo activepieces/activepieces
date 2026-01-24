@@ -60,7 +60,7 @@ export const findPayments = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { paymentNumber, payee, businessUnit, paymentStatus, paymentDateFrom, paymentDateTo, limit, offset } = context.propsValue;
 
         const queryParams: Record<string, string | number> = {

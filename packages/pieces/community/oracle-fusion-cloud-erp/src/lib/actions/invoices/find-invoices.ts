@@ -49,7 +49,7 @@ export const findInvoices = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { invoiceNumber, supplier, businessUnit, validationStatus, limit, offset } = context.propsValue;
 
         const queryParams: Record<string, string | number> = {

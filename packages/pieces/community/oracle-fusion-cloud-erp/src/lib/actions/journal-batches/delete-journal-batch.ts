@@ -15,7 +15,7 @@ export const deleteJournalBatch = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { jeBatchId } = context.propsValue;
 
         await client.deleteRecord(`/journalBatches/${jeBatchId}`);

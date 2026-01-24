@@ -15,7 +15,7 @@ export const getInvoice = createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context.auth);
+        const client = makeClient(context.auth.props);
         const { invoiceId } = context.propsValue;
 
         const response = await client.getRecord(`/invoices/${invoiceId}`);
