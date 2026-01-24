@@ -2,10 +2,10 @@ import path from 'path'
 import { pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, filePiecesUtils, memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ApEnvironment, apId, isEmpty, isNil, LocalesEnum, PackageType, PieceType } from '@activepieces/shared'
+import KeyvSqlite from '@keyv/sqlite'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Keyv from 'keyv'
-import KeyvSqlite from '@keyv/sqlite'
 import cron from 'node-cron'
 import semVer from 'semver'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -47,7 +47,9 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         const { locale, platformId } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
-            return lastVersionOfEachPiece(pieces).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
+            return lastVersionOfEachPiece(pieces)
+                .filter((piece) => filterPieceBasedOnType(platformId, piece))
+                .map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
         }
         const cache = await getOrCreateCache()
         const list = (await cache.db.get(META_LIST_KEY(locale ?? DEFAULT_LOCALE))) as PieceMetadataSchema[] | undefined
@@ -77,7 +79,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         return filterPieceBasedOnType(platformId, piece) ? piece : null
     },
     async getRegistry(params: GetRegistryParams): Promise<PieceRegistryEntry[]> {
-        const { release } = params
+        const { release, platformId } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
             return pieces.map(piece => ({
@@ -86,6 +88,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
                 minimumSupportedRelease: piece.minimumSupportedRelease,
                 maximumSupportedRelease: piece.maximumSupportedRelease,
                 platformId: piece.platformId,
+                pieceType: piece.pieceType,
             }))
         }
         const cache = await getOrCreateCache()
@@ -95,8 +98,11 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
             minimumSupportedRelease: piece.minimumSupportedRelease,
             maximumSupportedRelease: piece.maximumSupportedRelease,
             platformId: piece.platformId,
+            pieceType: piece.pieceType,
         }))
-        return [...cache.registry, ...devPieces].filter((piece) => isNil(release) || isSupportedRelease(release, piece))
+        return [...cache.registry, ...devPieces]
+            .filter((piece) => filterPieceBasedOnType(platformId, piece))
+            .filter((piece) => isNil(release) || isSupportedRelease(release, piece))
     },
 })
 
@@ -159,11 +165,13 @@ function sortByNameAndVersionDesc(a: PieceMetadataSchema, b: PieceMetadataSchema
 async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBaseLogger): Promise<void> {
     const cache = await getOrCreateCache()
     const { db } = cache
-    cache.registry = sortedPieces.filter(piece => isOfficialPiece(piece)).map(piece => ({
+    cache.registry = sortedPieces.map(piece => ({
         name: piece.name,
         version: piece.version,
         minimumSupportedRelease: piece.minimumSupportedRelease,
         maximumSupportedRelease: piece.maximumSupportedRelease,
+        pieceType: piece.pieceType,
+        platformId: piece.platformId,
     }))
     await db.set(META_REGISTRY_KEY, cache.registry)
 
@@ -232,8 +240,9 @@ async function getOrCreateCache(): Promise<KVCacheInstance> {
             if (!isNil(cacheInstance)) {
                 return cacheInstance
             }
-            const baseDir = system.getOrThrow(AppSystemProp.CONFIG_PATH)
-            const dbPath = path.join(baseDir, 'pieces-cache-db.sqlite')
+            const pm2Enabled = system.getBoolean(AppSystemProp.PM2_ENABLED) ?? false
+            const cacheId = pm2Enabled ? (process.env.NODE_APP_INSTANCE ?? '0') : 'default'
+            const dbPath = path.resolve(path.join(process.cwd(), `pieces-cache-db-${cacheId}.sqlite`))
             const db = new Keyv({
                 store: new KeyvSqlite(`sqlite://${dbPath}`),
             })
@@ -249,19 +258,19 @@ async function getOrCreateCache(): Promise<KVCacheInstance> {
 }
 
 
-function filterPieceBasedOnType(platformId: string | undefined, piece: PieceMetadataSchema): boolean {
+function filterPieceBasedOnType(platformId: string | undefined, piece: PieceMetadataSchema | PieceRegistryEntry): boolean {
     return isOfficialPiece(piece) || isCustomPiece(platformId, piece)
 }
 
-function isOfficialPiece(piece: PieceMetadataSchema): boolean {
-    return piece.pieceType === PieceType.OFFICIAL && isNil(piece.projectId) && isNil(piece.platformId)
+function isOfficialPiece(piece: PieceMetadataSchema | PieceRegistryEntry): boolean {
+    return piece.pieceType === PieceType.OFFICIAL && isNil(piece.platformId)
 }
 
-function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchema): boolean {
+function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchema | PieceRegistryEntry): boolean {
     if (isNil(platformId)) {
         return false
     }
-    return piece.platformId === platformId && isNil(piece.projectId) && piece.pieceType === PieceType.CUSTOM
+    return piece.platformId === platformId  && piece.pieceType === PieceType.CUSTOM
 }
 
 
@@ -296,6 +305,8 @@ type GetPieceVersionParams = {
 }
 
 type PieceRegistryEntry = {
+    platformId?: string
+    pieceType: PieceType
     name: string
     version: string
     minimumSupportedRelease?: string
@@ -309,6 +320,7 @@ type GetListParams = {
 
 type GetRegistryParams = {
     release: string | undefined
+    platformId?: string
 }
 
 type KVCacheInstance = {
