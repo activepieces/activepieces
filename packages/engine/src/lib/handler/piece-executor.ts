@@ -1,19 +1,20 @@
 import { URL } from 'url'
-import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { LanguageModelV2 } from '@ai-sdk/provider'
+import { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
-import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
 import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
+import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { ExecutionVerdict } from './context/flow-execution-context'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -48,22 +49,22 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,
-            pieceSource: constants.piecesSource,
+            devPieces: constants.devPieces,
         })
-    
-        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
+
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver(piece.getContextInfo?.().version).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
-    
+
         stepOutput.input = censoredInput
     
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
         }
-    
-    
+
+
         const params: {
             hookResponse: HookResponse
         } = {
@@ -78,7 +79,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             stepName: action.name,
             stepOutput,
         })
-    
+
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
             await progressService.sendUpdate({
@@ -86,7 +87,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             })
         }
-        const context: ActionContext = {
+        const context: ActionContext<PieceAuthProperty, InputPropertyMap> = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
             store: createContextStore({
@@ -117,6 +118,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
             },
+            agent: {
+                tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
+                    engineConstants: constants,
+                    tools: params.tools,
+                    model: params.model as LanguageModelV2,
+                }),
+            },
             propsValue: processedInput,
             tags: createTagsManager(params),
             connections: utils.createConnectionManager({
@@ -125,11 +133,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 target: 'actions',
                 hookResponse: params.hookResponse,
+                contextVersion: piece.getContextInfo?.().version,
             }),
-            /*
-                @deprecated Use server.publicApiUrl instead.
-            */
-            serverUrl: constants.publicApiUrl,
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
@@ -146,11 +151,15 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
+        const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
+            contextVersion: piece.getContextInfo?.().version,
+            context,
+        })
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
-        const output = await runMethodToExecute(context)
+        const output = await runMethodToExecute(backwardCompatibleContext)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
-    
+
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
         if (!isNil(webhookResponse) && !isNil(constants.serverHandlerId) && !isNil(constants.httpRequestId) && isSamePiece) {
@@ -164,15 +173,15 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 },
             })
         }
-    
+
         const stepEndTime = performance.now()
         if (params.hookResponse.type === 'stopped') {
             if (isNil(params.hookResponse.response)) {
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                reason: FlowRunStatus.SUCCEEDED,
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({
+                status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
         }
@@ -180,15 +189,15 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             if (isNil(params.hookResponse.response)) {
                 throw new EngineGenericError('PauseResponseNotSetError', 'Pause response is not set')
             }
-            
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
-                .setVerdict(ExecutionVerdict.PAUSED, {
-                    reason: FlowRunStatus.PAUSED,
+
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted()
+                .setVerdict({
+                    status: FlowRunStatus.PAUSED,
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict(ExecutionVerdict.RUNNING, undefined)
-        
+        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
+
     }))
 
     if (executionStateError) {
@@ -199,7 +208,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict(ExecutionVerdict.FAILED, undefined)
+            .setVerdict({
+                status: FlowRunStatus.FAILED, failedStep: {
+                    name: action.name,
+                    displayName: action.displayName,
+                    message: utils.formatError(executionStateError),
+                },
+            })
     }
 
     return executionStateResult

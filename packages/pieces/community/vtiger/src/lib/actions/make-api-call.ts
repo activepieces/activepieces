@@ -70,21 +70,21 @@ export const makeAPICall = createAction({
       };
     }
 
-    let finalUrl = `${auth.instance_url}/webservice.php`;
+    let finalUrl = `${auth.props.instance_url}/webservice.php`;
     let useRestAuth = false;
 
     if (url) {
       if (url.startsWith('http://') || url.startsWith('https://')) {
         finalUrl = url;
       } else if (url.startsWith('/')) {
-        finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default${url}`;
+        finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default${url}`;
         useRestAuth = true;
       } else {
-        finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default/${url}`;
+        finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default/${url}`;
         useRestAuth = true;
       }
     } else if (urlPath) {
-      finalUrl = `${auth.instance_url}/restapi/v1/vtiger/default${urlPath}`;
+      finalUrl = `${auth.props.instance_url}/restapi/v1/vtiger/default${urlPath}`;
       useRestAuth = true;
     }
 
@@ -150,14 +150,14 @@ export const makeAPICall = createAction({
     if (useRestAuth) {
       httpRequest.authentication = {
         type: AuthenticationType.BASIC,
-        username: auth.username,
-        password: auth.password,
+        username: auth.props.username,
+        password: auth.props.password,
       };
     } else {
       const vtigerInstance = await instanceLogin(
-        auth.instance_url,
-        auth.username,
-        auth.password
+        auth.props.instance_url,
+        auth.props.username,
+        auth.props.password
       );
       if (vtigerInstance === null) return;
 

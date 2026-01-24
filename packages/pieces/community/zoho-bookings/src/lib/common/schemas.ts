@@ -13,7 +13,7 @@ export const bookAppointment = {
   customer_email: z.string().email(),
   customer_phone: z.string().min(1),
   notes: z.string().optional(),
-  additional_fields: z.record(z.any()).optional(),
+  additional_fields: z.record(z.string(), z.unknown()).optional(),
   cost_paid: z.number().min(0).optional(),
 };
 

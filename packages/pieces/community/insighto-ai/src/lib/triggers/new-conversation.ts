@@ -1,12 +1,14 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ConversationWebhookSchema } from '../schemas';
+import { insightoAuth } from '../..';
 
 export const newConversation = createTrigger({
   name: 'new_conversation',
   displayName: 'New Conversation',
   description: 'Fires when an existing conversation is updated with a new message',
   props: {},
+  auth: insightoAuth,
   sampleData: {
     id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
     object: 'event',
@@ -51,7 +53,7 @@ export const newConversation = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhookUrl = context.webhookUrl;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     try {
       const response = await httpClient.sendRequest({
@@ -77,7 +79,7 @@ export const newConversation = createTrigger({
     const webhookId = await context.store.get('webhook_id');
     if (!webhookId) return;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     try {
       await httpClient.sendRequest({

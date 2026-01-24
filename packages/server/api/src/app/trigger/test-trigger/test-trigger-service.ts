@@ -17,10 +17,12 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
     return {
         async test(params: TestParams): Promise<unknown> {
             const { testStrategy, ...executeParams } = params
+            log.info('[testTriggerService#test] Starting test trigger')
             return distributedLock(log).runExclusive({
                 key: lockKey(executeParams.flowId),
                 timeoutInSeconds: 120,
                 fn: async () => {
+                    log.info('[testTriggerService#test] Acquired lock')
                     const populatedFlow = await flowService(log).getOnePopulatedOrThrow({
                         id: executeParams.flowId,
                         projectId: executeParams.projectId,
@@ -33,13 +35,17 @@ export const testTriggerService = (log: FastifyBaseLogger) => {
                                 flowId: executeParams.flowId,
                                 simulate: true,
                             })
+                            log.info({
+                                exists,
+                            }, '[testTriggerService#test] Trigger source exists')
                             if (exists) {
-                                return triggerSourceService(log).disable({
+                                await triggerSourceService(log).disable({
                                     flowId: executeParams.flowId,
                                     projectId: executeParams.projectId,
                                     simulate: true,
                                     ignoreError: true,
                                 })
+                                return
                             }
                             await triggerSourceService(log).enable({
                                 flowVersion: populatedFlow.version,

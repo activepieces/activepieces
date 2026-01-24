@@ -17,7 +17,7 @@ export const findContactAction = createAction({
   },
   async run(context) {
     const { query } = context.propsValue;
-    const { subdomain, apiToken } = context.auth
+    const { subdomain, apiToken } = context.auth.props
 
     const result = await makeRequest(
       { apiToken, subdomain },

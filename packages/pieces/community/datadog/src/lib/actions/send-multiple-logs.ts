@@ -39,14 +39,14 @@ export const sendMultipleLogs = createAction({
     z.object({
       logs: z.array(
         z.object({
-          message: z.string({required_error: "Log message cannot be empty"}),
+          message: z.string({error: "Log message cannot be empty"}),
           ddsource: z.string().optional(),
           ddtags: z.string().optional(),
           hostname: z.string().optional(),
           service: z.string().optional(),
           additionalProperties: z.record(z.string(), z.unknown()).optional(),
-        }).strict("Allowed properties are `message`, `ddsource`, `ddtags`, `hostname`, `service`, `additionalProperties`"),
-        { invalid_type_error: "Logs must be an array of objects under `logs` key e.g `{'logs': [{'message': 'test'}]}`"}
+        }).strict().describe("Allowed properties are `message`, `ddsource`, `ddtags`, `hostname`, `service`, `additionalProperties`"),
+        { error: "Logs must be an array of objects under `logs` key e.g `{'logs': [{'message': 'test'}]}`"}
       ).min(1, "At least one log entry is required")
     }).strict().parse(propsValue.body);
 

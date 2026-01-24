@@ -2,36 +2,42 @@ import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ExecutionMode,
     isNil,
-    MachineInformation,
+    partition,
+    WebsocketServerEvent,
+    WorkerMachineHealthcheckRequest,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
     WorkerSettingsResponse,
 } from '@activepieces/shared'
+
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
-import { In } from 'typeorm'
-import { repoFactory } from '../../core/db/repo-factory'
+import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
-import { WorkerMachineEntity } from './machine-entity'
+import { workerMachineCache } from './machine-cache'
 
-const workerRepo = repoFactory(WorkerMachineEntity)
+dayjs.extend(utc)
 
-export const machineService = (_log: FastifyBaseLogger) => {
+export const machineService = (log: FastifyBaseLogger) => {
     return {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
-            system.globalLogger().info({
+            log.info({
                 message: 'Worker disconnected',
                 workerId: request.workerId,
             })
-            await workerRepo().delete({ id: request.workerId })
+            await workerMachineCache().delete([request.workerId])
         },
-        async onConnection(platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
-            const executionMode = await getExecutionMode(_log, platformIdForDedicatedWorker)
+        async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+            await workerMachineCache().upsert({
+                id: request.workerId,
+                information: request,
+            })
+            const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
             const isDedicatedWorker = !isNil(platformIdForDedicatedWorker)
             return {
                 JWT_SECRET: await jwtUtils.getJwtSecret(),
@@ -45,10 +51,10 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
                 ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
                 APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
+                MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
                 MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
                 SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
                 SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
-                PIECES_SOURCE: system.getOrThrow(AppSystemProp.PIECES_SOURCE),
                 DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
                 SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
                 LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
@@ -74,50 +80,41 @@ export const machineService = (_log: FastifyBaseLogger) => {
                 REDIS_SENTINEL_ROLE: system.get(AppSystemProp.REDIS_SENTINEL_ROLE),
                 REDIS_SENTINEL_HOSTS: system.get(AppSystemProp.REDIS_SENTINEL_HOSTS),
                 REDIS_SENTINEL_NAME: system.get(AppSystemProp.REDIS_SENTINEL_NAME),
+                EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
                 REDIS_FAILED_JOB_RETENTION_DAYS: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
                 REDIS_FAILED_JOB_RETENTION_MAX_COUNT: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
                 EDITION: system.getOrThrow(AppSystemProp.EDITION),
             }
         },
-        async onHeartbeat({
-            workerId,
-            totalSandboxes,
-            diskInfo,
-            cpuUsagePercentage,
-            ramUsagePercentage,
-            totalAvailableRamInBytes,
-            workerProps,
-            ip,
-            freeSandboxes,
-        }: OnHeartbeatParams): Promise<void> {
-            await workerRepo().upsert({
-                information: {
-                    diskInfo,
-                    cpuUsagePercentage,
-                    ramUsagePercentage,
-                    totalAvailableRamInBytes,
-                    workerProps,
-                    ip,
-                    totalSandboxes,
-                    freeSandboxes,
-                },
-                updated: dayjs().toISOString(),
-                id: workerId,
-            }, ['id'])
-        },
         async list(): Promise<WorkerMachineWithStatus[]> {
-            const allWorkers = await workerRepo().find()
+
+            let allWorkers = await workerMachineCache().find()
+
+            await Promise.all(allWorkers.map(async worker => {
+                const settings = await websocketService.emitWithAck<WorkerMachineHealthcheckRequest[]>( WebsocketServerEvent.WORKER_HEALTHCHECK, worker.id)
+                    .catch(error => {
+                        log.error({
+                            message: 'Failed to get worker healthcheck',
+                            error,
+                            workerId: worker.id,
+                        })
+                    })
+                if (settings && settings[0]) {
+                    await workerMachineCache().upsert({
+                        id: worker.id,
+                        information: settings[0],
+                    })
+                }
+            }))
+
+            allWorkers = await workerMachineCache().find()
+
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
 
-            const workersToDelete = allWorkers.filter(worker => dayjs(worker.updated).isBefore(offlineThreshold))
+            const [onlineWorkers, offLineWorkers] = partition(allWorkers, (worker) => dayjs(worker.updated).isAfter(offlineThreshold))
 
-            if (workersToDelete.length > 0) {
-                await workerRepo().delete({
-                    id: In(workersToDelete.map(worker => worker.id)),
-                })
-            }
+            await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
 
-            const onlineWorkers = allWorkers.filter(worker => dayjs(worker.updated).isAfter(offlineThreshold))
             return onlineWorkers.map(worker => ({
                 ...worker,
                 status: WorkerMachineStatus.ONLINE,
@@ -145,17 +142,4 @@ async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWo
 
 type OnDisconnectParams = {
     workerId: string
-}
-
-type OnHeartbeatParams = {
-    socket: Socket
-    workerId: string
-    cpuUsagePercentage: number
-    diskInfo: MachineInformation['diskInfo']
-    ramUsagePercentage: number
-    totalAvailableRamInBytes: number
-    ip: string
-    totalSandboxes: number
-    freeSandboxes: number
-    workerProps: Record<string, string>
 }

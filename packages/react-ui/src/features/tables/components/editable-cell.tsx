@@ -123,7 +123,7 @@ export function EditableCell({
         isEditing
           ? 'h-full w-full'
           : cn(
-              'h-full flex items-center justify-between gap-2  focus:outline-none  ',
+              'h-full flex items-center justify-between gap-2  focus:outline-hidden  ',
               'group cursor-pointer border',
               isSelected && !locked ? 'border-primary' : 'border-transparent',
               locked && 'locked-row',

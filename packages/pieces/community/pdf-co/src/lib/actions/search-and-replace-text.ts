@@ -94,7 +94,7 @@ export const searchAndReplaceText = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/replace-text`,
 				headers: {
-					'x-api-key': auth,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: requestBody,

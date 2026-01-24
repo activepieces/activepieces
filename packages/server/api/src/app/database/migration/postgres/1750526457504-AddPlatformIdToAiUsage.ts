@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddPlatformIdToAiUsage1750526457504 implements MigrationInterface {
     name = 'AddPlatformIdToAiUsage1750526457504'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             TRUNCATE TABLE "ai_usage"
         `)
@@ -26,6 +31,9 @@ export class AddPlatformIdToAiUsage1750526457504 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             DROP INDEX "idx_ai_usage_project_created"
         `)

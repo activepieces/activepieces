@@ -6,7 +6,6 @@ import {
     ExecuteTriggerResponse,
     ExecutionType,
     FlowActionType,
-    FlowRunResponse,
     flowStructureUtil,
     GenericStepOutput,
     isNil,
@@ -17,27 +16,26 @@ import {
     TriggerPayload,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 
 export const flowOperation = {
-    execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<FlowRunResponse>> => {
+    execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
-        const output: FlowExecutorContext = await executieSingleStepOrFlowOperation(input)
-        const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
+        const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
         await progressService.sendUpdate({
             engineConstants: constants,
-            flowExecutorContext: newContext,
+            flowExecutorContext: output,
             updateImmediate: true,
         })
-        const response = await newContext.toResponse()
         return {
             status: EngineResponseStatus.OK,
-            response,
+            response: undefined,
+            delayInSeconds: output.getDelayedInSeconds(),
         }
     },
 }
@@ -53,6 +51,7 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
             projectId: input.projectId,
             engineToken: input.engineToken,
             sampleData: input.sampleData,
+            engineConstants: constants,
         })
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
@@ -80,6 +79,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
             break
         }
         case ExecutionType.RESUME: {
+            flowContext = flowContext.addTags(input.executionState.tags)
             break
         }
     }

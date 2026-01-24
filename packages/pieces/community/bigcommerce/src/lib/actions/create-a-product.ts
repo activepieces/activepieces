@@ -52,7 +52,7 @@ export const createAProduct = createAction({
   },
   async run(context) {
     return await bigCommerceApiService.createProduct({
-      auth: context.auth,
+      auth: context.auth.props,
       payload: {
         name: context.propsValue.name,
         type: context.propsValue.type,

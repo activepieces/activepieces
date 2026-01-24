@@ -54,7 +54,7 @@ export const findUser = createAction({
             const response = await callZendeskApi(
                 HttpMethod.GET,
                 `v2/users/${user_id}`,
-                auth as ZendeskSellAuth
+                auth
             );
             return response.body;
         }
@@ -73,7 +73,7 @@ export const findUser = createAction({
         const response = await callZendeskApi(
             HttpMethod.GET,
             'v2/users',
-            auth as ZendeskSellAuth,
+            auth,
             undefined, 
             params    
         );

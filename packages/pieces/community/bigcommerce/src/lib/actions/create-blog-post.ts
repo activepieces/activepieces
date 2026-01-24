@@ -59,7 +59,7 @@ export const createBlogPost = createAction({
   },
   async run(context) {
     return await bigCommerceApiService.createBlogPost({
-      auth: context.auth,
+      auth: context.auth.props,
       payload: {
         title: context.propsValue.title,
         body: context.propsValue.body,

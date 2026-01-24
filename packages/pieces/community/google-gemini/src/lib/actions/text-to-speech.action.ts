@@ -75,7 +75,7 @@ export const textToSpeechAction = createAction({
     const { text, model, voice } = context.propsValue;
 
     try {
-      const genAI = new GoogleGenAI({ apiKey: context.auth });
+      const genAI = new GoogleGenAI({ apiKey: context.auth.secret_text });
 
       const response = await genAI.models.generateContent({
         model,

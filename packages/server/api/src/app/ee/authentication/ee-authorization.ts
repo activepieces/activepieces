@@ -5,9 +5,12 @@ import {
     PlatformRole,
     PlatformWithoutSensitiveData,
     PrincipalType,
+    ProjectType,
 } from '@activepieces/shared'
 import { FastifyRequest, onRequestAsyncHookHandler } from 'fastify'
+import { requestUtils } from '../../core/request/request-utils'
 import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 
 export const platformMustHaveFeatureEnabled = (handler: (platform: PlatformWithoutSensitiveData) => boolean): onRequestAsyncHookHandler =>
@@ -75,6 +78,33 @@ const checkIfPlatformIsOwnedByUser = async (platformId: string, request: Fastify
         })
     }
 }
+
+export const projectMustBeTeamType: onRequestAsyncHookHandler =
+    async (request, _res) => {
+        if (request.principal.type !== PrincipalType.USER && request.principal.type !== PrincipalType.SERVICE) {
+            return
+        }
+        const projectId = requestUtils.extractProjectId(request)
+
+        if (isNil(projectId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Project ID is required',
+                },
+            })
+        }
+        const project = await projectService.getOneOrThrow(projectId)
+        if (project.type !== ProjectType.TEAM) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Project must be a team project',
+                },
+            })
+        }
+    }
+
 export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
     async (request, _res) => {
         const principal = request.principal

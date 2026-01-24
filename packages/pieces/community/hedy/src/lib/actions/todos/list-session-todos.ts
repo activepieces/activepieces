@@ -33,7 +33,7 @@ export const listSessionTodos = createAction({
   },
   async run(context) {
     const sessionId = context.propsValue.sessionId as string;
-    const client = new HedyApiClient(context.auth as string);
+    const client = new HedyApiClient(context.auth.secret_text);
     const { returnAll, limit } = context.propsValue as {
       returnAll?: boolean;
       limit?: number;

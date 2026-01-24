@@ -1,7 +1,7 @@
 import { comfyIcuAuth } from '../../index';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { comfyIcuApiCall, commonProps } from '../common';
@@ -14,7 +14,7 @@ import {
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof comfyIcuAuth>,
+  AppConnectionValueForAuthProperty<typeof comfyIcuAuth>,
   { workflow_id: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

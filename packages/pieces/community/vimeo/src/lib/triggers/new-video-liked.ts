@@ -1,9 +1,9 @@
-import { PiecePropValueSchema, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { vimeoAuth } from '../auth';
 import { apiRequest } from '../common';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 
-const polling: Polling<PiecePropValueSchema<typeof vimeoAuth>, object> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof vimeoAuth>, object> = {
   strategy: DedupeStrategy.LAST_ITEM,
   async items({ auth, lastItemId }) {
     const response = await apiRequest({

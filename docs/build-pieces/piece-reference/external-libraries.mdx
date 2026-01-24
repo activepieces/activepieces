@@ -1,0 +1,20 @@
+---
+title: "External Libraries"
+icon: 'npm'
+description: "Learn how to install and use external libraries."
+---
+
+The Activepieces repository is structured as a monorepo, employing Nx as its build tool.
+
+To keep our main `package.json` as light as possible, we keep libraries that are only used for a piece in the piece `package.json` . This means when adding a new library you should navigate to the piece folder and install the library with our package manager `bun`
+
+```bash
+cd packages/pieces/<piece-path> 
+bun install --save <library-name>
+```
+
+- Import the library into your piece.
+
+Guidelines:
+- Make sure you are using well-maintained libraries.
+- Ensure that the library size is not too large to avoid bloating the bundle size; this will make the piece load faster in the sandbox.

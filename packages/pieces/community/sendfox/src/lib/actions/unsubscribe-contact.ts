@@ -16,7 +16,7 @@ export const unsubscribe = createAction({
   },
   async run(context) {
     const authentication = context.auth;
-    const accessToken = authentication;
+    const accessToken = authentication.secret_text;
     const email = context.propsValue.email;
     const response = (
       await callsendfoxApi(HttpMethod.PATCH, 'unsubscribe', accessToken, {

@@ -19,7 +19,7 @@ export const updateItemNameAction = createAction({
   async run(context) {
     const { board_id, item_id, name } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     return await client.updateItem({
       boardId: board_id,
       itemId: item_id,

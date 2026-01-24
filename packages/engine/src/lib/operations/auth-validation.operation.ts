@@ -12,7 +12,7 @@ export const authValidationOperation = {
         const input = operation as ExecuteValidateAuthOperation
         const output = await pieceHelper.executeValidateAuth({
             params: input,
-            pieceSource: EngineConstants.PIECE_SOURCES,
+            devPieces: EngineConstants.DEV_PIECES,
         })
 
         return {

@@ -36,7 +36,7 @@ export const DataList: React.FC<DataListProps> = ({
       {entries.map(([key, value]) => (
         <div
           key={key}
-          className="grid grid-cols-[auto,1fr] gap-x-3 items-start"
+          className="grid grid-cols-[auto_1fr] gap-x-3 items-start"
         >
           <dt className="font-medium text-muted-foreground capitalize">
             {key}

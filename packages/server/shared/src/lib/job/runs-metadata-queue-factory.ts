@@ -1,4 +1,6 @@
-import { ApId, FlowRun, ProjectId } from '@activepieces/shared'
+import { apId, ApId, FlowRun as FlowRunSchema } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { Value } from '@sinclair/typebox/value'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
@@ -7,12 +9,6 @@ import { DistributedStore } from '../redis/distributed-store-factory'
 import { QueueName } from './index'
 
 export const redisMetadataKey = (runId: ApId): string => `runs_metadata:${runId}`
-
-export type RunsMetadataQueueConfig = {
-    isOtelEnabled: boolean
-    redisFailedJobRetentionDays: number
-    redisFailedJobRetentionMaxCount: number
-}
 
 export const runsMetadataQueueFactory = ({
     createRedisConnection,
@@ -46,12 +42,17 @@ export const runsMetadataQueueFactory = ({
                 throw new Error('Runs metadata queue not initialized')
             }
 
-            await distributedStore.merge(redisMetadataKey(params.id), params)
+            const cleanedParams = Value.Clean(RunsMetadataUpsertData, params) as RunsMetadataUpsertData
+
+            await distributedStore.merge(redisMetadataKey(cleanedParams.id), {
+                ...cleanedParams,
+                requestId: apId(),
+            })
 
             await queueInstance.add(
                 'update-run-metadata',
-                { runId: params.id, projectId: params.projectId },
-                { deduplication: { id: params.id } },
+                { runId: cleanedParams.id, projectId: cleanedParams.projectId },
+                { deduplication: { id: cleanedParams.id } },
             )
         },
 
@@ -67,17 +68,46 @@ export const runsMetadataQueueFactory = ({
         },
     }
 }
-export type RunsMetadataJobData = {
-    runId: string
-    projectId: string
-}
-
-export type RunsMetadataUpsertData = Partial<FlowRun> & {
-    id: ApId
-    projectId: ProjectId
-}
 
 type RunsMetadataQueueFactoryParams = {
     createRedisConnection: () => Promise<Redis>
     distributedStore: DistributedStore
 }
+
+export type RunsMetadataJobData = {
+    runId: string
+    projectId: string
+}
+
+export type RunsMetadataQueueConfig = {
+    isOtelEnabled: boolean
+    redisFailedJobRetentionDays: number
+    redisFailedJobRetentionMaxCount: number
+}
+
+export const RunsMetadataUpsertData = Type.Composite([
+    Type.Required(Type.Pick(FlowRunSchema, ['id', 'projectId'])),
+    Type.Partial(Type.Pick(FlowRunSchema, [
+        'flowId',
+        'flowVersionId',
+        'environment',
+        'triggeredBy',
+        'startTime',
+        'finishTime',
+        'status',
+        'tags',
+        'pauseMetadata',
+        'failedStep',
+        'stepNameToTest',
+        'parentRunId',
+        'failParentOnFailure',
+        'logsFileId',
+        'updated',
+        'stepsCount',
+    ])),
+    Type.Object({
+        requestId: Type.Optional(Type.String()),
+    }),
+])
+
+export type RunsMetadataUpsertData = Static<typeof RunsMetadataUpsertData>

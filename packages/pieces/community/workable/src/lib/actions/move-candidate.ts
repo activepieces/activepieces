@@ -31,7 +31,7 @@ export const moveCandidate = createAction({
     const member_id = context.propsValue.member_id;
     const target_stage = context.propsValue.target_stage;
 
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
     const subdomain = await getAccountSubdomain(accessToken);
 
     const payload: Record<string, any> = {

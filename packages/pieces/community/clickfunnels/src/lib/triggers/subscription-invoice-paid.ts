@@ -24,7 +24,7 @@ export const subscriptionInvoicePaid = createTrigger({
 
     try {
       const response: any = await clickfunnelsApiService.createWebhook(
-        auth,
+        auth.props,
         workspaceId as string,
         {
           webhooks_outgoing_endpoint: {
@@ -52,7 +52,7 @@ export const subscriptionInvoicePaid = createTrigger({
 
     if (cachedData) {
       await clickfunnelsApiService
-        .deleteWebhook(auth, cachedData.webhookId)
+        .deleteWebhook(auth.props, cachedData.webhookId)
         .then(async () => {
           await store.delete(CACHE_KEY);
         });

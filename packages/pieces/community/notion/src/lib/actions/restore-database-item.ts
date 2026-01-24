@@ -43,7 +43,12 @@ export const restoreDatabaseItem = createAction({
 
       if ('properties' in response && response.properties) {
         const firstProperty = Object.values(response.properties)[0];
-        if (firstProperty && 'title' in firstProperty && firstProperty.title) {
+        if (
+          firstProperty &&
+          typeof firstProperty === 'object' &&
+          'title' in firstProperty &&
+          firstProperty.title
+        ) {
           itemTitle =
             (firstProperty.title as any)[0]?.plain_text || 'Untitled item';
         }

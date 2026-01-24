@@ -13,7 +13,7 @@ export const stripeDeactivatePaymentLink = createAction({
   },
   async run(context) {
     const { payment_link_id } = context.propsValue;
-    const client = getClient(context.auth);
+    const client = getClient(context.auth.secret_text);
     return await client.paymentLinks.update(payment_link_id, {
       active: false,
     });

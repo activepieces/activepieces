@@ -17,13 +17,21 @@ export const eventsById = createAction({
       description:
         "Comma separated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.",
     }),
-    calendarId: Property.Dropdown<string>({
+    calendarId: Property.Dropdown<string,false,typeof weblingAuth>({
+      auth: weblingAuth,
       displayName: 'Calendar',
       description: 'Calendar to filter the events by.',
       refreshers: [],
       required: false,
       options: async ({ auth }) => {
-        const authProp = auth as PiecePropValueSchema<typeof weblingAuth>;
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        const authProp = auth;
         const calendars = await getCalendars(authProp);
         return {
           disabled: false,

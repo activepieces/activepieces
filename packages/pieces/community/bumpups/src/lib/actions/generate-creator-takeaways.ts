@@ -60,7 +60,7 @@ export const generateCreatorTakeaways = createAction({
     };
 
     const response = await makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.POST,
       '/creator/takeaways',
       body

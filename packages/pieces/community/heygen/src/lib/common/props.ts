@@ -2,12 +2,14 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { heygenApiCall } from './client';
 import { isNil } from '@activepieces/shared';
+import { heygenAuth } from './auth';
 
 export const folderDropdown = Property.Dropdown({
 	displayName: 'Folder',
 	description: 'Select the folder to store the video.',
 	required: false,
 	refreshers: [],
+	auth: heygenAuth,
 	options: async ({ auth }) => {
 		if (!auth) {
 			return {
@@ -20,7 +22,7 @@ export const folderDropdown = Property.Dropdown({
 		const response = await heygenApiCall<{
 			data: { folders: { id: string; name: string }[] };
 		}>({
-			apiKey: auth as string,
+			apiKey: auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: '/folders',
 			apiVersion: 'v1',
@@ -36,7 +38,8 @@ export const folderDropdown = Property.Dropdown({
 	},
 });
 
-export const brandVoiceDropdown = Property.Dropdown({
+export const brandVoiceDropdown = Property.Dropdown({	
+	auth: heygenAuth,
 	displayName: 'Brand Voice',
 	description: 'Select the Brand Voice to apply to the video.',
 	required: false,
@@ -53,7 +56,7 @@ export const brandVoiceDropdown = Property.Dropdown({
 		const response = await heygenApiCall<{
 			data: { list: { id: string; name: string }[] };
 		}>({
-			apiKey: auth as string,
+			apiKey: auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: '/brand_voice/list',
 			apiVersion: 'v1',
@@ -70,6 +73,7 @@ export const brandVoiceDropdown = Property.Dropdown({
 });
 
 export const templateDropdown = Property.Dropdown({
+	auth: heygenAuth,
 	displayName: 'Template',
 	description: 'Select the template to generate the video.',
 	required: true,
@@ -86,7 +90,7 @@ export const templateDropdown = Property.Dropdown({
 		const response = await heygenApiCall<{
 			data: { templates: { template_id: string; name: string; aspect_ratio: string }[] };
 		}>({
-			apiKey: auth as string,
+			apiKey: auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: '/templates',
 			apiVersion: 'v2',
@@ -103,6 +107,7 @@ export const templateDropdown = Property.Dropdown({
 });
 
 export const supportedLanguagesDropdown = Property.Dropdown({
+	auth: heygenAuth,
 	displayName: 'Supported Language',
 	description: 'Select the language for video translation.',
 	required: true,
@@ -117,7 +122,7 @@ export const supportedLanguagesDropdown = Property.Dropdown({
 		}
 
 		const response = await heygenApiCall<{ data: { languages: string[] } }>({
-			apiKey: auth as string,
+			apiKey: auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: '/video_translate/target_languages',
 			apiVersion: 'v2',
@@ -134,6 +139,7 @@ export const supportedLanguagesDropdown = Property.Dropdown({
 });
 
 export const templateVariables = Property.DynamicProperties({
+	auth: heygenAuth,
 	displayName: 'Template Varriables',
 	refreshers: ['templateId'],
 	required: false,
@@ -146,7 +152,7 @@ export const templateVariables = Property.DynamicProperties({
 			const response = await heygenApiCall<{
 				data: { variables: { [x: string]: { type: string; name: string } } };
 			}>({
-				apiKey: auth as unknown as string,
+				apiKey: auth.secret_text,
 				method: HttpMethod.GET,
 				resourceUri: `/template/${templateId}`,
 				apiVersion: 'v2',

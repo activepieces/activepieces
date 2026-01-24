@@ -1,12 +1,11 @@
 import { performance } from 'node:perf_hooks'
-import { ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, isNil } from '@activepieces/shared'
-import { EngineGenericError } from '../helper/execution-errors'
+import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, isNil } from '@activepieces/shared'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
@@ -75,7 +74,7 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-            const shouldBreakExecution = flowExecutionContext.verdict !== ExecutionVerdict.RUNNING || testSingleStepMode
+            const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
 
             if (shouldBreakExecution) {
                 break

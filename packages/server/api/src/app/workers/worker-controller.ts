@@ -1,7 +1,9 @@
-import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { ExecutionType, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, securityAccess, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { ExecutionType, FileType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
+import { StatusCodes } from 'http-status-codes'
+import { fileService } from '../file/file.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { dedupeService } from '../trigger/dedupe-service'
@@ -13,9 +15,22 @@ const tracer = trace.getTracer('worker-controller')
 
 export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
+    app.get('/archive/:fileId', GetFileRequestParams, async (request, reply) => {
+        const { fileId } = request.params
+        const { data } = await fileService(request.log).getDataOrThrow({
+            fileId,
+            type: FileType.PACKAGE_ARCHIVE,
+        })
+        return reply
+            .type('application/zip')
+            .status(StatusCodes.OK)
+            .send(data)
+    })
+
+   
     app.post('/save-payloads', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: securityAccess.worker(),
         },
         schema: {
             body: SavePayloadRequest,
@@ -45,7 +60,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/migrate-job', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: securityAccess.worker(),
         },
         schema: {
             body: MigrateJobsRequest,
@@ -56,7 +71,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     
     app.post('/submit-payloads', {
         config: {
-            allowedPrincipals: [PrincipalType.WORKER],
+            security: securityAccess.worker(),
         },
         schema: {
             body: SubmitPayloadsRequest,
@@ -117,3 +132,13 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+const GetFileRequestParams = {
+    config: {
+        security: securityAccess.worker(),
+    },
+    schema: {
+        params: Type.Object({
+            fileId: Type.String(),
+        }),
+    },
+}

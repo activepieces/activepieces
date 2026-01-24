@@ -29,7 +29,7 @@ export const constantContact = createPiece({
       baseUrl: () => 'https://api.cc.email/v3', // Replace with the actual base URL
       auth: constantContactAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

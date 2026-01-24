@@ -10,24 +10,19 @@ import {
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
-  BulkRetryFlowRequestBody,
   SeekPage,
+  BulkActionOnRunsRequestBody,
+  BulkArchiveActionOnRunsRequestBody,
+  BulkCancelFlowRequestBody,
 } from '@activepieces/shared';
 
 type TestStepParams = {
   socket: Socket;
   request: CreateStepRunRequestBody;
-} & (
-  | {
-      isForTodo: true;
-      onProgress: (progress: StepRunResponse) => void;
-    }
-  | {
-      isForTodo: false;
-      onProgress: undefined;
-    }
-);
-
+  // optional callback for steps like agent and todo
+  onProgress?: (progress: StepRunResponse) => void;
+  onFinish?: () => void;
+};
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
     return api.get<SeekPage<FlowRun>>('/v1/flow-runs', request);
@@ -35,8 +30,14 @@ export const flowRunsApi = {
   getPopulated(id: string): Promise<FlowRun> {
     return api.get<FlowRun>(`/v1/flow-runs/${id}`);
   },
-  bulkRetry(request: BulkRetryFlowRequestBody): Promise<FlowRun[]> {
+  bulkRetry(request: BulkActionOnRunsRequestBody): Promise<FlowRun[]> {
     return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
+  },
+  bulkCancel(request: BulkCancelFlowRequestBody): Promise<FlowRun[]> {
+    return api.post<FlowRun[]>('/v1/flow-runs/cancel', request);
+  },
+  bulkArchive(request: BulkArchiveActionOnRunsRequestBody): Promise<void> {
+    return api.post<void>('/v1/flow-runs/archive', request);
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
@@ -47,56 +48,59 @@ export const flowRunsApi = {
     onUpdate: (response: FlowRun) => void,
   ): Promise<void> {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const initialRun = await getInitialRun(socket, request.flowVersionId);
+    const initialRun = await getInitialRun(
+      socket,
+      request.flowVersionId,
+      false,
+    );
+    onUpdate(initialRun);
+  },
+  async startManualTrigger(
+    socket: Socket,
+    request: TestFlowRunRequestBody,
+    onUpdate: (response: FlowRun) => void,
+  ): Promise<void> {
+    socket.emit(WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED, request);
+    const initialRun = await getInitialRun(socket, request.flowVersionId, true);
     onUpdate(initialRun);
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
-    const { socket, request, isForTodo, onProgress } = params;
+    const { socket, request, onProgress, onFinish } = params;
     const stepRun = await api.post<FlowRun>(
       '/v1/sample-data/test-step',
       request,
     );
 
     return new Promise<StepRunResponse>((resolve, reject) => {
-      let handleStepProgress: ((response: StepRunResponse) => void) | null =
-        null;
       const handleStepFinished = (response: StepRunResponse) => {
         if (response.runId === stepRun.id) {
+          onFinish?.();
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
             handleStepFinished,
           );
-          if (handleStepProgress) {
-            socket.off(
-              WebsocketClientEvent.TEST_STEP_PROGRESS,
-              handleStepProgress,
-            );
-          }
           socket.off('error', handleError);
           resolve(response);
         }
       };
 
       const handleError = (error: any) => {
+        onFinish?.();
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        if (handleStepProgress) {
-          socket.off(
-            WebsocketClientEvent.TEST_STEP_PROGRESS,
-            handleStepProgress,
-          );
-        }
         socket.off('error', handleError);
         reject(error);
       };
+
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
       socket.on('error', handleError);
-      if (isForTodo) {
-        handleStepProgress = (response: StepRunResponse) => {
+
+      if (onProgress) {
+        const handleOnProgress = (response: StepRunResponse) => {
           if (response.runId === stepRun.id) {
             onProgress(response);
           }
         };
-        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleStepProgress);
+        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
       }
     });
   },
@@ -104,16 +108,28 @@ export const flowRunsApi = {
 function getInitialRun(
   socket: Socket,
   flowVersionId: string,
+  forManualTrigger: boolean,
 ): Promise<FlowRun> {
   return new Promise<FlowRun>((resolve) => {
     const onRunStarted = (run: FlowRun) => {
       if (run.flowVersionId !== flowVersionId) {
         return;
       }
-      socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      if (forManualTrigger) {
+        socket.off(
+          WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED,
+          onRunStarted,
+        );
+      } else {
+        socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      }
       resolve(run);
     };
 
-    socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    if (forManualTrigger) {
+      socket.on(WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED, onRunStarted);
+    } else {
+      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    }
   });
 }

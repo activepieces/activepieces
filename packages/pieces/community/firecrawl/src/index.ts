@@ -23,18 +23,10 @@ export const firecrawlAuth = PieceAuth.SecretText({
   validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${FIRECRAWL_API_BASE_URL}/scrape`,
+        method: HttpMethod.GET,
+        url: `${FIRECRAWL_API_BASE_URL}/team/credit-usage`,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${auth}`,
-        },
-        body: {
-          url: 'https://www.example.com',
-          formats: ['json'],
-          jsonOptions: {
-            prompt: 'test'
-          }
         },
       });
       return {
@@ -68,7 +60,7 @@ export const firecrawl = createPiece({
       baseUrl: () => FIRECRAWL_API_BASE_URL,
       auth: firecrawlAuth,
       authMapping: async (auth) => ({
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

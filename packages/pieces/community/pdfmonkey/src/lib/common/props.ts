@@ -1,9 +1,11 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { pdfmonkeyAuth } from './auth';
 
 export const templateIdDropdown = Property.Dropdown({
 	displayName: 'Template ID',
+	auth: pdfmonkeyAuth,
 	required: true,
 	refreshers: [],
 	options: async ({ auth }) => {
@@ -25,7 +27,7 @@ export const templateIdDropdown = Property.Dropdown({
 				const response = await makeRequest<{
 					document_template_cards: Array<{ id: string; identifier: string }>;
 					meta: { total_pages: number; current_page: number };
-				}>(auth as string, HttpMethod.GET, '/document_template_cards',{ page: page.toString() });
+				}>(auth, HttpMethod.GET, '/document_template_cards',{ page: page.toString() });
 
 				const items = response.document_template_cards ?? [];
 
@@ -55,6 +57,7 @@ export const documentIdDropdown = Property.Dropdown({
 	displayName: 'Document ID',
 	required: true,
 	refreshers: [],
+	auth: pdfmonkeyAuth,
 	options: async ({ auth }) => {
 		if (!auth) {
 			return {
@@ -74,7 +77,7 @@ export const documentIdDropdown = Property.Dropdown({
 				const response = await makeRequest<{
 					document_cards: Array<{ id: string; filename: string }>;
 					meta: { total_pages: number; current_page: number };
-				}>(auth as string, HttpMethod.GET, '/document_cards', { page: page.toString() });
+				}>(auth, HttpMethod.GET, '/document_cards', { page: page.toString() });
 
 				const items = response.document_cards ?? [];
 

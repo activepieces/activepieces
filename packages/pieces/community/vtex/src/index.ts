@@ -78,11 +78,11 @@ export const vtex = createPiece({
     getOrderById,
     getOrderList,
     createCustomApiCallAction({
-      baseUrl: (auth) => `https://${(auth as { hostUrl: string }).hostUrl}`,
+      baseUrl: (auth) => `https://${(auth)?.props.hostUrl}`,
       auth: vtexAuth,
       authMapping: async (auth) => ({
-        'X-VTEX-API-AppKey': (auth as { appKey: string }).appKey,
-        'X-VTEX-API-AppToken': (auth as { appToken: string }).appToken,
+        'X-VTEX-API-AppKey': auth.props.appKey,
+        'X-VTEX-API-AppToken': auth.props.appToken,
       }),
     }),
   ],

@@ -19,7 +19,7 @@ export const taskFinishedWithErrorTrigger = createTrigger({
 
   async onEnable(context) {
     const { robotId } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     try {
       // Verify robot exists and we have access
@@ -81,7 +81,7 @@ export const taskFinishedWithErrorTrigger = createTrigger({
     const { robotId } = context.propsValue;
 
     const webhookId = await context.store.get<string>(TRIGGER_KEY);
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     if (!isNil(webhookId)) {
       try {
@@ -116,7 +116,7 @@ export const taskFinishedWithErrorTrigger = createTrigger({
   async test(context) {
     const { robotId } = context.propsValue;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const response = await browseAiApiCall<{
       result: { robotTasks: { items: { id: string }[] } };

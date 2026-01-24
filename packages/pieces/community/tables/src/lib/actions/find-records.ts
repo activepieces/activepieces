@@ -23,6 +23,7 @@ export const findRecords = createAction({
       required: false,
     }),
     filters: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Filters',
       description: 'Filter conditions to apply',
       required: false,

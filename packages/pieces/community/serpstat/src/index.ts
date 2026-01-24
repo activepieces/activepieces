@@ -23,7 +23,7 @@ export const serpstat = createPiece({
       authLocation: 'queryParams',
       authMapping: async (auth) => {
         return {
-          token: auth as string,
+          token: auth.secret_text,
         };
       },
     }),

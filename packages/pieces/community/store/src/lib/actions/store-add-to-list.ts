@@ -4,7 +4,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 import deepEqual from 'deep-equal';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
 
-async function executeStorageAddToList(context: ActionContext<PieceAuthProperty, {
+	async function executeStorageAddToList(context: ActionContext<PieceAuthProperty | undefined, {
 	key: ShortTextProperty<true>;
 	value: ArrayProperty<true>;
 	ignore_if_exists: CheckboxProperty<false>;

@@ -32,25 +32,25 @@ export const CORE_STEP_METADATA: Record<
 > = {
   [FlowActionType.CODE]: {
     displayName: t('Code'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/code.svg',
     description: t('Powerful Node.js & TypeScript code with npm'),
     type: FlowActionType.CODE as const,
   },
   [FlowActionType.LOOP_ON_ITEMS]: {
     displayName: t('Loop on Items'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/loop.svg',
     description: 'Iterate over a list of items',
     type: FlowActionType.LOOP_ON_ITEMS as const,
   },
   [FlowActionType.ROUTER]: {
     displayName: t('Router'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
     description: t('Split your flow into branches depending on condition(s)'),
     type: FlowActionType.ROUTER as const,
   },
   [FlowTriggerType.EMPTY]: {
     displayName: t('Empty Trigger'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
     description: t('Empty Trigger'),
     type: FlowTriggerType.EMPTY as const,
   },
@@ -106,6 +106,7 @@ export const stepUtils = {
           ...CORE_STEP_METADATA[step.type],
           ...spreadIfDefined('logoUrl', customLogoUrl),
           actionOrTriggerOrAgentDisplayName: '',
+          actionOrTriggerOrAgentDescription: '',
         };
       case FlowActionType.PIECE:
       case FlowTriggerType.PIECE: {
@@ -122,9 +123,14 @@ export const stepUtils = {
           step.type === FlowActionType.PIECE
             ? piece.actions[step.settings.actionName!].displayName
             : piece.triggers[step.settings.triggerName!].displayName;
+        const actionOrTriggerDescription =
+          step.type === FlowActionType.PIECE
+            ? piece.actions[step.settings.actionName!].description
+            : piece.triggers[step.settings.triggerName!].description;
         return {
           ...metadata,
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
+          actionOrTriggerOrAgentDescription: actionOrTriggerDescription,
           actionOrTriggerOrAgentDisplayName: actionOrTriggerDisplayName,
         };
       }

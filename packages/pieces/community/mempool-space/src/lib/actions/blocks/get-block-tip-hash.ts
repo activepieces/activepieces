@@ -1,8 +1,9 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getBlockTipHash = createAction({
+ auth:PieceAuth.None(),
     name: 'get_block_tip_hash',
     displayName: 'Get Block Tip Hash',
     description: 'Returns the hash of the last block',

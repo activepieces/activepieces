@@ -16,6 +16,7 @@ export function makeClient(
 export const baserowCommon = {
   tableFields: (required = true) =>
     Property.DynamicProperties({
+      auth: baserowAuth,
       displayName: 'Table Fields',
       required,
       refreshers: ['table_id'],
@@ -25,7 +26,7 @@ export const baserowCommon = {
         const fields: DynamicPropsValue = {};
         try {
           const client = makeClient(
-            auth as PiecePropValueSchema<typeof baserowAuth>
+            auth.props
           );
           const tableFields = await client.listTableFields(
             table_id as unknown as number

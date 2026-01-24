@@ -61,7 +61,7 @@ export const createDeal = createAction({
         const response = await callZendeskApi(
             HttpMethod.POST,
             'v2/deals',
-            auth as ZendeskSellAuth,
+            auth,
             { data: cleanedBody } 
         );
 

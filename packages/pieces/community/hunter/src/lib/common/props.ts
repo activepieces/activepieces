@@ -1,11 +1,13 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { hunterApiCall } from './index';
+import { hunterAuth } from '../..';
 
 export const campaignIdProp = Property.Dropdown({
     displayName: 'Campaign',
     required: true,
     refreshers: [],
+    auth: hunterAuth,
     options: async ({ auth }) => {
         if (!auth) {
             return {
@@ -15,7 +17,7 @@ export const campaignIdProp = Property.Dropdown({
             };
         }
         const resp = await hunterApiCall({
-            apiKey: auth as string,
+            apiKey: auth,
             endpoint: '/campaigns',
             method: HttpMethod.GET,
         });
@@ -51,7 +53,8 @@ export const leadIdsProp = Property.Array({
 
 export const leadIdsDropdownProp = Property.MultiSelectDropdown({
     displayName: 'Leads',
-    required: false,
+    required: false,    
+    auth: hunterAuth,
     description: 'Select leads from your Hunter account to add as recipients.',
     refreshers: [],
     options: async ({ auth }) => {
@@ -64,7 +67,7 @@ export const leadIdsDropdownProp = Property.MultiSelectDropdown({
         }
         
         const resp = await hunterApiCall({
-            apiKey: auth as string,
+            apiKey: auth,
             endpoint: '/leads',
             method: HttpMethod.GET,
             qparams: { limit: '100' }
@@ -102,6 +105,7 @@ export const companyLeadProp = Property.ShortText({
 });
 
 export const emailTypeProp = Property.Dropdown({
+    auth: hunterAuth,
     displayName: 'Type',
     required: false,
     description:
@@ -213,6 +217,7 @@ export const leadsListIdsProp = Property.Array({
 });
 
 export const leadsListDropdownProp = Property.Dropdown({
+    auth: hunterAuth,
     displayName: 'Leads List',
     required: false,
     description: 'Select which list to add the lead to; defaults to your most recent list.',
@@ -227,7 +232,7 @@ export const leadsListDropdownProp = Property.Dropdown({
         }
         
         const resp = await hunterApiCall({
-            apiKey: auth as string,
+            apiKey: auth,
             endpoint: '/leads',
             method: HttpMethod.GET,
             qparams: { limit: '100' }
@@ -266,6 +271,7 @@ export const leadIdProp = Property.Number({
 });
 
 export const leadSelectDropdownProp = Property.Dropdown({
+    auth: hunterAuth,
     displayName: 'Lead',
     required: true,
     description: 'Select a lead from your Hunter account.',
@@ -280,7 +286,7 @@ export const leadSelectDropdownProp = Property.Dropdown({
         }
         
         const resp = await hunterApiCall({
-            apiKey: auth as string,
+            apiKey: auth,
             endpoint: '/leads',
             method: HttpMethod.GET,
             qparams: { limit: '100' }
@@ -298,6 +304,7 @@ export const leadSelectDropdownProp = Property.Dropdown({
 });
 
 export const leadDeleteDropdownProp = Property.Dropdown({
+    auth: hunterAuth,
     displayName: 'Lead to Delete',
     required: true,
     description: 'Select the lead to delete from your Hunter account.',
@@ -312,7 +319,7 @@ export const leadDeleteDropdownProp = Property.Dropdown({
         }
         
         const resp = await hunterApiCall({
-            apiKey: auth as string,
+            apiKey: auth,
             endpoint: '/leads',
             method: HttpMethod.GET,
             qparams: { limit: '100' }
@@ -404,7 +411,8 @@ export const syncStatusProp = Property.Dropdown({
     displayName: 'Sync Status',
     required: false,
     description: 'Filter by synchronization status.',
-    options: async () => ({
+    auth: hunterAuth,
+        options: async () => ({
         disabled: false,
         options: [
             { label: 'Pending', value: 'pending' },

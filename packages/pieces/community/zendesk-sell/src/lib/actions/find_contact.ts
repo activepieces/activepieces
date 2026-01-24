@@ -49,7 +49,7 @@ export const findContact = createAction({
         const response = await callZendeskApi(
             HttpMethod.GET,
             'v2/contacts',
-            auth as ZendeskSellAuth,
+            auth,
             undefined,
             params     
         );

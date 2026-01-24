@@ -96,10 +96,8 @@ export const mempoolSpace = createPiece({
     getTransactionStatus,
     getTransactionTimes,
     postTransaction,
-
     createCustomApiCallAction({
       baseUrl: () => 'https://mempool.space/api',
-      auth: PieceAuth.None(),
     }),
   ],
   triggers: []

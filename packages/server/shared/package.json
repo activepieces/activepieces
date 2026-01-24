@@ -5,12 +5,12 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.20.2",
-    "@activepieces/shared": "0.25.2",
+    "@activepieces/pieces-framework": "0.24.0",
+    "@activepieces/shared": "0.32.0",
     "tslib": "2.6.2",
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
-    "axios": "1.8.3",
+    "axios": "1.13.1",
     "axios-retry": "4.4.1",
     "dayjs": "1.11.9",
     "@sentry/node": "7.120.0",
@@ -23,8 +23,9 @@
     "ioredis": "5.4.1",
     "redlock": "5.0.0-beta.2",
     "redis-memory-server": "0.13.0",
-    "chalk": "4.1.2",
     "bullmq": "5.61.0",
-    "bullmq-otel": "1.0.1"
+    "bullmq-otel": "1.0.1",
+    "tree-kill": "1.2.2",
+    "typeorm": "0.3.26"
   }
 }

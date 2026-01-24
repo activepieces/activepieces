@@ -25,7 +25,7 @@ export const findRecordAction = createAction({
     const recordId = context.propsValue.recordId;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof BikaAuth>
+      context.auth.props,
     );
 
     const response: any = await client.findRecord(

@@ -13,7 +13,7 @@ export const getDocumentDetails = createAction({
   },
   async run({ auth, propsValue }) {
     return await pandadocClient.makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.GET,
       `/documents/${propsValue.document_id}/details`
     );

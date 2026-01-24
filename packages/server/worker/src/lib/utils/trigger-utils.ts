@@ -6,6 +6,7 @@ import {
     ErrorCode,
     FlowTriggerType,
     FlowVersion,
+    PieceTriggerSettings,
     PlatformId,
     ProjectId,
     TriggerHookType,
@@ -13,8 +14,9 @@ import {
     TriggerRunStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineRunner } from '../compute'
-import { pieceEngineUtil } from './flow-engine-util'
+import { pieceWorkerCache } from '../cache/piece-worker-cache'
+
+import { operationHandler } from '../compute/operation-handler'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
 import { workerRedisConnections } from './worker-redis'
@@ -36,7 +38,13 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
         }
         const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
 
-        const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, flowVersion)
+        const triggerSettings = flowVersion.trigger.settings as PieceTriggerSettings
+        const triggerPiece = await pieceWorkerCache(log).getPiece({
+            engineToken,
+            pieceName: triggerSettings.pieceName,
+            pieceVersion: triggerSettings.pieceVersion,
+            platformId,
+        })
         await triggerRunStats(log, await workerRedisConnections.useExisting()).save({
             platformId,
             pieceName: triggerPiece.pieceName,
@@ -74,7 +82,7 @@ async function getTriggerPayloadsAndStatus(
 ): Promise<ExtractPayloadsResult> {
     const { payload, flowVersion, projectId, simulate, timeoutInSeconds } = params
     try {
-        const { status, result, standardError } = await engineRunner(log).executeTrigger(engineToken, {
+        const { status, result, standardError } = await operationHandler(log).executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
             flowVersion,
             triggerPayload: payload,
@@ -102,7 +110,7 @@ async function getTriggerPayloadsAndStatus(
         }
     }
     catch (e) {
-        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
+        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT
         if (isTimeoutError) {
             return {
                 payloads: [],

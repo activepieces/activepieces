@@ -16,10 +16,10 @@ export const matomo = createPiece({
   actions: [
     addAnnotationAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { domain: string }).domain,
+      baseUrl: (auth) => (auth?.props .domain ?? ''),
       auth: matomoAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { tokenAuth: string }).tokenAuth}`,
+        Authorization: `Bearer ${(auth ).props .tokenAuth}`,
       }),
     }),
   ],

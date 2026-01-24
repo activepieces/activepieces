@@ -8,7 +8,7 @@ export class RemoveAgentidFromMcpEntity1760452015041 implements MigrationInterfa
             ALTER TABLE "mcp" DROP CONSTRAINT "fk_mcp_agent_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."mcp_agent_id"
+            DROP INDEX "mcp_agent_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp" DROP COLUMN "agentId"

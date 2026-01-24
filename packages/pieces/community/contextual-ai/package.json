@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-contextual-ai",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "contextual-client": "^0.10.0",
+    "tslib": "^2.3.0"
+  }
+}

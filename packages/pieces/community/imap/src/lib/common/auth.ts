@@ -2,8 +2,10 @@ import {
   PieceAuth,
   Property,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { performImapOperation } from './imap';
+import { AppConnectionType } from '@activepieces/shared';
 
 const description = `
 **Gmail Users:**
@@ -52,7 +54,7 @@ export const imapAuth = PieceAuth.CustomAuth({
     auth,
   }): Promise<{ valid: true } | { valid: false; error: string }> {
     try {
-      return (await performImapOperation(auth, async (imapClient) => {
+      return (await performImapOperation({ type: AppConnectionType.CUSTOM_AUTH, props: auth }, async (imapClient) => {
         imapClient.noop();
         return { valid: true };
       })) as { valid: true };
@@ -66,4 +68,4 @@ export const imapAuth = PieceAuth.CustomAuth({
   required: true,
 });
 
-export type ImapAuth = PiecePropValueSchema<typeof imapAuth>;
+export type ImapAuth = AppConnectionValueForAuthProperty<typeof imapAuth>;

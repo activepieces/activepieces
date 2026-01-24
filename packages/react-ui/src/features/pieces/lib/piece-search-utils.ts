@@ -10,7 +10,7 @@ import {
   PieceCategory,
   FlowTriggerType,
   FlowActionType,
-  AGENT_PIECE_NAME,
+  AI_PIECE_NAME,
 } from '@activepieces/shared';
 
 const isFlowController = (stepMetadata: StepMetadata) => {
@@ -161,12 +161,13 @@ const sortByPieceNameOrder = (
 const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
   '@activepieces/piece-webhook',
   '@activepieces/piece-schedule',
+  '@activepieces/piece-manual-trigger',
   '@activepieces/piece-forms',
   '@activepieces/piece-tables',
 ];
 
 const HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS = [
-  AGENT_PIECE_NAME,
+  AI_PIECE_NAME,
   '@activepieces/piece-http',
   '@activepieces/piece-tables',
   '@activepieces/piece-todos',

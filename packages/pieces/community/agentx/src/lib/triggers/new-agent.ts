@@ -1,4 +1,4 @@
-import {createTrigger,TriggerStrategy,PiecePropValueSchema,} from "@activepieces/pieces-framework";
+import {createTrigger,TriggerStrategy, AppConnectionValueForAuthProperty,} from "@activepieces/pieces-framework";
 import {DedupeStrategy,Polling,pollingHelper,} from "@activepieces/pieces-common";
 import dayjs from "dayjs";
 import { makeRequest } from "../common/client";
@@ -12,12 +12,12 @@ type Agent = {
 };
 
 const polling: Polling<
-  PiecePropValueSchema<typeof AgentXAuth>,
+  AppConnectionValueForAuthProperty<typeof AgentXAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const agents = (await makeRequest(auth, HttpMethod.GET, "/agents")) as Agent[];
+    const agents = (await makeRequest(auth.secret_text, HttpMethod.GET, "/agents")) as Agent[];
     
     const sortedAgents = agents.sort((a, b) => 
       dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()

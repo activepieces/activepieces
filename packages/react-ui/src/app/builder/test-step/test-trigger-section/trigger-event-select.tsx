@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { FlowTrigger, TriggerEventWithPayload } from '@activepieces/shared';
 
-import { testStepHooks } from '../test-step-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 type TriggerEventSelectProps = {
   pollResults: { data: TriggerEventWithPayload[] } | undefined;

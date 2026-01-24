@@ -14,6 +14,7 @@ export const createExpense = createAction({
       required: true,
     }),
     case: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case',
       description: 'The case to associate with this expense',
       required: true,
@@ -76,6 +77,7 @@ export const createExpense = createAction({
       required: false,
     }),
     staff: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Staff',
       description: 'The staff member associated with this expense',
       required: false,

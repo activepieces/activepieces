@@ -21,6 +21,6 @@ export const addVideo = createAction({
     const { auth: apiKey, propsValue } = context;
     const { video_url } = propsValue;
 
-    return await aidbaseClient.addVideo(apiKey, video_url);
+    return await aidbaseClient.addVideo(apiKey.secret_text, video_url);
   },
 });

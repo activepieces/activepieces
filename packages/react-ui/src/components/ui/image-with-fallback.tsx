@@ -42,7 +42,7 @@ const ImageWithFallback = ({
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
-            `transition-opacity duration-500 w-full h-full object-cover`,
+            `transition-opacity duration-500 w-full h-full object-contain`,
             {
               'opacity-0': isLoading,
               'opacity-100': !isLoading,

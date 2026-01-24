@@ -1,8 +1,17 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Puzzle,
+  Hash,
+  BarChart3,
+  Clock,
+  Calendar,
+} from 'lucide-react';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
@@ -111,7 +120,7 @@ export default function TriggerHealthPage() {
       case STATUS.SUCCESS:
         return <CheckCircle size={16} className="text-emerald-700" />;
       case STATUS.WARNING:
-        return <AlertCircle size={16} className="text-yellow-700" />;
+        return <AlertCircle size={16} className="text-amber-700" />;
       case STATUS.FAULT:
         return <XCircle size={16} className="text-destructive" />;
       default:
@@ -124,7 +133,7 @@ export default function TriggerHealthPage() {
       case STATUS.SUCCESS:
         return 'text-emerald-700';
       case STATUS.WARNING:
-        return 'text-yellow-700';
+        return 'text-amber-700';
       case STATUS.FAULT:
         return 'text-destructive';
       default:
@@ -139,8 +148,9 @@ export default function TriggerHealthPage() {
   const columns = [
     {
       accessorKey: 'pieceDisplayName',
+      size: 200,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Piece" />
+        <DataTableColumnHeader column={column} title="Piece" icon={Puzzle} />
       ),
       cell: ({ row }: any) => {
         const status = row.original.status;
@@ -180,8 +190,13 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'runs',
+      size: 160,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Total Runs (14D)" />
+        <DataTableColumnHeader
+          column={column}
+          title="Total Runs (14D)"
+          icon={Hash}
+        />
       ),
       cell: ({ row }: any) => (
         <div className="font-medium">{row.original.runs.toLocaleString()}</div>
@@ -189,8 +204,13 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'lastResults',
+      size: 200,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Last Results" />
+        <DataTableColumnHeader
+          column={column}
+          title="Last Results"
+          icon={BarChart3}
+        />
       ),
       cell: ({ row }: any) => (
         <StatusProgressBar days={row.original.lastResults} />
@@ -198,8 +218,13 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last24Hours',
+      size: 120,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Last 24 Hours" />
+        <DataTableColumnHeader
+          column={column}
+          title="Last 24 Hours"
+          icon={Clock}
+        />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last24Hours}%</div>
@@ -207,8 +232,13 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last7Days',
+      size: 120,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Last 7 Days" />
+        <DataTableColumnHeader
+          column={column}
+          title="Last 7 Days"
+          icon={Calendar}
+        />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last7Days}%</div>
@@ -216,8 +246,13 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last14Days',
+      size: 120,
       header: ({ column }: any) => (
-        <DataTableColumnHeader column={column} title="Last 14 Days" />
+        <DataTableColumnHeader
+          column={column}
+          title="Last 14 Days"
+          icon={Calendar}
+        />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last14Days}%</div>

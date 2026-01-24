@@ -8,15 +8,15 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof bambooHrAuth>,
+  AppConnectionValueForAuthProperty<typeof bambooHrAuth>,
   {
     reportId: string;
     fieldToMonitor: string;
@@ -24,12 +24,8 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, store }) => {
-    const { companyDomain, apiKey } = auth as {
-      companyDomain: string;
-      apiKey: string;
-    };
+    const { companyDomain, apiKey } = auth.props;
 
-    // Fetch the report from BambooHR
     const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `https://api.bamboohr.com/api/gateway.php/${companyDomain}/v1/reports/${propsValue.reportId}?format=json`,
@@ -40,27 +36,41 @@ const polling: Polling<
     };
 
     try {
-      const response = await httpClient.sendRequest<{ employees: any[] }>(
-        request
-      );
+      const response = await httpClient.sendRequest<{
+        fields: Array<{ id: string; type: string; name: string }>;
+        employees: Array<Record<string, any>>;
+      }>(request);
+
+      const fields = response.body.fields || [];
       const reportData = response.body.employees || [];
 
-      // Get the last known state from store
+      const availableFields = new Set(fields.map((f) => f.id));
+
+      if (!availableFields.has(propsValue.fieldToMonitor)) {
+        console.warn(
+          `Field "${
+            propsValue.fieldToMonitor
+          }" not found in report. Available fields: ${Array.from(
+            availableFields
+          ).join(', ')}`
+        );
+        return [];
+      }
+
       const lastKnownState =
         (await store.get<Record<string, any>>('lastReportState')) || {};
       const currentState: Record<string, any> = {};
       const changes: any[] = [];
 
-      // Process each employee record
-      reportData.forEach((employee: any) => {
-        const employeeId = employee.id || employee.employeeId;
+      reportData.forEach((employee: Record<string, any>) => {
+        const employeeId = String(
+          employee['id'] || employee['employeeId'] || 'unknown'
+        );
         const currentFieldValue = employee[propsValue.fieldToMonitor];
         const lastFieldValue = lastKnownState[employeeId];
 
-        // Store current state
         currentState[employeeId] = currentFieldValue;
 
-        // Check for changes
         if (
           lastFieldValue !== undefined &&
           lastFieldValue !== currentFieldValue
@@ -70,21 +80,21 @@ const polling: Polling<
             data: {
               employeeId,
               employeeName:
-                employee.displayName ||
-                employee.firstName + ' ' + employee.lastName,
+                employee['displayName'] ||
+                (employee['firstName'] && employee['lastName']
+                  ? `${employee['firstName']} ${employee['lastName']}`
+                  : 'Unknown'),
               fieldName: propsValue.fieldToMonitor,
               oldValue: lastFieldValue,
               newValue: currentFieldValue,
               changedAt: dayjs().toISOString(),
-              employee: employee, // Include full employee data
+              employee: employee,
             },
           });
         }
       });
 
-      // Update stored state
       await store.put('lastReportState', currentState);
-
       return changes;
     } catch (error) {
       console.error('Error fetching BambooHR report:', error);
@@ -134,13 +144,11 @@ export const reportFieldChanged = createTrigger({
   },
 
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

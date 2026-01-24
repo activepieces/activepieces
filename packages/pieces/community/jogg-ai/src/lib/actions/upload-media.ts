@@ -39,7 +39,7 @@ export const uploadMedia = createAction({
       method: HttpMethod.POST,
       url: 'https://api.jogg.ai/v1/upload/asset',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: {

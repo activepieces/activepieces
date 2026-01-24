@@ -20,6 +20,7 @@ import { addWatcherToIssueAction } from './lib/actions/add-watcher-to-issue';
 import { linkIssuesAction } from './lib/actions/link-issues';
 import { getIssueAttachmentAction } from './lib/actions/get-issue-attachment';
 import { markdownToJiraFormat } from './lib/actions/markdown-to-jira-format';
+import { getIssueAction } from './lib/actions/get-issue';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -45,15 +46,16 @@ export const jiraCloud = createPiece({
 		listIssueCommentsAction,
 		deleteIssueCommentAction,
 		markdownToJiraFormat,
+		getIssueAction,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
-				return `${(auth as JiraAuth).instanceUrl}/rest/api/3`;
+				return auth ? `${(auth).props.instanceUrl}/rest/api/3` : '';
 			},
 			auth: jiraCloudAuth,
 			authMapping: async (auth) => {
 				const typedAuth = auth as JiraAuth;
 				return {
-					Authorization: `Basic ${Buffer.from(`${typedAuth.email}:${typedAuth.apiToken}`).toString(
+					Authorization: `Basic ${Buffer.from(`${typedAuth.props.email}:${typedAuth.props.apiToken}`).toString(
 						'base64',
 					)}`,
 				};

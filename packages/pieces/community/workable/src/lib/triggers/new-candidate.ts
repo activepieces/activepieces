@@ -60,7 +60,7 @@ export const newCandidate = createTrigger({
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context){
-        const accessToken = context.auth;
+        const accessToken = context.auth.secret_text;
         const subdomain = await getAccountSubdomain(accessToken);
 
         const shortcode = context.propsValue.shortcode || '';
@@ -82,7 +82,7 @@ export const newCandidate = createTrigger({
     },
     async onDisable(context){
         // implement webhook deletion logic
-        const accessToken = context.auth;
+        const accessToken = context.auth.secret_text;
 
         const webhookInfo = await context.store.get<WebhookInformation>('_new_candidate_created');
 
@@ -92,7 +92,7 @@ export const newCandidate = createTrigger({
         }
     },
     async test(context){
-        const accessToken = context.auth;
+        const accessToken = context.auth.secret_text;
         const subdomain = await getAccountSubdomain(accessToken);
         const shortcode = context.propsValue.shortcode || '';
         const stageSlug = context.propsValue.stage_slug || '';

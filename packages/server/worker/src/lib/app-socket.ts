@@ -1,11 +1,9 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { emitWithAck as emitWithAckUtil, tryCatch, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { emitWithAck as emitWithAckUtil, tryCatch, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { io, Socket } from 'socket.io-client'
 import { workerMachine } from './utils/machine'
 
 let socket: Socket
-let heartbeatInterval: NodeJS.Timeout
 let workerToken: string
 
 export const appSocket = (log: FastifyBaseLogger) => ({
@@ -61,28 +59,12 @@ export const appSocket = (log: FastifyBaseLogger) => ({
 
         socket.connect()
 
-        heartbeatInterval = setInterval(() => {
-            rejectedPromiseHandler((async (): Promise<void> => {
-                if (!socket.connected) {
-                    log.error({
-                        message: 'Not connected to server, retrying...',
-                    })
-                    return
-                }
-                try {
-                    const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-                    socket.emit(WebsocketServerEvent.WORKER_HEALTHCHECK, request)
-                }
-                catch (error) {
-                    log.error({
-                        message: 'Failed to send heartbeat, retrying...',
-                        error,
-                    })
-                }
-            })(), log)
-        }, 15000)
+        socket.on(WebsocketServerEvent.WORKER_HEALTHCHECK, async (_, callback) => {
+            const settings = await workerMachine.getSystemInfo(log)
+            callback?.(settings)
+        })
     },
-    
+
     emitWithAck: async <T = unknown>(event: string, data: unknown): Promise<T> => {
         const result = await tryCatch(() => {
             return emitWithAckUtil<T>(socket, event, data, {
@@ -104,9 +86,8 @@ export const appSocket = (log: FastifyBaseLogger) => ({
 
         return result.data
     },
-    
+
     disconnect: (): void => {
-        clearInterval(heartbeatInterval)
         if (socket) {
             socket.disconnect()
         }

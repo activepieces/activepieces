@@ -19,6 +19,7 @@ export const newRecording = createTrigger({
     'Fires when a meeting is recorded (i.e. a new meeting recording is produced)',
   props: {
     triggered_for: Property.MultiSelectDropdown({
+      auth: fathomAuth,
       displayName: 'Trigger For',
       description: 'Select which types of recordings should trigger this webhook',
       required: true,
@@ -78,7 +79,7 @@ export const newRecording = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const fathom = new Fathom({
-      security: { apiKeyAuth: context.auth }
+      security: { apiKeyAuth: context.auth.secret_text }
     });
 
     const webhookParams: CreateWebhookRequest = {
@@ -105,7 +106,7 @@ export const newRecording = createTrigger({
 
     if (webhookInfo?.webhookId) {
       const fathom = new Fathom({
-        security: { apiKeyAuth: context.auth }
+        security: { apiKeyAuth: context.auth.secret_text }
       });
 
       await fathom.deleteWebhook({ id: webhookInfo.webhookId });
@@ -113,7 +114,7 @@ export const newRecording = createTrigger({
   },
   async test(context) {
     const fathom = new Fathom({
-      security: { apiKeyAuth: context.auth }
+      security: { apiKeyAuth: context.auth.secret_text }
     });
 
     const params = {

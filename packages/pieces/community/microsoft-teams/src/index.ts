@@ -21,6 +21,9 @@ import { getChannelMessageAction } from './lib/actions/get-channel-message';
 import { findChannelAction } from './lib/actions/find-channel';
 import { findTeamMemberAction } from './lib/actions/find-team-member';
 import { createGraphClient, withGraphRetry } from './lib/common/graph';
+import { deleteChatMessageAction } from './lib/actions/delete-chat-message';
+import { requestApprovalDirectMessage } from './lib/actions/request-approval-direct-message';
+import { requestApprovalInChannel } from './lib/actions/request-approval-channel-message';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -109,9 +112,12 @@ export const microsoftTeams = createPiece({
 		createChatAndSendMessageAction,
 		createPrivateChannelAction,
 		getChatMessageAction,
+		deleteChatMessageAction,
 		getChannelMessageAction,
 		findChannelAction,
 		findTeamMemberAction,
+		requestApprovalInChannel,
+		requestApprovalDirectMessage,
 		createCustomApiCallAction({
 			auth: microsoftTeamsAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/teams',

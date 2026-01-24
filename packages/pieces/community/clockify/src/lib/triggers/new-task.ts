@@ -27,7 +27,7 @@ export const newTaskTrigger = createTrigger({
 		const { workspaceId, projectId } = context.propsValue;
 
 		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/webhooks`,
 			body: {
@@ -47,7 +47,7 @@ export const newTaskTrigger = createTrigger({
 
 		if (!isNil(webhookId)) {
 			await clockifyApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});
@@ -57,7 +57,7 @@ export const newTaskTrigger = createTrigger({
 		const { workspaceId, projectId } = context.propsValue;
 
 		const response = await clockifyApiCall<{ id: string }[]>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 			query: {

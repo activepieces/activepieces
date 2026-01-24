@@ -15,7 +15,7 @@ export const createSocialMediaMessageAction = createAction({
     channelid: vboutCommon.socialMediaProfile,
   },
   async run(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth.secret_text);
     return await client.createSocialMediaPost(context.propsValue);
   },
 });

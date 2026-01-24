@@ -2,7 +2,9 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -15,7 +17,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 
@@ -31,6 +32,7 @@ type FromSchema = Static<typeof FromSchema>;
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
+
   const form = useForm({
     defaultValues: {
       name: platform?.name,
@@ -41,33 +43,34 @@ export const AppearanceSection = () => {
     },
     resolver: typeboxResolver(FromSchema),
   });
-
-  const { toast } = useToast();
+  const logoRef = useRef<HTMLInputElement>(null);
+  const iconRef = useRef<HTMLInputElement>(null);
+  const faviconRef = useRef<HTMLInputElement>(null);
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
-      platformApi.update(
-        {
-          name: form.getValues().name,
-          fullLogoUrl: form.getValues().logoUrl,
-          logoIconUrl: form.getValues().iconUrl,
-          favIconUrl: form.getValues().faviconUrl,
-          primaryColor: form.getValues().color,
-        },
-        platform.id,
-      );
+      const logo = logoRef.current?.files?.[0];
+      const icon = iconRef.current?.files?.[0];
+      const favicon = faviconRef.current?.files?.[0];
+
+      const formdata = new FormData();
+      formdata.append('name', form.getValues().name);
+      formdata.append('primaryColor', form.getValues().color);
+      if (logo) formdata.append('fullLogo', logo);
+      if (icon) formdata.append('logoIcon', icon);
+      if (favicon) formdata.append('favIcon', favicon);
+
+      await platformApi.updateWithFormData(formdata, platform.id);
       window.location.reload();
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
+      toast.success(t('Your changes have been saved.'), {
         duration: 3000,
       });
       form.reset(form.getValues());
     },
   });
-  console.log(form.formState.isValid, form.getValues());
+
   return (
     <>
       <Separator className="my-2" />
@@ -99,51 +102,59 @@ export const AppearanceSection = () => {
 
               <FormField
                 name="logoUrl"
-                render={({ field }) => (
+                render={() => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="logoUrl">{t('Logo URL')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      id="logoUrl"
-                      placeholder="https://www.example.com/logo.png"
-                      className="rounded-sm"
-                    />
+                    <FormLabel htmlFor="logoFile">{t('Logo')}</FormLabel>
+                    <div className="flex flex-row gap-2 items-center">
+                      <Input
+                        type="file"
+                        ref={logoRef}
+                        defaultFileName={platform?.fullLogoUrl}
+                        accept="image/*"
+                        id="logoFile"
+                        className="rounded-sm"
+                      />
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 name="iconUrl"
-                render={({ field }) => (
+                render={() => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="iconUrl">{t('Icon URL')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      id="iconUrl"
-                      placeholder="https://www.example.com/icon.png"
-                      className="rounded-sm"
-                    />
+                    <FormLabel htmlFor="iconFile">{t('Icon')}</FormLabel>
+                    <div className="flex flex-row gap-2 items-center">
+                      <Input
+                        type="file"
+                        ref={iconRef}
+                        defaultFileName={platform?.logoIconUrl}
+                        accept="image/*"
+                        id="iconFile"
+                        className="rounded-sm"
+                      />
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 name="faviconUrl"
-                render={({ field }) => (
+                render={() => (
                   <FormItem className="grid space-y-2">
                     <FormLabel htmlFor="faviconUrl">
                       {t('Favicon URL')}
                     </FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      id="faviconUrl"
-                      placeholder="https://www.example.com/favicon.png"
-                      className="rounded-sm"
-                    />
+                    <div className="flex flex-row gap-2 items-center">
+                      <Input
+                        type="file"
+                        ref={faviconRef}
+                        defaultFileName={platform?.favIconUrl}
+                        accept="image/*"
+                        id="faviconFile"
+                        className="rounded-sm"
+                      />
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

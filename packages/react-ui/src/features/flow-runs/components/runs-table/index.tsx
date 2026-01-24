@@ -7,6 +7,7 @@ import {
   ChevronDown,
   History,
   X,
+  Archive,
 } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -29,7 +30,7 @@ import {
 import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
@@ -77,6 +78,7 @@ export const RunsTable = () => {
 
       const createdAfter = searchParams.get('createdAfter');
       const createdBefore = searchParams.get('createdBefore');
+      const archivedParam = searchParams.get('archivedAt');
 
       return flowRunsApi.list({
         status: status ?? undefined,
@@ -84,9 +86,10 @@ export const RunsTable = () => {
         flowId,
         cursor: cursor ?? undefined,
         limit,
+        includeArchived: archivedParam === 'true',
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
-        failedStepName: failedStepName,
+        failedStepName,
         flowRunIds,
       });
     },
@@ -114,7 +117,7 @@ export const RunsTable = () => {
   });
 
   const navigate = useNavigate();
-  const { data: flowsData, isFetching: isFetchingFlows } = flowsHooks.useFlows({
+  const { data: flowsData, isFetching: isFetchingFlows } = flowHooks.useFlows({
     limit: 1000,
     cursor: undefined,
   });
@@ -154,6 +157,12 @@ export const RunsTable = () => {
         title: t('Created'),
         accessorKey: 'created',
         icon: CheckIcon,
+        defaultPresetName: '7days',
+      },
+      {
+        type: 'checkbox',
+        title: t('Show archived'),
+        accessorKey: 'archivedAt',
       },
     ],
     [flows],
@@ -196,8 +205,150 @@ export const RunsTable = () => {
     },
   });
 
+  const cancelRuns = useMutation({
+    mutationFn: (cancelParams: { runIds: string[] }) => {
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
+      const createdAfter = searchParams.get('createdAfter') || undefined;
+      const createdBefore = searchParams.get('createdBefore') || undefined;
+      return flowRunsApi.bulkCancel({
+        projectId: authenticationSession.getProjectId()!,
+        flowRunIds: selectedAll ? undefined : cancelParams.runIds,
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status:
+          status.length > 0
+            ? (status.filter(
+                (s) => s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
+              ) as (
+                | typeof FlowRunStatus.PAUSED
+                | typeof FlowRunStatus.QUEUED
+              )[])
+            : undefined,
+        flowId,
+        createdAfter,
+        createdBefore,
+      });
+    },
+    onSuccess: () => {
+      refetch();
+      setSelectedRows([]);
+      setSelectedAll(false);
+      setExcludedRows(new Set());
+    },
+  });
+
+  const archiveRuns = useMutation({
+    mutationFn: (retryParams: { runIds: string[] }) => {
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
+      const createdAfter = searchParams.get('createdAfter') || undefined;
+      const createdBefore = searchParams.get('createdBefore') || undefined;
+      const failedStepName = searchParams.get('failedStepName') || undefined;
+      return flowRunsApi.bulkArchive({
+        projectId: authenticationSession.getProjectId()!,
+        flowRunIds: selectedAll ? undefined : retryParams.runIds,
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status,
+        flowId,
+        createdAfter,
+        createdBefore,
+        failedStepName,
+      });
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
   const bulkActions: BulkAction<FlowRun>[] = useMemo(
     () => [
+      {
+        render: (_, resetSelection) => {
+          const isDisabled =
+            selectedRows.length === 0 || !userHasPermissionToRetryRun;
+
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <Button
+                disabled={isDisabled}
+                variant="outline"
+                className="h-9 w-full"
+                loading={archiveRuns.isPending}
+                onClick={() => {
+                  archiveRuns.mutate({
+                    runIds: selectedRows.map((row) => row.id),
+                  });
+                  resetSelection();
+                  setSelectedRows([]);
+                }}
+              >
+                <Archive className="size-4 mr-1" />
+                {selectedRows.length > 0
+                  ? `${t('Archive')} ${
+                      !isDisabled
+                        ? selectedAll
+                          ? excludedRows.size > 0
+                            ? `${t('all except')} ${excludedRows.size}`
+                            : t('all')
+                          : `(${selectedRows.length})`
+                        : ''
+                    }`
+                  : t('Archive')}
+              </Button>
+            </div>
+          );
+        },
+      },
+      {
+        render: (_, resetSelection) => {
+          const allCancellable = selectedRows.every(
+            (row) =>
+              row.status === FlowRunStatus.PAUSED ||
+              row.status === FlowRunStatus.QUEUED,
+          );
+          const isDisabled =
+            selectedRows.length === 0 ||
+            !userHasPermissionToRetryRun ||
+            !allCancellable;
+
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToRetryRun}
+              >
+                <MessageTooltip
+                  message={t('Only paused or queued runs can be cancelled')}
+                  isDisabled={allCancellable}
+                >
+                  <Button
+                    disabled={isDisabled}
+                    variant="outline"
+                    className="h-9 w-full"
+                    loading={cancelRuns.isPending}
+                    onClick={() => {
+                      cancelRuns.mutate({
+                        runIds: selectedRows.map((row) => row.id),
+                      });
+                      resetSelection();
+                    }}
+                  >
+                    <X className="h-3 w-4 mr-1" />
+                    {selectedRows.length > 0
+                      ? `${t('Cancel')} ${
+                          selectedAll
+                            ? excludedRows.size > 0
+                              ? `${t('all except')} ${excludedRows.size}`
+                              : t('all')
+                            : `(${selectedRows.length})`
+                        }`
+                      : t('Cancel')}
+                  </Button>
+                </MessageTooltip>
+              </PermissionNeededTooltip>
+            </div>
+          );
+        },
+      },
       {
         render: (_, resetSelection) => {
           const allFailed = selectedRows.every((row) =>
@@ -213,17 +364,24 @@ export const RunsTable = () => {
               >
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild disabled={isDisabled}>
-                    <Button disabled={isDisabled} className="h-9 w-full">
+                    <Button
+                      disabled={isDisabled}
+                      className="h-9 w-full"
+                      loading={retryRuns.isPending}
+                    >
+                      <RotateCw className="size-4 mr-1" />
                       {selectedRows.length > 0
                         ? `${t('Retry')} ${
-                            selectedAll
-                              ? excludedRows.size > 0
-                                ? `${t('all except')} ${excludedRows.size}`
-                                : t('all')
-                              : `(${selectedRows.length})`
+                            !isDisabled
+                              ? selectedAll
+                                ? excludedRows.size > 0
+                                  ? `${t('all except')} ${excludedRows.size}`
+                                  : t('all')
+                                : `(${selectedRows.length})`
+                              : ''
                           }`
                         : t('Retry')}
-                      <ChevronDown className="h-3 w-4 ml-2" />
+                      <ChevronDown className="h-3 w-4 ml-1" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
@@ -285,7 +443,15 @@ export const RunsTable = () => {
         },
       },
     ],
-    [retryRuns, userHasPermissionToRetryRun, t, selectedRows, data],
+    [
+      retryRuns,
+      archiveRuns,
+      userHasPermissionToRetryRun,
+      selectedRows,
+      selectedAll,
+      excludedRows,
+      cancelRuns,
+    ],
   );
 
   const handleRowClick = useCallback(

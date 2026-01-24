@@ -105,9 +105,9 @@ const DataTableSelectPopover = ({
                     >
                       <div
                         className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-secondary',
                           isSelected
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-secondary text-secondary-foreground'
                             : 'opacity-50 [&_svg]:invisible',
                         )}
                       >

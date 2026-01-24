@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
@@ -10,7 +11,6 @@ import { ScheduleOptions } from '../trigger'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
-    EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -38,10 +38,10 @@ export const enum EngineSocketEvent {
     ENGINE_RESPONSE = 'engine-response',
     ENGINE_STDOUT = 'engine-stdout',
     ENGINE_STDERR = 'engine-stderr',
-    ENGINE_READY = 'engine-ready',
     ENGINE_OPERATION = 'engine-operation',
     UPDATE_RUN_PROGRESS = 'update-run-progress',
     SEND_FLOW_RESPONSE = 'send-flow-response',
+    UPDATE_STEP_PROGRESS = 'update-step-progress',
 }
 
 
@@ -80,7 +80,8 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
     pieceVersion: string
-    input: Record<string, unknown>
+    predefinedInput?: PredefinedInputsStructure
+    instruction: string
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -210,6 +211,13 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
                 H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
                     ExecuteOnEnableTriggerResponse
 
+export type ExecuteToolResponse = {
+    status: ExecutionToolStatus
+    output?: unknown
+    resolvedInput: Record<string, unknown>
+    errorMessage?: unknown
+}
+
 export type ExecuteActionResponse = {
     success: boolean
     input: unknown
@@ -234,6 +242,7 @@ export type ExecuteValidateAuthResponse =
 export type EngineResponse<T = unknown> = {
     status: EngineResponseStatus
     response: T
+    delayInSeconds?: number
     error?: string
 }
 

@@ -46,7 +46,7 @@ export const createDataSourceAction = createAction({
     const { defaultName, connectionString, driverName, username, password, signonDefaultName } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const dataSourceDefinition: any = {
         defaultName,

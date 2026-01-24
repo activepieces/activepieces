@@ -28,7 +28,7 @@ export const getBudget = createAction({
     })
   },
   async run(context) {
-    await initializeAndDownloadBudget(api, context.auth)
+    await initializeAndDownloadBudget(api, context.auth.props)
     const budget = await api.getBudgetMonth(`${context.propsValue.year}-${context.propsValue.month}`);
     await api.shutdown();
     return budget;

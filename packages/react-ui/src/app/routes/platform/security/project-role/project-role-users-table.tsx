@@ -4,8 +4,8 @@ import { t } from 'i18next';
 import { Ellipsis, User } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import {
   Breadcrumb,
   BreadcrumbList,

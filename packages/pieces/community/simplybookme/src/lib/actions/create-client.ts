@@ -49,7 +49,7 @@ export const createClient = createAction({
     })
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const {
       name,
       email,

@@ -1,15 +1,13 @@
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
     InvitationStatus,
     InvitationType,
     isNil,
     ListUserInvitationsRequest,
     Permission,
-    PlatformUsageMetric,
     Principal,
     PrincipalType,
     ProjectRole,
@@ -23,9 +21,8 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
-import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
@@ -40,6 +37,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         const { email, type } = request.body
         switch (type) {
             case InvitationType.PROJECT:
+                await projectMustBeTeamType.call(app, request, reply)
                 await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, request.body.projectId, Permission.WRITE_INVITATION)
                 break
             case InvitationType.PLATFORM:
@@ -49,12 +47,6 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         const status = request.principal.type === PrincipalType.SERVICE ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body)
         const platformId = request.principal.platform.id
-
-        await PlatformPlanHelper.checkQuotaOrThrow({
-            platformId: request.principal.platform.id,
-            projectId: undefined,
-            metric: PlatformUsageMetric.USER_SEATS,
-        })
 
         const invitation = await userInvitationsService(request.log).create({
             email,
@@ -70,6 +62,9 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', ListUserInvitationsRequestParams, async (request, reply) => {
+        if (!isNil(request.query.projectId) && request.query.type === InvitationType.PROJECT) {
+            await projectMustBeTeamType.call(app, request, reply)
+        }
         const projectId = await getProjectIdAndAssertPermission(app, request, reply, request.principal, request.query)
         const invitations = await userInvitationsService(request.log).list({
             platformId: request.principal.platform.id,
@@ -99,6 +94,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         switch (invitation.type) {
             case InvitationType.PROJECT: {
                 assertNotNullOrUndefined(invitation.projectId, 'projectId')
+                await projectMustBeTeamType.call(app, request, reply)
                 await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
                 break
             }
@@ -128,7 +124,7 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     })
     return projectRole
 }
-async function getProjectIdAndAssertPermission<R extends Principal & { projectId: string }>(
+async function getProjectIdAndAssertPermission<R extends Principal>(
     app: FastifyInstance,
     request: FastifyRequest,
     reply: FastifyReply,
@@ -142,7 +138,7 @@ async function getProjectIdAndAssertPermission<R extends Principal & { projectId
         await assertPrincipalHasPermissionToProject(app, request, reply, principal, requestQuery.projectId, Permission.READ_INVITATION)
         return requestQuery.projectId
     }
-    return principal.projectId
+    return requestQuery.projectId ?? null
 }
 
 
@@ -160,15 +156,13 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
         })
     }
     await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
-    await assertRoleHasPermission(request.principal, permission, request.log)
+    await assertRoleHasPermission(request.principal, projectId, permission, request.log)
 }
 
 
 const ListUserInvitationsRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_INVITATION,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['user-invitations'],
@@ -182,7 +176,7 @@ const ListUserInvitationsRequestParams = {
 
 const AcceptUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         body: Type.Object({
@@ -193,8 +187,7 @@ const AcceptUserInvitationRequestParams = {
 
 const DeleteInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['user-invitations'],
@@ -210,8 +203,7 @@ const DeleteInvitationRequestParams = {
 
 const UpsertUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         body: SendUserInvitationRequest,

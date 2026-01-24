@@ -6,6 +6,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+    AppConnectionValueForAuthProperty,
     PiecePropValueSchema,
     Property,
     StaticPropsValue,
@@ -37,7 +38,7 @@ const props = {
     }),
 };
 
-const polling: Polling<PiecePropValueSchema<typeof cloudinaryAuth>, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof cloudinaryAuth>, StaticPropsValue<typeof props>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, lastFetchEpochMS }) => {
         const resourceType = propsValue.resource_type || 'image';

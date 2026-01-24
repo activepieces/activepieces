@@ -25,7 +25,7 @@ export const findWorkflowAction = createAction({
 
 		do {
 			const response = await skyvernApiCall<ListWorkflowResponse[]>({
-				apiKey: context.auth as string,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.GET,
 				resourceUri: '/workflows',
 				query: {

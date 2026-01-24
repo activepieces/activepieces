@@ -13,7 +13,7 @@ export const campaignControl = createAction({
     await propsValidation.validateZod(propsValue, famulorCommon.campaignControlSchema);
 
     return await famulorCommon.campaignControl({
-      auth: auth as string,
+      auth: auth.secret_text,
       campaign_id: propsValue.campaign,
       action: propsValue.action as 'start' | 'stop',
     });

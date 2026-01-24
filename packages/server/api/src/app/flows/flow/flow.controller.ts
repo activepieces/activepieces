@@ -1,5 +1,5 @@
-
-import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
+import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -10,11 +10,8 @@ import {
     FlowOperationType,
     FlowStatus,
     flowStructureUtil,
-    FlowTemplateWithoutProjectInformation,
     FlowTrigger,
-    FlowVersionState,
     GetFlowQueryParamsRequest,
-    GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
@@ -23,6 +20,7 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SharedTemplate,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -33,10 +31,12 @@ import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
-import { eventsHooks } from '../../helper/application-events'
-import { flowMigrations } from '../flow-version/migrations'
+import { applicationEvents } from '../../helper/application-events'
+import { userService } from '../../user/user-service'
+import { migrateFlowVersionTemplate } from '../flow-version/migrations'
+import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -45,11 +45,13 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             request: request.body,
+            ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
+            templateId: request.body.templateId,
         })
 
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_CREATED,
             data: {
                 flow: newFlow,
@@ -61,8 +63,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', {
         config: {
-            allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-            permission: Permission.UPDATE_FLOW_STATUS,
+            security: securityAccess.project(
+                [PrincipalType.USER, PrincipalType.SERVICE], 
+                Permission.UPDATE_FLOW_STATUS, {
+                    type: ProjectResourceType.TABLE,
+                    tableName: FlowEntity,
+                }),
         },
         schema: {
             tags: ['flows'],
@@ -73,77 +79,60 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 id: ApId,
             }),
         },
-        preValidation: (request, _, done) => {
+        preValidation: async (request) => {
             if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
-                flowMigrations.apply({
-                    agentIds: [],
-                    connectionIds: [],
-                    created: new Date().toISOString(),
-                    displayName: '',
-                    flowId: '',
-                    id: '',
-                    updated: new Date().toISOString(),
-                    updatedBy: '',
-                    valid: false,
+                const migratedFlowTemplate = await migrateFlowVersionTemplate({
                     trigger: request.body.request.trigger,
-                    state: FlowVersionState.DRAFT,
                     schemaVersion: request.body.request.schemaVersion,
-                }).then((migratedFlowVersion) => {
-                    request.body.request = {
-                        ...request.body.request,
-                        trigger: migratedFlowVersion.trigger,
-                        schemaVersion: migratedFlowVersion.schemaVersion,
-                    }
-                    done()
-                }).catch((error) => {
-                    request.log.error(error)
-               
+                    notes: request.body.request.notes ?? [],
+                    valid: false,
                 })
-            }
-            else {
-                done()
+                request.body.request = {
+                    ...request.body.request,
+                    trigger: migratedFlowTemplate.trigger,
+                    schemaVersion: migratedFlowTemplate.schemaVersion,
+                    notes: migratedFlowTemplate.notes,
+                }
             }
         },
     }, async (request) => {
-        const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
-        await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
+        const userId = await authenticationUtils.extractUserIdFromRequest(request)
+        await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
 
         const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
         const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
         if (turnOnFlow || publishDisabledFlow) {
-            await PlatformPlanHelper.checkQuotaOrThrow({
-                platformId: request.principal.platform.id,
-                projectId: request.principal.projectId,
-                metric: PlatformUsageMetric.ACTIVE_FLOWS,
-            })
+            await platformPlanService(request.log).checkActiveFlowsExceededLimit(
+                request.principal.platform.id,
+                PlatformUsageMetric.ACTIVE_FLOWS,
+            )
         }
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        const updatedFlow = await flowService(request.log).update({
+            id: request.params.id,
+            userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
+            platformId: request.principal.platform.id,
+            projectId: request.projectId,
+            operation: cleanOperation(request.body),
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
                 request: request.body,
                 flowVersion: flow.version,
             },
         })
-        const updatedFlow = await flowService(request.log).update({
-            id: request.params.id,
-            userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-            operation: cleanOperation(request.body),
-        })
-
         return updatedFlow
     })
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
         return flowService(request.log).list({
-            projectId: request.principal.projectId,
+            projectIds: [request.projectId],
             folderId: request.query.folderId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
@@ -159,14 +148,16 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/count', CountFlowsRequestOptions, async (request) => {
         return flowService(request.log).count({
             folderId: request.query.folderId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     })
 
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
+        const userMetadata = request.principal.type === PrincipalType.USER ? await userService.getMetaInformation({ id: request.principal.id }) : null
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
-            projectId: request.principal.projectId,
+            userMetadata,
+            projectId: request.projectId,
             versionId: undefined,
         })
     })
@@ -174,7 +165,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetFlowRequestOptions, async (request) => {
         return flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             versionId: request.query.versionId,
         })
     })
@@ -182,26 +173,26 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.delete('/:id', DeleteFlowRequestOptions, async (request, reply) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
-            projectId: request.principal.projectId,
-        })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_DELETED,
-            data: {
-                flow,
-                flowVersion: flow.version,
-            },
+            projectId: request.projectId,
         })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,
             externalId: flow.externalId,
             userId: request.principal.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             platformId: request.principal.platform.id,
             log: request.log,
         })
         await flowService(request.log).delete({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
@@ -269,8 +260,11 @@ async function assertThatFlowIsNotBeingUsed(
 
 const CreateFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_FLOW, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         tags: ['flows'],
@@ -286,8 +280,11 @@ const CreateFlowRequestOptions = {
 
 const ListFlowsRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         tags: ['flows'],
@@ -302,8 +299,11 @@ const ListFlowsRequestOptions = {
 
 const CountFlowsRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         querystring: CountFlowsRequest,
@@ -312,8 +312,12 @@ const CountFlowsRequestOptions = {
 
 const GetFlowTemplateRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
     },
     schema: {
         tags: ['flows'],
@@ -324,15 +328,19 @@ const GetFlowTemplateRequestOptions = {
         }),
         querystring: GetFlowTemplateRequestQuery,
         response: {
-            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+            [StatusCodes.OK]: SharedTemplate,
         },
     },
 }
 
 const GetFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
     },
     schema: {
         tags: ['flows'],
@@ -350,8 +358,12 @@ const GetFlowRequestOptions = {
 
 const DeleteFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
     },
     schema: {
         tags: ['flows'],

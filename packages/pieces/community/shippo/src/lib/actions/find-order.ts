@@ -18,7 +18,7 @@ export const findOrder = createAction({
     const { order_id } = context.propsValue;
 
     const client = new ShippoClient({
-      apiToken: context.auth,
+      apiToken: context.auth.secret_text,
     });
 
     return await client.getOrder(order_id);

@@ -2,9 +2,10 @@ import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFacto
 import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
-import { engineRunner } from './compute'
-import { engineRunnerSocket } from './compute/engine-runner-socket'
+import { sandboxPool } from './compute/sandbox/sandbox-pool'
+import { sandboxWebsocketServer } from './compute/sandbox/websocket-server'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
@@ -14,28 +15,31 @@ export const runsMetadataQueue = runsMetadataQueueFactory({
     distributedStore: workerDistributedStore,
 })
 
-export const flowWorker = (log: FastifyBaseLogger): {
-    init: (params: { workerToken: string }) => Promise<void>
-    close: () => Promise<void>
-} => ({
-    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+export const flowWorker = (log: FastifyBaseLogger) => ({
+    async init({ workerToken: token, markAsHealthy }: FlowWorkerInitParams): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
-        await engineRunnerSocket(log).init()
+
+        sandboxWebsocketServer.init(log)
 
         await appSocket(log).init({
             workerToken: token,
             onConnect: async () => {
-                const request = await workerMachine.getSystemInfo()
+                const request = await workerMachine.getSystemInfo(log)
                 const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
-                await workerMachine.init(response, log)
-                await jobQueueWorker(log).start(token)
+                await workerMachine.init(response, token, log)
+                sandboxPool.init(log)
+                await registryPieceManager(log).warmup()
+                await jobQueueWorker(log).start()
                 await initRunsMetadataQueue(log)
+                await markAsHealthy()
+                await registryPieceManager(log).distributedWarmup()
             },
         })
     },
 
     async close(): Promise<void> {
-        await engineRunnerSocket(log).disconnect()
+        await sandboxPool.drain()
+        await sandboxWebsocketServer.shutdown()
         appSocket(log).disconnect()
 
         if (runsMetadataQueue.isInitialized()) {
@@ -45,9 +49,6 @@ export const flowWorker = (log: FastifyBaseLogger): {
         await workerRedisConnections.destroy()
         await workerDistributedLock(log).destroy()
         
-        if (workerMachine.hasSettings()) {
-            await engineRunner(log).shutdownAllWorkers()
-        }
         await jobQueueWorker(log).close()
     },
 })
@@ -63,4 +64,9 @@ async function initRunsMetadataQueue(log: FastifyBaseLogger): Promise<void> {
     log.info({
         message: 'Initialized runs metadata queue for worker',
     }, '[flowWorker#init]')
+}
+
+type FlowWorkerInitParams = {
+    workerToken: string
+    markAsHealthy: () => Promise<void>
 }

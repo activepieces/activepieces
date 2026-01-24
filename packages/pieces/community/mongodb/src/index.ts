@@ -4,7 +4,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { propsValidation } from '@activepieces/pieces-common';
 import { z } from 'zod';
 
@@ -75,7 +75,10 @@ const validateAuth = async (auth: PiecePropValueSchema<typeof mongodbAuth>) => {
     authSource: z.string().optional(),
   });
 
-  const client = await mongodbConnect(auth);
+  const client = await mongodbConnect({
+    props: auth,
+    type: AppConnectionType.CUSTOM_AUTH,
+  });
 
   await client.db('admin').command({ ping: 1 });
 

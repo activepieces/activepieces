@@ -18,7 +18,7 @@ export const getEntryAction = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth;
     const { formId, entryId } = context.propsValue;
 
     return await makeRequest(

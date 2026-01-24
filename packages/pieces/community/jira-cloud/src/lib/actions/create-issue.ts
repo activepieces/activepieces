@@ -37,6 +37,7 @@ export const createIssueAction = createAction({
 		projectId: getProjectIdDropdown(),
 		issueTypeId: issueTypeIdProp('Issue Type'),
 		issueFields: Property.DynamicProperties({
+			auth: jiraCloudAuth,
 			displayName: 'Fields',
 			required: true,
 			refreshers: ['projectId', 'issueTypeId'],
@@ -72,6 +73,7 @@ export const createIssueAction = createAction({
 			},
 		}),
     adfFields: Property.MultiSelectDropdown({
+		auth: jiraCloudAuth,
 			displayName: 'Fields in JSON Atlassian Document Format',
 			description: 'https://developer.atlassian.com/cloud/jira/platform/apis/document/structure',
 			required: false,

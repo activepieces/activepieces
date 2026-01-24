@@ -65,7 +65,7 @@ const ScrollArea = React.forwardRef<
       >
         <ScrollAreaPrimitive.Viewport
           className={cn(
-            'size-full rounded-[inherit] [&>div]:!block',
+            'size-full rounded-[inherit] [&>div]:block!',
             viewPortClassName,
           )}
           ref={viewportRef}
@@ -78,7 +78,7 @@ const ScrollArea = React.forwardRef<
         {showGradient && showBottomGradient && (
           <div
             className={cn(
-              'pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-t from-sidebar to-transparent',
+              'pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-linear-to-t from-sidebar to-transparent',
               gradientClassName,
             )}
           />
@@ -99,9 +99,9 @@ const ScrollBar = React.forwardRef<
     className={cn(
       'flex touch-none select-none transition-colors',
       orientation === 'vertical' &&
-        'h-full w-2.5 border-l border-l-transparent p-[1px]',
+        'h-full w-2.5 border-l border-l-transparent p-px',
       orientation === 'horizontal' &&
-        'h-2.5 flex-col border-t border-t-transparent p-[1px]',
+        'h-2.5 flex-col border-t border-t-transparent p-px',
       className,
     )}
     {...props}

@@ -26,9 +26,9 @@ export const queryRecords = createAction({
   },
   async run({ propsValue, auth }) {
     const vtigerInstance = await instanceLogin(
-      auth.instance_url,
-      auth.username,
-      auth.password
+      auth.props.instance_url,
+      auth.props.username,
+      auth.props.password
     );
     if (vtigerInstance === null) return;
 
@@ -37,7 +37,7 @@ export const queryRecords = createAction({
       result: Record<string, unknown>[];
     }>(
       prepareHttpRequest(
-        auth.instance_url,
+        auth.props.instance_url,
         vtigerInstance.sessionId ?? vtigerInstance.sessionName,
         'query' as Operation,
         { query: propsValue.query }

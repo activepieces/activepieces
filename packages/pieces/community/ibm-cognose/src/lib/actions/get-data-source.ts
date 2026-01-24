@@ -21,7 +21,7 @@ export const getDataSourceAction = createAction({
     const { datasourceId, fields } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const queryParams = [];
       if (fields && fields.trim()) {

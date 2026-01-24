@@ -19,7 +19,7 @@ export const deleteUser = createAction({
     }),
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     if (!context.propsValue.confirmDeletion) {
       return {

@@ -1,13 +1,14 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { microsoft365PlannerCommon } from '.';
+import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '.';
 
 export const groupDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: microsoft365PlannerAuth,
     displayName: 'Group',
     description: 'Select the Grroup',
     required: required,
     refreshers: ['auth'],
-    options: async ({ auth }: { auth?: OAuth2PropertyValue | null }) => {
+    options: async ({ auth }) => {
       if (!auth) {
         return {
           options: [],
@@ -29,11 +30,12 @@ export const groupDropdown = ({ required = true }) =>
 
 export const PlanDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: microsoft365PlannerAuth,
     displayName: 'Plan',
     description: 'Select the plan',
     required: required,
     refreshers: ['auth'],
-    options: async ({ auth }: { auth?: OAuth2PropertyValue | null }) => {
+    options: async ({ auth }) => {
       if (!auth) {
         return {
           options: [],
@@ -55,6 +57,7 @@ export const PlanDropdown = ({ required = true }) =>
 
 export const BucketDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: microsoft365PlannerAuth,
     displayName: 'Bucket',
     description: 'Select the bucket',
     required: required,
@@ -98,6 +101,7 @@ export const BucketDropdown = ({ required = true }) =>
 
 export const TaskDropdown = ({ required = true }) =>
   Property.Dropdown({
+    auth: microsoft365PlannerAuth,
     displayName: 'Task',
     description: 'Select the task',
     required: required,
