@@ -1,6 +1,4 @@
-import { Compass, LineChart, Trophy } from 'lucide-react';
 import React, { ComponentType, SVGProps } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -12,6 +10,7 @@ import { projectHooks } from '@/hooks/project-collection';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
+import { AllowOnlyLoggedInUserOnlyGuard } from '../allow-logged-in-user-only-guard';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
@@ -42,7 +41,6 @@ export function ProjectDashboardLayout({
 }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const currentProjectId = authenticationSession.getProjectId();
-  const { t } = useTranslation();
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
   const isEmbedded = useEmbedding().embedState.isEmbedded;
@@ -50,52 +48,31 @@ export function ProjectDashboardLayout({
     return <Navigate to="/sign-in" replace />;
   }
 
-  const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
-    {
-      to: '/templates',
-      label: t('Explore'),
-      show: !isEmbedded,
-      icon: Compass,
-      hasPermission: true,
-    },
-    {
-      to: '/impact',
-      label: t('Impact'),
-      show: !isEmbedded,
-      icon: LineChart,
-      hasPermission: true,
-    },
-    {
-      to: '/leaderboard',
-      label: t('Leaderboard'),
-      show: !isEmbedded,
-      icon: Trophy,
-      hasPermission: true,
-    },
-  ];
-
   const hideHeader =
-    itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
-    isPlatformPage;
+    ['/templates', '/impact', '/leaderboard', '/quick'].some((item) =>
+      location.pathname.includes(item),
+    ) || isPlatformPage;
 
   return (
-    <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <SidebarProvider>
-        {!isEmbedded && <ProjectDashboardSidebar />}
-        <SidebarInset className={`relative overflow-auto gap-4`}>
-          <div className="flex flex-col">
-            {!hideHeader && (
-              <>
-                <ProjectDashboardLayoutHeader key={currentProjectId} />
-                <Separator className="mb-5" />
-              </>
-            )}
-            <div className="px-4"> {children} </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+    <AllowOnlyLoggedInUserOnlyGuard>
+      <ProjectChangedRedirector currentProjectId={currentProjectId}>
+        <SidebarProvider>
+          {!isEmbedded && <ProjectDashboardSidebar />}
+          <SidebarInset className={`relative overflow-auto gap-4`}>
+            <div className="flex flex-col">
+              {!hideHeader && (
+                <>
+                  <ProjectDashboardLayoutHeader key={currentProjectId} />
+                  <Separator className="mb-5" />
+                </>
+              )}
+              <div className="px-4"> {children} </div>
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
 
-      {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
-    </ProjectChangedRedirector>
+        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+      </ProjectChangedRedirector>
+    </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

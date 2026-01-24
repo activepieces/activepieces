@@ -49,10 +49,6 @@ const LICENSE_PROPS_MAP = {
     label: 'Project Roles',
     description: 'Control who can view, edit, or manage different projects',
   },
-  customDomainsEnabled: {
-    label: 'Custom Domains',
-    description: 'Use your own web address instead of the default domain',
-  },
   apiKeysEnabled: {
     label: 'API Keys',
     description: 'Connect external services and applications to your workflows',

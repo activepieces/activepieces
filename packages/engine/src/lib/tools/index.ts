@@ -25,7 +25,7 @@ export const agentTools = {
                     instruction: z.string().describe('The instruction to the tool'),
                 }),
                 execute: async ({ instruction }: { instruction: string }) =>
-                    execute({
+                    agentTools.execute({
                         ...engineConstants,
                         instruction,
                         pieceName: tool.pieceMetadata.pieceName,
@@ -39,6 +39,48 @@ export const agentTools = {
 
         return {
             ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
+        }
+    },
+
+    async execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
+        const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
+            pieceName: operation.pieceName,
+            pieceVersion: operation.pieceVersion,
+            actionName: operation.actionName,
+            devPieces: EngineConstants.DEV_PIECES,
+        })
+        const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
+        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
+        const step: PieceAction = {
+            name: operation.actionName,
+            displayName: operation.actionName,
+            type: FlowActionType.PIECE,
+            settings: {
+                input: resolvedInput,
+                actionName: operation.actionName,
+                pieceName: operation.pieceName,
+                pieceVersion: operation.pieceVersion,
+                propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
+                    type: PropertyExecutionType.MANUAL,
+                    schema: undefined,
+                }])),
+            },
+            valid: true,
+        }
+        const output = await flowExecutor.getExecutorForAction(step.type).handle({
+            action: step,
+            executionState: FlowExecutorContext.empty(),
+            constants: EngineConstants.fromExecuteActionInput(operation),
+        })
+        const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
+        return {
+            status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
+            output: stepOutput,
+            resolvedInput: {
+                ...resolvedInput,
+                auth: 'Redacted',
+            },
+            errorMessage,
         }
     },
 }
@@ -130,49 +172,6 @@ async function resolveProperties(
         }
     }
     return result
-}
-
-async function execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
-
-    const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
-        pieceName: operation.pieceName,
-        pieceVersion: operation.pieceVersion,
-        actionName: operation.actionName,
-        devPieces: EngineConstants.DEV_PIECES,
-    })
-    const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
-    const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
-    const step: PieceAction = {
-        name: operation.actionName,
-        displayName: operation.actionName,
-        type: FlowActionType.PIECE,
-        settings: {
-            input: resolvedInput,
-            actionName: operation.actionName,
-            pieceName: operation.pieceName,
-            pieceVersion: operation.pieceVersion,
-            propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
-                type: PropertyExecutionType.MANUAL,
-                schema: undefined,
-            }])),
-        },
-        valid: true,
-    }
-    const output = await flowExecutor.getExecutorForAction(step.type).handle({
-        action: step,
-        executionState: FlowExecutorContext.empty(),
-        constants: EngineConstants.fromExecuteActionInput(operation),
-    })
-    const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
-    return {
-        status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
-        output: stepOutput,
-        resolvedInput: {
-            ...resolvedInput,
-            auth: 'Redacted',
-        },
-        errorMessage,
-    }
 }
 
 const constructExtractionPrompt = (
@@ -312,18 +311,24 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
         description: property.description,
     }
 
-    if (
-        property.type === PropertyType.DROPDOWN ||
-        property.type === PropertyType.MULTI_SELECT_DROPDOWN ||
-        property.type === PropertyType.STATIC_DROPDOWN ||
-        property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
-    ) {
-        const options = await loadOptions(propertyName, operation, input)
-        return {
-            ...baseDetail,
-            options,
+    switch (property.type) {
+        case PropertyType.STATIC_DROPDOWN:
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN: {
+            const options = property.options.options
+            return {
+                ...baseDetail,
+                options,
+            }
         }
+        case PropertyType.DROPDOWN:
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+            const options = await loadOptions(propertyName, operation, input)
+            return {
+                ...baseDetail,
+                options,
+            }
     }
+
 
     return baseDetail
 }

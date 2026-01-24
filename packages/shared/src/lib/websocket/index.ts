@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { TriggerUpdateStatusErrorParams } from '../common/activepieces-error'
 import { PopulatedFlow } from '../flows/flow'
 import { StepRunResponse } from '../flows/sample-data'
+import { ChatSession, ChatSessionUpdate } from '../quick'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -14,6 +15,8 @@ export enum WebsocketClientEvent {
     BADGE_AWARDED = 'BADGE_AWARDED',
     TODO_ACTIVITY_CHANGED = 'TODO_ACTIVITY_CHANGED',
     TODO_ACTIVITY_CREATED = 'TODO_ACTIVITY_CREATED',
+    AGENT_STREAMING_UPDATE = 'AGENT_STREAMING_UPDATE',
+    AGENT_STREAMING_ENDED = 'AGENT_STREAMING_ENDED',
     FLOW_STATUS_UPDATED = 'FLOW_STATUS_UPDATED',
 }
 
@@ -53,6 +56,24 @@ export type BadgeAwarded = Static<typeof BadgeAwarded>
 
 export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
 
+export type EmitAgentStreamingUpdateRequest = {
+    userId: string
+    event: WebsocketClientEvent.AGENT_STREAMING_UPDATE
+    data: ChatSessionUpdate
+}
+
+export type EmitAgentStreamingEndedRequest = {
+    userId: string
+    event: WebsocketClientEvent.AGENT_STREAMING_ENDED
+    data: {
+        session: ChatSession
+    }
+}
+
+export type EmitAgentProgressRequest =
+    | EmitAgentStreamingUpdateRequest
+    | EmitAgentStreamingEndedRequest
+
 export enum WebsocketServerEvent {
     TEST_FLOW_RUN = 'TEST_FLOW_RUN',
     CONNECT = 'CONNECT',
@@ -61,6 +82,7 @@ export enum WebsocketServerEvent {
     WORKER_HEALTHCHECK = 'WORKER_HEALTHCHECK',
     EMIT_TEST_STEP_PROGRESS = 'EMIT_TEST_STEP_PROGRESS',
     EMIT_TEST_STEP_FINISHED = 'EMIT_TEST_STEP_FINISHED',
+    EMIT_AGENT_PROGRESS = 'EMIT_AGENT_PROGRESS',
     MANUAL_TRIGGER_RUN_STARTED = 'MANUAL_TRIGGER_RUN_STARTED',
 }
 

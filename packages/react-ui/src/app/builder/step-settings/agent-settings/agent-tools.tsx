@@ -1,7 +1,6 @@
 import { Accordion } from '@radix-ui/react-accordion';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { AddToolDropdown } from '@/features/agents/agent-tools/add-agent-tool-dropwdown';
@@ -23,19 +22,23 @@ const icons = [
 ];
 
 interface AgentToolsProps {
-  toolsField: ControllerRenderProps;
   disabled?: boolean;
+  label?: string;
+  tools: AgentTool[];
+  hideAddButton?: boolean;
+  emptyStateLabel?: string;
+  onToolsUpdate: (tools: AgentTool[]) => void;
 }
 
 export const AgentTools = ({
   disabled,
-  toolsField: agentToolsField,
+  tools,
+  label = 'Agent Tools',
+  emptyStateLabel = 'Connect apps, flows, MCPs and more.',
+  hideAddButton = false,
+  onToolsUpdate,
 }: AgentToolsProps) => {
-  const tools = Array.isArray(agentToolsField.value)
-    ? (agentToolsField.value as AgentTool[])
-    : [];
-
-  const onToolsUpdate = (tools: AgentTool[]) => agentToolsField.onChange(tools);
+  console.log(!hideAddButton);
 
   const removeTool = (toolName: string) => {
     onToolsUpdate(tools.filter((tool) => toolName !== tool.toolName));
@@ -56,7 +59,7 @@ export const AgentTools = ({
 
   return (
     <div>
-      <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>
+      <h2 className="text-sm font-medium">{t(label)}</h2>
 
       <div className="mt-2">
         {tools.length > 0 ? (
@@ -89,12 +92,15 @@ export const AgentTools = ({
                 />
               )}
             </Accordion>
-            <AddToolDropdown disabled={disabled} align="start">
-              <Button variant="outline" className="mt-2">
-                <Plus className="size-4 mr-2" />
-                {t('Add')}
-              </Button>
-            </AddToolDropdown>
+
+            {!hideAddButton && (
+              <AddToolDropdown disabled={disabled} align="center">
+                <Button variant="outline" className="gap-2">
+                  <Plus className="size-4" />
+                  {t('Add')}
+                </Button>
+              </AddToolDropdown>
+            )}
           </>
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
@@ -121,15 +127,16 @@ export const AgentTools = ({
             </div>
 
             <p className="text-sm font-medium text-muted-foreground">
-              {t('Connect apps, flows, MCPs and more.')}
+              {t(emptyStateLabel)}
             </p>
-
-            <AddToolDropdown disabled={disabled} align="center">
-              <Button variant="outline" className="gap-2">
-                <Plus className="size-4" />
-                {t('Add')}
-              </Button>
-            </AddToolDropdown>
+            {!hideAddButton && (
+              <AddToolDropdown disabled={disabled} align="center">
+                <Button variant="outline" className="gap-2">
+                  <Plus className="size-4" />
+                  {t('Add')}
+                </Button>
+              </AddToolDropdown>
+            )}
           </div>
         )}
       </div>

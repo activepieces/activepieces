@@ -1,5 +1,4 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { tr } from 'zod/v4/locales';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 

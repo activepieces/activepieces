@@ -247,7 +247,7 @@ export const PredefinedInputsForm = () => {
                             property,
                             allowDynamicValues: false,
                             markdownVariables: {},
-                            useMentionTextInput: true,
+                            useMentionTextInput: false,
                             disabled: false,
                             dynamicInputModeToggled: false,
                             form,

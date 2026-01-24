@@ -15,6 +15,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
 }
 
 export enum TriggerHookType {
@@ -82,6 +83,7 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     pieceVersion: string
     predefinedInput?: PredefinedInputsStructure
     instruction: string
+    modelId?: string
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {

@@ -8,6 +8,7 @@ import { AgentStructuredOutput } from '@/features/agents/structured-output';
 import {
   AgentPieceProps,
   AgentProviderModel,
+  AgentTool,
   isNil,
   PieceAction,
   PieceActionSettings,
@@ -100,7 +101,18 @@ const selectAgentFormComponentForProperty = (
 
   switch (propertyName) {
     case AgentPieceProps.AGENT_TOOLS: {
-      return <AgentTools disabled={disabled} toolsField={field} />;
+      const tools = Array.isArray(field.value)
+        ? (field.value as AgentTool[])
+        : [];
+      const onToolsUpdate = (tools: AgentTool[]) => field.onChange(tools);
+
+      return (
+        <AgentTools
+          disabled={disabled}
+          tools={tools}
+          onToolsUpdate={onToolsUpdate}
+        />
+      );
     }
     case AgentPieceProps.STRUCTURED_OUTPUT: {
       return (

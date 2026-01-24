@@ -137,6 +137,12 @@ export const projectService = {
         })
         return !isNil(project)
     },
+    async getPersonalProject(userId: UserId): Promise<Project> {
+        return projectRepo().findOneByOrFail({
+            ownerId: userId,
+            type: ProjectType.PERSONAL,
+        })
+    },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
         const user = await userService.getOneOrFail({ id: userId })
         assertNotNullOrUndefined(user.platformId, 'platformId is undefined')

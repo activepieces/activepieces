@@ -16,6 +16,7 @@ import { SSOPage } from '@/app/routes/platform/security/sso';
 import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
+import { QuickPage } from '@/app/routes/quick';
 import { RedirectPage } from '@/app/routes/redirect';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
@@ -354,6 +355,16 @@ const routes = [
       <ProjectDashboardLayout>
         <PageTitle title="Leaderboard">
           <LeaderboardPage />
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  },
+  {
+    path: '/quick',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Chat">
+          <QuickPage />
         </PageTitle>
       </ProjectDashboardLayout>
     ),

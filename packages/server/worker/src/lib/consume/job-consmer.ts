@@ -1,8 +1,9 @@
-import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, JobData, WorkerJobType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, ConsumeJobResponse, ConsumeJobResponseStatus, isNil, JobData, WorkerJobType } from '@activepieces/shared'
 import { context, propagation, trace } from '@opentelemetry/api'
 import { Job } from 'bullmq'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { agentExecutor } from '../agent/agent-executor'
 import { workerMachine } from '../utils/machine'
 import { tokenUtls } from '../utils/token-utils'
 import { eventDestinationExecutor } from './executors/event-destination-job-executor'
@@ -20,9 +21,11 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
         const { id: jobId, data: jobData, attemptsStarted } = job
         assertNotNullOrUndefined(jobId, 'jobId')
         const timeoutInSeconds = getTimeoutForWorkerJob(jobData.jobType)
-        const engineToken = await tokenUtls.generateEngineToken({ jobId, projectId: jobData.projectId!, platformId: jobData.platformId })
         const traceContext = ('traceContext' in jobData && jobData.traceContext) ? jobData.traceContext : {}
         const extractedContext = propagation.extract(context.active(), traceContext)
+        const projectId = jobData.projectId
+        const platformId = jobData.platformId
+        const engineToken = !isNil(projectId) && !isNil(platformId) ? await tokenUtls.generateEngineToken({ jobId, projectId, platformId }) : undefined
 
         return context.with(extractedContext, () => {
             return tracer.startActiveSpan('worker.consumeJob', {
@@ -30,22 +33,29 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                     'worker.jobId': jobId,
                     'worker.jobType': jobData.jobType,
                     'worker.attemptsStarted': attemptsStarted,
-                    'worker.projectId': jobData.projectId ?? 'unknown',
+                    'worker.projectId': projectId,
+                    'worker.platformId': platformId,
                 },
             }, async (span) => {
                 try {
                     switch (jobData.jobType) {
+                        case WorkerJobType.EXECUTE_AGENT:
+                            await agentExecutor(log).execute(jobData, engineToken!)
+                            span.setAttribute('worker.completed', true)
+                            return {
+                                status: ConsumeJobResponseStatus.OK,
+                            }
                         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                         case WorkerJobType.EXECUTE_PROPERTY:
                         case WorkerJobType.EXECUTE_VALIDATION:
                         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-                            await userInteractionJobExecutor(log).execute(jobData, engineToken, timeoutInSeconds)
+                            await userInteractionJobExecutor(log).execute(jobData, engineToken!, timeoutInSeconds)
                             span.setAttribute('worker.completed', true)
                             return {
                                 status: ConsumeJobResponseStatus.OK,
                             }
                         case WorkerJobType.EXECUTE_FLOW: {
-                            const response = await flowJobExecutor(log).executeFlow({ jobData, attemptsStarted, engineToken, timeoutInSeconds })
+                            const response = await flowJobExecutor(log).executeFlow({ jobData, attemptsStarted, engineToken: engineToken!, timeoutInSeconds })
                             span.setAttribute('worker.completed', true)
                             return response
                         }
@@ -53,7 +63,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                             const response = await executeTriggerExecutor(log).executeTrigger({
                                 jobId,
                                 data: jobData,
-                                engineToken,
+                                engineToken: engineToken!,
                                 timeoutInSeconds,
                             })
                             span.setAttribute('worker.completed', true)
@@ -63,7 +73,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                         case WorkerJobType.RENEW_WEBHOOK: {
                             const response = await renewWebhookExecutor(log).renewWebhook({
                                 data: jobData,
-                                engineToken,
+                                engineToken: engineToken!,
                                 timeoutInSeconds,
                             })
                             span.setAttribute('worker.completed', true)
@@ -71,7 +81,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                         }
                         case WorkerJobType.EXECUTE_WEBHOOK: {
                             span.setAttribute('worker.webhookExecution', true)
-                            return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, timeoutInSeconds)
+                            return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken!, timeoutInSeconds)
                         }
                         case WorkerJobType.EVENT_DESTINATION: {
                             await eventDestinationExecutor(log).execute(jobId, jobData, timeoutInSeconds)
@@ -102,6 +112,7 @@ const getTimeoutForWorkerJob = (jobType: WorkerJobType): number => {
         case WorkerJobType.EXECUTE_POLLING:
             return dayjs.duration(workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EXECUTE_FLOW:
+        case WorkerJobType.EXECUTE_AGENT:
             return dayjs.duration(workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EVENT_DESTINATION:
             return dayjs.duration(workerMachine.getSettings().EVENT_DESTINATION_TIMEOUT_SECONDS, 'seconds').asSeconds()

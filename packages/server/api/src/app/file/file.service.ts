@@ -175,7 +175,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }, '[FileService#deleteStaleBulk] completed')
     },
     async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
-        const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
+        const { file, type, platformId, allowedMimeTypes, maxFileSizeInBytes, metadata } = params
         
         if (isNil(file)) {
             return undefined
@@ -190,7 +190,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
+        if (!isNil(allowedMimeTypes) && !allowedMimeTypes.includes(file.mimetype ?? '')) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -218,6 +218,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             metadata: {
                 ...metadata,
                 mimetype: file.mimetype ?? '',
+                platformId,
             },
         })
 
@@ -247,6 +248,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.TRIGGER_EVENT_FILE:
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:
+        case FileType.CHAT_ATTACHMENT:
             return true
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:
