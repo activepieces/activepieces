@@ -39,6 +39,12 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
+    app.get('/versions', {}, async () => {
+        return {
+
+        }
+    })
+
     app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
         const query = req.query
         const includeTags = query.includeTags ?? false
