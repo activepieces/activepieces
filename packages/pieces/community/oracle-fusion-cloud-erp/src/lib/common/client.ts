@@ -5,11 +5,9 @@ import {
     QueryParams,
     httpClient,
     HttpRequest,
-    AuthenticationType,
     HttpHeaders,
 } from '@activepieces/pieces-common';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
-import { BusinessObjectType, ENDPOINT_MAP } from './constants';
 
 interface OracleAPIResponse<T> {
     items: T[];
@@ -24,24 +22,21 @@ interface OracleRecord {
     [key: string]: any;
 }
 
-export function getEndpoint(businessObject: BusinessObjectType, recordId?: string): string {
-    const baseEndpoint = ENDPOINT_MAP[businessObject];
-    if (!baseEndpoint) {
-        throw new Error(`Unsupported business object: ${businessObject}`);
-    }
-    return recordId ? `${baseEndpoint}/${recordId}` : baseEndpoint;
-}
-
 export type filterParams = Record<
     string,
     string | number | string[] | undefined
 >;
 
 export class OracleFusionAPIClient {
+    private credentials: string;
+
     constructor(
         private serverUrl: string,
-        private accessToken: string
-    ) {}
+        username: string,
+        password: string
+    ) {
+        this.credentials = Buffer.from(`${username}:${password}`).toString('base64');
+    }
 
     async makeRequest<T extends HttpMessageBody>(
         method: HttpMethod,
@@ -50,10 +45,11 @@ export class OracleFusionAPIClient {
         body?: any,
         headers?: HttpHeaders
     ): Promise<T> {
-        const baseUrl = `${this.serverUrl}/fscmRestApi/resources/latest`;
+        const baseUrl = `${this.serverUrl}/fscmRestApi/resources/11.13.18.05`;
         const params: QueryParams = {};
         const requestHeaders: HttpHeaders = {
             'Content-Type': 'application/json',
+            'Authorization': `Basic ${this.credentials}`,
             ...headers,
         };
 
@@ -68,10 +64,6 @@ export class OracleFusionAPIClient {
         const request: HttpRequest = {
             method: method,
             url: baseUrl + resourceUri,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: this.accessToken,
-            },
             headers: requestHeaders,
             queryParams: params,
             body: body,
@@ -86,7 +78,8 @@ export class OracleFusionAPIClient {
             HttpMethod.POST,
             endpoint,
             undefined,
-            request
+            request,
+            { 'Content-Type': 'application/vnd.oracle.adf.resourceitem+json' }
         );
     }
 
@@ -122,14 +115,25 @@ export class OracleFusionAPIClient {
     async getBusinessObjects(): Promise<any[]> {
         return await this.makeRequest(HttpMethod.GET, '/');
     }
+
+    async executeAction(actionEndpoint: string, payload: Record<string, any>): Promise<OracleRecord> {
+        return await this.makeRequest(
+            HttpMethod.POST,
+            actionEndpoint,
+            undefined,
+            payload,
+            { 'Content-Type': 'application/vnd.oracle.adf.action+json' }
+        );
+    }
 }
 
 export function makeClient(
     auth: PiecePropValueSchema<typeof oracleFusionCloudErpAuth>
 ) {
     const client = new OracleFusionAPIClient(
-        auth.props?.['server_url'] as string,
-        auth.access_token
+        auth.serverUrl,
+        auth.username,
+        auth.password
     );
     return client;
 }

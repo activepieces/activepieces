@@ -1,7 +1,6 @@
 
 import {
     createPiece,
-    OAuth2PropertyValue,
     PieceAuth,
     Property,
 } from '@activepieces/pieces-framework';
@@ -9,109 +8,115 @@ import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const authDesc = `
-**Oracle Fusion Cloud ERP Authentication Setup**
+Connect to your Oracle Fusion Cloud ERP instance using Basic Authentication.
 
-1. **Access Oracle Cloud Console**: Log in to your Oracle Cloud Console at https://cloud.oracle.com
-2. **Navigate to Identity & Access Management**:
-   - Go to Identity & Security → Domains
-   - Select your domain
-   - Go to Applications → Confidential Applications
-3. **Create a New Application**:
-   - Click "Create Application"
-   - Choose "Confidential Application"
-   - Enter a name and description
-4. **Configure Authentication**:
-   - Add allowed grant types: Authorization Code, Refresh Token
-   - Add redirect URIs for OAuth2 flow
-5. **Add Scopes**: Add the following scopes based on your needs:
-   - \`https://www.oracle.com/fscmRestApi/fscmRestApi/read\`
-   - \`https://www.oracle.com/fscmRestApi/fscmRestApi/write\`
-   - \`https://www.oracle.com/fscmRestApi/fscmRestApi/manage\`
-6. **Get Credentials**:
-   - Copy the Client ID
-   - Copy the Client Secret
-7. **Enter Instance Details**:
-   - Server URL: Your Oracle Fusion instance URL (e.g., https://your-instance.fa.us2.oraclecloud.com)
-   - Environment: Production, Test, or Development
+**Required:**
+- **Server URL**: Your Oracle Fusion instance URL (e.g., https://your-instance.fa.us2.oraclecloud.com)
+- **Username**: Your Oracle Cloud username with API access
+- **Password**: Your Oracle Cloud password
 
-**Note**: Ensure your Oracle Fusion Cloud instance has the REST API enabled and proper security policies configured.
+Contact your Oracle administrator if you need REST API access enabled.
 `;
 
-export const oracleFusionCloudErpAuth = PieceAuth.OAuth2({
+export const oracleFusionCloudErpAuth = PieceAuth.CustomAuth({
     description: authDesc,
+    required: true,
     props: {
-        server_url: Property.ShortText({
+        serverUrl: Property.ShortText({
             displayName: 'Server URL',
             description: 'Your Oracle Fusion Cloud instance URL (e.g., https://your-instance.fa.us2.oraclecloud.com)',
             required: true,
         }),
-        environment: Property.StaticDropdown({
-            displayName: 'Environment',
-            description: 'Choose the environment type',
+        username: Property.ShortText({
+            displayName: 'Username',
+            description: 'Your Oracle Cloud username',
             required: true,
-            options: {
-                options: [
-                    {
-                        label: 'Production',
-                        value: 'prod',
-                    },
-                    {
-                        label: 'Test',
-                        value: 'test',
-                    },
-                    {
-                        label: 'Development',
-                        value: 'dev',
-                    },
-                ],
-            },
-            defaultValue: 'prod',
+        }),
+        password: PieceAuth.SecretText({
+            displayName: 'Password',
+            description: 'Your Oracle Cloud password',
+            required: true,
         }),
     },
-    required: true,
-    scope: [
-        'https://www.oracle.com/fscmRestApi/fscmRestApi/read',
-        'https://www.oracle.com/fscmRestApi/fscmRestApi/write',
-        'https://www.oracle.com/fscmRestApi/fscmRestApi/manage',
-    ],
-    authUrl: 'https://{server_url}/oauth2/v1/authorize',
-    tokenUrl: 'https://{server_url}/oauth2/v1/token',
 });
 
-import { createRecord } from './lib/actions/create-record';
-import { updateRecord } from './lib/actions/update-record';
-import { deleteRecord } from './lib/actions/delete-record';
-import { getRecord } from './lib/actions/get-record';
-import { searchRecords } from './lib/actions/search-records';
-import { newRecord } from './lib/triggers/new-record';
+import {
+    createInvoice,
+    getInvoice,
+    findInvoices,
+    updateInvoice,
+    deleteInvoice,
+    validateInvoice,
+    cancelInvoice,
+} from './lib/actions/invoices';
+import {
+    createReceivablesInvoice,
+    getReceivablesInvoice,
+    findReceivablesInvoices,
+    updateReceivablesInvoice,
+    deleteReceivablesInvoice,
+} from './lib/actions/receivables-invoices';
+import {
+    createPayment,
+    getPayment,
+    findPayments,
+    updatePayment,
+    stopPayment,
+    voidPayment,
+} from './lib/actions/payments';
+import {
+    getJournalBatch,
+    findJournalBatches,
+    updateJournalBatch,
+    deleteJournalBatch,
+} from './lib/actions/journal-batches';
 
 export const oracleFusionCloudErp = createPiece({
     displayName: 'Oracle Fusion Cloud ERP',
     description: 'Enterprise resource planning suite covering financials, procurement, project accounting, supply chain, and more.',
     minimumSupportedRelease: '0.36.1',
     logoUrl: 'https://cdn.activepieces.com/pieces/oracle-fusion-cloud-erp.png',
-    authors: ['owuzo'],
-    categories: [PieceCategory.SALES_AND_CRM, PieceCategory.ACCOUNTING],
+    authors: ['owuzo', 'onyedikachi-david'],
+    categories: [PieceCategory.ACCOUNTING],
     auth: oracleFusionCloudErpAuth,
     actions: [
-        createRecord,
-        updateRecord,
-        deleteRecord,
-        getRecord,
-        searchRecords,
+        createInvoice,
+        getInvoice,
+        findInvoices,
+        updateInvoice,
+        deleteInvoice,
+        validateInvoice,
+        cancelInvoice,
+        createReceivablesInvoice,
+        getReceivablesInvoice,
+        findReceivablesInvoices,
+        updateReceivablesInvoice,
+        deleteReceivablesInvoice,
+        createPayment,
+        getPayment,
+        findPayments,
+        updatePayment,
+        stopPayment,
+        voidPayment,
+        getJournalBatch,
+        findJournalBatches,
+        updateJournalBatch,
+        deleteJournalBatch,
         createCustomApiCallAction({
             baseUrl: (auth) => {
-                const authValue = auth as OAuth2PropertyValue;
-                return `${authValue.props?.['server_url']}/fscmRestApi/resources/latest`;
+                const authValue = auth as { serverUrl: string };
+                return `${authValue.serverUrl}/fscmRestApi/resources/11.13.18.05`;
             },
             auth: oracleFusionCloudErpAuth,
-            authMapping: async (auth) => ({
-                Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-            }),
+            authMapping: async (auth) => {
+                const authValue = auth as { username: string; password: string };
+                const credentials = Buffer.from(`${authValue.username}:${authValue.password}`).toString('base64');
+                return {
+                    Authorization: `Basic ${credentials}`,
+                };
+            },
         }),
     ],
-    triggers: [
-        newRecord,
-    ],
+    triggers: [],
 });
     
