@@ -66,7 +66,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             const piece = await localPieceCache(log).getPieceVersion({
                 pieceName: bestMatch.name,
                 version: bestMatch.version,
-                platformId,
+                platformId: bestMatch.platformId,
             })
 
             if (isNil(piece)) {
@@ -273,7 +273,7 @@ const sortByVersionDescending = <T extends { version: string }>(a: T, b: T): num
 const findExactVersion = async (
     log: FastifyBaseLogger,
     params: { name: string, version: string | undefined, platformId: string | undefined },
-): Promise<{ name: string, version: string } | undefined> => {
+): Promise<{ name: string, version: string, platformId: string | undefined } | undefined> => {
     const { name, version, platformId } = params
     const versionToSearch = findNextExcludedVersion(version)
     const registry = await localPieceCache(log).getRegistry({ release: undefined, platformId })
@@ -293,7 +293,11 @@ const findExactVersion = async (
     }
 
     const sortedEntries = matchingRegistryEntries.sort(sortByVersionDescending)
-    return sortedEntries[0]
+    return {
+        name: sortedEntries[0].name,
+        version: sortedEntries[0].version,
+        platformId: sortedEntries[0].platformId,
+    }
 }
 
 const findNextExcludedVersion = (version: string | undefined): { baseVersion: string, nextExcludedVersion: string } | undefined => {
