@@ -1,6 +1,6 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateText, LanguageModel, Output, Tool } from 'ai'
+import { generateText, LanguageModel, Output, Tool, zodSchema } from 'ai'
 import { z } from 'zod/v3'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -149,7 +149,6 @@ async function resolveProperties(
 
         if (Object.keys(propertyToFill).length === 0) continue
 
-        const schemaObject = z.object(propertyToFill) as z.ZodTypeAny
         const extractionPrompt = constructExtractionPrompt(
             instruction,
             propertyToFill,
@@ -161,7 +160,7 @@ async function resolveProperties(
             model,
             prompt: extractionPrompt,
             output: Output.object({
-                schema: schemaObject,
+                schema: zodSchema(z.object(propertyToFill)),
             }),
         })
 
@@ -275,10 +274,13 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
     if (property.defaultValue) {
         schema = schema.default(property.defaultValue)
     }
+    if(!property.required) {
+        schema = schema.nullish()
+    }
     if (property.description) {
         schema = schema.describe(property.description)
     }
-    return property.required ? schema : schema.nullable()
+    return schema
 }
 
 async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
