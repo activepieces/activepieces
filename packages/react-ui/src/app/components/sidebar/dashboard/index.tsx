@@ -24,6 +24,7 @@ import {
   SidebarSeparator,
   useSidebar,
   SidebarGroupLabel,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
@@ -203,11 +204,9 @@ export function ProjectDashboardSidebar() {
         collapsible="icon"
         className="group p-0 z-99  border"
       >
-        {/* onClick removed - handled in base Sidebar component to prevent auto-expansion on navigation */}
         <AppSidebarHeader />
 
-        {state === 'collapsed' && <div className="mt-1" />}
-        {state === 'expanded' && <div className="mt-2" />}
+        <div className="mt-1" />
 
         <SidebarContent
           className={cn(
@@ -333,9 +332,7 @@ export function ProjectDashboardSidebar() {
               {displayProjects.length > 0 ? (
                 <SidebarMenu
                   className={cn(
-                    state === 'collapsed'
-                      ? 'gap-2 flex flex-col items-center'
-                      : '',
+                    state === 'collapsed' ? 'flex flex-col items-center' : '',
                   )}
                   style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
@@ -346,20 +343,12 @@ export function ProjectDashboardSidebar() {
                   {virtualItems.map((virtualItem) => {
                     const project = displayProjects[virtualItem.index];
                     return (
-                      <div
+                      <SidebarMenuItem
                         key={virtualItem.key}
                         data-virtual-index={virtualItem.index}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: `${virtualItem.size}px`,
-                          transform: `translateY(${virtualItem.start}px)`,
-                        }}
                       >
                         {renderProjectItem(project)}
-                      </div>
+                      </SidebarMenuItem>
                     );
                   })}
                 </SidebarMenu>
