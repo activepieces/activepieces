@@ -10,6 +10,9 @@ import { ProgressUpdateType } from './engine-operation'
 
 export const UploadRunLogsRequest = Type.Object({
     runId: Type.String(),
+    flowVersionId: Type.String(),
+    platformId: Type.String(),
+    flowId: Type.String(),
     tags: Type.Optional(Type.Array(Type.String())),
     status: Type.Enum(FlowRunStatus),
     projectId: Type.String(),
