@@ -50,8 +50,8 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
   return (
     <div className="flex items-center justify-between gap-1">
       <PreviousOrNextButton isNext={false} />
-      <div className="flex grow items-center justify-between gap-3 min-h-[36px]">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex grow items-center justify-between gap-3 min-h-[36px] min-w-0">
+        <div className="flex items-center gap-2 min-w-0 ">
           <PieceIcon
             logoUrl={stepMetadata?.logoUrl}
             displayName={stepMetadata?.displayName}
@@ -62,11 +62,11 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
             {!isNil(stepMetadata?.displayName) ? (
               <>
                 <span
-                  className={
+                  className={`shrink-0 ${
                     !actionOrTriggerDisplayName
                       ? 'text-foreground font-medium'
                       : 'text-muted-foreground'
-                  }
+                  }`}
                 >
                   {stepMetadata.displayName}
                 </span>
@@ -76,7 +76,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
                     <TextWithTooltip
                       tooltipMessage={actionOrTriggerDisplayName}
                     >
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-foreground min-w-0">
                         {actionOrTriggerDisplayName}
                       </span>
                     </TextWithTooltip>
