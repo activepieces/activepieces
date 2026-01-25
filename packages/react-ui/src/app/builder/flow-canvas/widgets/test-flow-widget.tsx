@@ -50,32 +50,28 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.triggerName,
   );
 
-  const { mutate: runFlow, isPending: isTestingFlow } = flowHooks.useTestFlow({
-    flowVersionId: flowVersion.id,
-    onUpdateRun: (response: UpdateRunProgressRequest) => {
-      assertNotNullOrUndefined(response.flowRun, 'flowRun');
-      const steps = runRef.current?.steps ?? {};
-      const startTime = response.flowRun.startTime ?? runRef.current?.startTime;
-      if (!isNil(response.step)) {
-        const updatedSteps = flowRunUtils.updateRunSteps(
-          steps,
-          response.step?.name,
-          response.step?.path,
-          response.step?.output,
-        );
-        setRun(
-          { ...response.flowRun, startTime, steps: updatedSteps },
-          flowVersion,
-        );
-      }
-      setRun({ ...response.flowRun, startTime, steps }, flowVersion);
-    },
-  });
-  const { mutate: startManualTrigger, isPending: isStartingManualTrigger } =
-    flowHooks.useStartManualTrigger({
+  const { mutate: runFlow, isPending: isTestingFlow } =
+    flowHooks.useTestFlowOrStartManualTrigger({
       flowVersionId: flowVersion.id,
-      onUpdateRun: (run) => {
-        setRun(run, flowVersion);
+      isForManualTrigger: isManualTrigger,
+      onUpdateRun: (response: UpdateRunProgressRequest) => {
+        assertNotNullOrUndefined(response.flowRun, 'flowRun');
+        const steps = runRef.current?.steps ?? {};
+        const startTime =
+          response.flowRun.startTime ?? runRef.current?.startTime;
+        if (!isNil(response.step)) {
+          const updatedSteps = flowRunUtils.updateRunSteps(
+            steps,
+            response.step?.name,
+            response.step?.path,
+            response.step?.output,
+          );
+          setRun(
+            { ...response.flowRun, startTime, steps: updatedSteps },
+            flowVersion,
+          );
+        }
+        setRun({ ...response.flowRun, startTime, steps }, flowVersion);
       },
     });
 
@@ -114,15 +110,11 @@ const TestFlowWidget = () => {
   return (
     <AboveTriggerButton
       onClick={() => {
-        if (isManualTrigger) {
-          startManualTrigger();
-        } else {
-          runFlow();
-        }
+        runFlow();
       }}
       text={isManualTrigger ? t('Run Flow') : t('Test Flow')}
       disable={!triggerHasSampleData && !isManualTrigger}
-      loading={isTestingFlow || isStartingManualTrigger}
+      loading={isTestingFlow}
     />
   );
 };
