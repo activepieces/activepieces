@@ -579,7 +579,7 @@ const SidebarMenu = React.forwardRef<
   />
 ));
 SidebarMenu.displayName = 'SidebarMenu';
-
+  
 const SidebarMenuItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentProps<'li'>

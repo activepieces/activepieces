@@ -67,7 +67,7 @@ export function SidebarUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu modal>
+        <DropdownMenu modal open={state === 'collapsed' ? false : undefined}>
           {isCollapsed ? (
             <div className="flex items-center p-2 justify-center size-12">
               <UserAvatar
