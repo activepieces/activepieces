@@ -26,14 +26,14 @@ import {
 } from '@activepieces/shared';
 
 type NewOAuth2DialogProps = {
-  providerName: 'google' | 'github';
+  providerName: 'google' | 'github' | 'oidc';
   providerDisplayName: string;
   platform: PlatformWithoutSensitiveData;
   connected: boolean;
   refetch: () => Promise<void>;
 };
 
-const OAuth2FormValues = Type.Object({
+const BasicOAuth2FormValues = Type.Object({
   clientId: Type.String({
     minLength: 1,
   }),
@@ -41,7 +41,19 @@ const OAuth2FormValues = Type.Object({
     minLength: 1,
   }),
 });
-type OAuth2FormValues = Static<typeof OAuth2FormValues>;
+
+const OidcFormValues = Type.Composite([
+  BasicOAuth2FormValues,
+  Type.Object({
+    issuerUrl: Type.String({
+      minLength: 1,
+    }),
+    scope: Type.Optional(Type.String()),
+  }),
+]);
+
+type BasicOAuth2FormValues = Static<typeof BasicOAuth2FormValues>;
+type OidcFormValues = Static<typeof OidcFormValues>;
 
 export const NewOAuth2Dialog = ({
   providerDisplayName,
@@ -51,8 +63,9 @@ export const NewOAuth2Dialog = ({
   refetch,
 }: NewOAuth2DialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<OAuth2FormValues>({
-    resolver: typeboxResolver(OAuth2FormValues),
+  const schema = providerName === 'oidc' ? OidcFormValues : BasicOAuth2FormValues;
+  const form = useForm<BasicOAuth2FormValues | OidcFormValues>({
+    resolver: typeboxResolver(schema),
   });
 
   const { mutate, isPending } = useMutation({
@@ -133,6 +146,25 @@ export const NewOAuth2Dialog = ({
               });
             })}
           >
+            {providerName === 'oidc' && (
+              <FormField
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                name={'issuerUrl' as any}
+                render={({ field }) => (
+                  <FormItem className="grid space-y-4">
+                    <Label htmlFor="issuerUrl">{t('Issuer URL')}</Label>
+                    <Input
+                      {...field}
+                      required
+                      id="issuerUrl"
+                      className="rounded-sm"
+                      placeholder="https://your-idp.com"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               name="clientId"
               render={({ field }) => (
@@ -172,6 +204,24 @@ export const NewOAuth2Dialog = ({
                 </FormItem>
               )}
             />
+            {providerName === 'oidc' && (
+              <FormField
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                name={'scope' as any}
+                render={({ field }) => (
+                  <FormItem className="grid space-y-4">
+                    <Label htmlFor="scope">{t('Scope')}</Label>
+                    <Input
+                      {...field}
+                      id="scope"
+                      className="rounded-sm"
+                      placeholder="openid email profile"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}

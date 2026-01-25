@@ -152,6 +152,11 @@ const systemPropValidators: {
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
     [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,
+    [AppSystemProp.OIDC_ISSUER_URL]: stringValidator,
+    [AppSystemProp.OIDC_CLIENT_ID]: stringValidator,
+    [AppSystemProp.OIDC_CLIENT_SECRET]: stringValidator,
+    [AppSystemProp.OIDC_SCOPE]: stringValidator,
+    [AppSystemProp.OIDC_INSECURE_TLS]: booleanValidator,
 
     // Cloudflare
     [AppSystemProp.CLOUDFLARE_API_TOKEN]: stringValidator,

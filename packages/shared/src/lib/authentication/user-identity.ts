@@ -5,6 +5,7 @@ import { BaseModelSchema, Nullable } from '../common'
 export enum UserIdentityProvider {
     EMAIL = 'EMAIL',
     GOOGLE = 'GOOGLE',
+    OIDC = 'OIDC',
     SAML = 'SAML',
     JWT = 'JWT',
 }

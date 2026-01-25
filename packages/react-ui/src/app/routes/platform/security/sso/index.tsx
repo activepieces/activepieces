@@ -17,6 +17,7 @@ import { platformApi } from '@/lib/platforms-api';
 import { isNil } from '@activepieces/shared';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
+import OidcIcon from '../../../../../assets/img/custom/auth/oidc.svg';
 
 type ProviderCardProps = {
   providerName: string;
@@ -69,6 +70,7 @@ const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
   const googleConnected = !isNil(platform.federatedAuthProviders?.google);
+  const oidcConnected = !isNil(platform.federatedAuthProviders?.oidc);
   const samlConnected = !isNil(platform.federatedAuthProviders?.saml);
   const emailAuthEnabled = platform.emailAuthEnabled;
 
@@ -127,6 +129,19 @@ const SSOPage = () => {
                 platform={platform}
                 refetch={refetch}
                 connected={googleConnected}
+              />
+            }
+          />
+          <ProviderCard
+            providerName={t('OpenID Connect (OIDC)')}
+            providerIcon={<img src={OidcIcon} alt="icon" width={32} height={32} />}
+            button={
+              <NewOAuth2Dialog
+                providerDisplayName={t('OIDC')}
+                providerName="oidc"
+                platform={platform}
+                refetch={refetch}
+                connected={oidcConnected}
               />
             }
           />

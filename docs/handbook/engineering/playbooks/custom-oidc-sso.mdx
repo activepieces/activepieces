@@ -1,0 +1,191 @@
+---
+title: "Custom OIDC SSO (Engineering)"
+description: "What to change to add a custom OpenID Connect provider for SSO"
+---
+
+## Goal
+
+Add support for signing in/up via a **custom OpenID Connect (OIDC) provider** (any standards-compliant issuer), in addition to the existing Google SSO implementation.
+
+This document is **for developers** and summarizes the code + config changes required.
+
+## Current state (as of Jan 2026)
+
+- Backend has a single hard-coded OAuth/OIDC provider implementation in:
+  - `packages/server/api/src/app/ee/authentication/federated-authn/google-authn-provider.ts`
+- The federated auth endpoints exist, but the provider selection is only partially wired:
+  - `GET /v1/authn/federated/login?providerName=...` currently ignores `providerName`.
+  - `POST /v1/authn/federated/claim` accepts `providerName` in the request body schema, but the handler currently only passes `code` through.
+- Platform-level config is stored in `platform.federatedAuthProviders` (JSONB) and already contains placeholders for `google`, `github`, `saml`:
+  - `packages/shared/src/lib/federated-authn/index.ts`
+  - `packages/server/api/src/app/platform/platform.entity.ts`
+  - UI config screen exists at **Platform Settings → SSO** (`packages/react-ui/src/app/routes/platform/security/sso/*`).
+
+## What “Custom OIDC” should mean
+
+At minimum, custom OIDC SSO should support:
+
+- **Authorization Code flow** (confidential client)
+- OIDC discovery via `/.well-known/openid-configuration` (preferred)
+- ID token validation via issuer’s **JWKS** (`jwks_uri`)
+- Mapping of required identity fields:
+  - `email` (required)
+  - `given_name` / `family_name` (optional)
+  - `picture` (optional)
+
+Recommended extras:
+
+- **PKCE** (even for confidential clients)
+- `nonce` handling
+- Configurable scopes and claim-mapping (because providers vary)
+
+## Required changes
+
+### 1) Shared types: add an OIDC provider and config
+
+Files:
+
+- `packages/shared/src/lib/federated-authn/authn-provider-name.ts`
+- `packages/shared/src/lib/federated-authn/index.ts`
+
+Changes:
+
+- Add a new provider enum value, e.g.:
+  - `ThirdPartyAuthnProviderEnum.OIDC = 'oidc'`
+- Extend `FederatedAuthnProviderConfig` to include an `oidc` entry.
+
+Suggested config shape (minimum viable):
+
+- `issuerUrl` (string) — used for discovery: `${issuerUrl}/.well-known/openid-configuration`
+- `clientId` (string)
+- `clientSecret` (string)
+- `scope` (string, default: `openid email profile`)
+
+Optional fields (often needed in real deployments):
+
+- `authorizationEndpoint` / `tokenEndpoint` / `jwksUri` (override discovery)
+- `claims` mapping (e.g. `emailClaim`, `firstNameClaim`, `lastNameClaim`, `pictureClaim`)
+- `requireEmailVerified` (boolean)
+- `additionalAuthParams` (record) for provider-specific requirements
+
+### 2) Backend: implement an OIDC provider module
+
+Create a new provider implementation similar to the Google provider:
+
+- New file (suggested):
+  - `packages/server/api/src/app/ee/authentication/federated-authn/oidc-authn-provider.ts`
+
+Implementation notes:
+
+- **Login URL generation**
+  - Use discovery to obtain `authorization_endpoint`
+  - Build URL with:
+    - `client_id`, `redirect_uri`
+    - `response_type=code`
+    - `scope=openid email profile` (or configurable)
+- **Code exchange**
+  - Use discovery to obtain `token_endpoint`
+  - `POST` form-encoded:
+    - `grant_type=authorization_code`
+    - `code`, `client_id`, `client_secret`
+    - `redirect_uri` (must match)
+  - Read `id_token` from response
+- **ID token verification**
+  - Use discovery `jwks_uri` (or configured override)
+  - Verify:
+    - signature against JWKS
+    - `iss` matches discovered `issuer`
+    - `aud` contains `clientId`
+    - `exp` is valid
+  - Extract claims
+
+Existing helper that can be reused:
+
+- `packages/server/api/src/app/helper/jwt-utils.ts`
+
+### 3) Backend: wire provider selection end-to-end
+
+Files:
+
+- `packages/server/api/src/app/ee/authentication/federated-authn/federated-authn-module.ts`
+- `packages/server/api/src/app/ee/authentication/federated-authn/federated-authn-service.ts`
+
+Changes:
+
+- Ensure `providerName` is actually used:
+  - `login(...)` should accept `providerName` and select the correct provider implementation.
+  - `claim(...)` must accept and use `providerName` from the request body.
+- Add config lookup for OIDC under `platform.federatedAuthProviders.oidc`.
+- Decide what happens when there is **no platformId** (cloud/global auth):
+  - Either disallow custom OIDC without a platform (recommended)
+  - Or add system props for a “global” OIDC provider (issuer + credentials)
+
+### 4) Backend: flags / “providers to show” map
+
+File:
+
+- `packages/server/api/src/app/ee/flags/enterprise-flags.hooks.ts`
+
+Changes:
+
+- Extend `ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP` to include OIDC.
+- OIDC should appear as enabled when `platform.federatedAuthProviders.oidc` is present.
+
+### 5) UI: add configuration UI for OIDC
+
+Files:
+
+- `packages/react-ui/src/app/routes/platform/security/sso/index.tsx`
+- `packages/react-ui/src/app/routes/platform/security/sso/oauth2-dialog.tsx`
+
+Changes:
+
+- Add a new provider card for “OIDC” (or “Custom OIDC”).
+- You’ll likely need a new dialog component (or generalize `NewOAuth2Dialog`) because OIDC needs **issuer/discovery URL** in addition to client id/secret.
+
+Suggested fields:
+
+- Issuer URL (or discovery URL)
+- Client ID
+- Client Secret
+- Scope (optional)
+
+### 6) UI: add a login button for OIDC
+
+Files:
+
+- `packages/react-ui/src/features/authentication/components/third-party-logins.tsx`
+
+Changes:
+
+- Use the flags map to conditionally render an “OIDC” button.
+- On click, call:
+  - `authenticationApi.getFederatedAuthLoginUrl(ThirdPartyAuthnProviderEnum.OIDC)`
+
+### 7) API contract consistency
+
+Today, the public contract is:
+
+- `GET /v1/authn/federated/login?providerName=...` → `{ loginUrl }`
+- `POST /v1/authn/federated/claim` → auth response (token + user)
+
+For OIDC, keep the contract the same.
+
+Important: the `providerName` query/body values must match what the backend expects, and be part of the shared enum.
+
+### 8) Security and operational notes
+
+- **State**: UI already injects a `state` query param; the backend should treat it as opaque and not trust it.
+- **Nonce**: if you add nonce, you’ll need server-side storage to validate it, or a signed/short-lived state.
+- **PKCE**: optional but recommended; requires generating/verifying code challenge/verifier.
+- **Email verification**: Google requires `email_verified !== false`. For custom OIDC, make this configurable.
+- **Domain enforcement**: domain restrictions are enforced in the existing auth flow; verify OIDC signups go through the same checks.
+- **Key rotation**: JWKS client should cache and rate-limit (similar to current Google usage via `jwks-rsa`).
+
+## Optional: update public admin docs
+
+If you want admins to self-serve OIDC setup, extend:
+
+- `docs/admin-guide/guides/sso.mdx`
+
+…with a “Custom OIDC” section describing issuer URL, redirect URI, and required scopes.

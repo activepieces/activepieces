@@ -470,6 +470,7 @@
                   "icon": "code",
                   "pages": [
                      "handbook/engineering/playbooks/run-ee",
+                     "handbook/engineering/playbooks/custom-oidc-sso",
                      "handbook/engineering/playbooks/setup-incident-io",
                      "handbook/engineering/playbooks/releases",
                      "handbook/engineering/playbooks/infrastructure",

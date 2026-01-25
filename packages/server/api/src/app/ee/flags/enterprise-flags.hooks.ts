@@ -1,4 +1,5 @@
 import { ApEdition, ApFlagId, isNil, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
@@ -14,20 +15,44 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
         const edition = system.getEdition()
         if (isNil(platformId)) {
+            // Public (unauthenticated) requests may not resolve a platformId (e.g. self-hosted without dedicated domains).
+            // Still expose federated auth buttons if instance-level config exists.
             if (edition === ApEdition.CLOUD) {
                 modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
                     [ThirdPartyAuthnProviderEnum.GOOGLE]: true,
                 }
             }
+            else {
+                const googleConfigured = !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID))
+                    && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
+                const oidcConfigured = !isNil(system.get(AppSystemProp.OIDC_ISSUER_URL))
+                    && !isNil(system.get(AppSystemProp.OIDC_CLIENT_ID))
+                    && !isNil(system.get(AppSystemProp.OIDC_CLIENT_SECRET))
+                modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
+                    [ThirdPartyAuthnProviderEnum.GOOGLE]: googleConfigured,
+                    [ThirdPartyAuthnProviderEnum.OIDC]: oidcConfigured,
+                    [ThirdPartyAuthnProviderEnum.SAML]: false,
+                }
+            }
+
+            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(undefined)
             return modifiedFlags
         }
         modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = edition !== ApEdition.CLOUD
         const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
         const platform = await platformService.getOneOrThrow(platformId)
+        const googleConfiguredOnInstance = !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID))
+            && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
+        const oidcConfiguredOnInstance = !isNil(system.get(AppSystemProp.OIDC_ISSUER_URL))
+            && !isNil(system.get(AppSystemProp.OIDC_CLIENT_ID))
+            && !isNil(system.get(AppSystemProp.OIDC_CLIENT_SECRET))
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(
                 platform.federatedAuthProviders.google,
-            ),
+            ) || (edition !== ApEdition.CLOUD && googleConfiguredOnInstance),
+            [ThirdPartyAuthnProviderEnum.OIDC]: !isNil(
+                platform.federatedAuthProviders.oidc,
+            ) || (edition !== ApEdition.CLOUD && oidcConfiguredOnInstance),
             [ThirdPartyAuthnProviderEnum.SAML]: !isNil(
                 platform.federatedAuthProviders.saml,
             ),

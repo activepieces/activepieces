@@ -1,5 +1,6 @@
 export enum ThirdPartyAuthnProviderEnum {
     GOOGLE = 'google',
+    OIDC = 'oidc',
     SAML = 'saml',
 }
 
