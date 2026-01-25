@@ -1,4 +1,4 @@
-import { EmitTestStepProgressRequest, PrincipalType, TestFlowRunRequestBody, UpdateRunProgressRequest, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { EmitTestStepProgressRequest, FlowOperationType, PrincipalType, SampleDataDataType, SampleDataFileType, TestFlowRunRequestBody, UpdateRunProgressRequest, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../core/websockets.service'
 import { flowWorkerController } from '../workers/worker-controller'
@@ -6,6 +6,7 @@ import { flowVersionController } from './flow/flow-version.controller'
 import { flowController } from './flow/flow.controller'
 import { flowRunService } from './flow-run/flow-run-service'
 import { sampleDataController } from './step-run/sample-data.controller'
+import { flowVersionService } from './flow-version/flow-version.service'
 
 export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, { prefix: '/v1/worker/flows' })
@@ -41,6 +42,41 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.EMIT_TEST_STEP_FINISHED, (socket) => {
         return async (data: EmitTestStepProgressRequest, _principal, _projectId, callback?: (data?: unknown) => void): Promise<void> => {
             socket.to(data.projectId).emit(WebsocketClientEvent.TEST_STEP_FINISHED, data)
+            const flowVersion = await flowVersionService(app.log).getFlowVersionOrThrow({
+                flowId: data.flowId,
+                versionId: data.flowVersionId,
+            })
+           
+            if(data.standardError === '') {
+                flowVersionService(app.log).applyOperation({
+                    flowVersion,
+                    platformId: data.platformId,
+                    projectId: data.projectId,
+                    userId: null,
+                    userOperation: {
+                        type: FlowOperationType.SAVE_SAMPLE_DATA,
+                        request: {
+                          payload: data.output,
+                          stepName: data.stepName,
+                          type: SampleDataFileType.OUTPUT,
+                        },
+                    }
+                    })
+            flowVersionService(app.log).applyOperation({
+                flowVersion,
+                platformId: data.platformId,
+                projectId: data.projectId,
+                userId: null,
+                userOperation: {
+                    type: FlowOperationType.SAVE_SAMPLE_DATA,
+                    request: {
+                      payload: data.input,
+                      stepName: data.stepName,
+                      type: SampleDataFileType.INPUT,
+                    },
+                }
+                })
+            }
             callback?.()
         }
     })

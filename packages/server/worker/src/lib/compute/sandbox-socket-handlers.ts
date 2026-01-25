@@ -1,5 +1,5 @@
 import { pubsubFactory } from '@activepieces/server-shared'
-import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { EmitTestStepProgressRequest, EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appSocket } from '../app-socket'
@@ -56,7 +56,8 @@ export const sandboxSockerHandler = (log: FastifyBaseLogger) => ({
             })
 
             const wsEvent = isTerminalOutput  ? WebsocketServerEvent.EMIT_TEST_STEP_FINISHED : WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS
-            await appSocket(log).emitWithAck(wsEvent, { projectId, platformId, flowId, flowVersionId, stepNameToTest, ...stepResponse })
+            const data: EmitTestStepProgressRequest = { projectId, platformId, flowId, flowVersionId, stepName: stepNameToTest, ...stepResponse }
+            await appSocket(log).emitWithAck(wsEvent, data)
         }
     },
     updateStepProgress: async (request: UpdateStepProgressRequest): Promise<void> => {
