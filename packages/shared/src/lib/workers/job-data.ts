@@ -61,6 +61,7 @@ export enum WorkerJobType {
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
+    EXECUTE_AGENT = 'EXECUTE_AGENT',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
 }
@@ -96,6 +97,14 @@ export const PollingJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_POLLING),
 })
 export type PollingJobData = Static<typeof PollingJobData>
+
+export const ExecuteAgentJobData = Type.Object({
+    jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
+    platformId: Type.String(),
+    projectId: Type.String(),
+    session: ChatSession,
+})
+export type ExecuteAgentJobData = Static<typeof ExecuteAgentJobData>
 
 export const ExecuteFlowJobData = Type.Object({
     projectId: Type.String(),
