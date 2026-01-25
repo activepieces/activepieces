@@ -26,10 +26,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "Text to be translated. Only UTF-8-encoded plain text is supported.": "翻訳するテキスト。UTF-8 でエンコードされたプレーンテキストのみサポートされています。",
   "The language into which the text should be translated.": "テキストを翻訳する言語。",
   "Language of the text to be translated": "翻訳するテキストの言語",
@@ -41,7 +43,7 @@
   "The automatic detection of the XML structure won't yield best results in all XML files.": "XML構造の自動検出は、すべてのXMLファイルで最善の結果をもたらすことはありません。",
   "Comma-separated list of XML or HTML tags.": "カンマ区切りのXMLまたはHTMLタグのリスト。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Bulgarian": "ブルガリア語",
   "Czech": "チェコ語",
   "Danish": "デンマーク語",
@@ -92,5 +94,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }
