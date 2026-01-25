@@ -31,12 +31,7 @@ import { useBuilderStateContext } from '../../builder-hooks';
 
 import { testStepUtils } from './test-step-utils';
 
-const stringifyNullOrUndefined = (data: undefined | null) => {
-  if (data === undefined) {
-    return 'undefined';
-  }
-  return 'null';
-};
+
 
 export const testStepHooks = {
   useUpdateSampleData: (stepName: string) => {
@@ -69,10 +64,7 @@ export const testStepHooks = {
           return;
         }
         if (response.success) {
-          //if the output is undefined it will fail to save sample data unless we stringify it
-          const output = isNil(response.output)
-            ? stringifyNullOrUndefined(response.output)
-            : response.output;
+          const output = response.output
           setSampleData({ stepName: step.name, type: 'output', value: output });
           applyOperation({
             type: FlowOperationType.SAVE_SAMPLE_DATA,
@@ -80,16 +72,10 @@ export const testStepHooks = {
               stepName: step.name,
               payload: output,
               type: SampleDataFileType.OUTPUT,
-              dataType:
-                typeof output === 'string'
-                  ? SampleDataDataType.STRING
-                  : SampleDataDataType.JSON,
             },
           });
           if (response.testType === 'action') {
-            const input = isNil(response.input)
-              ? stringifyNullOrUndefined(response.input)
-              : response.input;
+            const input =response.input
             setSampleData({ stepName: step.name, type: 'input', value: input });
             applyOperation({
               type: FlowOperationType.SAVE_SAMPLE_DATA,
@@ -97,10 +83,6 @@ export const testStepHooks = {
                 stepName: step.name,
                 payload: input,
                 type: SampleDataFileType.INPUT,
-                dataType:
-                  typeof input === 'string'
-                    ? SampleDataDataType.STRING
-                    : SampleDataDataType.JSON,
               },
             });
           }
