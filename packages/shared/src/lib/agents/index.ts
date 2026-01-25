@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { AIProviderName } from '../ai-providers'
 import { DiscriminatedUnion, Nullable } from '../common'
-export * from './tools'
+export * from '../agent-v2/tools'
 export * from './mcp'
 
 export enum AgentOutputFieldType {

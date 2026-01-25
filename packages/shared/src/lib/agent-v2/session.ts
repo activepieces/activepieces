@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
-import { AgentTool } from '../agents'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
 import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage, UserConversationMessage } from './message'
+import { AgentTool } from '../agents/tools'
 
 export const DEFAULT_CHAT_MODEL = 'openai/gpt-5.1' 
 
