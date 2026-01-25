@@ -22,7 +22,7 @@ type ColumnDefWithAccessorKey = ColumnDef<RowDataWithActions<UserRowData>> & {
 export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
   {
     accessorKey: 'email',
-    size: 300,
+    size: 200,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Email')} icon={Mail} />
     ),
