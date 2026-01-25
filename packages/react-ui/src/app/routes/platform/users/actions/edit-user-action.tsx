@@ -19,20 +19,7 @@ type EditUserActionProps = {
 
 export const EditUserAction = ({ row, onUpdate }: EditUserActionProps) => {
   if (row.type === 'invitation') {
-    return (
-      <div className="flex items-end justify-end">
-        <Tooltip>
-          <TooltipTrigger>
-            <Button variant="ghost" className="size-8 p-0" disabled>
-              <Pencil className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('Cannot edit pending invitation')}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    );
+    return null;
   }
 
   return (

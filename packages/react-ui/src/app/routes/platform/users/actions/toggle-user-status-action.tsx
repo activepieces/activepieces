@@ -23,20 +23,7 @@ export const ToggleUserStatusAction = ({
   onToggleStatus,
 }: ToggleUserStatusActionProps) => {
   if (row.type === 'invitation') {
-    return (
-      <div className="flex items-end justify-end">
-        <Tooltip>
-          <TooltipTrigger>
-            <Button variant="ghost" className="size-8 p-0" disabled>
-              <CircleMinus className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('Cannot activate/deactivate pending invitation')}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    );
+    return null;
   }
 
   const isAdmin = row.data.platformRole === PlatformRole.ADMIN;
