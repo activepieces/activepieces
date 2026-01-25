@@ -1,4 +1,4 @@
-import { EmitTestStepProgressRequest, PrincipalType, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { EmitTestStepProgressRequest, PrincipalType, TestFlowRunRequestBody, UpdateRunProgressRequest, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../core/websockets.service'
 import { flowWorkerController } from '../workers/worker-controller'
@@ -45,4 +45,10 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
         }
     })
 
+    websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.UPDATE_RUN_PROGRESS, (socket) => {
+        return async (data: UpdateRunProgressRequest, _principal, _projectId, callback?: (data?: unknown) => void): Promise<void> => {
+            socket.to(data.flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, data)
+            callback?.()
+        }
+    })
 }

@@ -1,10 +1,13 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
+    ErrorCode,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
+    isNil,
     ListPiecesRequestQuery,
     LocalesEnum,
     PieceCategory,
@@ -41,6 +44,17 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
         const query = req.query
+
+        const oldSyncCall = !isNil(query.release)
+        if (oldSyncCall) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PIECE_SYNC_NOT_SUPPORTED,
+                params: {
+                    message: 'This endpoint is deprecated. Please use it without release parameter.',
+                    release: query.release ?? '',
+                },
+            })
+        }
         const includeTags = query.includeTags ?? false
         const platformId = getPlatformId(req.principal)
         const projectId = req.query.projectId

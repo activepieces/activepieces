@@ -17,7 +17,6 @@ import { downloadFile, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
-  FlowRun,
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
@@ -33,6 +32,8 @@ import {
   SeekPage,
   Template,
   UncategorizedFolderId,
+  UpdateRunProgressRequest,
+  FlowRun,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -277,7 +278,7 @@ export const flowHooks = {
     onUpdateRun,
   }: {
     flowVersionId: string;
-    onUpdateRun: (run: FlowRun) => void;
+    onUpdateRun: (stepResponse: UpdateRunProgressRequest) => void;
   }) => {
     const socket = useSocket();
     return useMutation<void>({

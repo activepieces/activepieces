@@ -1,7 +1,6 @@
 import { StoreApi } from 'zustand';
 
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { RightSideBarType } from '@/lib/types';
 import {
   FlowActionType,
   FlowRun,
@@ -12,7 +11,6 @@ import {
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
-import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
 export type RunState = {
   run: FlowRun | null;
@@ -35,36 +33,18 @@ export const createRunState = (
     run: initialState.run,
     loopsIndexes:
       initialState.run && initialState.run.steps
-        ? flowRunUtils.findLoopsState(
-            initialState.flowVersion,
-            initialState.run,
-            {},
-          )
+        ? flowRunUtils.findLoopsState(initialState.run, {})
         : {},
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {
-        const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(
-          run.status,
-          run.steps,
+        const loopsIndexes = flowRunUtils.findLoopsState(
+          run,
+          state.loopsIndexes,
         );
-        const initiallySelectedStep = run.steps
-          ? flowCanvasUtils.determineInitiallySelectedStep(
-              lastStepWithStatus,
-              flowVersion,
-            )
-          : state.selectedStep ?? 'trigger';
         return {
-          loopsIndexes: flowRunUtils.findLoopsState(
-            flowVersion,
-            run,
-            state.loopsIndexes,
-          ),
+          loopsIndexes,
           run,
           flowVersion,
-          rightSidebar: initiallySelectedStep
-            ? RightSideBarType.PIECE_SETTINGS
-            : RightSideBarType.NONE,
-          selectedStep: initiallySelectedStep,
           readonly: true,
         };
       }),
@@ -101,7 +81,6 @@ export const createRunState = (
             childLoop.name,
             loopsIndexes,
             state.run?.steps ?? {},
-            state.flowVersion.trigger,
           ) as LoopStepOutput | undefined;
 
           if (isNil(childLoopOutput) || isNil(childLoopOutput.output)) {

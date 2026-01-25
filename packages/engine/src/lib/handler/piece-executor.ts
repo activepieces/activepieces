@@ -1,7 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
-import { LanguageModelV2 } from '@ai-sdk/provider'
 import { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -85,6 +84,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+                stepNameToUpdate: action.name,
             })
         }
         const context: ActionContext<PieceAuthProperty, InputPropertyMap> = {
@@ -122,7 +122,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
                     engineConstants: constants,
                     tools: params.tools,
-                    model: params.model as LanguageModelV2,
+                    model: params.model,
                 }),
             },
             propsValue: processedInput,

@@ -1,13 +1,14 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import { FlowRunStatus, PauseMetadata } from '../flow-run/execution/flow-execution'
-import { FailedStep } from '../flow-run/flow-run'
+import { StepOutput } from '../flow-run/execution/step-output'
+import { FailedStep, FlowRun } from '../flow-run/flow-run'
 import { StepRunResponse } from '../flows/sample-data'
 import { ProgressUpdateType } from './engine-operation'
 
 
 
-export const UpdateRunProgressRequest = Type.Object({
+export const UploadRunLogsRequest = Type.Object({
     runId: Type.String(),
     tags: Type.Optional(Type.Array(Type.String())),
     status: Type.Enum(FlowRunStatus),
@@ -25,7 +26,7 @@ export const UpdateRunProgressRequest = Type.Object({
     stepsCount: Type.Optional(Type.Number()),
 })
 
-export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
+export type UploadRunLogsRequest = Static<typeof UploadRunLogsRequest>
 
 
 export const UpdateStepProgressRequest = Type.Object({
@@ -68,3 +69,12 @@ export const GetFlowVersionForWorkerRequest = Type.Object({
 })
 
 export type GetFlowVersionForWorkerRequest = Static<typeof GetFlowVersionForWorkerRequest>
+
+export type UpdateRunProgressRequest = {
+    flowRun: Omit<FlowRun, 'steps'>
+    step?: {
+        name: string
+        path: readonly [string, number][]
+        output: StepOutput
+    }
+}
