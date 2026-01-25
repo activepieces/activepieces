@@ -30,6 +30,8 @@ const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 const SIDEBAR_STATE_STORAGE_KEY = 'sidebar-state';
 
+let persistedHoverState = false;
+
 function getSidebarStateFromLocalStorage() {
   const stored = localStorage.getItem(SIDEBAR_STATE_STORAGE_KEY);
   return stored ? stored === 'true' : true;
@@ -86,7 +88,9 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
-    const [isHovered, setIsHovered] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(
+      hoverMode ? persistedHoverState : false,
+    );
 
     const [_open, _setOpen] = React.useState(
       hoverMode ?? getSidebarStateFromLocalStorage(),
@@ -107,9 +111,15 @@ const SidebarProvider = React.forwardRef<
       [setOpenProp, open, hoverMode],
     );
 
-    const setHovered = React.useCallback((hovered: boolean) => {
-      setIsHovered(hovered);
-    }, []);
+    const setHovered = React.useCallback(
+      (hovered: boolean) => {
+        if (hoverMode) {
+          persistedHoverState = hovered;
+        }
+        setIsHovered(hovered);
+      },
+      [hoverMode],
+    );
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
@@ -579,7 +589,7 @@ const SidebarMenu = React.forwardRef<
   />
 ));
 SidebarMenu.displayName = 'SidebarMenu';
-  
+
 const SidebarMenuItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentProps<'li'>

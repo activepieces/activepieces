@@ -23,6 +23,7 @@ type ApProjectDisplayProps = {
   titleClassName?: string;
   maxLengthToNotShowTooltip?: number;
   projectType: ProjectType;
+  inSidebar?: boolean;
 };
 
 export const ApProjectDisplay = ({
@@ -32,6 +33,7 @@ export const ApProjectDisplay = ({
   titleClassName = '',
   maxLengthToNotShowTooltip = 30,
   projectType,
+  inSidebar = false,
 }: ApProjectDisplayProps) => {
   const { state } = useSidebar();
   const projectAvatar = isNil(icon) ? null : projectType ===
@@ -57,7 +59,7 @@ export const ApProjectDisplay = ({
   const content = (
     <div className={`flex items-center gap-2 ${containerClassName}`}>
       {projectAvatar}
-      {state === 'expanded' && (
+      {((inSidebar && state === 'expanded') || !inSidebar) && (
         <span className={cn(titleClassName, 'truncate')}>{displayText}</span>
       )}
     </div>

@@ -74,6 +74,7 @@ const ProjectSideBarItem = ({
                 icon={project.icon}
                 maxLengthToNotShowTooltip={28}
                 projectType={project.type}
+                inSidebar={true}
               />
             </div>
           </div>

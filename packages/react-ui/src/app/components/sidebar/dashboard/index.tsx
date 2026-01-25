@@ -109,7 +109,7 @@ export function ProjectDashboardSidebar() {
 
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
-      await projectCollectionUtils.setCurrentProject(projectId);
+      projectCollectionUtils.setCurrentProject(projectId);
       navigate(`/projects/${projectId}/flows`);
       setSearchOpen(false);
     },
