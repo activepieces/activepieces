@@ -55,7 +55,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
             projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
-            invitationExpirySeconds: dayjs.duration(1, 'day').asSeconds(),
+            invitationExpirySeconds: dayjs.duration(7, 'days').asSeconds(),
             status,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)

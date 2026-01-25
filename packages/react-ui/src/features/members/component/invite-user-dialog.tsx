@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -49,6 +50,7 @@ import {
   isNil,
   Permission,
   PlatformRole,
+  ProjectType,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
@@ -90,6 +92,8 @@ export const InviteUserDialog = ({
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { checkAccess } = useAuthorization();
+  const location = useLocation();
+  const isPlatformPage = location.pathname.includes('/platform/');
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
@@ -144,7 +148,9 @@ export const InviteUserDialog = ({
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
       email: '',
-      type: platform.plan.projectRolesEnabled
+      type: isPlatformPage
+        ? InvitationType.PLATFORM
+        : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
@@ -196,10 +202,10 @@ export const InviteUserDialog = ({
               <DialogDescription>
                 {invitationLink
                   ? t(
-                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
+                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
                     )
                   : t(
-                      'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+                      'Type the email address of the user you want to invite, the invitation expires in 7 days.',
                     )}
               </DialogDescription>
             </DialogHeader>
@@ -226,40 +232,43 @@ export const InviteUserDialog = ({
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem className="grid gap-2">
-                        <Label>{t('Invite To')}</Label>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('Invite To')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>{t('Invite To')}</SelectLabel>
-                              {currentUser?.platformRole ===
-                                PlatformRole.ADMIN && (
-                                <SelectItem value={InvitationType.PLATFORM}>
-                                  {t('Entire Platform')}
-                                </SelectItem>
-                              )}
-                              {platform.plan.projectRolesEnabled && (
-                                <SelectItem value={InvitationType.PROJECT}>
-                                  {project.displayName} (Current)
-                                </SelectItem>
-                              )}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  ></FormField>
+                  {!isPlatformPage && (
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem className="grid gap-2">
+                          <Label>{t('Invite To')}</Label>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('Invite To')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>{t('Invite To')}</SelectLabel>
+                                {currentUser?.platformRole ===
+                                  PlatformRole.ADMIN && (
+                                  <SelectItem value={InvitationType.PLATFORM}>
+                                    {t('Entire Platform')}
+                                  </SelectItem>
+                                )}
+                                {platform.plan.projectRolesEnabled &&
+                                  project.type === ProjectType.TEAM && (
+                                    <SelectItem value={InvitationType.PROJECT}>
+                                      {project.displayName} (Current)
+                                    </SelectItem>
+                                  )}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    ></FormField>
+                  )}
 
                   {form.getValues().type === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />
