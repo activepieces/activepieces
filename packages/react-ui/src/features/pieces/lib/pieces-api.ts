@@ -25,10 +25,23 @@ export const piecesApi = {
   get(
     request: GetPieceRequestParams & GetPieceRequestQuery,
   ): Promise<PieceMetadataModel> {
-    return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
+    const req = api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,
       locale: request.locale ?? undefined,
       projectId: request.projectId ?? undefined,
+    });
+    const latestVersion = api.get<PieceMetadataModel>(
+      `/v1/pieces/${request.name}`,
+      {
+        projectId: request.projectId ?? undefined,
+      },
+    );
+    return Promise.all([req, latestVersion]).then(([req, latestVersion]) => {
+      const latestVersionLogoUrl = latestVersion.logoUrl;
+      return {
+        ...req,
+        logoUrl: latestVersionLogoUrl,
+      };
     });
   },
   options<

@@ -1,11 +1,18 @@
 import { t } from 'i18next';
+import { useRef } from 'react';
 
 import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { ChatDrawerSource } from '@/lib/types';
-import { isNil, FlowTriggerType } from '@activepieces/shared';
+import {
+  isNil,
+  FlowTriggerType,
+  UpdateRunProgressRequest,
+  assertNotNullOrUndefined,
+} from '@activepieces/shared';
 
 import { AboveTriggerButton } from './above-trigger-button';
 
@@ -15,6 +22,7 @@ const TestFlowWidget = () => {
     flowVersion,
     readonly,
     hideTestWidget,
+    run,
     setRun,
     publishedVersionId,
   ] = useBuilderStateContext((state) => [
@@ -22,9 +30,12 @@ const TestFlowWidget = () => {
     state.flowVersion,
     state.readonly,
     state.hideTestWidget,
+    state.run,
     state.setRun,
     state.flow.publishedVersionId,
   ]);
+  const runRef = useRef(run);
+  runRef.current = run;
 
   const triggerHasSampleData =
     flowVersion.trigger.type === FlowTriggerType.PIECE &&
@@ -39,17 +50,28 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.triggerName,
   );
 
-  const { mutate: runFlow, isPending: isTestingFlow } = flowHooks.useTestFlow({
-    flowVersionId: flowVersion.id,
-    onUpdateRun: (run) => {
-      setRun(run, flowVersion);
-    },
-  });
-  const { mutate: startManualTrigger, isPending: isStartingManualTrigger } =
-    flowHooks.useStartManualTrigger({
+  const { mutate: runFlow, isPending: isTestingFlow } =
+    flowHooks.useTestFlowOrStartManualTrigger({
       flowVersionId: flowVersion.id,
-      onUpdateRun: (run) => {
-        setRun(run, flowVersion);
+      isForManualTrigger: isManualTrigger,
+      onUpdateRun: (response: UpdateRunProgressRequest) => {
+        assertNotNullOrUndefined(response.flowRun, 'flowRun');
+        const steps = runRef.current?.steps ?? {};
+        const startTime =
+          response.flowRun.startTime ?? runRef.current?.startTime;
+        if (!isNil(response.step)) {
+          const updatedSteps = flowRunUtils.updateRunSteps(
+            steps,
+            response.step?.name,
+            response.step?.path,
+            response.step?.output,
+          );
+          setRun(
+            { ...response.flowRun, startTime, steps: updatedSteps },
+            flowVersion,
+          );
+        }
+        setRun({ ...response.flowRun, startTime, steps }, flowVersion);
       },
     });
 
@@ -88,15 +110,11 @@ const TestFlowWidget = () => {
   return (
     <AboveTriggerButton
       onClick={() => {
-        if (isManualTrigger) {
-          startManualTrigger();
-        } else {
-          runFlow();
-        }
+        runFlow();
       }}
       text={isManualTrigger ? t('Run Flow') : t('Test Flow')}
       disable={!triggerHasSampleData && !isManualTrigger}
-      loading={isTestingFlow || isStartingManualTrigger}
+      loading={isTestingFlow}
     />
   );
 };

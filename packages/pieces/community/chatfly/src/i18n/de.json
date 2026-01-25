@@ -1,0 +1,12 @@
+{
+  "ChatFly allows you to build AI chatbots trained on your data.": "ChatFly ermöglicht Ihnen die Erstellung von KI-Chatbots, die auf Ihre Daten trainiert werden.",
+  "Enter your ChatFly API key": "ChatFly API-Schlüssel eingeben",
+  "Send Message": "Nachricht senden",
+  "Send a message to ChatFly bot": "Nachricht an ChatFly Bot senden",
+  "Bot ID": "Bot ID",
+  "Message": "Nachricht",
+  "Session ID": "Sitzungs-ID",
+  "The ID of your bot": "Die ID deines Bots",
+  "The message to send": "Die Nachricht zum Senden",
+  "The ID of the session": "Die ID der Sitzung"
+}
