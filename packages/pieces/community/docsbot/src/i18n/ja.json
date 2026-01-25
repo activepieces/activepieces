@@ -40,10 +40,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The team to use.": "使用するチーム",
   "The bot to use.": "使用するボット。",
   "The question to ask the bot. 2 to 500 characters. Max increased to 8K tokens (roughtly 32k chars) when authenticated.": "Botに質問する質問。認証時に最大8Kトークン(大まかに32K文字)が増加しました。",
@@ -71,7 +73,7 @@
   "The ID of an existing bot in your team to copy from. If provided, the new bot will be created as a copy of the specified bot, with all sources copied over after creation.": "コピー元のチームに存在するボットのID。 指定された場合、新しいボットは指定されたボットのコピーとして作成され、すべてのソースは作成後にコピーされます。",
   "The bot name.": "Botの名前。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Minimal": "最小",
   "Low": "低い",
   "Medium": "ミディアム",
@@ -103,5 +105,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }
