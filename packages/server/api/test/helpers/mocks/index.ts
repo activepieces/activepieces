@@ -224,6 +224,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
         platformId: platformPlan?.platformId ?? apId(),
+        tablesEnabled: platformPlan?.tablesEnabled ?? false,
         includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         stripeCustomerId: undefined,

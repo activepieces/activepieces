@@ -84,6 +84,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+                stepNameToUpdate: action.name,
             })
         }
         const context: ActionContext<PieceAuthProperty, InputPropertyMap> = {

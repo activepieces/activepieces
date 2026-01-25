@@ -1,6 +1,6 @@
 import { CaretDownIcon, CaretUpIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,16 +26,25 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     ]);
   const stepOutput = useMemo(() => {
     return run && run.steps
-      ? flowRunUtils.extractStepOutput(
-          stepName,
-          loopsIndexes,
-          run.steps,
-          flowVersion.trigger,
-        )
+      ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
       : null;
   }, [run, stepName, loopsIndexes, flowVersion.trigger]);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevIndexRef = useRef(currentIndex);
+
+  useEffect(() => {
+    if (prevIndexRef.current !== currentIndex) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 600); // Animation duration
+      prevIndexRef.current = currentIndex;
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]);
+
   const totalIterations =
     stepOutput &&
     stepOutput.output &&
@@ -67,7 +76,9 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           <TooltipTrigger>
             <Input
               ref={inputRef}
-              className="py-2 duration-300 w-[35px] px-0 h-[35px] animate-in fade-in bg-background border-border border border-solid rounded-md text-center !text-xs"
+              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-background border-solid rounded-md text-center !text-xs transition-all duration-300 ease-in-out ${
+                isAnimating ? 'border-2 border-primary' : 'border border-border'
+              }`}
               type="number"
               value={currentIndex + 1}
               min={1}

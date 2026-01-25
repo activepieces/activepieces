@@ -241,7 +241,7 @@ export const httpSendRequestAction = createAction({
     followRedirects: Property.Checkbox({
       displayName: 'Follow redirects',
       required: false,
-      defaultValue: true,
+      defaultValue: false,
     }),
     failureMode: Property.StaticDropdown({
       displayName: 'On Failure',

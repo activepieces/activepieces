@@ -1,6 +1,7 @@
-import { ApEdition, FlowRun, isFailedState, isFlowRunStateTerminal, isNil, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, FlowRun, isFailedState, isFlowRunStateTerminal, isNil, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { websocketService } from '../../core/websockets.service'
 import { alertsService } from '../../ee/alerts/alerts-service'
 import { system } from '../../helper/system/system'
 
@@ -12,6 +13,11 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             ignoreInternalError: true,
         })) {
             return
+        }
+        if (flowRun.environment === RunEnvironment.TESTING) {
+            websocketService.to(flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, {
+                flowRun,
+            } satisfies UpdateRunProgressRequest)
         }
         if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION && !isNil(flowRun.failedStep?.name)) {
             const date = dayjs(flowRun.created).toISOString()
