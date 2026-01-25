@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -29,8 +30,6 @@ import {
   UpdateUserRequestBody,
   User,
 } from '@activepieces/shared';
-
-import { Input } from '../../../../components/ui/input';
 
 export const UpdateUserDialog = ({
   children,
