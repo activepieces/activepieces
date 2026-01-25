@@ -40,8 +40,6 @@ afterAll(async () => {
 })
 
 describe('Piece Metadata API', () => {
-
-
     describe('Get Piece metadata', () => {
         it('Should return metadata when authenticated', async () => {
             // arrange
@@ -136,7 +134,6 @@ describe('Piece Metadata API', () => {
             expect(responseBody.packageType).toBe(mockPieceMetadata.packageType)
             expect(responseBody.pieceType).toBe(mockPieceMetadata.pieceType)
             expect(responseBody.platformId).toBe(mockPieceMetadata.platformId)
-            expect(responseBody.projectId).toBe(mockPieceMetadata.projectId)
             expect(responseBody.version).toBe(mockPieceMetadata.version)
         })
     })

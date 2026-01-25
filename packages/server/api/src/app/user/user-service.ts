@@ -128,6 +128,9 @@ export const userService = {
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
     },
+    async getUsersByIdentityId({ identityId }: GetUsersByIdentityIdParams): Promise<Pick<User, 'id' | 'platformId'>[]> {
+        return userRepo().find({ where: { identityId } }).then((users) => users.map((user) => ({ id: user.id, platformId: user.platformId })))
+    },
     async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
         return userRepo().findOneBy({ identityId })
     },
@@ -302,6 +305,9 @@ type CreateParams = {
     platformId: string | null
     externalId?: string
     platformRole: PlatformRole
+}
+type GetUsersByIdentityIdParams = {
+    identityId: string
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>

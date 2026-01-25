@@ -82,10 +82,10 @@ export class AddEventStreaming1769084311004 implements MigrationInterface {
             ADD "todosEnabled" boolean NOT NULL
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_event_destination_project_scope"
+            DROP INDEX "idx_event_destination_project_scope"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_event_destination_platform_scope"
+            DROP INDEX "idx_event_destination_platform_scope"
         `)
         await queryRunner.query(`
             DROP TABLE "event_destination"
