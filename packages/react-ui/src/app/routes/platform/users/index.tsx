@@ -12,7 +12,9 @@ import {
   Shield,
   Clock,
   Activity,
+  UserPlus,
 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -28,6 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
@@ -36,6 +39,7 @@ import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
   const { data, isLoading, refetch } = platformUserHooks.useUsers();
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],
@@ -88,7 +92,12 @@ export default function UsersPage() {
           description={t(
             'Manage, delete, activate and deactivate users on platform',
           )}
-        />
+        >
+          <Button className="gap-2" onClick={() => setInviteOpen(true)}>
+            <UserPlus className="w-4 h-4" />
+            <span className="text-sm font-medium">Invite</span>
+          </Button>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}
@@ -327,6 +336,7 @@ export default function UsersPage() {
           ]}
         />
       </div>
+      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
     </LockedFeatureGuard>
   );
 }
