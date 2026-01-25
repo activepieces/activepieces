@@ -6,21 +6,15 @@ import { AssistantConversationContent, AssistantConversationMessage, Conversatio
 
 export const DEFAULT_CHAT_MODEL = 'openai/gpt-5.1' 
 
-export const PlanItem = Type.Object({
-    id: Type.String(),
-    content: Type.String(),
-    status: Type.Union([Type.Literal('pending'), Type.Literal('completed'), Type.Literal('in_progress') ]),
-})
-export type PlanItem = Static<typeof PlanItem>
-
 export const ChatSession = Type.Object({
     ...BaseModelSchema,
     userId: ApId,
-    plan: Type.Optional(Type.Array(PlanItem)),
     conversation: Type.Array(ConversationMessage),
     modelId: Type.String(),
+    state: Type.Record(Type.String(), Type.Any()),
     tools: Type.Array(AgentTool),
 })
+
 export type ChatSession = Static<typeof ChatSession>
 
 export const CreateChatSessionRequest = Type.Object({})
@@ -33,7 +27,6 @@ export type UpdateChatSessionRequest = Static<typeof UpdateChatSessionRequest>
 
 export const ChatSessionUpdate = Type.Object({
     sessionId: Type.String(),
-    plan: Type.Optional(Type.Array(PlanItem)),
     part: AssistantConversationContent,
 })
 export type ChatSessionUpdate = Static<typeof ChatSessionUpdate>
@@ -55,16 +48,41 @@ export const chatSessionUtils = {
             })
         }
         const lastAssistantMessage = newConvo[newConvo.length - 1] as AssistantConversationMessage
-        const lastPartMatch = lastAssistantMessage.parts.length > 0 && lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1].type === chunk.part.type
-        if (lastPartMatch) {
-            lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1] = {
-                ...lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1],
-                ...chunk.part,
-            } 
-        }
-        else {
+        
+        // For text parts, merge with the last text part (streaming behavior)
+        // For tool-call and tool-result, find existing part by toolCallId or add new
+        if (chunk.part.type === 'text') {
+            const lastPart = lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1]
+            if (lastPart && lastPart.type === 'text') {
+                lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1] = {
+                    ...lastPart,
+                    ...chunk.part,
+                }
+            } else {
+                
+                lastAssistantMessage.parts.push(chunk.part)
+            }
+        } else if (chunk.part.type === 'tool-call' || chunk.part.type === 'tool-result') {
+            const toolCallId = chunk.part.toolCallId
+            const partType = chunk.part.type
+            const existingIndex = lastAssistantMessage.parts.findIndex(
+                (part) => 
+                    part.type === partType && 
+                    'toolCallId' in part &&
+                    part.toolCallId === toolCallId
+            )
+            if (existingIndex !== -1) {
+                lastAssistantMessage.parts[existingIndex] = {
+                    ...lastAssistantMessage.parts[existingIndex],
+                    ...chunk.part,
+                }
+            } else {
+                lastAssistantMessage.parts.push(chunk.part)
+            }
+        } else {
             lastAssistantMessage.parts.push(chunk.part)
         }
+        
         return {
             ...session,
             conversation: newConvo,

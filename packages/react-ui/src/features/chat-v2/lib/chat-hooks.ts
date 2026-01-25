@@ -92,7 +92,6 @@ export const chatHooks = {
                 sessionId: currentSession.id,
                 part: data.part,
               });
-              currentSession.plan = data.plan;
               setSession(currentSession);
             },
           );

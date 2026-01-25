@@ -10,7 +10,6 @@ import { isNil } from '@activepieces/shared';
 
 import { FileInputPreview, UploadingFile } from './file-input-preview';
 import { AIModelSelector } from './model-selector';
-import ToolsButton from './tools';
 
 interface PromptInputProps {
   placeholder?: string;
@@ -180,7 +179,6 @@ export const PromptInput = ({ placeholder }: PromptInputProps) => {
                   }}
                   className="hidden"
                 />
-                <ToolsButton />
               </div>
               <div className="flex justify-center items-center gap-x-2">
                 <AIModelSelector />

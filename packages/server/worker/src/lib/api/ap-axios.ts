@@ -62,7 +62,7 @@ export class ApAxiosClient {
     }
 
     async get<T>(url: string, opts: {
-        params?: Record<string, string>
+        params?: Record<string, unknown>
         responseType?: 'arraybuffer' | undefined
     }): Promise<T> {
         try {

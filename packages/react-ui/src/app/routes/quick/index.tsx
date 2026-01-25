@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Conversation } from '@/features/chat-v2/conversation';
 import { EmptyConversation } from '@/features/chat-v2/empty-conversation';
 import { chatHooks } from '@/features/chat-v2/lib/chat-hooks';
-import { Plan } from '@/features/chat-v2/plan/plan';
 import { PromptInput } from '@/features/chat-v2/prompt-input';
 import { useChatSessionStore } from '@/features/chat-v2/store';
 import { isNil } from '@activepieces/shared';
@@ -61,12 +60,6 @@ export function QuickPage() {
 
         <div className="max-w-4xl mx-auto w-full px-6 py-4">
           <PromptInput placeholder="Ask Quick..." />
-        </div>
-      </div>
-
-      <div className="w-96 border-l bg-muted/30 overflow-y-auto">
-        <div className="sticky top-0 p-3">
-          <Plan items={session?.plan ?? []} />
         </div>
       </div>
     </div>

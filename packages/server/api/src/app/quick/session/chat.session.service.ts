@@ -8,16 +8,6 @@ import { ChatSessionEntity } from './chat.session.entity'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
-const agentSearchTool: AgentTool = {
-    toolName: SEARCH_TOOL,
-    type: AgentToolType.SEARCH,
-}
-
-const agentExecuteTool: AgentTool = {
-    toolName: EXECUTE_TOOL,
-    type: AgentToolType.EXECUTE_CODE,
-}
-
 export const chatSessionService = (log: FastifyBaseLogger)=> ({
     async create(userId: string): Promise<ChatSession> {
         const newSession: Partial<ChatSession> = {
@@ -25,7 +15,8 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
             userId,
             conversation: [],
             modelId: DEFAULT_CHAT_MODEL,
-            tools: [agentExecuteTool, agentSearchTool],
+            state: {},
+            tools: [],
         }
         return chatSessionRepo().save(newSession)
     },
@@ -58,10 +49,9 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
     },
     async update(params: UpdateChastSessionParams): Promise<ChatSession> {
         await chatSessionRepo().update(params.id, {
-            ...spreadIfDefined('plan', params.session.plan),
             ...spreadIfDefined('conversation', params.session.conversation),
             ...spreadIfDefined('modelId', params.session.modelId),
-            ...spreadIfDefined('tools', params.session.tools),
+            ...spreadIfDefined('state', params.session.state),
         })
         return this.getOneOrThrow({ id: params.id, userId: params.userId })
     },

@@ -1,15 +1,15 @@
 import { AIProviderName, GetProviderConfigResponse } from '@activepieces/shared'
-import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { ApAxiosClient } from '../api/ap-axios'
 import { workerMachine } from '../utils/machine'
+import { LanguageModel } from 'ai'
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
 export const agentUtils = {
-    async getModel(modelId: string, engineToken: string): Promise<LanguageModelV2> {
+    async getModel(modelId: string, engineToken: string): Promise<LanguageModel> {
 
         const client = new ApAxiosClient(
             removeTrailingSlash(workerMachine.getInternalApiUrl()),

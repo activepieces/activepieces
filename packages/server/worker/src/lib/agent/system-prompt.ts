@@ -1,5 +1,3 @@
-import { CODE_EXECUTION_SYSTEM_PROMPT } from './tools/execute-code'
-import { TODO_SYSTEM_PROMPT } from './tools/planning-tool'
 
 
 export const systemPrompt = () => {
@@ -16,7 +14,5 @@ Today's date is ${new Date().toISOString().split('T')[0]}.
 - Be analytical: Consider potential edge cases, ambiguities in the query, and how to clarify if needed (but prefer acting proactively if possible).
 - Avoid assumptions: Base decisions on available information, tools, and prior responses. If something is unclear, use tools to gather more data rather than guessing.
 
-${TODO_SYSTEM_PROMPT}
-${CODE_EXECUTION_SYSTEM_PROMPT}
 `.trim()
 }

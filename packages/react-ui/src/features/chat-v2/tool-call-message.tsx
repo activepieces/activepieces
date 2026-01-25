@@ -1,22 +1,19 @@
 import { t } from 'i18next';
+import { useState } from 'react';
 import {
-  ListTodo,
   Wrench,
-  FileText,
   Search,
-  Map,
-  Globe,
-  Layers,
-  FileOutput,
-  RefreshCw,
-  Activity,
-  XCircle,
+  ChevronRight,
+  ChevronDown,
+  List,
+  PenTool,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
   ConversationMessage,
   ToolCallConversationMessage,
+  ToolResultConversationMessage,
 } from '@activepieces/shared';
 
 interface ToolCallMessageProps {
@@ -32,55 +29,26 @@ type ToolConfig = {
 };
 
 const TOOL_CONFIGS: Record<string, ToolConfig> = {
-  write_todos: {
-    icon: <ListTodo className="size-4 shrink-0" />,
-    labelInProgress: 'Planning...',
-    labelCompleted: 'Planning completed',
-  },
-  scrape: {
-    icon: <FileText className="size-4 shrink-0" />,
-    labelInProgress: 'Scraping page...',
-    labelCompleted: 'Page scraped',
-  },
-  search: {
+  // Agent tools
+  search_triggers: {
     icon: <Search className="size-4 shrink-0" />,
-    labelInProgress: 'Searching...',
-    labelCompleted: 'Search completed',
+    labelInProgress: 'Searching for triggers...',
+    labelCompleted: 'Found triggers',
   },
-  map: {
-    icon: <Map className="size-4 shrink-0" />,
-    labelInProgress: 'Mapping site...',
-    labelCompleted: 'Site mapped',
+  search_tools: {
+    icon: <Search className="size-4 shrink-0" />,
+    labelInProgress: 'Searching for tools...',
+    labelCompleted: 'Found tools',
   },
-  crawl: {
-    icon: <Globe className="size-4 shrink-0" />,
-    labelInProgress: 'Crawling site...',
-    labelCompleted: 'Site crawled',
+  list_flows: {
+    icon: <List className="size-4 shrink-0" />,
+    labelInProgress: 'Loading your flows...',
+    labelCompleted: 'Loaded flows',
   },
-  batchScrape: {
-    icon: <Layers className="size-4 shrink-0" />,
-    labelInProgress: 'Batch scraping...',
-    labelCompleted: 'Batch scrape completed',
-  },
-  extract: {
-    icon: <FileOutput className="size-4 shrink-0" />,
-    labelInProgress: 'Extracting data...',
-    labelCompleted: 'Data extracted',
-  },
-  poll: {
-    icon: <RefreshCw className="size-4 shrink-0" />,
-    labelInProgress: 'Polling status...',
-    labelCompleted: 'Poll completed',
-  },
-  status: {
-    icon: <Activity className="size-4 shrink-0" />,
-    labelInProgress: 'Checking status...',
-    labelCompleted: 'Status checked',
-  },
-  cancel: {
-    icon: <XCircle className="size-4 shrink-0" />,
-    labelInProgress: 'Cancelling...',
-    labelCompleted: 'Cancelled',
+  write_flows: {
+    icon: <PenTool className="size-4 shrink-0" />,
+    labelInProgress: 'Building your flow...',
+    labelCompleted: 'Flow created',
   },
 };
 
@@ -89,22 +57,24 @@ export function ToolCallMessage({
   conversation,
   className,
 }: ToolCallMessageProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const toolConfig = TOOL_CONFIGS[message.toolName];
 
-  const isCompleted = conversation.some(
-    (msg) =>
-      msg.role === 'assistant' &&
-      msg.parts.some(
-        (part) =>
-          part.type === 'tool-result' && part.toolCallId === message.toolCallId,
-      ),
-  );
+  const toolResult = conversation
+    .filter((msg) => msg.role === 'assistant')
+    .flatMap((msg) => msg.parts)
+    .find(
+      (part): part is ToolResultConversationMessage =>
+        part.type === 'tool-result' && part.toolCallId === message.toolCallId,
+    );
+
+  const isCompleted = !!toolResult;
 
   const getIcon = () => {
     if (toolConfig) {
       return toolConfig.icon;
     }
-    return <Wrench className="size-4 text-muted-foreground shrink-0" />;
+    return <Wrench className="size-3 text-muted-foreground shrink-0" />;
   };
 
   const getLabel = () => {
@@ -118,15 +88,53 @@ export function ToolCallMessage({
       : t('Using {toolName}', { toolName: message.toolName });
   };
 
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
-    <div
-      className={cn(
-        'flex items-center gap-2 text-sm text-muted-foreground py-1',
-        className,
+    <div className={cn('text-sm', className)}>
+      <div
+        className={cn(
+          'flex items-center gap-2 py-1 cursor-pointer select-none',
+          !isCompleted && 'animate-pulse',
+        )}
+        onClick={handleToggle}
+      >
+        {getIcon()}
+        <span className="text-muted-foreground">{getLabel()}</span>
+        {isExpanded ? (
+          <ChevronDown className="size-3 shrink-0 text-muted-foreground self-center" />
+        ) : (
+          <ChevronRight className="size-3 shrink-0 text-muted-foreground self-center" />
+        )}
+      </div>
+
+      {isExpanded && (
+        <div className="mt-2 space-y-2">
+          {message.input && (
+            <div className="bg-accent rounded-md p-3">
+              <div className="text-xs font-medium text-muted-foreground mb-1">
+                {t('Arguments')}
+              </div>
+              <pre className="text-xs overflow-auto whitespace-pre-wrap break-all">
+                {JSON.stringify(message.input, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {toolResult?.output && (
+            <div className="bg-accent rounded-md p-3">
+              <div className="text-xs font-medium text-muted-foreground mb-1">
+                {t('Result')}
+              </div>
+              <pre className="text-xs overflow-auto whitespace-pre-wrap break-all">
+                {JSON.stringify(toolResult.output, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
       )}
-    >
-      {getIcon()}
-      <span>{getLabel()}</span>
     </div>
   );
 }
