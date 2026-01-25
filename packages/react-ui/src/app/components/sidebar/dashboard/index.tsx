@@ -198,7 +198,7 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar variant={'inset'} collapsible="icon" className="group p-1">
+      <Sidebar variant={'inset'} collapsible="icon" className="group p-0  border">
         {/* onClick removed - handled in base Sidebar component to prevent auto-expansion on navigation */}
         <AppSidebarHeader />
 
