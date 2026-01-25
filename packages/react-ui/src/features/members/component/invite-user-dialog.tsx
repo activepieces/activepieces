@@ -81,9 +81,11 @@ type FormSchema = Static<typeof FormSchema>;
 export const InviteUserDialog = ({
   open,
   setOpen,
+  onInviteSuccess,
 }: {
   open: boolean;
   setOpen: (_open: boolean) => void;
+  onInviteSuccess?: () => void;
 }) => {
   const { embedState } = useEmbedding();
   const [invitationLink, setInvitationLink] = useState('');
@@ -130,6 +132,7 @@ export const InviteUserDialog = ({
         });
       }
       refetch();
+      onInviteSuccess?.();
       //TODO: navigate to platform admin users
     },
   });
