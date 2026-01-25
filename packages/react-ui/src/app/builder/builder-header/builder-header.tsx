@@ -215,7 +215,6 @@ export const BuilderHeader = () => {
         leftContent={leftContent}
         showBorder={true}
         className="select-none"
-        hideSidebarTrigger={embedState.isEmbedded}
       />
     </div>
   );
