@@ -60,15 +60,18 @@ export function ToolCallMessage({
   const [isExpanded, setIsExpanded] = useState(false);
   const toolConfig = TOOL_CONFIGS[message.toolName];
 
-  const toolResult = conversation
-    .filter((msg) => msg.role === 'assistant')
-    .flatMap((msg) => msg.parts)
-    .find(
-      (part): part is ToolResultConversationMessage =>
-        part.type === 'tool-result' && part.toolCallId === message.toolCallId,
-    );
+  const isCompleted = message.status === 'completed';
+  const isLoading = message.status === 'loading' || message.status === 'ready';
 
-  const isCompleted = !!toolResult;
+  const toolResult = isCompleted
+    ? conversation
+        .filter((msg) => msg.role === 'assistant')
+        .flatMap((msg) => msg.parts)
+        .find(
+          (part): part is ToolResultConversationMessage =>
+            part.type === 'tool-result' && part.toolCallId === message.toolCallId,
+        )
+    : undefined;
 
   const getIcon = () => {
     if (toolConfig) {
@@ -97,7 +100,7 @@ export function ToolCallMessage({
       <div
         className={cn(
           'flex items-center gap-2 py-1 cursor-pointer select-none',
-          !isCompleted && 'animate-pulse',
+          isLoading && 'animate-pulse',
         )}
         onClick={handleToggle}
       >

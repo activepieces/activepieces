@@ -41,13 +41,27 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                     quickStreamingUpdate = publishTextUpdate(newSession, previousText, false)
                     break
                 }
+                case 'tool-input-start': {
+                    previousText = ''
+                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.id, chunk.toolName, undefined, 'loading')
+                    break
+                }
                 case 'tool-call': {
                     previousText = ''
-                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>)
+                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'ready')
                     break
                 }
                 case 'tool-result': {
                     previousText = ''
+                    // First mark the tool call as completed
+                    const toolCompletedUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, undefined, 'completed')
+                    newSession = chatSessionUtils.streamChunk(newSession, toolCompletedUpdate)
+                    await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, {
+                        userId: data.session.userId,
+                        event: WebsocketClientEvent.AGENT_STREAMING_UPDATE,
+                        data: toolCompletedUpdate,
+                    })
+                    // Then publish the tool result
                     quickStreamingUpdate = publishToolResultUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>)
                     break
                 }
@@ -76,7 +90,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     },
 })
 
-function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolName: string, input?: Record<string, any>) {
+function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolName: string, input: Record<string, any> | undefined, status: 'loading' | 'ready' | 'completed' | 'error') {
     const quickStreamingUpdate: ChatSessionUpdate = {
         sessionId: session.id,
         part: {
@@ -84,6 +98,7 @@ function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolNam
             toolCallId: toolcallId,
             toolName,
             input,
+            status,
         },
     }
     return quickStreamingUpdate
