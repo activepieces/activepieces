@@ -28,6 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
@@ -36,6 +37,7 @@ import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
   const { data, isLoading, refetch } = platformUserHooks.useUsers();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],
@@ -230,6 +232,7 @@ export default function UsersPage() {
           isLoading={isLoading}
           actions={[
             (row) => {
+              const isAdmin = platform.ownerId === row.id;
               return (
                 <div className="flex items-end justify-end">
                   <Tooltip>
@@ -239,6 +242,7 @@ export default function UsersPage() {
                         role={row.platformRole}
                         externalId={row.externalId ?? undefined}
                         onUpdate={() => refetch()}
+                        isAdmin={isAdmin}
                       >
                         <Button variant="ghost" className="size-8 p-0">
                           <Pencil className="size-4" />
