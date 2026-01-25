@@ -27,7 +27,7 @@ import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { isNil, PieceType } from '@activepieces/shared';
+import { PieceType } from '@activepieces/shared';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 
@@ -95,9 +95,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
     accessorKey: 'actions',
     header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
-      if (
-        row.original.pieceType !== PieceType.CUSTOM 
-      ) {
+      if (row.original.pieceType !== PieceType.CUSTOM) {
         return null;
       }
       return (
