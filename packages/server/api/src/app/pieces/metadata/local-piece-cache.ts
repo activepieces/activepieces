@@ -52,7 +52,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         const cache = await getOrCreateCache()
         const list = (await cache.db.get(META_LIST_KEY(locale))) as PieceMetadataSchema[] | undefined
         const devPieces = await loadDevPiecesIfEnabled(log)
-        const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
+        const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }))
         return [...(list ?? []), ...translatedDevPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
     },
     async getPieceVersion(params: GetPieceVersionParams): Promise<PieceMetadataSchema | null> {
@@ -192,7 +192,7 @@ async function storePieces(sortedPieces: PieceMetadataSchema[]): Promise<void> {
     const supportedLocales = Object.values(LocalesEnum)
     for (const locale of supportedLocales) {
         const translatedPieces = latestVersions.map((piece) => 
-            pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale),
+            pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale }),
         )
         await db.set(META_LIST_KEY(locale), translatedPieces)
     }
