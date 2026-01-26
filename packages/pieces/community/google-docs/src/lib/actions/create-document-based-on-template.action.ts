@@ -31,14 +31,14 @@ export const createDocumentBasedOnTemplate = createAction({
       displayName: 'Placeholder Format',
       description: 'Choose the format of placeholders in your template',
       required: true,
-      defaultValue: '[[KEY]]',
+      defaultValue: 'square_brackets',
       options: {
           disabled: false,
           options: [
-              { label: 'Curly Braces {{}}', value: '{{KEY}}' },
-              { label: 'Square Brackets [[]]', value: '[[KEY]]' },
-              { label: 'Single Curly Braces {}', value: '{KEY}' },
-              { label: 'Single Square Brackets []', value: '[KEY]' }
+              { label: 'Curly Braces {{}}', value: 'curly_braces' },
+              { label: 'Square Brackets [[]]', value: 'square_brackets' },
+              { label: 'Single Curly Braces {}', value: 'single_curly' },
+              { label: 'Single Square Brackets []', value: 'single_square' }
           ],
         },
   }),
@@ -46,7 +46,17 @@ export const createDocumentBasedOnTemplate = createAction({
   async run(context) {
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
-    const placeholder_format = context.propsValue.placeholder_format;
+    const placeholderType = context.propsValue.placeholder_format;
+
+    // Map placeholder type to actual format
+    const placeholderFormats: Record<string, string> = {
+      'curly_braces': '{{KEY}}',
+      'square_brackets': '[[KEY]]',
+      'single_curly': '{KEY}',
+      'single_square': '[KEY]'
+    };
+
+    const placeholder_format = placeholderFormats[placeholderType] || '[[KEY]]';
 
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth);
@@ -56,14 +66,12 @@ export const createDocumentBasedOnTemplate = createAction({
 
     for (const key in values) {
       const value = values[key];
-      // Replace 'KEY' with the actual key name in the placeholder format
-      // This creates the exact text to search for in the document (e.g., {{username}}, [[email]], etc.)
-      const placeholderText = placeholder_format.replace('KEY', key);
+      const new_key = placeholder_format.replace('KEY', key);
 
       requests.push({
         replaceAllText: {
           containsText: {
-            text: placeholderText,
+            text: new_key,
             matchCase: true,
           },
           replaceText: String(value),
