@@ -33,7 +33,6 @@ import {
   Template,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
-  FlowRun,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -273,44 +272,29 @@ export const flowHooks = {
       staleTime: 0,
     });
   },
-  useTestFlow: ({
+  useTestFlowOrStartManualTrigger: ({
     flowVersionId,
     onUpdateRun,
+    isForManualTrigger,
   }: {
     flowVersionId: string;
     onUpdateRun: (stepResponse: UpdateRunProgressRequest) => void;
+    isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
     return useMutation<void>({
       mutationFn: () =>
-        flowRunsApi.testFlow(
+        flowRunsApi.subscribeToTestFlowOrManualRun(
           socket,
           {
             flowVersionId,
           },
           onUpdateRun,
+          isForManualTrigger,
         ),
     });
   },
-  useStartManualTrigger: ({
-    flowVersionId,
-    onUpdateRun,
-  }: {
-    flowVersionId: string;
-    onUpdateRun: (run: FlowRun) => void;
-  }) => {
-    const socket = useSocket();
-    return useMutation<void>({
-      mutationFn: () =>
-        flowRunsApi.startManualTrigger(
-          socket,
-          {
-            flowVersionId,
-          },
-          onUpdateRun,
-        ),
-    });
-  },
+
   useListFlowVersions: (flowId: string) => {
     return useQuery<SeekPage<FlowVersionMetadata>, Error>({
       queryKey: ['flow-versions', flowId],

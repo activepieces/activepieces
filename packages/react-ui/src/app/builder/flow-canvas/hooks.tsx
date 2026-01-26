@@ -19,6 +19,7 @@ import {
   isNil,
   WebsocketClientEvent,
   RunEnvironment,
+  isFlowRunStateTerminal,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -53,31 +54,30 @@ const useSetSocketListener = (refetchPiece: () => void) => {
   }, [socket.id, run?.id]);
 };
 
-const useRefetchRun = () => {
+const useListenToExistingRun = () => {
   const [run, setRun, flowVersion] = useBuilderStateContext((state) => [
     state.run,
     state.setRun,
     state.flowVersion,
   ]);
-
-  const { data } = useQuery({
+  useQuery({
     queryKey: ['refetched-run', run?.id],
     queryFn: async () => {
       if (isNil(run)) {
         return null;
       }
       const flowRun = await flowRunsApi.getPopulated(run.id);
-      return flowRun;
+      setRun(flowRun, flowVersion);
     },
-    enabled: !isNil(run) && run.environment === RunEnvironment.PRODUCTION,
+    enabled:
+      !isNil(run) &&
+      run.environment === RunEnvironment.PRODUCTION &&
+      !isFlowRunStateTerminal({
+        status: run.status,
+        ignoreInternalError: false,
+      }),
     refetchInterval: 5000,
   });
-
-  useEffect(() => {
-    if (data) {
-      setRun(data, flowVersion);
-    }
-  }, [data]);
 };
 
 const useShowBuilderIsSavingWarningBeforeLeaving = () => {
@@ -239,5 +239,5 @@ export const flowCanvasHooks = {
   useFocusOnStep,
   useResizeCanvas,
   useSwitchToDraft,
-  useRefetchRun,
+  useListenToExistingRun,
 };
