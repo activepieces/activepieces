@@ -1,9 +1,9 @@
 import { ActivepiecesError, apId, ChatFileAttachment, ChatSession, DEFAULT_CHAT_MODEL, ErrorCode, genericAgentUtils, isNil, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../../core/db/repo-factory'
-import { projectService } from '../../project/project-service'
+import { repoFactory } from '../core/db/repo-factory'
+import { projectService } from '../project/project-service'
 import { ChatSessionEntity } from './chat.session.entity'
-import { genericAgentService } from '../generic-agent.service'
+import { genericAgentService } from '../generic-agent/generic-agent.service'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 

@@ -3,7 +3,7 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-} from '../../database/database-common'
+} from '../database/database-common'
 
 export const ChatSessionEntity = new EntitySchema<ChatSession>({
     name: 'chat_session',

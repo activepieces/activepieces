@@ -16,6 +16,7 @@ export const genericAgentService = (log: FastifyBaseLogger) => ({
                 modelId: params.modelId,
                 state: params.state,
                 conversation: params.conversation ?? [],
+                structuredOutput: params.structuredOutput,
                 requestId,
             },
             jobType: WorkerJobType.EXECUTE_AGENT,

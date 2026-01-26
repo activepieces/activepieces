@@ -9,6 +9,7 @@ export const ExecuteAgentData = Type.Object({
   modelId: Type.String(),
   state: Type.Record(Type.String(), Type.Any()),
   conversation: Type.Optional(Type.Array(ConversationMessage)),
+  structuredOutput: Type.Optional(Type.Record(Type.String(), Type.Any())),
 })
 export type ExecuteAgentData = Static<typeof ExecuteAgentData>
 

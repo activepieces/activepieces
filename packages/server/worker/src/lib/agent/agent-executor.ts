@@ -14,7 +14,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
         const { platformId, projectId } = data
-        const { requestId, conversation, modelId } = data.session
+        const { requestId, conversation, modelId, structuredOutput } = data.session
         let newSession: ExecuteAgentData = data.session satisfies ExecuteAgentData
 
         const { fullStream } = streamText({
