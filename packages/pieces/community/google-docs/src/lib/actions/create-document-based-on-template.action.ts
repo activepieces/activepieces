@@ -54,9 +54,16 @@ export const createDocumentBasedOnTemplate = createAction({
 
     const requests = [];
 
+    // Helper function to escape special regex characters
+    const escapeRegex = (str: string) => {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
+
     for (const key in values) {
       const value = values[key];
-      const new_key = placeholder_format.replace('KEY', key);
+      // Escape special characters in placeholder_format before replacing KEY
+      const escapedFormat = escapeRegex(placeholder_format);
+      const new_key = escapedFormat.replace('KEY', key);
 
       requests.push({
         replaceAllText: {
