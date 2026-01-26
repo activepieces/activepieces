@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -30,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { TagInput } from '@/components/ui/tag-input';
 import {
   Tooltip,
   TooltipContent,
@@ -49,15 +51,16 @@ import {
   isNil,
   Permission,
   PlatformRole,
+  ProjectType,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 
 const FormSchema = Type.Object({
-  email: Type.String({
-    errorMessage: t('Please enter a valid email address'),
-    pattern: formatUtils.emailRegex.source,
+  emails: Type.Array(Type.String(), {
+    errorMessage: t('Please enter at least one email address'),
+    minItems: 1,
   }),
   type: Type.Enum(InvitationType, {
     errorMessage: t('Please select invitation type'),
@@ -79,9 +82,11 @@ type FormSchema = Static<typeof FormSchema>;
 export const InviteUserDialog = ({
   open,
   setOpen,
+  onInviteSuccess,
 }: {
   open: boolean;
   setOpen: (_open: boolean) => void;
+  onInviteSuccess?: () => void;
 }) => {
   const { embedState } = useEmbedding();
   const [invitationLink, setInvitationLink] = useState('');
@@ -90,6 +95,8 @@ export const InviteUserDialog = ({
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { checkAccess } = useAuthorization();
+  const location = useLocation();
+  const isPlatformPage = location.pathname.includes('/platform/');
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
@@ -99,34 +106,42 @@ export const InviteUserDialog = ({
     HttpError,
     FormSchema
   >({
-    mutationFn: (data) => {
-      switch (data.type) {
-        case InvitationType.PLATFORM:
-          return userInvitationApi.invite({
-            email: data.email.trim().toLowerCase(),
-            type: data.type,
-            platformRole: data.platformRole,
-          });
-        case InvitationType.PROJECT:
-          return userInvitationApi.invite({
-            email: data.email.trim().toLowerCase(),
-            type: data.type,
-            projectRole: data.projectRole!,
-            projectId: project.id,
-          });
-      }
+    mutationFn: async (data) => {
+      const promises = data.emails.map((email) =>
+        data.type === InvitationType.PLATFORM
+          ? userInvitationApi.invite({
+              email: email.trim().toLowerCase(),
+              type: data.type,
+              platformRole: data.platformRole,
+            })
+          : userInvitationApi.invite({
+              email: email.trim().toLowerCase(),
+              type: data.type,
+              projectRole: data.projectRole!,
+              projectId: project.id,
+            }),
+      );
+
+      const results = await Promise.all(promises);
+      return results[0];
     },
     onSuccess: (res) => {
       if (res.link) {
         setInvitationLink(res.link);
       } else {
         setOpen(false);
+        form.reset();
         toast.success(t('Invitation sent successfully'), {
           duration: 3000,
         });
       }
       refetch();
-      //TODO: navigate to platform admin users
+      onInviteSuccess?.();
+    },
+    onError: (error) => {
+      toast.error(error.message || t('Failed to send invitations'), {
+        duration: 4000,
+      });
     },
   });
 
@@ -143,8 +158,10 @@ export const InviteUserDialog = ({
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
-      email: '',
-      type: platform.plan.projectRolesEnabled
+      emails: [],
+      type: isPlatformPage
+        ? InvitationType.PLATFORM
+        : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
@@ -153,6 +170,26 @@ export const InviteUserDialog = ({
   });
 
   const onSubmit = (data: FormSchema) => {
+    if (data.emails.length === 0) {
+      form.setError('emails', {
+        type: 'required',
+        message: t('Please enter at least one email address'),
+      });
+      return;
+    }
+
+    const invalidEmails = data.emails.filter(
+      (email) => !formatUtils.emailRegex.test(email.trim()),
+    );
+
+    if (invalidEmails.length > 0) {
+      form.setError('emails', {
+        type: 'validation',
+        message: t('Please fix invalid email addresses'),
+      });
+      return;
+    }
+
     if (data.type === InvitationType.PROJECT && !data.projectRole) {
       form.setError('projectRole', {
         type: 'required',
@@ -182,10 +219,8 @@ export const InviteUserDialog = ({
           modal
           onOpenChange={(open) => {
             setOpen(open);
-            if (open) {
-              form.reset();
-              setInvitationLink('');
-            }
+            form.reset();
+            setInvitationLink('');
           }}
         >
           <DialogContent className="sm:max-w-[425px]">
@@ -196,10 +231,10 @@ export const InviteUserDialog = ({
               <DialogDescription>
                 {invitationLink
                   ? t(
-                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
+                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
                     )
                   : t(
-                      'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+                      'Type email addresses separated by spaces to invite multiple users. Invitations expire in 7 days.',
                     )}
               </DialogDescription>
             </DialogHeader>
@@ -212,54 +247,61 @@ export const InviteUserDialog = ({
                 >
                   <FormField
                     control={form.control}
-                    name="email"
+                    name="emails"
                     render={({ field }) => (
                       <FormItem className="grid gap-2">
-                        <Label htmlFor="email">{t('Email')}</Label>
-                        <Input
+                        <Label htmlFor="emails">{t('Emails')}</Label>
+                        <TagInput
                           {...field}
-                          type="text"
-                          placeholder="jon@doe.com"
+                          placeholder={t('Invite users by email')}
+                          validateItem={(email) =>
+                            formatUtils.emailRegex.test(email.trim())
+                          }
+                          badgeClassName="rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 font-normal"
+                          invalidBadgeClassName="bg-destructive border-destructive text-white font-light"
                         />
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem className="grid gap-2">
-                        <Label>{t('Invite To')}</Label>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('Invite To')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>{t('Invite To')}</SelectLabel>
-                              {currentUser?.platformRole ===
-                                PlatformRole.ADMIN && (
-                                <SelectItem value={InvitationType.PLATFORM}>
-                                  {t('Entire Platform')}
-                                </SelectItem>
-                              )}
-                              {platform.plan.projectRolesEnabled && (
-                                <SelectItem value={InvitationType.PROJECT}>
-                                  {project.displayName} (Current)
-                                </SelectItem>
-                              )}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  ></FormField>
+                  {!isPlatformPage && (
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem className="grid gap-2">
+                          <Label>{t('Invite To')}</Label>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('Invite To')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>{t('Invite To')}</SelectLabel>
+                                {currentUser?.platformRole ===
+                                  PlatformRole.ADMIN && (
+                                  <SelectItem value={InvitationType.PLATFORM}>
+                                    {t('Entire Platform')}
+                                  </SelectItem>
+                                )}
+                                {platform.plan.projectRolesEnabled &&
+                                  project.type === ProjectType.TEAM && (
+                                    <SelectItem value={InvitationType.PROJECT}>
+                                      {project.displayName} (Current)
+                                    </SelectItem>
+                                  )}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    ></FormField>
+                  )}
 
                   {form.getValues().type === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />

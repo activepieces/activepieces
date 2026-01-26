@@ -56,6 +56,13 @@ export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 const USE_SIGNED_URL = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
+    async upsert({ id, projectId }: { id: FlowRunId, projectId: ProjectId }): Promise<FlowRun> {
+        const existingFlowRun = await flowRunRepo().findOneBy({ id, projectId })
+        if (isNil(existingFlowRun)) {
+            return flowRunRepo().save({ id, projectId })
+        }
+        return existingFlowRun
+    },
     async list(params: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor)
         const paginator = buildPaginator<FlowRun>({

@@ -14,7 +14,6 @@ export const PieceBase = Type.Object({
   displayName: Type.String(),
   logoUrl: Type.String(),
   description: Type.String(),
-  projectId: Type.Optional(Type.String()),
   authors: Type.Array(Type.String()),
   platformId: Type.Optional(Type.String()),
   directoryPath: Type.Optional(Type.String()),
@@ -32,7 +31,6 @@ export type PieceBase = {
   displayName: string;
   logoUrl: string;
   description: string;
-  projectId?: ProjectId;
   platformId?: string;
   authors: string[],
   directoryPath?: string;
