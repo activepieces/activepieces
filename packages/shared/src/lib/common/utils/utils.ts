@@ -166,3 +166,7 @@ export function validateIndexBound({
     }
     return index
 }
+
+export function isManualPieceTrigger({ pieceName, triggerName }: { pieceName: string, triggerName: string }) {
+    return pieceName === '@activepieces/piece-manual-trigger' && triggerName === 'manual_trigger'
+}
