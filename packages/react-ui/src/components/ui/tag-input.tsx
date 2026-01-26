@@ -33,15 +33,18 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
 
   const [pendingDataPoint, setPendingDataPoint] = useState('');
   const internalInputRef = useRef<HTMLInputElement | null>(null);
-  
-  const handleRef = useCallback((node: HTMLInputElement | null) => {
-    internalInputRef.current = node;
-    if (typeof ref === 'function') {
-      ref(node);
-    } else if (ref) {
-      (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
-    }
-  }, [ref]);
+
+  const handleRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      internalInputRef.current = node;
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref) {
+        (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+      }
+    },
+    [ref],
+  );
 
   useEffect(() => {
     if (pendingDataPoint.includes(SEPARATOR)) {

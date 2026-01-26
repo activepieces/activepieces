@@ -152,7 +152,8 @@ export const InviteUserDialog = ({
   });
 
   const roles = rolesData?.data ?? [];
-  const defaultProjectRole = roles?.find((role) => role.name === 'Editor')?.name || roles?.[0]?.name;
+  const defaultProjectRole =
+    roles?.find((role) => role.name === 'Editor')?.name || roles?.[0]?.name;
 
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
@@ -228,21 +229,25 @@ export const InviteUserDialog = ({
                 {invitationLink ? t('Invitation Link') : t('Invite User')}
               </DialogTitle>
               <DialogDescription>
-                {invitationLink
-                  ? t(
-                      'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
-                    )
-                  : isPlatformPage
-                  ? t(
-                      'Type email addresses separated by commas to invite multiple users to the entire platform. Invitations expire in 7 days.',
-                    )
-                  : (
-                      <>
-                        {t('Type email addresses separated by commas to add members to')}{' '}
-                        <span className="text-foreground font-semibold">{project.displayName}</span>.{' '}
-                        {t('Invitations expire in 7 days')}.
-                      </>
-                    )}
+                {invitationLink ? (
+                  t(
+                    'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
+                  )
+                ) : isPlatformPage ? (
+                  t(
+                    'Type email addresses separated by commas to invite multiple users to the entire platform. Invitations expire in 7 days.',
+                  )
+                ) : (
+                  <>
+                    {t(
+                      'Type email addresses separated by commas to add members to',
+                    )}{' '}
+                    <span className="text-foreground font-semibold">
+                      {project.displayName}
+                    </span>
+                    . {t('Invitations expire in 7 days')}.
+                  </>
+                )}
               </DialogDescription>
             </DialogHeader>
 
