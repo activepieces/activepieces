@@ -19,6 +19,10 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
             type: 'jsonb',
             nullable: false,
         },
+        state: {
+            type: 'jsonb',
+            nullable: false,
+        },
         modelId: {
             type: String,
             nullable: false,

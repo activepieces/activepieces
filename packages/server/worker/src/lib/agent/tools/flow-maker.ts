@@ -59,25 +59,15 @@ export function createFlowTools({ engineToken, projectId, platformId, state }: C
                 return currentState
             },
         },
-        [agentToolsName.WRITE_FLOWS_TOOL_NAME]: {
-            description: `Create or update flows in the workspace. When merge=true, updates existing flows by id and adds new ones. When merge=false, replaces all existing flows with the provided list. Each flow requires a trigger, prompt describing its purpose, and a list of tools/actions it can use.`,
-            inputSchema: writeFlowsInputSchema,
-            async execute(input: z.infer<typeof writeFlowsInputSchema>) {
-                const currentState = getState(state)
-                if (input.merge) {
-                    for (const flow of input.flows) {
-                        const index = currentState.flows.findIndex(f => f.id === flow.id)
-                        if (index !== -1) {
-                            currentState.flows[index] = flow
-                        } else {
-                            currentState.flows.push(flow)
-                        }
-                    }
-                } else {
-                    currentState.flows = input.flows
+        [agentToolsName.SUGGEST_FLOW_TOOL_NAME]: {
+            description: `Suggest a flow to the user. The flow will NOT be added automatically - it will be presented to the user for review. If the user accepts the suggestion, it will be added to their flows. Each flow requires a trigger, prompt describing its purpose, and a list of tools/actions it can use.`,
+            inputSchema: suggestFlowInputSchema,
+            outputSchema: suggestFlowOutputSchema,
+            async execute(input: z.infer<typeof suggestFlowInputSchema>) {
+                return {
+                    suggestion: input.flow,
+                    message: 'Flow suggestion created. Waiting for user approval.',
                 }
-                state[agentStateKeys.FLOWS] = currentState
-                return currentState
             },
         },
     }
@@ -104,7 +94,7 @@ const toolSchema = z.object({
 })
 
 const simpleFlowSchema = z.object({
-    id: z.string().describe('Unique identifier for the flow (used for updates when merge=true)'),
+    id: z.string().describe('Unique identifier for the flow'),
     displayName: z.string().describe('Human-readable name shown in the UI'),
     description: z.string().describe('Detailed description of what this flow automates'),
     trigger: triggerSchema.describe('The trigger that starts this flow'),
@@ -112,9 +102,13 @@ const simpleFlowSchema = z.object({
     tools: z.array(toolSchema).describe('List of actions/tools available for this flow to execute'),
 })
 
-const writeFlowsInputSchema = z.object({
-    flows: z.array(simpleFlowSchema).describe('Array of flows to create or update'),
-    merge: z.boolean().describe('When true, merges with existing flows by id. When false, replaces all existing flows'),
+const suggestFlowInputSchema = z.object({
+    flow: simpleFlowSchema.describe('The flow to suggest to the user'),
+})
+
+const suggestFlowOutputSchema = z.object({
+    suggestion: simpleFlowSchema.describe('The suggested flow awaiting user approval'),
+    status: z.union([z.literal('accepted'), z.literal('pending')])
 })
 
 const listFlowsInputSchema = z.object({})
@@ -148,6 +142,10 @@ export const FLOW_TOOLS_SYSTEM_PROMPT = `## Flow Creation Tools
 
 You have access to flow creation tools to help users build automation workflows.
 
+### Communication:
+- Keep your responses concise and to the point.
+- Do not explain how the flow was created
+
 ### Available Tools
 
 1. **\`${agentToolsName.SEARCH_TRIGGERS_TOOL_NAME}\`** - Find triggers that can start a flow
@@ -162,9 +160,10 @@ You have access to flow creation tools to help users build automation workflows.
    - Use before creating new flows to avoid duplicates
    - Use to understand current automation setup
 
-4. **\`${agentToolsName.WRITE_FLOWS_TOOL_NAME}\`** - Create or update flows
-   - Use merge=true to update specific flows while keeping others
-   - Use merge=false to replace all flows with a new configuration
+4. **\`${agentToolsName.SUGGEST_FLOW_TOOL_NAME}\`** - Suggest a flow to the user
+   - The flow will NOT be added automatically
+   - It will be presented to the user for review
+   - Only after user approval will the flow be added
 
 ### Workflow for Creating Flows
 
@@ -172,17 +171,21 @@ You have access to flow creation tools to help users build automation workflows.
 2. **Search for triggers** - Use an app/integration name to find a trigger to start the flow
 3. **Search for tools** - Use an app/integration name to find available actions needed for the automation
 4. **List existing flows** - Check if similar automation already exists
-5. **Write the flow** - Create the flow with appropriate trigger, prompt, and tools
+5. **Suggest the flow** - Create a suggestion for the user to review and approve
 
 ### Best Practices
 
-- Always search for available apps (integration names) to find triggers/tools before writing flows. Do NOT rely on generic or semantic search for tool/trigger names.
+- Always search for available apps (integration names) to find triggers/tools before suggesting flows. Do NOT rely on generic or semantic search for tool/trigger names.
 - Use descriptive names and detailed descriptions for flows
 - Write clear prompts that explain the flow's purpose
-- Include only necessary tools to keep flows focused
-- Use merge=true when updating a single flow to preserve others`
+- Include only necessary tools to keep flows focused`
 
 
-const getState = (state: CreateFlowState['state']) => {
-    return state[agentStateKeys.FLOWS] as z.infer<typeof listFlowsOutputSchema>
+
+const getState = (state: CreateFlowState['state']): z.infer<typeof listFlowsOutputSchema> => {
+    const currentState = state[agentStateKeys.FLOWS] as z.infer<typeof listFlowsOutputSchema> | undefined
+    if (!currentState) {
+        return { flows: [] }
+    }
+    return currentState
 }

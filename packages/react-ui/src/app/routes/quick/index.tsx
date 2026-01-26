@@ -1,21 +1,31 @@
 import { t } from 'i18next';
-import { Trash } from 'lucide-react';
+import { Trash, Wrench } from 'lucide-react';
 
 import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 import { Button } from '@/components/ui/button';
+import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { Conversation } from '@/features/chat-v2/conversation';
 import { EmptyConversation } from '@/features/chat-v2/empty-conversation';
 import { chatHooks } from '@/features/chat-v2/lib/chat-hooks';
 import { PromptInput } from '@/features/chat-v2/prompt-input';
 import { useChatSessionStore } from '@/features/chat-v2/store';
-import { isNil } from '@activepieces/shared';
+import { AgentTool, isNil } from '@activepieces/shared';
+import { QuickFlowsList } from './quick-flows-list';
 
 export function QuickPage() {
   const { session, setSession } = useChatSessionStore();
   const { mutate: deleteChatSession, isPending: deletingChatSession } =
     chatHooks.useDeleteChatSession(setSession);
+  const { mutate: updateChatSession } = chatHooks.useUpdateChatSession(setSession);
 
   const hasConversation = !isNil(session?.conversation) && session.conversation.length > 0;
+
+  const handleToolsUpdate = (tools: AgentTool[]) => {
+    updateChatSession({
+      currentSession: session,
+      update: { tools },
+    });
+  };
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -60,6 +70,22 @@ export function QuickPage() {
 
         <div className="max-w-4xl mx-auto w-full px-6 py-4">
           <PromptInput placeholder="Ask Quick..." />
+        </div>
+      </div>
+
+      {/* Right section - Tools & Flows */}
+      <div className="pl-4 py-4 w-100 border-l bg-background flex flex-col">
+        <div className="overflow-y-auto flex-1 space-y-6">
+          <AgentTools
+            tools={session?.tools ?? []}
+            onToolsUpdate={handleToolsUpdate}
+            label="Tools"
+            icon={Wrench}
+            emptyStateLabel="Connect apps, MCPs and more."
+            hideBorder={true}
+          />
+          
+          <QuickFlowsList />
         </div>
       </div>
     </div>

@@ -50,7 +50,7 @@ export const chatSessionUtils = {
         const lastAssistantMessage = newConvo[newConvo.length - 1] as AssistantConversationMessage
         
         // For text parts, merge with the last text part (streaming behavior)
-        // For tool-call and tool-result, find existing part by toolCallId or add new
+        // For tool-call, find existing part by toolCallId or add new
         if (chunk.part.type === 'text') {
             const lastPart = lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1]
             if (lastPart && lastPart.type === 'text') {
@@ -62,13 +62,11 @@ export const chatSessionUtils = {
                 
                 lastAssistantMessage.parts.push(chunk.part)
             }
-        } else if (chunk.part.type === 'tool-call' || chunk.part.type === 'tool-result') {
+        } else if (chunk.part.type === 'tool-call') {
             const toolCallId = chunk.part.toolCallId
-            const partType = chunk.part.type
             const existingIndex = lastAssistantMessage.parts.findIndex(
                 (part) => 
-                    part.type === partType && 
-                    'toolCallId' in part &&
+                    part.type === 'tool-call' && 
                     part.toolCallId === toolCallId
             )
             if (existingIndex !== -1) {

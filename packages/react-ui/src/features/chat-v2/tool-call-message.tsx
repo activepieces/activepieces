@@ -7,18 +7,16 @@ import {
   ChevronDown,
   List,
   PenTool,
+  AlertCircle,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
-  ConversationMessage,
   ToolCallConversationMessage,
-  ToolResultConversationMessage,
 } from '@activepieces/shared';
 
 interface ToolCallMessageProps {
   message: ToolCallConversationMessage;
-  conversation: ConversationMessage[];
   className?: string;
 }
 
@@ -54,7 +52,6 @@ const TOOL_CONFIGS: Record<string, ToolConfig> = {
 
 export function ToolCallMessage({
   message,
-  conversation,
   className,
 }: ToolCallMessageProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -62,16 +59,7 @@ export function ToolCallMessage({
 
   const isCompleted = message.status === 'completed';
   const isLoading = message.status === 'loading' || message.status === 'ready';
-
-  const toolResult = isCompleted
-    ? conversation
-        .filter((msg) => msg.role === 'assistant')
-        .flatMap((msg) => msg.parts)
-        .find(
-          (part): part is ToolResultConversationMessage =>
-            part.type === 'tool-result' && part.toolCallId === message.toolCallId,
-        )
-    : undefined;
+  const isError = message.status === 'error';
 
   const getIcon = () => {
     if (toolConfig) {
@@ -82,11 +70,11 @@ export function ToolCallMessage({
 
   const getLabel = () => {
     if (toolConfig) {
-      return isCompleted
+      return isCompleted || isError
         ? t(toolConfig.labelCompleted)
         : t(toolConfig.labelInProgress);
     }
-    return isCompleted
+    return isCompleted || isError
       ? t('Used {toolName}', { toolName: message.toolName })
       : t('Using {toolName}', { toolName: message.toolName });
   };
@@ -104,8 +92,14 @@ export function ToolCallMessage({
         )}
         onClick={handleToggle}
       >
-        {getIcon()}
-        <span className="text-muted-foreground">{getLabel()}</span>
+        {isError ? (
+          <AlertCircle className="size-4 shrink-0 text-destructive" />
+        ) : (
+          getIcon()
+        )}
+        <span className="text-muted-foreground">
+          {getLabel()}
+        </span>
         {isExpanded ? (
           <ChevronDown className="size-3 shrink-0 text-muted-foreground self-center" />
         ) : (
@@ -126,13 +120,24 @@ export function ToolCallMessage({
             </div>
           )}
 
-          {toolResult?.output && (
+          {isError && message.error && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+              <div className="text-xs font-medium text-destructive mb-1">
+                {t('Error')}
+              </div>
+              <pre className="text-xs overflow-auto whitespace-pre-wrap break-all text-destructive">
+                {message.error}
+              </pre>
+            </div>
+          )}
+
+          {message.output && (
             <div className="bg-accent rounded-md p-3">
               <div className="text-xs font-medium text-muted-foreground mb-1">
                 {t('Result')}
               </div>
               <pre className="text-xs overflow-auto whitespace-pre-wrap break-all">
-                {JSON.stringify(toolResult.output, null, 2)}
+                {JSON.stringify(message.output, null, 2)}
               </pre>
             </div>
           )}
