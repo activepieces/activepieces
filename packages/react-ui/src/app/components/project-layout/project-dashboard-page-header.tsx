@@ -153,7 +153,7 @@ export const ProjectDashboardPageHeader = ({
           onClick={() => setInviteOpen(true)}
         >
           <UserPlus className="w-4 h-4" />
-          <span className="text-sm font-medium">Add a member</span>
+          <span className="text-sm font-medium">{t('Invite')}</span>
         </Button>
       )}
       <Button
