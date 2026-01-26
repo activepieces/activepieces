@@ -45,10 +45,10 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.pieceName,
     flowVersion.trigger.settings.triggerName,
   );
-  const isManualTrigger = pieceSelectorUtils.isManualTrigger(
-    flowVersion.trigger.settings.pieceName,
-    flowVersion.trigger.settings.triggerName,
-  );
+  const isManualTrigger = pieceSelectorUtils.isManualTrigger({
+    pieceName: flowVersion.trigger.settings.pieceName,
+    triggerName: flowVersion.trigger.settings.triggerName,
+  });
 
   const { mutate: runFlow, isPending: isTestingFlow } =
     flowHooks.useTestFlowOrStartManualTrigger({
