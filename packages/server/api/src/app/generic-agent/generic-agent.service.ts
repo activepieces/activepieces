@@ -1,8 +1,7 @@
-import { apId, ExecuteAgentJobData, ExecuteAgentRequest, PlatformId, WorkerJobType } from "@activepieces/shared"
+import { AgentStreamingEvent, AgentStreamingUpdate, apId, ExecuteAgentJobData, ExecuteAgentRequest, PlatformId, WorkerJobType } from "@activepieces/shared"
 import { FastifyBaseLogger, FastifyReply } from "fastify"
 import { jobQueue } from "../workers/queue/job-queue"
 import { JobType } from "../workers/queue/queue-manager"
-import { pubsubFactory } from "@activepieces/server-shared"
 import { pubsub } from "../helper/pubsub"
 
 export const genericAgentService = (log: FastifyBaseLogger) => ({
@@ -30,27 +29,23 @@ export const genericAgentService = (log: FastifyBaseLogger) => ({
     },
     async streamAgentResponse(params: StreamAgentResponseRequest ) {
         const { reply, requestId } = params
-        reply.type('application/x-ndjson')
+        reply.raw.setHeader('Content-Type', 'application/x-ndjson')
+        reply.raw.setHeader('Connection', 'keep-alive')
 
-        let queue: string[] | null = []
-        pubsub.subscribe(`agent-response:${requestId}`, (message) => {
-            if (queue === null) return;
-            queue!.push(message)
-            if (message == "end") queue = null
-        })
-
-        async function* streamJson() {
-          while (queue !== null) {
-            const message = queue!.shift()
-            if (message) {
-              yield message + '\n'
+        pubsub.subscribe(`agent-response:${requestId}`, async (message) => {
+            try {
+                const messageJson = JSON.parse(message) as AgentStreamingUpdate
+                reply.raw.write(message)
+                if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_ENDED) {
+                    pubsub.unsubscribe(`agent-response:${requestId}`)
+                    reply.raw.end()
+                }
+            } catch (error) {
+                reply.raw.destroy(error as Error)
             }
-            await new Promise(resolve => setTimeout(resolve, 100))
-          }
-          pubsub.unsubscribe(`agent-response:${requestId}`)
-        }
-      
-        return reply.send(streamJson())
+           
+        })
+        return reply
     }
 })
 

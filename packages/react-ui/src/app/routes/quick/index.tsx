@@ -59,7 +59,7 @@ export function QuickPage() {
           <div className="max-w-4xl mx-auto w-full">
             {hasConversation ? (
               <Conversation
-                conversation={session.conversation}
+                conversation={session?.conversation ?? []}
                 className="px-6 py-8 space-y-6"
               />
             ) : (

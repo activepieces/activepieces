@@ -27,8 +27,5 @@ const ExecuteAgentRequestSchema = {
         tags: ['agents'],
         summary: 'Execute an agent with tools and prompt',
         body: ExecuteAgentRequest,
-        response: {
-            [StatusCodes.NO_CONTENT]: Type.Void(),
-        },
     },
 }

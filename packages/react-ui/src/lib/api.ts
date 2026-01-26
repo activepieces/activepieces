@@ -60,23 +60,33 @@ function request<TResponse>(
   const unAuthenticated = disallowedRoutes.some((route) =>
     resolvedUrl.replace(API_URL, '').startsWith(route),
   );
+  const token = getToken(unAuthenticated, isApWebsite, authenticationSession.getToken());
+
+  if (config.responseType === 'stream') {
+      return fetch(resolvedUrl, {
+        method: config.method ?? 'GET',
+        body: config.data ? JSON.stringify(config.data) : undefined,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": token } : {}),
+        },
+      }) as Promise<TResponse>;
+  }
 
   return axios({
     url: resolvedUrl,
     ...config,
     headers: {
       ...config.headers,
-      Authorization: getToken(
-        unAuthenticated,
-        isApWebsite,
-        authenticationSession.getToken(),
-      ),
+      Authorization: token,
     },
   })
-    .then((response) =>
-      config.responseType === 'blob'
-        ? response.data
-        : (response.data as TResponse),
+    .then((response) => {
+      if (config.responseType === 'blob') {
+        return response.data;
+      }
+      return response.data as TResponse;
+    },
     )
     .catch((error) => {
       if (
@@ -148,12 +158,14 @@ export const api = {
     body?: TBody,
     params?: TParams,
     headers?: Record<string, string>,
+    responseType?: 'stream' | 'blob' | 'json',
   ) =>
     request<TResponse>(url, {
       method: 'POST',
       data: body,
       headers: { 'Content-Type': 'application/json', ...headers },
       params: params,
+      responseType: responseType,
     }),
 
   patch: <TResponse, TBody = unknown, TParams = unknown>(

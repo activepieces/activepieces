@@ -4,15 +4,17 @@ import { useSocket } from '@/components/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import {
+  AgentStreamingEvent,
+  AgentStreamingUpdate,
   ChatFileAttachment,
   ChatSession,
-  ChatSessionEnded,
-  ChatSessionUpdate,
   chatSessionUtils,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 
 import { UploadingFile } from '../prompt-input/file-input-preview';
+import { readStream } from '@/lib/read-stream';
+import { AxiosResponse } from 'axios';
 
 export const uploadFile = async (file: File): Promise<string | undefined> => {
   const formData = new FormData();
@@ -74,36 +76,37 @@ export const chatHooks = {
         currentSession =
           chatSessionUtils.addEmptyAssistantMessage(currentSession);
         setSession(currentSession);
-        await api.post<ChatSession>(
+        const response = await api.post(
           `/v1/chat-sessions/${currentSession.id}/chat`,
           {
             message: request.message,
             files: uploadedFiles,
           },
+          undefined,
+          undefined,
+          'stream'
         );
         return new Promise((resolve) => {
-          socket.on(
-            WebsocketClientEvent.AGENT_STREAMING_UPDATE,
-            (data: ChatSessionUpdate) => {
-              if (data.sessionId !== currentSession.id) {
-                return;
-              }
-              currentSession = chatSessionUtils.streamChunk(currentSession, data);
-              setSession(currentSession);
+          readStream({
+            response: response as { body: ReadableStream<Uint8Array> },
+            onChunk: (chunk) => {
+              console.log("received chunk", chunk);
+              try {
+                const messageJson = JSON.parse(chunk) as AgentStreamingUpdate
+                if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_UPDATE) {
+                  // @ts-ignore
+                  currentSession = chatSessionUtils.streamChunk(currentSession, messageJson.data);
+                  setSession(currentSession);
+                } else if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_ENDED) {
+                  setSession(currentSession);
+                  resolve(currentSession);
+                }
+              } catch (error) {}
             },
-          );
-          socket.on(
-            WebsocketClientEvent.AGENT_STREAMING_ENDED,
-            (data: ChatSessionEnded) => {
-              if (data.sessionId !== currentSession.id) {
-                return;
-              }
-              socket.off(WebsocketClientEvent.AGENT_STREAMING_UPDATE);
-              socket.off(WebsocketClientEvent.AGENT_STREAMING_ENDED);
-              setSession(currentSession);
+            onEnd: () => {
               resolve(currentSession);
             },
-          );
+          });
         });
       },
       onError: (error) => {
