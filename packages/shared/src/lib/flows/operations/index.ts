@@ -23,7 +23,7 @@ import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-
+import { _clearStepTestRunId } from './clear-step-test-run-id'
 
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
@@ -51,6 +51,7 @@ export enum FlowOperationType {
     UPDATE_NOTE = 'UPDATE_NOTE',
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
+    CLEAR_STEP_TEST_RUN_ID = 'CLEAR_STEP_TEST_RUN_ID',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -202,7 +203,10 @@ export const UpdateOwnerRequest = Type.Object({
     ownerId: Type.String(),
 })
 export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
-
+export const ClearStepTestRunIdRequest = Type.Object({
+    name: Type.String(),
+})
+export type ClearStepTestRunIdRequest = Static<typeof ClearStepTestRunIdRequest>
 export const FlowOperationRequest = Type.Union([
     Type.Object(
         {
@@ -423,7 +427,18 @@ export const FlowOperationRequest = Type.Union([
             title: 'Add Note',
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.CLEAR_STEP_TEST_RUN_ID),
+            request: ClearStepTestRunIdRequest,
+        },
+        {
+            title: 'Clear Step Test Run ID',
+        },
+    ),
 ])
+
+
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
 
@@ -517,6 +532,10 @@ export const flowOperations = {
             }
             case FlowOperationType.ADD_NOTE: {
                 clonedVersion = notesOperations.addNote(clonedVersion, operation.request)
+                break
+            }
+            case FlowOperationType.CLEAR_STEP_TEST_RUN_ID: {
+                clonedVersion = _clearStepTestRunId(clonedVersion, operation.request)
                 break
             }
             default:

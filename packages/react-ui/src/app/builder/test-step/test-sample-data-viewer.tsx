@@ -30,7 +30,7 @@ type RetestSampleDataViewerProps = {
   agentResult?: AgentResult;
   sampleData: unknown;
   sampleDataInput: unknown | null;
-  errorMessage: string | undefined;
+  errorMessage: string | null;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs?: string | null;
@@ -93,7 +93,6 @@ export const TestSampleDataViewer = React.memo(
     sampleDataInput,
     errorMessage,
     lastTestDate,
-    agentResult,
     currentStep,
     children,
     consoleLogs,
@@ -104,7 +103,7 @@ export const TestSampleDataViewer = React.memo(
       if (isRunAgent(currentStep)) {
         return (
           <AgentTestStep
-            agentResult={resolveAgentResult(sampleData, agentResult)}
+            agentResult={sampleData as AgentResult}
             errorMessage={errorMessage}
           />
         );
@@ -164,12 +163,8 @@ export const TestSampleDataViewer = React.memo(
               <div className="text-md flex gap-1 items-center">
                 {(() => {
                   if (isRunAgent(currentStep)) {
-                    const resolvedAgentResult = resolveAgentResult(
-                      sampleData,
-                      agentResult,
-                    );
                     const isFailed =
-                      resolvedAgentResult.status === AgentTaskStatus.FAILED;
+                      (sampleData as AgentResult).status === AgentTaskStatus.FAILED;
 
                     return (
                       <>

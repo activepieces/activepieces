@@ -30,6 +30,7 @@ export const AgentTimeline = ({
   if (isNil(agentResult)) {
     return <p>{t('No agent output available')}</p>;
   }
+  console.log(agentResult);
 
   return (
     <div className={`h-full flex w-full flex-col ${className}`}>

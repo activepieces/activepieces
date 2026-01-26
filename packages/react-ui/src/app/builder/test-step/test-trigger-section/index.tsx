@@ -187,7 +187,7 @@ const TestTriggerSection = React.memo(
                 isTesting={isPollingTesting}
                 sampleData={sampleData}
                 sampleDataInput={sampleDataInput ?? null}
-                errorMessage={errorMessage}
+                errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
               >

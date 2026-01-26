@@ -133,15 +133,7 @@ const TestWaitForNextWebhookDialog = ({
   onOpenChange,
   open,
 }: TestWaitForNextWebhookDialogProps) => {
-  const { mutate: onSubmit, isPending: isLoading } =
-    testStepHooks.useTestAction({
-      currentStep,
-      setErrorMessage: undefined,
-      setConsoleLogs: undefined,
-      onSuccess: () => {
-        onOpenChange(false);
-      },
-    });
+  const [updateSampleData] = useBuilderStateContext((state) => [state.updateSampleData]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -150,25 +142,17 @@ const TestWaitForNextWebhookDialog = ({
         </DialogHeader>
         <TestWebhookFunctionalityForm
           showMethodDropdown={false}
+          isLoading={false}
           onSubmit={(data) => {
-            onSubmit({
-              type: 'webhookAction',
-              preExistingSampleData: {
-                runId: apId(),
-                success: true,
-                output: {
-                  body: data.body,
-                  headers: data.headers,
-                  queryParams: data.queryParams,
-                },
-                standardError: '',
-                standardOutput: '',
-                input: {},
+            updateSampleData({
+              stepName: currentStep.name,
+              output: {
+                body: data.body,
+                headers: data.headers,
+                queryParams: data.queryParams,
               },
-              onProgress: undefined,
             });
           }}
-          isLoading={isLoading}
         />
       </DialogContent>
     </Dialog>

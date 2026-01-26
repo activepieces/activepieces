@@ -1,4 +1,4 @@
-import { EmitTestStepProgressRequest, FlowOperationType, PrincipalType, SampleDataDataType, SampleDataFileType, TestFlowRunRequestBody, UpdateRunProgressRequest, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { EmitTestStepProgressRequest, FlowOperationType, flowStructureUtil, PrincipalType, SampleDataFileType, TestFlowRunRequestBody, UpdateRunProgressRequest, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../core/websockets.service'
 import { flowWorkerController } from '../workers/worker-controller'
@@ -46,8 +46,8 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
                 flowId: data.flowId,
                 versionId: data.flowVersionId,
             })
-           
-            if(data.standardError === '') {
+            const step = flowStructureUtil.getStepOrThrow(data.stepName, flowVersion.trigger)
+            if(data.standardError === '' && step.settings.sampleData?.testRunId === data.runId) {
                 flowVersionService(app.log).applyOperation({
                     flowVersion,
                     platformId: data.platformId,
@@ -75,6 +75,18 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
                       type: SampleDataFileType.INPUT,
                     },
                 }
+                })
+                flowVersionService(app.log).applyOperation({
+                    flowVersion,
+                    platformId: data.platformId,
+                    projectId: data.projectId,
+                    userId: null,
+                    userOperation: {
+                        type: FlowOperationType.CLEAR_STEP_TEST_RUN_ID,
+                        request: {
+                            name: data.stepName,
+                        },
+                    },
                 })
             }
             callback?.()

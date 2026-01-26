@@ -51,7 +51,7 @@ export const BadgeAwarded = Type.Object({
 
 export type BadgeAwarded = Static<typeof BadgeAwarded>
 
-export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string, flowVersionId:string, flowId:string, platformId:string, stepName:string }
+export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string, flowVersionId:string, flowId:string, platformId:string}
 
 export enum WebsocketServerEvent {
     TEST_FLOW_RUN = 'TEST_FLOW_RUN',

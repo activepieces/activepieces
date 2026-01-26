@@ -11,7 +11,7 @@ import {
   CreateAndWaitTodoResult,
 } from '@activepieces/shared';
 
-import { testStepHooks } from '../utils/test-step-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 type TodoTestingDialogProps = {
   open: boolean;
@@ -30,9 +30,9 @@ function TodoTestingDialog({
   type,
   setErrorMessage,
 }: TodoTestingDialogProps) {
-  const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-    currentStep.name,
-  );
+  const { updateSampleData } = useBuilderStateContext((state) => ({
+    updateSampleData: state.updateSampleData,
+  }));
 
   const formatTodoResult = (
     response: PopulatedTodo,
@@ -64,7 +64,8 @@ function TodoTestingDialog({
       setErrorMessage(undefined);
       const output = formatTodoResult(response);
       updateSampleData({
-        response: { testType: 'todo', output, success: true },
+        stepName: currentStep.name,
+        output,
       });
       onOpenChange(false);
     },

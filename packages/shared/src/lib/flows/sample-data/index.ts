@@ -46,6 +46,7 @@ export const StepRunResponse = Type.Object({
     sampleDataInputFileId: Type.Optional(Type.String()),
     standardError: Type.String(),
     standardOutput: Type.String(),
+    stepName: Type.String(),
 })
 
 export type StepRunResponse = Static<typeof StepRunResponse>
@@ -57,6 +58,7 @@ export const SampleDataSetting = Type.Object(
         sampleDataFileId: Type.Optional(Type.String()),
         sampleDataInputFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
+        testRunId: Type.Optional(Type.String()),
     },
     {
         additionalProperties: true,

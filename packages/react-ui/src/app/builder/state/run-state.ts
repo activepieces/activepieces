@@ -1,16 +1,32 @@
+import { QueryClient } from '@tanstack/react-query';
+import { Socket } from 'socket.io-client';
 import { StoreApi } from 'zustand';
 
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import {
+  FlowAction,
   FlowActionType,
+  FlowOperationType,
   FlowRun,
   flowStructureUtil,
   FlowVersion,
   isNil,
   LoopStepOutput,
+  SampleDataFileType,
+  StepRunResponse,
+  WebsocketClientEvent,
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
+
+export type UpdateSampleDataParams = {
+  stepName: string;
+  input?: unknown;
+  output?: unknown;
+  onlyLocally?: boolean;
+};
 
 export type RunState = {
   run: FlowRun | null;
@@ -18,15 +34,31 @@ export type RunState = {
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
   setLoopIndex: (stepName: string, index: number) => void;
+  addActionTestListener: ({runId, stepName}: {runId: string, stepName: string}) => void;
+  removeStepTestListener: (runId: string) => void;
+  stepTestListeners: Record<string, StepTestListener | null>;
+  updateSampleData: (params: UpdateSampleDataParams) => void;
+  errorLogs: Record<string, string | null>;
+  setErrorLogs: (stepName: string, error: string | null) => void;
+  getErrorLogs: (stepName: string) => string | null;
+  setConsoleLogs: (stepName: string, consoleLogs: string | null) => void;
+  getConsoleLogs: (stepName: string) => string | null;
+  consoleLogs: Record<string, string | null>;
 };
 type RunStateInitialState = {
   run: FlowRun | null;
   flowVersion: FlowVersion;
+  socket: Socket;
+  queryClient: QueryClient;
 };
-
+type StepTestListener = {
+  onProgress: (response: StepRunResponse) => void;
+  onFinish: (response: StepRunResponse) => void;
+  error: (error: any) => void;
+};
 export const createRunState = (
   initialState: RunStateInitialState,
-  _: StoreApi<BuilderState>['getState'],
+  get: StoreApi<BuilderState>['getState'],
   set: StoreApi<BuilderState>['setState'],
 ): RunState => {
   return {
@@ -100,5 +132,145 @@ export const createRunState = (
         };
       });
     },
+    addActionTestListener: ({runId, stepName}: {runId: string, stepName: string}) => {
+      const socket = initialState.socket;
+      const action = flowStructureUtil.getStepOrThrow(stepName, get().flowVersion.trigger) as FlowAction;
+      const sampleDataSettings = action.settings.sampleData?? {};
+      sampleDataSettings.testRunId = runId;
+      const copiedAction: FlowAction = JSON.parse(JSON.stringify(action));
+      copiedAction.settings.sampleData = sampleDataSettings;
+      get().applyOperation({
+        type: FlowOperationType.UPDATE_ACTION,
+        request: copiedAction,
+      })
+      const handleStepFinished = (response: StepRunResponse) => {
+        // if (response.runId === runId) {
+        //    get().removeStepTestListener(runId);
+        //    if(response.success) {
+        //    get().updateSampleData({
+        //       stepName: stepName,
+        //       output: response.output,
+        //       input: response.input,
+        //     });
+        //   }
+        //   get().setErrorLogs(stepName, response.standardError === '' ? null : response.standardError);
+        //   get().setConsoleLogs(stepName, response.standardOutput === '' ? null : response.standardOutput);
+        //   get().applyOperation({
+        //     type: FlowOperationType.CLEAR_STEP_TEST_RUN_ID,
+        //     request: {
+        //       name: stepName,
+        //     },
+        //   });
+        // }
+      };
+
+      const handleError = (error: any) => {
+        get().removeStepTestListener(runId);
+        console.error(error);
+        internalErrorToast();
+      };
+
+      socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
+      socket.on('error', handleError);
+
+        const handleOnProgress = (response: StepRunResponse) => {
+          if (response.runId === runId) {
+            get().updateSampleData({
+              stepName: response.stepName,
+              output: response.output,
+              onlyLocally: true,
+            })}
+        };
+        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
+      
+      set((state) => {
+        state.stepTestListeners[runId] = {
+          onProgress: handleOnProgress,
+          onFinish: handleStepFinished,
+          error: handleError,
+        };
+        return state;
+      });
+    },
+    removeStepTestListener: (runId: string) => {
+      set((state) => {
+        const socket = initialState.socket;
+        const listner = state.stepTestListeners[runId];
+        if(listner) {
+          socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, listner.onFinish);
+          socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, listner.onProgress);
+          socket.off('error', listner.error);
+        }
+        state.stepTestListeners[runId] = null;
+        return state;
+      });
+    },
+    stepTestListeners: {},
+    updateSampleData: (params: UpdateSampleDataParams) => {
+      const {setSampleData, applyOperation, flowVersion} = get();
+      const step = flowStructureUtil.getStep(
+        params.stepName,
+        flowVersion.trigger,
+      );
+
+      if (isNil(step)) {
+        console.error(`Step ${params.stepName} not found`);
+        internalErrorToast();
+        return;
+      }
+        const output = params.output;
+        setSampleData({ stepName: step.name, type: 'output', value: output });
+        if(!params.onlyLocally) {
+        applyOperation({
+          type: FlowOperationType.SAVE_SAMPLE_DATA,
+          request: {
+            stepName: step.name,
+            payload: output,
+            type: SampleDataFileType.OUTPUT,
+          },
+        });
+      }
+
+        if (!isNil(params.input)) {
+          const input = params.input;
+          setSampleData({ stepName: step.name, type: 'input', value: input });
+          if(!params.onlyLocally) {
+          applyOperation({
+            type: FlowOperationType.SAVE_SAMPLE_DATA,
+            request: {
+              stepName: step.name,
+              payload: input,
+              type: SampleDataFileType.INPUT,
+            },
+          });
+        }
+        }  
+
+      // Invalidate so next time the user enters the builder, the sample data is refetched
+      sampleDataHooks.invalidateSampleData(
+        flowVersion.id,
+        initialState.queryClient,
+      );
+    },
+    setErrorLogs: (stepName: string, error: string | null) => {
+      set((state) => {
+        state.errorLogs[stepName] = error;
+        return state;
+      });
+    },
+    getErrorLogs: (stepName: string) => {
+      return get().errorLogs[stepName] ?? null;
+    },
+    errorLogs: {},
+    setConsoleLogs: (stepName: string, consoleLogs: string | null) => {
+      set((state) => {
+        state.consoleLogs[stepName] = consoleLogs;
+        return state;
+      });
+    },
+    getConsoleLogs: (stepName: string) => {
+      return get().consoleLogs[stepName] ?? null;
+    },
+    consoleLogs: {},
   };
 };

@@ -211,6 +211,7 @@ export const createFlowState = (
             step.settings.sampleData = {
               ...step.settings.sampleData,
               lastTestDate: dayjs().toISOString(),
+              testRunId: undefined,
             };
             if (
               step.type === FlowTriggerType.PIECE ||
@@ -230,7 +231,8 @@ export const createFlowState = (
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:
-          case FlowOperationType.UPDATE_ACTION: {
+          case FlowOperationType.UPDATE_ACTION: 
+          case FlowOperationType.CLEAR_STEP_TEST_RUN_ID:{
             debouncedAddToFlowUpdatesQueue(
               operation.request.name,
               updateRequest,

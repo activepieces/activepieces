@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import { create, useStore } from 'zustand';
 
@@ -11,6 +12,7 @@ import {
 } from './state/piece-selector-state';
 import { createRunState, RunState } from './state/run-state';
 import { createStepFormState, StepFormState } from './state/step-form-state';
+import { Socket } from 'socket.io-client';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -39,7 +41,10 @@ export type BuilderInitialState = Pick<
   | 'run'
   | 'outputSampleData'
   | 'inputSampleData'
->;
+> & {
+  socket: Socket;
+  queryClient: QueryClient;
+};
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 export const createBuilderStore = (initialState: BuilderInitialState) =>
