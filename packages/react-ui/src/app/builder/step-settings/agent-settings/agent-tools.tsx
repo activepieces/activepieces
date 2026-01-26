@@ -1,13 +1,11 @@
 import { Accordion } from '@radix-ui/react-accordion';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { LucideIcon, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { AddToolDropdown } from '@/features/agents/agent-tools/add-agent-tool-dropwdown';
-import { AgentFlowToolComponent } from '@/features/agents/agent-tools/componenets/flow-tool';
 import { AgentMcpToolComponent } from '@/features/agents/agent-tools/componenets/mcp-tool';
 import { AgentPieceToolComponent } from '@/features/agents/agent-tools/componenets/piece-tool';
-import { AgentFlowToolDialog } from '@/features/agents/agent-tools/flow-tool-dialog';
 import { AgentMcpDialog } from '@/features/agents/agent-tools/mcp-tool-dialog';
 import { AgentToolType } from '@activepieces/shared';
 import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
@@ -24,8 +22,10 @@ const icons = [
 interface AgentToolsProps {
   disabled?: boolean;
   label?: string;
+  icon?: LucideIcon;
   tools: AgentTool[];
   hideAddButton?: boolean;
+  hideBorder?: boolean;
   emptyStateLabel?: string;
   onToolsUpdate: (tools: AgentTool[]) => void;
 }
@@ -34,17 +34,17 @@ export const AgentTools = ({
   disabled,
   tools,
   label = 'Agent Tools',
-  emptyStateLabel = 'Connect apps, flows, MCPs and more.',
+  icon: Icon,
+  emptyStateLabel = 'Connect apps, MCPs and more.',
   hideAddButton = false,
+  hideBorder = false,
   onToolsUpdate,
 }: AgentToolsProps) => {
-  console.log(!hideAddButton);
 
   const removeTool = (toolName: string) => {
     onToolsUpdate(tools.filter((tool) => toolName !== tool.toolName));
   };
 
-  const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
   const mcpTools = tools.filter((tool) => tool.type === AgentToolType.MCP);
   const pieceToToolMap = tools
     .filter((tool) => tool.type === AgentToolType.PIECE)
@@ -59,7 +59,10 @@ export const AgentTools = ({
 
   return (
     <div>
-      <h2 className="text-sm font-medium">{t(label)}</h2>
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="size-4 text-muted-foreground" />}
+        <h2 className="text-sm font-medium">{t(label)}</h2>
+      </div>
 
       <div className="mt-2">
         {tools.length > 0 ? (
@@ -67,7 +70,7 @@ export const AgentTools = ({
             <Accordion
               type="single"
               collapsible
-              className="border rounded-md overflow-hidden shadow-none"
+              className={`rounded-md overflow-hidden shadow-none ${hideBorder ? '' : 'border'}`}
             >
               {Object.entries(pieceToToolMap).map(([pieceName, tools]) => (
                 <AgentPieceToolComponent
@@ -77,13 +80,6 @@ export const AgentTools = ({
                   removeTool={removeTool}
                 />
               ))}
-              {flowTools.length > 0 && (
-                <AgentFlowToolComponent
-                  disabled={disabled}
-                  tools={flowTools}
-                  removeTool={removeTool}
-                />
-              )}
               {mcpTools.length > 0 && (
                 <AgentMcpToolComponent
                   disabled={disabled}
@@ -103,7 +99,7 @@ export const AgentTools = ({
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
+          <div className={`flex flex-col items-center justify-center gap-4 rounded-xl bg-card px-4 py-8 text-center ${hideBorder ? '' : 'border'}`}>
             <div className="flex items-center">
               {icons.slice(0, 4).map((icon, index) => (
                 <div
@@ -141,7 +137,6 @@ export const AgentTools = ({
         )}
       </div>
 
-      <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />
       <AgentMcpDialog tools={tools} onToolsUpdate={onToolsUpdate} />
     </div>

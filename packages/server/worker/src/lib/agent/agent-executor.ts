@@ -54,8 +54,15 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                     quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'ready')
                     break
                 }
+                case 'tool-error': {
+                    previousText = ''
+                    const errorMessage = chunk.error instanceof Error ? chunk.error.message : String(chunk.error)
+                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'error', errorMessage)
+                    break
+                }
                 case 'tool-result': {
                     previousText = ''
+                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed', undefined, chunk.output as Record<string, any>)
                     // First mark the tool call as completed
                     const toolCompletedUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed')
                     newSession = chatSessionUtils.streamChunk(newSession, toolCompletedUpdate)
@@ -91,7 +98,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     }
 })
 
-function publishToolCallUpdate(requestId: string, toolcallId: string, toolName: string, input: Record<string, any> | undefined, status: 'loading' | 'ready' | 'completed' | 'error') {
+function publishToolCallUpdate(requestId: string, toolcallId: string, toolName: string, input: Record<string, any> | undefined, status: 'loading' | 'ready' | 'completed' | 'error', error?: string, output?: Record<string, any>) {
     const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
         sessionId: requestId,
         part: {
@@ -99,6 +106,7 @@ function publishToolCallUpdate(requestId: string, toolcallId: string, toolName: 
             toolCallId: toolcallId,
             toolName,
             input,
+            output,
             status,
         },
     }
@@ -109,10 +117,11 @@ function publishToolResultUpdate(requestId: string, toolcallId: string, toolName
     const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
         sessionId: requestId, // should be session id not request id
         part: {
-            type: 'tool-result',
+            type: 'tool-call',
             toolCallId: toolcallId,
             toolName,
             output,
+            status: 'completed',
         },
     }
     return quickStreamingUpdate
@@ -131,55 +140,90 @@ function publishTextUpdate(requestId: string, text: string, isStreaming: boolean
 }
 
 function convertHistory(conversation: ConversationMessage[]): ModelMessage[] {
-    return conversation.map(message => {
+    const result: ModelMessage[] = []
+
+    for (const message of conversation) {
         if (message.role === 'user') {
-            return [{
-                role: 'user',
-                content: message.content.map(part => {
-                    switch (part.type) {
-                        case 'text':
-                            return {
-                                type: 'text',
-                                text: part.message,
-                            }
-                        case 'image':
-                            return {
-                                type: 'image',
-                                image: part.image,
-                            }
-                        case 'file':
-                            return {
-                                type: 'file',
-                                file: part.file,
-                                name: part.name,
-                                mimeType: part.mimeType,
-                            }
-                        default:
-                            return undefined
-                    }
-                }),
-            }]
-        }
-        return message.parts.map(item => {
-            switch (item.type) {
-                case 'tool-result':
-                    return {
-                        role: 'tool',
-                        content: [{
-                            type: 'tool-result',
-                            toolCallId: item.toolCallId,
-                            toolName: item.toolName,
-                            result: item.output as LanguageModelV2ToolResultOutput,
-                        }],
-                    }
-                case 'text':
-                    return {
-                        role: 'assistant',
-                        content: item.message,
-                    }
-                default:
-                    return undefined
+            const userContent = message.content.map(part => {
+                switch (part.type) {
+                    case 'text':
+                        return {
+                            type: 'text' as const,
+                            text: part.message,
+                        }
+                    case 'image':
+                        return {
+                            type: 'image' as const,
+                            image: part.image,
+                        }
+                    case 'file':
+                        return {
+                            type: 'file' as const,
+                            file: part.file,
+                            name: part.name,
+                            mimeType: part.mimeType,
+                        }
+                    default:
+                        return undefined
+                }
+            }).filter(f => !isNil(f))
+
+            if (userContent.length > 0) {
+                result.push({
+                    role: 'user',
+                    content: userContent,
+                } as ModelMessage)
             }
-        })
-    }).flat().filter(f => !isNil(f)) as ModelMessage[]
+        }
+        else {
+            // Process assistant message parts
+            const assistantContent = []
+            const toolResults: ModelMessage[] = []
+
+            for (const item of message.parts) {
+                switch (item.type) {
+                    case 'text':
+                        if (item.message && item.message.trim().length > 0) {
+                            assistantContent.push({
+                                type: 'text',
+                                text: item.message,
+                            })
+                        }
+                        break
+                    case 'tool-call':
+                        if (item.status === 'completed' || item.status === 'ready') {
+                            assistantContent.push({
+                                type: 'tool-call',
+                                toolCallId: item.toolCallId,
+                                toolName: item.toolName,
+                                args: item.input ?? {},
+                            })
+                            toolResults.push({
+                                role: 'tool',
+                                content: [{
+                                    type: 'tool-result',
+                                    toolCallId: item.toolCallId,
+                                    toolName: item.toolName,
+                                    output: item.output as LanguageModelV2ToolResultOutput,
+                                }],
+                            })
+                        }
+                        break
+                }
+            }
+
+            // Add assistant message if it has any content
+            if (assistantContent.length > 0) {
+                result.push({
+                    role: 'assistant',
+                    content: assistantContent,
+                } as ModelMessage)
+            }
+
+            // Add tool results after the assistant message
+            result.push(...toolResults)
+        }
+    }
+
+    return result
 }

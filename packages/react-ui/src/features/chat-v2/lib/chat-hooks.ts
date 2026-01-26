@@ -88,10 +88,7 @@ export const chatHooks = {
               if (data.sessionId !== currentSession.id) {
                 return;
               }
-              currentSession = chatSessionUtils.streamChunk(currentSession, {
-                sessionId: currentSession.id,
-                part: data.part,
-              });
+              currentSession = chatSessionUtils.streamChunk(currentSession, data);
               setSession(currentSession);
             },
           );

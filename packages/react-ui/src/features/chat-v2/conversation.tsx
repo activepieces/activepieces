@@ -16,7 +16,6 @@ export function Conversation({ conversation, className }: ConversationProps) {
           <LLMMessage
             key={index}
             message={message}
-            conversation={conversation}
           />
         ) : (
           <UserMessage key={index} message={message} />

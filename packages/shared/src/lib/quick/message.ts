@@ -51,24 +51,16 @@ export const ToolCallConversationMessage = Type.Object({
     toolCallId: Type.String(),
     toolName: Type.String(),
     input: Type.Optional(Type.Record(Type.String(), Type.Any())),
+    output: Type.Optional(Type.Record(Type.String(), Type.Any())),
     status: Type.Union([Type.Literal('loading'), Type.Literal('ready'), Type.Literal('completed'), Type.Literal('error')]),
+    error: Type.Optional(Type.String()),
 })
 export type ToolCallConversationMessage = Static<typeof ToolCallConversationMessage>
-
-export const ToolResultConversationMessage = Type.Object({
-    type: Type.Literal('tool-result'),
-    toolCallId: Type.String(),
-    toolName: Type.String(),
-    output: Type.Record(Type.String(), Type.Any()),
-})
-
-export type ToolResultConversationMessage = Static<typeof ToolResultConversationMessage>
 
 
 export const AssistantConversationContent = Type.Union([
     TextConversationMessage,
     ToolCallConversationMessage,
-    ToolResultConversationMessage,
 ])
 
 export type AssistantConversationContent = Static<typeof AssistantConversationContent>

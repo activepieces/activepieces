@@ -3,7 +3,6 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import { cn } from '@/lib/utils';
 import {
   AssistantConversationMessage,
-  ConversationMessage,
   MarkdownVariant,
 } from '@activepieces/shared';
 
@@ -12,13 +11,11 @@ import { ToolCallMessage } from './tool-call-message';
 
 interface LLMMessageProps {
   message: AssistantConversationMessage;
-  conversation: ConversationMessage[];
   className?: string;
 }
 
 export function LLMMessage({
   message,
-  conversation,
   className,
 }: LLMMessageProps) {
   const fullText = message.parts
@@ -29,7 +26,7 @@ export function LLMMessage({
     .join('\n\n');
 
   const hasNoMessage =
-    message.parts.length === 0 || fullText.trim().length === 0;
+    message.parts.length === 0;
 
   if (hasNoMessage) {
     return <Thinking className={className} />;
@@ -58,7 +55,6 @@ export function LLMMessage({
               <ToolCallMessage
                 key={index}
                 message={part}
-                conversation={conversation}
               />
             );
           }
