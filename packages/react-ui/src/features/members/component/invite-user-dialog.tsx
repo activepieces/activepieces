@@ -43,7 +43,6 @@ import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userHooks } from '@/hooks/user-hooks';
 import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -93,7 +92,6 @@ export const InviteUserDialog = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { data: currentUser } = userHooks.useCurrentUser();
   const { checkAccess } = useAuthorization();
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
@@ -154,6 +152,7 @@ export const InviteUserDialog = ({
   });
 
   const roles = rolesData?.data ?? [];
+  const defaultProjectRole = roles?.find((role) => role.name === 'Editor')?.name || roles?.[0]?.name;
 
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
@@ -165,7 +164,7 @@ export const InviteUserDialog = ({
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
-      projectRole: roles?.[0]?.name,
+      projectRole: defaultProjectRole,
     },
   });
 
@@ -233,8 +232,16 @@ export const InviteUserDialog = ({
                   ? t(
                       'Please copy the link below and share it with the user you want to invite, the invitation expires in 7 days.',
                     )
-                  : t(
-                      'Type email addresses separated by spaces to invite multiple users. Invitations expire in 7 days.',
+                  : isPlatformPage
+                  ? t(
+                      'Type email addresses separated by commas to invite multiple users to the entire platform. Invitations expire in 7 days.',
+                    )
+                  : (
+                      <>
+                        {t('Type email addresses separated by commas to add members to')}{' '}
+                        <span className="text-foreground font-semibold">{project.displayName}</span>.{' '}
+                        {t('Invitations expire in 7 days')}.
+                      </>
                     )}
               </DialogDescription>
             </DialogHeader>
@@ -265,44 +272,6 @@ export const InviteUserDialog = ({
                     )}
                   />
 
-                  {!isPlatformPage && (
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem className="grid gap-2">
-                          <Label>{t('Invite To')}</Label>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('Invite To')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>{t('Invite To')}</SelectLabel>
-                                {currentUser?.platformRole ===
-                                  PlatformRole.ADMIN && (
-                                  <SelectItem value={InvitationType.PLATFORM}>
-                                    {t('Entire Platform')}
-                                  </SelectItem>
-                                )}
-                                {platform.plan.projectRolesEnabled &&
-                                  project.type === ProjectType.TEAM && (
-                                    <SelectItem value={InvitationType.PROJECT}>
-                                      {project.displayName} (Current)
-                                    </SelectItem>
-                                  )}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    ></FormField>
-                  )}
-
                   {form.getValues().type === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />
                   )}
@@ -312,7 +281,7 @@ export const InviteUserDialog = ({
                       name="projectRole"
                       render={({ field }) => (
                         <FormItem className="grid gap-2">
-                          <Label>{t('Select Project Role')}</Label>
+                          <Label>{t('Project Role')}</Label>
                           <Select
                             onValueChange={(value) => {
                               const selectedRole = roles.find(
@@ -320,7 +289,7 @@ export const InviteUserDialog = ({
                               );
                               field.onChange(selectedRole?.name);
                             }}
-                            defaultValue={field.value}
+                            value={field.value || defaultProjectRole}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder={t('Select Role')} />

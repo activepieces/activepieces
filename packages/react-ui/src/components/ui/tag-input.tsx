@@ -1,7 +1,7 @@
 'use client';
 
 import { XIcon } from 'lucide-react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -18,7 +18,7 @@ type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   invalidBadgeClassName?: string;
 };
 
-const SEPARATOR = ' ';
+const SEPARATOR = ',';
 
 const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   const {
@@ -32,6 +32,16 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
   } = props;
 
   const [pendingDataPoint, setPendingDataPoint] = useState('');
+  const internalInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const handleRef = useCallback((node: HTMLInputElement | null) => {
+    internalInputRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref) {
+      (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+    }
+  }, [ref]);
 
   useEffect(() => {
     if (pendingDataPoint.includes(SEPARATOR)) {
@@ -46,18 +56,39 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
     }
   }, [pendingDataPoint, onChange, value]);
 
-  const addPendingDataPoint = () => {
-    if (pendingDataPoint) {
-      const newDataPoints = new Set(
-        [...value, ...pendingDataPoint.split(SEPARATOR)].flatMap((x) => {
-          const trimmedX = x.trim();
-          return trimmedX.length > 0 ? [trimmedX] : [];
-        }),
-      );
-      onChange(Array.from(newDataPoints));
-      setPendingDataPoint('');
-    }
-  };
+  const addPendingDataPoint = useCallback(() => {
+    setPendingDataPoint((current) => {
+      if (current) {
+        const newDataPoints = new Set(
+          [...value, ...current.split(SEPARATOR)].flatMap((x) => {
+            const trimmedX = x.trim();
+            return trimmedX.length > 0 ? [trimmedX] : [];
+          }),
+        );
+        onChange(Array.from(newDataPoints));
+        return '';
+      }
+      return current;
+    });
+  }, [onChange, value]);
+
+  useEffect(() => {
+    const input = internalInputRef.current;
+    if (!input) return;
+
+    const form = input.closest('form');
+    if (!form) return;
+
+    const handleFormSubmit = () => {
+      addPendingDataPoint();
+    };
+
+    form.addEventListener('submit', handleFormSubmit, true);
+
+    return () => {
+      form.removeEventListener('submit', handleFormSubmit, true);
+    };
+  }, [addPendingDataPoint]);
 
   return (
     <div
@@ -114,9 +145,12 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                 onChange(value.slice(0, -1));
               }
             }}
+            onBlur={() => {
+              addPendingDataPoint();
+            }}
             {...domProps}
             placeholder={value.length > 0 ? '' : domProps.placeholder}
-            ref={ref}
+            ref={handleRef}
           />
         </div>
       </ScrollArea>
