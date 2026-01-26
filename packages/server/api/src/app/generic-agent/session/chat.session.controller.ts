@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { chatSessionService } from './chat.session.service'
+import { genericAgentService } from '../generic-agent.service'
 
 export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateChatSessionRequestConfig, async (request) => {
@@ -35,13 +36,17 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post(
         '/:id/chat',
         ChatWithSessionRequest,
-        async (request) => {
-            await chatSessionService(request.log).chatWithSession({
+        async (request, reply) => {
+            const requestId = await chatSessionService(request.log).chatWithSession({
                 platformId: request.principal.platform.id,
                 userId: request.principal.id,
                 sessionId: request.params.id,
                 message: request.body.message,
                 files: request.body.files,
+            })
+            return await genericAgentService(request.log).streamAgentResponse({
+                reply,
+                requestId,
             })
         },
     )

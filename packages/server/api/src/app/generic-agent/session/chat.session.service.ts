@@ -1,10 +1,9 @@
-import { ActivepiecesError, AgentTool, AgentToolType, apId, ChatFileAttachment, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, EXECUTE_TOOL, ExecuteAgentJobData, isNil, SEARCH_TOOL, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ChatFileAttachment, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, isNil, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
-import { jobQueue } from '../../workers/queue/job-queue'
-import { JobType } from '../../workers/queue/queue-manager'
 import { ChatSessionEntity } from './chat.session.entity'
+import { genericAgentService } from '../generic-agent.service'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
@@ -21,7 +20,7 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
         return chatSessionRepo().save(newSession)
     },
 
-    async chatWithSession(params: ChatWithSessionParams): Promise<ChatSession> {
+    async chatWithSession(params: ChatWithSessionParams): Promise<string> {
         const session: ChatSession = await this.getOneOrThrow({
             id: params.sessionId,
             userId: params.userId,
@@ -34,18 +33,15 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
         }))
         const newSession = chatSessionUtils.addUserMessage(session, params.message, filesForMessage)
         await chatSessionRepo().save(newSession)
-        const jobData: ExecuteAgentJobData = {
-            platformId: params.platformId,
+        return await genericAgentService(log).executeAgent({
             projectId: project.id,
-            session: newSession,
-            jobType: WorkerJobType.EXECUTE_AGENT,
-        }
-        await jobQueue(log).add({
-            id: jobData.session.id,
-            type: JobType.ONE_TIME,
-            data: jobData,
+            platformId: params.platformId,
+            prompt: params.message,
+            tools: newSession.tools,
+            modelId: newSession.modelId,
+            state: newSession.state,
+            conversation: newSession.conversation,
         })
-        return newSession
     },
     async update(params: UpdateChastSessionParams): Promise<ChatSession> {
         await chatSessionRepo().update(params.id, {

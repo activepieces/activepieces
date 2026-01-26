@@ -7,7 +7,7 @@ import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
-import { ChatSession } from '../quick'
+import { ExecuteAgentData } from '../generic-agents/dto'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 
@@ -213,13 +213,19 @@ export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 
-export const ExecuteAgentJobData = Type.Object({
+export const ExecuteAgentJobData = (Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
     platformId: Type.String(),
     projectId: Type.String(),
-    session: ChatSession,
-})
+    session: Type.Composite([
+        ExecuteAgentData,
+        Type.Object({
+            requestId: Type.String(),
+        }),
+    ]),
+}))
 export type ExecuteAgentJobData = Static<typeof ExecuteAgentJobData>
+
 export const EventDestinationJobData = Type.Object({
     schemaVersion: Type.Number(),
     platformId: Type.String(),

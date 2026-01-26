@@ -1,68 +1,70 @@
-import { ChatSession, ChatSessionUpdate, chatSessionUtils, ConversationMessage, EmitAgentStreamingEndedRequest, ExecuteAgentJobData, isNil, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { AgentStreamingEvent, AgentStreamingUpdate, chatSessionUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
 import { ModelMessage, stepCountIs, streamText, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { appSocket } from '../app-socket'
 import { systemPrompt } from './system-prompt'
 import { agentUtils } from './utils'
 import { createFlowTools } from './tools/flow-maker'
+import { pubsubFactory } from '@activepieces/server-shared'
+import { workerRedisConnections } from '../utils/worker-redis'
+
+const pubsub = pubsubFactory(workerRedisConnections.create)
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
         const { platformId, projectId } = data
-        const { conversation, modelId } = data.session
-        let newSession: ChatSession = data.session
+        const { requestId, conversation, modelId } = data.session
+        let newSession: ExecuteAgentData = data.session satisfies ExecuteAgentData
 
         const { fullStream } = streamText({
             model: await agentUtils.getModel(modelId, engineToken),
             system: systemPrompt(),
             stopWhen: [stepCountIs(25)],
-            messages: convertHistory(conversation),
+            messages: conversation ? convertHistory(conversation) : [],
             tools: {
                 ...(await createFlowTools({ engineToken, projectId, platformId, state: data.session.state })),
             } as ToolSet,
         })
         let previousText = ''
         for await (const chunk of fullStream) {
-            let quickStreamingUpdate: ChatSessionUpdate | undefined
+            let quickStreamingUpdate: AgentStreamingUpdateProgressData | undefined
             switch (chunk.type) {
                 case 'text-start': {
                     previousText = ''
-                    quickStreamingUpdate = publishTextUpdate(newSession, '', true)
+                    quickStreamingUpdate = publishTextUpdate(requestId, '', true)
                     break
                 }
                 case 'text-delta': {
                     previousText += chunk.text
-                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, true)
+                    quickStreamingUpdate = publishTextUpdate(requestId, previousText, true)
                     break
                 }
                 case 'text-end': {
-                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, false)
+                    quickStreamingUpdate = publishTextUpdate(requestId, previousText, false)
                     break
                 }
                 case 'tool-input-start': {
                     previousText = ''
-                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.id, chunk.toolName, undefined, 'loading')
+                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.id, chunk.toolName, undefined, 'loading')
                     break
                 }
                 case 'tool-call': {
                     previousText = ''
-                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'ready')
+                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'ready')
                     break
                 }
                 case 'tool-result': {
                     previousText = ''
                     // First mark the tool call as completed
-                    const toolCompletedUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, undefined, 'completed')
+                    const toolCompletedUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed')
                     newSession = chatSessionUtils.streamChunk(newSession, toolCompletedUpdate)
-                    await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, {
-                        userId: data.session.userId,
-                        event: WebsocketClientEvent.AGENT_STREAMING_UPDATE,
+                    await this.emitProgress(requestId, {
+                        event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
                         data: toolCompletedUpdate,
                     })
                     // Then publish the tool result
-                    quickStreamingUpdate = publishToolResultUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>)
+                    quickStreamingUpdate = publishToolResultUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>)
                     break
                 }
                 default: {
@@ -72,27 +74,26 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
 
             if (!isNil(quickStreamingUpdate)) {
                 newSession = chatSessionUtils.streamChunk(newSession, quickStreamingUpdate)
-                await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, {
-                    userId: data.session.userId,
-                    event: WebsocketClientEvent.AGENT_STREAMING_UPDATE,
+                await this.emitProgress(requestId, {
+                    event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
                     data: quickStreamingUpdate,
                 })
             }
         }
-        const chatSessionEnded: EmitAgentStreamingEndedRequest = {
-            userId: data.session.userId,
-            event: WebsocketClientEvent.AGENT_STREAMING_ENDED,
-            data: {
-                session: newSession,
-            },
-        }
-        await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, chatSessionEnded)
+   
+        await this.emitProgress(requestId, {
+            event: AgentStreamingEvent.AGENT_STREAMING_ENDED,
+            data: newSession,
+        })
     },
+    emitProgress: async (requestId: string, update: AgentStreamingUpdate) => {
+        await pubsub.publish(`agent-response:${requestId}`, JSON.stringify(update))
+    }
 })
 
-function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolName: string, input: Record<string, any> | undefined, status: 'loading' | 'ready' | 'completed' | 'error') {
-    const quickStreamingUpdate: ChatSessionUpdate = {
-        sessionId: session.id,
+function publishToolCallUpdate(requestId: string, toolcallId: string, toolName: string, input: Record<string, any> | undefined, status: 'loading' | 'ready' | 'completed' | 'error') {
+    const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
+        sessionId: requestId,
         part: {
             type: 'tool-call',
             toolCallId: toolcallId,
@@ -104,9 +105,9 @@ function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolNam
     return quickStreamingUpdate
 }
 
-function publishToolResultUpdate(session: ChatSession, toolcallId: string, toolName: string, output: Record<string, any>) {
-    const quickStreamingUpdate: ChatSessionUpdate = {
-        sessionId: session.id,
+function publishToolResultUpdate(requestId: string, toolcallId: string, toolName: string, output: Record<string, any>) {
+    const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
+        sessionId: requestId, // should be session id not request id
         part: {
             type: 'tool-result',
             toolCallId: toolcallId,
@@ -117,9 +118,9 @@ function publishToolResultUpdate(session: ChatSession, toolcallId: string, toolN
     return quickStreamingUpdate
 }
 
-function publishTextUpdate(session: ChatSession, text: string, isStreaming: boolean) {
-    const quickStreamingUpdate: ChatSessionUpdate = {
-        sessionId: session.id,
+function publishTextUpdate(requestId: string, text: string, isStreaming: boolean) {
+    const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
+        sessionId: requestId,// should be session id not request id
         part: {
             type: 'text',
             message: text,

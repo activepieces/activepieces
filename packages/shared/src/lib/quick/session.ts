@@ -1,19 +1,18 @@
 import { Static, Type } from '@sinclair/typebox'
-import { AgentTool } from '../agents'
+import { AgentStreamingUpdateProgressData, ExecuteAgentData } from '../generic-agents/dto'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
-import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage, UserConversationMessage } from './message'
+import { AssistantConversationMessage, ConversationMessage, UserConversationMessage } from './message'
 
 export const DEFAULT_CHAT_MODEL = 'openai/gpt-5.1' 
 
-export const ChatSession = Type.Object({
-    ...BaseModelSchema,
-    userId: ApId,
-    conversation: Type.Array(ConversationMessage),
-    modelId: Type.String(),
-    state: Type.Record(Type.String(), Type.Any()),
-    tools: Type.Array(AgentTool),
-})
+export const ChatSession = Type.Composite([
+    Type.Object({
+        ...BaseModelSchema,
+        userId: ApId,
+    }),
+    ExecuteAgentData,
+])
 
 export type ChatSession = Static<typeof ChatSession>
 
@@ -25,22 +24,11 @@ export const UpdateChatSessionRequest = Type.Object({
 })
 export type UpdateChatSessionRequest = Static<typeof UpdateChatSessionRequest>
 
-export const ChatSessionUpdate = Type.Object({
-    sessionId: Type.String(),
-    part: AssistantConversationContent,
-})
-export type ChatSessionUpdate = Static<typeof ChatSessionUpdate>
-
-export const ChatSessionEnded = Type.Object({
-    sessionId: Type.String(),
-})
-
-export type ChatSessionEnded = Static<typeof ChatSessionEnded>
 
 export const chatSessionUtils = {
-    streamChunk(session: ChatSession, chunk: ChatSessionUpdate): ChatSession {
-        const newConvo: ConversationMessage[] = [...session.conversation]
-        const lastMessageIsAssistant = session.conversation.length > 0 && newConvo[newConvo.length - 1].role === 'assistant'
+    streamChunk(session: ExecuteAgentData, chunk: AgentStreamingUpdateProgressData): ExecuteAgentData {
+        const newConvo: ConversationMessage[] = [...(session.conversation ?? [])]
+        const lastMessageIsAssistant = session.conversation && session.conversation.length > 0 && newConvo[newConvo.length - 1].role === 'assistant'
         if (!lastMessageIsAssistant) {
             newConvo.push({
                 role: 'assistant',
@@ -91,7 +79,7 @@ export const chatSessionUtils = {
     addEmptyAssistantMessage(session: ChatSession): ChatSession {
         return {
             ...session,
-            conversation: [...session.conversation, {
+            conversation: [...(session.conversation ?? []), {
                 role: 'assistant',
                 parts: [],
             }],
@@ -134,7 +122,7 @@ export const chatSessionUtils = {
         
         return {
             ...session,
-            conversation: [...session.conversation, {
+            conversation: [...(session.conversation ?? []), {
                 role: 'user',
                 content,
             }],
