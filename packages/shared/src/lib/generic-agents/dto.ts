@@ -1,7 +1,7 @@
 import { Static, Type } from "@sinclair/typebox"
 import { AgentTool } from "../agents/tools"
 import { DiscriminatedUnion } from "../common"
-import { AssistantConversationContent, ConversationMessage } from "../quick/message"
+import { AssistantConversationContent, ConversationMessage } from "./message"
 
 export const ExecuteAgentData = Type.Object({
   prompt: Type.String(),

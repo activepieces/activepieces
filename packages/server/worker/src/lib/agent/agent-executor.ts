@@ -1,4 +1,4 @@
-import { AgentStreamingEvent, AgentStreamingUpdate, chatSessionUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData } from '@activepieces/shared'
+import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
 import { ModelMessage, stepCountIs, streamText, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -65,7 +65,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                     quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed', undefined, chunk.output as Record<string, any>)
                     // First mark the tool call as completed
                     const toolCompletedUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed')
-                    newSession = chatSessionUtils.streamChunk(newSession, toolCompletedUpdate)
+                    newSession = genericAgentUtils.streamChunk(newSession, toolCompletedUpdate)
                     await this.emitProgress(requestId, {
                         event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
                         data: toolCompletedUpdate,
@@ -80,7 +80,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             }
 
             if (!isNil(quickStreamingUpdate)) {
-                newSession = chatSessionUtils.streamChunk(newSession, quickStreamingUpdate)
+                newSession = genericAgentUtils.streamChunk(newSession, quickStreamingUpdate)
                 await this.emitProgress(requestId, {
                     event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
                     data: quickStreamingUpdate,

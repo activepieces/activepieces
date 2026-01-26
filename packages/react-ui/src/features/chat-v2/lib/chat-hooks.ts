@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { useSocket } from '@/components/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import {
@@ -8,13 +7,12 @@ import {
   AgentStreamingUpdate,
   ChatFileAttachment,
   ChatSession,
-  chatSessionUtils,
-  WebsocketClientEvent,
+  ExecuteAgentData,
+  genericAgentUtils,
 } from '@activepieces/shared';
 
 import { UploadingFile } from '../prompt-input/file-input-preview';
 import { readStream } from '@/lib/read-stream';
-import { AxiosResponse } from 'axios';
 
 export const uploadFile = async (file: File): Promise<string | undefined> => {
   const formData = new FormData();
@@ -41,9 +39,15 @@ const convertUploadingFilesToAttachments = (
     }));
 };
 
+const updateChatSession = (session: ChatSession, update: ExecuteAgentData): ChatSession => {
+  return {
+    ...session,
+    ...update,
+  }
+}
+
 export const chatHooks = {
   useSendMessage(setSession: (session: ChatSession) => void) {
-    const socket = useSocket();
     return useMutation<
       ChatSession,
       Error,
@@ -68,13 +72,13 @@ export const chatHooks = {
           type: file.mimeType,
           url: file.url,
         }));
-        currentSession = chatSessionUtils.addUserMessage(
+        currentSession = updateChatSession(currentSession, genericAgentUtils.addUserMessage(
           currentSession,
           request.message,
           filesForDisplay,
-        );
-        currentSession =
-          chatSessionUtils.addEmptyAssistantMessage(currentSession);
+        ));
+        currentSession = updateChatSession(currentSession, genericAgentUtils.addEmptyAssistantMessage(currentSession));
+
         setSession(currentSession);
         const response = await api.post(
           `/v1/chat-sessions/${currentSession.id}/chat`,
@@ -90,12 +94,10 @@ export const chatHooks = {
           readStream({
             response: response as { body: ReadableStream<Uint8Array> },
             onChunk: (chunk) => {
-              console.log("received chunk", chunk);
               try {
                 const messageJson = JSON.parse(chunk) as AgentStreamingUpdate
                 if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_UPDATE) {
-                  // @ts-ignore
-                  currentSession = chatSessionUtils.streamChunk(currentSession, messageJson.data);
+                  currentSession = updateChatSession(currentSession, genericAgentUtils.streamChunk(currentSession, messageJson.data));
                   setSession(currentSession);
                 } else if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_ENDED) {
                   setSession(currentSession);

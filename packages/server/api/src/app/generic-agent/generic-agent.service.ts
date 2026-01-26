@@ -5,7 +5,7 @@ import { JobType } from "../workers/queue/queue-manager"
 import { pubsub } from "../helper/pubsub"
 
 export const genericAgentService = (log: FastifyBaseLogger) => ({
-    async executeAgent(params: ExecuteAgentRequest & { platformId: PlatformId} ): Promise<string> {
+    async executeAgent(params: ExecuteAgentRequest & { platformId: PlatformId } ): Promise<string> {
         const requestId = apId()
         const jobData: ExecuteAgentJobData = {
             platformId: params.platformId,

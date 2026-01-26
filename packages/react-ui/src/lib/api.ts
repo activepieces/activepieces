@@ -67,7 +67,7 @@ function request<TResponse>(
         method: config.method ?? 'GET',
         body: config.data ? JSON.stringify(config.data) : undefined,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": config.headers?.['Content-Type'] ?? "application/json",
           ...(token ? { "Authorization": token } : {}),
         },
       }) as Promise<TResponse>;

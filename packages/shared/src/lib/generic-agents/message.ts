@@ -1,12 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 
-export const ChatFileAttachment = Type.Object({
-    name: Type.String(),
-    mimeType: Type.String(),
-    url: Type.String(),
-})
-export type ChatFileAttachment = Static<typeof ChatFileAttachment>
-
 export const UserTextConversationMessage = Type.Object({
     type: Type.Literal('text'),
     message: Type.String(),
@@ -78,11 +71,4 @@ export const ConversationMessage = Type.Union([
 ])
 
 export type ConversationMessage = Static<typeof ConversationMessage>
-
-export const ChatWithQuickRequest = Type.Object({
-    message: Type.String(),
-    files: Type.Optional(Type.Array(ChatFileAttachment)),
-})
-
-export type ChatWithQuickRequest = Static<typeof ChatWithQuickRequest>
 

@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ChatFileAttachment, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, apId, ChatFileAttachment, ChatSession, DEFAULT_CHAT_MODEL, ErrorCode, genericAgentUtils, isNil, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
@@ -31,7 +31,10 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
             type: file.mimeType,
             url: file.url,
         }))
-        const newSession = chatSessionUtils.addUserMessage(session, params.message, filesForMessage)
+        const newSession: ChatSession = {
+            ...session,
+            ...genericAgentUtils.addUserMessage(session, params.message, filesForMessage),
+        }
         await chatSessionRepo().save(newSession)
         return await genericAgentService(log).executeAgent({
             projectId: project.id,
