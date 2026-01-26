@@ -54,21 +54,16 @@ export const createDocumentBasedOnTemplate = createAction({
 
     const requests = [];
 
-    // Helper function to escape special regex characters
-    const escapeRegex = (str: string) => {
-      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    };
-
     for (const key in values) {
       const value = values[key];
-      // Escape special characters in placeholder_format before replacing KEY
-      const escapedFormat = escapeRegex(placeholder_format);
-      const new_key = escapedFormat.replace('KEY', key);
+      // Replace 'KEY' with the actual key name in the placeholder format
+      // This creates the exact text to search for in the document (e.g., {{username}}, [[email]], etc.)
+      const placeholderText = placeholder_format.replace('KEY', key);
 
       requests.push({
         replaceAllText: {
           containsText: {
-            text: new_key,
+            text: placeholderText,
             matchCase: true,
           },
           replaceText: String(value),
