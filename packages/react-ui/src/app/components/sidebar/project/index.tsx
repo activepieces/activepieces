@@ -7,12 +7,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { getProjectName } from '@/hooks/project-collection';
 import { cn } from '@/lib/utils';
 import {
@@ -35,6 +29,7 @@ const ProjectSideBarItem = ({
   handleProjectSelect,
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
+
   const projectAvatar =
     project.type === ProjectType.TEAM ? (
       <Avatar
@@ -52,25 +47,16 @@ const ProjectSideBarItem = ({
   return (
     <SidebarMenuItem>
       {state === 'collapsed' ? (
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleProjectSelect(project.id)}
-                className={cn('relative flex items-center justify-center', {
-                  '!bg-sidebar-accent': isCurrentProject,
-                })}
-              >
-                {projectAvatar}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="center">
-              {project.displayName}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleProjectSelect(project.id)}
+          className={cn('relative flex items-center justify-center', {
+            '!bg-sidebar-accent': isCurrentProject,
+          })}
+        >
+          {projectAvatar}
+        </Button>
       ) : (
         <SidebarMenuButton
           asChild
@@ -88,6 +74,7 @@ const ProjectSideBarItem = ({
                 icon={project.icon}
                 maxLengthToNotShowTooltip={28}
                 projectType={project.type}
+                inSidebar={true}
               />
             </div>
           </div>
