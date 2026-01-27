@@ -1777,6 +1777,9 @@
       ],
       "@activepieces/piece-zeplin": [
         "packages/pieces/community/zeplin/src/index.ts"
+      ],
+      "@activepieces/piece-google-search": [
+        "packages/pieces/community/google-search/src/index.ts"
       ]
     },
     "resolveJsonModule": true
