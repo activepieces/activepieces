@@ -26,7 +26,7 @@ export const sandboxSockerHandler = (log: FastifyBaseLogger) => ({
         })
     },
     uploadRunLogs: async (request: UploadRunLogsRequest): Promise<void> => {
-        const { runId, projectId, platformId, flowId, workerHandlerId, flowVersionId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse, pauseMetadata, stepsCount } = request
+        const { runId, projectId, workerHandlerId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse, pauseMetadata, stepsCount } = request
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
             await publishEngineResponse(log, {

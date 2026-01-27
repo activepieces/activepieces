@@ -110,9 +110,6 @@ export const progressService = {
     
             const request: UploadRunLogsRequest = {
                 runId: engineConstants.flowRunId,
-                platformId: engineConstants.platformId,
-                flowId: engineConstants.flowId,
-                flowVersionId: engineConstants.flowVersionId,
                 projectId: engineConstants.projectId,
                 workerHandlerId: engineConstants.serverHandlerId ?? null,
                 httpRequestId: engineConstants.httpRequestId ?? null,
