@@ -1,0 +1,17 @@
+{
+  "Enter your DigitalPilot API key": "Introduzca su clave de API DigitalPilot",
+  "Add Target Account": "Añadir cuenta de destino",
+  "Remove Target Account": "Remove Target Account",
+  "Add a target account to a list": "Añadir una cuenta de destino a una lista",
+  "Remove a target account from a list": "Eliminar una cuenta de destino de una lista",
+  "Tag ID": "Etiqueta ID",
+  "List ID": "ID de lista",
+  "Domain": "Dominio",
+  "The ID of the tag": "El ID de la etiqueta",
+  "The ID of the list": "El ID de la lista",
+  "Account domain name (e.g., example.com)": "Nombre de dominio de la cuenta (por ejemplo, ejemplo.com)",
+  "New High Intent Visit": "Nueva visita de alta intención",
+  "New Target Account Visit": "Nueva visita de cuenta de destino",
+  "Triggers when a business exhibits high intent behavior on your website": "Dispara cuando una empresa exhibe un alto comportamiento de intenciones en su sitio web",
+  "Triggers when a business you've identified as a high-priority target account browses your site": "Dispara cuando una empresa que ha identificado como una cuenta objetivo de alta prioridad navega por su sitio"
+}

@@ -15,7 +15,6 @@ export const DashboardPageHeader = ({
       description={description}
       rightContent={children}
       className="min-w-full z-30 -mx-4"
-      hideSidebarTrigger={true}
     />
   );
 };

@@ -50,7 +50,7 @@ export const progressService = {
                     created: dayjs().toISOString(),
                     updated: dayjs().toISOString(),
                     status: flowExecutorContext.verdict.status,
-                    environment: RunEnvironment.TESTING,
+                    environment: engineConstants.runEnvironment ?? RunEnvironment.TESTING,
                     failParentOnFailure: false,
                     triggeredBy: engineConstants.triggerPieceName,
                     tags: Array.from(flowExecutorContext.tags),

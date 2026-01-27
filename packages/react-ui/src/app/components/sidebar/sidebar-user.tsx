@@ -27,12 +27,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
 import {
@@ -73,26 +67,17 @@ export function SidebarUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu modal>
+        <DropdownMenu modal open={isCollapsed ? false : undefined}>
           {isCollapsed ? (
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger className="flex items-center justify-center size-9 rounded-md hover:bg-accent cursor-pointer">
-                    <UserAvatar
-                      name={user.firstName + ' ' + user.lastName}
-                      email={user.email}
-                      imageUrl={user.imageUrl}
-                      size={28}
-                      disableTooltip={true}
-                    />
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="right" align="center">
-                  {user.firstName + ' ' + user.lastName}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="flex items-center p-2 justify-center size-12">
+              <UserAvatar
+                name={user.firstName + ' ' + user.lastName}
+                email={user.email}
+                imageUrl={user.imageUrl}
+                size={32}
+                disableTooltip={true}
+              />
+            </div>
           ) : (
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
@@ -118,10 +103,10 @@ export function SidebarUser() {
             </DropdownMenuTrigger>
           )}
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side="right"
-            align="end"
-            sideOffset={4}
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-[9999999]"
+            side="top"
+            align="start"
+            sideOffset={10}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
