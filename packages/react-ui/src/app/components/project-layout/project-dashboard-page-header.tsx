@@ -3,6 +3,7 @@ import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -180,6 +181,7 @@ export const ProjectDashboardPageHeader = ({
         rightContent={rightContent}
         className="min-w-full"
       />
+      <ApSidebarToggle />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
         open={settingsOpen}

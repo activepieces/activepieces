@@ -68,12 +68,10 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:px-2! px-2! data-[state=open]:text-sidebar-accent-foreground"
-            >
+          <DropdownMenuTrigger className="w-full">
+            <SidebarMenuButton>
               <UserAvatar
+                className={`scale-150`}
                 name={user.firstName + ' ' + user.lastName}
                 email={user.email}
                 imageUrl={user.imageUrl}

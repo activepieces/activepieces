@@ -65,7 +65,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuTrigger className="w-full">{children}</DropdownMenuTrigger>
       {dropdownContent}
     </DropdownMenu>
   );

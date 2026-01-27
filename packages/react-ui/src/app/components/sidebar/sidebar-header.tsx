@@ -1,10 +1,9 @@
 import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { buttonVariants } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   SidebarHeader,
   SidebarMenu,
@@ -21,11 +20,12 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const branding = flagsHooks.useWebsiteBranding();
-
+  const navigate = useNavigate();
   return (
-    <Link
-      to={linkTo || '/'}
-      className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
+    <SidebarMenuButton
+      size="lg"
+      onClick={() => navigate(linkTo || '/')}
+      className="w-fit"
     >
       <img
         src={branding.logos.logoIconUrl}
@@ -33,7 +33,7 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
         className="h-5 w-5 object-contain"
         draggable={false}
       />
-    </Link>
+    </SidebarMenuButton>
   );
 }
 
@@ -50,7 +50,7 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
       <img
         src={branding.logos.fullLogoUrl}
         alt={t('home')}
-        className="h-9 w-full object-contain"
+        className="object-contain border"
         draggable={false}
       />
     </Link>
@@ -65,15 +65,13 @@ export const AppSidebarHeader = () => {
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
+  const branding = flagsHooks.useWebsiteBranding();
 
   if (!showSwitcher) {
     return (
-      <SidebarHeader
-        className="relative w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <SidebarMenu className="w-full">
-          <SidebarMenuItem className="w-full flex items-center justify-center">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
             {state === 'collapsed' ? (
               <SidebarLogoCollapsed />
             ) : (
@@ -86,26 +84,28 @@ export const AppSidebarHeader = () => {
   }
 
   return (
-    <SidebarHeader className="relative" onClick={(e) => e.stopPropagation()}>
+    <SidebarHeader>
       <SidebarMenu>
-        <SidebarMenuItem
-          className={cn('flex items-center justify-start gap-1 pl-2')}
-        >
+        <SidebarMenuItem>
           {state === 'collapsed' ? (
             <SidebarLogoCollapsed linkTo={defaultRoute} />
           ) : (
-            <div className="flex items-center gap-2 w-full">
-              <SidebarLogoCollapsed linkTo={defaultRoute} />
-              <Separator orientation="vertical" className="h-4" />
-              <PlatformSwitcher>
-                <SidebarMenuButton className="px-2 h-9 gap-3 flex-1 min-w-0">
-                  <h1 className="flex-1 min-w-0 truncate font-semibold">
-                    {currentPlatform?.name}
-                  </h1>
-                  <ChevronsUpDown className="ml-auto size-4 shrink-0" />
-                </SidebarMenuButton>
-              </PlatformSwitcher>
-            </div>
+            <PlatformSwitcher>
+              <SidebarMenuButton>
+                {/* <div className="flex aspect-square size-8 items-center justify-center border rounded-md"> */}
+                <img
+                  src={branding.logos.logoIconUrl}
+                  alt={currentPlatform?.name ?? t('platform')}
+                  className="size-4 object-contain"
+                  draggable={false}
+                />
+                {/* </div> */}
+                <span className="truncate font-medium flex-1 text-left text-sm">
+                  {currentPlatform?.name ?? t('platform')}
+                </span>
+                <ChevronsUpDown className="ml-auto size-3! shrink-0" />
+              </SidebarMenuButton>
+            </PlatformSwitcher>
           )}
         </SidebarMenuItem>
       </SidebarMenu>
