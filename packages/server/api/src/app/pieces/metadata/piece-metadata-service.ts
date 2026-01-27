@@ -37,19 +37,18 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             await localPieceCache(log).setup()
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
-            const originalPieces = await localPieceCache(log).getList({
+            const translatedPieces = await localPieceCache(log).getList({
                 platformId: params.platformId,
+                locale: params.locale,
             })
-            const piecesWithTags = await enrichTags(params.platformId, originalPieces, params.includeTags)
-            const locale = params.locale ?? LocalesEnum.ENGLISH
-            const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
+            const piecesWithTags = await enrichTags(params.platformId, translatedPieces, params.includeTags)
             const filteredPieces = await pieceListUtils.filterPieces({
                 ...params,
-                pieces: translatedPieces,
+                pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
             })
 
-            return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
+            return toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
             const registry = await localPieceCache(log).getRegistry({ release: params.release })
@@ -94,7 +93,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 })
             }
             const resolvedLocale = locale ?? LocalesEnum.ENGLISH
-            return pieceTranslation.translatePiece<PieceMetadataModel>(piece, resolvedLocale)
+            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale: resolvedLocale, mutate: true })
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({

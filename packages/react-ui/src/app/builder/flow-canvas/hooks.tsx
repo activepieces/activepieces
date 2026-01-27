@@ -3,7 +3,7 @@ import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
-import { usePrevious } from 'react-use';
+import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -60,6 +60,8 @@ const useListenToExistingRun = () => {
     state.setRun,
     state.flowVersion,
   ]);
+  const location = useLocation();
+  const inRunsPage = location.pathname?.includes('/runs');
   useQuery({
     queryKey: ['refetched-run', run?.id],
     queryFn: async () => {
@@ -75,7 +77,8 @@ const useListenToExistingRun = () => {
       !isFlowRunStateTerminal({
         status: run.status,
         ignoreInternalError: false,
-      }),
+      }) &&
+      inRunsPage,
     refetchInterval: 5000,
   });
 };

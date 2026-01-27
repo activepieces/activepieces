@@ -319,10 +319,10 @@ function traverseStep(
   const stepNeedsTesting =
     isNil(step.settings.sampleData?.lastTestDate) &&
     (step.type !== FlowTriggerType.PIECE ||
-      !pieceSelectorUtils.isManualTrigger(
-        step.settings.pieceName,
-        step.settings.triggerName ?? '',
-      ));
+      !pieceSelectorUtils.isManualTrigger({
+        pieceName: step.settings.pieceName,
+        triggerName: step.settings.triggerName ?? '',
+      }));
   if (stepNeedsTesting) {
     return buildTestStepNode(displayName, step.name);
   }
