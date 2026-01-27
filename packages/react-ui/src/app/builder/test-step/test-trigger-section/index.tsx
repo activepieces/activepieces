@@ -184,6 +184,7 @@ const TestTriggerSection = React.memo(
               <TestSampleDataViewer
                 onRetest={onTest}
                 isValid={isValid}
+                consoleLogs={null}
                 isTesting={isPollingTesting}
                 sampleData={sampleData}
                 sampleDataInput={sampleDataInput ?? null}

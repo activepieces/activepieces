@@ -56,7 +56,7 @@ const TestStepSectionImplementation = React.memo(
         state.outputSampleData[currentStep.name],
         state.inputSampleData[currentStep.name],
         state.errorLogs[currentStep.name],
-        state.consoleLogs[currentStep.name],
+        currentStep.type === FlowActionType.CODE? state.consoleLogs[currentStep.name] : null,
         state.isStepBeingTested(currentStep.name),
       ];
     });
