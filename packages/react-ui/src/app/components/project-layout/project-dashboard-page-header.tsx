@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -101,6 +102,8 @@ export const ProjectDashboardPageHeader = ({
 
   const titleContent = (
     <div className="flex items-center gap-2">
+      <ApSidebarToggle />
+      <Separator orientation="vertical" className="h-5 mr-2" />
       <ApProjectDisplay
         title={getProjectName(project)}
         maxLengthToNotShowTooltip={30}
@@ -181,7 +184,6 @@ export const ProjectDashboardPageHeader = ({
         rightContent={rightContent}
         className="min-w-full"
       />
-      <ApSidebarToggle />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
         open={settingsOpen}

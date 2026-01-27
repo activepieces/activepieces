@@ -29,8 +29,6 @@ const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
-let persistedHoverState = false;
-
 type SidebarContextProps = {
   state: 'expanded' | 'collapsed';
   open: boolean;
@@ -40,6 +38,7 @@ type SidebarContextProps = {
   isMobile: boolean;
   toggleSidebar: () => void;
   hoverMode: boolean;
+  isHoverExpanded: boolean;
   setHovered: (hovered: boolean) => void;
 };
 
@@ -71,50 +70,40 @@ function SidebarProvider({
 }) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
-  const [isHovered, setIsHovered] = React.useState(
-    hoverMode ? persistedHoverState : false,
-  );
+  const [isHovered, setIsHovered] = React.useState(false);
 
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
-  const open = hoverMode ? isHovered : openProp ?? _open;
+  const persistedOpen = openProp ?? _open;
+
+  const isHoverExpanded = hoverMode && !persistedOpen && isHovered;
+  const open = persistedOpen || isHoverExpanded;
+
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
-      if (hoverMode) return;
-      const openState = typeof value === 'function' ? value(open) : value;
+      const openState =
+        typeof value === 'function' ? value(persistedOpen) : value;
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
         _setOpen(openState);
       }
 
-      // This sets the cookie to keep the sidebar state.
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
-    [setOpenProp, open, hoverMode],
+    [setOpenProp, persistedOpen],
   );
 
-  const setHovered = React.useCallback(
-    (hovered: boolean) => {
-      if (hoverMode) {
-        persistedHoverState = hovered;
-      }
-      setIsHovered(hovered);
-    },
-    [hoverMode],
-  );
+  const setHovered = React.useCallback((hovered: boolean) => {
+    setIsHovered(hovered);
+  }, []);
 
-  // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
-    if (hoverMode) return;
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-  }, [isMobile, setOpen, setOpenMobile, hoverMode]);
+  }, [isMobile, setOpen, setOpenMobile]);
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (hoverMode) return;
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
@@ -126,10 +115,8 @@ function SidebarProvider({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleSidebar, hoverMode]);
+  }, [toggleSidebar]);
 
-  // We add a state so that we can do data-state="expanded" or "collapsed".
-  // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? 'expanded' : 'collapsed';
 
   const contextValue = React.useMemo<SidebarContextProps>(
@@ -142,6 +129,7 @@ function SidebarProvider({
       setOpenMobile,
       toggleSidebar,
       hoverMode,
+      isHoverExpanded,
       setHovered,
     }),
     [
@@ -153,6 +141,7 @@ function SidebarProvider({
       setOpenMobile,
       toggleSidebar,
       hoverMode,
+      isHoverExpanded,
       setHovered,
     ],
   );
@@ -199,6 +188,7 @@ function Sidebar({
     setOpenMobile,
     setOpen,
     hoverMode,
+    isHoverExpanded,
     setHovered,
   } = useSidebar();
 
@@ -260,13 +250,13 @@ function Sidebar({
           'transition-[width] duration-200 ease-linear relative w-(--sidebar-width) bg-transparent',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
-          hoverMode
-            ? variant === 'floating' || variant === 'inset'
-              ? 'w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
-              : 'w-(--sidebar-width-icon)'
-            : variant === 'floating' || variant === 'inset'
+          variant === 'floating' || variant === 'inset'
             ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
+          isHoverExpanded &&
+            (variant === 'floating' || variant === 'inset'
+              ? 'w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
+              : 'w-(--sidebar-width-icon)'),
         )}
       />
       <div
@@ -276,7 +266,6 @@ function Sidebar({
           side === 'left'
             ? 'left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]'
             : 'right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]',
-          // Adjust the padding for floating and inset variants.
           variant === 'floating' || variant === 'inset'
             ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l',
@@ -284,7 +273,7 @@ function Sidebar({
             state === 'collapsed' &&
             collapsible === 'icon' &&
             '[&_*]:!cursor-nesw-resize [&_button]:!cursor-pointer [&_button]:relative [&_button]:z-20 [&_button_*]:!cursor-pointer [&_a]:!cursor-pointer [&_a]:relative [&_a]:z-20 [&_a_*]:!cursor-pointer [&_[role=button]]:!cursor-pointer [&_[role=button]]:relative [&_[role=button]]:z-20 [&_[role=button]_*]:!cursor-pointer [&_[data-sidebar=menu-button]]:!cursor-pointer [&_[data-sidebar=menu-button]]:relative [&_[data-sidebar=menu-button]]:z-20 [&_[data-sidebar=menu-button]_*]:!cursor-pointer cursor-nesw-resize',
-          hoverMode && state === 'expanded' && 'z-20',
+          isHoverExpanded && 'z-55',
           className,
         )}
         {...props}
@@ -298,9 +287,9 @@ function Sidebar({
               state === 'collapsed' &&
               collapsible === 'icon' &&
               'relative',
+            isHoverExpanded && 'shadow-[4px_0_12px_rgba(0,0,0,0.1)]',
           )}
         >
-          {/* Clickable overlay to expand collapsed sidebar */}
           {!hoverMode && state === 'collapsed' && collapsible === 'icon' && (
             <div
               className="absolute inset-0 !cursor-nesw-resize z-10"

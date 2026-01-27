@@ -1,9 +1,8 @@
 import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { buttonVariants } from '@/components/ui/button';
 import {
   SidebarHeader,
   SidebarMenu,
@@ -15,7 +14,7 @@ import { PlatformSwitcher } from '@/features/projects/components/platform-switch
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn, determineDefaultRoute } from '@/lib/utils';
+import { determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
@@ -23,9 +22,8 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const navigate = useNavigate();
   return (
     <SidebarMenuButton
-      size="lg"
       onClick={() => navigate(linkTo || '/')}
-      className="w-fit"
+      className="w-fit h-10! group-data-[collapsible=icon]:h-10!"
     >
       <img
         src={branding.logos.logoIconUrl}
@@ -39,13 +37,12 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
 
 function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
   const branding = flagsHooks.useWebsiteBranding();
+  const navigate = useNavigate();
+
   return (
-    <Link
-      to={linkTo || '/'}
-      className={cn(
-        buttonVariants({ variant: 'ghost', size: 'icon' }),
-        'w-full flex items-center justify-start px-2 h-9',
-      )}
+    <SidebarMenuButton
+      onClick={() => navigate(linkTo || '/')}
+      className="h-10! group-data-[collapsible=icon]:h-10!"
     >
       <img
         src={branding.logos.fullLogoUrl}
@@ -53,7 +50,7 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
         className="object-contain border"
         draggable={false}
       />
-    </Link>
+    </SidebarMenuButton>
   );
 }
 
@@ -91,15 +88,13 @@ export const AppSidebarHeader = () => {
             <SidebarLogoCollapsed linkTo={defaultRoute} />
           ) : (
             <PlatformSwitcher>
-              <SidebarMenuButton>
-                {/* <div className="flex aspect-square size-8 items-center justify-center border rounded-md"> */}
+              <SidebarMenuButton className="h-10! group-data-[collapsible=icon]:h-10!">
                 <img
                   src={branding.logos.logoIconUrl}
                   alt={currentPlatform?.name ?? t('platform')}
                   className="size-4 object-contain"
                   draggable={false}
                 />
-                {/* </div> */}
                 <span className="truncate font-medium flex-1 text-left text-sm">
                   {currentPlatform?.name ?? t('platform')}
                 </span>

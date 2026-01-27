@@ -341,9 +341,7 @@ export function ProjectDashboardSidebar() {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          {state === 'expanded' && (
-            <DelayedSidebarUsageLimits />
-          )}
+          {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

@@ -69,7 +69,7 @@ export function SidebarUser() {
       <SidebarMenuItem>
         <DropdownMenu modal>
           <DropdownMenuTrigger className="w-full">
-            <SidebarMenuButton>
+            <SidebarMenuButton className="h-10! group-data-[collapsible=icon]:h-10!">
               <UserAvatar
                 className={`scale-150`}
                 name={user.firstName + ' ' + user.lastName}
