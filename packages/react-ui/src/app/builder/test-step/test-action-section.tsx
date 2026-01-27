@@ -54,7 +54,7 @@ const TestStepSectionImplementation = React.memo(
       });
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
+    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage) || !isNil(sampleData);
 
     const onTestButtonClick = async () => {
       if (isReturnResponseAndWaitForWebhook(currentStep)) {

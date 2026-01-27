@@ -163,6 +163,7 @@ export const TestSampleDataViewer = React.memo(
               <div className="text-md flex gap-1 items-center">
                 {(() => {
                   if (isRunAgent(currentStep)) {
+                    console.log(sampleData)
                     const isFailed =
                       (sampleData as AgentResult).status === AgentTaskStatus.FAILED;
 

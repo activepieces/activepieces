@@ -144,24 +144,24 @@ export const createRunState = (
         request: copiedAction,
       })
       const handleStepFinished = (response: StepRunResponse) => {
-        // if (response.runId === runId) {
-        //    get().removeStepTestListener(runId);
-        //    if(response.success) {
-        //    get().updateSampleData({
-        //       stepName: stepName,
-        //       output: response.output,
-        //       input: response.input,
-        //     });
-        //   }
-        //   get().setErrorLogs(stepName, response.standardError === '' ? null : response.standardError);
-        //   get().setConsoleLogs(stepName, response.standardOutput === '' ? null : response.standardOutput);
-        //   get().applyOperation({
-        //     type: FlowOperationType.CLEAR_STEP_TEST_RUN_ID,
-        //     request: {
-        //       name: stepName,
-        //     },
-        //   });
-        // }
+        if (response.runId === runId) {
+           get().removeStepTestListener(runId);
+           if(response.success) {
+           get().updateSampleData({
+              stepName: stepName,
+              output: response.output,
+              input: response.input,
+            });
+          }
+          get().setErrorLogs(stepName, response.standardError === '' ? null : response.standardError);
+          get().setConsoleLogs(stepName, response.standardOutput === '' ? null : response.standardOutput);
+          get().applyOperation({
+            type: FlowOperationType.CLEAR_STEP_TEST_RUN_ID,
+            request: {
+              name: stepName,
+            },
+          });
+        }
       };
 
       const handleError = (error: any) => {
@@ -174,7 +174,8 @@ export const createRunState = (
       socket.on('error', handleError);
 
         const handleOnProgress = (response: StepRunResponse) => {
-          if (response.runId === runId) {
+          if (response.runId === runId && response.output) {
+            console.log(`-----response`, response)
             get().updateSampleData({
               stepName: response.stepName,
               output: response.output,

@@ -19,11 +19,13 @@ import {
   TriggerEventWithPayload,
   isNil,
   TriggerTestStrategy,
+  AgentTaskStatus,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
 import { testStepUtils } from './test-step-utils';
+import { isRunAgent } from '../agent-test-step';
 
 export const testStepHooks = {
   useSimulateTrigger: ({
@@ -184,7 +186,7 @@ export const testStepHooks = {
   }: {
     currentStep: FlowAction;
   }) => {
-    const { flowVersionId, addActionTestListener } = useRequiredStateToTestSteps().builderState;
+    const { flowVersionId, addActionTestListener,updateSampleData } = useRequiredStateToTestSteps().builderState;
     
     return useMutation<{runId:string}, Error, TestActionMutationParams>({
       mutationFn: async () => {
@@ -199,6 +201,18 @@ export const testStepHooks = {
       },
       onSuccess: (testStepResponse: {runId:string}) => {
         addActionTestListener({runId: testStepResponse.runId, stepName: currentStep.name});
+        if(isRunAgent(currentStep)) {
+          const defaultAgentOutput = {
+            status: AgentTaskStatus.IN_PROGRESS,
+            steps: [],
+            prompt: '',
+          };
+          updateSampleData({
+            stepName: currentStep.name,
+            output: defaultAgentOutput,
+            onlyLocally:true
+          });
+        }
       },
       onError: () => {
         internalErrorToast();
