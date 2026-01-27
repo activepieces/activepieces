@@ -1,29 +1,12 @@
-
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { ziplinAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
-import { project_idProp } from '../common/props';
-
-const TRIGGER_KEY = '_new_screen_trigger';
-
-interface WebhookInformation {
-  webhookId: string;
-  projectId: string;
-}
 
 export const newScreen = createTrigger({
   auth: ziplinAuth,
   name: 'newScreen',
   displayName: 'New Screen',
   description: 'Triggered when a new screen is created in a project',
-  props: {
-    projectId: project_idProp,
-  },
+  props: {},
   sampleData: {
     event: 'project.screen',
     action: 'created',
@@ -99,35 +82,10 @@ export const newScreen = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { projectId } = context.propsValue;
-
-    const body = {
-      url: context.webhookUrl,
-      event: 'screen.created',
-    };
-
-    const response = (await makeRequest<any>(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      `/projects/${projectId}/webhooks`,
-      body
-    )) as { id: string };
-
-    await context.store?.put<WebhookInformation>(TRIGGER_KEY, {
-      webhookId: response.id,
-      projectId,
-    });
+    // add webbhook  on the dashboard
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(TRIGGER_KEY);
-
-    if (response !== null && response !== undefined) {
-      await makeRequest(
-        context.auth.secret_text,
-        HttpMethod.DELETE,
-        `/projects/${response.projectId}/webhooks/${response.webhookId}`
-      );
-    }
+    // No-op
   },
   async run(context) {
     return [context.payload.body];

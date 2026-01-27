@@ -8,7 +8,7 @@ export const project_idProp = Property.Dropdown({
   displayName: 'Project',
   description: 'Select the Zeplin project',
   required: true,
-  refreshers: [''],
+  refreshers: [],
   options: async ({ auth }) => {
     if (!auth) {
       return {

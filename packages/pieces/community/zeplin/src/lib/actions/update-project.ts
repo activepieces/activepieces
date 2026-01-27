@@ -43,6 +43,7 @@ export const updateProject = createAction({
 
     return {
       success: true,
+      message: "Project updated",
       data: response,
     };
   },

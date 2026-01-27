@@ -19,7 +19,7 @@ export const createNote = createAction({
     }),
     color: Property.StaticDropdown({
       displayName: 'Color',
-      description: 'The color of the note (e.g., #FF0000)',
+      description: 'The color of the note',
       required: true,
       options: {
         options: [
@@ -69,7 +69,7 @@ export const createNote = createAction({
       color,
     };
 
-    const response = await makeRequest<unknown>(
+    const response = await makeRequest(
       context.auth.secret_text,
       HttpMethod.POST,
       `/projects/${projectId}/screens/${screenId}/notes`,
