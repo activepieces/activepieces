@@ -40,6 +40,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Unique identifier for the invoice": "Unique identifier for the invoice",
   "Invoice number or reference": "Invoice number or reference",
   "Name of the contact/customer": "Name of the contact/customer",

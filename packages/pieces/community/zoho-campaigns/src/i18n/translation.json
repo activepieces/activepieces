@@ -60,6 +60,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "A name to your campaign": "A name to your campaign",
   "Sender email address for the campaign": "Sender email address for the campaign",
   "The subject line of the campaign": "The subject line of the campaign",

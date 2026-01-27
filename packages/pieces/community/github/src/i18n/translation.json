@@ -68,6 +68,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The title of the issue": "The title of the issue",
   "The description of the issue": "The description of the issue",
   "Labels for the Issue": "Labels for the Issue",

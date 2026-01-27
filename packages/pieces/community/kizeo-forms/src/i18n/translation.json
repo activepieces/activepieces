@@ -44,6 +44,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The ID of the item you want to retrieve from the list": "The ID of the item you want to retrieve from the list",
   "Pattern to search": "Pattern to search",
   "Max number of results to return": "Max number of results to return",

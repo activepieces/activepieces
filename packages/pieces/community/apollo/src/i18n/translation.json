@@ -42,6 +42,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   " The email address of the person to be matched": " The email address of the person to be matched",
   "Store the response in the project store for future use.": "Store the response in the project store for future use.",
   "The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.": "The Apollo IDs for the companies you want to include in your search results. To find IDs, call the Organization Search endpoint.",

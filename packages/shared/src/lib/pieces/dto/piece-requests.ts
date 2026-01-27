@@ -68,23 +68,11 @@ export const RegistryPiecesRequestQuery = Type.Object({
 
 export type RegistryPiecesRequestQuery = Static<typeof RegistryPiecesRequestQuery>
 
-export const ListVersionRequestQuery = Type.Object({
-    projectId: Type.Optional(Type.String()),
-    release: ExactVersionType,
-    name: Type.String(),
-    edition: Type.Optional(Type.Enum(ApEdition)),
-})
-
-export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
-
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
     projectId: Type.Optional(Type.String()),
     locale: Type.Optional(Type.String()),
 })
-
-export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))
-export type ListVersionsResponse = Static<typeof ListVersionsResponse>
 
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>
 

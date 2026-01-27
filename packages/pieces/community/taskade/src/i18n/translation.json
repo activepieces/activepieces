@@ -24,6 +24,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Placement of task in block": "Placement of task in block",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",

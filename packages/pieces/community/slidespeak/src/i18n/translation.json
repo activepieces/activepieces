@@ -34,6 +34,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Topic of presentation.": "Topic of presentation.",
   "Uploaded docuemts to use in presentation.": "Uploaded docuemts to use in presentation.",
   "Whether to include stock images.": "Whether to include stock images.",

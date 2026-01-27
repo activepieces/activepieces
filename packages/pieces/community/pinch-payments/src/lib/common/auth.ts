@@ -4,6 +4,7 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 export interface PinchPaymentsAuthCredentials {
   username: string;
   password: string;
+  environment: string;
 }
 
 export interface PinchPaymentsTokenResponse {
@@ -39,24 +40,22 @@ export async function getPinchPaymentsToken(
 export const pinchPaymentsAuth = PieceAuth.CustomAuth({
   description: `Connect your Pinch Payments account
 
-This connector requires Pinch Payments API credentials. You can use either:
-- Application ID and Secret Key (recommended)
-- Merchant ID and Secret Key
+This connector requires Pinch Payments API credentials. (Application ID and Secret Key)
 
 How to generate API keys:
 1. Sign in to your Pinch Payments account at https://web.getpinch.com.au
 2. Navigate to API Keys: https://web.getpinch.com.au/api-keys
-3. Copy your Test Merchant ID and Test Secret Key for sandbox testing
-4. For production, generate live credentials from the same page
+3. Create an Application to generate API credentials
+4. Copy your Application ID and Secret Key (either live or test depending on the environment)
 
 Authentication uses Basic Auth where:
-- Username: Your Application ID or Merchant ID  
+- Username: Your Application ID
 - Password: Your Secret Key
 `,
   props: {
     username: Property.ShortText({
-      displayName: 'Application ID / Merchant ID',
-      description: 'Your Application ID (recommended) or Merchant ID',
+      displayName: 'Application ID',
+      description: 'Your Application ID',
       required: true,
     }),
     password: Property.ShortText({
@@ -64,6 +63,23 @@ Authentication uses Basic Auth where:
       description: 'Your Secret Key',
       required: true,
     }),
+    environment: Property.StaticDropdown({
+      displayName: 'Environment',
+      description: 'Pinch API environment to use.',
+      required: true,
+      options: {
+        options: [
+          {
+            label: 'Live',
+            value: 'live',
+          },
+          {
+            label: 'Test',
+            value: 'test',
+          },
+        ],
+      },
+    })
   },
   required: true,
   async validate(context) {
@@ -71,6 +87,7 @@ Authentication uses Basic Auth where:
       await getPinchPaymentsToken({
         username: context.auth.username,
         password: context.auth.password,
+        environment: context.auth.environment
       });
       return { valid: true };
     } catch (error) {

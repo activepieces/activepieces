@@ -51,10 +51,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "A min-max size range. Examples: \"11-50\"\". For now, only single range is supported.": "最小最大サイズの範囲。例: \"11-50\"\"。現時点では、単一の範囲のみサポートされています。",
   "Page number of shown items": "ページ番号の表示",
   "Limit the number of shown items per page. Max 1000.": "ページあたりの表示項目の数を制限します。最大1000まで。",
@@ -76,7 +78,7 @@
   "The ID of the news event to find.": "検索するニュースイベントのID。",
   "The domain to find.": "検索するドメイン",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Administration": "管理",
   "Consulting": "コンサルティング",
   "Data Analysis": "データ解析",
@@ -138,5 +140,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }

@@ -55,7 +55,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
             projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
-            invitationExpirySeconds: dayjs.duration(1, 'day').asSeconds(),
+            invitationExpirySeconds: dayjs.duration(7, 'days').asSeconds(),
             status,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)
@@ -94,7 +94,6 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         switch (invitation.type) {
             case InvitationType.PROJECT: {
                 assertNotNullOrUndefined(invitation.projectId, 'projectId')
-                await projectMustBeTeamType.call(app, request, reply)
                 await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
                 break
             }
@@ -187,7 +186,7 @@ const AcceptUserInvitationRequestParams = {
 
 const DeleteInvitationRequestParams = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['user-invitations'],

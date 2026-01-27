@@ -38,6 +38,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Phone number in E.164 format without the plus sign (e.g. 14155553434)": "Phone number in E.164 format without the plus sign (e.g. 14155553434)",
   "First name of the contact": "First name of the contact",
   "Last name of the contact": "Last name of the contact",

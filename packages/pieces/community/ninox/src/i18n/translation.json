@@ -33,6 +33,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select the team containing the database.": "Select the team containing the database.",
   "Select the database containing the table.": "Select the database containing the table.",
   "Select the table": "Select the table",

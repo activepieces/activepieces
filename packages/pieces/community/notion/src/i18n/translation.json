@@ -48,6 +48,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Choose the Notion database you want to work with from your workspace": "Choose the Notion database you want to work with from your workspace",
   "The content you want to append to your item.": "The content you want to append to your item.",
   "Select the item you want to update": "Select the item you want to update",

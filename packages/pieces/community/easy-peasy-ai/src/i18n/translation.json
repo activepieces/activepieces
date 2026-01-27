@@ -34,6 +34,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "What do you want to generate? (max 1000 characters)": "What do you want to generate? (max 1000 characters)",
   "Additional context or background information (optional, max 1000 characters)": "Additional context or background information (optional, max 1000 characters)",
   "How many outputs to generate (default: 1)": "How many outputs to generate (default: 1)",

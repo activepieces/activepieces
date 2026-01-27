@@ -29,6 +29,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select the organization": "Select the organization",
   "The contact (respondent) id to add the tag to": "The contact (respondent) id to add the tag to",
   "Select the tag": "Select the tag",

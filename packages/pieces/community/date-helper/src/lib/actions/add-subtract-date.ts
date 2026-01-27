@@ -164,8 +164,12 @@ function addSubtractTime(date: Date, expression: string, timeZone?: string): day
   let dayjsDate = timeZone ? apDayjs(date).tz(timeZone) : apDayjs(date);
   
   for (let i = 0; i < numbers.length; i++) {
-    const val = units[i].toLowerCase() as timeParts;
-    switch (val) {
+    let val = units[i].toLowerCase();
+    if (val.endsWith('s')) {
+      val = val.slice(0, -1);
+    }
+    const normalizedVal = val as timeParts;
+    switch (normalizedVal) {
       case timeParts.year:
         dayjsDate = dayjsDate.add(numbers[i], 'year');
         break;
@@ -189,8 +193,7 @@ function addSubtractTime(date: Date, expression: string, timeZone?: string): day
       case timeParts.unix_time:
         break;
       default: {
-        const nvr: never = val;
-        console.error(nvr, 'unhandled case was reached');
+        console.error(val, 'unhandled case was reached');
       }
     }
   }

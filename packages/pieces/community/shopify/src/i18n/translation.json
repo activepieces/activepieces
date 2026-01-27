@@ -107,6 +107,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The ID of the inventory item.": "The ID of the inventory item.",
   "The ID of the location.": "The ID of the location.",
   "Positive values increase inventory, negative values decrease it.": "Positive values increase inventory, negative values decrease it.",

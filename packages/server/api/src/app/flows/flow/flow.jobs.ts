@@ -54,11 +54,14 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                     versionId: publishedFlowVersionId,
                 })
 
+                const templateId = flowToUpdate.templateId ?? undefined
+
                 if (!preUpdateDone) {
                     await flowSideEffects(log).preUpdateStatus({
                         flowToUpdate,
                         publishedFlowVersion,
                         newStatus,
+                        templateId,
                     })
                     await job.updateData({
                         ...data,
