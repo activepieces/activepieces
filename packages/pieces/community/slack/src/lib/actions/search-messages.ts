@@ -34,7 +34,6 @@ export const searchMessages = createAction({
       const page = await client.search.messages({
         query: propsValue.query,
         count: 100,
-        // @ts-expect-error TS2353 - SDK is not aware cursor is actually supported
         cursor,
       });
       if (page.messages?.matches) {

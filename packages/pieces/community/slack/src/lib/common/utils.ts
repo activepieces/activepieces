@@ -21,6 +21,7 @@ export const slackSendMessage = async ({
       channel_id: conversationId,
       initial_comment: text,
       thread_ts: threadTs,
+      blocks: blocks as Block[],
       file_uploads: [
         {
           file: file.data,
