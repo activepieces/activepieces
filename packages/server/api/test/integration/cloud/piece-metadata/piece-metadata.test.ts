@@ -153,6 +153,11 @@ describe('Piece Metadata API', () => {
                 },
             })
 
+            const mockProject = await createProjectAndPlan({
+                platformId: mockPlatform.id,
+                ownerId: mockOwner.id,
+            })
+
 
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
@@ -201,7 +206,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces',
+                url: `/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

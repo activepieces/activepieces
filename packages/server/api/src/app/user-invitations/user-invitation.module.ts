@@ -94,7 +94,6 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         switch (invitation.type) {
             case InvitationType.PROJECT: {
                 assertNotNullOrUndefined(invitation.projectId, 'projectId')
-                await projectMustBeTeamType.call(app, request, reply)
                 await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
                 break
             }
@@ -187,7 +186,7 @@ const AcceptUserInvitationRequestParams = {
 
 const DeleteInvitationRequestParams = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['user-invitations'],
