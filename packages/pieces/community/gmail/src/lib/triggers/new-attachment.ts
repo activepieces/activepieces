@@ -1,33 +1,73 @@
 import {
   createTrigger,
   TriggerStrategy,
+  Property,
   PiecePropValueSchema,
   FilesService,
 } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
 import { gmailAuth } from '../../';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
 import {
-  GmailRequests,
   parseStream,
   convertAttachment,
   getFirstFiveOrAll,
 } from '../common/data';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { GmailLabel } from '../common/models';
+import dayjs from 'dayjs';
 
-export const gmailNewEmailTrigger = createTrigger({
+type Props = {
+  from?: string;
+  to?: string;
+  subject?: string;
+  label?: GmailLabel;
+  category?: string;
+  filenameExtension?: string;
+};
+
+export const gmailNewAttachmentTrigger = createTrigger({
   auth: gmailAuth,
-  name: 'gmail_new_email_received',
-  displayName: 'New Email',
-  description: 'Triggers when new mail is found in your Gmail inbox',
+  name: 'new_attachment',
+  displayName: 'New Attachment',
+  description: 'Triggers when an email with an attachment arrives.',
   props: {
-    subject: GmailProps.subject,
-    from: GmailProps.from,
-    to: GmailProps.to,
-    label: GmailProps.label,
-    category: GmailProps.category,
+    from: {
+      ...GmailProps.from,
+      description: 'Filter by sender email.',
+      displayName: 'From',
+      required: false,
+    },
+    to: {
+      ...GmailProps.to,
+      description: 'Filter by recipient email.',
+      displayName: 'To',
+      required: false,
+    },
+    subject: Property.ShortText({
+      displayName: 'Subject Contains',
+      description:
+        'Only trigger for emails containing this text in the subject.',
+      required: false,
+    }),
+    label: {
+      ...GmailProps.label,
+      description: 'Filter by Gmail label.',
+      displayName: 'Label',
+      required: false,
+    },
+    category: {
+      ...GmailProps.category,
+      description: 'Filter by Gmail category.',
+      displayName: 'Category',
+      required: false,
+    },
+    filenameExtension: Property.ShortText({
+      displayName: 'File Extension',
+      description:
+        'Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).',
+      required: false,
+    }),
   },
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -70,14 +110,6 @@ export const gmailNewEmailTrigger = createTrigger({
   },
 });
 
-interface PropsValue {
-  from: string | undefined;
-  to: string | undefined;
-  subject: string | undefined;
-  label: GmailLabel | undefined;
-  category: string | undefined;
-}
-
 async function pollRecentMessages({
   auth,
   props,
@@ -85,7 +117,7 @@ async function pollRecentMessages({
   lastFetchEpochMS,
 }: {
   auth: PiecePropValueSchema<typeof gmailAuth>;
-  props: PropsValue;
+  props: Props;
   files: FilesService;
   lastFetchEpochMS: number;
 }): Promise<
@@ -100,7 +132,7 @@ async function pollRecentMessages({
   const gmail = google.gmail({ version: 'v1', auth: authClient });
 
   // construct query
-  const query = [];
+  const query = ['has:attachment'];
   const maxResults = lastFetchEpochMS === 0 ? 5 : 100;
   const afterUnixSeconds = Math.floor(lastFetchEpochMS / 1000);
 
@@ -109,6 +141,8 @@ async function pollRecentMessages({
   if (props.subject) query.push(`subject:(${props.subject})`);
   if (props.label) query.push(`label:${props.label.name}`);
   if (props.category) query.push(`category:${props.category}`);
+  if (props.filenameExtension)
+    query.push(`filename:${props.filenameExtension}`);
   if (afterUnixSeconds != null && afterUnixSeconds > 0)
     query.push(`after:${afterUnixSeconds}`);
 
@@ -126,10 +160,6 @@ async function pollRecentMessages({
       id: message.id!,
       format: 'raw',
     });
-    const threadResponse = await gmail.users.threads.get({
-      userId: 'me',
-      id: message.threadId!,
-    });
 
     const parsedMailResponse = await parseStream(
       Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
@@ -137,21 +167,21 @@ async function pollRecentMessages({
       )
     );
 
-    pollingResponse.push({
-      epochMilliSeconds: dayjs(parsedMailResponse.date).valueOf(),
-      data: {
-        message: {
-          ...parsedMailResponse,
-          attachments: await convertAttachment(
-            parsedMailResponse.attachments,
-            files
-          ),
+    const { attachments, ...restOfParsedMailResponse } = parsedMailResponse;
+    const parsedAttachments = await convertAttachment(attachments, files);
+
+    for (const attachment of parsedAttachments) {
+      pollingResponse.push({
+        epochMilliSeconds: dayjs(restOfParsedMailResponse.date).valueOf(),
+        data: {
+          attachment,
+          message: {
+            id: message.id,
+            ...restOfParsedMailResponse,
+          },
         },
-        thread: {
-          ...threadResponse,
-        },
-      },
-    });
+      });
+    }
   }
 
   return pollingResponse;
