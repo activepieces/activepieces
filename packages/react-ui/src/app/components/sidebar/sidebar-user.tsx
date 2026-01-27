@@ -67,9 +67,12 @@ export function SidebarUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu modal open={isCollapsed ? false : undefined}>
-          {isCollapsed ? (
-            <div className="flex items-center p-2 justify-center size-12">
+        <DropdownMenu modal>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              className="data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:px-2! px-2! data-[state=open]:text-sidebar-accent-foreground"
+            >
               <UserAvatar
                 name={user.firstName + ' ' + user.lastName}
                 email={user.email}
@@ -77,33 +80,18 @@ export function SidebarUser() {
                 size={32}
                 disableTooltip={true}
               />
-            </div>
-          ) : (
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
-              >
-                <div className="flex items-center gap-2 w-full text-left text-sm">
-                  <UserAvatar
-                    name={user.firstName + ' ' + user.lastName}
-                    email={user.email}
-                    imageUrl={user.imageUrl}
-                    size={32}
-                    disableTooltip={true}
-                  />
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate">
-                      {user.firstName + ' ' + user.lastName}
-                    </span>
-                  </div>
+              {!isCollapsed && (
+                <>
+                  <span className="truncate">
+                    {user.firstName + ' ' + user.lastName}
+                  </span>
                   <ChevronsUpDown className="ml-auto size-4" />
-                </div>
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-          )}
+                </>
+              )}
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-[9999999]"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-999"
             side="top"
             align="start"
             sideOffset={10}
