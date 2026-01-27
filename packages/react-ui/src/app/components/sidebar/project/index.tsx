@@ -1,21 +1,17 @@
 import { User } from 'lucide-react';
 
 import { Avatar } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar-shadcn';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar-shadcn';
 import { getProjectName } from '@/hooks/project-collection';
 import { cn } from '@/lib/utils';
 import {
+  isNil,
   PROJECT_COLOR_PALETTE,
   ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
 
-import { ApProjectDisplay } from '../../ap-project-display';
+const MAX_LENGTH_TO_NOT_SHOW_TOOLTIP = 28;
 
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
@@ -30,57 +26,38 @@ const ProjectSideBarItem = ({
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
 
-  const projectAvatar =
-    project.type === ProjectType.TEAM ? (
-      <Avatar
-        className="size-6 flex items-center justify-center rounded-sm cursor-pointer"
-        style={{
-          backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
-          color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
-        }}
-      >
-        {project.displayName.charAt(0).toUpperCase()}
-      </Avatar>
-    ) : (
-      <User className="size-5 flex items-center justify-center cursor-pointer" />
-    );
+  const projectName = getProjectName(project);
+
+  const projectAvatar = isNil(project.icon) ? null : project.type ===
+    ProjectType.TEAM ? (
+    <Avatar
+      className="size-4 scale-180 text-sm mr-2 font-bold flex items-center justify-center rounded-sm"
+      style={{
+        backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
+        color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
+      }}
+    >
+      <span className="scale-50">{projectName.charAt(0).toUpperCase()}</span>
+    </Avatar>
+  ) : (
+    <User className="size-4 " />
+  );
+
+  const shouldShowTooltip = projectName.length > MAX_LENGTH_TO_NOT_SHOW_TOOLTIP;
+  const displayText = shouldShowTooltip
+    ? `${projectName.substring(0, MAX_LENGTH_TO_NOT_SHOW_TOOLTIP)}...`
+    : projectName;
+  const isCollapsed = state === 'collapsed';
   return (
-    <SidebarMenuItem>
-      {state === 'collapsed' ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleProjectSelect(project.id)}
-          className={cn('relative flex items-center justify-center', {
-            '!bg-sidebar-accent': isCurrentProject,
-          })}
-        >
-          {projectAvatar}
-        </Button>
-      ) : (
-        <SidebarMenuButton
-          asChild
-          className={cn('px-2 py-5 cursor-pointer group/project', {
-            '!bg-sidebar-accent ': isCurrentProject,
-          })}
-        >
-          <div
-            onClick={() => handleProjectSelect(project.id)}
-            className="w-full flex items-center justify-between gap-2"
-          >
-            <div className="flex-1 flex items-center gap-2 min-w-0">
-              <ApProjectDisplay
-                title={getProjectName(project)}
-                icon={project.icon}
-                maxLengthToNotShowTooltip={28}
-                projectType={project.type}
-                inSidebar={true}
-              />
-            </div>
-          </div>
-        </SidebarMenuButton>
-      )}
-    </SidebarMenuItem>
+    <SidebarMenuButton
+      onClick={() => handleProjectSelect(project.id)}
+      className={cn('', {
+        'bg-sidebar-accent! ': isCurrentProject,
+      })}
+    >
+      {projectAvatar}
+      {!isCollapsed && <span className={cn('truncate')}>{displayText}</span>}
+    </SidebarMenuButton>
   );
 };
 
