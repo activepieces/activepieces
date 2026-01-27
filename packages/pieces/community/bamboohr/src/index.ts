@@ -2,7 +2,6 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { reportFieldChanged } from './lib/triggers/report-field-changed';
 import { bambooHrAuth } from './lib/common/auth';
-import { reportFieldChangedCopy } from './lib/triggers/report-field-changed copy';
 
 export const bambooHr = createPiece({
 	displayName: 'BambooHR',
@@ -23,5 +22,5 @@ export const bambooHr = createPiece({
 			},
 		}),
 	],
-	triggers: [reportFieldChanged,reportFieldChangedCopy],
+	triggers: [reportFieldChanged],
 });
