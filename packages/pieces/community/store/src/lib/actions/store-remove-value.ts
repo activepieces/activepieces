@@ -5,13 +5,12 @@ import {
   Property,
   ShortTextProperty,
   StaticDropdownProperty,
-  StoreScope,
 } from '@activepieces/pieces-framework';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
-async function executeStorageRemoveValue(context: ActionContext<PieceAuthProperty, {
+async function executeStorageRemoveValue(context: ActionContext<PieceAuthProperty | undefined, {
   key: ShortTextProperty<true>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {

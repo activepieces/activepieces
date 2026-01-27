@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   PiecePropertyMap,
   Property,
@@ -39,6 +40,7 @@ export function formatDate(date?: string): string | undefined {
 export const pastefyCommon = {
   folder_id: (required = true, displayName = 'Folder') =>
     Property.Dropdown({
+      auth: pastefyAuth,
       description: 'A folder',
       displayName: displayName,
       required,
@@ -52,8 +54,8 @@ export const pastefyCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof pastefyAuth>,
-          { auth }
+          auth,
+          { ...auth.props }
         );
         const folders = await client.getFolderHierarchy();
 
@@ -83,8 +85,8 @@ export const pastefyCommon = {
 };
 
 export function makeClient(
-  auth: PiecePropValueSchema<typeof pastefyAuth>,
+  auth: AppConnectionValueForAuthProperty<typeof pastefyAuth>,
   propsValue: StaticPropsValue<PiecePropertyMap>
 ): PastefyClient {
-  return new PastefyClient(auth.token || undefined, propsValue.instance_url);
+  return new PastefyClient(auth.props.token || undefined, propsValue.instance_url);
 }

@@ -1,6 +1,7 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { Contact, ContactFolder } from '@microsoft/microsoft-graph-types';
+import { microsoft365PeopleAuth } from './auth';
 
 export type authProps = { auth: OAuth2PropertyValue };
 
@@ -116,6 +117,7 @@ export const microsoft365PeopleCommon = {
     required = true
   ) =>
     Property.Dropdown({
+      auth: microsoft365PeopleAuth,
       displayName,
       description,
       required,
@@ -151,7 +153,8 @@ export const microsoft365PeopleCommon = {
     description = 'Select an option',
     required = true
   ) =>
-    Property.Dropdown({
+    Property.Dropdown({ 
+      auth: microsoft365PeopleAuth,
       displayName,
       description,
       required,

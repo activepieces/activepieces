@@ -38,6 +38,7 @@ export const sendFile = createAction({
         required: false,
     }),
     typeId: Property.DynamicProperties({
+      auth: wedofAuth,
       displayName: 'Type du fichier',
       refreshers: ['entityClass', 'externalId'],
       required: true,
@@ -107,6 +108,7 @@ export const sendFile = createAction({
       
     }),
   files: Property.DynamicProperties({
+    auth: wedofAuth,
     description: '',
     displayName: 'ez',
     required: true,
@@ -154,7 +156,7 @@ export const sendFile = createAction({
           body: message,
           headers: {
             'Content-Type': 'multipart/form-data',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

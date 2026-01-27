@@ -17,7 +17,7 @@ export const updateCompany = createAction({
     fields: mauticCommon.companyFields,
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth;
+    const { base_url, username, password } = context.auth.props;
     // This is intentionally done because for `null` data Mautic doesn't change data for contacts but
     // for the same it changes data for companies. This step is taken to ensure both behave the same.
     const fields = context.propsValue.fields;

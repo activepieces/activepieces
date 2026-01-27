@@ -19,7 +19,7 @@ export const translateText = createAction({
   },
   async run({ auth, propsValue }) {
     const response = await makeRequest(
-      auth ,
+      auth.secret_text ,
       HttpMethod.POST,
       "/text/translate",
       {

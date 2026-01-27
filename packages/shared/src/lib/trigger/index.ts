@@ -1,11 +1,11 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
 
-
 export enum TriggerStrategy {
     POLLING = 'POLLING',
     WEBHOOK = 'WEBHOOK',
     APP_WEBHOOK = 'APP_WEBHOOK',
+    MANUAL = 'MANUAL',
 }
 
 export enum WebhookHandshakeStrategy {

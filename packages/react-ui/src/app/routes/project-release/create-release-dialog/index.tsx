@@ -20,12 +20,11 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  AgentOperationType,
   ConnectionOperationType,
   DiffReleaseRequest,
   ProjectReleaseType,
@@ -71,8 +70,7 @@ const CreateReleaseDialogContent = ({
 }: CreateReleaseDialogContentProps) => {
   const isThereAnyChanges =
     (plan?.flows && plan?.flows.length > 0) ||
-    (plan?.tables && plan?.tables.length > 0) ||
-    (plan?.agents && plan?.agents.length > 0);
+    (plan?.tables && plan?.tables.length > 0);
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
@@ -313,52 +311,6 @@ const CreateReleaseDialogContent = ({
               </div>
             </div>
           )}
-
-          {plan?.agents && plan?.agents.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-col justify -center gap-1 py-2 border-b">
-                  <Label className="text-sm font-medium">
-                    {t('Agents Changes')} ({plan?.agents?.length || 0})
-                  </Label>
-                </div>
-                <ScrollArea viewPortClassName="max-h-[10vh]">
-                  {plan?.agents.map((agent, index) => (
-                    <div
-                      key={agent.agentState.externalId}
-                      className="flex items-center gap-2 text-sm py-1"
-                    >
-                      {agent.type === AgentOperationType.UPDATE_AGENT && (
-                        <div className="flex items-center gap-2">
-                          <PencilIcon className="w-4 h-4 shrink-0" />
-                          <div className="flex items-center gap-1">
-                            <span>{agent.agentState.displayName}</span>
-                          </div>
-                        </div>
-                      )}
-                      {agent.type === AgentOperationType.CREATE_AGENT && (
-                        <div className="flex items-center gap-2">
-                          <Plus className="w-4 h-4 shrink-0 text-success" />
-                          <span className="text-success">
-                            {agent.agentState.displayName}
-                          </span>
-                        </div>
-                      )}
-                      {agent.type === AgentOperationType.DELETE_AGENT && (
-                        <div className="flex items-center gap-2">
-                          <TrashIcon className="w-4 h-4 shrink-0 text-destructive" />
-                          <span className="text-destructive">
-                            {agent.agentState.displayName}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </ScrollArea>
-              </div>
-            </div>
-          )}
-
           {errorMessage && (
             <p className="text-sm text-destructive">{errorMessage}</p>
           )}
@@ -389,11 +341,7 @@ const CreateReleaseDialogContent = ({
                 form.setError('name', { message: 'Release name is required' });
                 error = true;
               }
-              if (
-                selectedChanges.size === 0 &&
-                plan.tables.length === 0 &&
-                plan.agents.length === 0
-              ) {
+              if (selectedChanges.size === 0 && plan.tables.length === 0) {
                 setErrorMessage(
                   'Please select at least one change to include in the release',
                 );
@@ -445,7 +393,7 @@ const CreateReleaseDialog = ({
       }}
     >
       <DialogContent className="min-h-[100px] max-h-[850px] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')

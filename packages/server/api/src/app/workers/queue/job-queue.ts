@@ -1,38 +1,58 @@
-import { AppSystemProp, QueueName } from '@activepieces/server-shared'
-import { ApEdition, ApId, isNil } from '@activepieces/shared'
-import { Queue, QueueEvents } from 'bullmq'
+import { apDayjsDuration, AppSystemProp, getPlatformQueueName, memoryLock, QueueName } from '@activepieces/server-shared'
+import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, WorkerJobType } from '@activepieces/shared'
+import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../database/redis'
-import { apDayjsDuration } from '../../helper/dayjs-helper'
+import { redisConnections } from '../../database/redis-connections'
+import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
-import { machineService } from '../machine/machine-service'
-import { queueMetrics } from './queue-events'
-import { AddJobParams, getDefaultJobPriority, JOB_PRIORITY, JobType, QueueManager, RATE_LIMIT_PRIORITY } from './queue-manager'
-import { workerJobRateLimiter } from './worker-job-rate-limiter'
+import { AddJobParams, JobType } from './queue-manager'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
 const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
+const CHILD_RUNS_KEY = (parentRunId: ApId) => `child_runs:${parentRunId}`
 
-export let bullMqQueue: Queue | undefined = undefined
+const dedicatedWorkersQueues = new Map<string, Queue>()
 
-export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
-    async setConcurrency(queueName: QueueName, concurrency: number): Promise<void> {
-        const queue = await ensureQueueExists(queueName, log)
-        await queue.setGlobalConcurrency(concurrency)
-    },
+export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName, log))
-        await Promise.all(queues)
-        await machineService(log).updateConcurrency()
-        log.info('[redisQueueManager#init] Redis queues initialized')
+        const platformIdsWithDedicatedWorkers = await dedicatedWorkers(log).getPlatformIds()
+
+        await Promise.all([
+            ...platformIdsWithDedicatedWorkers.map(async (platformId) => {
+                const queueName = await getQueueName(platformId, log)
+                const queue = await ensureQueueExists({ log, queueName })
+                dedicatedWorkersQueues.set(queueName, queue)
+            }),
+            ensureQueueExists({ log, queueName: QueueName.WORKER_JOBS }),
+        ])
+
+        log.info('[jobQueue#init] Dynamic queue system initialized')
+    },
+    async promoteChildRuns(jobId: string): Promise<void> {
+        const redisConnection = await redisConnections.useExisting()
+        const childRunData = (await redisConnection.smembers(CHILD_RUNS_KEY(jobId))).map(childRunData => JSON.parse(childRunData) as ChildRunData)
+        log.info({
+            jobId,
+            childRunData,
+        }, '[jobQueue#promoteChildRuns] Promoting child runs')
+        for (const { jobId, platformId } of childRunData) {
+            const queueName = await getQueueName(platformId, log)
+            const queue = await ensureQueueExists({ log, queueName })
+            const job = await queue.getJob(jobId)
+            if (!isNil(job)) {
+                await job.promote()
+            }
+        }
+        await redisConnection.del(CHILD_RUNS_KEY(jobId))
     },
     async add(params: AddJobParams<JobType>): Promise<void> {
-        const { data, type } = params
+        const { type, data } = params
 
-        const { shouldRateLimit } = await workerJobRateLimiter(log).shouldBeLimited(params.id, data)
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
+        const platformId = data.platformId
+        const queueName = await getQueueName(platformId, log)
+        const queue = await ensureQueueExists({ log, queueName })
 
         switch (type) {
             case JobType.REPEATING: {
@@ -49,59 +69,133 @@ export const jobQueue = (log: FastifyBaseLogger): QueueManager => ({
                 break
             }
             case JobType.ONE_TIME: {
+                const dependOnJobId = params.dependOnJobId
+                if (!isNil(dependOnJobId)) {
+                    const redisConnection = await redisConnections.useExisting()
+                    const childRunData: ChildRunData = {
+                        jobId: params.id,
+                        platformId,
+                    }
+                    await redisConnection.sadd(CHILD_RUNS_KEY(dependOnJobId), JSON.stringify(childRunData))
+                }
                 await queue.add(params.id, data, {
-                    priority: shouldRateLimit ? JOB_PRIORITY[RATE_LIMIT_PRIORITY] : JOB_PRIORITY[getDefaultJobPriority(data)],
-                    delay: params.delay,
+                    priority: JOB_PRIORITY[getDefaultJobPriority(data)],
+                    delay: !isNil(dependOnJobId) ? apDayjsDuration(1, 'year').asMilliseconds() : params.delay,
                     jobId: params.id,
+                    removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
                 })
                 break
             }
         }
     },
+
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
-        const queue = await ensureQueueExists(QueueName.WORKER_JOBS, log)
+        const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+
+        await Promise.allSettled(
+            allQueues.map(queue => queue.removeJobScheduler(flowVersionId)),
+        )
+
         log.info({
             flowVersionId,
-        }, '[redisQueue#removeRepeatingJob] removing the jobs')
-        await queue.removeJobScheduler(flowVersionId)
+        }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
+    },
+
+    async removeOneTimeJob({ jobId, platformId }: { jobId: ApId, platformId: string | null }): Promise<void> {
+        const queueName = await getQueueName(platformId, log)
+        const queue = await ensureQueueExists({ log, queueName })
+        const job = await queue.getJob(jobId)
+        if (!isNil(job)) {
+            await job.remove()
+            log.info({
+                jobId,
+                queueName,
+            }, '[jobQueue#removeOneTimeJob] removed job from queue')
+            return
+        }
+        log.info({
+            jobId,
+            queueName,
+        }, '[jobQueue#removeOneTimeJob] job not found in queue')
+    },
+
+    getAllQueues(): Queue[] {
+        const queues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+        return queues
+    },
+
+    getSharedQueue(): Queue {
+        const queue = dedicatedWorkersQueues.get(QueueName.WORKER_JOBS)
+        if (isNil(queue)) {
+            throw Error('Shared queue not initialized')
+        }
+        return queue
+    },
+    async close(): Promise<void> {
+        log.info('[jobQueue#close] Closing job queue')
+        const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
+        await Promise.allSettled(
+            allQueues.map(queue => queue.close()),
+        )
     },
 })
 
-async function ensureQueueExists(queueName: QueueName, log: FastifyBaseLogger): Promise<Queue> {
-    if (!isNil(bullMqQueue)) {
-        return bullMqQueue
+async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, queueName: string }): Promise<Queue> {
+    const existingQueue = dedicatedWorkersQueues.get(queueName)
+    if (!isNil(existingQueue)) {
+        return existingQueue
     }
-    const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
+    return memoryLock.runExclusive({
+        key: `ensure_queue_exists_${queueName}`,
+        fn: async () => {
+            const existingQueue = dedicatedWorkersQueues.get(queueName)
+            if (!isNil(existingQueue)) {
+                return existingQueue
+            }
 
-    const options = {
-        telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
-        connection: await redisConnections.createNew(),
-        defaultJobOptions: {
-            attempts: 5,
-            backoff: {
-                type: 'exponential',
-                delay: EIGHT_MINUTES_IN_MILLISECONDS,
-            },
-            removeOnComplete: true,
-            removeOnFail: {
-                age: REDIS_FAILED_JOB_RETENTION_DAYS,
-                count: REDIS_FAILED_JOB_RETRY_COUNT,
-            },
+            const isOtpEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
+            const queue = new Queue(queueName, {
+                telemetry: isOtpEnabled ? new BullMQOtel(queueName) : undefined,
+                connection: await redisConnections.create(),
+                defaultJobOptions: {
+                    attempts: 5,
+                    backoff: {
+                        type: 'exponential',
+                        delay: EIGHT_MINUTES_IN_MILLISECONDS,
+                    },
+                    removeOnComplete: true,
+                    removeOnFail: {
+                        age: REDIS_FAILED_JOB_RETENTION_DAYS,
+                        count: REDIS_FAILED_JOB_RETRY_COUNT,
+                    },
+                },
+            })
+
+            await queue.removeGlobalConcurrency()
+            await queue.waitUntilReady()
+
+            dedicatedWorkersQueues.set(queueName, queue)
+
+            log.info({
+                queueName,
+            }, '[jobQueue#ensureQueueExists] Queue created')
+
+            return queue
         },
-
-    }
-
-    bullMqQueue = new Queue(queueName, options)
-    await bullMqQueue.waitUntilReady()
-
-    const edition = system.getEdition()
-    if (edition !== ApEdition.CLOUD) {
-        const queueEvents = new QueueEvents(queueName, options)
-        await queueEvents.waitUntilReady()
-        await queueMetrics(log, queueEvents).detach()
-        await queueMetrics(log, queueEvents).attach()
-    }
-
-    return bullMqQueue
+    })
 }
 
+async function getQueueName(platformId: string | null, log: FastifyBaseLogger): Promise<string> {
+    if (!platformId) {
+        return QueueName.WORKER_JOBS
+    }
+
+    const isDedicatedWorkersEnabled = await dedicatedWorkers(log).isEnabledForPlatform(platformId)
+    return isDedicatedWorkersEnabled ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
+}
+
+
+type ChildRunData = {
+    jobId: ApId
+    platformId: string
+}

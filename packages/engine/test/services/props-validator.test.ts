@@ -206,6 +206,44 @@ describe('Property Validation', () => {
                 json: ['Expected JSON, received: null'],
             })
         })
+
+        it('should validate optional json property with invalid value', async () => {
+            const props = {
+                json: Property.Json({
+                    displayName: 'JSON',
+                    required: false,
+                }),
+            }
+            
+            const { errors: validNullErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { json: null },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(validNullErrors).toEqual({})
+
+            const { errors: validUndefinedErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { json: undefined },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(validUndefinedErrors).toEqual({})
+
+            const { errors: invalidJsonErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { json: 'not a json object' },
+                props,
+                PieceAuth.None(),
+                false,
+                {},
+            )
+            expect(invalidJsonErrors).toEqual({
+                json: ['Expected JSON, received: not a json object'],
+            })
+        })
         it('should validate required object property', async () => {
             const props = {
                 object: Property.Object({

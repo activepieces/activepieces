@@ -24,9 +24,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      
+          
       - name: Install dependencies
-        run: npm ci
+        run: npm install -g bun && bun install
 
       - name: Run Checkly tests (${{ inputs.environment }})
         id: checkly-tests

@@ -1,16 +1,18 @@
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
+import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
+import { magicalApiAuth } from "./auth";
 
 export const BASE_URL = "https://gw.magicalapi.com";
 
 export async function makeRequest(
-  apiKey: string,
+  apiKey: AppConnectionValueForAuthProperty<typeof magicalApiAuth>,
   method: HttpMethod,
   path: string,
   body?: any
 ): Promise<any> {
   try {
     const headers: Record<string, string> = {
-      "api-key": apiKey,
+      "api-key": apiKey.secret_text,
       "Content-Type": "application/json",
     };
 

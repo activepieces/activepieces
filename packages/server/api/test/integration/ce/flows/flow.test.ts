@@ -3,8 +3,10 @@ import {
     FlowOperationType,
     FlowStatus,
     FlowTriggerType,
+    FlowVersionState,
     PackageType,
     PieceType,
+    PopulatedFlow,
     PrincipalType,
     PropertyExecutionType,
     TriggerStrategy,
@@ -39,11 +41,13 @@ afterAll(async () => {
 describe('Flow API', () => {
     describe('Create Flow endpoint', () => {
         it('Adds an empty flow', async () => {
-            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+            const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const mockCreateFlowRequest = {
@@ -71,7 +75,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(10)
+            expect(Object.keys(responseBody)).toHaveLength(14)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -80,8 +84,10 @@ describe('Flow API', () => {
             expect(responseBody?.status).toBe('DISABLED')
             expect(responseBody?.publishedVersionId).toBeNull()
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
-
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
+            expect(responseBody?.operationStatus).toBeDefined()
+            expect(responseBody?.templateId).toBeNull()
+            
+            expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
@@ -104,7 +110,7 @@ describe('Flow API', () => {
             // arrange
             const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
-            const mockPieceMetadata1 = createMockPieceMetadata({
+            const mockPieceMetadata1 = createMockPieceMetadata({ 
                 name: '@activepieces/piece-schedule',
                 version: '0.1.5',
                 triggers: {
@@ -112,17 +118,11 @@ describe('Flow API', () => {
                         'name': 'every_hour',
                         'displayName': 'Every Hour',
                         'description': 'Triggers the current flow every hour',
-                        'requireAuth': true,
+                        'requireAuth': false,
                         'props': {
 
                         },
-                        'type': TriggerStrategy.WEBHOOK,
-                        'handshakeConfiguration': {
-                            'strategy': WebhookHandshakeStrategy.NONE,
-                        },
-                        'renewConfiguration': {
-                            'strategy': WebhookRenewStrategy.NONE,
-                        },
+                        'type': TriggerStrategy.POLLING,
                         'sampleData': {
 
                         },
@@ -161,8 +161,8 @@ describe('Flow API', () => {
                         },
                     },
                     valid: true,
-                    name: 'webhook',
-                    displayName: 'Webhook',
+                    name: 'trigger',
+                    displayName: 'Schedule',
                 },
             })
             await databaseConnection()
@@ -178,16 +178,9 @@ describe('Flow API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: mockProject.id,
                 id: mockOwner.id,
             })
 
-            const mockUpdateFlowStatusRequest = {
-                type: FlowOperationType.CHANGE_STATUS,
-                request: {
-                    status: 'ENABLED',
-                },
-            }
 
             // act
             const response = await app?.inject({
@@ -196,25 +189,31 @@ describe('Flow API', () => {
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
-                body: mockUpdateFlowStatusRequest,
+                body: {
+                    type: FlowOperationType.CHANGE_STATUS,
+                    request: {
+                        status: 'ENABLED',
+                    },
+                },
             })
-            const responseBody = response?.json()
+            
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-
-            expect(Object.keys(responseBody)).toHaveLength(10)
-            expect(responseBody?.id).toBe(mockFlow.id)
-            expect(responseBody?.created).toBeDefined()
-            expect(responseBody?.updated).toBeDefined()
-            expect(responseBody?.projectId).toBe(mockProject.id)
-            expect(responseBody?.folderId).toBeNull()
-            expect(responseBody?.status).toBe('ENABLED')
-            expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
-            expect(responseBody?.metadata).toBeNull()
-
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
-            expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
+            const responseBody: PopulatedFlow | undefined = response?.json()
+            expect(responseBody).toBeDefined()
+            if (responseBody) {
+                expect(responseBody.id).toBe(mockFlow.id)
+                expect(responseBody.created).toBeDefined()
+                expect(responseBody.updated).toBeDefined()
+                expect(responseBody.projectId).toBe(mockProject.id)
+                expect(responseBody.folderId).toBeNull()
+                expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
+                expect(responseBody.metadata).toBeNull()
+                expect(responseBody.operationStatus).toBe('ENABLING')
+                expect(Object.keys(responseBody.version)).toHaveLength(14)
+                expect(responseBody.version.id).toBe(mockFlowVersion.id)
+            }
         })
 
         it('Disables an enabled Flow', async () => {
@@ -244,7 +243,6 @@ describe('Flow API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: mockProject.id,
                 id: mockOwner.id,
             })
 
@@ -269,17 +267,18 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(10)
+            expect(Object.keys(responseBody)).toHaveLength(14)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
             expect(responseBody?.projectId).toBe(mockProject.id)
             expect(responseBody?.folderId).toBeNull()
-            expect(responseBody?.status).toBe('DISABLED')
+            expect(responseBody?.status).toBe('ENABLED')
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.metadata).toBeNull()
-
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
+            expect(responseBody?.operationStatus).toBe('DISABLING')
+            expect(responseBody?.templateId).toBeNull()
+            expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -330,6 +329,7 @@ describe('Flow API', () => {
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockOwner.id,
+                state: FlowVersionState.DRAFT,
                 trigger: {
                     type: FlowTriggerType.PIECE,
                     settings: {
@@ -346,8 +346,8 @@ describe('Flow API', () => {
                         },
                     },
                     valid: true,
-                    name: 'webhook',
-                    displayName: 'Webhook',
+                    name: 'trigger',
+                    displayName: 'Schedule',
                 },
             })
             await databaseConnection()
@@ -357,7 +357,6 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -378,21 +377,25 @@ describe('Flow API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-
-            expect(Object.keys(responseBody)).toHaveLength(10)
-            expect(responseBody?.id).toBe(mockFlow.id)
-            expect(responseBody?.created).toBeDefined()
-            expect(responseBody?.updated).toBeDefined()
-            expect(responseBody?.projectId).toBe(mockProject.id)
-            expect(responseBody?.folderId).toBeNull()
-            expect(responseBody?.status).toBe('ENABLED')
-            expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
-            expect(responseBody?.metadata).toBeNull()
-
-            expect(Object.keys(responseBody?.version)).toHaveLength(12)
-            expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
-            expect(responseBody?.version?.state).toBe('LOCKED')
+            const responseBody: PopulatedFlow | undefined = response?.json()
+            expect(responseBody).toBeDefined()
+            if (responseBody) {
+                expect(Object.keys(responseBody)).toHaveLength(14)
+                expect(responseBody.id).toBe(mockFlow.id)
+                expect(responseBody.created).toBeDefined()
+                expect(responseBody.updated).toBeDefined()
+                expect(responseBody.projectId).toBe(mockProject.id)
+                expect(responseBody.folderId).toBeNull()
+                expect(responseBody.status).toBe(mockFlow.status)
+                expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
+                expect(responseBody.metadata).toBeNull()
+                expect(responseBody.operationStatus).toBe('DISABLING')
+                expect(Object.keys(responseBody.version)).toHaveLength(14)
+                expect(responseBody.version.id).toBe(mockFlowVersion.id)
+                expect(responseBody.version.state).toBe('LOCKED')
+                expect(responseBody.templateId).toBeNull()
+            }
+           
         })
     })
 
@@ -425,7 +428,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -467,7 +469,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -504,7 +505,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -549,7 +549,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -611,7 +610,6 @@ describe('Flow API', () => {
             const mockApiKey = 'test_api_key'
             const mockToken = await generateMockToken({
                 type: PrincipalType.SERVICE,
-                projectId: mockProject.id,
                 id: mockApiKey,
                 platform: {
                     id: mockPlatform.id,
@@ -633,8 +631,9 @@ describe('Flow API', () => {
 
             expect(responseBody).toHaveProperty('name')
             expect(responseBody).toHaveProperty('description')
-            expect(responseBody).toHaveProperty('template')
-            expect(responseBody.template).toHaveProperty('trigger')
+            expect(responseBody).toHaveProperty('flows')
+            expect(responseBody.flows).toHaveLength(1)
+            expect(responseBody.flows[0]).toHaveProperty('trigger')
         })
     })
 })

@@ -1,10 +1,10 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth, BlueSkyAuthType } from '../common/auth';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, { 
+const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, { 
   authorSelection: string;
   authorFromFollowing?: string;
   authorHandle?: string;
@@ -35,7 +35,7 @@ const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, {
         return [];
       }
 
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
       const normalizedHandle = selectedAuthorHandle.replace('@', '').trim();
       
@@ -128,13 +128,15 @@ export const newPostsByAuthor = createTrigger({
     }),
     
     authorFromFollowing: Property.Dropdown({
+      auth: blueskyAuth,
       displayName: 'Select Author',
       description: 'Choose from accounts you follow',
       required: false,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         try {
-          const agent = await createBlueskyAgent(auth as BlueSkyAuthType);
+          if (!auth) return { options: [] };
+          const agent = await createBlueskyAgent(auth.props);
           const session = agent.session;
           
           if (!session?.did) {

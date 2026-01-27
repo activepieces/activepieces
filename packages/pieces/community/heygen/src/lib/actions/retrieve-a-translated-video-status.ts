@@ -19,7 +19,7 @@ export const retrieveTranslatedVideoStatus = createAction({
     const { videoId } = propsValue;
 
     const response = await heygenApiCall({
-      apiKey: auth as string,
+			apiKey: auth.secret_text,
       method: HttpMethod.GET,
       resourceUri: `/video_translate/${videoId}`,
       apiVersion: 'v2',

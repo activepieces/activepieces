@@ -21,7 +21,7 @@ export const stripeCancelSubscription = createAction({
   async run(context) {
     const { subscription, cancel_at_period_end } = context.propsValue;
 
-    const client = getClient(context.auth);
+    const client = getClient(context.auth.secret_text);
 
     if (cancel_at_period_end) {
       return await client.subscriptions.update(subscription, {

@@ -1,7 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { FastifyOtelInstrumentation } from '@fastify/otel'
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -18,19 +18,13 @@ function getServiceName(): string {
 if (system.get(AppSystemProp.OTEL_ENABLED)) {
     const traceExporter = new OTLPTraceExporter()
 
-    // Creating a resource to identify your service in traces
     const resource = resourceFromAttributes({
         [ATTR_SERVICE_NAME]: getServiceName(),
     })
-
     // Configuring the OpenTelemetry Node SDK
     const sdk = new NodeSDK({
-        // Adding a BatchSpanProcessor to batch and send traces
-        spanProcessor: new BatchSpanProcessor(traceExporter),
-
-        // Registering the resource to the SDK
+        spanProcessors: [new BatchSpanProcessor(traceExporter)],
         resource,
-
         // Adding auto-instrumentations to automatically collect trace data
         instrumentations: [
             getNodeAutoInstrumentations(),

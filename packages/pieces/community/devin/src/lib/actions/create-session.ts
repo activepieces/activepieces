@@ -34,7 +34,7 @@ export const createSession = createAction({
       method: HttpMethod.POST,
       url: 'https://api.devin.ai/v1/sessions',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         prompt: propsValue.prompt,

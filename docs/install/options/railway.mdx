@@ -1,0 +1,108 @@
+---
+title: "Railway"
+description: "Deploy Activepieces to the cloud in minutes using Railway's one-click template"
+---
+
+Railway simplifies your infrastructure stack from servers to observability with a single, scalable, easy-to-use platform. With Railway's one-click deployment, you can get Activepieces up and running in minutes without managing servers, databases, or infrastructure.
+
+<a href="https://railway.com/deploy/kGEO1J" target="_blank">
+  <img alt="Deploy on Railway" src="https://railway.app/button.svg" />
+</a>
+
+## What Gets Deployed
+
+The Railway template deploys Activepieces with the following components:
+
+- **Activepieces Application**: The main Activepieces container running the latest version from [Docker Hub](https://hub.docker.com/r/activepieces/activepieces)
+- **PostgreSQL Database**: Managed PostgreSQL database for storing flows, executions, and application data
+- **Redis Cache**: Redis instance for job queuing and caching (optional, can use in-memory cache)
+- **Automatic SSL**: Railway provides automatic HTTPS with SSL certificates
+- **Custom Domain Support**: Configure your own domain through Railway's dashboard
+
+## Prerequisites
+
+Before deploying, ensure you have:
+
+- A [Railway account](https://railway.app/) (free tier available)
+- Basic understanding of environment variables (optional, for advanced configuration)
+
+## Quick Start
+
+1. **Click the deploy button** above to open Railway's deployment interface
+2. **Configure environment variables for advanced usage** (see [Configuration](#configuration) below)
+3. **Deploy** - Railway will automatically provision resources and start your instance
+
+Once deployed, Railway will provide you with a public URL where your Activepieces instance is accessible.
+
+## Configuration
+
+### Environment Variables
+
+Railway allows you to configure Activepieces through environment variables. You can set these in the Railway dashboard under your project's **Variables** tab.
+
+#### Execution Mode
+
+Configure the execution mode for security and performance:
+See the [Workers & Sandboxing](/install/architecture/workers) documentation for details on each mode.
+
+#### Other Important Variables
+
+- `AP_TELEMETRY_ENABLED`: Enable/disable telemetry (default: `false`)
+
+For a complete list of all available environment variables, see the [Environment Variables](/install/configuration/environment-variables) documentation.
+
+## Custom Domain Setup
+
+Railway supports custom domains with automatic SSL:
+
+1. Go to your Railway project dashboard
+2. Navigate to **Settings** → **Networking**
+3. Add your custom domain
+4. Update `AP_FRONTEND_URL` environment variable to match your custom domain
+5. Railway will automatically provision SSL certificates
+
+For more details on SSL configuration, see the [Setup SSL](/install/guides/setup-ssl) guide.
+
+## Production Considerations
+
+Before deploying to production, review these important points:
+
+- [ ] Review [Security Practices](/admin-guide/security/practices) documentation
+- [ ] Configure `AP_WORKER_CONCURRENCY` based on your workload and hardware resources
+- [ ] Ensure PostgreSQL backups are configured in Railway
+- [ ] Consider database scaling options in Railway
+
+## Observability
+
+Railway provides built-in observability features for Activepieces. You can view logs and metrics in the Railway dashboard.
+
+## Upgrading
+
+To upgrade to a new version of Activepieces on Railway:
+
+1. Go to your Railway project dashboard
+2. Navigate to **Deployments**
+3. Click **Redeploy** on the latest deployment
+4. Railway will pull the latest Activepieces image and redeploy
+
+<Warning>
+Before upgrading, review the [Breaking Changes](/install/configuration/breaking-changes) documentation to ensure compatibility with your flows and configuration.
+</Warning>
+
+## Next Steps
+
+After deploying Activepieces on Railway:
+
+1. **Access your instance** using the Railway-provided URL
+2. **Create your first flow** - see [Building Flows](/flows/building-flows)
+3. **Configure webhooks** - see [Setup App Webhooks](/install/guides/setup-app-webhooks)
+4. **Explore pieces** - browse available integrations in the piece library
+
+## Additional Resources
+
+- [Troubleshooting](/install/troubleshooting/websocket-issues): Troubleshooting guide
+- [Configuration Guide](/install/configuration/overview): Comprehensive configuration documentation
+- [Environment Variables](/install/configuration/environment-variables): Complete list of configuration options
+- [Architecture Overview](/install/architecture/overview): Understand Activepieces architecture
+- [Railway Documentation](https://docs.railway.app/): Official Railway platform documentation
+

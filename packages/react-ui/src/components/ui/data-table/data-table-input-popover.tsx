@@ -1,11 +1,12 @@
+import { t } from 'i18next';
 import { SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { Badge } from '../badge';
 import { Button } from '../button';
-import { Input } from '../input';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { SearchInput } from '../search-input';
 import { Separator } from '../separator';
 
 type DataTableInputPopoverProps = {
@@ -46,11 +47,10 @@ const DataTableInputPopover = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
-        <Input
-          type="text"
-          placeholder="Name"
+        <SearchInput
+          placeholder={t('Search')}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e)}
         />
       </PopoverContent>
     </Popover>

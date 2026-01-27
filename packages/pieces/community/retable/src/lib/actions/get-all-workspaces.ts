@@ -16,7 +16,7 @@ export const retableGetAllWorkspacesAction = createAction({
         method: HttpMethod.GET,
         url: `${retableCommon.baseUrl}/workspace`,
         headers: {
-          ApiKey: context.auth as string,
+          ApiKey: context.auth.secret_text,
         },
       })
     ).body;

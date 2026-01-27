@@ -8,6 +8,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { getEmailDetailsAction } from './lib/actions/get-email-details';
 import { markEmailAsReadAction } from './lib/actions/mark-email-as-read';
 import { markEmailAsUnreadAction } from './lib/actions/mark-email-as-unread';
+import { archiveEmailAction } from './lib/actions/archive-email';
+import { unarchiveEmailAction } from './lib/actions/unarchive-email';
 import { moveEmailAction } from './lib/actions/move-email';
 import { sendEmailAction } from './lib/actions/send-email';
 import { zohoMailAuth } from './lib/common/auth';
@@ -17,7 +19,7 @@ export const zohoMail = createPiece({
 	displayName: 'Zoho Mail',
 	logoUrl: 'https://cdn.activepieces.com/pieces/zoho-mail.png',
 	auth: zohoMailAuth,
-	authors: ['onyedikachi-david', 'kishanprmr'],
+	authors: ['onyedikachi-david', 'kishanprmr', 'kdurek'],
 	description:
 		'Zoho Mail is a powerful email service that allows you to manage your email, contacts, and calendars efficiently.',
 	minimumSupportedRelease: '0.36.1',
@@ -26,6 +28,8 @@ export const zohoMail = createPiece({
 		getEmailDetailsAction,
 		markEmailAsReadAction,
 		markEmailAsUnreadAction,
+		archiveEmailAction,
+		unarchiveEmailAction,
 		moveEmailAction,
 		sendEmailAction,
 		createCustomApiCallAction({

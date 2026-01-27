@@ -8,10 +8,13 @@ import {
   RotateCcw,
   FolderOpenDot,
   Package,
+  Tag,
+  Clock,
+  User,
+  Database,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -22,15 +25,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { formatUtils } from '@/lib/utils';
+import { projectCollectionUtils } from '@/hooks/project-collection';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   ProjectRelease,
   ProjectReleaseType,
@@ -49,23 +53,32 @@ const ProjectReleasesPage = () => {
   );
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
-    queryFn: () => projectReleaseApi.list(),
+    queryFn: () =>
+      projectReleaseApi.list({
+        projectId: authenticationSession.getProjectId()!,
+      }),
   });
-  const { data: projects } = projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
       accessorKey: 'name',
+      size: 200,
       accessorFn: (row) => row.name,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'type',
+      size: 150,
       accessorFn: (row) => row.type,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Source')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Source')}
+          icon={Database}
+        />
       ),
       cell: ({ row }) => {
         const isGit = row.original.type === ProjectReleaseType.GIT;
@@ -91,24 +104,30 @@ const ProjectReleasesPage = () => {
     },
     {
       accessorKey: 'created',
+      size: 150,
       accessorFn: (row) => row.created,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Imported At')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Imported At')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
+          <FormattedDate date={new Date(row.original.created)} />
         </div>
       ),
     },
     {
       accessorKey: 'importedBy',
+      size: 180,
       accessorFn: (row) => row.importedBy,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Imported By')}
-          className="text-center"
+          icon={User}
         />
       ),
       cell: ({ row }) => (
@@ -134,6 +153,7 @@ const ProjectReleasesPage = () => {
                   variant="ghost"
                   className="size-8 p-0"
                   request={{
+                    projectId: authenticationSession.getProjectId()!,
                     type: ProjectReleaseType.ROLLBACK,
                     projectReleaseId: row.original.id,
                   }}
@@ -152,24 +172,6 @@ const ProjectReleasesPage = () => {
 
   return (
     <div className="flex-col w-full gap-4">
-      <DashboardPageHeader
-        title={t('Project Releases')}
-        description={
-          <>
-            {t(
-              'Track and manage your project version history and deployments. ',
-            )}
-            <a
-              href="https://www.activepieces.com/docs/operations/git-sync"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {t('Environments & Releases')}
-            </a>
-          </>
-        }
-      ></DashboardPageHeader>
       <DataTable
         emptyStateTextTitle={t('No project releases found')}
         emptyStateTextDescription={t('Create a project release to get started')}
@@ -207,7 +209,10 @@ const ProjectReleasesPage = () => {
                           variant="ghost"
                           onSuccess={refetch}
                           className="w-full justify-start"
-                          request={{ type: ProjectReleaseType.GIT }}
+                          request={{
+                            type: ProjectReleaseType.GIT,
+                            projectId: authenticationSession.getProjectId()!,
+                          }}
                         >
                           <div className="flex flex-row gap-2 items-center">
                             <GitBranch className="size-4" />

@@ -7,7 +7,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { adjustInventoryLevelAction } from './lib/actions/adjust-inventory-level';
 import { cancelOrderAction } from './lib/actions/cancel-order';
 import { closeOrderAction } from './lib/actions/close-order';
@@ -75,7 +75,10 @@ export const shopifyAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       await sendShopifyRequest({
-        auth,
+        auth: { 
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
         method: HttpMethod.GET,
         url: '/shop.json',
       });
@@ -128,13 +131,13 @@ export const shopify = createPiece({
     uploadProductImageAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return getBaseUrl((auth as { shopName: string }).shopName);
+        return auth ? getBaseUrl(auth.props.shopName) : '';
       },
       auth: shopifyAuth,
       authMapping: async (auth) => {
-        const typedAuth = auth as { adminToken: string };
+        const typedAuth = auth.props.adminToken;
         return {
-          'X-Shopify-Access-Token': typedAuth.adminToken,
+          'X-Shopify-Access-Token': typedAuth,
         };
       },
     }),

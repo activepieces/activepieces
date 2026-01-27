@@ -10,6 +10,7 @@ export const findUserByCustomFieldAction = createAction({
 	description: 'Finds a user by custom field.',
 	props: {
 		field: Property.Dropdown({
+			auth: manychatAuth,
 	displayName: 'Custom Field',
 	refreshers: [],
 	required: true,
@@ -29,7 +30,7 @@ export const findUserByCustomFieldAction = createAction({
 			method: HttpMethod.GET,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth as string,
+				token: auth.secret_text
 			},
 		});
 		return {
@@ -64,7 +65,7 @@ export const findUserByCustomFieldAction = createAction({
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 		});
 

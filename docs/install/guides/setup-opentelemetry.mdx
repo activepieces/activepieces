@@ -1,0 +1,19 @@
+---
+title: "How to Setup OpenTelemetry"
+description: "Configure OpenTelemetry for observability and tracing"
+icon: "chart-line"
+---
+
+Activepieces supports both standard OpenTelemetry environment variables and vendor-specific configuration for observability and tracing.
+
+## Environment Variables
+
+| Variable | Description | Default Value | Example |
+|----------|-------------|---------------|---------|
+| `AP_OTEL_ENABLED` | Enable OpenTelemetry tracing | `false` | `true` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP exporter endpoint URL | None | `https://your-collector:4317/v1/traces` |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Headers for OTLP exporter (comma-separated key=value pairs) | None | `Authorization=Bearer token` |
+
+<Note>
+Both `AP_OTEL_ENABLED` and `OTEL_EXPORTER_OTLP_ENDPOINT` must be set for OpenTelemetry to be enabled.
+</Note>

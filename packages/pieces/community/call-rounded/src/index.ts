@@ -21,7 +21,7 @@ export const callRounded = createPiece({
       auth: callRoundedAuth,
       authMapping: async (auth) => ({
         'x-app': 'activepieces',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       }),
     })
   ],

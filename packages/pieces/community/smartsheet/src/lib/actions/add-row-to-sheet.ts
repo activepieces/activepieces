@@ -73,7 +73,7 @@ export const addRowToSheet = createAction({
 
 		try {
 			const result = await addRowToSmartsheet(
-				context.auth as string,
+				context.auth.secret_text,
 				sheet_id as string,
 				rowPayload,
 			);

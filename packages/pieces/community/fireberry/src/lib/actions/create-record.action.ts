@@ -13,7 +13,7 @@ export const createRecordAction = createAction({
     fields: objectFields,
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, fields } = propsValue;
 
     const fieldsObj = typeof fields === 'string' ? JSON.parse(fields) : fields;
@@ -22,6 +22,6 @@ export const createRecordAction = createAction({
       throw new Error('Fields must be an object');
     }
 
-    return await client.batchCreate(objectType, [fieldsObj]);
+    return await client.batchCreate(objectType as string, [fieldsObj]);
   },
 }); 

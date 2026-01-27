@@ -9,6 +9,7 @@ export const createEmailMarketingCampaignAction = createAction({
   description: 'Creates a new email campaign for specific list.',
   props: {
     lists: Property.MultiSelectDropdown({
+      auth: vboutAuth,
       displayName: 'Campaign Recipients List',
       required: true,
       refreshers: [],
@@ -20,7 +21,7 @@ export const createEmailMarketingCampaignAction = createAction({
             options: [],
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth.secret_text);
         const res = await client.listEmailLists();
         return {
           disabled: false,
@@ -79,7 +80,7 @@ export const createEmailMarketingCampaignAction = createAction({
   async run(context) {
     const { lists, name, from_name, fromemail, reply_to, subject, body, type } =
       context.propsValue;
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth.secret_text);
     return await client.addCampaign({
       lists: lists.join(','),
       name,

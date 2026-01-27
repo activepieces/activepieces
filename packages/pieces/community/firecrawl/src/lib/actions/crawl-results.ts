@@ -19,7 +19,7 @@ export const crawlResults = createAction({
       method: HttpMethod.GET,
       url: `https://api.firecrawl.dev/v1/crawl/${propsValue.crawlId}`,
       headers: {
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       },
     });
 

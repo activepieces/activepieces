@@ -1,6 +1,7 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const pdfmonkeyAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
@@ -8,7 +9,10 @@ export const pdfmonkeyAuth = PieceAuth.SecretText({
 	required: true,
 	validate: async ({ auth }) => {
 		try {
-			await makeRequest(auth as string, HttpMethod.GET, '/documents', {});
+			await makeRequest({
+				type: AppConnectionType.SECRET_TEXT,
+				secret_text: auth,
+			}, HttpMethod.GET, '/documents', {});
 			return {
 				valid: true,
 			};

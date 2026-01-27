@@ -14,7 +14,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient (auth.props);
     const res = await client.getEntry(propsValue.entry_id);
     return res.entry;
   },

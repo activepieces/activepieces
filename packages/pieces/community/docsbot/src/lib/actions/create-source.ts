@@ -20,7 +20,7 @@ export const createSource = createAction({
       await docsbotCommon.createSourceSchema.parseAsync(parsedProps);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errors = error.errors.reduce((acc, err) => {
+        const errors = error.issues.reduce((acc: Record<string, string>, err: z.ZodIssue) => {
           const path = err.path.join('.');
           return {
             ...acc,

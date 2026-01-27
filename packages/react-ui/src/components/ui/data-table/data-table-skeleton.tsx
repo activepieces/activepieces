@@ -20,10 +20,10 @@ function TableRowSkeleton() {
   return (
     <div
       id="table-loading"
-      className="w-full h-10 bg-gray-100 mb-4 dark:bg-gray-800 rounded-sm"
+      className="w-full h-10  mb-4  rounded-sm"
       data-testid="header-cell"
     >
-      <Skeleton className="w-full" />
+      <Skeleton className="w-full min-h-10" />
     </div>
   );
 }

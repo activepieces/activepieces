@@ -1,45 +1,51 @@
 import semverMajor from 'semver/functions/major'
 import semverMinor from 'semver/functions/minor'
 import semverMinVersion from 'semver/ranges/min-version'
+import { assertNotNullOrUndefined } from '../common'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
-import { PackageType, PiecePackage } from './piece'
 
+/**
+ * @param {string} pieceName - starts with `@activepieces/piece-`
+ * @param {string} pieceVersion - the version of the piece
+ * @returns {string} the package alias for the piece, e.g. `@activepieces/piece-activepieces-0.0.1`
+ */
 export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): string => {
     const { pieceName, pieceVersion } = params
     return `${pieceName}-${pieceVersion}`
 }
 
-export const getPackageSpecForPiece = (packageArchivePath: string, params: PiecePackage): string => {
-    const { packageType, pieceName, pieceVersion } = params
-
-    switch (packageType) {
-        case PackageType.REGISTRY: {
-            return `npm:${pieceName}@${pieceVersion}`
-        }
-
-        case PackageType.ARCHIVE: {
-            const archivePath = getPackageArchivePathForPiece({
-                archiveId: params.archiveId,
-                archivePath: packageArchivePath,
-            })
-
-            return `file:${archivePath}`
-        }
+/**
+ * @param {string} alias - e.g. piece-activepieces or @publisher/piece-activepieces or activepieces or @publisher/activepieces 
+ * @returns {string} the piece name, e.g. activepieces
+ */
+export const getPieceNameFromAlias = (alias: string): string => {
+    const fullPieceName =  alias.startsWith('@') ? alias.split('/').pop() : alias
+    assertNotNullOrUndefined(fullPieceName, 'Full piece name')
+    if (fullPieceName.startsWith('piece-')) {
+        return fullPieceName.split('-').slice(1).join('-')
     }
+    return fullPieceName
 }
 
-export const getPackageArchivePathForPiece = (params: GetPackageArchivePathForPieceParams): string => {
-    return `${params.archivePath}/${params.archiveId}.tgz`
+/**
+ * @param {string} alias - e.g. `@activepieces/piece-activepieces-0.0.1`
+ * @returns {string} the piece name, e.g. `@activepieces/piece-activepieces`
+ */
+export const trimVersionFromAlias = (alias: string): string => {
+    return alias.split('-').slice(0, -1).join('-')
 }
+
+
 
 export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams): T => {
     const { module, pieceName, pieceVersion } = params
     const exports = Object.values(module)
-
+    const constructors = []
     for (const e of exports) {
         if (e !== null && e !== undefined && e.constructor.name === 'Piece') {
             return e as T
         }
+        constructors.push(e?.constructor?.name)
     }
 
     throw new ActivepiecesError({
@@ -47,7 +53,7 @@ export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams):
         params: {
             pieceName,
             pieceVersion,
-            message: 'Failed to extract piece from module.',
+            message: `Failed to extract piece from module, found constructors: ${constructors.join(', ')}`,
         },
     })
 }
@@ -62,12 +68,6 @@ export const getPieceMajorAndMinorVersion = (pieceVersion: string): string => {
 type GetPackageAliasForPieceParams = {
     pieceName: string
     pieceVersion: string
-}
-
-
-type GetPackageArchivePathForPieceParams = {
-    archiveId: string
-    archivePath: string
 }
 
 type ExtractPieceFromModuleParams = {

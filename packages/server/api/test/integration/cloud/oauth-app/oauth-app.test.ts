@@ -39,6 +39,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -76,6 +77,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -137,6 +139,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -192,7 +195,13 @@ describe('OAuth App API', () => {
         it('should list OAuth Apps by platform member', async () => {
             // arrange
             const { mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
-            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
+            const { mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
+            const { mockUser: mockUserTwo } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatformTwo.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
 
             const mockOAuthAppsOne = await createMockOAuthApp({
                 platformId: mockPlatformOne.id,
@@ -208,7 +217,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
-                platform: { id: mockPlatformOne.id },
+                platform: { id: mockPlatformTwo.id },
             })
             // act
             const response = await app?.inject({
@@ -224,7 +233,7 @@ describe('OAuth App API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody.data).toHaveLength(1)
-            expect(responseBody.data[0].id).toBe(mockOAuthAppsOne.id)
+            expect(responseBody.data[0].id).toBe(mockOAuthAppsTwo.id)
             expect(responseBody.data[0].clientSecret).toBeUndefined()
         })
     })

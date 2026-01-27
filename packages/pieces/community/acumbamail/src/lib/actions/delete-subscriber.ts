@@ -26,7 +26,7 @@ export const removeSubscribeAction = createAction({
       method: HttpMethod.DELETE,
       url: acumbamailCommon.baseUrl + '/deleteSubscriber/',
       queryParams: {
-        auth_token: context.auth,
+        auth_token: context.auth.secret_text,
         list_id: listId.toString(),
         email: email,
       },

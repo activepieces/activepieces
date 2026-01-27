@@ -30,7 +30,7 @@ export const getContactDetails = createAction({
       required: false,
       description: 'Email of the logged in user',
     }),
-  },
+  },  
   async run(context) {
     const contact = {
       contactId: context.propsValue.contactId,
@@ -57,10 +57,10 @@ export const getContactDetails = createAction({
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${
-        context.auth.base_url
+        context.auth.props.base_url
       }/api/services/CRM/Contact/GetContactData?${queryParams.toString()}`,
       headers: {
-        'api-key': context.auth.api_key,
+        'api-key': context.auth.props.api_key,
         'Content-Type': 'application/json',
       },
     });

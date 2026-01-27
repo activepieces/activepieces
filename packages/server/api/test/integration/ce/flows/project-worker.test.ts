@@ -1,4 +1,4 @@
-import { PrincipalType } from '@activepieces/shared'
+import { apId, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
@@ -23,10 +23,14 @@ describe('Project Worker API', () => {
     describe('Get worker project endpoint', () => {
         it('Returns worker project', async () => {
             // arrange
-            const { mockProject } = await mockAndSaveBasicSetup()
+            const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.ENGINE,
+                id: apId(),
+                platform: {
+                    id: mockPlatform.id,
+                },
                 projectId: mockProject.id,
             })
 

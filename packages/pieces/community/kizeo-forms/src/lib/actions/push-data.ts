@@ -36,7 +36,7 @@ export const pushData = createAction({
       url: endpoint + `v3/forms/${formId}/push?used-with-actives-pieces=`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
       body: body,
     });

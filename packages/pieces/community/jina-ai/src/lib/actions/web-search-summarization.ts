@@ -198,7 +198,7 @@ export const webSearchSummarizationAction = createAction({
     const responseBody = await JinaAICommon.makeRequest({
       url: finalUrl,
       method: HttpMethod.GET,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       headers,
     });
 

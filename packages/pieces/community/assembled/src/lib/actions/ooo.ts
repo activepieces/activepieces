@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const OOO = createAction({
+  auth: assembledAuth,
   name: 'OOO',
   displayName: 'Create OOO Request',
   description: 'Create an Out of Office request in Assembled.',
@@ -76,7 +78,7 @@ export const OOO = createAction({
       };
 
       const response = await assembledCommon.makeRequest(
-        context.auth as string,
+        context.auth.secret_text,
         HttpMethod.POST,
         '/time_off',
         oooData

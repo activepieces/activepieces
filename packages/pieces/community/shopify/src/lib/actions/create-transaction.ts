@@ -15,6 +15,7 @@ export const createTransactionAction = createAction({
       required: true,
     }),
     kind: Property.Dropdown({
+      auth: shopifyAuth,
       displayName: 'Type',
       required: true,
       refreshers: [],

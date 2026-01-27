@@ -127,3 +127,46 @@ export function chunk<T>(records: T[], size: number) {
     }
     return chunks
 }
+
+export function partition<T>(array: T[], predicate: (item: T, index: number, arr: T[]) => boolean): [T[], T[]] {
+    const truthy: T[] = []
+    const falsy: T[] = []
+    array.forEach((item, idx) => {
+        if (predicate(item, idx, array)) {
+            truthy.push(item)
+        }
+        else {
+            falsy.push(item)
+        }
+    })
+    return [truthy, falsy]
+}
+
+export function unique<T>(array: T[]): T[] {
+    return array.filter((item, index, self) => index === self.findIndex(other => JSON.stringify(other) === JSON.stringify(item)))
+}
+
+export function mapsAreSame<K, V>(a: Map<K, V>, b: Map<K, V>): boolean {
+    if (a.size !== b.size) return false
+    for (const [key, value] of a) {
+        if (!b.has(key)) return false
+        if (b.get(key) !== value) return false
+    }
+    return true
+}
+
+export function validateIndexBound({
+    index, limit,
+}: { index: number, limit: number }) {
+    if (index < 0) {
+        return 0
+    }
+    if (index >= limit) {
+        return limit - 1
+    }
+    return index
+}
+
+export function isManualPieceTrigger({ pieceName, triggerName }: { pieceName: string, triggerName: string }) {
+    return pieceName === '@activepieces/piece-manual-trigger' && triggerName === 'manual_trigger'
+}

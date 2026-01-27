@@ -27,12 +27,12 @@ export const createQrCodeAction = createAction({
       },
     }),
     destination: Property.DynamicProperties({
+      auth: bitlyAuth,
       displayName: 'Destination',
       required: true,
       refreshers: ['destination_type'],
       props: async (
-        propsValue: Record<string, DynamicPropsValue>,
-        ctx: any
+        propsValue: Record<string, unknown>,
       ) => {
         const destination_type = propsValue[
           'destination_type'
@@ -360,7 +360,7 @@ export const createQrCodeAction = createAction({
 
       return await bitlyApiCall({
         method: HttpMethod.POST,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: '/qr-codes',
         body,
       });

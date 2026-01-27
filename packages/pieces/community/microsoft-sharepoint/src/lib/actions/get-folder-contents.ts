@@ -18,6 +18,7 @@ export const getFolderContentsAction = createAction({
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,
     folderId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'Folder',
       description: 'The folder whose contents you want to list. Select "Root Folder" for the top-level folder.',
       required: true,

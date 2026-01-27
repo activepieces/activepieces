@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const addShift = createAction({
+  auth: assembledAuth,
   name: 'add_shift',
   displayName: 'Add Shift on Assembled',
   description: 'Add a new shift to a user\'s schedule in Assembled',
@@ -20,11 +22,6 @@ export const addShift = createAction({
     end_time: Property.DateTime({
       displayName: 'End Time', 
       description: 'End time of the shift',
-      required: true,
-    }),
-    date: Property.DateTime({
-      displayName: 'Date',
-      description: 'Date of the shift',
       required: true,
     }),
     shift_type: Property.StaticDropdown({
@@ -53,7 +50,7 @@ export const addShift = createAction({
     }),
   },
   async run(context) {
-    const { agent_id, start_time, end_time, date, shift_type, activity_type_id, notes } = context.propsValue;
+    const { agent_id, start_time, end_time, shift_type, activity_type_id, notes } = context.propsValue;
     
     try {
       // Convert to Unix timestamps as required by Assembled API
@@ -69,7 +66,7 @@ export const addShift = createAction({
       };
 
       const response = await assembledCommon.makeRequest(
-        context.auth as string,
+        context.auth.secret_text,
         HttpMethod.POST,
         '/activities',
         shiftData

@@ -62,7 +62,7 @@ export const wedofCommon = {
         const webhookId = await wedofCommon.subscribeWebhook(
           events,
           context.webhookUrl,
-          context.auth as string,
+          context.auth.secret_text,
           name
         );
         await context.store.put('_webhookId', webhookId);

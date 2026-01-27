@@ -10,6 +10,7 @@ export const createSection = createAction({
 	description: 'Creates a new section in notebook.',
 	props: {
 		notebook_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook to create the section in.',
 			required: true,

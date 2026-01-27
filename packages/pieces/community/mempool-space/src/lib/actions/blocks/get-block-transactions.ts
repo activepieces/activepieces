@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getBlockTransactions = createAction({
+ auth:PieceAuth.None(),
     name: 'get_block_transactions',
     displayName: 'Get Block Transactions',
     description: 'Returns a list of transactions in the block (up to 25 transactions)',

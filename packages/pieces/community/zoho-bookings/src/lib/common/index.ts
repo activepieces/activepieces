@@ -208,6 +208,7 @@ export const formatDateTime = (date: string) => {
 };
 
 export const bookingIdDropdown = Property.Dropdown({
+  auth: zohoBookingsAuth,
   displayName: 'Appointment',
   description: 'Select the appointment to get details for',
   required: true,

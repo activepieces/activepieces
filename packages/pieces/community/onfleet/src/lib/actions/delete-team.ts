@@ -13,7 +13,7 @@ export const deleteTeam = createAction({
     team: common.team,
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.teams.deleteOne(context.propsValue.team as string);
   },

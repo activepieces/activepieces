@@ -5,13 +5,13 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import gfm from 'remark-gfm';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import { MarkdownVariant } from '@activepieces/shared';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
-import { useToast } from '../ui/use-toast';
 
 function applyVariables(markdown: string, variables: Record<string, string>) {
   if (typeof markdown !== 'string') {
@@ -42,7 +42,7 @@ const Container = ({
   return (
     <Alert
       className={cn('rounded-md border', {
-        'bg-warning-100 text-warning-300 border-none':
+        'dark:bg-amber-950 bg-amber-50  border-none dark:text-amber-600 text-amber-700':
           variant === MarkdownVariant.WARNING,
         'bg-success-100 text-success-300 border-none':
           variant === MarkdownVariant.TIP,
@@ -56,16 +56,14 @@ const Container = ({
             <Info className="w-4 h-4 mt-1" />
           )}
           {variant === MarkdownVariant.WARNING && (
-            <AlertTriangle className="w-4 h-4 mt-1" />
+            <AlertTriangle className="w-4 h-4 mt-1 stroke-amber-700" />
           )}
           {variant === MarkdownVariant.TIP && (
             <Lightbulb className="w-4 h-4 mt-1" />
           )}
         </>
       )}
-      <AlertDescription className="flex-grow w-full">
-        {children}
-      </AlertDescription>
+      <AlertDescription className="grow w-full">{children}</AlertDescription>
     </Alert>
   );
 };
@@ -73,7 +71,6 @@ const Container = ({
 const ApMarkdown = React.memo(
   ({ markdown, variables, variant, className, loading }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
-    const { toast } = useToast();
 
     const { mutate: copyToClipboard } = useMutation({
       mutationFn: async (text: string) => {
@@ -83,8 +80,7 @@ const ApMarkdown = React.memo(
         setCopiedText(null);
       },
       onError: () => {
-        toast({
-          title: t('Failed to copy to clipboard'),
+        toast.error(t('Failed to copy to clipboard'), {
           duration: 3000,
         });
       },
@@ -107,7 +103,7 @@ const ApMarkdown = React.memo(
     return (
       <Container variant={variant}>
         <ReactMarkdown
-          className={cn('flex-grow w-full ', className)}
+          className={cn('grow w-full ', className)}
           remarkPlugins={[gfm, breaks]}
           components={{
             code(props) {
@@ -158,10 +154,7 @@ const ApMarkdown = React.memo(
               />
             ),
             p: ({ node, ...props }) => (
-              <p
-                className="leading-7 [&:not(:first-child)]:mt-2 w-full"
-                {...props}
-              />
+              <p className="leading-7 not-first:mt-2 w-full" {...props} />
             ),
             ul: ({ node, ...props }) => (
               <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />

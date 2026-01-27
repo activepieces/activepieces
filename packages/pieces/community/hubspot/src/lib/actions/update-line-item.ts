@@ -59,6 +59,9 @@ export const updateLineItemAction = createAction({
 
         // Add additional properties to the lineItemProperties object
         Object.entries(objectProperties).forEach(([key, value]) => {
+            if ((Array.isArray(value) && value.length === 0)) {
+                return;  
+            }
             // Format values if they are arrays
             lineItemProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });

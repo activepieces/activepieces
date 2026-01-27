@@ -1,110 +1,60 @@
-import { AppSystemProp, QueueName, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
-    MachineInformation,
-    WorkerMachineHealthcheckResponse,
+    ExecutionMode,
+    isNil,
+    partition,
+    WebsocketServerEvent,
+    WorkerMachineHealthcheckRequest,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
+    WorkerSettingsResponse,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
-import { In } from 'typeorm'
-import { repoFactory } from '../../core/db/repo-factory'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { system } from '../../helper/system/system'
-import { app } from '../../server'
-import { jobQueue } from '../queue/job-queue'
-import { WorkerMachineEntity } from './machine-entity'
-import { machineRouting } from './machine-routing'
 
-const workerRepo = repoFactory(WorkerMachineEntity)
-const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import { FastifyBaseLogger } from 'fastify'
+import { websocketService } from '../../core/websockets.service'
+import { redisConnections } from '../../database/redis-connections'
+import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
+import { jwtUtils } from '../../helper/jwt-utils'
+import { system } from '../../helper/system/system'
+import { workerMachineCache } from './machine-cache'
+
+dayjs.extend(utc)
 
 export const machineService = (log: FastifyBaseLogger) => {
     return {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
-            system.globalLogger().info({
+            log.info({
                 message: 'Worker disconnected',
                 workerId: request.workerId,
             })
-            await workerRepo().delete({ id: request.workerId })
-            await machineRouting.onDisconnect({
-                workerId: request.workerId,
+            await workerMachineCache().delete([request.workerId])
+        },
+        async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+            await workerMachineCache().upsert({
+                id: request.workerId,
+                information: request,
             })
-            await machineService(log).updateConcurrency()
-        },
-        async acquire(): Promise<string> {
-            const workerId = await machineRouting.acquire()
-            const sockets = await app?.io.to(workerId).fetchSockets()
-            if (sockets && sockets.length > 0) {
-                return workerId
-            }
-            else {
-                await machineService(log).onDisconnect({
-                    workerId,
-                })
-                return machineService(log).acquire()
-            }
-        },
-        async release(workerId: string): Promise<void> {
-            await machineRouting.release(workerId)
-        },
-        async getConcurrency(): Promise<Record<QueueName, number>> {
-            const machines = await machineService(log).list()
-            const flowWorkerConcurrency = machines.reduce((acc, machine) => acc + (parseInt(machine.information.workerProps[WorkerSystemProp.WORKER_CONCURRENCY]) || 0), 0)
+            const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
+            const isDedicatedWorker = !isNil(platformIdForDedicatedWorker)
             return {
-                [QueueName.WORKER_JOBS]: flowWorkerConcurrency,
-            }
-        },
-        async updateConcurrency(): Promise<void> {
-            const concurrency = await machineService(log).getConcurrency()
-            await Promise.all(Object.entries(concurrency).map(([queueName, concurrency]) => jobQueue(log).setConcurrency(queueName as QueueName, concurrency)))
-        },
-        async onHeartbeat({
-            workerId,
-            totalSandboxes,
-            diskInfo,
-            cpuUsagePercentage,
-            ramUsagePercentage,
-            totalAvailableRamInBytes,
-            workerProps,
-            ip,
-            freeSandboxes,
-        }: OnHeartbeatParams): Promise<WorkerMachineHealthcheckResponse> {
-            await machineRouting.onHeartbeat({
-                workerId,
-                totalSandboxes,
-                freeSandboxes,
-            })
-            await workerRepo().upsert({
-                information: {
-                    diskInfo,
-                    cpuUsagePercentage,
-                    ramUsagePercentage,
-                    totalAvailableRamInBytes,
-                    workerProps,
-                    ip,
-                    totalSandboxes,
-                    freeSandboxes,
-                },
-                updated: dayjs().toISOString(),
-                id: workerId,
-            }, ['id'])
-
-            const response: WorkerMachineHealthcheckResponse = {
+                JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
-                EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
+                EXECUTION_MODE: executionMode,
+                TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
                 LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
                 LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
                 ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
                 APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
+                MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
                 MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
                 SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
                 SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
-                PIECES_SOURCE: system.getOrThrow(AppSystemProp.PIECES_SOURCE),
                 DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
                 SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
                 LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
@@ -114,26 +64,57 @@ export const machineService = (log: FastifyBaseLogger) => {
                 PUBLIC_URL: await domainHelper.getPublicUrl({
                     path: '',
                 }),
+                PROJECT_RATE_LIMITER_ENABLED: isDedicatedWorker ? false : system.getBooleanOrThrow(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED),
+                MAX_CONCURRENT_JOBS_PER_PROJECT: system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+                REDIS_TYPE: redisConnections.getRedisType(),
+                REDIS_SSL_CA_FILE: system.get(AppSystemProp.REDIS_SSL_CA_FILE),
+                REDIS_DB: system.getNumber(AppSystemProp.REDIS_DB) ?? undefined,
+                REDIS_HOST: system.get(AppSystemProp.REDIS_HOST),
+                REDIS_PASSWORD: system.get(AppSystemProp.REDIS_PASSWORD),
+                REDIS_PORT: system.get(AppSystemProp.REDIS_PORT),
+                REDIS_URL: system.get(AppSystemProp.REDIS_URL),
+                REDIS_USER: system.get(AppSystemProp.REDIS_USER),
+                REDIS_USE_SSL: system.get(AppSystemProp.REDIS_USE_SSL) === 'true',
+                REDIS_SENTINEL_ROLE: system.get(AppSystemProp.REDIS_SENTINEL_ROLE),
+                REDIS_SENTINEL_HOSTS: system.get(AppSystemProp.REDIS_SENTINEL_HOSTS),
+                REDIS_SENTINEL_NAME: system.get(AppSystemProp.REDIS_SENTINEL_NAME),
+                EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
+                REDIS_FAILED_JOB_RETENTION_DAYS: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
+                REDIS_FAILED_JOB_RETENTION_MAX_COUNT: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
+                EDITION: system.getOrThrow(AppSystemProp.EDITION),
             }
-
-            await machineService(log).updateConcurrency()
-
-            return response
         },
         async list(): Promise<WorkerMachineWithStatus[]> {
-            const offlineThreshold = dayjs().subtract(OFFLINE_THRESHOLD, 'ms').utc()
-            const allWorkers = await workerRepo().find()
-            const workersToDelete = allWorkers.filter(worker => dayjs(worker.updated).isBefore(offlineThreshold))
 
-            if (workersToDelete.length > 0) {
-                await workerRepo().delete({
-                    id: In(workersToDelete.map(worker => worker.id)),
-                })
-            }
+            let allWorkers = await workerMachineCache().find()
 
-            const onlineWorkers = allWorkers.filter(worker => dayjs(worker.updated).isAfter(offlineThreshold))
+            await Promise.all(allWorkers.map(async worker => {
+                const settings = await websocketService.emitWithAck<WorkerMachineHealthcheckRequest[]>( WebsocketServerEvent.WORKER_HEALTHCHECK, worker.id)
+                    .catch(error => {
+                        log.error({
+                            message: 'Failed to get worker healthcheck',
+                            error,
+                            workerId: worker.id,
+                        })
+                    })
+                if (settings && settings[0]) {
+                    await workerMachineCache().upsert({
+                        id: worker.id,
+                        information: settings[0],
+                    })
+                }
+            }))
+
+            allWorkers = await workerMachineCache().find()
+
+            const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+
+            const [onlineWorkers, offLineWorkers] = partition(allWorkers, (worker) => dayjs(worker.updated).isAfter(offlineThreshold))
+
+            await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
+
             return onlineWorkers.map(worker => ({
                 ...worker,
                 status: WorkerMachineStatus.ONLINE,
@@ -142,19 +123,23 @@ export const machineService = (log: FastifyBaseLogger) => {
     }
 }
 
-type OnDisconnectParams = {
-    workerId: string
+
+async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
+    const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
+    if (isNil(platformIdForDedicatedWorker)) {
+        return executionMode
+    }
+
+    const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
+    if (isNil(dedicatedWorkerConfig)) {
+        return executionMode
+    }
+    if (dedicatedWorkerConfig.trustedEnvironment) {
+        return ExecutionMode.SANDBOX_PROCESS
+    }
+    return ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
-type OnHeartbeatParams = {
-    socket: Socket
+type OnDisconnectParams = {
     workerId: string
-    cpuUsagePercentage: number
-    diskInfo: MachineInformation['diskInfo']
-    ramUsagePercentage: number
-    totalAvailableRamInBytes: number
-    ip: string
-    totalSandboxes: number
-    freeSandboxes: number
-    workerProps: Record<string, string>
 }

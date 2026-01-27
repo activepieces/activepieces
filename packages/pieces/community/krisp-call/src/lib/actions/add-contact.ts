@@ -39,7 +39,7 @@ export const addContact = createAction({
       method: HttpMethod.POST,
       url: 'https://app.krispcall.com/api/v3/platform/activepiece/add-contact',
       headers: {
-        'X-API-KEY': auth.apiKey,
+        'X-API-KEY': auth.props.apiKey,
       },
       body: {
         name: propsValue.name,

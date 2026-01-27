@@ -112,7 +112,7 @@ const EditableText = ({
       ref={editableTextRef}
       contentEditable
       suppressContentEditableWarning={true}
-      className={`${className}  focus:outline-none break-all`}
+      className={`${className}  focus:outline-hidden break-all`}
       onBlur={() => {
         emitChangedValue();
         setIsEditing(false);

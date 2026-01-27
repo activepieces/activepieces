@@ -12,7 +12,7 @@ export const linearRawGraphqlQuery = createAction({
     variables: Property.Object({ displayName: 'Parameters', required: false }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth as string);
+    const client = makeClient(auth);
     const result = await client.rawRequest(
       propsValue.query,
       propsValue.variables

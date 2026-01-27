@@ -1,6 +1,6 @@
 
+import { securityAccess } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
     FlowRun,
@@ -12,10 +12,12 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
 import { FastifyRequest } from 'fastify'
+import mime from 'mime-types'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
+import { isBinaryContentType } from './webhook-utils'
 import { webhookService } from './webhook.service'
 
 const tracer = trace.getTracer('webhook-controller')
@@ -159,8 +161,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 const WEBHOOK_PARAMS = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        skipAuth: true,
+        security: securityAccess.public(),
         rawBody: true,
     },
     schema: {
@@ -174,12 +175,14 @@ async function convertRequest(
     projectId: string,
     flowId: string,
 ): Promise<EventPayload> {
+    const contentType = request.headers['content-type']
+    const isBinary = isBinaryContentType(contentType) && Buffer.isBuffer(request.body)
     return {
         method: request.method,
         headers: request.headers as Record<string, string>,
         body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
-        rawBody: request.rawBody,
+        rawBody: isBinary ? undefined : request.rawBody,
     }
 }
 
@@ -217,6 +220,26 @@ async function convertBody(
         }
         return jsonResult
     }
+    const contentType = request.headers['content-type']
+    if (isBinaryContentType(contentType) && Buffer.isBuffer(request.body)) {
+        const platformId = await projectService.getPlatformId(projectId)
+        const extension = mime.extension(contentType?.split(';')[0] || '') || 'bin'
+        const fileName = `file.${extension}`
+
+        const file = await stepFileService(request.log).saveAndEnrich({
+            data: request.body,
+            fileName,
+            stepName: 'trigger',
+            flowId,
+            contentLength: request.body.length,
+            platformId,
+            projectId,
+        })
+        return {
+            fileUrl: file.url,
+        }
+    }
+
     return request.body
 }
 

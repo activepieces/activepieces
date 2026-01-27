@@ -14,6 +14,7 @@ export const uploadFileToProject = createAction({
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'The project to upload the file to.',
 			required: true,
@@ -26,7 +27,7 @@ export const uploadFileToProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/projects.json',
 				});
@@ -51,6 +52,7 @@ export const uploadFileToProject = createAction({
 			required: false,
 		}),
 		categoryId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Category',
 			description: 'The category to assign the file to.',
 			required: false,
@@ -63,7 +65,7 @@ export const uploadFileToProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: `/projects/api/v3/projects/${projectId}/filecategories.json`,
 				});

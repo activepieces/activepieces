@@ -55,7 +55,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.updateUser(propsValue.user_id as number, {
       name: propsValue.name,
       email: propsValue.email,

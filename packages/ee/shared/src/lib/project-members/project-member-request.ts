@@ -26,3 +26,9 @@ export const UpdateProjectMemberRoleRequestBody = Type.Object({
 })
 
 export type UpdateProjectMemberRoleRequestBody = Static<typeof UpdateProjectMemberRoleRequestBody>
+
+export const GetCurrentProjectMemberRoleQuery = Type.Object({
+    projectId: Type.String(),
+})
+
+export type GetCurrentProjectMemberRoleQuery = Static< typeof GetCurrentProjectMemberRoleQuery>

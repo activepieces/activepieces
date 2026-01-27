@@ -17,10 +17,12 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
+  "Follow redirects": "Suivre les redirections",
   "Name of the dataset to create": "Nom du jeu de données à créer",
   "The mode of the dataset": "Le mode du jeu de données",
   "Define the tables and their columns for the dataset (JSON format)": "Définir les tables et leurs colonnes pour le jeu de données (format JSON)",
@@ -29,7 +31,7 @@
   "JSON object containing the rows to add to the table. Each row must match your table schema.": "Objet JSON contenant les lignes à ajouter à la table. Chaque ligne doit correspondre au schéma de votre table.",
   "Skip refreshing the dataset after pushing data (only applies to Push and PushStreaming modes)": "Ignorer l'actualisation du jeu de données après l'envoi des données (s'applique uniquement aux modes Push et PushStreaming)",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Push": "Pousser",
   "Streaming": "Streaming en cours",
   "PushStreaming": "PushStreaming",
@@ -38,5 +40,9 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut"
 }

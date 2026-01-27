@@ -32,7 +32,7 @@ export const downloadCustomExportInItsOriginalFormat = createAction({
         `v3/forms/${formId}/data/${dataId}/pdf?used-with-actives-pieces=`;
       headers = {
         'Content-Type': 'application/pdf',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       };
     } else {
       uri =
@@ -41,7 +41,7 @@ export const downloadCustomExportInItsOriginalFormat = createAction({
       headers = {
         Accept:
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       };
     }
 

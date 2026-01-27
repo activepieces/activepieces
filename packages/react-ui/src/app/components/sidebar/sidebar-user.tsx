@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   ChevronsUpDown,
   LogOut,
-  Settings,
   Shield,
   UserCogIcon,
   UserPlus,
@@ -11,10 +10,8 @@ import {
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { notificationHooks } from '@/app/routes/platform/notifications/hooks/notifications-hooks';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
-import { Dot } from '@/components/ui/dot';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,30 +25,34 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import {
+  useIsPlatformAdmin,
+  useAuthorization,
+} from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformRole } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
-import { ProjectSettingsDialog } from '../project-settings';
+import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [projectSettingsOpen, setProjectSettingsOpen] = useState(false);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const { embedState } = useEmbedding();
+  const { state } = useSidebar();
   const location = useLocation();
-  const { project } = projectHooks.useCurrentProject();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
-
+  const { checkAccess } = useAuthorization();
+  const canInviteUsers = checkAccess(Permission.WRITE_INVITATION);
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
+  const isCollapsed = state === 'collapsed';
 
   if (!user || embedState.isEmbedded) {
     return null;
@@ -66,75 +67,80 @@ export function SidebarUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu modal>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex items-center gap-2 w-full text-left text-sm">
-                <UserAvatar
-                  name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
-                  size={32}
-                  disableTooltip={true}
-                />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {user.firstName}
-                  </span>
-                  <span className="truncate text-xs">{user.email}</span>
+        <DropdownMenu modal open={isCollapsed ? false : undefined}>
+          {isCollapsed ? (
+            <div className="flex items-center p-2 justify-center size-12">
+              <UserAvatar
+                name={user.firstName + ' ' + user.lastName}
+                email={user.email}
+                imageUrl={user.imageUrl}
+                size={32}
+                disableTooltip={true}
+              />
+            </div>
+          ) : (
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <div className="flex items-center gap-2 w-full text-left text-sm">
+                  <UserAvatar
+                    name={user.firstName + ' ' + user.lastName}
+                    email={user.email}
+                    imageUrl={user.imageUrl}
+                    size={32}
+                    disableTooltip={true}
+                  />
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate">
+                      {user.firstName + ' ' + user.lastName}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
                 </div>
-                <ChevronsUpDown className="ml-auto size-4" />
-              </div>
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+          )}
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side="right"
-            align="end"
-            sideOffset={4}
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-[9999999]"
+            side="top"
+            align="start"
+            sideOffset={10}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <UserAvatar
                   name={user.firstName + ' ' + user.lastName}
                   email={user.email}
+                  imageUrl={user.imageUrl}
                   size={32}
                   disableTooltip={true}
                 />
 
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {user.firstName}
+                  <span className="truncate font-medium">
+                    {user.firstName + ' ' + user.lastName}
                   </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {!isInPlatformAdmin && (
-              <>
-                <SidebarPlatformAdminButton />
-                <DropdownMenuSeparator />
-              </>
-            )}
+            {!isInPlatformAdmin && <SidebarPlatformAdminButton />}
 
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
-              {!isInPlatformAdmin && (
-                <DropdownMenuItem onClick={() => setProjectSettingsOpen(true)}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t('Project Settings')}
+              {canInviteUsers && (
+                <DropdownMenuItem onClick={() => setInviteUserOpen(true)}>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {t('Invite User')}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => setInviteOpen(true)}>
-                <UserPlus className="size-4 mr-2" />
-                <span>{t('Invite User')}</span>
-              </DropdownMenuItem>
+              <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
@@ -145,31 +151,19 @@ export function SidebarUser() {
         </DropdownMenu>
       </SidebarMenuItem>
 
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
-      <ProjectSettingsDialog
-        open={projectSettingsOpen}
-        onClose={() => setProjectSettingsOpen(false)}
-        projectId={project?.id}
-        initialValues={{
-          projectName: project?.displayName,
-          tasks: project?.plan?.tasks?.toString() ?? '',
-          aiCredits: project?.plan?.aiCredits?.toString() ?? '',
-        }}
-      />
       <AccountSettingsDialog
         open={accountSettingsOpen}
         onClose={() => setAccountSettingsOpen(false)}
       />
+      <InviteUserDialog open={inviteUserOpen} setOpen={setInviteUserOpen} />
     </SidebarMenu>
   );
 }
 
 function SidebarPlatformAdminButton() {
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
-  const messages = notificationHooks.useNotifications();
-  const platformRole = userHooks.getCurrentUserPlatformRole();
 
   if (embedState.isEmbedded || !showPlatformAdminDashboard) {
     return null;
@@ -178,19 +172,13 @@ function SidebarPlatformAdminButton() {
   return (
     <DropdownMenuGroup>
       <DropdownMenuItem
-        onClick={() => navigate('/platform')}
+        onClick={() => navigate('/platform/projects')}
         className="w-full flex items-center justify-center relative"
       >
         <div className={`w-full flex items-center gap-2`}>
           <Shield className="size-4" />
           <span className={`text-sm`}>{t('Platform Admin')}</span>
         </div>
-        {messages.length > 0 && platformRole === PlatformRole.ADMIN && (
-          <Dot
-            variant="primary"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"
-          />
-        )}
       </DropdownMenuItem>
     </DropdownMenuGroup>
   );

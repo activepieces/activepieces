@@ -5,7 +5,7 @@ import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
 
-export const AGENT_PIECE_NAME = '@activepieces/piece-agent'
+export const AI_PIECE_NAME = '@activepieces/piece-ai'
 
 export type Step = FlowAction | FlowTrigger
 type StepWithIndex = Step & {
@@ -211,6 +211,23 @@ function extractConnectionIdsFromAuth(auth: string): string[] {
     return match[1].split(/'\s*,\s*'/).map(id => id.trim())
 }
 
+function extractAgentIds(flowVersion: FlowVersion): string[] {
+    const getExternalAgentId = (action: Step) => {
+        if (isAgentPiece(action) && 'agentId' in action.settings.input) {
+            return action.settings.input.agentId
+        }
+        return null
+    }
+
+    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+}
+
+function isAgentPiece(action: Step) {
+    return (
+        action.type === FlowActionType.PIECE && action.settings.pieceName === AI_PIECE_NAME
+    )
+}
+
 function extractConnectionIds(flowVersion: FlowVersion): string[] {
     const triggerAuthIds = flowVersion.trigger.settings?.input?.auth
         ? extractConnectionIdsFromAuth(flowVersion.trigger.settings.input.auth)
@@ -225,23 +242,6 @@ function extractConnectionIds(flowVersion: FlowVersion): string[] {
         )
 
     return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
-}
-
-function extractAgentIds(flowVersion: FlowVersion): string[] {
-    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
-}
-
-function getExternalAgentId(action: Step) {
-    if (isAgentPiece(action)) {
-        return action.settings.input.agentId
-    }
-    return null
-}
-
-function isAgentPiece(action: Step) {
-    return (
-        action.type === FlowActionType.PIECE && action.settings.pieceName === AGENT_PIECE_NAME
-    )
 }
 
 export const flowStructureUtil = {
@@ -262,7 +262,6 @@ export const flowStructureUtil = {
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
     extractConnectionIds,
-    extractAgentIds,
     isAgentPiece,
-    getExternalAgentId,
+    extractAgentIds,
 }

@@ -71,7 +71,7 @@ export const clarifai = createPiece({
       baseUrl: () => 'https://api.clarifai.com/v2', // Replace with the actual base URL
       auth: clarifaiAuth,
       authMapping: async (auth) => ({
-        Authorization: `Key ${auth}`,
+        Authorization: `Key ${auth.secret_text}`,
       }),
     }),
   ],

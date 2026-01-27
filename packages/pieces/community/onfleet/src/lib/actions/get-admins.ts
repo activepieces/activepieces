@@ -9,6 +9,6 @@ export const getAdmins = createAction({
   description: 'Get many administrators',
   props: {},
   async run(context) {
-    return await common.getAdmins(context.auth);
+    return await common.getAdmins(context.auth.secret_text);
   },
 });

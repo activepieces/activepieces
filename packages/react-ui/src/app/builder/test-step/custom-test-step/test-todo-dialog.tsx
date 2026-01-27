@@ -11,7 +11,7 @@ import {
   CreateAndWaitTodoResult,
 } from '@activepieces/shared';
 
-import { testStepHooks } from '../test-step-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 type TodoTestingDialogProps = {
   open: boolean;
@@ -64,7 +64,7 @@ function TodoTestingDialog({
       setErrorMessage(undefined);
       const output = formatTodoResult(response);
       updateSampleData({
-        response: { output, success: true },
+        response: { testType: 'todo', output, success: true },
       });
       onOpenChange(false);
     },

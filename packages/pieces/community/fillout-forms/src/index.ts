@@ -18,7 +18,7 @@ export const filloutFormsAuth = PieceAuth.SecretText({
 4. Paste it here.`,
 	validate: async ({ auth }) => {
 		try {
-			await makeRequest(auth as string, HttpMethod.GET, '/forms', undefined);
+			await makeRequest(auth, HttpMethod.GET, '/forms', undefined);
 			return { valid: true };
 		} catch (error: any) {
 			return {
@@ -46,7 +46,7 @@ export const filloutForms = createPiece({
 			baseUrl: () => 'https://api.fillout.com/v1/api',
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 				};
 			},
 		}),

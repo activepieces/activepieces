@@ -1,0 +1,1 @@
+export const BASE_URL = 'https://alttext.ai/api/v1'

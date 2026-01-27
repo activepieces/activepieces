@@ -2,16 +2,16 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, RedisType } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     isNil,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { Mutex } from 'async-mutex'
-import { redisConnections } from '../database/redis'
+import { redisConnections } from '../database/redis-connections'
 import { localFileStore } from './local-store'
-import { RedisType, system } from './system/system'
+import { system } from './system/system'
 
 const algorithm = 'aes-256-cbc'
 const ivLength = 16

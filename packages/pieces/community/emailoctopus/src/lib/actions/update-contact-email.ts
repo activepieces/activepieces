@@ -26,7 +26,7 @@ export const updateContactEmail = createAction({
 
     async run(context) {
         const { list_id, current_email_address, new_email_address } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth);
+        const client = new EmailOctopusClient(context.auth.secret_text);
 
         
         const contactId = createHash('md5')

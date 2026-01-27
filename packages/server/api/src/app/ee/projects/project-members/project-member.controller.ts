@@ -1,8 +1,10 @@
 import {
+    GetCurrentProjectMemberRoleQuery,
     ListProjectMembersRequestQuery,
     ProjectMemberWithUser,
     UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     Permission,
     PrincipalType,
@@ -12,6 +14,7 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { ProjectMemberEntity } from './project-member.entity'
 import { projectMemberService } from './project-member.service'
 
 const DEFAULT_LIMIT_SIZE = 10
@@ -22,7 +25,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
     app.get('/role', GetCurrentProjectMemberRoleRequest, async (request) => {
         return  projectMemberService(request.log).getRole({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             userId: request.principal.id,
         })
     })
@@ -30,7 +33,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
         return projectMemberService(request.log).list({
             platformId: request.principal.platform.id,  
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             projectRoleId: request.query.projectRoleId ?? undefined,
@@ -43,7 +46,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
         return projectMemberService(req.log).update({
             id: req.params.id,
             role: req.body.role,
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             platformId: req.principal.platform.id,
         })
     })
@@ -51,7 +54,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
     app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
         await projectMemberService(request.log).delete(
-            request.principal.projectId,
+            request.projectId,
             request.params.id,
         )
         await reply.status(StatusCodes.NO_CONTENT).send()
@@ -60,17 +63,29 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
 const GetCurrentProjectMemberRoleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            undefined,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
-
+        querystring: GetCurrentProjectMemberRoleQuery,
     },
 }
 
 const UpdateProjectMemberRoleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_PROJECT_MEMBER,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_PROJECT_MEMBER,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: ProjectMemberEntity,
+            },
+        ),
     },
     schema: {
         params: Type.Object({
@@ -85,8 +100,13 @@ const UpdateProjectMemberRoleRequest = {
 
 const ListProjectMembersRequestQueryOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_PROJECT_MEMBER,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_PROJECT_MEMBER,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         tags: ['project-members'],
@@ -100,8 +120,14 @@ const ListProjectMembersRequestQueryOptions = {
 
 const DeleteProjectMemberRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_PROJECT_MEMBER,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_PROJECT_MEMBER,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: ProjectMemberEntity,
+            },
+        ),
     },
     schema: {
         tags: ['project-members'],

@@ -1,6 +1,6 @@
 import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { flowVersionService } from '../../flow-version/flow-version.service'
@@ -48,7 +48,6 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         const pieceVersion = await pieceMetadataService(log).resolveExactVersion({
             name: FORMS_PIECE_NAME,
             version: flow.version.trigger.settings.pieceVersion,
-            projectId: flow.projectId,
             platformId: await projectService.getPlatformId(flow.projectId),
         })
         const triggerSettings = flow.version.trigger.settings

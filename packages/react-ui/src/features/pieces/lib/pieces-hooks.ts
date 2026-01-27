@@ -2,8 +2,11 @@ import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import { useTelemetry } from '@/components/telemetry-provider';
+import { appConnectionsApi } from '@/features/connections/lib/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
@@ -23,6 +26,7 @@ import {
   FlowTriggerType,
   ApFlagId,
   ApEnvironment,
+  TelemetryEventName,
 } from '@activepieces/shared';
 
 import { pieceSearchUtils } from './piece-search-utils';
@@ -69,6 +73,7 @@ type UsePiecesSearchProps = {
   searchQuery: string;
   enabled?: boolean;
   type: 'action' | 'trigger';
+  shouldCaptureEvent: boolean;
 };
 
 export const piecesHooks = {
@@ -147,6 +152,7 @@ export const piecesHooks = {
       queryKey: ['pieces', searchQuery, includeHidden],
       queryFn: () =>
         piecesApi.list({
+          projectId: authenticationSession.getProjectId()!,
           searchQuery,
           includeHidden,
           includeTags,
@@ -167,6 +173,7 @@ export const piecesHooks = {
     data: CategorizedStepMetadataWithSuggestions[];
   } => {
     const { selectedTab } = usePieceSelectorTabs();
+    const { capture } = useTelemetry();
     const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
       ApFlagId.ENVIRONMENT,
     );
@@ -248,6 +255,11 @@ export const piecesHooks = {
           isLoading: false,
           data: getAiAndAgentsPieces(piecesMetadataWithoutEmptySuggestions),
         };
+      case PieceSelectorTabType.APPROVALS:
+        return {
+          isLoading: false,
+          data: [],
+        };
       case PieceSelectorTabType.APPS: {
         const popularAppsCategory = {
           ...popularCategory,
@@ -266,11 +278,22 @@ export const piecesHooks = {
         return result;
       }
 
-      case PieceSelectorTabType.NONE:
+      case PieceSelectorTabType.NONE: {
+        if (props.shouldCaptureEvent && props.searchQuery.length > 3) {
+          capture({
+            name: TelemetryEventName.PIECE_SELECTOR_SEARCH,
+            payload: {
+              search: props.searchQuery,
+              isTrigger: props.type === 'trigger',
+              selectedActionOrTriggerName: null,
+            },
+          });
+        }
         return {
           isLoading: false,
           data: allCategory.metadata.length > 0 ? [allCategory] : [],
         };
+      }
     }
   },
   usePieceOptions: <
@@ -300,6 +323,36 @@ export const piecesHooks = {
       onError,
       retry: 1,
       retryDelay: 1000,
+    });
+  },
+  usePieceForEmbeddingConnection: ({
+    pieceName,
+    connectionExternalId,
+  }: {
+    pieceName: string;
+    connectionExternalId: string;
+  }) => {
+    return useQuery<PieceMetadataModel, Error>({
+      queryKey: ['piece', pieceName, connectionExternalId],
+      queryFn: async () => {
+        const appConnection = (
+          await appConnectionsApi.list({
+            pieceName,
+            limit: 1,
+            projectId: authenticationSession.getProjectId()!,
+          })
+        ).data.find(
+          (connection) => connection.externalId === connectionExternalId,
+        );
+        if (!appConnection) {
+          return piecesApi.get({ name: pieceName });
+        }
+        return piecesApi.get({
+          name: appConnection.pieceName,
+          version: appConnection.pieceVersion,
+        });
+      },
+      staleTime: Infinity,
     });
   },
 };

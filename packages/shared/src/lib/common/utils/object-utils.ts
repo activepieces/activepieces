@@ -103,3 +103,23 @@ export const isObject = (obj: unknown): obj is Record<string, unknown> => {
 }
 
 export type MakeKeyNonNullableAndRequired<T extends object, K extends keyof T> = T & { [P in K]-?: NonNullable<T[P]> }
+
+export function groupBy<T, K extends string | number | symbol>(
+    items: T[],
+    keySelector: (item: T) => K,
+): Record<K, T[]> {
+    const result = {} as Record<K, T[]>
+  
+    for (const item of items) {
+        const key = keySelector(item)
+  
+        if (!result[key]) {
+            result[key] = []
+        }
+  
+        result[key].push(item)
+    }
+  
+    return result
+}
+  

@@ -11,8 +11,9 @@ import {
     ApEnvironment,
     EngineResponseStatus,
     ErrorCode,
+    FlowId,
     FlowTriggerType,
-    FlowVersion,
+    FlowVersionId,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     ScheduleOptions,
@@ -22,8 +23,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
-    EngineHelperResponse,
     EngineHelperTriggerResult,
+    OperationResponse,
 } from 'server-worker'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
@@ -42,19 +43,20 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                     scheduleOptions: undefined,
                 }
             }
-            const { flowVersion, projectId, simulate, pieceTrigger } = params
+            const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
 
             const platformId = await projectService.getPlatformId(projectId)
-            const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
+            const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_ENABLE,
-                flowVersion,
+                flowId,
+                flowVersionId,
                 platformId,
                 projectId,
                 test: simulate,
             })
 
-            assertEngineResponseIsOk(engineHelperResponse, flowVersion)
+            assertEngineResponseIsOk(engineHelperResponse, flowId, flowVersionId)
 
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK: {
@@ -78,42 +80,53 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                         ...params,
                     })
                 }
+                case TriggerStrategy.MANUAL: {
+                    return {
+                        scheduleOptions: undefined,
+                    }
+                }
             }
         },
         async disable(params: DisableFlowTriggerParams): Promise<void> {
-            const { flowVersion, projectId, simulate, pieceTrigger } = params
+            if (environment === ApEnvironment.TESTING) {
+                return
+            }
+            const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
             const platformId = await projectService.getPlatformId(projectId)
-            const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
+            const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
                 jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                 hookType: TriggerHookType.ON_DISABLE,
-                flowVersion,
+                flowId,
+                flowVersionId,
                 test: simulate,
                 projectId,
                 platformId,
             })
             if (!params.ignoreError) {
-                assertEngineResponseIsOk(engineHelperResponse, flowVersion)
+                assertEngineResponseIsOk(engineHelperResponse, flowId, flowVersionId)
             }
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK:
                     await appEventRoutingService.deleteListeners({
                         projectId,
-                        flowId: flowVersion.flowId,
+                        flowId,
                     })
                     break
                 case TriggerStrategy.WEBHOOK: {
                     const renewConfiguration = pieceTrigger.renewConfiguration
                     if (renewConfiguration?.strategy === WebhookRenewStrategy.CRON) {
                         await jobQueue(log).removeRepeatingJob({
-                            flowVersionId: flowVersion.id,
+                            flowVersionId,
                         })
                     }
                     break
                 }
                 case TriggerStrategy.POLLING:
                     await jobQueue(log).removeRepeatingJob({
-                        flowVersionId: flowVersion.id,
+                        flowVersionId,
                     })
+                    break
+                case TriggerStrategy.MANUAL:
                     break
             }
         },
@@ -121,11 +134,11 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
     }
 }
 
-async function handleAppWebhookTrigger({ engineHelperResponse, flowVersion, projectId, pieceName }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
+async function handleAppWebhookTrigger({ engineHelperResponse, flowId, projectId, pieceName }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
     for (const listener of engineHelperResponse.result.listeners) {
         await appEventRoutingService.createListeners({
             projectId,
-            flowId: flowVersion.flowId,
+            flowId,
             appName: pieceName,
             events: listener.events,
             identifierValue: listener.identifierValue,
@@ -136,19 +149,19 @@ async function handleAppWebhookTrigger({ engineHelperResponse, flowVersion, proj
     }
 }
 
-async function handleWebhookTrigger({ flowVersion, projectId, pieceTrigger, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
+async function handleWebhookTrigger({ flowId, flowVersionId, projectId, pieceTrigger, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
     const renewConfiguration = pieceTrigger.renewConfiguration
     switch (renewConfiguration?.strategy) {
         case WebhookRenewStrategy.CRON: {
             const platformId = await projectService.getPlatformId(projectId)
             await jobQueue(log).add({
-                id: flowVersion.id,
+                id: flowVersionId,
                 type: JobType.REPEATING,
                 data: {
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     projectId,
-                    flowVersionId: flowVersion.id,
-                    flowId: flowVersion.flowId,
+                    flowVersionId,
+                    flowId,
                     jobType: WorkerJobType.RENEW_WEBHOOK,
                     platformId,
                 },
@@ -168,9 +181,8 @@ async function handleWebhookTrigger({ flowVersion, projectId, pieceTrigger, log 
     }
 }
 
-async function handlePollingTrigger({ engineHelperResponse, flowVersion, projectId, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
+async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionId, projectId, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
     const pollingFrequencyCronExpression = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
-
     if (isNil(engineHelperResponse.result.scheduleOptions)) {
         engineHelperResponse.result.scheduleOptions = {
             cronExpression: pollingFrequencyCronExpression,
@@ -180,13 +192,13 @@ async function handlePollingTrigger({ engineHelperResponse, flowVersion, project
     }
     const platformId = await projectService.getPlatformId(projectId)
     await jobQueue(log).add({
-        id: flowVersion.id,
+        id: flowVersionId,
         type: JobType.REPEATING,
         data: {
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             projectId,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
+            flowVersionId,
+            flowId,
             triggerType: FlowTriggerType.PIECE,
             jobType: WorkerJobType.EXECUTE_POLLING,
             platformId,
@@ -198,12 +210,13 @@ async function handlePollingTrigger({ engineHelperResponse, flowVersion, project
     }
 }
 
-function assertEngineResponseIsOk(engineHelperResponse: EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowVersion: FlowVersion) {
+function assertEngineResponseIsOk(engineHelperResponse: OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowId: FlowId, flowVersionId: FlowVersionId) {
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
         throw new ActivepiecesError({
             code: ErrorCode.TRIGGER_UPDATE_STATUS,
             params: {
-                flowVersionId: flowVersion.id,
+                flowId,
+                flowVersionId,
                 standardOutput: engineHelperResponse.standardOutput,
                 standardError: engineHelperResponse.standardError,
             },
@@ -214,7 +227,8 @@ function assertEngineResponseIsOk(engineHelperResponse: EngineHelperResponse<Eng
 
 
 type EnableFlowTriggerParams = {
-    flowVersion: FlowVersion
+    flowId: FlowId
+    flowVersionId: FlowVersionId
     pieceName: string
     projectId: string
     pieceTrigger: TriggerBase
@@ -227,7 +241,7 @@ type DisableFlowTriggerParams = EnableFlowTriggerParams & {
 
 type ActiveTriggerParams = EnableFlowTriggerParams & {
     log: FastifyBaseLogger
-    engineHelperResponse: EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>
+    engineHelperResponse: OperationResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>
 }
 
 type ActiveTriggerReturn = {

@@ -20,7 +20,7 @@ export const newFormResponse = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const { formId } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const response = (await makeRequest(
       apiKey,
@@ -36,7 +36,7 @@ export const newFormResponse = createTrigger({
     await context.store.put<number>(TRIGGER_KEY, response.id);
   },
   async onDisable(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const webhookId = await context.store.get<number>(TRIGGER_KEY);
     if (!isNil(webhookId)) {
@@ -47,7 +47,7 @@ export const newFormResponse = createTrigger({
   },
   async test(context) {
     const { formId } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const response = await makeRequest(
       apiKey,

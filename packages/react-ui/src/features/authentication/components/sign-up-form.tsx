@@ -292,7 +292,7 @@ const SignUpForm = ({
                       onChange={(e) => field.onChange(e)}
                     />
                   </PopoverTrigger>
-                  <PopoverContent className="absolute border-2 bg-background p-2 !pointer-events-none rounded-md right-60 -bottom-16 flex flex-col">
+                  <PopoverContent className="absolute border-2 bg-background p-2 pointer-events-none! rounded-md right-60 -bottom-16 flex flex-col">
                     <PasswordValidator password={form.getValues().password} />
                   </PopoverContent>
                 </Popover>
@@ -309,7 +309,7 @@ const SignUpForm = ({
                   <FormControl>
                     <Checkbox
                       id="newsLetter"
-                      className="!m-0"
+                      className="m-0!"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     ></Checkbox>

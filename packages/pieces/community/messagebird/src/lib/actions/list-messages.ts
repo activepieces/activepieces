@@ -53,7 +53,7 @@ export const listMessages = createAction({
   async run(context) {
     const { status, startAt, endAt, pageToken } = context.propsValue;
   
-    const auth = context.auth as { apiKey: string; workspaceId: string; channelId: string };
+    const auth = context.auth.props;
 
     const response = await httpClient.sendRequest<any>({
       method: HttpMethod.GET,

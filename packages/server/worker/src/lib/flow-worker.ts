@@ -1,210 +1,72 @@
-import { inspect } from 'util'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, WebsocketClientEvent, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
-import { context, propagation, trace } from '@opentelemetry/api'
+import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-shared'
+import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { io, Socket } from 'socket.io-client'
+import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
-import { agentJobExecutor } from './executors/agent-job-executor'
-import { executeTriggerExecutor } from './executors/execute-trigger-executor'
-import { flowJobExecutor } from './executors/flow-job-executor'
-import { renewWebhookExecutor } from './executors/renew-webhook-executor'
-import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
-import { webhookExecutor } from './executors/webhook-job-executor'
-import { engineRunner } from './runner'
-import { engineRunnerSocket } from './runner/engine-runner-socket'
+import { sandboxPool } from './compute/sandbox/sandbox-pool'
+import { sandboxWebsocketServer } from './compute/sandbox/websocket-server'
+import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
+import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
 
-const tracer = trace.getTracer('flow-worker')
-
-let workerToken: string
-let heartbeatInterval: NodeJS.Timeout
-let socket: Socket
+export const runsMetadataQueue = runsMetadataQueueFactory({ 
+    createRedisConnection: workerRedisConnections.create,
+    distributedStore: workerDistributedStore,
+})
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
-    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+    async init({ workerToken: token, markAsHealthy }: FlowWorkerInitParams): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
-        await engineRunnerSocket(log).init()
 
-        workerToken = token
+        sandboxWebsocketServer.init(log)
 
-        const { url, path } = workerMachine.getSocketUrlAndPath()
-        socket = io(url, {
-            transports: ['websocket'],
-            path,
-            autoConnect: false,
-            reconnection: true,
+        await appSocket(log).init({
+            workerToken: token,
+            onConnect: async () => {
+                const request = await workerMachine.getSystemInfo(log)
+                const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
+                await workerMachine.init(response, token, log)
+                sandboxPool.init(log)
+                await registryPieceManager(log).warmup()
+                await jobQueueWorker(log).start()
+                await initRunsMetadataQueue(log)
+                await markAsHealthy()
+                await registryPieceManager(log).distributedWarmup()
+            },
         })
-
-        socket.auth = { token: workerToken, workerId: workerMachine.getWorkerId() }
-
-        socket.on('connect', () => {
-            log.info({
-                message: 'Connected to server',
-                workerId: workerMachine.getWorkerId(),
-                socketId: socket.id,
-            })
-        })
-
-        socket.on('disconnect', () => {
-            log.info({
-                message: 'Disconnected from server',
-            })
-        })
-
-        socket.on('connect_error', (error) => {
-            log.error({
-                message: 'Socket connection error',
-                error: error.message,
-            })
-        })
-
-        socket.on('error', (error) => {
-            log.error({
-                message: 'Socket error',
-                error: error.message,
-            })
-        })
-
-        socket.on(WebsocketClientEvent.CONSUME_JOB_REQUEST, async (request: ConsumeJobRequest, callback: (data: unknown) => void) => {
-            log.info({
-                message: 'Received consume job request',
-                jobId: request.jobId,
-                attempsStarted: request.attempsStarted,
-            })
-            try {
-                const response: ConsumeJobResponse = await consumeJob(request, log)
-                callback(response)
-            }
-            catch (error) {
-                log.info({
-                    message: 'Failed to consume job',
-                    error,
-                })
-                const response: ConsumeJobResponse = {
-                    status: ConsumeJobResponseStatus.INTERNAL_ERROR,
-                    errorMessage: inspect(error),
-                }
-                callback(response)
-            }
-        })
-
-        socket.connect()
-
-
-        heartbeatInterval = setInterval(async () => {
-            if (!socket.connected) {
-                log.error({
-                    message: 'Not connected to server, retrying...',
-                })
-                return
-            }
-            try {
-                const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
-                const response = await socket.timeout(10000).emitWithAck(WebsocketServerEvent.MACHINE_HEARTBEAT, request)
-                await workerMachine.init(response, log)
-            }
-            catch (error) {
-                log.error({
-                    message: 'Failed to send heartbeat, retrying...',
-                    error,
-                })
-            }
-        }, 15000)
-
     },
 
     async close(): Promise<void> {
-        await engineRunnerSocket(log).disconnect()
+        await sandboxPool.drain()
+        await sandboxWebsocketServer.shutdown()
+        appSocket(log).disconnect()
 
-        if (socket) {
-            socket.disconnect()
+        if (runsMetadataQueue.isInitialized()) {
+            await runsMetadataQueue.get().close()
         }
 
-        clearTimeout(heartbeatInterval)
-        if (workerMachine.hasSettings()) {
-            await engineRunner(log).shutdownAllWorkers()
-        }
+        await workerRedisConnections.destroy()
+        await workerDistributedLock(log).destroy()
+        
+        await jobQueueWorker(log).close()
     },
 })
 
+async function initRunsMetadataQueue(log: FastifyBaseLogger): Promise<void> {
+    const settings = workerMachine.getSettings()
+    const config: RunsMetadataQueueConfig = {
+        isOtelEnabled: settings.OTEL_ENABLED ?? false,
+        redisFailedJobRetentionDays: settings.REDIS_FAILED_JOB_RETENTION_DAYS,
+        redisFailedJobRetentionMaxCount: settings.REDIS_FAILED_JOB_RETENTION_MAX_COUNT,
+    }
+    await runsMetadataQueue.init(config)
+    log.info({
+        message: 'Initialized runs metadata queue for worker',
+    }, '[flowWorker#init]')
+}
 
-async function consumeJob(request: ConsumeJobRequest, log: FastifyBaseLogger): Promise<ConsumeJobResponse> {
-    const traceContext = ('traceContext' in request.jobData && request.jobData.traceContext) ? request.jobData.traceContext : {}
-    const extractedContext = propagation.extract(context.active(), traceContext)
-    
-    return context.with(extractedContext, () => {
-        return tracer.startActiveSpan('worker.consumeJob', {
-            attributes: {
-                'worker.jobId': request.jobId,
-                'worker.jobType': request.jobData.jobType,
-                'worker.attempsStarted': request.attempsStarted,
-                'worker.projectId': request.jobData.projectId ?? 'unknown',
-            },
-        }, async (span) => {
-            try {
-                const { jobId, jobData, attempsStarted, engineToken, timeoutInSeconds } = request
-                switch (jobData.jobType) {
-                    case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-                    case WorkerJobType.EXECUTE_PROPERTY:
-                    case WorkerJobType.EXECUTE_TOOL:
-                    case WorkerJobType.EXECUTE_VALIDATION:
-                    case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-                        await userInteractionJobExecutor(log).execute(jobData, engineToken, workerToken, timeoutInSeconds)
-                        span.setAttribute('worker.completed', true)
-                        return {
-                            status: ConsumeJobResponseStatus.OK,
-                        }
-                    case WorkerJobType.EXECUTE_FLOW:
-                        await flowJobExecutor(log).executeFlow({ jobData, attempsStarted, engineToken, timeoutInSeconds })
-                        span.setAttribute('worker.completed', true)
-                        return {
-                            status: ConsumeJobResponseStatus.OK,
-                        }
-                    case WorkerJobType.EXECUTE_POLLING:{
-                        const response = await executeTriggerExecutor(log).executeTrigger({
-                            jobId,
-                            data: jobData,
-                            engineToken,
-                            workerToken,
-                            timeoutInSeconds,
-                        })
-                        span.setAttribute('worker.completed', true)
-                        return response
-                        
-                    }
-                    case WorkerJobType.RENEW_WEBHOOK:
-                        const response = await renewWebhookExecutor(log).renewWebhook({
-                            data: jobData,
-                            engineToken,
-                            timeoutInSeconds,
-                        })
-                        span.setAttribute('worker.completed', true)
-                        return response
-                    case WorkerJobType.DELAYED_FLOW: {
-                        span.setAttribute('worker.error', true)
-                        throw new Error('Delayed flow is handled by the app')
-                    }
-                    case WorkerJobType.EXECUTE_WEBHOOK: {
-                        span.setAttribute('worker.webhookExecution', true)
-                        return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
-                    }
-                    case WorkerJobType.EXECUTE_AGENT: {
-                        await agentJobExecutor(log).executeAgent({
-                            jobData,
-                            engineToken,
-                            workerToken,
-                        })
-                        span.setAttribute('worker.completed', true)
-                        return {
-                            status: ConsumeJobResponseStatus.OK,
-                        }
-                    }
-                }
-            }
-            finally {
-                span.end()
-            }
-        })
-    })
+type FlowWorkerInitParams = {
+    workerToken: string
+    markAsHealthy: () => Promise<void>
 }

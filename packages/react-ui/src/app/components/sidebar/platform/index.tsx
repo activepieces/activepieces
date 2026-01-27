@@ -1,14 +1,24 @@
 import { t } from 'i18next';
 import {
   ArrowLeft,
+  Palette,
   LayoutGrid,
-  LineChart,
   Server,
-  Shield,
   Users,
-  Wrench,
+  Bot,
+  Unplug,
+  Puzzle,
+  Receipt,
+  SquareDashedBottomCode,
+  LogIn,
+  KeyRound,
+  FileJson2,
+  Settings2,
+  FileHeart,
+  MousePointerClick,
+  Webhook,
 } from 'lucide-react';
-import { useState } from 'react';
+import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -19,197 +29,163 @@ import {
   SidebarMenu,
   SidebarHeader,
   SidebarGroup,
+  SidebarGroupContent,
   SidebarMenuButton,
+  SidebarGroupLabel,
+  SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
-import { ApSidebareGroup, SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
-  const [setupOpen, setSetupOpen] = useState(false);
-  const [securityOpen, setSecurityOpen] = useState(false);
-  const [infrastructureOpen, setInfrastructureOpen] = useState(false);
   const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
+  const isEmbeddingEnabled = platform.plan.embeddingEnabled;
 
-  const items: SidebarGeneralItemType[] = [
+  const setupItems = [
     {
-      type: 'link',
-      to: '/platform/analytics',
-      label: t('Overview'),
-      icon: LineChart,
-      locked: !platform.plan.analyticsEnabled,
-      isSubItem: false,
-      show: true,
+      to: '/platform/setup/ai',
+      label: t('AI'),
+      icon: Bot,
     },
     {
-      type: 'link',
-      to: '/platform/projects',
-      label: t('Projects'),
+      to: '/platform/setup/branding',
+      label: t('Branding'),
+      icon: Palette,
+      locked: !platform.plan.customAppearanceEnabled,
+    },
+    {
+      to: '/platform/setup/connections',
+      label: t('Global Connections'),
+      icon: Unplug,
+      locked: !platform.plan.globalConnectionsEnabled,
+    },
+    {
+      to: '/platform/setup/pieces',
+      label: t('Pieces'),
+      icon: Puzzle,
+      locked: !platform.plan.managePiecesEnabled,
+    },
+    {
+      to: '/platform/setup/templates',
+      label: t('Templates'),
       icon: LayoutGrid,
-      locked: !platform.plan.manageProjectsEnabled,
-      isSubItem: false,
-      show: true,
+      locked: !platform.plan.manageTemplatesEnabled,
     },
     {
-      type: 'link',
-      to: '/platform/users',
-      label: t('Users'),
-      icon: Users,
-      isSubItem: false,
-      show: true,
+      to: '/platform/setup/billing',
+      label: t('Billing'),
+      icon: Receipt,
+      locked: edition === ApEdition.COMMUNITY,
     },
+  ].filter((item) => !(item.label === t('AI') && isEmbeddingEnabled));
+
+  const groups: {
+    label: string;
+    items: {
+      to: string;
+      label: string;
+      icon?: ComponentType<SVGProps<SVGSVGElement>>;
+      locked?: boolean;
+    }[];
+  }[] = [
     {
-      type: 'group',
-      label: t('Setup'),
-      icon: Wrench,
-      open: setupOpen,
-      setOpen: setSetupOpen,
-      isActive: (pathname: string) => pathname.includes('/setup'),
+      label: t('General'),
       items: [
         {
-          type: 'link',
-          to: '/platform/setup/ai',
-          label: t('AI'),
-          isSubItem: true,
-          show: true,
+          to: '/platform/projects',
+          label: t('Projects'),
+          icon: LayoutGrid,
+          locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
         },
         {
-          type: 'link',
-          to: '/platform/setup/branding',
-          label: t('Branding'),
-          isSubItem: true,
-          show: true,
-        },
-        {
-          type: 'link',
-          to: '/platform/setup/connections',
-          label: t('Global Connections'),
-          isSubItem: true,
-          show: true,
-        },
-        {
-          type: 'link',
-          to: '/platform/setup/pieces',
-          label: t('Pieces'),
-          isSubItem: true,
-          show: true,
-        },
-        {
-          type: 'link',
-          to: '/platform/setup/templates',
-          label: t('Templates'),
-          isSubItem: true,
-          show: true,
-        },
-        {
-          type: 'link',
-          to: '/platform/setup/billing',
-          label: t('Billing'),
-          isSubItem: true,
-          show: edition !== ApEdition.COMMUNITY,
+          to: '/platform/users',
+          label: t('Users'),
+          icon: Users,
         },
       ],
     },
     {
-      type: 'group',
+      label: t('Setup'),
+      items: setupItems,
+    },
+    {
       label: t('Security'),
-      open: securityOpen,
-      setOpen: setSecurityOpen,
-      isActive: (pathname: string) => pathname.includes('/security'),
-      icon: Shield,
       items: [
         {
-          type: 'link',
           to: '/platform/security/audit-logs',
           label: t('Audit Logs'),
-          isSubItem: true,
-          show: true,
+          icon: SquareDashedBottomCode,
+          locked: !platform.plan.auditLogEnabled,
         },
         {
-          type: 'link',
           to: '/platform/security/sso',
           label: t('Single Sign On'),
-          isSubItem: true,
-          show: true,
+          icon: LogIn,
+          locked: !platform.plan.ssoEnabled,
         },
         {
-          type: 'link',
           to: '/platform/security/signing-keys',
           label: t('Signing Keys'),
-          isSubItem: true,
-          show: true,
+          icon: KeyRound,
+          locked: !platform.plan.embeddingEnabled,
         },
         {
-          type: 'link',
           to: '/platform/security/project-roles',
           label: t('Project Roles'),
-          isSubItem: true,
-          show: true,
+          icon: Settings2,
+          locked: !platform.plan.projectRolesEnabled,
         },
         {
-          type: 'link',
           to: '/platform/security/api-keys',
           label: t('API Keys'),
-          isSubItem: true,
-          show: true,
+          icon: FileJson2,
+          locked: !platform.plan.apiKeysEnabled,
         },
       ],
     },
     {
-      type: 'group',
       label: t('Infrastructure'),
-      icon: Server,
-      open: infrastructureOpen,
-      setOpen: setInfrastructureOpen,
-      isActive: (pathname: string) => pathname.includes('/infrastructure'),
       items: [
         {
-          type: 'link',
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
-          isSubItem: true,
-          show: true,
+          icon: Server,
         },
         {
-          type: 'link',
-          to: '/platform/infrastructure/jobs',
-          label: t('Jobs'),
-          isSubItem: true,
-          show: edition !== ApEdition.CLOUD,
-        },
-        {
-          type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
-          isSubItem: true,
-          show: true,
+          icon: FileHeart,
         },
         {
-          type: 'link',
           to: '/platform/infrastructure/triggers',
           label: t('Triggers'),
-          isSubItem: true,
-          show: true,
+          icon: MousePointerClick,
+        },
+        {
+          to: '/platform/infrastructure/event-destinations',
+          label: t('Event Streaming'),
+          icon: Webhook,
+          locked: !platform.plan.eventStreamingEnabled,
         },
       ],
     },
   ];
 
   return (
-    <Sidebar variant="inset">
-      <SidebarHeader>
-        <div className="w-full py-2 flex items-center gap-2">
+    <Sidebar className="p-1" variant="inset">
+      <SidebarHeader className="px-3">
+        <div className="w-full pb-2 flex items-center gap-2">
           <Link
             to={defaultRoute}
             className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
@@ -223,30 +199,46 @@ export function PlatformSidebar() {
           <h1 className="truncate font-semibold">{branding.websiteName}</h1>
         </div>
       </SidebarHeader>
+      <div className="flex-1 overflow-y-auto scrollbar-hover">
+        <SidebarContent className="px-1 gap-0">
+          <SidebarGroup className="cursor-default shrink-0">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuButton
+                  onClick={() => navigate('/')}
+                  className="py-5 px-2"
+                >
+                  <ArrowLeft />
+                  {t('Exit platform admin')}
+                </SidebarMenuButton>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarSeparator className="mb-3" />
+          {groups.map((group, idx) => (
+            <SidebarGroup key={group.label} className="cursor-default shrink-0">
+              {idx > 0 && <SidebarSeparator className="mb-3" />}
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => (
+                    <ApSidebarItem
+                      type="link"
+                      key={item.label}
+                      to={item.to}
+                      label={item.label}
+                      icon={item.icon}
+                      locked={item.locked}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+      </div>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            {items.map((item) =>
-              item.type === 'group' ? (
-                <ApSidebareGroup key={item.label} {...item} />
-              ) : (
-                <ApSidebarItem key={item.label} {...item} />
-              ),
-            )}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuButton
-            onClick={() => navigate('/')}
-            className="py-5 px-2"
-          >
-            <ArrowLeft />
-            {t('Exit platform admin')}
-          </SidebarMenuButton>
-        </SidebarMenu>
+      <SidebarFooter className="px-3">
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>

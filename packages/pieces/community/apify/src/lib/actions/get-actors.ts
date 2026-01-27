@@ -9,7 +9,7 @@ export const getActors = createAction({
   description: 'Gets the list of Actors available to the user.',
   props: {},
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const headers = {
       Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',

@@ -39,7 +39,7 @@ export const createRecord = createAction({
 		};
 
 		try {
-			const response = await makeRequest(auth as string, HttpMethod.POST, path, requestBody);
+			const response = await makeRequest(auth.secret_text, HttpMethod.POST, path, requestBody);
 
 			return response;
 		} catch (error) {

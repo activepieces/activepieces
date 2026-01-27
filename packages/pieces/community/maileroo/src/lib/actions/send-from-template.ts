@@ -37,7 +37,7 @@ export const sendFromTemplate = createAction({
     const res = await sendFormData(
       'send-template',
       formData,
-      context.auth.apiKey
+      context.auth.props.apiKey
     );
 
     return res.body;

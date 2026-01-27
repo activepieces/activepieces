@@ -113,20 +113,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 })
                 break
             }
-            case GitPushOperationType.DELETE_AGENT: {
-                await gitRepoService(log).push({
-                    id: gitRepo.id,
-                    platformId,
-                    userId,
-                    request: {
-                        type: GitPushOperationType.DELETE_AGENT,
-                        commitMessage: `chore: deleted agent ${externalId}`,
-                        externalAgentIds: [externalId],
-                    },
-                    log,
-                })
-                break
-            }
             default:
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
@@ -155,13 +141,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                         type: GitPushOperationType.PUSH_TABLE,
                         commitMessage: request.commitMessage ?? `chore: push all tables ${projectState.tables.map((table) => table.name).join(', ')}`,
                         externalTableIds: projectState.tables.map((table) => table.externalId),
-                    })
-                }
-                if (!isNil(projectState.agents)) {
-                    operations.push({
-                        type: GitPushOperationType.PUSH_AGENT,
-                        commitMessage: request.commitMessage ?? `chore: push all agents ${projectState.agents.map((agent) => agent.displayName).join(', ')}`,
-                        externalAgentIds: projectState.agents.map((agent) => agent.externalId),
                     })
                 }
                 for (const operation of operations) {
@@ -209,31 +188,14 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 })
                 break
             }
-            case GitPushOperationType.PUSH_AGENT: {
-                await gitSyncHandler(log).agents.push({
-                    id,
-                    userId,
-                    request,
-                })
-                break
-            }
-            case GitPushOperationType.DELETE_AGENT: {
-                await gitSyncHandler(log).agents.delete({
-                    id,
-                    userId,
-                    request,
-                })
-                break
-            }
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
-        const { flowFolderPath, connectionsFolderPath, tablesFolderPath, agentsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        const { flowFolderPath, connectionsFolderPath, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         return gitSyncHelper(log).getStateFromGit({
             flowPath: flowFolderPath,
             connectionsFolderPath,
             tablesFolderPath,
-            agentsFolderPath,
         })
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {

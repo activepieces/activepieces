@@ -2048,6 +2048,69 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "akramcodez",
+      "name": "SK Akram",
+      "avatar_url": "https://avatars.githubusercontent.com/u/179671552?v=4",
+      "profile": "http://akramcodez.tech",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "im-soohyun",
+      "name": "Kim SooHyun",
+      "avatar_url": "https://avatars.githubusercontent.com/u/127273427?v=4",
+      "profile": "https://github.com/im-soohyun",
+      "contributions": [
+        "security"
+      ]
+    },
+    {
+      "login": "srimalleswari205",
+      "name": "Sri malleswari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/235991945?v=4",
+      "profile": "https://github.com/srimalleswari205",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "SinghaAnirban005",
+      "name": "Anirban Singha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143536290?v=4",
+      "profile": "https://github.com/SinghaAnirban005",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Dania02525",
+      "name": "Dania Es",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11240307?v=4",
+      "profile": "http://dania.es",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "meloncafe",
+      "name": "M.Cafe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6157093?v=4",
+      "profile": "https://github.com/meloncafe",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "vishakha1411",
+      "name": "vishakha1411",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119448495?v=4",
+      "profile": "https://github.com/vishakha1411",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

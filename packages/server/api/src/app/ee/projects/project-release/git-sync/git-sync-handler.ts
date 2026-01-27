@@ -1,12 +1,10 @@
-import { PushAgentsGitRepoRequest, PushFlowsGitRepoRequest, PushTablesGitRepoRequest } from '@activepieces/ee-shared'
+import { PushFlowsGitRepoRequest, PushTablesGitRepoRequest } from '@activepieces/ee-shared'
 import {
     FlowState,
     FlowVersionState,
-    PopulatedAgent,
     PopulatedTable,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { agentsService } from '../../../../agents/agents-service'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { fieldService } from '../../../../tables/field/field.service'
 import { tableService } from '../../../../tables/table/table.service'
@@ -113,47 +111,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted tables ${request.externalTableIds.join(', ')}`)
         },
     },
-
-    agents: {
-        async push({ id, userId, request }: AgentOperationParams): Promise<void> {
-            const gitRepo = await gitRepoService(log).getOrThrow({ id })
-            const { git, agentsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-
-            const agents = await listAgentsByExternalIds(log, gitRepo.projectId, request.externalAgentIds)
-            for (const agent of agents) {
-                await gitSyncHelper(log).upsertAgentToGit({
-                    fileName: agent.externalId,
-                    agent,
-                    agentsFolderPath,
-                })
-            }
-            await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated agents ${request.externalAgentIds.join(', ')}`)
-        },
-
-        async delete({ id, userId, request }: AgentOperationParams): Promise<void> {
-            const gitRepo = await gitRepoService(log).getOrThrow({ id })
-            const { git, agentsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-
-            const agents = await listAgentsByExternalIds(log, gitRepo.projectId, request.externalAgentIds)
-            for (const agent of agents) {
-                await gitSyncHelper(log).deleteFromGit({
-                    fileName: agent.externalId,
-                    folderPath: agentsFolderPath,
-                })
-            }
-            await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted agents ${request.externalAgentIds.join(', ')}`)
-        },
-    },
-
 })
-
-function listAgentsByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<PopulatedAgent[]> {
-    return agentsService(log).list({
-        projectId,
-        limit: 10000,
-        cursorRequest: null,
-    }).then((page) => page.data.filter((agent) => externalIds.includes(agent.externalId)))
-}
 
 async function listTablesByExternalIds(projectId: string, externalIds: string[]): Promise<PopulatedTable[]> {
     const tables = await tableService.list({
@@ -179,7 +137,7 @@ async function listTablesByExternalIds(projectId: string, externalIds: string[])
 
 function listFlowsByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<FlowState[]> {
     return flowService(log).list({
-        projectId,
+        projectIds: [projectId],
         limit: 10000,
         cursorRequest: null,
         folderId: undefined,
@@ -195,12 +153,6 @@ type FlowOperationParams = {
     platformId: string
     userId: string
     request: PushFlowsGitRepoRequest
-}
-
-type AgentOperationParams = {
-    id: string
-    userId: string
-    request: PushAgentsGitRepoRequest
 }
 
 type TableOperationParams = {

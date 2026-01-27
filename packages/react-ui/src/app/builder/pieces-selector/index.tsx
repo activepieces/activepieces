@@ -1,4 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { t } from 'i18next';
+import {
+  CheckCircle2Icon,
+  LayoutGridIcon,
+  PuzzleIcon,
+  SparklesIcon,
+  WrenchIcon,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -15,12 +23,63 @@ import {
   PieceSelectorTabType,
 } from '@/features/pieces/lib/piece-selector-tabs-provider';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 
+import {
+  PieceSearchProvider,
+  usePieceSearchContext,
+} from '../../../features/pieces/lib/piece-search-context';
+
+import { AITabContent } from './ai-tab-content';
+import { ApprovalsTabContent } from './approvals-tab-content';
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
+
+const getTabsList = (
+  operationType: FlowOperationType,
+  isEmbeddingEnabled: boolean,
+) => {
+  const baseTabs = [
+    {
+      value: PieceSelectorTabType.EXPLORE,
+      name: t('Explore'),
+      icon: <LayoutGridIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.APPS,
+      name: t('Apps'),
+      icon: <PuzzleIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.UTILITY,
+      name: t('Utility'),
+      icon: <WrenchIcon className="size-5" />,
+    },
+  ];
+
+  const replaceOrAddAction = [
+    FlowOperationType.ADD_ACTION,
+    FlowOperationType.UPDATE_ACTION,
+  ].includes(operationType);
+
+  if (replaceOrAddAction && !isEmbeddingEnabled) {
+    baseTabs.splice(1, 0, {
+      value: PieceSelectorTabType.AI_AND_AGENTS,
+      name: t('AI & Agents'),
+      icon: <SparklesIcon className="size-5" />,
+    });
+    baseTabs.push({
+      value: PieceSelectorTabType.APPROVALS,
+      name: t('Approvals'),
+      icon: <CheckCircle2Icon className="size-5" />,
+    });
+  }
+
+  return baseTabs;
+};
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -30,7 +89,15 @@ type PieceSelectorProps = {
   stepToReplacePieceDisplayName?: string;
 };
 
-const PieceSelector = ({
+const PieceSelectorWrapper = (props: PieceSelectorProps) => {
+  return (
+    <PieceSearchProvider>
+      <PieceSelectorContent {...props} />
+    </PieceSearchProvider>
+  );
+};
+
+const PieceSelectorContent = ({
   children,
   operation,
   id,
@@ -51,7 +118,7 @@ const PieceSelector = ({
       id === 'trigger',
     state.deselectStep,
   ]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = usePieceSearchContext();
   const isForReplace =
     operation.type === FlowOperationType.UPDATE_ACTION ||
     (operation.type === FlowOperationType.UPDATE_TRIGGER && !isForEmptyTrigger);
@@ -74,6 +141,13 @@ const PieceSelector = ({
     setSearchQuery('');
     setSelectedPieceMetadataInPieceSelector(null);
   };
+
+  const { platform } = platformHooks.useCurrentPlatform();
+  const tabsList = useMemo(
+    () => getTabsList(operation.type, platform?.plan.embeddingEnabled ?? false),
+    [operation.type, platform?.plan.embeddingEnabled],
+  );
+
   return (
     <Popover
       open={isOpen}
@@ -122,17 +196,15 @@ const PieceSelector = ({
           <>
             <div>
               <PiecesSearchInput
-                searchQuery={searchQuery}
                 searchInputRef={searchInputRef}
                 onSearchChange={(e) => {
-                  setSearchQuery(e);
                   setSelectedPieceMetadataInPieceSelector(null);
                   if (e === '') {
                     clearSearch();
                   }
                 }}
               />
-              {!isMobile && <PieceSelectorTabs />}
+              {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
@@ -142,6 +214,9 @@ const PieceSelector = ({
               }}
             >
               <ExploreTabContent operation={operation} />
+              <AITabContent operation={operation} />
+              <ApprovalsTabContent operation={operation} />
+
               <PiecesCardList
                 //this is done to avoid debounced results when user clears search
                 searchQuery={searchQuery === '' ? '' : debouncedQuery}
@@ -158,4 +233,4 @@ const PieceSelector = ({
   );
 };
 
-export { PieceSelector };
+export { PieceSelectorWrapper as PieceSelector };

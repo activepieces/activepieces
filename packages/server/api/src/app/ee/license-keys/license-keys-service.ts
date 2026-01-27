@@ -1,13 +1,11 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, TelemetryEventName } from '@activepieces/shared'
-import { PlanName } from '@ee/shared/src/lib/billing'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
-import { PlatformPlanHelper } from '../platform/platform-plan/platform-plan-helper'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
@@ -128,21 +126,15 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 ...turnedOffFeatures,
             },
         })
-        await PlatformPlanHelper.handleResourceLocking({
-            platformId, 
-            newLimits: {
-                userSeatsLimit: 0,
-            },
-        })
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
+        const teamProjectsLimit = key.manageProjectsEnabled ? TeamProjectsLimit.UNLIMITED : system.getEdition() === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
         await platformService.update({
             id: platformId,
             plan: {
                 plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
-                tasksLimit: undefined,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
                 environmentsEnabled: key.environmentsEnabled,
@@ -152,26 +144,18 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customAppearanceEnabled: key.customAppearanceEnabled,
                 globalConnectionsEnabled: key.globalConnectionsEnabled,
                 customRolesEnabled: key.customRolesEnabled,
-                manageProjectsEnabled: key.manageProjectsEnabled,
+                teamProjectsLimit,
                 managePiecesEnabled: key.managePiecesEnabled,
-                agentsLimit: undefined,
-                mcpsEnabled: key.mcpsEnabled,
-                todosEnabled: key.todosEnabled,
-                tablesEnabled: key.tablesEnabled,
                 activeFlowsLimit: undefined,
-                mcpLimit: undefined,
                 projectsLimit: undefined,
-                userSeatsLimit: undefined,
                 stripeSubscriptionId: undefined,
                 stripeSubscriptionStatus: undefined,
-                eligibleForTrial: undefined,
-                tablesLimit: undefined,
-                agentsEnabled: key.agentsEnabled,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
                 customDomainsEnabled: key.customDomainsEnabled,
                 projectRolesEnabled: key.projectRolesEnabled,
                 analyticsEnabled: key.analyticsEnabled,
+                eventStreamingEnabled: key.eventStreamingEnabled,
             },
         })
     },
@@ -193,8 +177,5 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     projectRolesEnabled: false,
-    agentsEnabled: false,
-    mcpsEnabled: false,
-    tablesEnabled: false,
-    todosEnabled: false,
+    eventStreamingEnabled: false,
 }

@@ -9,10 +9,12 @@ export enum ExecutionType {
 
 export type ExecutionState = {
     steps: Record<string, StepOutput>
+    tags: string[]
 }
 
 export const ExecutionState = Type.Object({
     steps: Type.Record(Type.String(), Type.Unknown()),
+    tags: Type.Array(Type.String()),
 })
 
 export type ExecutioOutputFile = {

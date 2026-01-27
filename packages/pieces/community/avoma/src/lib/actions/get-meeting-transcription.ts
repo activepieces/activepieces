@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { avomaCommon } from '../common';
 
 export const getMeetingTranscription = createAction({
+  auth: avomaCommon.avomaAuth,
   name: 'get_meeting_transcription',
   displayName: 'Get Meeting Transcription',
   description: 'Returns transcription with speakers, timestamps, and VTT file URL',

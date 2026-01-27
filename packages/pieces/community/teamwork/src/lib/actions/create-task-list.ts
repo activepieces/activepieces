@@ -10,6 +10,7 @@ export const createTaskList = createAction({
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'The project to create the task list in.',
 			required: true,
@@ -22,7 +23,7 @@ export const createTaskList = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});
@@ -65,6 +66,7 @@ export const createTaskList = createAction({
 			},
 		}),
 		tags: Property.MultiSelectDropdown({
+auth: teamworkAuth,
 			displayName: 'Default Task Tags',
 			description: 'Default tags for new tasks in this list.',
 			required: false,
@@ -77,7 +79,7 @@ export const createTaskList = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/tags.json',
 				});

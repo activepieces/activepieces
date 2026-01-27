@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { createEntryAction } from './lib/actions/create-entry';
 import { updateEntryAction } from './lib/actions/update-entry';
 import { deleteEntryAction } from './lib/actions/delete-entry';
@@ -22,7 +22,7 @@ export const cognitoFormsAuth = PieceAuth.SecretText({
   `,
   validate: async ({ auth }) => {
     try {
-      await makeRequest(auth as string, HttpMethod.GET, '/forms');
+      await makeRequest({secret_text: auth, type: AppConnectionType.SECRET_TEXT}, HttpMethod.GET, '/forms');
 
       return { valid: true };
     } catch {

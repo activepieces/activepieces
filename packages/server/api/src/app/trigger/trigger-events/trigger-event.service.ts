@@ -18,7 +18,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
+import { EngineHelperTriggerResult, OperationResponse } from 'server-worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -76,9 +76,10 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         switch (trigger.type) {
             case FlowTriggerType.PIECE: {
 
-                const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
+                const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
-                    flowVersion: flow.version,
+                    flowId: flow.id,
+                    flowVersionId: flow.version.id,
                     test: true,
                     projectId,
                     jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,

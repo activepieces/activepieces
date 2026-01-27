@@ -20,10 +20,9 @@ export default [
     baseUrl: () => 'https://my.clockodo.com/api', // Replace with the actual base URL
     auth: clockodoAuth,
     authMapping: async (auth) => ({
-      'X-ClockodoApiUser': (auth as { email: string }).email,
-      'X-ClockodoApiKey': (auth as { token: string }).token,
-      'X-Clockodo-External-Application': (auth as { company_name: string })
-        .company_name,
+      'X-ClockodoApiUser': auth?.props?.email || '',
+      'X-ClockodoApiKey': auth?.props?.token || '',
+      'X-Clockodo-External-Application': auth?.props?.company_name || '',
       'Accept-Language': 'en',
     }),
   }),

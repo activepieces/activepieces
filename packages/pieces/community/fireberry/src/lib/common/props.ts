@@ -1,10 +1,12 @@
 import { Property } from '@activepieces/pieces-framework';
 import { FireberryClient } from './client';
+import { fireberryAuth } from '../..';
 
 export const objectTypeDropdown = Property.Dropdown({
   displayName: 'Object Type',
   required: true,
   refreshers: [],
+  auth: fireberryAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -13,8 +15,7 @@ export const objectTypeDropdown = Property.Dropdown({
         placeholder: 'Connect your Fireberry account',
       };
     }
-    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
-    const client = new FireberryClient(authStr);
+    const client = new FireberryClient(auth);
     const metadata = await client.getObjectsMetadata();
     const options = metadata.data.map(obj => ({
       label: obj.name,
@@ -31,11 +32,11 @@ export const objectFields = Property.DynamicProperties({
   displayName: 'Fields',
   refreshers: ['objectType'],
   required: true,
+  auth: fireberryAuth,
   props: async ({ auth, objectType }) => {
     if (!auth || !objectType) return {};
     const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
-    const client = new FireberryClient(authStr);
+    const client = new FireberryClient(auth);
     const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
     const props: Record<string, any> = {};
     

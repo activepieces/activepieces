@@ -2,10 +2,7 @@ import { InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useMemo } from 'react';
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
   CardListEmpty,
   CardListItemSkeleton,
@@ -14,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { RightSideBarType } from '@/lib/types';
 import {
   FlowRun,
   isFlowRunStateTerminal,
@@ -28,9 +26,9 @@ type RunsListItem =
   | { type: 'flowRun'; run: FlowRun }
   | { type: 'loadMoreButton'; id: 'loadMoreButton' };
 const RunsList = React.memo(() => {
-  const [flow, setLeftSidebar, run] = useBuilderStateContext((state) => [
+  const [flow, setRightSidebar, run] = useBuilderStateContext((state) => [
     state.flow,
-    state.setLeftSidebar,
+    state.setRightSidebar,
     state.run,
   ]);
 
@@ -88,7 +86,7 @@ const RunsList = React.memo(() => {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
+      <SidebarHeader onClose={() => setRightSidebar(RightSideBarType.NONE)}>
         {t('Recent Runs')}
       </SidebarHeader>
       {isLoading && <CardListItemSkeleton numberOfCards={10} />}

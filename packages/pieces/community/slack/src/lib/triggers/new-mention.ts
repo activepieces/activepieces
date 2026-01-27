@@ -16,6 +16,7 @@ export const newMention = createTrigger({
     info: multiSelectChannelInfo,
     user: userId,
     channels: Property.MultiSelectDropdown({
+      auth: slackAuth,
       displayName: 'Channels',
       description:
         'If no channel is selected, the flow will be triggered for username mentions in all channels',

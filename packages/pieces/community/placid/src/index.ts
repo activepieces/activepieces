@@ -35,7 +35,7 @@ The token is project-specific and will only work with templates from that projec
 				method: HttpMethod.GET,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth.auth as string,
+					token: auth.auth,
 				},
 			});
 			return {
@@ -70,7 +70,7 @@ export const placid = createPiece({
 			auth: placidAuth,
 			baseUrl: () => PLACID_BASE_URL,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${auth}`,
+				Authorization: `Bearer ${auth.secret_text}`,
 			}),
 		}),
 	],

@@ -10,6 +10,7 @@ export const extractStructuredDataAction = createAction({
 	description: 'Returns structured data from provided unstructured text.',
 	props: {
 		model: Property.Dropdown({
+  auth: openaiAuth,
 			displayName: 'Model',
 			required: true,
 			refreshers: [],
@@ -24,7 +25,7 @@ export const extractStructuredDataAction = createAction({
 				}
 				try {
 					const openai = new OpenAI({
-						apiKey: auth as string,
+						apiKey: auth.secret_text,
 					});
 					const response = await openai.models.list();
 					// We need to get only LLM models
@@ -105,7 +106,7 @@ export const extractStructuredDataAction = createAction({
 		}
 		const prompt = 'Extract the following data from the provided text'
 		const openai = new OpenAI({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 		});
 
 		const response = await openai.chat.completions.create({

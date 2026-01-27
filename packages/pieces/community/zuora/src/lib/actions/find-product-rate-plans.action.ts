@@ -31,7 +31,7 @@ export const findProductRatePlanAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${context.auth.environment}/object-query/product-rate-plans?filter[]=name.EQ:${name}&filter[]=productid.EQ:${productid}`,
+      url: `${context.auth.props.environment}/object-query/product-rate-plans?filter[]=name.EQ:${name}&filter[]=productid.EQ:${productid}`,
       authentication: { type: AuthenticationType.BEARER_TOKEN, token },
       queryParams: {
         'expand[]': 'productrateplancharges',

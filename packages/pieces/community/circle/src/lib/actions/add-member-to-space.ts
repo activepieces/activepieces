@@ -45,7 +45,7 @@ export const addMemberToSpace = createAction({
 			url: `${BASE_URL}/space_members`,
 			body: payload,
 			headers: {
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 				'Content-Type': 'application/json',
 			},
 		});

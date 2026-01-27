@@ -21,6 +21,7 @@ const createDriveDropdown = (params: {
   refreshers: string[];
 }) =>
   Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: params.displayName,
     required: true,
     refreshers: params.refreshers,
@@ -68,7 +69,8 @@ const createDriveDropdown = (params: {
   });
 
 export const microsoftSharePointCommon = {
-  siteId: Property.Dropdown({
+  siteId: Property.Dropdown({ 
+    auth: microsoftSharePointAuth,
     displayName: 'Site',
     required: true,
     refreshers: [],
@@ -119,6 +121,7 @@ export const microsoftSharePointCommon = {
   createDriveDropdown,
 
   itemId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'Source File or Folder',
     required: true,
     refreshers: ['siteId', 'driveId'],
@@ -166,6 +169,7 @@ export const microsoftSharePointCommon = {
 
 
   destinationFolderId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'Destination Folder',
     description: 'The folder to copy the item into. Defaults to the root of the drive.',
     required: false,
@@ -215,6 +219,7 @@ export const microsoftSharePointCommon = {
   }),
 
   listId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'List',
     required: true,
     refreshers: ['siteId'],
@@ -257,6 +262,7 @@ export const microsoftSharePointCommon = {
   }),
 
   listColumns: Property.DynamicProperties({
+    auth: microsoftSharePointAuth,
     displayName: 'List Columns',
     refreshers: ['siteId', 'listId'],
     required: true,
@@ -338,6 +344,7 @@ export const microsoftSharePointCommon = {
   }),
 
   listItemId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'List Item',
     required: true,
     refreshers: ['siteId', 'listId'],
@@ -384,6 +391,7 @@ export const microsoftSharePointCommon = {
   }),
 
   pageId: Property.Dropdown({
+    auth: microsoftSharePointAuth,
     displayName: 'Page',
     required: true,
     refreshers: ['siteId'],

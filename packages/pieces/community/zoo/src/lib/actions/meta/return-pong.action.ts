@@ -14,7 +14,7 @@ export const returnPongAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/ping',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

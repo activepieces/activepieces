@@ -19,7 +19,7 @@ export const newGroupTrigger = createTrigger({
     };
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/account/webhooks',
       HttpMethod.POST,
       webhookData
@@ -32,7 +32,7 @@ export const newGroupTrigger = createTrigger({
     
     if (webhookId) {
       await makeSenderRequest(
-        context.auth,
+        context.auth.secret_text,
         `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
@@ -45,7 +45,7 @@ export const newGroupTrigger = createTrigger({
   },
   async test(context) {
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/groups?limit=1',
       HttpMethod.GET
     );

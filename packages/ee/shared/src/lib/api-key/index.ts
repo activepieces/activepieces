@@ -7,6 +7,7 @@ export const ApiKey = Type.Object({
     displayName: Type.String(),
     hashedValue: Type.String(),
     truncatedValue: Type.String(),
+    lastUsedAt: Type.Optional(Type.String()),
 })
 
 export type ApiKey = Static<typeof ApiKey>

@@ -1,8 +1,10 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import MailerLite from '@mailerlite/mailerlite-nodejs';
+import { mailerLiteAuth } from '../..';
 
 export const mailerLiteCommon = {
 	subscriberFields: Property.DynamicProperties({
+		auth: mailerLiteAuth,
 		displayName: 'Fields',
 		refreshers: [],
 		required: true,
@@ -11,7 +13,7 @@ export const mailerLiteCommon = {
 
 			const props: DynamicPropsValue = {};
 
-			const client = new MailerLite({ api_key: auth as unknown as string });
+			const client = new MailerLite({ api_key: auth.secret_text });
 			const response = await client.fields.get({ page: 1, limit: 100 });
 
 			for (const field of response.data.data) {
@@ -42,6 +44,7 @@ export const mailerLiteCommon = {
 	}),
 	subscriberGroupIds: (required = false) =>
 		Property.MultiSelectDropdown({
+			auth: mailerLiteAuth,
 			displayName: 'Group IDs',
 			required,
 			refreshers: [],
@@ -54,7 +57,7 @@ export const mailerLiteCommon = {
 					};
 				}
 
-				const client = new MailerLite({ api_key: auth as string });
+				const client = new MailerLite({ api_key: auth.secret_text });
 				const response = await client.groups.get({
 					page: 1,
 					limit: 100,
@@ -74,6 +77,7 @@ export const mailerLiteCommon = {
 		}),
 	subscriberGroupId: (required = false) =>
 		Property.Dropdown({
+			auth: mailerLiteAuth,
 			displayName: 'Group ID',
 			required,
 			refreshers: [],
@@ -86,7 +90,7 @@ export const mailerLiteCommon = {
 					};
 				}
 
-				const client = new MailerLite({ api_key: auth as string });
+				const client = new MailerLite({ api_key: auth.secret_text });
 				const response = await client.groups.get({
 					page: 1,
 					limit: 100,
@@ -106,6 +110,7 @@ export const mailerLiteCommon = {
 		}),
 	subscriberId: (required = false) =>
 		Property.Dropdown({
+			auth: mailerLiteAuth,
 			displayName: 'Subscriber ID',
 			refreshers: [],
 			required,
@@ -117,7 +122,7 @@ export const mailerLiteCommon = {
 						options: [],
 					};
 				}
-				const client = new MailerLite({ api_key: auth as string });
+				const client = new MailerLite({ api_key: auth.secret_text });
 				const subscribers: { label: string; value: string }[] = [];
 				let cursor;
 				do {
