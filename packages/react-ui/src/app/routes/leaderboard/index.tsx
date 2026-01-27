@@ -27,6 +27,8 @@ import { AnalyticsTimePeriod } from '@activepieces/shared';
 
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 import { UsersLeaderboard, UserStats } from './users-leaderboard';
+import { Separator } from '@/components/ui/separator';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 
 export default function LeaderboardPage() {
   const [timePeriod, setTimePeriod] = useState<AnalyticsTimePeriod>(
@@ -139,6 +141,8 @@ export default function LeaderboardPage() {
         <DashboardPageHeader
           title={
             <div className="flex items-center gap-3">
+              <ApSidebarToggle />
+              <Separator orientation="vertical" className="h-5 mr-2" />
               <span>{t('Leaderboard')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>

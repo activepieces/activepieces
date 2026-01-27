@@ -28,6 +28,8 @@ import { FlowsDetails } from './details';
 import { Summary } from './summary';
 import { TimeSavedEncouragementBanner } from './time-saved-encouragement-banner';
 import { Trends } from './trends';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
+import { Separator } from '@/components/ui/separator';
 
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
@@ -81,6 +83,8 @@ export default function AnalyticsPage() {
       <DashboardPageHeader
         title={
           <div className="flex items-center gap-3">
+            <ApSidebarToggle />
+            <Separator orientation="vertical" className="h-5 mr-2" />
             <span>{t('Analytics')}</span>
             <Tooltip>
               <TooltipTrigger asChild>
