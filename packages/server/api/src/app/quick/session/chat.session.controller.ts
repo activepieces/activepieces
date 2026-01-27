@@ -2,10 +2,10 @@ import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
 import { ApId, ApMultipartFile, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, FileType, PrincipalType, UpdateChatSessionRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { fileService } from '../file/file.service'
-import { system } from '../helper/system/system'
-import { chatSessionService } from './chat.session.service'
-import { genericAgentService } from '../generic-agent/generic-agent.service'
+import { fileService } from '../../file/file.service'
+import { system } from '../../helper/system/system'
+import { chatSessionService } from '../session/chat.session.service'
+import { genericAgentService } from '../../generic-agent/generic-agent.service'
 
 export const quickModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(chatSessionController, { prefix: '/v1/chat-sessions' })
@@ -47,6 +47,7 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
                 sessionId: request.params.id,
                 message: request.body.message,
                 files: request.body.files,
+                conversationId: request.body.conversationId,
             })
             return await genericAgentService(request.log).streamAgentResponse({
                 reply,
