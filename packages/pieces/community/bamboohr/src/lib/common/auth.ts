@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from "@activepieces/pieces-framework";
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const bambooHrAuth = PieceAuth.CustomAuth({
   required: true,
