@@ -178,7 +178,6 @@ export const flowRunUtils = {
           variant: 'default',
           Icon: Play,
         };
-    
       case FlowRunStatus.FAILED:
         return {
           variant: 'error',
