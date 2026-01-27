@@ -47,20 +47,18 @@ export const sendEmail = createAction({
       description: 'The email subject line',
       required: true,
     }),
-    content_type: Property.Dropdown<'text' | 'html'>({
+    content_type: Property.StaticDropdown<'text' | 'html'>({
       displayName: 'Content Type',
-      refreshers: [],
       required: true,
       defaultValue: 'html',
-      options: async () => {
-        return {
-          disabled: false,
-          options: [
+      options: {
+        disabled: false,
+        options: [
             { label: 'Plain Text', value: 'text' },
             { label: 'HTML', value: 'html' },
           ],
-        };
-      },
+        },
+      
     }),
     content: Property.LongText({
       displayName: 'Content',
@@ -133,7 +131,7 @@ export const sendEmail = createAction({
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
     });
   },
