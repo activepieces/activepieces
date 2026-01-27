@@ -1,9 +1,10 @@
 import { ActivepiecesError, apId, ChatFileAttachment, ChatSession, DEFAULT_CHAT_MODEL, ErrorCode, genericAgentUtils, isNil, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../core/db/repo-factory'
-import { projectService } from '../project/project-service'
+import { repoFactory } from '../../core/db/repo-factory'
+import { projectService } from '../../project/project-service'
 import { ChatSessionEntity } from './chat.session.entity'
-import { genericAgentService } from '../generic-agent/generic-agent.service'
+import { genericAgentService } from '../../generic-agent/generic-agent.service'
+import { chatConversationService } from '../conversation/chat.conversation.service'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
@@ -12,12 +13,20 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
         const newSession: Partial<ChatSession> = {
             id: apId(),
             userId,
-            conversation: [],
             modelId: DEFAULT_CHAT_MODEL,
             state: {},
             tools: [],
         }
-        return chatSessionRepo().save(newSession)
+        const savedSession = await chatSessionRepo().save(newSession)
+        const conversation = await chatConversationService(log).create({
+            userId: userId,
+            sessionId: savedSession.id,
+            conversation: [],
+        })
+        return {
+            ...savedSession,
+            conversations: [conversation],
+        }
     },
 
     async chatWithSession(params: ChatWithSessionParams): Promise<string> {
@@ -31,34 +40,62 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
             type: file.mimeType,
             url: file.url,
         }))
-        const newSession: ChatSession = {
-            ...session,
-            ...genericAgentUtils.addUserMessage(session, params.message, filesForMessage),
+
+        // Get or create conversation
+        const conversationEntity = await chatConversationService(log).getOrCreate({
+            userId: params.userId,
+            sessionId: params.sessionId,
+            conversationId: params.conversationId,
+        })
+        const conversation = conversationEntity.conversation
+        const conversationId = conversationEntity.id
+
+        // Add user message to conversation
+        const sessionData = {
+            conversation,
+            tools: session.tools,
+            modelId: session.modelId,
+            state: session.state,
+            prompt: params.message,
         }
-        await chatSessionRepo().save(newSession)
+        const updatedSessionData = genericAgentUtils.addUserMessage(sessionData, params.message, filesForMessage)
+
+        // Update conversation
+        await chatConversationService(log).update({
+            id: conversationId,
+            sessionId: params.sessionId,
+            userId: params.userId,
+            conversation: updatedSessionData.conversation || [],
+        })
+
         return await genericAgentService(log).executeAgent({
             projectId: project.id,
             platformId: params.platformId,
             prompt: params.message,
-            tools: newSession.tools,
-            modelId: newSession.modelId,
-            state: newSession.state,
-            conversation: newSession.conversation,
+            tools: session.tools,
+            modelId: session.modelId,
+            state: session.state,
+            conversation: updatedSessionData.conversation,
         })
     },
     async update(params: UpdateChastSessionParams): Promise<ChatSession> {
         await chatSessionRepo().update(params.id, {
-            ...spreadIfDefined('conversation', params.session.conversation),
             ...spreadIfDefined('modelId', params.session.modelId),
             ...spreadIfDefined('state', params.session.state),
+            ...spreadIfDefined('tools', params.session.tools),
         })
         return this.getOneOrThrow({ id: params.id, userId: params.userId })
     },
 
     async getOne(params: GetOneParams): Promise<ChatSession | null> {
-        return chatSessionRepo().findOneBy({
-            id: params.id,
-            userId: params.userId,
+        return chatSessionRepo().findOne({
+            where: {
+                id: params.id,
+                userId: params.userId,
+            },
+            relations: {
+                conversations: true,
+            },
         })
     },
 
@@ -102,6 +139,7 @@ type ChatWithSessionParams = {
     sessionId: string
     message: string
     files?: ChatFileAttachment[]
+    conversationId?: string
 }
 
 type GetOneParams = {

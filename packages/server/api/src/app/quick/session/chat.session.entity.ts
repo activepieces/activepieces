@@ -3,7 +3,7 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-} from '../database/database-common'
+} from '../../database/database-common'
 
 export const ChatSessionEntity = new EntitySchema<ChatSession>({
     name: 'chat_session',
@@ -13,10 +13,6 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
         ...BaseColumnSchemaPart,
         userId: {
             ...ApIdSchema,
-            nullable: false,
-        },
-        conversation: {
-            type: 'jsonb',
             nullable: false,
         },
         state: {
@@ -46,6 +42,11 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
                 referencedColumnName: 'id',
                 foreignKeyConstraintName: 'fk_chat_session_user',
             },
+        },
+        conversations: {
+            type: 'one-to-many',
+            target: 'chat_conversation',
+            inverseSide: 'sessionId',
         },
     },
 })
