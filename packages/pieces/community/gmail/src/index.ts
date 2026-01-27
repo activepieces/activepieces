@@ -8,6 +8,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
+import { requestApprovalInEmail } from './lib/actions/request-approval-in-email';
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
@@ -31,6 +32,7 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
+    requestApprovalInEmail,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -53,6 +55,7 @@ export const gmail = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'sanket-a11y',
   ],
   triggers: [gmailNewEmailTrigger, gmailNewLabeledEmailTrigger],
   auth: gmailAuth,
