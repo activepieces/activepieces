@@ -56,7 +56,7 @@ export const sandboxSockerHandler = (log: FastifyBaseLogger) => ({
             })
 
             const wsEvent = isTerminalOutput  ? WebsocketServerEvent.EMIT_TEST_STEP_FINISHED : WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS
-            const data: EmitTestStepProgressRequest = { projectId, platformId, flowId, flowVersionId, ...stepResponse }
+            const data: EmitTestStepProgressRequest = { projectId, ...stepResponse }
             await appSocket(log).emitWithAck(wsEvent, data)
         }
     },

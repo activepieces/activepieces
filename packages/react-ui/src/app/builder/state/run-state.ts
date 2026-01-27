@@ -178,7 +178,7 @@ export const createRunState = (
       const handleOnProgress = (response: StepRunResponse) => {
         if (response.runId === runId && response.output) {
           get().updateSampleData({
-            stepName: response.stepName,
+            stepName: stepName,
             output: response.output,
             onlyLocally: true,
           });

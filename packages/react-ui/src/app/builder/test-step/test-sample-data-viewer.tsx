@@ -13,9 +13,7 @@ import {
   isNil,
   StepOutputStatus,
 } from '@activepieces/shared';
-
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
-
 import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
 
