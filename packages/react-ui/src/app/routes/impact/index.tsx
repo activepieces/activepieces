@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -14,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -28,8 +30,6 @@ import { FlowsDetails } from './details';
 import { Summary } from './summary';
 import { TimeSavedEncouragementBanner } from './time-saved-encouragement-banner';
 import { Trends } from './trends';
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
-import { Separator } from '@/components/ui/separator';
 
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 

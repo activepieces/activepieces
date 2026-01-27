@@ -3,6 +3,7 @@ import { Calendar, Download, RefreshCcwIcon } from 'lucide-react';
 import { useContext, useMemo, useState } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -27,8 +29,6 @@ import { AnalyticsTimePeriod } from '@activepieces/shared';
 
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 import { UsersLeaderboard, UserStats } from './users-leaderboard';
-import { Separator } from '@/components/ui/separator';
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 
 export default function LeaderboardPage() {
   const [timePeriod, setTimePeriod] = useState<AnalyticsTimePeriod>(

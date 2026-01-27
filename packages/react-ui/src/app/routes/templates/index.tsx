@@ -3,6 +3,7 @@ import { Plus, Search } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
@@ -20,7 +21,6 @@ import { AllCategoriesView } from './all-categories-view';
 import { CategoryFilterCarousel } from './category-filter-carousel';
 import { EmptyTemplatesView } from './empty-templates-view';
 import { SelectedCategoryView } from './selected-category-view';
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 
 const TemplatesPage = () => {
   const navigate = useNavigate();

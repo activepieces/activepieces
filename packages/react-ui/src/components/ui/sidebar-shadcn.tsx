@@ -287,7 +287,7 @@ function Sidebar({
               state === 'collapsed' &&
               collapsible === 'icon' &&
               'relative',
-            isHoverExpanded && 'shadow-[4px_0_12px_rgba(0,0,0,0.1)]',
+            isHoverExpanded && 'shadow-sm',
           )}
         >
           {!hoverMode && state === 'collapsed' && collapsible === 'icon' && (
