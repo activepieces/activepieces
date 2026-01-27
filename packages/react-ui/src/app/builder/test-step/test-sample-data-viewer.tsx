@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import React, { useContext } from 'react';
 
+import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,11 +14,13 @@ import {
   isNil,
   StepOutputStatus,
 } from '@activepieces/shared';
+
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
+
 import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
 
-type RetestSampleDataViewerProps = {
+type TestSampleDataViewerProps = {
   isValid: boolean;
   currentStep?: FlowAction;
   isTesting: boolean;
@@ -28,7 +31,17 @@ type RetestSampleDataViewerProps = {
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs: string | null;
-} & RetestButtonProps;
+} & (
+  | {
+      hideCancel: true;
+      onCancelTesting?: undefined;
+    }
+  | {
+      hideCancel?: false;
+      onCancelTesting: () => void;
+    }
+) &
+  RetestButtonProps;
 
 type RetestButtonProps = {
   isValid: boolean;
@@ -78,8 +91,13 @@ export const TestSampleDataViewer = React.memo(
     consoleLogs,
     isSaving,
     onRetest,
-  }: RetestSampleDataViewerProps) => {
+    onCancelTesting,
+    hideCancel,
+  }: TestSampleDataViewerProps) => {
     const renderViewer = () => {
+      if (isTesting) {
+        return <StepOutputSkeleton className="px-1 " />;
+      }
       if (isRunAgent(currentStep)) {
         return (
           <AgentTestStep
@@ -142,6 +160,14 @@ export const TestSampleDataViewer = React.memo(
             <div className="flex flex-col grow gap-1">
               <div className="text-md flex gap-1 items-center">
                 {(() => {
+                  if (isTesting) {
+                    return (
+                      <div className="flex items-center gap-1">
+                        <span>{t('Testing...')}</span>
+                      </div>
+                    );
+                  }
+
                   if (isRunAgent(currentStep)) {
                     const isFailed =
                       (sampleData as AgentResult).status ===
@@ -192,18 +218,26 @@ export const TestSampleDataViewer = React.memo(
               <div className="text-muted-foreground text-xs">
                 {lastTestDate &&
                   !errorMessage &&
+                  !isTesting &&
                   formatUtils.formatDate(new Date(lastTestDate))}
               </div>
             </div>
 
-            <TestButtonTooltip invalid={!isValid}>
-              <RetestButton
-                isValid={isValid}
-                isSaving={isSaving}
-                isTesting={isTesting}
-                onRetest={onRetest}
-              />
-            </TestButtonTooltip>
+            {!isTesting && (
+              <TestButtonTooltip invalid={!isValid}>
+                <RetestButton
+                  isValid={isValid}
+                  isSaving={isSaving}
+                  isTesting={isTesting}
+                  onRetest={onRetest}
+                />
+              </TestButtonTooltip>
+            )}
+            {isTesting && !hideCancel && (
+              <Button size={'sm'} variant={'outline'} onClick={onCancelTesting}>
+                {t('Cancel')}
+              </Button>
+            )}
           </div>
           {renderViewer()}
         </div>

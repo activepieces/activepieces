@@ -183,6 +183,7 @@ const TestTriggerSection = React.memo(
             {showSampleDataViewer && (
               <TestSampleDataViewer
                 onRetest={onTest}
+                hideCancel={true}
                 isValid={isValid}
                 consoleLogs={null}
                 isTesting={isPollingTesting}

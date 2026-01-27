@@ -40,7 +40,7 @@ export type RunState = {
     runId: string;
     stepName: string;
   }) => void;
-  removeStepTestListener: (runId: string) => void;
+  removeStepTestListener: (stepName: string) => void;
   stepTestListeners: Record<string, StepTestListener | null | undefined>;
   updateSampleData: (params: UpdateSampleDataParams) => void;
   errorLogs: Record<string, string | null>;
@@ -197,17 +197,23 @@ export const createRunState = (
     removeStepTestListener: (stepName: string) => {
       set((state) => {
         const socket = initialState.socket;
-        const listner = state.stepTestListeners[stepName];
-        if (listner) {
-          socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, listner.onFinish);
+        const listners = state.stepTestListeners[stepName];
+        if (listners) {
+          socket.off(
+            WebsocketClientEvent.TEST_STEP_FINISHED,
+            listners.onFinish,
+          );
           socket.off(
             WebsocketClientEvent.TEST_STEP_PROGRESS,
-            listner.onProgress,
+            listners.onProgress,
           );
-          socket.off('error', listner.error);
+          socket.off('error', listners.error);
         }
-        state.stepTestListeners[stepName] = null;
-        return state;
+        const stepListeners = { ...state.stepTestListeners };
+        stepListeners[stepName] = null;
+        return {
+          stepTestListeners: stepListeners,
+        };
       });
     },
     stepTestListeners: {},

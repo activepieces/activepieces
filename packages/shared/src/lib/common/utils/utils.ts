@@ -10,10 +10,10 @@ export function isNil<T>(value: T | null | undefined): value is null | undefined
 
 export function stringifyNullOrUndefined(data: undefined | null): string {
     if (data === undefined) {
-      return 'undefined';
+        return 'undefined'
     }
-    return 'null';
-  };
+    return 'null'
+}
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

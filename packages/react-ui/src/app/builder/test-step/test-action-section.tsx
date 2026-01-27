@@ -51,13 +51,17 @@ const TestStepSectionImplementation = React.memo(
       errorMessage,
       consoleLogs,
       isStepBeingTested,
+      removeStepTestListener,
     ] = useBuilderStateContext((state) => {
       return [
         state.outputSampleData[currentStep.name],
         state.inputSampleData[currentStep.name],
         state.errorLogs[currentStep.name],
-        currentStep.type === FlowActionType.CODE? state.consoleLogs[currentStep.name] : null,
-        state.isStepBeingTested(currentStep.name),
+        currentStep.type === FlowActionType.CODE
+          ? state.consoleLogs[currentStep.name]
+          : null,
+        state.isStepBeingTested,
+        state.removeStepTestListener,
       ];
     });
 
@@ -85,12 +89,12 @@ const TestStepSectionImplementation = React.memo(
     const isTesting =
       activeDialog !== DialogType.NONE ||
       isWatingTestResult ||
-      isStepBeingTested;
+      isStepBeingTested(currentStep.name);
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
     return (
       <>
-        {!sampleDataExists && (
+        {!sampleDataExists && !isTesting && (
           <div className="grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip invalid={!currentStep.valid}>
               <Button
@@ -108,7 +112,7 @@ const TestStepSectionImplementation = React.memo(
             </TestButtonTooltip>
           </div>
         )}
-        {sampleDataExists && (
+        {(sampleDataExists || isTesting) && (
           <TestSampleDataViewer
             isValid={currentStep.valid}
             currentStep={currentStep}
@@ -120,6 +124,9 @@ const TestStepSectionImplementation = React.memo(
             onRetest={onTestButtonClick}
             errorMessage={errorMessage}
             consoleLogs={consoleLogs}
+            onCancelTesting={() => {
+              removeStepTestListener(currentStep.name);
+            }}
           ></TestSampleDataViewer>
         )}
         {activeDialog === DialogType.WEBHOOK && (
