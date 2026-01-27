@@ -10,7 +10,7 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { userInvitationsHooks } from '@/features/members/lib/user-invitations-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission, UserStatus } from '@activepieces/shared';
+import { InvitationType, Permission, UserStatus } from '@activepieces/shared';
 
 import { membersTableColumns, MemberRowData } from './columns';
 
@@ -53,7 +53,11 @@ export const MembersSettings = () => {
 
     const pendingInvitations: MemberRowData[] =
       invitations
-        ?.filter((invitation) => invitation.projectId === currentProjectId)
+        ?.filter(
+          (invitation) =>
+            invitation.projectId === currentProjectId &&
+            invitation.type === InvitationType.PROJECT,
+        )
         .map((invitation) => ({
           id: invitation.id,
           type: 'invitation' as const,

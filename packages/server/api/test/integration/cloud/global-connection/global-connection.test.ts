@@ -150,7 +150,7 @@ describe('GlobalConnection API', () => {
 
         it('Fails if project ids are invalid', async () => {
             // arrange
-            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
+            const { mockPlatform, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
                 platformId: mockPlatform.id,

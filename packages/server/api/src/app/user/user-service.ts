@@ -107,6 +107,9 @@ export const userService = {
 
         return this.getMetaInformation({ id })
     },
+    async getUsersByIdentityId({ identityId }: GetUsersByIdentityIdParams): Promise<Pick<User, 'id' | 'platformId'>[]> {
+        return userRepo().find({ where: { identityId } }).then((users) => users.map((user) => ({ id: user.id, platformId: user.platformId })))
+    },
     async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -124,9 +127,6 @@ export const userService = {
 
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
-    },
-    async getUsersByIdentityId({ identityId }: GetUsersByIdentityIdParams): Promise<Pick<User, 'id' | 'platformId'>[]> {
-        return userRepo().find({ where: { identityId } }).then((users) => users.map((user) => ({ id: user.id, platformId: user.platformId })))
     },
     async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
         return userRepo().findOneBy({ identityId })

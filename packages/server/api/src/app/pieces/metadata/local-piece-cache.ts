@@ -20,9 +20,8 @@ export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
 
 const META_REGISTRY_KEY = 'pieces:registry'
 const META_STATE_KEY = 'pieces:state'
-const META_LIST_KEY = (locale: LocalesEnum) => `pieces:list:${locale}`
-const META_PIECE_KEY = (pieceName: string, version: string, locale: LocalesEnum) => `pieces:piece:${pieceName}:${version}:${locale}`
-const DEFAULT_LOCALE = LocalesEnum.ENGLISH
+const META_LIST_KEY = (locale: LocalesEnum): string => `pieces:list:${locale}`
+const META_PIECE_KEY = (pieceName: string, version: string, platformId: string | undefined) => `pieces:piece:${pieceName}:${version}:${platformId ?? 'OFFICIAL'}`
 
 let cacheInstance: KVCacheInstance | null = null
 
@@ -30,7 +29,7 @@ let cacheInstance: KVCacheInstance | null = null
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         await getOrCreateCache()
-        rejectedPromiseHandler(updateCache(log), log)
+        await updateCache(log)
         cron.schedule('*/15 * * * *', () => {
             log.info('[localPieceCache] Refreshing pieces cache via cron job')
             rejectedPromiseHandler(updateCache(log), log)
@@ -44,39 +43,32 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         await updateCache(log)
     },
     async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
-        const { locale, platformId } = params
+        const { platformId, locale = LocalesEnum.ENGLISH } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
             return lastVersionOfEachPiece(pieces)
                 .filter((piece) => filterPieceBasedOnType(platformId, piece))
-                .map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
         }
         const cache = await getOrCreateCache()
-        const list = (await cache.db.get(META_LIST_KEY(locale ?? DEFAULT_LOCALE))) as PieceMetadataSchema[] | undefined
-        const devPieces = (await loadDevPiecesIfEnabled(log)).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
-        return [...(list ?? []), ...devPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
+        const list = (await cache.db.get(META_LIST_KEY(locale))) as PieceMetadataSchema[] | undefined
+        const devPieces = await loadDevPiecesIfEnabled(log)
+        const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }))
+        return [...(list ?? []), ...translatedDevPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
     },
     async getPieceVersion(params: GetPieceVersionParams): Promise<PieceMetadataSchema | null> {
-        const { pieceName, version, locale, platformId } = params
+        const { pieceName, version, platformId } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
-            const piece = pieces.find(p => p.name === pieceName && p.version === version)
-            if (!piece) {
-                return null
-            }
-            return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale) : piece
+            return pieces.find(p => p.name === pieceName && p.version === version) ?? null
         }
         const cache = await getOrCreateCache()
-        const piece = (await cache.db.get(META_PIECE_KEY(pieceName, version, locale ?? DEFAULT_LOCALE))) as PieceMetadataSchema | undefined
+        const cachedPiece = (await cache.db.get(META_PIECE_KEY(pieceName, version, platformId))) as PieceMetadataSchema | undefined
         const devPieces = await loadDevPiecesIfEnabled(log)
         const devPiece = devPieces.find(p => p.name === pieceName && p.version === version)
         if (!isNil(devPiece)) {
-            return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(devPiece, locale ?? DEFAULT_LOCALE) : devPiece
+            return devPiece
         }
-        if (isNil(piece)) {
-            return null
-        }
-        return filterPieceBasedOnType(platformId, piece) ? piece : null
+        return cachedPiece ?? null
     },
     async getRegistry(params: GetRegistryParams): Promise<PieceRegistryEntry[]> {
         const { release, platformId } = params
@@ -177,10 +169,11 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
 
 
     await storePieces(sortedPieces)
+    log.info({ sortedPieces: sortedPieces.length }, '[populateCache] Storing pieces')
+    const startTime = Date.now()
     for (const piece of sortedPieces) {
         await storePiece(piece)
     }
-
     const state: State = {
         recentUpdate: sortedPieces.length > 0 ? new Date(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).valueOf()))).toISOString() : undefined,
         count: sortedPieces.length.toString(),
@@ -188,27 +181,26 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
     await db.set(META_STATE_KEY, state)
     log.info({
         count: sortedPieces.length,
+        duration: Date.now() - startTime,
     }, '[populateCache] Stored pieces cache')
 }
 
 async function storePieces(sortedPieces: PieceMetadataSchema[]): Promise<void> {
     const { db } = await getOrCreateCache()
     const latestVersions = sortedPieces.filter((piece, index, self) => index === self.findIndex((t) => t.name === piece.name))
-
-    const locales = Object.values(LocalesEnum) as LocalesEnum[]
-    for (const locale of locales) {
-        const translatedLatestVersions = latestVersions.map((p) => pieceTranslation.translatePiece<PieceMetadataSchema>(p, locale))
-        await db.set(META_LIST_KEY(locale), translatedLatestVersions)
+    
+    const supportedLocales = Object.values(LocalesEnum)
+    for (const locale of supportedLocales) {
+        const translatedPieces = latestVersions.map((piece) => 
+            pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale }),
+        )
+        await db.set(META_LIST_KEY(locale), translatedPieces)
     }
 }
 
 async function storePiece(piece: PieceMetadataSchema): Promise<void> {
     const { db } = await getOrCreateCache()
-    const locales = Object.values(LocalesEnum) as LocalesEnum[]
-    for (const locale of locales) {
-        const translatedPiece = pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale)
-        await db.set(META_PIECE_KEY(piece.name, piece.version, locale), translatedPiece)
-    }
+    await db.set(META_PIECE_KEY(piece.name, piece.version, piece.platformId), piece)
 }
 
 async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> {
@@ -270,7 +262,7 @@ function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchem
     if (isNil(platformId)) {
         return false
     }
-    return piece.platformId === platformId  && piece.pieceType === PieceType.CUSTOM
+    return piece.platformId === platformId && piece.pieceType === PieceType.CUSTOM
 }
 
 
@@ -301,7 +293,6 @@ type GetPieceVersionParams = {
     pieceName: string
     version: string
     platformId?: string
-    locale?: LocalesEnum
 }
 
 type PieceRegistryEntry = {
@@ -315,7 +306,7 @@ type PieceRegistryEntry = {
 
 type GetListParams = {
     platformId?: string
-    locale: LocalesEnum
+    locale?: LocalesEnum
 }
 
 type GetRegistryParams = {

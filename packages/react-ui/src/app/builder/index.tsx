@@ -77,6 +77,8 @@ const BuilderPage = () => {
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
+  flowCanvasHooks.useListenToExistingRun();
+
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
