@@ -227,7 +227,7 @@ export function ProjectDashboardSidebar() {
           <SidebarSeparator className="shrink-0" />
 
           <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between group-data-[collapsible=icon]:opacity-0">
+            <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
               <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
               <div className="flex items-center gap-1">
                 {shouldShowNewProjectButton && (

@@ -84,7 +84,7 @@ const BuilderPage = () => {
 
   return (
     <div className="flex h-full w-full flex-col relative">
-      <div className="z-50">
+      <div className="z-40">
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
