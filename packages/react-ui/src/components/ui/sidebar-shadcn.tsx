@@ -30,6 +30,8 @@ const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 const SIDEBAR_STATE_STORAGE_KEY = 'sidebar-state';
 
+let persistedHoverState = false;
+
 function getSidebarStateFromLocalStorage() {
   const stored = localStorage.getItem(SIDEBAR_STATE_STORAGE_KEY);
   return stored ? stored === 'true' : true;
@@ -47,6 +49,8 @@ type SidebarContextProps = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  hoverMode: boolean;
+  setHovered: (hovered: boolean) => void;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -66,6 +70,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    hoverMode?: boolean;
   }
 >(
   (
@@ -73,6 +78,7 @@ const SidebarProvider = React.forwardRef<
       defaultOpen,
       open: openProp,
       onOpenChange: setOpenProp,
+      hoverMode = false,
       className,
       style,
       children,
@@ -82,13 +88,17 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(
+      hoverMode ? persistedHoverState : false,
+    );
 
     const [_open, _setOpen] = React.useState(
-      defaultOpen ?? getSidebarStateFromLocalStorage(),
+      hoverMode ?? getSidebarStateFromLocalStorage(),
     );
-    const open = openProp ?? _open;
+    const open = hoverMode ? isHovered : openProp ?? _open;
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
+        if (hoverMode) return;
         const openState = typeof value === 'function' ? value(open) : value;
         if (setOpenProp) {
           setOpenProp(openState);
@@ -98,19 +108,31 @@ const SidebarProvider = React.forwardRef<
 
         setSidebarStateToLocalStorage(openState);
       },
-      [setOpenProp, open],
+      [setOpenProp, open, hoverMode],
+    );
+
+    const setHovered = React.useCallback(
+      (hovered: boolean) => {
+        if (hoverMode) {
+          persistedHoverState = hovered;
+        }
+        setIsHovered(hovered);
+      },
+      [hoverMode],
     );
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
+      if (hoverMode) return;
       return isMobile
         ? setOpenMobile((open) => !open)
         : setOpen((open) => !open);
-    }, [isMobile, setOpen, setOpenMobile]);
+    }, [isMobile, setOpen, setOpenMobile, hoverMode]);
 
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
+        if (hoverMode) return;
         if (
           event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.metaKey || event.ctrlKey)
@@ -122,7 +144,7 @@ const SidebarProvider = React.forwardRef<
 
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [toggleSidebar]);
+    }, [toggleSidebar, hoverMode]);
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
     // This makes it easier to style the sidebar with Tailwind classes.
@@ -137,6 +159,8 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        hoverMode,
+        setHovered,
       }),
       [
         state,
@@ -146,6 +170,8 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        hoverMode,
+        setHovered,
       ],
     );
 
@@ -195,8 +221,15 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile, setOpen } =
-      useSidebar();
+    const {
+      isMobile,
+      state,
+      openMobile,
+      setOpenMobile,
+      setOpen,
+      hoverMode,
+      setHovered,
+    } = useSidebar();
 
     if (collapsible === 'none') {
       return (
@@ -245,14 +278,19 @@ const Sidebar = React.forwardRef<
         data-collapsible={state === 'collapsed' ? collapsible : ''}
         data-variant={variant}
         data-side={side}
+        onMouseEnter={hoverMode ? () => setHovered(true) : undefined}
+        onMouseLeave={hoverMode ? () => setHovered(false) : undefined}
       >
-        {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
             'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-in-out',
             'group-data-[collapsible=offcanvas]:w-0',
             'group-data-[side=right]:rotate-180',
-            variant === 'floating' || variant === 'inset'
+            hoverMode
+              ? variant === 'floating' || variant === 'inset'
+                ? 'w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
+                : 'w-(--sidebar-width-icon)'
+              : variant === 'floating' || variant === 'inset'
               ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
               : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
           )}
@@ -267,9 +305,11 @@ const Sidebar = React.forwardRef<
             variant === 'floating' || variant === 'inset'
               ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]'
               : 'group-data-[collapsible=icon]:w-[--sidebar-width-icon]',
-            state === 'collapsed' &&
+            !hoverMode &&
+              state === 'collapsed' &&
               collapsible === 'icon' &&
               '[&_*]:!cursor-nesw-resize [&_button]:!cursor-pointer [&_button]:relative [&_button]:z-20 [&_button_*]:!cursor-pointer [&_a]:!cursor-pointer [&_a]:relative [&_a]:z-20 [&_a_*]:!cursor-pointer [&_[role=button]]:!cursor-pointer [&_[role=button]]:relative [&_[role=button]]:z-20 [&_[role=button]_*]:!cursor-pointer [&_[data-sidebar=menu-button]]:!cursor-pointer [&_[data-sidebar=menu-button]]:relative [&_[data-sidebar=menu-button]]:z-20 [&_[data-sidebar=menu-button]_*]:!cursor-pointer cursor-nesw-resize',
+            hoverMode && state === 'expanded' && 'z-9999',
             className,
           )}
           {...props}
@@ -278,11 +318,14 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className={cn(
               'flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-sm',
-              state === 'collapsed' && collapsible === 'icon' && 'relative',
+              !hoverMode &&
+                state === 'collapsed' &&
+                collapsible === 'icon' &&
+                'relative',
             )}
           >
             {/* Clickable overlay to expand collapsed sidebar */}
-            {state === 'collapsed' && collapsible === 'icon' && (
+            {!hoverMode && state === 'collapsed' && collapsible === 'icon' && (
               <div
                 className="absolute inset-0 !cursor-nesw-resize z-10"
                 onClick={() => setOpen(true)}

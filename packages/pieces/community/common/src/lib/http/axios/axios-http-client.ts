@@ -45,8 +45,8 @@ export class AxiosHttpClient extends BaseHttpClient {
         data: request.body,
         timeout,
         responseType,
-        maxRedirects: (request.followRedirects ?? true) ? undefined : 0,
-        validateStatus: !(request.followRedirects ?? true)
+        maxRedirects: (request.followRedirects ?? false) ? undefined : 0,
+        validateStatus: !(request.followRedirects ?? false)
           ? (status) => status >= 200 && status < 400
           : undefined,
       };

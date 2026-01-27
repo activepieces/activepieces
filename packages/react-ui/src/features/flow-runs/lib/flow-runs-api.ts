@@ -14,6 +14,7 @@ import {
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
   BulkCancelFlowRequestBody,
+  UpdateRunProgressRequest,
 } from '@activepieces/shared';
 
 type TestStepParams = {
@@ -42,27 +43,41 @@ export const flowRunsApi = {
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
   },
-  async testFlow(
+  async subscribeToTestFlowOrManualRun(
     socket: Socket,
     request: TestFlowRunRequestBody,
-    onUpdate: (response: FlowRun) => void,
+    onUpdate: (response: UpdateRunProgressRequest) => void,
+    isForManualTrigger: boolean,
   ): Promise<void> {
-    socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
+    socket.emit(
+      isForManualTrigger
+        ? WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED
+        : WebsocketServerEvent.TEST_FLOW_RUN,
+      request,
+    );
     const initialRun = await getInitialRun(
       socket,
       request.flowVersionId,
-      false,
+      isForManualTrigger,
     );
-    onUpdate(initialRun);
-  },
-  async startManualTrigger(
-    socket: Socket,
-    request: TestFlowRunRequestBody,
-    onUpdate: (response: FlowRun) => void,
-  ): Promise<void> {
-    socket.emit(WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED, request);
-    const initialRun = await getInitialRun(socket, request.flowVersionId, true);
-    onUpdate(initialRun);
+    onUpdate({
+      flowRun: initialRun,
+    });
+    const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
+      if (response.flowRun.id === initialRun.id) {
+        onUpdate(response);
+        if (response.flowRun.finishTime) {
+          socket.off(
+            WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+            handleUpdateRunProgress,
+          );
+        }
+      }
+    };
+    socket.on(
+      WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+      handleUpdateRunProgress,
+    );
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
     const { socket, request, onProgress, onFinish } = params;
