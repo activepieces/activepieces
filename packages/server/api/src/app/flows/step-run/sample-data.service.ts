@@ -36,7 +36,6 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
                     sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
                     sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
                     lastTestDate: dayjs().toISOString(),
-                    testRunId: undefined,
                 },
             },
         }

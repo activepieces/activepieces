@@ -390,7 +390,5 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated note in flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.DELETE_NOTE:
             return `Deleted note in flow "${event.data.flowVersion.displayName}".`
-        case FlowOperationType.CLEAR_STEP_TEST_RUN_ID:
-            return `finshed testing step "${event.data.request.request.name}" in flow "${event.data.flowVersion.displayName}".`
-    }
+      }
 }

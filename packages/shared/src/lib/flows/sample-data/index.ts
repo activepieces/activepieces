@@ -58,7 +58,6 @@ export const SampleDataSetting = Type.Object(
         sampleDataFileId: Type.Optional(Type.String()),
         sampleDataInputFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
-        testRunId: Type.Optional(Type.String()),
     },
     {
         additionalProperties: true,

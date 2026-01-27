@@ -16,11 +16,7 @@ import {
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import {
-  AgentTestStep,
-  defaultAgentOutput,
-  isRunAgent,
-} from './agent-test-step';
+import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type RetestSampleDataViewerProps = {
@@ -69,20 +65,6 @@ RetestButton.displayName = 'TestButton';
 const isConsoleLogsValid = (value: unknown) => {
   if (isNil(value)) return false;
   return value !== '';
-};
-
-const resolveAgentResult = (
-  sampleData: unknown,
-  agentResult?: AgentResult,
-): AgentResult => {
-  return (
-    agentResult ??
-    (sampleData &&
-    typeof sampleData === 'object' &&
-    Object.keys(sampleData).length > 0
-      ? (sampleData as AgentResult)
-      : defaultAgentOutput)
-  );
 };
 
 export const TestSampleDataViewer = React.memo(
@@ -163,9 +145,10 @@ export const TestSampleDataViewer = React.memo(
               <div className="text-md flex gap-1 items-center">
                 {(() => {
                   if (isRunAgent(currentStep)) {
-                    console.log(sampleData)
+                    console.log(sampleData);
                     const isFailed =
-                      (sampleData as AgentResult).status === AgentTaskStatus.FAILED;
+                      (sampleData as AgentResult).status ===
+                      AgentTaskStatus.FAILED;
 
                     return (
                       <>

@@ -76,13 +76,13 @@ export const flowRunsApi = {
       );
     }
   },
-  async testStep(params: TestStepParams): Promise<{runId:string}> {
-    const {  request } = params;
+  async testStep(params: TestStepParams): Promise<{ runId: string }> {
+    const { request } = params;
     const stepRun = await api.post<FlowRun>(
       '/v1/sample-data/test-step',
       request,
     );
-    return {runId:stepRun.id};
+    return { runId: stepRun.id };
   },
 };
 function getInitialRun(

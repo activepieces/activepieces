@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
+import { Socket } from 'socket.io-client';
 import { create, useStore } from 'zustand';
 
 import { CanvasState, createCanvasState } from './state/canvas-state';
@@ -12,7 +13,6 @@ import {
 } from './state/piece-selector-state';
 import { createRunState, RunState } from './state/run-state';
 import { createStepFormState, StepFormState } from './state/step-form-state';
-import { Socket } from 'socket.io-client';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 

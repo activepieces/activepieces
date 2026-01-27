@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
@@ -43,9 +43,18 @@ const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [flowVersion, rightSidebar, selectedStep] = useBuilderStateContext(
-    (state) => [state.flowVersion, state.rightSidebar, state.selectedStep],
-  );
+  const [flowVersion, rightSidebar, selectedStep, OnRunStateDestroyed] =
+    useBuilderStateContext((state) => [
+      state.flowVersion,
+      state.rightSidebar,
+      state.selectedStep,
+      state.OnRunStateDestroyed,
+    ]);
+  useEffect(() => {
+    return () => {
+      OnRunStateDestroyed();
+    };
+  }, []);
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   const { memorizedSelectedStep } = useBuilderStateContext((state) => {
     const flowVersion = state.flowVersion;

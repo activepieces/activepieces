@@ -6,7 +6,6 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import {
-  FlowAction,
   FlowActionType,
   FlowOperationType,
   FlowRun,
@@ -34,9 +33,15 @@ export type RunState = {
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
   setLoopIndex: (stepName: string, index: number) => void;
-  addActionTestListener: ({runId, stepName}: {runId: string, stepName: string}) => void;
+  addActionTestListener: ({
+    runId,
+    stepName,
+  }: {
+    runId: string;
+    stepName: string;
+  }) => void;
   removeStepTestListener: (runId: string) => void;
-  stepTestListeners: Record<string, StepTestListener | null>;
+  stepTestListeners: Record<string, StepTestListener | null | undefined>;
   updateSampleData: (params: UpdateSampleDataParams) => void;
   errorLogs: Record<string, string | null>;
   setErrorLogs: (stepName: string, error: string | null) => void;
@@ -44,6 +49,8 @@ export type RunState = {
   setConsoleLogs: (stepName: string, consoleLogs: string | null) => void;
   getConsoleLogs: (stepName: string) => string | null;
   consoleLogs: Record<string, string | null>;
+  OnRunStateDestroyed: () => void;
+  isStepBeingTested: (stepName: string) => boolean;
 };
 type RunStateInitialState = {
   run: FlowRun | null;
@@ -132,60 +139,54 @@ export const createRunState = (
         };
       });
     },
-    addActionTestListener: ({runId, stepName}: {runId: string, stepName: string}) => {
+    addActionTestListener: ({
+      runId,
+      stepName,
+    }: {
+      runId: string;
+      stepName: string;
+    }) => {
       const socket = initialState.socket;
-      const action = flowStructureUtil.getStepOrThrow(stepName, get().flowVersion.trigger) as FlowAction;
-      const sampleDataSettings = action.settings.sampleData?? {};
-      sampleDataSettings.testRunId = runId;
-      const copiedAction: FlowAction = JSON.parse(JSON.stringify(action));
-      copiedAction.settings.sampleData = sampleDataSettings;
-      get().applyOperation({
-        type: FlowOperationType.UPDATE_ACTION,
-        request: copiedAction,
-      })
       const handleStepFinished = (response: StepRunResponse) => {
         if (response.runId === runId) {
-           get().removeStepTestListener(runId);
-           if(response.success) {
-           get().updateSampleData({
+          get().removeStepTestListener(stepName);
+          if (response.success) {
+            get().updateSampleData({
               stepName: stepName,
               output: response.output,
               input: response.input,
             });
           }
-          get().setErrorLogs(stepName, response.standardError === '' ? null : response.standardError);
-          get().setConsoleLogs(stepName, response.standardOutput === '' ? null : response.standardOutput);
-          get().applyOperation({
-            type: FlowOperationType.CLEAR_STEP_TEST_RUN_ID,
-            request: {
-              name: stepName,
-            },
-          });
+          get().setErrorLogs(
+            stepName,
+            response.standardError === '' ? null : response.standardError,
+          );
+          get().setConsoleLogs(
+            stepName,
+            response.standardOutput === '' ? null : response.standardOutput,
+          );
         }
       };
-
       const handleError = (error: any) => {
-        get().removeStepTestListener(runId);
+        get().removeStepTestListener(stepName);
         console.error(error);
         internalErrorToast();
       };
 
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
       socket.on('error', handleError);
-
-        const handleOnProgress = (response: StepRunResponse) => {
-          if (response.runId === runId && response.output) {
-            console.log(`-----response`, response)
-            get().updateSampleData({
-              stepName: response.stepName,
-              output: response.output,
-              onlyLocally: true,
-            })}
-        };
-        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
-      
+      const handleOnProgress = (response: StepRunResponse) => {
+        if (response.runId === runId && response.output) {
+          get().updateSampleData({
+            stepName: response.stepName,
+            output: response.output,
+            onlyLocally: true,
+          });
+        }
+      };
+      socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
       set((state) => {
-        state.stepTestListeners[runId] = {
+        state.stepTestListeners[stepName] = {
           onProgress: handleOnProgress,
           onFinish: handleStepFinished,
           error: handleError,
@@ -193,22 +194,25 @@ export const createRunState = (
         return state;
       });
     },
-    removeStepTestListener: (runId: string) => {
+    removeStepTestListener: (stepName: string) => {
       set((state) => {
         const socket = initialState.socket;
-        const listner = state.stepTestListeners[runId];
-        if(listner) {
+        const listner = state.stepTestListeners[stepName];
+        if (listner) {
           socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, listner.onFinish);
-          socket.off(WebsocketClientEvent.TEST_STEP_PROGRESS, listner.onProgress);
+          socket.off(
+            WebsocketClientEvent.TEST_STEP_PROGRESS,
+            listner.onProgress,
+          );
           socket.off('error', listner.error);
         }
-        state.stepTestListeners[runId] = null;
+        state.stepTestListeners[stepName] = null;
         return state;
       });
     },
     stepTestListeners: {},
     updateSampleData: (params: UpdateSampleDataParams) => {
-      const {setSampleData, applyOperation, flowVersion} = get();
+      const { setSampleData, applyOperation, flowVersion } = get();
       const step = flowStructureUtil.getStep(
         params.stepName,
         flowVersion.trigger,
@@ -219,9 +223,9 @@ export const createRunState = (
         internalErrorToast();
         return;
       }
-        const output = params.output;
-        setSampleData({ stepName: step.name, type: 'output', value: output });
-        if(!params.onlyLocally) {
+      const output = params.output;
+      setSampleData({ stepName: step.name, type: 'output', value: output });
+      if (!params.onlyLocally) {
         applyOperation({
           type: FlowOperationType.SAVE_SAMPLE_DATA,
           request: {
@@ -232,10 +236,10 @@ export const createRunState = (
         });
       }
 
-        if (!isNil(params.input)) {
-          const input = params.input;
-          setSampleData({ stepName: step.name, type: 'input', value: input });
-          if(!params.onlyLocally) {
+      if (!isNil(params.input)) {
+        const input = params.input;
+        setSampleData({ stepName: step.name, type: 'input', value: input });
+        if (!params.onlyLocally) {
           applyOperation({
             type: FlowOperationType.SAVE_SAMPLE_DATA,
             request: {
@@ -245,13 +249,15 @@ export const createRunState = (
             },
           });
         }
-        }  
+      }
 
       // Invalidate so next time the user enters the builder, the sample data is refetched
-      sampleDataHooks.invalidateSampleData(
-        flowVersion.id,
-        initialState.queryClient,
-      );
+      if (!params.onlyLocally) {
+        sampleDataHooks.invalidateSampleData(
+          flowVersion.id,
+          initialState.queryClient,
+        );
+      }
     },
     setErrorLogs: (stepName: string, error: string | null) => {
       set((state) => {
@@ -273,5 +279,14 @@ export const createRunState = (
       return get().consoleLogs[stepName] ?? null;
     },
     consoleLogs: {},
+    OnRunStateDestroyed: () => {
+      const stepTestListeners = get().stepTestListeners;
+      Object.keys(stepTestListeners).forEach((stepName) => {
+        get().removeStepTestListener(stepName);
+      });
+    },
+    isStepBeingTested: (stepName: string) => {
+      return !isNil(get().stepTestListeners[stepName]);
+    },
   };
 };

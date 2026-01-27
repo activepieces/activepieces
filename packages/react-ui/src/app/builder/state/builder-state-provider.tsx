@@ -12,7 +12,10 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-collection';
 import { Permission } from '@activepieces/shared';
 
-type BuilderStateProviderProps = Omit<React.PropsWithChildren<BuilderInitialState>, 'socket' | 'queryClient'>;
+type BuilderStateProviderProps = Omit<
+  React.PropsWithChildren<BuilderInitialState>,
+  'socket' | 'queryClient'
+>;
 
 export function BuilderStateProvider({
   children,

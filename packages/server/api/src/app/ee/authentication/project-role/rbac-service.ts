@@ -107,7 +107,6 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.MOVE_BRANCH: 
             case FlowOperationType.ADD_NOTE:
             case FlowOperationType.UPDATE_NOTE:
-            case FlowOperationType.CLEAR_STEP_TEST_RUN_ID:
             case FlowOperationType.DELETE_NOTE: {
                 await this.assertPrinicpalAccessToProject({ principal, permission: Permission.WRITE_FLOW, projectId })
                 break

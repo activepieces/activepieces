@@ -17,15 +17,14 @@ import {
   StepRunResponse,
   FlowTrigger,
   TriggerEventWithPayload,
-  isNil,
   TriggerTestStrategy,
   AgentTaskStatus,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { isRunAgent } from '../agent-test-step';
 
 import { testStepUtils } from './test-step-utils';
-import { isRunAgent } from '../agent-test-step';
 
 export const testStepHooks = {
   useSimulateTrigger: ({
@@ -181,27 +180,12 @@ export const testStepHooks = {
     });
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
-  useTestAction: ({
-    currentStep
-  }: {
-    currentStep: FlowAction;
-  }) => {
-    const { flowVersionId, addActionTestListener,updateSampleData } = useRequiredStateToTestSteps().builderState;
-    
-    return useMutation<{runId:string}, Error, TestActionMutationParams>({
+  useTestAction: ({ currentStep }: { currentStep: FlowAction }) => {
+    const { flowVersionId, addActionTestListener, updateSampleData } =
+      useRequiredStateToTestSteps().builderState;
+    return useMutation<{ runId: string }, Error, TestActionMutationParams>({
       mutationFn: async () => {
-        const response = await flowRunsApi.testStep({
-          request: {
-            projectId: authenticationSession.getProjectId()!,
-            flowVersionId,
-            stepName: currentStep.name,
-          }
-        });
-        return response;
-      },
-      onSuccess: (testStepResponse: {runId:string}) => {
-        addActionTestListener({runId: testStepResponse.runId, stepName: currentStep.name});
-        if(isRunAgent(currentStep)) {
+        if (isRunAgent(currentStep)) {
           const defaultAgentOutput = {
             status: AgentTaskStatus.IN_PROGRESS,
             steps: [],
@@ -210,9 +194,23 @@ export const testStepHooks = {
           updateSampleData({
             stepName: currentStep.name,
             output: defaultAgentOutput,
-            onlyLocally:true
+            onlyLocally: true,
           });
         }
+        const response = await flowRunsApi.testStep({
+          request: {
+            projectId: authenticationSession.getProjectId()!,
+            flowVersionId,
+            stepName: currentStep.name,
+          },
+        });
+        return response;
+      },
+      onSuccess: (testStepResponse: { runId: string }) => {
+        addActionTestListener({
+          runId: testStepResponse.runId,
+          stepName: currentStep.name,
+        });
       },
       onError: () => {
         internalErrorToast();
@@ -245,4 +243,3 @@ type TestActionMutationParams =
       onFinish?: () => void;
     }
   | undefined;
-

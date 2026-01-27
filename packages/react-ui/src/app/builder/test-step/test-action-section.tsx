@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import React, { useContext, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import {
@@ -12,6 +13,7 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
+
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
@@ -26,7 +28,6 @@ enum DialogType {
   NONE = 'NONE',
   WEBHOOK = 'WEBHOOK',
 }
-
 
 const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
   return (
@@ -44,8 +45,20 @@ const TestStepSectionImplementation = React.memo(
     const [activeDialog, setActiveDialog] = useState<DialogType>(
       DialogType.NONE,
     );
-    const [ sampleData, sampleDataInput, errorMessage, consoleLogs]= useBuilderStateContext((state) => {
-      return [state.outputSampleData[currentStep.name], state.inputSampleData[currentStep.name] , state.errorLogs[currentStep.name], state.consoleLogs[currentStep.name]];
+    const [
+      sampleData,
+      sampleDataInput,
+      errorMessage,
+      consoleLogs,
+      isStepBeingTested,
+    ] = useBuilderStateContext((state) => {
+      return [
+        state.outputSampleData[currentStep.name],
+        state.inputSampleData[currentStep.name],
+        state.errorLogs[currentStep.name],
+        state.consoleLogs[currentStep.name],
+        state.isStepBeingTested(currentStep.name),
+      ];
     });
 
     const { mutate: testAction, isPending: isWatingTestResult } =
@@ -54,7 +67,8 @@ const TestStepSectionImplementation = React.memo(
       });
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage) || !isNil(sampleData);
+    const sampleDataExists =
+      !isNil(lastTestDate) || !isNil(errorMessage) || !isNil(sampleData);
 
     const onTestButtonClick = async () => {
       if (isReturnResponseAndWaitForWebhook(currentStep)) {
@@ -68,7 +82,10 @@ const TestStepSectionImplementation = React.memo(
       setActiveDialog(DialogType.NONE);
     };
 
-    const isTesting = activeDialog !== DialogType.NONE || isWatingTestResult || !isNil(currentStep.settings.sampleData?.testRunId);
+    const isTesting =
+      activeDialog !== DialogType.NONE ||
+      isWatingTestResult ||
+      isStepBeingTested;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
     return (

@@ -143,10 +143,13 @@ export const runAgent = createAction({
           await Promise.all(mcpClients.map(async (client) => client.close()));
         },
       });
-
       for await (const chunk of stream.fullStream) {
         try {
           switch (chunk.type) {
+            case 'tool-input-delta': {
+              outputBuilder.addMarkdown(chunk.delta);
+              break;
+            }
             case 'text-delta': {
               outputBuilder.addMarkdown(chunk.text);
               break;
