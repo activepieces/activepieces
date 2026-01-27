@@ -47,11 +47,48 @@ export const reportFieldChanged = createTrigger({
         'The ID of the BambooHR report to monitor (e.g., "1", "2", etc.)',
       required: true,
     }),
-    fieldToMonitor: Property.ShortText({
+    fieldToMonitor: Property.Dropdown({
       displayName: 'Field to Monitor',
       description:
         'The name of the field to watch for changes (e.g., "department", "jobTitle", "status")',
       required: true,
+      auth: bambooHrAuth,
+      refreshers: ['reportId'],
+      options: async ({ auth, reportId }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please connect your account first.',
+            options: [],
+          };
+        }
+
+        if (!reportId) {
+          return {
+            disabled: true,
+            placeholder: 'Please provide report ID first.',
+            options: [],
+          };
+        }
+
+        const { companyDomain, apiKey } = auth.props;
+
+        const response = await getReportById(
+          companyDomain,
+          reportId as string,
+          apiKey
+        );
+
+        const fields = response.body.fields || [];
+
+        return {
+          disabled: false,
+          options: fields.map((field) => ({
+            label: field.name,
+            value: field.name,
+          })),
+        };
+      },
     }),
   },
   sampleData: {
