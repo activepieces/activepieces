@@ -247,6 +247,19 @@ export const createFlowState = (
             operation.request.names.forEach((name) => {
               state.removeStepTestListener(name);
             });
+            set((state) => {
+              return {
+                inputSampleData: {
+                  ...state.inputSampleData,
+                  [operation.request.names[0]]: undefined,
+                },
+                outputSampleData: {
+                  ...state.outputSampleData,
+                  [operation.request.names[0]]: undefined,
+                },
+              };
+            });
+            flowUpdatesQueue.add(updateRequest);
             break;
           }
           default: {
