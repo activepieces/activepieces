@@ -99,28 +99,32 @@ redis:
 
 ```bash
 git clone https://github.com/activepieces/activepieces.git
-cd activepieces
 ```
 
-### 2. Install Dependencies
+### 2. Navigate to the Helm Chart Directory
 
+```bash
+cd activepieces/deploy/activepieces-helm
+```
+
+### 3. Install Dependencies
 ```bash
 helm dependency update
 ```
 
-### 3. Create a Values File
+### 4. Create a Values File
 
 Create a `my-values.yaml` file with your configuration. You can use the [example values file](https://github.com/activepieces/activepieces/blob/main/deploy/activepieces-helm/values.yaml) as a reference.
 The Helm chart has sensible defaults for required values while leaving the optional ones empty, but you should customize these core values for production
 
 
-### 4. Install Activepieces
+### 5. Install Activepieces
 
 ```bash
 helm install activepieces deploy/activepieces-helm -f my-values.yaml
 ```
 
-### 5. Verify Installation
+### 6. Verify Installation
 
 ```bash
 # Check deployment status
