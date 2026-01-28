@@ -1,6 +1,6 @@
-import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { MigrateJobsRequest, SavePayloadRequest, SubmitPayloadsRequest } from '@activepieces/server-shared'
-import { ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, tryCatch } from '@activepieces/shared'
+import { ExecutioOutputFile, FlowRun, FlowVersion, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, JobData, ListPiecesRequestQuery, tryCatch } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import fetchRetry from 'fetch-retry'
 import pLimit from 'p-limit'
@@ -141,6 +141,11 @@ export const engineApiService = (engineToken: string) => {
        
         async getPiece(name: string, options: GetPieceRequestQuery): Promise<PieceMetadataModel> {
             return client.get<PieceMetadataModel>(`/v1/pieces/${encodeURIComponent(name)}`, {
+                params: options,
+            })
+        },
+        async listPieces(options: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {
+            return client.get<PieceMetadataModelSummary[]>('/v1/pieces', {
                 params: options,
             })
         },

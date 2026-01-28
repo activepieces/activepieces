@@ -3,7 +3,6 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { voucheryIoAuth } from '../common/auth';
 import { comapaignIdDropdown } from '../common/props';
-import { tr } from 'zod/v4/locales';
 
 export const createAVoucher = createAction({
   auth: voucheryIoAuth,

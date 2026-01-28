@@ -115,6 +115,7 @@ export const WorkerSettingsResponse = Type.Object({
     EVENT_DESTINATION_TIMEOUT_SECONDS: Type.Number(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: Type.Optional(Type.String()),
     EDITION: Type.String(),
+    E2B_API_KEY: Type.Optional(Type.String(),)
 })
 
 export type WorkerSettingsResponse = Static<typeof WorkerSettingsResponse>

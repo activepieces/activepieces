@@ -29,13 +29,16 @@ export const websocketService = {
         const projectId = socket.handshake.auth.projectId
         switch (type) {
             case PrincipalType.USER: {
-                await validateProjectId({ userId: principal.id, projectId, log })
-                log.info({
-                    message: 'User connected',
-                    userId: principal.id,
-                    projectId,
-                })
-                await socket.join(projectId)
+                if (!isNil(projectId)) {
+                    await validateProjectId({ userId: principal.id, projectId, log })
+                    await socket.join(projectId)
+
+                    log.info({
+                        message: 'User connected',
+                        userId: principal.id,
+                        projectId,
+                    })
+                }
                 await socket.join(principal.id)
                 break
             }

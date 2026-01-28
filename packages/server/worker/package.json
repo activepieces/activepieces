@@ -25,6 +25,11 @@
     "socket.io-client": "4.8.1",
     "jsonwebtoken": "9.0.1",
     "socket.io": "4.8.1",
-    "http-status-codes": "2.2.0"
+    "http-status-codes": "2.2.0",
+    "ai": "5.0.104",
+    "@ai-sdk/provider": "2.0.0",
+    "firecrawl-aisdk": "0.8.1",
+    "zod": "4.1.13",
+    "@openrouter/ai-sdk-provider": "1.4.1"
   }
 }

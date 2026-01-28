@@ -2,6 +2,16 @@ import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion } from '../common'
 
 export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
+export const EXECUTE_TOOL = 'execute_tool'
+export const SCRAPE_TOOL = 'scrape'
+export const SEARCH_TOOL = 'search'
+export const MAP_TOOL = 'map'
+export const CRAWL_TOOL = 'crawl'
+export const BATCH_SCRAPE_TOOL = 'batchScrape'
+export const EXTRACT_TOOL = 'extract'
+export const POLL_TOOL = 'poll'
+export const STATUS_TOOL = 'status'
+export const CANCEL_TOOL = 'cancel'
 
 export enum FieldControlMode {
     AGENT_DECIDE = 'agent-decide',
@@ -25,6 +35,8 @@ export enum AgentToolType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
     MCP = 'MCP',
+    SEARCH = 'SEARCH',
+    EXECUTE_CODE = 'EXECUTE_CODE',
 }
 
 export enum McpProtocol {
@@ -80,6 +92,18 @@ export const AgentPieceToolMetadata = Type.Object({
 })
 export type AgentPieceToolMetadata = Static<typeof AgentPieceToolMetadata>
 
+export const AgentSearchTool = Type.Object({
+    type: Type.Literal(AgentToolType.SEARCH),
+    ...AgentToolBase,
+})
+export type AgentSearchTool = Static<typeof AgentSearchTool>
+
+export const AgentExecuteCodeTool = Type.Object({
+    type: Type.Literal(AgentToolType.EXECUTE_CODE),
+    ...AgentToolBase,
+})
+export type AgentExecuteCodeTool = Static<typeof AgentExecuteCodeTool>
+
 export const AgentPieceTool = Type.Object({
     type: Type.Literal(AgentToolType.PIECE),
     ...AgentToolBase,
@@ -107,5 +131,7 @@ export const AgentTool = DiscriminatedUnion('type', [
     AgentPieceTool,
     AgentFlowTool,
     AgentMcpTool,
+    AgentExecuteCodeTool,
+    AgentSearchTool,
 ])
 export type AgentTool = Static<typeof AgentTool>
