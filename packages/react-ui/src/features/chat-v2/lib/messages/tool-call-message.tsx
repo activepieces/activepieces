@@ -6,14 +6,14 @@ import {
   ChevronRight,
   ChevronDown,
   List,
-  PenTool,
   AlertCircle,
+  Lightbulb,
 } from 'lucide-react';
-
 import { cn } from '@/lib/utils';
 import {
   ToolCallConversationMessage,
 } from '@activepieces/shared';
+import { SuggestFlowCard } from '../messages/suggest-flow-card';
 
 interface ToolCallMessageProps {
   message: ToolCallConversationMessage;
@@ -43,10 +43,10 @@ const TOOL_CONFIGS: Record<string, ToolConfig> = {
     labelInProgress: 'Loading your flows...',
     labelCompleted: 'Loaded flows',
   },
-  write_flows: {
-    icon: <PenTool className="size-4 shrink-0" />,
-    labelInProgress: 'Building your flow...',
-    labelCompleted: 'Flow created',
+  suggest_flow: {
+    icon: <Lightbulb className="size-4 shrink-0" />,
+    labelInProgress: 'Suggesting a flow...',
+    labelCompleted: 'Flow suggested',
   },
 };
 
@@ -82,6 +82,11 @@ export function ToolCallMessage({
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
   };
+
+  // Special rendering for suggest_flow tool
+  if (message.toolName === 'suggest_flow') {
+    return <SuggestFlowCard message={message} className={className} />;
+  }
 
   return (
     <div className={cn('text-sm', className)}>

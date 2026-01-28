@@ -362,7 +362,7 @@ const routes = [
   {
     path: '/quick',
     element: (
-      <ProjectDashboardLayout>
+      <ProjectDashboardLayout defaultSidebarOpen={false}>
         <PageTitle title="Chat">
           <QuickPage />
         </PageTitle>

@@ -72,3 +72,6 @@ export const ConversationMessage = Type.Union([
 
 export type ConversationMessage = Static<typeof ConversationMessage>
 
+
+export const Conversation = Type.Array(ConversationMessage)
+export type Conversation = Static<typeof Conversation>

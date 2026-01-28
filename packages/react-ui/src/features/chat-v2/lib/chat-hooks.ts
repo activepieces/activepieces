@@ -7,7 +7,7 @@ import {
   AgentStreamingUpdate,
   ChatFileAttachment,
   ChatSession,
-  ExecuteAgentData,
+  Conversation,
   genericAgentUtils,
 } from '@activepieces/shared';
 
@@ -39,10 +39,10 @@ const convertUploadingFilesToAttachments = (
     }));
 };
 
-const updateChatSession = (session: ChatSession, update: ExecuteAgentData): ChatSession => {
+const updateChatSessionConversation = (session: ChatSession, conversation: Conversation): ChatSession => {
   return {
     ...session,
-    ...update,
+    conversation,
   }
 }
 
@@ -72,12 +72,12 @@ export const chatHooks = {
           type: file.mimeType,
           url: file.url,
         }));
-        currentSession = updateChatSession(currentSession, genericAgentUtils.addUserMessage(
-          currentSession,
+        currentSession = updateChatSessionConversation(currentSession, genericAgentUtils.addUserMessage(
+          currentSession.conversation ?? [],
           request.message,
           filesForDisplay,
         ));
-        currentSession = updateChatSession(currentSession, genericAgentUtils.addEmptyAssistantMessage(currentSession));
+        currentSession = updateChatSessionConversation(currentSession, genericAgentUtils.addEmptyAssistantMessage(currentSession.conversation ?? []));
 
         setSession(currentSession);
         const response = await api.post(
@@ -97,7 +97,7 @@ export const chatHooks = {
               try {
                 const messageJson = JSON.parse(chunk) as AgentStreamingUpdate
                 if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_UPDATE) {
-                  currentSession = updateChatSession(currentSession, genericAgentUtils.streamChunk(currentSession, messageJson.data));
+                  currentSession = updateChatSessionConversation(currentSession, genericAgentUtils.streamChunk(currentSession.conversation ?? [], messageJson.data));
                   setSession(currentSession);
                 } else if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_ENDED) {
                   setSession(currentSession);
@@ -133,7 +133,7 @@ export const chatHooks = {
 
         session = await api.post<ChatSession>(
           `/v1/chat-sessions/${session.id}/update`,
-          { session: update },
+          update,
         );
 
         setSession(session);

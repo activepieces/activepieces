@@ -36,8 +36,10 @@ const ProjectChangedRedirector = ({
 
 export function ProjectDashboardLayout({
   children,
+  defaultSidebarOpen = true,
 }: {
   children: React.ReactNode;
+  defaultSidebarOpen?: boolean;
 }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const currentProjectId = authenticationSession.getProjectId();
@@ -56,7 +58,7 @@ export function ProjectDashboardLayout({
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <ProjectChangedRedirector currentProjectId={currentProjectId}>
-        <SidebarProvider hoverMode={true}>
+        <SidebarProvider hoverMode={true} defaultOpen={defaultSidebarOpen}>
           {!isEmbedded && <ProjectDashboardSidebar />}
           <SidebarInset className={`relative overflow-auto gap-4`}>
             <div className="flex flex-col">

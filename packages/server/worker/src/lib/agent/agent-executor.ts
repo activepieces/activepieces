@@ -65,7 +65,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                     quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed', undefined, chunk.output as Record<string, any>)
                     // First mark the tool call as completed
                     const toolCompletedUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed')
-                    newSession = genericAgentUtils.streamChunk(newSession, toolCompletedUpdate)
+                    newSession = { ...newSession, conversation: genericAgentUtils.streamChunk(newSession.conversation ?? [], toolCompletedUpdate) }
                     await this.emitProgress(requestId, {
                         event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
                         data: toolCompletedUpdate,
@@ -80,7 +80,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             }
 
             if (!isNil(quickStreamingUpdate)) {
-                newSession = genericAgentUtils.streamChunk(newSession, quickStreamingUpdate)
+                newSession = { ...newSession, conversation: genericAgentUtils.streamChunk(newSession.conversation ?? [], quickStreamingUpdate) }
                 await this.emitProgress(requestId, {
                     event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
                     data: quickStreamingUpdate,
@@ -115,7 +115,7 @@ function publishToolCallUpdate(requestId: string, toolcallId: string, toolName: 
 
 function publishToolResultUpdate(requestId: string, toolcallId: string, toolName: string, output: Record<string, any>) {
     const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
-        sessionId: requestId, // should be session id not request id
+        sessionId: requestId, 
         part: {
             type: 'tool-call',
             toolCallId: toolcallId,

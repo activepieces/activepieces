@@ -1,10 +1,10 @@
-import { AssistantConversationMessage, ConversationMessage, UserConversationMessage } from "./message"
-import { AgentStreamingUpdateProgressData, ExecuteAgentData } from "./dto"
+import { AssistantConversationMessage, Conversation, UserConversationMessage } from "./message"
+import { AgentStreamingUpdateProgressData } from "./dto"
 
 export const genericAgentUtils = {
-  streamChunk(session: ExecuteAgentData, chunk: AgentStreamingUpdateProgressData): ExecuteAgentData {
-      const newConvo: ConversationMessage[] = [...(session.conversation ?? [])]
-      const lastMessageIsAssistant = session.conversation && session.conversation.length > 0 && newConvo[newConvo.length - 1].role === 'assistant'
+  streamChunk(conversation: Conversation, chunk: AgentStreamingUpdateProgressData): Conversation {
+      const newConvo: Conversation = [...conversation]
+      const lastMessageIsAssistant = conversation.length > 0 && newConvo[newConvo.length - 1].role === 'assistant'
       if (!lastMessageIsAssistant) {
           newConvo.push({
               role: 'assistant',
@@ -45,25 +45,19 @@ export const genericAgentUtils = {
           lastAssistantMessage.parts.push(chunk.part)
       }
       
-      return {
-          ...session,
-          conversation: newConvo,
-      }
+      return newConvo
   },
-  addEmptyAssistantMessage(session: ExecuteAgentData): ExecuteAgentData {
-    return {
-        ...session,
-        conversation: [...(session.conversation ?? []), {
-            role: 'assistant',
-            parts: [],
-        }],
-    }
-},
-addUserMessage(
-    session: ExecuteAgentData, 
+  addEmptyAssistantMessage(conversation: Conversation): Conversation {
+    return [...conversation, {
+        role: 'assistant',
+        parts: [],
+    }]
+  },
+  addUserMessage(
+    conversation: Conversation, 
     message: string, 
     files?: { name: string; type: string; url: string }[]
-): ExecuteAgentData {
+  ): Conversation {
     const content: UserConversationMessage['content'] = []
     
     // Add text message if present
@@ -94,13 +88,9 @@ addUserMessage(
         }
     }
     
-    return {
-        ...session,
-        conversation: [...(session.conversation ?? []), {
-            role: 'user',
-            content,
-        }],
-    }
-},
-
+    return [...conversation, {
+        role: 'user',
+        content,
+    }]
+  },
 }

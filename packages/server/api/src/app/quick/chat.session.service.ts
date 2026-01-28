@@ -33,7 +33,7 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
         }))
         const newSession: ChatSession = {
             ...session,
-            ...genericAgentUtils.addUserMessage(session, params.message, filesForMessage),
+            conversation: genericAgentUtils.addUserMessage(session.conversation ?? [], params.message, filesForMessage),
         }
         await chatSessionRepo().save(newSession)
         return await genericAgentService(log).executeAgent({

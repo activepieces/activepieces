@@ -5,9 +5,8 @@ import {
   UserImageConversationMessage,
   UserTextConversationMessage,
 } from '@activepieces/shared';
-
-import { FilePreview } from './file-preview';
-import { ImagePreview } from './image-preview';
+import { FilePreview } from '../../file-preview';
+import { ImagePreview } from '../../image-preview';
 
 interface UserMessageProps {
   className?: string;
