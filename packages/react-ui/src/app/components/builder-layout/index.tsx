@@ -11,7 +11,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
   const { embedState } = useEmbedding();
 
   return (
-    <SidebarProvider hoverMode={true}>
+    <SidebarProvider hoverMode={true} defaultOpen={false}>
       {!embedState.isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset>
         {children}
