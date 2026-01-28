@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -157,7 +157,7 @@ export const ProjectDashboardPageHeader = ({
           onClick={() => setInviteOpen(true)}
         >
           <UserPlus className="w-4 h-4" />
-          <span className="text-sm font-medium">{t('Invite')}</span>
+          <span className="text-sm font-medium">{t('Add memebers')}</span>
         </Button>
       )}
       <Button
