@@ -1,7 +1,14 @@
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { useEmbedding } from '@/components/embed-provider';
 import { isNil } from '@activepieces/shared';
 
 export const NoteFooter = ({ creatorId, isDragging }: NoteFooterProps) => {
+  const {
+    embedState: { isEmbedded },
+  } = useEmbedding();
+  if (isEmbedded) {
+    return null;
+  }
   return (
     <div className="flex items-center justify-between gap-2 cursor-grabbing">
       <div className="grow">
