@@ -29,12 +29,7 @@ export function UserSuggestionsPopover({
   onSelectUser,
   isPlatformPage,
 }: UserSuggestionsPopoverProps) {
-  const {
-    suggestedUsers,
-    emailStatus,
-    pendingInvitationEmails,
-    hasSuggestions,
-  } = useUserSuggestions({
+  const { suggestedUsers, emailStatus, hasSuggestions } = useUserSuggestions({
     inputValue,
     currentEmails,
     isPlatformPage,
@@ -57,9 +52,6 @@ export function UserSuggestionsPopover({
                   key={user.id}
                   type="platform-user"
                   user={user}
-                  isInvited={pendingInvitationEmails.has(
-                    user.email.toLowerCase(),
-                  )}
                   onSelect={onSelectUser}
                 />
               ))}

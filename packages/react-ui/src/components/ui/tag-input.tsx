@@ -175,6 +175,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                 className={
                   'placeholder:text-neutral-500 dark:placeholder:text-neutral-400 w-full min-w-[200px] flex-1 outline-hidden bg-transparent'
                 }
+                autoComplete="off"
                 value={pendingDataPoint}
                 onChange={(e) => {
                   setPendingDataPoint(e.target.value);

@@ -13,7 +13,6 @@ type SuggestedUserItemProps =
   | {
       type: 'platform-user';
       user: SuggestedUser;
-      isInvited: boolean;
       onSelect: (email: string) => void;
     }
   | {
@@ -31,23 +30,21 @@ export function SuggestedUserItem(props: SuggestedUserItemProps) {
 
 function PlatformUserItem({
   user,
-  isInvited,
   onSelect,
 }: {
   user: SuggestedUser;
-  isInvited: boolean;
   onSelect: (email: string) => void;
 }) {
-  const isDisabled = user.isProjectMember;
+  const isDisabled = user.memberStatus !== 'available';
 
   const getBadge = () => {
-    if (user.isProjectMember) {
+    if (user.memberStatus === 'has-access') {
       return {
-        label: t('Member'),
-        className: 'text-warning-300 bg-warning/15',
+        label: t('Has Access'),
+        className: 'text-primary bg-primary/15',
       };
     }
-    if (isInvited) {
+    if (user.memberStatus === 'already-invited') {
       return {
         label: t('Invited'),
         className: 'text-muted-foreground bg-muted-foreground/15',

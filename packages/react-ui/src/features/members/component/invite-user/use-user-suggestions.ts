@@ -14,7 +14,7 @@ import {
 import { EmailStatusType } from './types';
 
 export type SuggestedUser = UserWithMetaInformation & {
-  isProjectMember: boolean;
+  memberStatus: 'available' | 'has-access' | 'already-invited';
 };
 
 type UseUserSuggestionsParams = {
@@ -78,21 +78,30 @@ export function useUserSuggestions({
           matchesSearch(user, searchTerm)
         );
       })
-      .map((user) => ({
-        ...user,
-        isProjectMember: projectMemberEmails.has(user.email.toLowerCase()),
-      }));
+      .map((user) => {
+        const email = user.email.toLowerCase();
+        let memberStatus: SuggestedUser['memberStatus'] = 'available';
+        if (projectMemberEmails.has(email)) {
+          memberStatus = 'has-access';
+        } else if (pendingInvitationEmails.has(email)) {
+          memberStatus = 'already-invited';
+        }
+        return { ...user, memberStatus };
+      });
 
-    // Sort: non-members first, then members at the end
-    filtered.sort(
-      (a, b) => Number(a.isProjectMember) - Number(b.isProjectMember),
-    );
+    // Sort: available users first, then disabled users at the end
+    filtered.sort((a, b) => {
+      const aDisabled = a.memberStatus !== 'available';
+      const bDisabled = b.memberStatus !== 'available';
+      return Number(aDisabled) - Number(bDisabled);
+    });
 
     return filtered.slice(0, 10);
   }, [
     isPlatformPage,
     platformUsersData,
     projectMemberEmails,
+    pendingInvitationEmails,
     currentEmails,
     searchTerm,
     currentUserEmail,
@@ -146,7 +155,6 @@ export function useUserSuggestions({
   return {
     suggestedUsers,
     emailStatus,
-    pendingInvitationEmails,
     hasSuggestions: suggestedUsers.length > 0 || emailStatus !== null,
   };
 }
