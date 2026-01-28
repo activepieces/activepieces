@@ -686,7 +686,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTablesIntoTemplateEntity1768306510367,
         AddTemplateIdToFlowEntity1768829135202,
         AddChatSessions1769369780193,
-        AddRecordIdToCellEntity1769136998805
+        AddRecordIdToCellEntity1769136998805,
         RemoveOperatorRole1769613456917,
     ]
     return migrations
