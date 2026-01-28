@@ -144,7 +144,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.ADMIN, platformId: project.platformId })
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.OPERATOR) {
-            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.OPERATOR, platformId: project.platformId })
+            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.EDITOR, platformId: project.platformId })
         }
         const member = await repo().findOneBy({
             projectId,
