@@ -261,7 +261,7 @@ export const InviteUserDialog = ({
                   ? t('Invitation Link')
                   : isPlatformPage
                   ? t('Invite to Your Platform')
-                  : t('Add memebers')}
+                  : t('Add Members')}
               </DialogTitle>
               <DialogDescription>
                 {invitationLink ? (

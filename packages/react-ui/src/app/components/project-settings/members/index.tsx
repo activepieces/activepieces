@@ -135,7 +135,7 @@ export const MembersSettings = () => {
         />
         {userHasPermissionToInviteUser && (
           <Button onClick={() => setInviteOpen(true)}>
-            {t('Invite members')}
+            {t('Add Members')}
           </Button>
         )}
       </div>
