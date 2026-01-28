@@ -96,6 +96,7 @@ export enum PieceScope {
 
 export const AddPieceRequestBody = Type.Union([
     Type.Object({
+        projectId: Type.String(),
         packageType: Type.Literal(PackageType.ARCHIVE),
         scope: Type.Literal(PieceScope.PLATFORM),
         pieceName: Type.String({
