@@ -72,8 +72,7 @@ const TestStepSectionImplementation = React.memo(
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
     const sampleDataExists =
-      !isNil(lastTestDate) || !isNil(errorMessage) || !isNil(sampleData);
-
+      !isNil(lastTestDate) || !isNil(errorMessage) || isStepBeingTested(currentStep.name);
     const onTestButtonClick = async () => {
       if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
@@ -114,9 +113,9 @@ const TestStepSectionImplementation = React.memo(
         )}
         {(sampleDataExists || isTesting) && (
           <TestSampleDataViewer
-            isValid={currentStep.valid}
+            isValid={currentStep.valid || isLoadingDynamicProperties}
             currentStep={currentStep}
-            isTesting={isTesting || isLoadingDynamicProperties}
+            isTesting={isTesting}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             lastTestDate={lastTestDate}

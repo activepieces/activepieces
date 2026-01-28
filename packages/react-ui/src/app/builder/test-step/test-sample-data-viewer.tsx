@@ -19,6 +19,7 @@ import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties
 
 import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 type TestSampleDataViewerProps = {
   isValid: boolean;
@@ -95,7 +96,7 @@ export const TestSampleDataViewer = React.memo(
     hideCancel,
   }: TestSampleDataViewerProps) => {
     const renderViewer = () => {
-      if (isTesting) {
+      if (isTesting && isNil(sampleData)) {
         return <StepOutputSkeleton className="px-1 " />;
       }
       if (isRunAgent(currentStep)) {
@@ -163,7 +164,7 @@ export const TestSampleDataViewer = React.memo(
                   if (isTesting) {
                     return (
                       <div className="flex items-center gap-1">
-                        <span>{t('Testing...')}</span>
+                        <span className='flex gap-1 items-center'><LoadingSpinner className='w-4 h-4' />{isRunAgent(currentStep) ? t('Agent running...') : t('Testing...')}</span>
                       </div>
                     );
                   }
