@@ -61,8 +61,7 @@ export function useUserSuggestions({
   );
 
   const projectMemberEmails = useMemo(
-    () =>
-      new Set(projectMembers?.map((m) => m.user.email.toLowerCase()) ?? []),
+    () => new Set(projectMembers?.map((m) => m.user.email.toLowerCase()) ?? []),
     [projectMembers],
   );
 
@@ -85,7 +84,9 @@ export function useUserSuggestions({
       }));
 
     // Sort: non-members first, then members at the end
-    filtered.sort((a, b) => Number(a.isProjectMember) - Number(b.isProjectMember));
+    filtered.sort(
+      (a, b) => Number(a.isProjectMember) - Number(b.isProjectMember),
+    );
 
     return filtered.slice(0, 10);
   }, [
@@ -105,7 +106,8 @@ export function useUserSuggestions({
 
     // Skip if already in current selection or shown in suggestions
     if (emailSetHas(currentEmails, email)) return null;
-    if (suggestedUsers.some((u) => u.email.toLowerCase() === email)) return null;
+    if (suggestedUsers.some((u) => u.email.toLowerCase() === email))
+      return null;
 
     const platformUser = platformUsersData?.data.find(
       (u) => u.email.toLowerCase() === email,

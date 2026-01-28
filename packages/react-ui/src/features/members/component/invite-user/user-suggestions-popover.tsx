@@ -1,10 +1,6 @@
 import { t } from 'i18next';
 
-import {
-  Command,
-  CommandGroup,
-  CommandList,
-} from '@/components/ui/command';
+import { Command, CommandGroup, CommandList } from '@/components/ui/command';
 import {
   Popover,
   PopoverContent,
@@ -33,12 +29,16 @@ export function UserSuggestionsPopover({
   onSelectUser,
   isPlatformPage,
 }: UserSuggestionsPopoverProps) {
-  const { suggestedUsers, emailStatus, pendingInvitationEmails, hasSuggestions } =
-    useUserSuggestions({
-      inputValue,
-      currentEmails,
-      isPlatformPage,
-    });
+  const {
+    suggestedUsers,
+    emailStatus,
+    pendingInvitationEmails,
+    hasSuggestions,
+  } = useUserSuggestions({
+    inputValue,
+    currentEmails,
+    isPlatformPage,
+  });
 
   return (
     <Popover open={open && hasSuggestions} onOpenChange={onOpenChange}>

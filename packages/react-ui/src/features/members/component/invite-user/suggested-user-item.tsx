@@ -42,7 +42,10 @@ function PlatformUserItem({
 
   const getBadge = () => {
     if (user.isProjectMember) {
-      return { label: t('Member'), className: 'text-warning-300 bg-warning/15' };
+      return {
+        label: t('Member'),
+        className: 'text-warning-300 bg-warning/15',
+      };
     }
     if (isInvited) {
       return {
