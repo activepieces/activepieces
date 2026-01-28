@@ -1,7 +1,7 @@
+import { ProjectMember } from '@activepieces/ee-shared'
 import { PlatformId, ProjectRole } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../../../database/database-common'
-import { ProjectMember } from '@activepieces/ee-shared'
 
 export type ProjectRoleSchema = ProjectRole & {
     name: string
