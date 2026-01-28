@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import React, { useContext } from 'react';
 
+import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,25 +17,32 @@ import {
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import {
-  AgentTestStep,
-  defaultAgentOutput,
-  isRunAgent,
-} from './agent-test-step';
+import { AgentTestStep, isRunAgent } from './agent-test-step';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
-type RetestSampleDataViewerProps = {
+type TestSampleDataViewerProps = {
   isValid: boolean;
   currentStep?: FlowAction;
   isTesting: boolean;
   agentResult?: AgentResult;
   sampleData: unknown;
   sampleDataInput: unknown | null;
-  errorMessage: string | undefined;
+  errorMessage: string | null;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
-  consoleLogs?: string | null;
-} & RetestButtonProps;
+  consoleLogs: string | null;
+} & (
+  | {
+      hideCancel: true;
+      onCancelTesting?: undefined;
+    }
+  | {
+      hideCancel?: false;
+      onCancelTesting: () => void;
+    }
+) &
+  RetestButtonProps;
 
 type RetestButtonProps = {
   isValid: boolean;
@@ -71,20 +79,6 @@ const isConsoleLogsValid = (value: unknown) => {
   return value !== '';
 };
 
-const resolveAgentResult = (
-  sampleData: unknown,
-  agentResult?: AgentResult,
-): AgentResult => {
-  return (
-    agentResult ??
-    (sampleData &&
-    typeof sampleData === 'object' &&
-    Object.keys(sampleData).length > 0
-      ? (sampleData as AgentResult)
-      : defaultAgentOutput)
-  );
-};
-
 export const TestSampleDataViewer = React.memo(
   ({
     isValid,
@@ -93,18 +87,22 @@ export const TestSampleDataViewer = React.memo(
     sampleDataInput,
     errorMessage,
     lastTestDate,
-    agentResult,
     currentStep,
     children,
     consoleLogs,
     isSaving,
     onRetest,
-  }: RetestSampleDataViewerProps) => {
+    onCancelTesting,
+    hideCancel,
+  }: TestSampleDataViewerProps) => {
     const renderViewer = () => {
+      if (isTesting && isNil(sampleData)) {
+        return <StepOutputSkeleton className="px-1 " />;
+      }
       if (isRunAgent(currentStep)) {
         return (
           <AgentTestStep
-            agentResult={resolveAgentResult(sampleData, agentResult)}
+            agentResult={sampleData as AgentResult}
             errorMessage={errorMessage}
           />
         );
@@ -163,13 +161,18 @@ export const TestSampleDataViewer = React.memo(
             <div className="flex flex-col grow gap-1">
               <div className="text-md flex gap-1 items-center">
                 {(() => {
-                  if (isRunAgent(currentStep)) {
-                    const resolvedAgentResult = resolveAgentResult(
-                      sampleData,
-                      agentResult,
+                  if (isTesting) {
+                    return (
+                      <div className="flex items-center gap-1">
+                        <span className='flex gap-1 items-center'><LoadingSpinner className='w-4 h-4' />{isRunAgent(currentStep) ? t('Agent running...') : t('Testing...')}</span>
+                      </div>
                     );
+                  }
+
+                  if (isRunAgent(currentStep)) {
                     const isFailed =
-                      resolvedAgentResult.status === AgentTaskStatus.FAILED;
+                      (sampleData as AgentResult).status ===
+                      AgentTaskStatus.FAILED;
 
                     return (
                       <>
@@ -216,18 +219,26 @@ export const TestSampleDataViewer = React.memo(
               <div className="text-muted-foreground text-xs">
                 {lastTestDate &&
                   !errorMessage &&
+                  !isTesting &&
                   formatUtils.formatDate(new Date(lastTestDate))}
               </div>
             </div>
 
-            <TestButtonTooltip invalid={!isValid}>
-              <RetestButton
-                isValid={isValid}
-                isSaving={isSaving}
-                isTesting={isTesting}
-                onRetest={onRetest}
-              />
-            </TestButtonTooltip>
+            {!isTesting && (
+              <TestButtonTooltip invalid={!isValid}>
+                <RetestButton
+                  isValid={isValid}
+                  isSaving={isSaving}
+                  isTesting={isTesting}
+                  onRetest={onRetest}
+                />
+              </TestButtonTooltip>
+            )}
+            {isTesting && !hideCancel && (
+              <Button size={'sm'} variant={'outline'} onClick={onCancelTesting}>
+                {t('Cancel')}
+              </Button>
+            )}
           </div>
           {renderViewer()}
         </div>
