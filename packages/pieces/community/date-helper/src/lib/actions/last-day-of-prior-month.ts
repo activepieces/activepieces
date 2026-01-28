@@ -65,7 +65,7 @@ export const lastDayOfPreviousMonthAction = createAction({
     const useCurrentTime = context.propsValue.currentTime as boolean;
     let providedTime = context.propsValue.time as string;
 
-    let baseDateTime = apDayjs().tz(selectedTimeZone);
+    const baseDateTime = apDayjs().tz(selectedTimeZone);
 
     if (useCurrentTime === true) {
       providedTime = `${baseDateTime.hour()}:${baseDateTime.minute()}`;
