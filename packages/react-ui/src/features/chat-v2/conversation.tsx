@@ -1,7 +1,7 @@
 import { ConversationMessage } from '@activepieces/shared';
 
-import { LLMMessage } from './llm-message';
-import { UserMessage } from './user-message';
+import { LLMMessage } from './lib/messages/llm-message';
+import { UserMessage } from './lib/messages/user-message';
 
 interface ConversationProps {
   conversation: ConversationMessage[];
