@@ -33,6 +33,10 @@ function getStatusText({
       return t('Run Paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
       return t('Quota Exceeded');
+    case FlowRunStatus.LOG_SIZE_EXCEEDED:
+      return t(
+        'Run failed due to output of steps exceeding the log size limit',
+      );
     case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
       return t(
         'Run failed due to exceeding the memory limit of {memoryLimit} MB',

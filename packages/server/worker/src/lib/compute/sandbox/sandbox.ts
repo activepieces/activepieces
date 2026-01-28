@@ -102,6 +102,7 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
 
                 process.on('exit', (code, signal) => {
                     const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
+                    const isLogsSizeExceeded = stdError.includes('Flow run data size exceeded the maximum allowed size')
                     if (killedByTimeout) {
                         reject(new ActivepiecesError({
                             code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
@@ -111,7 +112,7 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                             },
                         }))
                     }
-                    else if (isRamIssue) {
+                    if (isRamIssue) {
                         reject(new ActivepiecesError({
                             code: ErrorCode.SANDBOX_MEMORY_ISSUE,
                             params: {
@@ -120,16 +121,23 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                             },
                         }))
                     }
-                    else {
+                    if (isLogsSizeExceeded) {
                         reject(new ActivepiecesError({
-                            code: ErrorCode.SANDBOX_INTERNAL_ERROR,
+                            code: ErrorCode.SANDBOX_LOGS_SIZE_EXCEEDED,
                             params: {
-                                reason: 'Worker exited with code ' + code + ' and signal ' + signal,
                                 standardOutput: stdOut,
                                 standardError: stdError,
                             },
                         }))
                     }
+                    reject(new ActivepiecesError({
+                        code: ErrorCode.SANDBOX_INTERNAL_ERROR,
+                        params: {
+                            reason: 'Worker exited with code ' + code + ' and signal ' + signal,
+                            standardOutput: stdOut,
+                            standardError: stdError,
+                        },
+                    }))
                 })
 
                 sandboxWebsocketServer.send(sandboxId, operation, operationType)

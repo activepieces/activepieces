@@ -58,6 +58,10 @@ export const loggingUtils = {
 
         return steps
     },
+    verifyFinalSize(steps: Record<string, StepOutput>, maxSize: number = MAX_SIZE_FOR_ALL_ENTRIES): boolean {
+        const totalJsonSize = getTotalStepsSize(steps)
+        return totalJsonSize <= maxSize
+    },
 }
 
 function getTotalStepsSize(steps: Record<string, StepOutput>): number {

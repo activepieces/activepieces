@@ -178,11 +178,6 @@ export const flowRunUtils = {
           variant: 'default',
           Icon: Play,
         };
-      case FlowRunStatus.SUCCEEDED:
-        return {
-          variant: 'success',
-          Icon: CircleCheck,
-        };
       case FlowRunStatus.FAILED:
         return {
           variant: 'error',
@@ -198,21 +193,15 @@ export const flowRunUtils = {
           variant: 'default',
           Icon: CircleX,
         };
+      case FlowRunStatus.SUCCEEDED:
+        return {
+          variant: 'success',
+          Icon: CircleCheck,
+        };
       case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-        };
+      case FlowRunStatus.LOG_SIZE_EXCEEDED:
       case FlowRunStatus.QUOTA_EXCEEDED:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-        };
       case FlowRunStatus.INTERNAL_ERROR:
-        return {
-          variant: 'error',
-          Icon: CircleAlert,
-        };
       case FlowRunStatus.TIMEOUT:
         return {
           variant: 'error',
