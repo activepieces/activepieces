@@ -26,7 +26,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
         await emailSender(log).send({
             emails: [email],
             platformId,
@@ -34,8 +34,39 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 name: 'invitation-email',
                 vars: {
                     setupLink: invitationLink,
-                    projectOrPlatformName,
+                    projectName,
                     role,
+                },
+            },
+        })
+    },
+
+    async sendProjectMemberAdded({ userInvitation }: SendProjectMemberAddedArgs): Promise<void> {
+        log.info({
+            message: '[emailService#sendProjectMemberAdded] sending project member added email',
+            email: userInvitation.email,
+            platformId: userInvitation.platformId,
+            projectId: userInvitation.projectId,
+            type: userInvitation.type,
+            projectRole: userInvitation.projectRole,
+            platformRole: userInvitation.platformRole,
+        })
+        const { email, platformId, projectId } = userInvitation
+        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
+        const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
+        const loginLink = await domainHelper.getPublicUrl({
+            platformId,
+            path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
+        })
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'project-member-added',
+                vars: {
+                    projectName,
+                    role,
+                    loginLink,
                 },
             },
         })
@@ -185,6 +216,10 @@ function capitalizeFirstLetter(str: string): string {
 type SendInvitationArgs = {
     userInvitation: UserInvitation
     invitationLink: string
+}
+
+type SendProjectMemberAddedArgs = {
+    userInvitation: UserInvitation
 }
 
 type SendOtpArgs = {
