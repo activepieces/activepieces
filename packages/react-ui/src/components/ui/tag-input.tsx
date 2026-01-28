@@ -203,7 +203,6 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
             </div>
           </ScrollArea>
         </div>
-        {/* Right Content */}
         {rightContent && (
           <div className="absolute right-2 top-2 pointer-events-auto">
             {rightContent}
