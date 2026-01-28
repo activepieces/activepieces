@@ -20,10 +20,10 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarMenu,
-  SidebarGroupContent,
   SidebarSeparator,
   useSidebar,
   SidebarGroupLabel,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
@@ -108,7 +108,7 @@ export function ProjectDashboardSidebar() {
 
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
-      await projectCollectionUtils.setCurrentProject(projectId);
+      projectCollectionUtils.setCurrentProject(projectId);
       navigate(`/projects/${projectId}/flows`);
       setSearchOpen(false);
     },
@@ -198,122 +198,105 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar variant="inset" collapsible="icon" className="group p-1">
-        {/* onClick removed - handled in base Sidebar component to prevent auto-expansion on navigation */}
+      <Sidebar collapsible="icon">
         <AppSidebarHeader />
 
-        {state === 'collapsed' && <div className="mt-1" />}
-        {state === 'expanded' && <div className="mt-2" />}
-
-        <SidebarContent
-          className={cn(
-            state === 'collapsed' ? 'gap-2' : 'gap-0',
-            'scrollbar-hover',
-            'cursor-default',
-            'flex',
-            'flex-col',
-            'overflow-hidden',
-          )}
-        >
-          <SidebarGroup className="cursor-default shrink-0">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <ApSidebarItem key={item.label} {...item} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
+        <SidebarContent className="overflow-hidden">
+          <SidebarGroup>
+            <SidebarMenu>
+              {items.map((item) => (
+                <ApSidebarItem key={item.label} {...item} />
+              ))}
+            </SidebarMenu>
           </SidebarGroup>
 
-          <SidebarSeparator className="mb-3 shrink-0" />
+          <SidebarSeparator />
 
-          <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
-            {state === 'expanded' && (
-              <div className="flex items-center justify-between">
-                <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-                <div className="flex items-center gap-1">
-                  {shouldShowNewProjectButton && (
-                    <>
-                      {!shouldDisableNewProjectButton ? (
-                        <NewProjectDialog
-                          onCreate={(project) => {
-                            navigate(`/projects/${project.id}/flows`);
-                          }}
-                        >
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 hover:bg-accent"
-                          >
-                            <Plus />
-                          </Button>
-                        </NewProjectDialog>
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled
-                                className="h-6 w-6"
-                              >
-                                <Plus />
-                              </Button>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-[250px]">
-                            <p className="text-xs mb-1">
-                              {t(
-                                'Upgrade your plan to create additional team projects.',
-                              )}{' '}
-                              <button
-                                className="text-xs text-primary underline hover:no-underline"
-                                onClick={() =>
-                                  window.open(
-                                    'https://www.activepieces.com/pricing',
-                                    '_blank',
-                                  )
-                                }
-                              >
-                                {t('View Plans')}
-                              </button>
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </>
-                  )}
-                  {shouldShowSearchButton && (
-                    <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                      <PopoverTrigger asChild>
+          <SidebarGroup>
+            <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
+              <div className="flex items-center justify-center gap-2">
+                {shouldShowNewProjectButton && (
+                  <>
+                    {!shouldDisableNewProjectButton ? (
+                      <NewProjectDialog
+                        onCreate={(project) => {
+                          navigate(`/projects/${project.id}/flows`);
+                        }}
+                      >
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 hover:bg-accent"
                         >
-                          <Search />
+                          <Plus />
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-[280px] p-3"
-                        align="start"
-                        side="right"
-                        sideOffset={8}
+                      </NewProjectDialog>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled
+                              className="h-6 w-6"
+                            >
+                              <Plus />
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[250px]">
+                          <p className="text-xs mb-1">
+                            {t(
+                              'Upgrade your plan to create additional team projects.',
+                            )}{' '}
+                            <button
+                              className="text-xs text-primary underline hover:no-underline"
+                              onClick={() =>
+                                window.open(
+                                  'https://www.activepieces.com/pricing',
+                                  '_blank',
+                                )
+                              }
+                            >
+                              {t('View Plans')}
+                            </button>
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </>
+                )}
+                {shouldShowSearchButton && (
+                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 hover:bg-accent"
                       >
-                        <SearchInput
-                          placeholder={t('Search projects...')}
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e)}
-                          className="h-9"
-                          autoFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </div>
+                        <Search />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[280px] p-3"
+                      align="start"
+                      side="right"
+                      sideOffset={8}
+                    >
+                      <SearchInput
+                        placeholder={t('Search projects...')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e)}
+                        className="h-9"
+                        autoFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
-            )}
+            </div>
             <div
               ref={projectsScrollRef}
               className={cn(
@@ -328,34 +311,22 @@ export function ProjectDashboardSidebar() {
             >
               {displayProjects.length > 0 ? (
                 <SidebarMenu
-                  className={cn(
-                    state === 'collapsed'
-                      ? 'gap-2 flex flex-col items-center'
-                      : '',
-                  )}
+                  className={cn('flex flex-col items-start w-full')}
                   style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
-                    width: '100%',
                     position: 'relative',
                   }}
                 >
                   {virtualItems.map((virtualItem) => {
                     const project = displayProjects[virtualItem.index];
                     return (
-                      <div
+                      <SidebarMenuItem
                         key={virtualItem.key}
                         data-virtual-index={virtualItem.index}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: `${virtualItem.size}px`,
-                          transform: `translateY(${virtualItem.start}px)`,
-                        }}
+                        className="w-full"
                       >
                         {renderProjectItem(project)}
-                      </div>
+                      </SidebarMenuItem>
                     );
                   })}
                 </SidebarMenu>
@@ -369,18 +340,26 @@ export function ProjectDashboardSidebar() {
             </div>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter
-          onClick={(e) => e.stopPropagation()}
-          className="cursor-default"
-        >
-          {state === 'expanded' && (
-            <div className="mb-2">
-              <SidebarUsageLimits />
-            </div>
-          )}
+        <SidebarFooter>
+          {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
     )
   );
+}
+
+function DelayedSidebarUsageLimits() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(true), 250);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return show ? (
+    <div>
+      <SidebarUsageLimits />
+    </div>
+  ) : null;
 }

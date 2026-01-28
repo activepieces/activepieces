@@ -27,12 +27,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
 import {
@@ -74,54 +68,31 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          {isCollapsed ? (
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger className="flex items-center justify-center size-9 rounded-md hover:bg-accent cursor-pointer">
-                    <UserAvatar
-                      name={user.firstName + ' ' + user.lastName}
-                      email={user.email}
-                      imageUrl={user.imageUrl}
-                      size={28}
-                      disableTooltip={true}
-                    />
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent side="right" align="center">
-                  {user.firstName + ' ' + user.lastName}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
-              >
-                <div className="flex items-center gap-2 w-full text-left text-sm">
-                  <UserAvatar
-                    name={user.firstName + ' ' + user.lastName}
-                    email={user.email}
-                    imageUrl={user.imageUrl}
-                    size={32}
-                    disableTooltip={true}
-                  />
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate">
-                      {user.firstName + ' ' + user.lastName}
-                    </span>
-                  </div>
+          <DropdownMenuTrigger className="w-full">
+            <SidebarMenuButton className="h-10! group-data-[collapsible=icon]:h-10!">
+              <UserAvatar
+                className={`scale-150`}
+                name={user.firstName + ' ' + user.lastName}
+                email={user.email}
+                imageUrl={user.imageUrl}
+                size={32}
+                disableTooltip={true}
+              />
+              {!isCollapsed && (
+                <>
+                  <span className="truncate">
+                    {user.firstName + ' ' + user.lastName}
+                  </span>
                   <ChevronsUpDown className="ml-auto size-4" />
-                </div>
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-          )}
+                </>
+              )}
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side="right"
-            align="end"
-            sideOffset={4}
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-999"
+            side="top"
+            align="start"
+            sideOffset={10}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">

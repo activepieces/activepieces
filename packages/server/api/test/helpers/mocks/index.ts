@@ -224,6 +224,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         created: platformPlan?.created ?? faker.date.recent().toISOString(),
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
         platformId: platformPlan?.platformId ?? apId(),
+        tablesEnabled: platformPlan?.tablesEnabled ?? false,
         includedAiCredits: platformPlan?.includedAiCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
         stripeCustomerId: undefined,
@@ -249,7 +250,6 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
-        tablesEnabled: platformPlan?.tablesEnabled ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {

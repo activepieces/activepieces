@@ -123,10 +123,10 @@ const StepSettingsContainer = () => {
   const modifiedStep = form.getValues();
   const isManualTrigger =
     modifiedStep.type === FlowTriggerType.PIECE &&
-    pieceSelectorUtils.isManualTrigger(
-      modifiedStep.settings.pieceName,
-      modifiedStep.settings.triggerName ?? '',
-    );
+    pieceSelectorUtils.isManualTrigger({
+      pieceName: modifiedStep.settings.pieceName,
+      triggerName: modifiedStep.settings.triggerName ?? '',
+    });
   const showGenerateSampleData = !readonly && !isManualTrigger;
   const showStepInputOutFromRun = !isNil(run) && !isManualTrigger;
 

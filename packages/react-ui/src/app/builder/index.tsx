@@ -77,12 +77,14 @@ const BuilderPage = () => {
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
+  flowCanvasHooks.useListenToExistingRun();
+
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
   return (
     <div className="flex h-full w-full flex-col relative">
-      <div className="z-50">
+      <div className="z-40">
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
