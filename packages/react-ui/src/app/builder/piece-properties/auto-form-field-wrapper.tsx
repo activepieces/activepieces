@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Calendar, SquareFunction, File } from 'lucide-react';
+import { Calendar, SquareFunction, File, Info } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
-import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
@@ -68,6 +67,16 @@ function AutoFormFieldWrapper({
             {property && !isAuthProperty && (
               <PropertyTypeTooltip property={property} />
             )}
+            {!isAuthProperty && !Array.isArray(property) && property.description && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="text-muted-foreground w-3 h-3 ml-1 mt-0.5 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {t(property.description)}
+                </TooltipContent>
+              </Tooltip>
+            )}
             <span className="grow"></span>
             {allowDynamicValues && (
               <DynamicValueToggle
@@ -101,12 +110,6 @@ function AutoFormFieldWrapper({
         {!placeBeforeLabelText && !dynamicInputModeToggled && (
           <div>{children}</div>
         )}
-
-        {!isForConnectionSelect &&
-          !Array.isArray(property) &&
-          property.description && (
-            <ReadMoreDescription text={t(property.description)} />
-          )}
       </FormItem>
     </AutoFormFielWrapperErrorBoundary>
   );
@@ -308,7 +311,6 @@ type AutoFormFieldWrapperProps = {
   hideLabel?: boolean;
   allowDynamicValues: boolean;
   propertyName: string;
-  hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
   disabled: boolean;
   field: ControllerRenderProps<any, string>;

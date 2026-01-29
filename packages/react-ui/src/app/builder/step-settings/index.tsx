@@ -37,7 +37,6 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 import { RouterSettings } from './router-settings';
-import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -186,8 +185,10 @@ const StepSettingsContainer = () => {
               setSelectedBranchIndex={setSelectedBranchIndex}
               isEditingStepOrBranchName={isEditingStepOrBranchName}
               setIsEditingStepOrBranchName={setIsEditingStepOrBranchName}
+              stepMetadata={stepMetadata}
             ></EditableStepName>
           </SidebarHeader>
+          <div className="h-px bg-border w-full mb-4" />
         </div>
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
@@ -196,8 +197,6 @@ const StepSettingsContainer = () => {
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="flex flex-col gap-3 px-4 pb-6">
-                  <StepInfo step={modifiedStep}></StepInfo>
-
                   {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}
