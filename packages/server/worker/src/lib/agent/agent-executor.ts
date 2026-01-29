@@ -1,5 +1,6 @@
-import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, AgentSession, AgentStreamingUpdateProgressData } from '@activepieces/shared'
+import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, AgentSession, AgentStreamingUpdateProgressData, AgentToolType, AgentPieceTool, AgentMcpTool } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
+import { MCPClient } from '@ai-sdk/mcp'
 import { ModelMessage, stepCountIs, streamText, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentUtils } from './utils'
@@ -7,6 +8,8 @@ import { pubsubFactory } from '@activepieces/server-shared'
 import { workerRedisConnections } from '../utils/worker-redis'
 import { buildSystemPrompt } from './system-prompt'
 import { createBuiltInTools } from './tools/built-in'
+import { pieceToolExecutor } from './tools/piece-tools'
+import { createMcpTools } from './tools/mcp'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
@@ -34,83 +37,110 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             tools,
         })
 
+        // Filter and construct piece tools
+        const pieceTools = (tools ?? []).filter((t): t is AgentPieceTool => t.type === AgentToolType.PIECE)
+        const constructedPieceTools = pieceTools.length > 0
+            ? await pieceToolExecutor(log).makeTools({
+                tools: pieceTools,
+                engineToken,
+                platformId,
+                projectId,
+                modelId,
+            })
+            : {}
 
-        const { fullStream } = streamText({
-            model,
-            system: systemPrompt,
-            stopWhen: [stepCountIs(25)],
-            messages: convertHistory(conversation ?? []),
-            tools: {
-                ...builtInTools,
-            } as ToolSet,
-        })
-        let newSession: AgentSession = data.session
+        // Filter and construct MCP tools
+        const mcpTools = (tools ?? []).filter((t): t is AgentMcpTool => t.type === AgentToolType.MCP)
+        const { tools: constructedMcpTools, mcpClients } = mcpTools.length > 0
+            ? await createMcpTools(mcpTools)
+            : { tools: {}, mcpClients: [] as MCPClient[] }
 
-        let previousText = ''
-        for await (const chunk of fullStream) {
-            let quickStreamingUpdate: AgentStreamingUpdateProgressData | undefined
-            switch (chunk.type) {
-                case 'text-start': {
-                    previousText = ''
-                    quickStreamingUpdate = publishTextUpdate(requestId, '', true)
-                    break
+        try {
+            const { fullStream } = streamText({
+                model,
+                system: systemPrompt,
+                stopWhen: [stepCountIs(25)],
+                messages: convertHistory(conversation ?? []),
+                tools: {
+                    ...builtInTools,
+                    ...constructedPieceTools,
+                    ...constructedMcpTools,
+                } as ToolSet,
+            })
+            let newSession: AgentSession = data.session
+
+            let previousText = ''
+            for await (const chunk of fullStream) {
+                let quickStreamingUpdate: AgentStreamingUpdateProgressData | undefined
+                switch (chunk.type) {
+                    case 'text-start': {
+                        previousText = ''
+                        quickStreamingUpdate = publishTextUpdate(requestId, '', true)
+                        break
+                    }
+                    case 'text-delta': {
+                        previousText += chunk.text
+                        quickStreamingUpdate = publishTextUpdate(requestId, previousText, true)
+                        break
+                    }
+                    case 'text-end': {
+                        quickStreamingUpdate = publishTextUpdate(requestId, previousText, false)
+                        break
+                    }
+                    case 'tool-input-start': {
+                        previousText = ''
+                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.id, chunk.toolName, undefined, 'loading')
+                        break
+                    }
+                    case 'tool-call': {
+                        previousText = ''
+                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'ready')
+                        break
+                    }
+                    case 'tool-error': {
+                        previousText = ''
+                        const errorMessage = chunk.error instanceof Error ? chunk.error.message : String(chunk.error)
+                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'error', errorMessage)
+                        break
+                    }
+                    case 'tool-result': {
+                        previousText = ''
+                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed', undefined, chunk.output as Record<string, any>)
+                        // First mark the tool call as completed
+                        const toolCompletedUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed')
+                        newSession = { ...newSession, conversation: genericAgentUtils.streamChunk(newSession.conversation ?? [], toolCompletedUpdate) }
+                        await this.emitProgress(requestId, {
+                            event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
+                            data: toolCompletedUpdate,
+                        })
+                        // Then publish the tool result
+                        quickStreamingUpdate = publishToolResultUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>)
+                        break
+                    }
+                    default: {
+                        break
+                    }
                 }
-                case 'text-delta': {
-                    previousText += chunk.text
-                    quickStreamingUpdate = publishTextUpdate(requestId, previousText, true)
-                    break
-                }
-                case 'text-end': {
-                    quickStreamingUpdate = publishTextUpdate(requestId, previousText, false)
-                    break
-                }
-                case 'tool-input-start': {
-                    previousText = ''
-                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.id, chunk.toolName, undefined, 'loading')
-                    break
-                }
-                case 'tool-call': {
-                    previousText = ''
-                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'ready')
-                    break
-                }
-                case 'tool-error': {
-                    previousText = ''
-                    const errorMessage = chunk.error instanceof Error ? chunk.error.message : String(chunk.error)
-                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'error', errorMessage)
-                    break
-                }
-                case 'tool-result': {
-                    previousText = ''
-                    quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed', undefined, chunk.output as Record<string, any>)
-                    // First mark the tool call as completed
-                    const toolCompletedUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed')
-                    newSession = { ...newSession, conversation: genericAgentUtils.streamChunk(newSession.conversation ?? [], toolCompletedUpdate) }
+
+                if (!isNil(quickStreamingUpdate)) {
+                    newSession = { ...newSession, conversation: genericAgentUtils.streamChunk(newSession.conversation ?? [], quickStreamingUpdate) }
                     await this.emitProgress(requestId, {
                         event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
-                        data: toolCompletedUpdate,
+                        data: quickStreamingUpdate,
                     })
-                    // Then publish the tool result
-                    quickStreamingUpdate = publishToolResultUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>)
-                    break
-                }
-                default: {
-                    break
                 }
             }
-
-            if (!isNil(quickStreamingUpdate)) {
-                newSession = { ...newSession, conversation: genericAgentUtils.streamChunk(newSession.conversation ?? [], quickStreamingUpdate) }
-                await this.emitProgress(requestId, {
-                    event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
-                    data: quickStreamingUpdate,
-                })
-            }
-        }
    
-        await this.emitProgress(requestId, {
-            event: AgentStreamingEvent.AGENT_STREAMING_ENDED,
-        })
+            await this.emitProgress(requestId, {
+                event: AgentStreamingEvent.AGENT_STREAMING_ENDED,
+            })
+        }
+        finally {
+            // Cleanup MCP clients
+            await Promise.all(mcpClients.map(client => client.close().catch(() => {
+                // Ignore close errors
+            })))
+        }
     },
     emitProgress: async (requestId: string, update: AgentStreamingUpdate) => {
         await pubsub.publish(`agent-response:${requestId}`, JSON.stringify(update))
