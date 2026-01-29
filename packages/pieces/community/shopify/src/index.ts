@@ -7,7 +7,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory, OAuth2GrantType } from '@activepieces/shared';
 import { adjustInventoryLevelAction } from './lib/actions/adjust-inventory-level';
 import { cancelOrderAction } from './lib/actions/cancel-order';
 import { closeOrderAction } from './lib/actions/close-order';
@@ -43,62 +43,45 @@ import { newPaidOrder } from './lib/triggers/new-paid-order';
 import { updatedProduct } from './lib/triggers/updated-product';
 
 const markdown = `
+**Setup Instructions**:
+
+1. Go to [Shopify Dev Dashboard](https://dev.shopify.com/) and log in
+2. Create a new app or select an existing one
+3. Go to **Settings** → **Credentials**
+4. Under **API credentials**, copy your **Client ID** and **Client Secret**
+5. Go to **Home** → **New versin**
+6. Update scope (Select the following scopes 'read_orders', 'write_orders', 'write_customers', 'read_customers', 'write_products', 'read_products', 'write_draft_orders', 'read_draft_orders')
+7. Redirect URLs
+7. Click **Release**
 **Shop Name**:
+You can find your shop name in the admin URL. For example, if the URL is \`https://example.myshopify.com/admin\`, then your shop name is **example**.
 
-You can find your shop name in the url For example, if the URL is \`https://example.myshopify.com/admin\`, then your shop name is **example**.
-
-**Admin Token**:
-
-1. Login to your Shopify account
-2. Go to Settings -> Apps
-3. Click on Develop apps
-4. Create an App
-5. Fill the app name
-6. Click on Configure Admin API Scopes (Select the following scopes 'read_orders', 'write_orders', 'write_customers', 'read_customers', 'write_products', 'read_products', 'write_draft_orders', 'read_draft_orders')
-7. Click on Install app
-8. Copy the Admin Access Token
+**Required Scopes**:
+The following scopes are automatically requested during OAuth: read_orders, write_orders, read_customers, write_customers, read_products, write_products, read_draft_orders, write_draft_orders
 `;
 
-export const shopifyAuth = PieceAuth.CustomAuth({
+export const shopifyAuth = PieceAuth.OAuth2({
   description: markdown,
   required: true,
   props: {
     shopName: Property.ShortText({
       displayName: 'Shop Name',
       required: true,
-    }),
-    adminToken: PieceAuth.SecretText({
-      displayName: 'Admin Token',
-      required: true,
+      description: 'The subdomain of your Shopify store (e.g., "mystore" from "mystore.myshopify.com")',
     }),
   },
-  validate: async ({ auth }) => {
-    try {
-      await sendShopifyRequest({
-        auth: { 
-          type: AppConnectionType.CUSTOM_AUTH,
-          props: auth,
-        },
-        method: HttpMethod.GET,
-        url: '/shop.json',
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid Shop Name or Admin Token',
-      };
-    }
-  },
+  authUrl: 'https://{shopName}.myshopify.com/admin/oauth/authorize',
+  tokenUrl: 'https://{shopName}.myshopify.com/admin/oauth/access_token',
+  scope: ['write_orders', 'read_orders', 'write_customers', 'read_customers', 'write_products', 'read_products', 'write_draft_orders', 'read_draft_orders'],
+  prompt: 'omit',
+  grantType: OAuth2GrantType.AUTHORIZATION_CODE,
 });
 
 export const shopify = createPiece({
   displayName: 'Shopify',
   description: 'Ecommerce platform for online stores',
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
-  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060"],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060",'sanket-a11y'],
   categories: [PieceCategory.COMMERCE],
   minimumSupportedRelease: '0.30.0',
   auth: shopifyAuth,
@@ -131,11 +114,11 @@ export const shopify = createPiece({
     uploadProductImageAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return auth ? getBaseUrl(auth.props.shopName) : '';
+        return auth ? getBaseUrl(auth.data.shopName) : '';
       },
       auth: shopifyAuth,
       authMapping: async (auth) => {
-        const typedAuth = auth.props.adminToken;
+        const typedAuth = auth.access_token;
         return {
           'X-Shopify-Access-Token': typedAuth,
         };
