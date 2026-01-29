@@ -74,7 +74,7 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
         await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
     }
 
-    for (const { packageName, pieceDirectory, packageJsonName } of pieceInfos) {
+    for (const { packageName, pieceDirectory } of pieceInfos) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
         app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
@@ -83,7 +83,6 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
                 try {
                     await buildPieces([packageName], io, app.log)
                     await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
                 }
                 catch (error) {
                     app.log.error(error)
