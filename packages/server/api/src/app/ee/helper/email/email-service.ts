@@ -215,10 +215,7 @@ function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-function isValidEmail(email: unknown): email is string {
-    if (typeof email !== 'string') {
-        return false
-    }
+function isValidEmail(email: string): boolean {
     return z.email().safeParse(email).success
 }
 
