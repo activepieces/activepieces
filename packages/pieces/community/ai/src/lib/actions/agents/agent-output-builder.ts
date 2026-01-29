@@ -145,7 +145,6 @@ function getToolMetadata({
   baseTool,
 }: GetToolMetadaParams): ToolCallContentBlock {
   const tool = tools.find((tool) => tool.type !== AgentToolType.FLOW_MAKER && tool.toolName === toolName);
-  assertNotNullOrUndefined(tool, `Tool ${toolName} not found`);
   if (isNil(tool)) {
     // should be flow maker tool
     return {
