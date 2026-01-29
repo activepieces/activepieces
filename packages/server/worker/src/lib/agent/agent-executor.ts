@@ -1,11 +1,12 @@
-import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData, spreadIfDefined } from '@activepieces/shared'
+import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
-import { LanguageModel, ModelMessage, stepCountIs, streamText, Tool, ToolSet } from 'ai'
+import { ModelMessage, stepCountIs, streamText, Tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentUtils } from './utils'
 import { pubsubFactory } from '@activepieces/server-shared'
 import { workerRedisConnections } from '../utils/worker-redis'
-import { createFlowTools } from './tools/flow-maker'
+import { buildSystemPrompt } from './system-prompt'
+import { createBuiltInTools } from './tools/built-in'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
@@ -13,7 +14,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
         const { platformId, projectId } = data
-        const { requestId, conversation, modelId, structuredOutput, prompt, systemPrompt, toolSet } = data.session
+        const { requestId, conversation, modelId, structuredOutput, prompt, toolSet, tools } = data.session
         const agentTools = toolSet as Record<string, Tool>
 
         let newSession: ExecuteAgentData = {
@@ -21,6 +22,18 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             toolSet: agentTools,
         } satisfies ExecuteAgentData
         const model = await agentUtils.getModel(modelId, engineToken)
+
+        // Build system prompt based on enabled tools
+        const systemPrompt = buildSystemPrompt(tools ?? [])
+        
+        // Build built-in tools based on enabled tools
+        const builtInTools = createBuiltInTools({
+            engineToken,
+            projectId,
+            platformId,
+            state: data.session.state,
+            tools: tools ?? [],
+        })
 
         const { fullStream } = streamText({
             model,
@@ -33,7 +46,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             ),
             tools: {
                 ...agentTools,
-                ...(await createFlowTools({ engineToken, projectId, platformId, state: data.session.state })),
+                ...builtInTools,
             } as ToolSet,
         })
 

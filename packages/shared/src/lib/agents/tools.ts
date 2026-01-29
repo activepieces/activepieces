@@ -35,8 +35,7 @@ export enum AgentToolType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
     MCP = 'MCP',
-    SEARCH = 'SEARCH',
-    EXECUTE_CODE = 'EXECUTE_CODE',
+    FLOW_MAKER = 'FLOW_MAKER'
 }
 
 export enum McpProtocol {
@@ -92,18 +91,6 @@ export const AgentPieceToolMetadata = Type.Object({
 })
 export type AgentPieceToolMetadata = Static<typeof AgentPieceToolMetadata>
 
-export const AgentSearchTool = Type.Object({
-    type: Type.Literal(AgentToolType.SEARCH),
-    ...AgentToolBase,
-})
-export type AgentSearchTool = Static<typeof AgentSearchTool>
-
-export const AgentExecuteCodeTool = Type.Object({
-    type: Type.Literal(AgentToolType.EXECUTE_CODE),
-    ...AgentToolBase,
-})
-export type AgentExecuteCodeTool = Static<typeof AgentExecuteCodeTool>
-
 export const AgentPieceTool = Type.Object({
     type: Type.Literal(AgentToolType.PIECE),
     ...AgentToolBase,
@@ -127,11 +114,15 @@ export const AgentMcpTool = Type.Object({
 })
 export type AgentMcpTool = Static<typeof AgentMcpTool>
 
+export const AgentFlowMakerTool = Type.Object({
+    type: Type.Literal(AgentToolType.FLOW_MAKER),
+})
+export type AgentFlowMakerTool = Static<typeof AgentFlowMakerTool>
+
 export const AgentTool = DiscriminatedUnion('type', [
     AgentPieceTool,
     AgentFlowTool,
     AgentMcpTool,
-    AgentExecuteCodeTool,
-    AgentSearchTool,
+    AgentFlowMakerTool,
 ])
 export type AgentTool = Static<typeof AgentTool>

@@ -1,7 +1,18 @@
-import { FLOW_TOOLS_SYSTEM_PROMPT } from "../../../../../pieces/community/framework/src/lib/common-tools/flow-maker"
+import { AgentTool, AgentToolType } from '@activepieces/shared'
+import { FLOW_MAKER_SKILL } from './tools/built-in/flow-maker'
 
+export const buildSystemPrompt = (tools: AgentTool[]): string => {
+    const skills: string[] = []
 
-export const systemPrompt = () => {
+    const hasFlowMakerAccess = tools.some(tool => tool.type === AgentToolType.FLOW_MAKER)
+    if (hasFlowMakerAccess) {
+        skills.push(FLOW_MAKER_SKILL)
+    }
+
+    const skillsSection = skills.length > 0
+        ? '\n\n' + skills.join('\n\n')
+        : ''
+
     return `Your name is Quick, you are a helpful, proactive AI automation assistant working for Activepieces designed to assist users efficiently and accurately
 Today's date is ${new Date().toISOString().split('T')[0]}.
 
@@ -14,8 +25,5 @@ Today's date is ${new Date().toISOString().split('T')[0]}.
 - Think step-by-step before taking any action. Use chain-of-thought reasoning: First, understand the user's query fully. Then, break it down into sub-tasks. Evaluate what information or actions are needed. Finally, decide on the next steps.
 - Be analytical: Consider potential edge cases, ambiguities in the query, and how to clarify if needed (but prefer acting proactively if possible).
 - Avoid assumptions: Base decisions on available information, tools, and prior responses. If something is unclear, use tools to gather more data rather than guessing.
-
-
-${FLOW_TOOLS_SYSTEM_PROMPT}
-`.trim()
+${skillsSection}`.trim()
 }

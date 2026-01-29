@@ -2,12 +2,12 @@ import { AgentPieceTool, EngineOperationType, EngineResponseStatus, ExecuteToolO
 import { tool, Tool } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { engineApiService } from '../../api/server-api.service'
-import { executionFiles } from '../../cache/execution-files'
-import { pieceWorkerCache } from '../../cache/piece-worker-cache'
-import { Sandbox } from '../../compute/sandbox/sandbox'
-import { sandboxPool } from '../../compute/sandbox/sandbox-pool'
-import { workerMachine } from '../../utils/machine'
+import { engineApiService } from '../../../api/server-api.service'
+import { executionFiles } from '../../../cache/execution-files'
+import { pieceWorkerCache } from '../../../cache/piece-worker-cache'
+import { Sandbox } from '../../../compute/sandbox/sandbox'
+import { sandboxPool } from '../../../compute/sandbox/sandbox-pool'
+import { workerMachine } from '../../../utils/machine'
 
 type ExecuteToolOperationInput = Omit<ExecuteToolOperation, 'publicApiUrl' | 'internalApiUrl' | 'engineToken'> & {
     modelId: string
@@ -103,4 +103,3 @@ export const pieceToolExecutor = (log: FastifyBaseLogger) => ({
         }
     },
 })
-
