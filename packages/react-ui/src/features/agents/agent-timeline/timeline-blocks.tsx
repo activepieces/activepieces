@@ -75,8 +75,8 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
   const { data: metadata, isLoading } = agentToolHooks.useToolMetadata(block);
 
   const output = block.output as ExecuteToolResponse | null;
-  const errorMessage = output?.errorMessage as string | null;
-  const isDone = block.status === 'completed';
+  const errorMessage = block?.error as string | null;
+  const isDone = block.status === 'completed' || block.status === 'error';
   const isSuccess = output?.status ?? ExecutionToolStatus.FAILED;
   const hasInstructions = !isNil(block.input?.instruction);
   const resolvedFields = output?.resolvedInput ?? null;

@@ -15,6 +15,12 @@ export const agentToolHooks = {
         toolCall.toolName,
       ],
       queryFn: async () => {
+        if (toolCall.toolType === 'piece') {
+          return {
+            displayName: toolCall.pieceMetadata?.actionName.replaceAll("_", " ").toUpperCase(),
+            logoUrl: null,
+          };
+        }
         return {
           displayName: toolCall.toolName,
           logoUrl: null,

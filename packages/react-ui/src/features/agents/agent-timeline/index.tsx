@@ -38,7 +38,6 @@ export const AgentTimeline = ({
   if (isNil(agentResult)) {
     return <p>{t('No agent output available')}</p>;
   }
-
   const parts = getAssistantParts(agentResult);
 
   return (

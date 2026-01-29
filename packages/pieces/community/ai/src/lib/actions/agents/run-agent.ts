@@ -131,7 +131,8 @@ export const runAgent = createAction({
         conversation: conversation,
       });
 
-      await new Promise<void>((resolve) => {
+      let isFailed = false;
+      await new Promise<void>((resolve, reject) => {
         readStream({
           response,
           onChunk: async (chunk) => {
@@ -139,10 +140,14 @@ export const runAgent = createAction({
             if (updated.event === AgentStreamingEvent.AGENT_STREAMING_UPDATE) {
               conversation = genericAgentUtils.streamChunk(conversation, updated.data);
               await context.output.update({ data: buildResult() });
+              if (updated.data.part.type === 'tool-call' && updated.data.part.status === 'error') {
+                isFailed = true;
+              }
             }
           },
           onEnd: async () => {
-            resolve()
+            if (isFailed) reject();
+            resolve();
           },
         });
       })
@@ -151,8 +156,6 @@ export const runAgent = createAction({
       await context.output.update({ data: buildResult() });
 
     } catch (error) {
-      const errorMessage = `Agent failed unexpectedly: \n${error}`;
-      console.error('errorMessage', errorMessage);
       status = AgentTaskStatus.FAILED;
       await context.output.update({ data: buildResult() });
     }

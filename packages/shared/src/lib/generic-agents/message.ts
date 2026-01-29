@@ -1,4 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
+import { DiscriminatedUnion } from '../common'
+import { AgentPieceToolMetadata } from './tool'
 
 export const UserTextConversationMessage = Type.Object({
     type: Type.Literal('text'),
@@ -38,18 +40,29 @@ export const TextConversationMessage = Type.Object({
 })
 export type TextConversationMessage = Static<typeof TextConversationMessage>
 
-
-export const ToolCallConversationMessage = Type.Object({
+const ToolCallConversationMessageBase = Type.Object({
     type: Type.Literal('tool-call'),
-    toolCallId: Type.String(),
     toolName: Type.String(),
+    toolCallId: Type.String(),
     input: Type.Optional(Type.Record(Type.String(), Type.Any())),
     output: Type.Optional(Type.Record(Type.String(), Type.Any())),
     status: Type.Union([Type.Literal('loading'), Type.Literal('ready'), Type.Literal('completed'), Type.Literal('error')]),
     error: Type.Optional(Type.String()),
 })
-export type ToolCallConversationMessage = Static<typeof ToolCallConversationMessage>
 
+export const ToolCallConversationMessage = DiscriminatedUnion('toolType', [
+    Type.Object({
+        ...ToolCallConversationMessageBase.properties,
+        toolType: Type.Literal('piece'),
+        pieceMetadata: AgentPieceToolMetadata,
+    }),
+    Type.Object({
+        ...ToolCallConversationMessageBase.properties,
+        toolType: Type.Literal("not-piece"),
+    }),
+]) 
+
+export type ToolCallConversationMessage = Static<typeof ToolCallConversationMessage>
 
 export const AssistantConversationContent = Type.Union([
     TextConversationMessage,

@@ -10,6 +10,7 @@ import { buildSystemPrompt } from './system-prompt'
 import { createBuiltInTools } from './tools/built-in'
 import { pieceToolExecutor } from './tools/piece-tools'
 import { createMcpTools } from './tools/mcp'
+import { inspect } from 'util'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
@@ -90,32 +91,79 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                     }
                     case 'tool-input-start': {
                         previousText = ''
-                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.id, chunk.toolName, undefined, 'loading')
+                        quickStreamingUpdate = publishToolCallUpdate({
+                            requestId,
+                            toolCallId: chunk.id,
+                            toolName: chunk.toolName,
+                            pieceTools,
+                            input: undefined,
+                            output: undefined,
+                            status: 'loading',
+                        })
                         break
                     }
                     case 'tool-call': {
                         previousText = ''
-                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'ready')
+                        quickStreamingUpdate = publishToolCallUpdate({
+                            requestId,
+                            toolCallId: chunk.toolCallId,
+                            toolName: chunk.toolName,
+                            pieceTools,
+                            input: chunk.input as Record<string, any>,
+                            output: undefined,
+                            status: 'ready',
+                        })
                         break
                     }
                     case 'tool-error': {
                         previousText = ''
-                        const errorMessage = chunk.error instanceof Error ? chunk.error.message : String(chunk.error)
-                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>, 'error', errorMessage)
+                        const errorMessage =  inspect(chunk.error)
+                        quickStreamingUpdate = publishToolCallUpdate({
+                            requestId,
+                            toolCallId: chunk.toolCallId,
+                            toolName: chunk.toolName,
+                            pieceTools,
+                            input: chunk.input as Record<string, any>,
+                            output: undefined,
+                            status: 'error',
+                            error: errorMessage,
+                        })
                         break
                     }
                     case 'tool-result': {
                         previousText = ''
-                        quickStreamingUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed', undefined, chunk.output as Record<string, any>)
+                        quickStreamingUpdate = publishToolCallUpdate({
+                            requestId,
+                            toolCallId: chunk.toolCallId,
+                            toolName: chunk.toolName,
+                            pieceTools,
+                            input: undefined,
+                            output: chunk.output as Record<string, any>,
+                            status: 'completed',
+                        })
                         // First mark the tool call as completed
-                        const toolCompletedUpdate = publishToolCallUpdate(requestId, chunk.toolCallId, chunk.toolName, undefined, 'completed')
+                        const toolCompletedUpdate = publishToolCallUpdate({
+                            requestId,
+                            toolCallId: chunk.toolCallId,
+                            toolName: chunk.toolName,
+                            pieceTools,
+                            input: undefined,
+                            output: undefined,
+                            status: 'completed',
+                        })
                         newSession = { ...newSession, conversation: genericAgentUtils.streamChunk(newSession.conversation ?? [], toolCompletedUpdate) }
                         await this.emitProgress(requestId, {
                             event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
                             data: toolCompletedUpdate,
                         })
                         // Then publish the tool result
-                        quickStreamingUpdate = publishToolResultUpdate(requestId, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>)
+                        quickStreamingUpdate = publishToolResultUpdate({
+                            requestId,
+                            toolCallId: chunk.toolCallId,
+                            toolName: chunk.toolName,
+                            pieceTools,
+                            output: chunk.output as Record<string, any>,
+                        })
                         break
                     }
                     default: {
@@ -148,30 +196,60 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     }
 })
 
-function publishToolCallUpdate(requestId: string, toolcallId: string, toolName: string, input: Record<string, any> | undefined, status: 'loading' | 'ready' | 'completed' | 'error', error?: string, output?: Record<string, any>) {
+type PublishToolCall = {
+    requestId: string;
+    toolCallId: string;
+    toolName: string;
+    pieceTools: AgentPieceTool[];
+    input: Record<string, any> | undefined;
+    output: Record<string, any> | undefined;
+    status: 'loading' | 'ready' | 'completed' | 'error';
+    error?: string;
+}
+
+function publishToolCallUpdate(params: PublishToolCall) {
+    const { requestId, toolCallId, toolName, pieceTools, input, output, status, error } = params
+    const pieceMetadata = pieceTools.find(t => t.toolName === toolName)?.pieceMetadata
+
     const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
         sessionId: requestId,
         part: {
             type: 'tool-call',
-            toolCallId: toolcallId,
+            toolCallId,
             toolName,
             input,
             output,
             status,
+            error,
+            ...(pieceMetadata ? {
+                toolType: 'piece',
+                pieceMetadata: pieceMetadata,
+            } : {
+                toolType: 'not-piece',
+            }),
         },
     }
     return quickStreamingUpdate
 }
 
-function publishToolResultUpdate(requestId: string, toolcallId: string, toolName: string, output: Record<string, any>) {
+function publishToolResultUpdate(params: Omit<PublishToolCall, 'status' | 'input'>) {
+    const { requestId, toolCallId, toolName, pieceTools, output } = params
+    const pieceMetadata = pieceTools.find(t => t.toolName === toolName)?.pieceMetadata
+
     const quickStreamingUpdate: AgentStreamingUpdateProgressData = {
         sessionId: requestId, 
         part: {
             type: 'tool-call',
-            toolCallId: toolcallId,
+            toolCallId,
             toolName,
             output,
             status: 'completed',
+            ...(pieceMetadata ? {
+                toolType: 'piece',
+                pieceMetadata: pieceMetadata,
+            } : {
+                toolType: 'not-piece',
+            }),
         },
     }
     return quickStreamingUpdate
