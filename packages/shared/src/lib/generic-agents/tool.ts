@@ -27,7 +27,7 @@ export const PredefinedInputField = Type.Object({
 export type PredefinedInputField = Static<typeof PredefinedInputField>
 
 export const PredefinedInputsStructure = Type.Object({
-    auth: Type.Optional(Type.String()),
+    auth: Type.Optional(Type.Unknown()),
     fields: Type.Record(Type.String(), PredefinedInputField),
 })
 export type PredefinedInputsStructure = Static<typeof PredefinedInputsStructure>
