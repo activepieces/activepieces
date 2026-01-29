@@ -21,7 +21,11 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             ...data.session,
             toolSet: agentTools,
         } satisfies ExecuteAgentData
-        const model = await agentUtils.getModel(modelId, engineToken)
+        const model = await agentUtils.getModel({
+            modelId,
+            engineToken,
+            provider: data.session.provider,
+        })
 
         // Build system prompt based on enabled tools
         const systemPrompt = buildSystemPrompt(tools ?? [])

@@ -3,6 +3,7 @@ import { AgentTool } from "../agents/tools"
 import { DiscriminatedUnion } from "../common"
 import { AssistantConversationContent, ConversationMessage } from "./message"
 import { Tool } from "ai"
+import { AIProviderName } from "../ai-providers"
 
 export const ExecuteAgentData = Type.Object({
   systemPrompt: Type.String(),
@@ -10,6 +11,7 @@ export const ExecuteAgentData = Type.Object({
   tools: Type.Array(AgentTool),
   toolSet: Type.Optional(Type.Record(Type.String(), Type.Unknown())), // workaround . should not exist after moving inputSchema creation from engine to worker
   modelId: Type.String(),
+  provider: Type.Enum(AIProviderName),
   state: Type.Record(Type.String(), Type.Unknown()),
   conversation: Type.Optional(Type.Array(ConversationMessage)),
   structuredOutput: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
