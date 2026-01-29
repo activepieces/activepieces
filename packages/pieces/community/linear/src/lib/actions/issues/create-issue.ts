@@ -8,6 +8,7 @@ export const linearCreateIssue = createAction({
   auth: linearAuth,
   name: 'linear_create_issue',
   displayName: 'Create Issue',
+
   description: 'Create a new issue in Linear workspace',
   props: {
     team_id: props.team_id(),
