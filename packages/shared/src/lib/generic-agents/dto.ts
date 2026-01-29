@@ -1,28 +1,23 @@
-import { Static, Type, Unknown } from "@sinclair/typebox"
+import { Static, Type } from "@sinclair/typebox"
 import { AgentTool } from "../agents/tools"
 import { DiscriminatedUnion } from "../common"
 import { AssistantConversationContent, ConversationMessage } from "./message"
-import { Tool } from "ai"
 import { AIProviderName } from "../ai-providers"
 
-export const ExecuteAgentData = Type.Object({
+export const AgentSession = Type.Object({
   systemPrompt: Type.String(),
-  prompt: Type.String(),
   tools: Type.Array(AgentTool),
-  toolSet: Type.Optional(Type.Record(Type.String(), Type.Unknown())), // workaround . should not exist after moving inputSchema creation from engine to worker
   modelId: Type.String(),
   provider: Type.Enum(AIProviderName),
   state: Type.Record(Type.String(), Type.Unknown()),
   conversation: Type.Optional(Type.Array(ConversationMessage)),
   structuredOutput: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
 })
-export type ExecuteAgentData = Static<typeof ExecuteAgentData> & {
-  toolSet?: Record<string, Tool>
-}
+export type AgentSession = Static<typeof AgentSession>
 
 export const ExecuteAgentRequest = Type.Composite([
   Type.Object({ projectId: Type.String() }),
-  ExecuteAgentData,
+  AgentSession,
 ])
 
 export type ExecuteAgentRequest = Static<typeof ExecuteAgentRequest>
@@ -40,7 +35,7 @@ export type AgentStreamingUpdateProgressData = Static<typeof AgentStreamingUpdat
 
 export const AgentStreamingUpdateEndedData = Type.Composite([Type.Object({
   sessionId: Type.Optional(Type.String()),
-}), ExecuteAgentData])
+}), AgentSession])
 export type AgentStreamingUpdateEndedData = Static<typeof AgentStreamingUpdateEndedData>
 
 const AgentStreamingUpdateProgress = Type.Object({

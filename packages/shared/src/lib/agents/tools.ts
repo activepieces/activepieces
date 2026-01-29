@@ -33,7 +33,6 @@ export type PredefinedInputsStructure = Static<typeof PredefinedInputsStructure>
 
 export enum AgentToolType {
     PIECE = 'PIECE',
-    FLOW = 'FLOW',
     MCP = 'MCP',
     FLOW_MAKER = 'FLOW_MAKER'
 }
@@ -98,13 +97,6 @@ export const AgentPieceTool = Type.Object({
 })
 export type AgentPieceTool = Static<typeof AgentPieceTool>
 
-export const AgentFlowTool = Type.Object({
-    type: Type.Literal(AgentToolType.FLOW),
-    ...AgentToolBase,
-    externalFlowId: Type.String(),
-})
-export type AgentFlowTool = Static<typeof AgentFlowTool>
-
 export const AgentMcpTool = Type.Object({
     type: Type.Literal(AgentToolType.MCP),
     ...AgentToolBase,
@@ -121,7 +113,6 @@ export type AgentFlowMakerTool = Static<typeof AgentFlowMakerTool>
 
 export const AgentTool = DiscriminatedUnion('type', [
     AgentPieceTool,
-    AgentFlowTool,
     AgentMcpTool,
     AgentFlowMakerTool,
 ])

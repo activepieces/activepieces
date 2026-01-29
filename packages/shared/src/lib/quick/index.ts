@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ExecuteAgentData } from '../generic-agents/dto'
+import { AgentSession } from '../generic-agents/dto'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
 import { AgentTool } from '../agents'
@@ -17,7 +17,7 @@ export const ChatSession = Type.Object({
   structuredOutput: Type.Optional(Type.Record(Type.String(), Type.Any())),
 })
 
-export type ChatSession = Static<typeof ChatSession> & ExecuteAgentData
+export type ChatSession = Static<typeof ChatSession> & AgentSession
 
 export const CreateChatSessionRequest = Type.Object({})
 export type CreateChatSessionRequest = Static<typeof CreateChatSessionRequest>

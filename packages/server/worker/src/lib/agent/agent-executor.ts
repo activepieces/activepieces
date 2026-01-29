@@ -1,4 +1,4 @@
-import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData } from '@activepieces/shared'
+import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, AgentSession, AgentStreamingUpdateProgressData } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
 import { ModelMessage, stepCountIs, streamText, Tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -14,13 +14,8 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
         const { platformId, projectId } = data
-        const { requestId, conversation, modelId, structuredOutput, prompt, toolSet, tools } = data.session
-        const agentTools = toolSet as Record<string, Tool>
+        const { requestId, conversation, modelId, structuredOutput, tools } = data.session
 
-        let newSession: ExecuteAgentData = {
-            ...data.session,
-            toolSet: agentTools,
-        } satisfies ExecuteAgentData
         const model = await agentUtils.getModel({
             modelId,
             engineToken,
@@ -43,16 +38,12 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             model,
             system: systemPrompt,
             stopWhen: [stepCountIs(25)],
-            ...(
-                isNil(prompt)
-                ? { messages: convertHistory(conversation ?? []) }
-                : { prompt }
-            ),
+            messages: convertHistory(conversation ?? []),
             tools: {
-                ...agentTools,
                 ...builtInTools,
             } as ToolSet,
         })
+        let newSession: AgentSession = data.session
 
         let previousText = ''
         for await (const chunk of fullStream) {

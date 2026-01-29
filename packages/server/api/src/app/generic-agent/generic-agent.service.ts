@@ -13,7 +13,6 @@ export const genericAgentService = (log: FastifyBaseLogger) => ({
             session: {
                 provider: params.provider,
                 systemPrompt: params.systemPrompt,
-                prompt: params.prompt,
                 tools: params.tools,
                 modelId: params.modelId,
                 state: params.state,

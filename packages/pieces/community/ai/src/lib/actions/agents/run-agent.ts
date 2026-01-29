@@ -48,11 +48,6 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
     required: false,
   }),
 
-  externalFlowId: Property.ShortText({
-    displayName: 'Flow External ID',
-    required: false,
-  }),
-
   serverUrl: Property.ShortText({
     displayName: 'MCP Server URL',
     required: false,
@@ -132,7 +127,7 @@ export const runAgent = createAction({
       context.propsValue.structuredOutput.length > 0;
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
-    const { mcpClients, tools } = await constructAgentTools({
+    const { tools } = await constructAgentTools({
       context,
       agentTools,
       model,
@@ -148,8 +143,8 @@ export const runAgent = createAction({
         prompt: agentUtils.getPrompts(prompt).prompt,
         modelId: agentProviderModel.model,
         projectId: context.project.id,
-        tools: [],
-        toolSet: tools,
+        tools: agentTools,
+        provider: agentProviderModel.provider,
         state: {},
         structuredOutput: { structuredOutput },
       });
@@ -215,7 +210,6 @@ export const runAgent = createAction({
             }
           },
           onEnd: async () => {
-            await Promise.all(mcpClients.map(async (client) => client.close()));
             resolve()
           },
         });
@@ -227,9 +221,6 @@ export const runAgent = createAction({
       //   prompt: agentUtils.getPrompts(prompt).prompt,
       //   tools,
       //   stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
-      //   onFinish: async () => {
-      //     await Promise.all(mcpClients.map(async (client) => client.close()));
-      //   },
       // });
 
       if (errors.length > 0) {
@@ -246,7 +237,6 @@ export const runAgent = createAction({
       const errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
       outputBuilder.fail({ message: errorMessage });
       await context.output.update({ data: outputBuilder.build() });
-      await Promise.all(mcpClients.map(async (client) => client.close()));
     }
 
     return outputBuilder.build();

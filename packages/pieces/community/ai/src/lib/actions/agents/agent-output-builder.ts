@@ -144,7 +144,7 @@ function getToolMetadata({
   tools,
   baseTool,
 }: GetToolMetadaParams): ToolCallContentBlock {
-  const tool = tools.find((tool) => tool.toolName === toolName);
+  const tool = tools.find((tool) => tool.type !== AgentToolType.FLOW_MAKER && tool.toolName === toolName);
   assertNotNullOrUndefined(tool, `Tool ${toolName} not found`);
 
   switch (tool.type) {
@@ -159,15 +159,6 @@ function getToolMetadata({
         actionName: tool.pieceMetadata.actionName,
       };
     }
-    case AgentToolType.FLOW: {
-      assertNotNullOrUndefined(tool.externalFlowId, 'Flow ID is required');
-      return {
-        ...baseTool,
-        toolCallType: ToolCallType.FLOW,
-        displayName: tool.toolName,
-        externalFlowId: tool.externalFlowId
-      };
-    }
     case AgentToolType.MCP: {
       assertNotNullOrUndefined(tool.serverUrl, 'Mcp server URL is required');
       return {
@@ -175,11 +166,7 @@ function getToolMetadata({
         toolCallType: ToolCallType.MCP,
         displayName: tool.toolName,
         serverUrl: tool.serverUrl,
-        
       };
-    }
-    case AgentToolType.EXECUTE_CODE: {
-      throw new Error(`Unsupported tool type: ${tool.type}`);
     }
   }
   throw new Error(`Unsupported tool type: ${tool.type}`);

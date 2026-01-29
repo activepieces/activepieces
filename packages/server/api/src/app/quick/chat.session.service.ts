@@ -42,11 +42,10 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
             provider: newSession.provider,
             projectId: project.id,
             platformId: params.platformId,
-            prompt: params.message,
             tools: newSession.tools,
             modelId: newSession.modelId,
             state: newSession.state,
-            conversation: newSession.conversation,
+            conversation: genericAgentUtils.addUserMessage(newSession.conversation ?? [], params.message, filesForMessage),
         })
     },
     async update(params: UpdateChastSessionParams): Promise<ChatSession> {

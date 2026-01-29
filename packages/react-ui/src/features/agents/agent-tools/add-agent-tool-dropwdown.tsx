@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Hammer } from 'lucide-react';
+import { Hammer, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
@@ -12,6 +12,7 @@ import {
 
 import { useMcpToolDialogStore } from './stores/mcp-tools';
 import { usePieceToolsDialogStore } from './stores/pieces-tools';
+import { cn } from '@/lib/utils';
 
 type AddAgentToolDropdownProps = {
   disabled?: boolean;
@@ -50,6 +51,14 @@ export const AddToolDropdown = ({
         <DropdownMenuItem onSelect={() => setShowAddMcpDialog(true)}>
           <McpSvg className="size-3.5 me-2" />
           <span>{t('Mcp server')}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          disabled={true}
+          className={cn('opacity-50 cursor-not-allowed')}
+        >
+          <Workflow className="size-3.5 me-2" />
+          <span>{t('Flow Tool')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -7,7 +7,7 @@ import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
-import { ExecuteAgentData } from '../generic-agents/dto'
+import { AgentSession } from '../generic-agents/dto'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 
@@ -218,7 +218,7 @@ export const ExecuteAgentJobData = (Type.Object({
     platformId: Type.String(),
     projectId: Type.String(),
     session: Type.Composite([
-        ExecuteAgentData,
+        AgentSession,
         Type.Object({
             requestId: Type.String(),
         }),
