@@ -117,6 +117,7 @@ const initSmtpClient = (): Transporter => {
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': 'You have been invited to a team',
+        'project-member-added': `You've been added to ${vars.projectName}`,
         'badge-awarded': 'You earned a new badge',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
