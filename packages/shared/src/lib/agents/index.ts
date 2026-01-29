@@ -35,6 +35,7 @@ export enum ToolCallType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
     MCP = 'MCP',
+    FLOW_MAKER = 'FLOW_MAKER',
 }
 
 export const AgentOutputField = Type.Object({
@@ -95,13 +96,18 @@ export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
         ...ToolCallBaseSchema.properties,
         toolCallType: Type.Literal(ToolCallType.FLOW),
         displayName: Type.String(),
-        externalFlowId: Type.String(),
+        externalFlowId: Type.Optional(Type.String()),
     }),
     Type.Object({
         ...ToolCallBaseSchema.properties,
         toolCallType: Type.Literal(ToolCallType.MCP),
         displayName: Type.String(),
         serverUrl: Type.String(),
+    }),
+    Type.Object({
+        ...ToolCallBaseSchema.properties,
+        toolCallType: Type.Literal(ToolCallType.FLOW_MAKER),
+        displayName: Type.String(),
     }),
 ])
 

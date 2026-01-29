@@ -13,7 +13,7 @@ type ExecuteToolOperationInput = Omit<ExecuteToolOperation, 'publicApiUrl' | 'in
     modelId: string
 }
 
-type MakeToolsParams = {
+export type MakeToolsParams = {
     tools: AgentPieceTool[]
     engineToken: string
     platformId: string

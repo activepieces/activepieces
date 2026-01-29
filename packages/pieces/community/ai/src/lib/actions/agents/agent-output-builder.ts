@@ -146,6 +146,14 @@ function getToolMetadata({
 }: GetToolMetadaParams): ToolCallContentBlock {
   const tool = tools.find((tool) => tool.type !== AgentToolType.FLOW_MAKER && tool.toolName === toolName);
   assertNotNullOrUndefined(tool, `Tool ${toolName} not found`);
+  if (isNil(tool)) {
+    // should be flow maker tool
+    return {
+      ...baseTool,
+      toolCallType: ToolCallType.FLOW_MAKER,
+      displayName: toolName,
+    }
+  }
 
   switch (tool.type) {
     case AgentToolType.PIECE: {
@@ -168,8 +176,10 @@ function getToolMetadata({
         serverUrl: tool.serverUrl,
       };
     }
+    default: {
+      throw new Error(`Tool ${toolName} type ${tool.type} not supported`);
+    }
   }
-  throw new Error(`Unsupported tool type: ${tool.type}`);
 }
 
 type GetToolMetadaParams = {

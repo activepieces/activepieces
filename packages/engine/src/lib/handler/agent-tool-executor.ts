@@ -1,53 +1,14 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateText, LanguageModel, Output, Tool, jsonSchema, Schema } from 'ai'
-import { EngineConstants } from '../handler/context/engine-constants'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { flowExecutor } from '../handler/flow-executor'
+import { generateText, LanguageModel, Output, jsonSchema } from 'ai'
+import { EngineConstants } from './context/engine-constants'
+import { FlowExecutorContext } from './context/flow-execution-context'
+import { flowExecutor } from './flow-executor'
 import { pieceHelper } from '../helper/piece-helper'
 import { pieceLoader } from '../helper/piece-loader'
-import { tsort } from './tsort'
+import { tsort } from '../tools/tsort'
 
-export const agentTools = {
-    async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<Record<string, Tool>> {
-        const piecesTools = await Promise.all(tools.map(async (tool) => {
-            const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
-                pieceName: tool.pieceMetadata.pieceName,
-                pieceVersion: tool.pieceMetadata.pieceVersion,
-                actionName: tool.pieceMetadata.actionName,
-                devPieces: EngineConstants.DEV_PIECES,
-            })
-            return {
-                name: tool.toolName,
-                description: pieceAction.description,
-                inputSchema: jsonSchema({
-                    type: 'object',
-                    properties: {
-                        instruction: {
-                            type: 'string',
-                            description: 'The instruction to the tool',
-                        },
-                    },
-                    required: ['instruction'],
-                }),
-                execute: async ({ instruction }: { instruction: string }) =>
-                    agentTools.execute({
-                        ...engineConstants,
-                        instruction,
-                        pieceName: tool.pieceMetadata.pieceName,
-                        pieceVersion: tool.pieceMetadata.pieceVersion,
-                        actionName: tool.pieceMetadata.actionName,
-                        predefinedInput: tool.pieceMetadata.predefinedInput,
-                        model,
-                    }),
-            }
-        }))
-
-        return {
-            ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
-        }
-    },
-
+export const agentToolExecutor = {
     async execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
         const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: operation.pieceName,
@@ -173,6 +134,7 @@ async function resolveProperties(
             required: requiredProperties,
         })
 
+        console.error('schemaToUse', schemaToUse);
         const { output } = await generateText({
             model,
             prompt: extractionPrompt,
@@ -180,6 +142,7 @@ async function resolveProperties(
                 schema: schemaToUse,
             }),
         })
+        console.error('output', output);
 
 
         result = {

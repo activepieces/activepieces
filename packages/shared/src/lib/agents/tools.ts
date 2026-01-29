@@ -26,7 +26,7 @@ export const PredefinedInputField = Type.Object({
 export type PredefinedInputField = Static<typeof PredefinedInputField>
 
 export const PredefinedInputsStructure = Type.Object({
-    auth: Type.Optional(Type.String()),
+    auth: Type.Optional(Type.Unknown()),
     fields: Type.Record(Type.String(), PredefinedInputField),
 })
 export type PredefinedInputsStructure = Static<typeof PredefinedInputsStructure>
@@ -107,6 +107,7 @@ export const AgentMcpTool = Type.Object({
 export type AgentMcpTool = Static<typeof AgentMcpTool>
 
 export const AgentFlowMakerTool = Type.Object({
+    ...AgentToolBase,
     type: Type.Literal(AgentToolType.FLOW_MAKER),
 })
 export type AgentFlowMakerTool = Static<typeof AgentFlowMakerTool>

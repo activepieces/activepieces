@@ -3,6 +3,7 @@ import { AgentTool } from "../agents/tools"
 import { DiscriminatedUnion } from "../common"
 import { AssistantConversationContent, ConversationMessage } from "./message"
 import { AIProviderName } from "../ai-providers"
+import { AgentOutputField } from "../agents"
 
 export const AgentSession = Type.Object({
   systemPrompt: Type.String(),
@@ -11,7 +12,7 @@ export const AgentSession = Type.Object({
   provider: Type.Enum(AIProviderName),
   state: Type.Record(Type.String(), Type.Unknown()),
   conversation: Type.Optional(Type.Array(ConversationMessage)),
-  structuredOutput: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+  structuredOutput: Type.Optional(Type.Array(AgentOutputField)),
 })
 export type AgentSession = Static<typeof AgentSession>
 

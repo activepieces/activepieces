@@ -1,12 +1,13 @@
 import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, AgentSession, AgentStreamingUpdateProgressData } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
-import { ModelMessage, stepCountIs, streamText, Tool, ToolSet } from 'ai'
+import { ModelMessage, stepCountIs, streamText, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentUtils } from './utils'
 import { pubsubFactory } from '@activepieces/server-shared'
 import { workerRedisConnections } from '../utils/worker-redis'
 import { buildSystemPrompt } from './system-prompt'
 import { createBuiltInTools } from './tools/built-in'
+import { constructAgentTools } from './tools/tools-constructor'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
@@ -31,7 +32,36 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             projectId,
             platformId,
             state: data.session.state,
-            tools: tools ?? [],
+            tools,
+        })
+
+        const { tools: agentTools, mcpClients } = await constructAgentTools(log, {
+            engineToken,
+            platformId,
+            projectId,
+            modelId,
+            tools,
+            structuredOutput,
+            taskCompletionCallback: async (success: boolean, output?: Record<string, unknown>) => {
+                // let text = success ? 'Task completed successfully' : 'Task failed'
+
+                // await this.emitProgress(requestId, {
+                //     event: AgentStreamingEvent.AGENT_STREAMING_UPDATE,
+                //     data: {
+                //         part: {
+                //             type: 'tool-call',
+                //             toolName: TASK_COMPLETION_TOOL_NAME,
+                //             toolCallId: crypto.randomUUID(),
+                //             status: 'completed',
+                //             input: {
+                //                 success,
+                //                 output,
+                //             },
+                //             isStreaming: false,
+                //         },
+                //     },
+                // })
+            }
         })
 
         const { fullStream } = streamText({
@@ -40,6 +70,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             stopWhen: [stepCountIs(25)],
             messages: convertHistory(conversation ?? []),
             tools: {
+                ...agentTools,
                 ...builtInTools,
             } as ToolSet,
         })
@@ -109,8 +140,8 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
    
         await this.emitProgress(requestId, {
             event: AgentStreamingEvent.AGENT_STREAMING_ENDED,
-            // data: newSession,
         })
+        await Promise.all(mcpClients.map(async (client) => client.close()));
     },
     emitProgress: async (requestId: string, update: AgentStreamingUpdate) => {
         await pubsub.publish(`agent-response:${requestId}`, JSON.stringify(update))

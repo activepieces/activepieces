@@ -1,22 +1,25 @@
-import { dynamicTool, LanguageModel, Tool } from "ai";
+import { dynamicTool, Tool } from "ai";
 import z from "zod";
-import { agentUtils } from "./utils";
-import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, isNil, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
-import { ActionContext } from "@activepieces/pieces-framework";
+import { AgentOutputField, AgentTool, AgentToolType, isNil, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { MakeToolsParams, pieceToolExecutor } from "./piece-tools";
+import { FastifyBaseLogger } from "fastify";
+import { agentUtils } from "../utils";
 
 export async function constructAgentTools(
+  log: FastifyBaseLogger,
   params: ConstructAgentToolParams
-): Promise<{ tools: Record<string, Tool> }> {
+): Promise<Record<string, Tool>> {
 
-    const { outputBuilder, structuredOutput, agentTools, context, model } = params;
-    const agentPieceTools = await context.agent.tools({
-      tools: agentTools.filter(tool => tool.type === AgentToolType.PIECE),
-      model: model,
+    const { structuredOutput, tools, engineToken, platformId, projectId, modelId, taskCompletionCallback } = params;
+    const agentPieceTools = await pieceToolExecutor(log).makeTools({
+      tools: tools.filter(tool => tool.type === AgentToolType.PIECE),
+      modelId: modelId,
+      engineToken: engineToken,
+      platformId: platformId,
+      projectId: projectId,
     });
 
     return {
-        tools: {
             ...agentPieceTools,
             [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
           description:
@@ -52,26 +55,24 @@ export async function constructAgentTools(
               success: boolean;
               output?: Record<string, unknown>;
             };
-            outputBuilder.setStatus(
-              success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
-            );
-            if (!isNil(structuredOutput) && !isNil(output)) {
-              outputBuilder.setStructuredOutput(output);
-            }
-            if (!isNil(structuredOutput) && !isNil(output)) {
-              outputBuilder.addMarkdown(output as unknown as string);
-            }
+            taskCompletionCallback(success, output);
+            // outputBuilder.setStatus(
+            //   success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
+            // );
+            // if (!isNil(structuredOutput) && !isNil(output)) {
+            //   outputBuilder.setStructuredOutput(output);
+            // }
+            // if (!isNil(structuredOutput) && !isNil(output)) {
+            //   outputBuilder.addMarkdown(output as unknown as string);
+            // }
             return {};
           },
         })
     }
-    }
 }
 
-type ConstructAgentToolParams = {
-  outputBuilder: ReturnType<typeof agentOutputBuilder>;
-  structuredOutput?: AgentOutputField[];
-  agentTools: AgentTool[];
-  context: ActionContext
-  model: LanguageModel
-};
+type ConstructAgentToolParams = Omit<MakeToolsParams, 'tools'> & {
+  tools: AgentTool[]
+  structuredOutput?: AgentOutputField[]
+  taskCompletionCallback: (success: boolean, output?: Record<string, unknown>) => void
+}

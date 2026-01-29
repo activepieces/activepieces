@@ -27,7 +27,6 @@ import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
-import { constructAgentTools } from './tools';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { context } from '@opentelemetry/api';
 import assert from 'assert';
@@ -112,41 +111,25 @@ export const runAgent = createAction({
     const { prompt, maxSteps, aiProviderModel } = context.propsValue;
     const agentProviderModel = aiProviderModel as AgentProviderModel
 
-    const model = await createAIModel({
-      modelId: agentProviderModel.model,
-      provider: agentProviderModel.provider as AIProviderName,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-    });
     const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =
       !isNil(context.propsValue.structuredOutput) &&
       context.propsValue.structuredOutput.length > 0;
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
-    const { tools } = await constructAgentTools({
-      context,
-      agentTools,
-      model,
-      outputBuilder,
-      structuredOutput
-    });
 
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
       const response = await runAgentApi(context, {
+        provider: agentProviderModel.provider as AIProviderName,
         systemPrompt: agentUtils.getPrompts(prompt).system,
         prompt: agentUtils.getPrompts(prompt).prompt,
         modelId: agentProviderModel.model,
         projectId: context.project.id,
         tools: agentTools,
-        provider: agentProviderModel.provider,
         state: {},
-        structuredOutput: { structuredOutput },
+        structuredOutput,
       });
 
       await new Promise<void>((resolve) => {
@@ -174,7 +157,6 @@ export const runAgent = createAction({
                       toolCallId: part.toolCallId,
                       output: part.output as Record<string, unknown>,
                     });
-                    shouldResolve = true;
 
                   } else if (part.status === 'error') {
 
@@ -186,7 +168,6 @@ export const runAgent = createAction({
                     outputBuilder.failToolCall({
                       toolCallId: part.toolCallId,
                     });
-                    shouldResolve = true;
 
                   } else {
                     outputBuilder.startToolCall({
@@ -225,6 +206,7 @@ export const runAgent = createAction({
 
       if (errors.length > 0) {
         const errorSummary = errors.map(e => `${e.type}: ${e.message}: ${e.details}`).join('\n');
+        console.error('errors', errorSummary);
         outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
         outputBuilder.fail({ message: 'Agent completed with errors' });
         await context.output.update({ data: outputBuilder.build() });
@@ -234,7 +216,9 @@ export const runAgent = createAction({
       }
 
     } catch (error) {
-      const errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
+      const errorMessage = `Agent failed unexpectedly: \n${error}`;
+      console.error('errorMessage', errorMessage);
+      outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n`);
       outputBuilder.fail({ message: errorMessage });
       await context.output.update({ data: outputBuilder.build() });
     }
@@ -253,6 +237,13 @@ const runAgentApi = async (context: ActionContext, request: ExecuteAgentRequest)
       'Authorization': `Bearer ${context.server.token}`,
     },
   });
+  if (response.status !== 200) {
+    const error = await response.json();
+    throw new Error(`
+      code: ${error.code}\n
+      message: ${error.message}\n
+    `);
+  }
 
   return response as { body: ReadableStream<Uint8Array> };
 }

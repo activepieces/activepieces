@@ -11,7 +11,7 @@ import {
 } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { agentTools } from '../tools'
+import { agentToolExecutor } from '../handler/agent-tool-executor'
 
 export const toolOperation = {
     execute: async (operation: ExecuteToolOperation): Promise<EngineResponse<ExecuteToolResponse>> => {
@@ -19,7 +19,7 @@ export const toolOperation = {
             throw new ExecutionError('Missing modelId', 'modelId is required for EXECUTE_TOOL operation', ExecutionErrorType.ENGINE)
         }
         const model = await getModel(operation.modelId, operation.engineToken, operation.internalApiUrl)
-        const output = await agentTools.execute({
+        const output = await agentToolExecutor.execute({
             ...operation,
             model,
         })

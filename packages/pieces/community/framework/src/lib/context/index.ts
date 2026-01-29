@@ -202,7 +202,6 @@ type BaseActionContext<
   server: ServerContext;
   files: FilesService;
   output: OutputContext;
-  agent: AgentContext;
   run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>,
@@ -235,10 +234,6 @@ export type ActionContext<
 export type ConstructToolParams = {
   tools: AgentPieceTool[]
   model: LanguageModel,
-}
-
-export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
 }
 
 export interface FilesService {

@@ -36,6 +36,11 @@ export const agentToolHooks = {
               displayName: contentBlock.displayName,
               logoUrl: null,
             };
+          case ToolCallType.FLOW_MAKER:
+            return {
+              displayName: contentBlock.displayName,
+              logoUrl: null,
+            };
           default:
             return { displayName: null, logoUrl: null };
         }
