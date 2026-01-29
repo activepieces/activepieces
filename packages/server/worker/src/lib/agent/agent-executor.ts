@@ -17,7 +17,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
         const { platformId, projectId } = data
-        const { requestId, conversation, modelId, structuredOutput, tools } = data.session
+        const { requestId, conversation, modelId, tools } = data.session
 
         const model = await agentUtils.getModel({
             modelId,
@@ -35,6 +35,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             platformId,
             state: data.session.state,
             tools,
+            structuredOutputSchema: data.session.structuredOutput,
         })
 
         // Filter and construct piece tools

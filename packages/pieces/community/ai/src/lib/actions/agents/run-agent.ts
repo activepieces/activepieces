@@ -101,7 +101,7 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, aiProviderModel } = context.propsValue;
+    const { prompt, aiProviderModel } = context.propsValue;
     const agentProviderModel = aiProviderModel as AgentProviderModel
 
     const hasStructuredOutput =
@@ -117,7 +117,7 @@ export const runAgent = createAction({
       prompt,
       conversation,
       status,
-      structuredOutput: undefined,
+      structuredOutput: genericAgentUtils.extractStructuredOutput(conversation),
     });
 
     try {

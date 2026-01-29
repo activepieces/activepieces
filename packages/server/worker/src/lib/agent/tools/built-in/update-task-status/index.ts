@@ -14,11 +14,11 @@ export const UPDATE_TASK_STATUS_SKILL = `
 `
 
 type CreateUpdateTaskStatusToolParams = {
-    structuredOutput?: AgentOutputField[]
+    structuredOutputSchema?: AgentOutputField[]
 }
 
-export function createUpdateTaskStatusTool({ structuredOutput }: CreateUpdateTaskStatusToolParams = {}) {
-    const inputSchema = buildInputSchema(structuredOutput)
+export function createUpdateTaskStatusTool({ structuredOutputSchema }: CreateUpdateTaskStatusToolParams = {}) {
+    const inputSchema = buildInputSchema(structuredOutputSchema)
     
     return {
         [agentToolsName.TASK_COMPLETION_TOOL_NAME]: {
@@ -32,50 +32,57 @@ export function createUpdateTaskStatusTool({ structuredOutput }: CreateUpdateTas
                     message: input['status'] === 'completed' 
                         ? 'Task marked as completed successfully.' 
                         : 'Task marked as failed.',
-                    ...extractStructuredOutput(input, structuredOutput),
+                    output: extractStructuredOutput(input, structuredOutputSchema),
                 }
             },
         },
     }
 }
 
-function buildInputSchema(structuredOutput?: AgentOutputField[]) {
+function buildInputSchema(structuredOutputSchema?: AgentOutputField[]) {
     const baseSchema: Record<string, z.ZodTypeAny> = {
         status: z.enum(['completed', 'failed']).describe('Whether the task was completed successfully or failed'),
         summary: z.string().describe('A clear summary of what was accomplished or why the task could not be completed'),
     }
 
-    if (structuredOutput && structuredOutput.length > 0) {
-        for (const field of structuredOutput) {
+    if (structuredOutputSchema && structuredOutputSchema.length > 0) {
+        const outputFields: Record<string, z.ZodTypeAny> = {}
+        for (const field of structuredOutputSchema) {
             const description = field.description || field.displayName
             switch (field.type) {
                 case AgentOutputFieldType.TEXT:
-                    baseSchema[field.displayName] = z.string().describe(description)
+                    outputFields[field.displayName] = z.string().describe(description)
                     break
                 case AgentOutputFieldType.NUMBER:
-                    baseSchema[field.displayName] = z.number().describe(description)
+                    outputFields[field.displayName] = z.number().describe(description)
                     break
                 case AgentOutputFieldType.BOOLEAN:
-                    baseSchema[field.displayName] = z.boolean().describe(description)
+                    outputFields[field.displayName] = z.boolean().describe(description)
                     break
                 default:
-                    baseSchema[field.displayName] = z.any().describe(description)
+                    outputFields[field.displayName] = z.any().describe(description)
             }
         }
+        baseSchema['output'] = z.object(outputFields).describe('The structured output fields for the task')
     }
 
     return z.object(baseSchema)
 }
 
-function extractStructuredOutput(input: Record<string, unknown>, structuredOutput?: AgentOutputField[]): Record<string, unknown> {
-    if (!structuredOutput || structuredOutput.length === 0) {
+function extractStructuredOutput(input: Record<string, unknown>, structuredOutputSchema?: AgentOutputField[]): Record<string, unknown> {
+    if (!structuredOutputSchema || structuredOutputSchema.length === 0) {
+        return {}
+    }
+
+    const output = input['output'] as Record<string, unknown> | undefined
+    if (!output) {
         return {}
     }
 
     const result: Record<string, unknown> = {}
-    for (const field of structuredOutput) {
-        if (field.displayName in input) {
-            result[field.displayName] = input[field.displayName]
+    for (const field of structuredOutputSchema) {
+        if (field.displayName in output) {
+            result[field.displayName] = output[field.displayName]
         }
     }
     return result
