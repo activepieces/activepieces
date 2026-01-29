@@ -81,7 +81,7 @@ export const AddMcpToolForm = ({
   const isToolNameUnique = (value: string) => {
     return !tools.some(
       (tool) =>
-        tool.toolName === value && tool.toolName !== editingMcpTool?.toolName,
+        tool.type === AgentToolType.MCP && tool.toolName === value && tool.type !== editingMcpTool?.type,
     );
   };
 

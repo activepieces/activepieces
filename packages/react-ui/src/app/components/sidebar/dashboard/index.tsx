@@ -7,13 +7,11 @@ import {
   useRef,
   useEffect,
   useCallback,
-  SVGProps,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
-import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,17 +56,6 @@ import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
-
-const QuickLogo = (props: SVGProps<SVGSVGElement>) => {
-  return (
-    <img
-      src={quickLogoUrl}
-      alt="Quick Logo"
-      className={props.className}
-      style={{ display: 'block' }}
-    />
-  );
-};
 
 export function ProjectDashboardSidebar() {
   const { data: projects } = projectCollectionUtils.useAll();
@@ -180,16 +167,6 @@ export function ProjectDashboardSidebar() {
     });
   }, []);
 
-  const coworkLink: SidebarItemType = {
-    type: 'link',
-    to: '/quick',
-    label: t('Chat'),
-    show: true,
-    icon: QuickLogo,
-    hasPermission: true,
-    isSubItem: false,
-  };
-
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
@@ -221,7 +198,7 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const items = [coworkLink, exploreLink, impactLink, leaderboardLink].filter(
+  const items = [exploreLink, impactLink, leaderboardLink].filter(
     permissionFilter,
   );
 

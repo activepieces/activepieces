@@ -85,7 +85,6 @@ export function QuickPage() {
             hideBorder={true}
           />
           
-          <QuickFlowsList />
         </div>
       </div>
     </div>
