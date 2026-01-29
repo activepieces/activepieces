@@ -89,7 +89,7 @@ const TestStepSectionImplementation = React.memo(
 
     const [todo, setTodo] = useState<PopulatedTodo | null>(null);
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
+    const sampleDataExists = !isNil(liveAgentResult) || !isNil(lastTestDate) || !isNil(errorMessage);
 
     const handleTodoTest = async () => {
       setActiveDialog(DialogType.TODO_CREATE_TASK);

@@ -1,4 +1,4 @@
-import { FLOW_TOOLS_SYSTEM_PROMPT } from "./tools/flow-maker"
+import { FLOW_TOOLS_SYSTEM_PROMPT } from "../../../../../pieces/community/framework/src/lib/common-tools/flow-maker"
 
 
 export const systemPrompt = () => {

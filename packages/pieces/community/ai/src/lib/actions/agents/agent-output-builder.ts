@@ -35,11 +35,11 @@ export const agentOutputBuilder = (prompt: string) => {
     fail({ message }: FinishParams) {
       status = AgentTaskStatus.FAILED;
       if (!isNil(message)) {
-        this.addMarkdown(message);
+        this.addMarkdown(message, true);
         this.appendErrorToStructuredOutput({ message });
       }
     },
-    addMarkdown(markdown: string) {
+    addMarkdown(markdown: string, append: boolean = false) {
       if (
         steps.length === 0 ||
         steps[steps.length - 1].type !== ContentBlockType.MARKDOWN
@@ -49,7 +49,11 @@ export const agentOutputBuilder = (prompt: string) => {
           markdown: '',
         });
       }
-      (steps[steps.length - 1] as MarkdownContentBlock).markdown += markdown;
+      if (append) {
+        (steps[steps.length - 1] as MarkdownContentBlock).markdown += markdown;
+      } else {
+        (steps[steps.length - 1] as MarkdownContentBlock).markdown = markdown;
+      }
     },
     startToolCall({
       toolName,
@@ -174,7 +178,11 @@ function getToolMetadata({
         
       };
     }
+    case AgentToolType.EXECUTE_CODE: {
+      throw new Error(`Unsupported tool type: ${tool.type}`);
+    }
   }
+  throw new Error(`Unsupported tool type: ${tool.type}`);
 }
 
 type GetToolMetadaParams = {

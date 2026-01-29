@@ -21,7 +21,7 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
         return chatSessionService(request.log).update({
             id: request.params.id,
             userId: request.principal.id,
-            session: request.body
+            session: request.body as Partial<ChatSession>
         })
     })
 

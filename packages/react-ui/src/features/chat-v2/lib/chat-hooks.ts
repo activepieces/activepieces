@@ -9,10 +9,10 @@ import {
   ChatSession,
   Conversation,
   genericAgentUtils,
+  readStream,
 } from '@activepieces/shared';
 
 import { UploadingFile } from '../prompt-input/file-input-preview';
-import { readStream } from '@/lib/read-stream';
 
 export const uploadFile = async (file: File): Promise<string | undefined> => {
   const formData = new FormData();

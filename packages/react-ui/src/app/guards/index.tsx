@@ -72,6 +72,7 @@ import {
   TokenCheckerWrapper,
 } from './project-route-wrapper';
 import { TemplateDetailsWrapper } from './template-details-wrapper';
+import { SocketProvider } from '@/components/socket-provider';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -121,13 +122,15 @@ const routes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleFlow,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_FLOW}>
-        <PageTitle title="Builder">
-          <BuilderLayout>
-            <FlowBuilderPage />
-          </BuilderLayout>
-        </PageTitle>
-      </RoutePermissionGuard>
+      <SocketProvider>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Builder">
+            <BuilderLayout>
+              <FlowBuilderPage />
+            </BuilderLayout>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </SocketProvider>
     ),
   }),
   ...ProjectRouterWrapper({

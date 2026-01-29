@@ -237,8 +237,8 @@ function getFlowVersionId(operation: EngineOperation, type: EngineOperationType)
         case EngineOperationType.EXECUTE_TRIGGER_HOOK:
             return (operation as ExecuteTriggerOperation<TriggerHookType>).flowVersion.id
         case EngineOperationType.EXTRACT_PIECE_METADATA:
-        case EngineOperationType.EXECUTE_TOOL:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:
+        case EngineOperationType.EXECUTE_TOOL:
             return undefined
     }
 }

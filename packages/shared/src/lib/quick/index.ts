@@ -17,7 +17,7 @@ export const ChatSession = Type.Object({
   structuredOutput: Type.Optional(Type.Record(Type.String(), Type.Any())),
 })
 
-export type ChatSession = Static<typeof ChatSession>
+export type ChatSession = Static<typeof ChatSession> & ExecuteAgentData
 
 export const CreateChatSessionRequest = Type.Object({})
 export type CreateChatSessionRequest = Static<typeof CreateChatSessionRequest>

@@ -1,12 +1,11 @@
-import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData } from '@activepieces/shared'
+import { AgentStreamingEvent, AgentStreamingUpdate, genericAgentUtils, ExecuteAgentJobData, isNil, ConversationMessage, ExecuteAgentData, AgentStreamingUpdateProgressData, spreadIfDefined } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
-import { ModelMessage, stepCountIs, streamText, ToolSet } from 'ai'
+import { LanguageModel, ModelMessage, stepCountIs, streamText, Tool, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { systemPrompt } from './system-prompt'
 import { agentUtils } from './utils'
-import { createFlowTools } from './tools/flow-maker'
 import { pubsubFactory } from '@activepieces/server-shared'
 import { workerRedisConnections } from '../utils/worker-redis'
+import { createFlowTools } from './tools/flow-maker'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
@@ -14,18 +13,30 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
         const { platformId, projectId } = data
-        const { requestId, conversation, modelId, structuredOutput } = data.session
-        let newSession: ExecuteAgentData = data.session satisfies ExecuteAgentData
+        const { requestId, conversation, modelId, structuredOutput, prompt, systemPrompt, toolSet } = data.session
+        const agentTools = toolSet as Record<string, Tool>
+
+        let newSession: ExecuteAgentData = {
+            ...data.session,
+            toolSet: agentTools,
+        } satisfies ExecuteAgentData
+        const model = await agentUtils.getModel(modelId, engineToken)
 
         const { fullStream } = streamText({
-            model: await agentUtils.getModel(modelId, engineToken),
-            system: systemPrompt(),
+            model,
+            system: systemPrompt,
             stopWhen: [stepCountIs(25)],
-            messages: conversation ? convertHistory(conversation) : [],
+            ...(
+                isNil(prompt)
+                ? { messages: convertHistory(conversation ?? []) }
+                : { prompt }
+            ),
             tools: {
+                ...agentTools,
                 ...(await createFlowTools({ engineToken, projectId, platformId, state: data.session.state })),
             } as ToolSet,
         })
+
         let previousText = ''
         for await (const chunk of fullStream) {
             let quickStreamingUpdate: AgentStreamingUpdateProgressData | undefined
@@ -90,7 +101,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
    
         await this.emitProgress(requestId, {
             event: AgentStreamingEvent.AGENT_STREAMING_ENDED,
-            data: newSession,
+            // data: newSession,
         })
     },
     emitProgress: async (requestId: string, update: AgentStreamingUpdate) => {

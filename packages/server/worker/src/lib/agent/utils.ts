@@ -20,6 +20,6 @@ export const agentUtils = {
             {},
         )
 
-        return createOpenRouter({ apiKey: response.auth.apiKey }).chat(modelId)
+        return createOpenRouter({ apiKey: response.auth.apiKey }).chat(modelId) as LanguageModel
     },
 }

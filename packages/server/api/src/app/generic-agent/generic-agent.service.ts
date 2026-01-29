@@ -11,6 +11,7 @@ export const genericAgentService = (log: FastifyBaseLogger) => ({
             platformId: params.platformId,
             projectId: params.projectId,
             session: {
+                systemPrompt: params.systemPrompt,
                 prompt: params.prompt,
                 tools: params.tools,
                 modelId: params.modelId,
@@ -21,6 +22,7 @@ export const genericAgentService = (log: FastifyBaseLogger) => ({
             },
             jobType: WorkerJobType.EXECUTE_AGENT,
         }
+     
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,

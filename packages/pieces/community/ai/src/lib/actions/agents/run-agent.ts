@@ -3,6 +3,7 @@ import {
   Property,
   PieceAuth,
   ArraySubProps,
+  ActionContext,
 } from '@activepieces/pieces-framework';
 
 import {
@@ -14,6 +15,12 @@ import {
   TASK_COMPLETION_TOOL_NAME,
   AIProviderName,
   AgentProviderModel,
+  ExecuteAgentRequest,
+  readStream,
+  AgentStreamingUpdate,
+  AgentStreamingEvent,
+  assertEqual,
+  parseToJsonIfPossible,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
@@ -21,6 +28,9 @@ import { createAIModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
 import { constructAgentTools } from './tools';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { context } from '@opentelemetry/api';
+import assert from 'assert';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -133,83 +143,103 @@ export const runAgent = createAction({
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
-      const stream = streamText({
-        model: model,
-        system: agentUtils.getPrompts(prompt).system,
+      const response = await runAgentApi(context, {
+        systemPrompt: agentUtils.getPrompts(prompt).system,
         prompt: agentUtils.getPrompts(prompt).prompt,
-        tools,
-        stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
-        onFinish: async () => {
-          await Promise.all(mcpClients.map(async (client) => client.close()));
-        },
+        modelId: agentProviderModel.model,
+        projectId: context.project.id,
+        tools: [],
+        toolSet: tools,
+        state: {},
+        structuredOutput: { structuredOutput },
       });
 
-      for await (const chunk of stream.fullStream) {
-        try {
-          switch (chunk.type) {
-            case 'text-delta': {
-              outputBuilder.addMarkdown(chunk.text);
-              break;
-            }
-            case 'tool-call': {
-              if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
-                continue;
+      await new Promise<void>((resolve) => {
+        readStream({
+          response,
+          onChunk: async (chunk) => {
+            try {
+              const messageJson = parseToJsonIfPossible(chunk) as AgentStreamingUpdate
+              if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_UPDATE) {
+                const part = messageJson.data.part;
+                let shouldResolve = false;
+
+                if (part.type === 'text') {
+                  outputBuilder.addMarkdown(part.message);
+                }
+
+                if (part.type === 'tool-call') {
+
+                  if (agentUtils.isTaskCompletionToolCall(part.toolName)) {
+                  } 
+
+                  else if (part.status === 'completed') {
+
+                    outputBuilder.finishToolCall({
+                      toolCallId: part.toolCallId,
+                      output: part.output as Record<string, unknown>,
+                    });
+                    shouldResolve = true;
+
+                  } else if (part.status === 'error') {
+
+                    errors.push({
+                      type: 'tool-error',
+                      message: `Tool ${part.toolName} failed`,
+                      details: part.error,
+                    });
+                    outputBuilder.failToolCall({
+                      toolCallId: part.toolCallId,
+                    });
+                    shouldResolve = true;
+
+                  } else {
+                    outputBuilder.startToolCall({
+                      toolName: part.toolName,
+                      toolCallId: part.toolCallId,
+                      input: part.input as Record<string, unknown>,
+                      agentTools: agentTools,
+                    });
+                  }
+                }
+
+                await context.output.update({ data: outputBuilder.build() });
+                if (shouldResolve) resolve()
               }
-              outputBuilder.startToolCall({
-                toolName: chunk.toolName,
-                toolCallId: chunk.toolCallId,
-                input: chunk.input as Record<string, unknown>,
-                agentTools: agentTools,
-              });
-              break;
-            }
-            case 'tool-result': {
-              if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
-                continue;
-              }
-              outputBuilder.finishToolCall({
-                toolCallId: chunk.toolCallId,
-                output: chunk.output as Record<string, unknown>,
-              });
-              break;
-            }
-            case 'tool-error': {
+            } catch (error) {
               errors.push({
-                type: 'tool-error',
-                message: `Tool ${chunk.toolName} failed`,
-                details: chunk.error,
+                type: 'chunk-processing-error',
+                message: 'Error processing chunk',
+                details: inspect(error),
               });
-              outputBuilder.failToolCall({
-                toolCallId: chunk.toolCallId,
-              });
-              break;
             }
-            case 'error': {
-              errors.push({
-                type: 'stream-error',
-                message: 'Error during streaming',
-                details: inspect(chunk.error),
-              });
-              break;
-            }
-          }
-          await context.output.update({ data: outputBuilder.build() });
-        } catch (innerError) {
-          errors.push({
-            type: 'chunk-processing-error',
-            message: 'Error processing chunk',
-            details: inspect(innerError),
-          });
-        }
-      }
+          },
+          onEnd: async () => {
+            await Promise.all(mcpClients.map(async (client) => client.close()));
+            resolve()
+          },
+        });
+      })
+      
+      // const stream = streamText({
+      //   model: model,
+      //   system: agentUtils.getPrompts(prompt).system,
+      //   prompt: agentUtils.getPrompts(prompt).prompt,
+      //   tools,
+      //   stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
+      //   onFinish: async () => {
+      //     await Promise.all(mcpClients.map(async (client) => client.close()));
+      //   },
+      // });
 
       if (errors.length > 0) {
-        const errorSummary = errors.map(e => `${e.type}: ${e.message}`).join('\n');
+        const errorSummary = errors.map(e => `${e.type}: ${e.message}: ${e.details}`).join('\n');
         outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
         outputBuilder.fail({ message: 'Agent completed with errors' });
         await context.output.update({ data: outputBuilder.build() });
       } else {
         outputBuilder.setStatus(AgentTaskStatus.COMPLETED)
+        await context.output.update({ data: outputBuilder.build() });
       }
 
     } catch (error) {
@@ -222,3 +252,17 @@ export const runAgent = createAction({
     return outputBuilder.build();
   }
 });
+
+const runAgentApi = async (context: ActionContext, request: ExecuteAgentRequest) => {
+
+  const response = await fetch(`${context.server.apiUrl}v1/generic-agent/execute`, {
+    method: HttpMethod.POST,
+    body: JSON.stringify(request),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${context.server.token}`,
+    },
+  });
+
+  return response as { body: ReadableStream<Uint8Array> };
+}

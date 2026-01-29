@@ -4,6 +4,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { projectService } from '../project/project-service'
 import { ChatSessionEntity } from './chat.session.entity'
 import { genericAgentService } from '../generic-agent/generic-agent.service'
+import { systemPrompt } from 'packages/server/worker/src/lib/agent/system-prompt'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
@@ -37,6 +38,7 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
         }
         await chatSessionRepo().save(newSession)
         return await genericAgentService(log).executeAgent({
+            systemPrompt: systemPrompt(),
             projectId: project.id,
             platformId: params.platformId,
             prompt: params.message,
