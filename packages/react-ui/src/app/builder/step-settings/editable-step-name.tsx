@@ -132,11 +132,7 @@ const EditableStepName: React.FC<EditableStepNameProps> = ({
                     {stepMetadata.actionOrTriggerOrAgentDescription}
                   </div>
                 )}
-                {pieceVersion && (
-                  <div className="text-xs">
-                    v{pieceVersion}
-                  </div>
-                )}
+                {pieceVersion && <div className="text-xs">v{pieceVersion}</div>}
               </div>
             </TooltipContent>
           )}

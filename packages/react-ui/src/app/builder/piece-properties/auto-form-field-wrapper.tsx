@@ -67,16 +67,18 @@ function AutoFormFieldWrapper({
             {property && !isAuthProperty && (
               <PropertyTypeTooltip property={property} />
             )}
-            {!isAuthProperty && !Array.isArray(property) && property.description && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="text-muted-foreground w-3 h-3 ml-1 mt-0.5 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  {t(property.description)}
-                </TooltipContent>
-              </Tooltip>
-            )}
+            {!isAuthProperty &&
+              !Array.isArray(property) &&
+              property.description && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="text-muted-foreground w-3 h-3 ml-1 mt-0.5 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    {t(property.description)}
+                  </TooltipContent>
+                </Tooltip>
+              )}
             <span className="grow"></span>
             {allowDynamicValues && (
               <DynamicValueToggle
