@@ -201,7 +201,7 @@ export function ProjectDashboardSidebar() {
       <Sidebar collapsible="icon">
         <AppSidebarHeader />
 
-        <SidebarContent className="overflow-hidden">
+        <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
             <SidebarMenu>
               {items.map((item) => (
