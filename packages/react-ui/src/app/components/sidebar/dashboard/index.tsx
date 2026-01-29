@@ -212,7 +212,7 @@ export function ProjectDashboardSidebar() {
 
           <SidebarSeparator />
 
-          <SidebarGroup>
+          <SidebarGroup className="flex-1">
             <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
               <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
               <div className="flex items-center justify-center gap-2">
