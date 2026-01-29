@@ -25,7 +25,8 @@ type AgentTimelineProps = {
 
 // Extract all parts from assistant messages in the conversation
 const getAssistantParts = (agentResult: AgentResult): AssistantConversationContent[] => {
-  return agentResult.conversation
+  const conversation = agentResult.conversation ?? [];
+  return conversation
     .filter((msg) => msg.role === 'assistant')
     .flatMap((msg) => msg.parts);
 };
@@ -46,7 +47,7 @@ export const AgentTimeline = ({
         <div className="absolute left-2 top-4 bottom-8 w-px bg-border" />
 
         <div className="space-y-7 pb-4">
-          {agentResult.prompt.length > 0 && (
+          {agentResult.prompt && agentResult.prompt.length > 0 && (
             <PromptBlock prompt={agentResult.prompt} />
           )}
 

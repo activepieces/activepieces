@@ -22,7 +22,6 @@ import {
   ConversationMessage,
   AgentResult,
 } from '@activepieces/shared';
-import { agentUtils } from './utils';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
