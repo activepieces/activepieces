@@ -1,4 +1,4 @@
-import { AgentTool, AgentToolType } from '@activepieces/shared'
+import { AgentTool, AgentToolType, AgentTaskUpdateTool } from '@activepieces/shared'
 import { ToolSet } from 'ai'
 import { createFlowMakerTools } from './flow-maker'
 import { createUpdateTaskStatusTool } from './update-task-status'
@@ -13,10 +13,10 @@ type CreateBuiltInToolsParams = {
 
 export function createBuiltInTools({ engineToken, projectId, platformId, state, tools }: CreateBuiltInToolsParams): ToolSet {
     const hasFlowMakerAccess = tools.some(tool => tool.type === AgentToolType.FLOW_MAKER)
+    const taskUpdateTool = tools.find((tool): tool is AgentTaskUpdateTool => tool.type === AgentToolType.TASK_UPDATE)
     
-    // Always include the updateTaskStatus tool
     const builtInTools: ToolSet = {
-        ...createUpdateTaskStatusTool(),
+        ...createUpdateTaskStatusTool({ structuredOutput: taskUpdateTool?.structuredOutput }),
     }
 
     if (hasFlowMakerAccess) {

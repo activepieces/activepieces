@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion } from '../common'
+import { AgentOutputField } from './types'
 
 export const agentToolsName = {
     SEARCH_TRIGGERS_TOOL_NAME: 'search_triggers',
@@ -34,7 +35,8 @@ export type PredefinedInputsStructure = Static<typeof PredefinedInputsStructure>
 export enum AgentToolType {
     PIECE = 'PIECE',
     MCP = 'MCP',
-    FLOW_MAKER = 'FLOW_MAKER'
+    FLOW_MAKER = 'FLOW_MAKER',
+    TASK_UPDATE = 'TASK_UPDATE',
 }
 
 export enum McpProtocol {
@@ -111,9 +113,16 @@ export const AgentFlowMakerTool = Type.Object({
 })
 export type AgentFlowMakerTool = Static<typeof AgentFlowMakerTool>
 
+export const AgentTaskUpdateTool = Type.Object({
+    type: Type.Literal(AgentToolType.TASK_UPDATE),
+    structuredOutput: Type.Optional(Type.Array(AgentOutputField)),
+})
+export type AgentTaskUpdateTool = Static<typeof AgentTaskUpdateTool>
+
 export const AgentTool = DiscriminatedUnion('type', [
     AgentPieceTool,
     AgentMcpTool,
     AgentFlowMakerTool,
+    AgentTaskUpdateTool,
 ])
 export type AgentTool = Static<typeof AgentTool>

@@ -19,11 +19,11 @@ import {
   AgentStreamingEvent,
   parseToJsonIfPossible,
   genericAgentUtils,
+  ConversationMessage,
+  AgentResult,
 } from '@activepieces/shared';
-import { agentOutputBuilder } from './agent-output-builder';
-import { inspect } from 'util';
 import { agentUtils } from './utils';
-import {  HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -105,13 +105,21 @@ export const runAgent = createAction({
     const { prompt, maxSteps, aiProviderModel } = context.propsValue;
     const agentProviderModel = aiProviderModel as AgentProviderModel
 
-    const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =
       !isNil(context.propsValue.structuredOutput) &&
       context.propsValue.structuredOutput.length > 0;
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
-    const errors: { type: string; message: string; details?: unknown }[] = [];
+
+    let conversation: ConversationMessage[] = genericAgentUtils.addUserMessage([], prompt);
+    let status: AgentTaskStatus = AgentTaskStatus.IN_PROGRESS;
+
+    const buildResult = (): AgentResult => ({
+      prompt,
+      conversation,
+      status,
+      structuredOutput: undefined,
+    });
 
     try {
       const response = await runAgentApi(context, {
@@ -121,65 +129,17 @@ export const runAgent = createAction({
         tools: agentTools,
         state: {},
         structuredOutput,
-        conversation: genericAgentUtils.addUserMessage([], prompt),
+        conversation: conversation,
       });
 
       await new Promise<void>((resolve) => {
         readStream({
           response,
           onChunk: async (chunk) => {
-            try {
-              const messageJson = parseToJsonIfPossible(chunk) as AgentStreamingUpdate
-              if (messageJson.event === AgentStreamingEvent.AGENT_STREAMING_UPDATE) {
-                const part = messageJson.data.part;
-                let shouldResolve = false;
-
-                if (part.type === 'text') {
-                  outputBuilder.addMarkdown(part.message);
-                }
-
-                if (part.type === 'tool-call') {
-
-                  if (agentUtils.isTaskCompletionToolCall(part.toolName)) {
-                  } 
-
-                  else if (part.status === 'completed') {
-
-                    outputBuilder.finishToolCall({
-                      toolCallId: part.toolCallId,
-                      output: part.output as Record<string, unknown>,
-                    });
-
-                  } else if (part.status === 'error') {
-
-                    errors.push({
-                      type: 'tool-error',
-                      message: `Tool ${part.toolName} failed`,
-                      details: part.error,
-                    });
-                    outputBuilder.failToolCall({
-                      toolCallId: part.toolCallId,
-                    });
-
-                  } else {
-                    outputBuilder.startToolCall({
-                      toolName: part.toolName,
-                      toolCallId: part.toolCallId,
-                      input: part.input as Record<string, unknown>,
-                      agentTools: agentTools,
-                    });
-                  }
-                }
-
-                await context.output.update({ data: outputBuilder.build() });
-                if (shouldResolve) resolve()
-              }
-            } catch (error) {
-              errors.push({
-                type: 'chunk-processing-error',
-                message: 'Error processing chunk',
-                details: inspect(error),
-              });
+            const updated = parseToJsonIfPossible(chunk) as AgentStreamingUpdate
+            if (updated.event === AgentStreamingEvent.AGENT_STREAMING_UPDATE) {
+              conversation = genericAgentUtils.streamChunk(conversation, updated.data);
+              await context.output.update({ data: buildResult() });
             }
           },
           onEnd: async () => {
@@ -188,34 +148,17 @@ export const runAgent = createAction({
         });
       })
       
-      // const stream = streamText({
-      //   model: model,
-      //   system: agentUtils.getPrompts(prompt).system,
-      //   prompt: agentUtils.getPrompts(prompt).prompt,
-      //   tools,
-      //   stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
-      // });
-
-      if (errors.length > 0) {
-        const errorSummary = errors.map(e => `${e.type}: ${e.message}: ${e.details}`).join('\n');
-        console.error('errors', errorSummary);
-        outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
-        outputBuilder.fail({ message: 'Agent completed with errors' });
-        await context.output.update({ data: outputBuilder.build() });
-      } else {
-        outputBuilder.setStatus(AgentTaskStatus.COMPLETED)
-        await context.output.update({ data: outputBuilder.build() });
-      }
+      status = AgentTaskStatus.COMPLETED;
+      await context.output.update({ data: buildResult() });
 
     } catch (error) {
       const errorMessage = `Agent failed unexpectedly: \n${error}`;
       console.error('errorMessage', errorMessage);
-      outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n`);
-      outputBuilder.fail({ message: errorMessage });
-      await context.output.update({ data: outputBuilder.build() });
+      status = AgentTaskStatus.FAILED;
+      await context.output.update({ data: buildResult() });
     }
 
-    return outputBuilder.build();
+    return buildResult();
   }
 });
 

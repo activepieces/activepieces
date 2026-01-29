@@ -42,7 +42,7 @@ export const AgentTools = ({
 }: AgentToolsProps) => {
 
   const removeTool = (toolName: string) => {
-    onToolsUpdate(tools.filter((tool) => tool.type !== AgentToolType.MCP && tool.type !== AgentToolType.FLOW_MAKER && toolName !== tool.toolName));
+    onToolsUpdate(tools.filter((tool) => tool.type !== AgentToolType.MCP && tool.type !== AgentToolType.FLOW_MAKER && toolName !== (tool as AgentPieceTool)?.toolName));
   };
 
   const mcpTools = tools.filter((tool) => tool.type === AgentToolType.MCP);

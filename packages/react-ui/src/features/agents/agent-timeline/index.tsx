@@ -4,8 +4,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   type AgentResult,
   AgentTaskStatus,
-  ContentBlockType,
   isNil,
+  AssistantConversationContent,
 } from '@activepieces/shared';
 
 import {
@@ -23,6 +23,13 @@ type AgentTimelineProps = {
   agentResult?: AgentResult;
 };
 
+// Extract all parts from assistant messages in the conversation
+const getAssistantParts = (agentResult: AgentResult): AssistantConversationContent[] => {
+  return agentResult.conversation
+    .filter((msg) => msg.role === 'assistant')
+    .flatMap((msg) => msg.parts);
+};
+
 export const AgentTimeline = ({
   agentResult,
   className = '',
@@ -30,6 +37,8 @@ export const AgentTimeline = ({
   if (isNil(agentResult)) {
     return <p>{t('No agent output available')}</p>;
   }
+
+  const parts = getAssistantParts(agentResult);
 
   return (
     <div className={`h-full flex w-full flex-col ${className}`}>
@@ -41,13 +50,13 @@ export const AgentTimeline = ({
             <PromptBlock prompt={agentResult.prompt} />
           )}
 
-          {agentResult.steps.map((step, index) => {
-            switch (step.type) {
-              case ContentBlockType.MARKDOWN:
-                return <MarkdownBlock key={index} step={step} index={index} />;
-              case ContentBlockType.TOOL_CALL:
+          {parts.map((part, index) => {
+            switch (part.type) {
+              case 'text':
+                return <MarkdownBlock key={index} part={part} index={index} />;
+              case 'tool-call':
                 return (
-                  <AgentToolBlock key={index} block={step} index={index} />
+                  <AgentToolBlock key={index} block={part} index={index} />
                 );
               default:
                 return null;

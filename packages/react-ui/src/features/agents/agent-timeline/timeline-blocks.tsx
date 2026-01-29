@@ -25,18 +25,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   ExecuteToolResponse,
   isNil,
-  MarkdownContentBlock,
   MarkdownVariant,
-  TASK_COMPLETION_TOOL_NAME,
-  ToolCallStatus,
+  agentToolsName,
   ExecutionToolStatus,
-  type ToolCallContentBlock,
+  type ToolCallConversationMessage,
+  type TextConversationMessage,
 } from '@activepieces/shared';
 
 import { agentToolHooks } from '../agent-tool-hooks';
 
 interface AgentToolBlockProps {
-  block: ToolCallContentBlock;
+  block: ToolCallConversationMessage;
   index: number;
 }
 
@@ -71,13 +70,13 @@ const TimelineItem = ({
 };
 
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
-  if ([TASK_COMPLETION_TOOL_NAME].includes(block.toolName ?? '')) return null;
+  if ([agentToolsName.TASK_COMPLETION_TOOL_NAME].includes(block.toolName ?? '')) return null;
 
   const { data: metadata, isLoading } = agentToolHooks.useToolMetadata(block);
 
   const output = block.output as ExecuteToolResponse | null;
   const errorMessage = output?.errorMessage as string | null;
-  const isDone = block.status === ToolCallStatus.COMPLETED;
+  const isDone = block.status === 'completed';
   const isSuccess = output?.status ?? ExecutionToolStatus.FAILED;
   const hasInstructions = !isNil(block.input?.instruction);
   const resolvedFields = output?.resolvedInput ?? null;
@@ -208,19 +207,19 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
 export const MarkdownBlock = ({
   index,
-  step,
+  part,
 }: {
   index: number;
-  step: MarkdownContentBlock;
+  part: TextConversationMessage;
 }) => {
   return (
     <TimelineItem
-      key={`step-${index}-${step.type}`}
+      key={`step-${index}-${part.type}`}
       icon={<MessageSquareText className="h-4 w-4 text-muted-foreground" />}
     >
       <div className="bg-accent/20 rounded-md p-3 text-sm text-foreground border border-border">
         <ApMarkdown
-          markdown={step.markdown}
+          markdown={part.message}
           variant={MarkdownVariant.BORDERLESS}
         />
       </div>

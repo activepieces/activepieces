@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ExecutionToolStatus, PredefinedInputsStructure } from '../generic-agents'
+import { PredefinedInputsStructure } from '../generic-agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
@@ -220,6 +220,13 @@ export type ExecuteToolResponse = {
     resolvedInput: Record<string, unknown>
     errorMessage?: unknown
 }
+
+
+export enum ExecutionToolStatus {
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
 
 export type ExecuteActionResponse = {
     success: boolean
