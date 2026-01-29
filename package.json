@@ -205,6 +205,7 @@
     "jwks-rsa": "3.1.0",
     "jwt-decode": "4.0.0",
     "lottie-web": "5.12.2",
+    "lru-map": "1.6.1",
     "lucide-react": "0.407.0",
     "mime": "4.0.1",
     "mime-types": "2.1.35",
