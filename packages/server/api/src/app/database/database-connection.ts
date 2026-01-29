@@ -131,6 +131,18 @@ const createDataSource = (): DataSource => {
     }
 }
 
+export const clearTables = async (db: DataSource, exclude: string[] = []): Promise<void> => {
+    const entities = getEntities()
+
+    const tableNames = entities
+        .map(entity => db.getMetadata(entity).tableName)
+        .filter(name => !exclude.includes(name))
+        .map(name => `"${name}"`)
+        .join(', ')
+    
+    await db.query(`TRUNCATE TABLE ${tableNames} CASCADE`)
+}
+
 export const databaseConnection = (): DataSource => {
     if (isNil(_databaseConnection)) {
         _databaseConnection = createDataSource()

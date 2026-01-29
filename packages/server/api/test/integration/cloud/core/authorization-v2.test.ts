@@ -14,7 +14,7 @@ import {
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
 import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { clearTables, databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import {
     createMockProjectMember,
@@ -37,6 +37,11 @@ afterAll(async () => {
     await databaseConnection().destroy()
     await app?.close()
 }, 600000)
+
+
+afterEach(async () => {
+    await clearTables(databaseConnection(), ['project_role'])
+})
 
 describe('authorizeOrThrow', () => {
     describe('PUBLIC routes', () => {
