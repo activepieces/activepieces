@@ -78,8 +78,16 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
         app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
-        const debouncedBuild = debounce(() => {
-            buildPieces([packageName], io, app.log).catch(app.log.error)
+        const debouncedBuild = debounce((): void => {
+            void (async (): Promise<void> => {
+                try {
+                    await buildPieces([packageName], io, app.log)
+                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
+                }
+                catch (error) {
+                    app.log.error(error)
+                }
+            })()
         }, 2000)
 
         const watcher = watch(resolve(pieceDirectory), {
