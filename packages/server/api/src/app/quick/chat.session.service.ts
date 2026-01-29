@@ -38,7 +38,6 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
         }
         await chatSessionRepo().save(newSession)
         return await genericAgentService(log).executeAgent({
-            systemPrompt: buildSystemPrompt(newSession.tools),
             provider: newSession.provider,
             projectId: project.id,
             platformId: params.platformId,

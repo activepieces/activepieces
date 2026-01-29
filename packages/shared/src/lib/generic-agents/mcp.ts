@@ -1,4 +1,4 @@
-import { McpAuthConfig, McpAuthType } from './tools'
+import { McpAuthConfig, McpAuthType } from './tool'
 
 export function buildAuthHeaders(authConfig: McpAuthConfig): Record<string, string> {
     let headers: Record<string, string> = {}
@@ -28,4 +28,3 @@ export type ValidateAgentMcpToolResponse = {
     toolNames?: string[]
     error?: string
 }
-

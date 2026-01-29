@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
+import { ExecutionToolStatus, PredefinedInputsStructure } from '../generic-agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'

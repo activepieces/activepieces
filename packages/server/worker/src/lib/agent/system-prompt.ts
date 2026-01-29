@@ -1,8 +1,12 @@
 import { AgentTool, AgentToolType } from '@activepieces/shared'
 import { FLOW_MAKER_SKILL } from './tools/built-in/flow-maker'
+import { UPDATE_TASK_STATUS_SKILL } from './tools/built-in/update-task-status'
 
 export const buildSystemPrompt = (tools: AgentTool[]): string => {
     const skills: string[] = []
+
+    // Always include the task completion skill
+    skills.push(UPDATE_TASK_STATUS_SKILL)
 
     const hasFlowMakerAccess = tools.some(tool => tool.type === AgentToolType.FLOW_MAKER)
     if (hasFlowMakerAccess) {

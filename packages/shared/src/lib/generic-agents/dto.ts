@@ -1,12 +1,11 @@
 import { Static, Type } from "@sinclair/typebox"
-import { AgentTool } from "../agents/tools"
+import { AgentTool } from "./tool"
 import { DiscriminatedUnion } from "../common"
 import { AssistantConversationContent, ConversationMessage } from "./message"
 import { AIProviderName } from "../ai-providers"
-import { AgentOutputField } from "../agents"
+import { AgentOutputField } from "./types"
 
 export const AgentSession = Type.Object({
-  systemPrompt: Type.String(),
   tools: Type.Array(AgentTool),
   modelId: Type.String(),
   provider: Type.Enum(AIProviderName),

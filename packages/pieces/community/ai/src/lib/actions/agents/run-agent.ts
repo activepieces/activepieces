@@ -12,24 +12,18 @@ import {
   AgentTaskStatus,
   isNil,
   AgentTool,
-  TASK_COMPLETION_TOOL_NAME,
-  AIProviderName,
   AgentProviderModel,
   ExecuteAgentRequest,
   readStream,
   AgentStreamingUpdate,
   AgentStreamingEvent,
-  assertEqual,
   parseToJsonIfPossible,
+  genericAgentUtils,
 } from '@activepieces/shared';
-import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
-import { createAIModel } from '../../common/ai-sdk';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { context } from '@opentelemetry/api';
-import assert from 'assert';
+import {  HttpMethod } from '@activepieces/pieces-common';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -117,19 +111,17 @@ export const runAgent = createAction({
       context.propsValue.structuredOutput.length > 0;
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
-
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
       const response = await runAgentApi(context, {
-        provider: agentProviderModel.provider as AIProviderName,
-        systemPrompt: agentUtils.getPrompts(prompt).system,
-        prompt: agentUtils.getPrompts(prompt).prompt,
+        provider: agentProviderModel.provider,
         modelId: agentProviderModel.model,
         projectId: context.project.id,
         tools: agentTools,
         state: {},
         structuredOutput,
+        conversation: genericAgentUtils.addUserMessage([], prompt),
       });
 
       await new Promise<void>((resolve) => {

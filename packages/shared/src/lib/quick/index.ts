@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { AgentSession } from '../generic-agents/dto'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
-import { AgentTool } from '../agents'
+import { AgentTool } from '../generic-agents'
 import { Conversation, ConversationMessage } from '../generic-agents/message'
 
 export const DEFAULT_CHAT_MODEL = 'openai/gpt-5.1'
