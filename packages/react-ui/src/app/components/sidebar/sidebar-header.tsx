@@ -23,12 +23,12 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   return (
     <SidebarMenuButton
       onClick={() => navigate(linkTo || '/')}
-      className="w-fit h-10! group-data-[collapsible=icon]:h-10!"
+      className="h-10! group-data-[collapsible=icon]:h-10! items-center"
     >
       <img
         src={branding.logos.logoIconUrl}
         alt={t('home')}
-        className="h-5 w-5 object-contain"
+        className="h-5! w-5!"
         draggable={false}
       />
     </SidebarMenuButton>
@@ -42,12 +42,12 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
   return (
     <SidebarMenuButton
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10!"
+      className="h-10! group-data-[collapsible=icon]:h-10! items-center"
     >
       <img
         src={branding.logos.fullLogoUrl}
         alt={t('home')}
-        className="object-contain border"
+        className="h-5! object-contain"
         draggable={false}
       />
     </SidebarMenuButton>
