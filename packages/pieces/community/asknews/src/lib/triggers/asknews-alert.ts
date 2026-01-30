@@ -91,13 +91,10 @@ export const asknewsAlert = createTrigger({
       alertRequestBody
     );
 
-    // Store the alert ID for later deletion
     await context.store?.put(`asknews_alert_id_${webhookUrl}`, response.id);
   },
   async onDisable(context) {
     const { auth, webhookUrl } = context;
-
-    // Retrieve the stored alert ID
     const alertId = await context.store?.get(`asknews_alert_id_${webhookUrl}`);
 
     if (alertId) {
@@ -108,8 +105,7 @@ export const asknewsAlert = createTrigger({
         {}
       );
 
-      // Clean up the stored ID
-      await context.store?.delete(`asknews_alert_id_${webhookUrl}`);
+      await context.store.delete(`asknews_alert_id_${webhookUrl}`);
     }
   },
   async run(context) {
