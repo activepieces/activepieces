@@ -1,12 +1,10 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
+import { actions } from './lib/actions';
+import { calcomAuth } from './lib/auth';
 
-export const calcomAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'API Key provided by cal.com',
-  required: true,
-});
+export { calcomAuth };
 
 export const calcom = createPiece({
   displayName: 'Cal.com',
@@ -16,6 +14,6 @@ export const calcom = createPiece({
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: calcomAuth,
-  actions: [],
+  actions,
   triggers,
 });

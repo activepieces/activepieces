@@ -9,7 +9,7 @@ import {
   HttpRequest,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { calcomAuth } from '../..';
+import { calcomAuth } from '../auth';
 
 export const registerWebhooks = ({
   name,

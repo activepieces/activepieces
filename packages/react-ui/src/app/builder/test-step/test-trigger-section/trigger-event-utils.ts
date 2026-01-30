@@ -7,7 +7,8 @@ export type TestType =
   | 'chat-trigger'
   | 'simulation'
   | 'webhook'
-  | 'polling';
+  | 'polling'
+  | 'diga-function-call';
 
 export const triggerEventUtils = {
   getTestType: ({
@@ -30,6 +31,12 @@ export const triggerEventUtils = {
       triggerName === 'catch_webhook'
     ) {
       return 'webhook';
+    }
+    if (
+      pieceName === '@activepieces/piece-diga' &&
+      triggerName === 'functionCall'
+    ) {
+      return 'diga-function-call';
     }
 
     if (

@@ -8,24 +8,38 @@ import { DIGA_API_URL, DIGA_AP_SECRET } from "../common/config";
 // Type for parameter definition from the form
 type ParameterDefinition = {
   name: string;
-  dataType: "string" | "number" | "boolean";
+  dataType: "string" | "number" | "boolean" | "array";
   required: boolean;
   description?: string;
+  itemsType?: "string" | "number" | "boolean";
 };
 
 // Convert form parameters to JSON Schema format
 function parametersToJsonSchema(parameters: ParameterDefinition[]): {
   type: "object";
-  properties: Record<string, { type: string; description?: string }>;
+  properties: Record<
+    string,
+    { type: string; description?: string; items?: { type: string } }
+  >;
   required: string[];
 } {
-  const properties: Record<string, { type: string; description?: string }> = {};
+  const properties: Record<
+    string,
+    { type: string; description?: string; items?: { type: string } }
+  > = {};
   const required: string[] = [];
 
   for (const param of parameters) {
-    properties[param.name] = {
-      type: param.dataType,
-    };
+    if (param.dataType === "array") {
+      properties[param.name] = {
+        type: "array",
+        items: { type: param.itemsType || "string" },
+      };
+    } else {
+      properties[param.name] = {
+        type: param.dataType,
+      };
+    }
     if (param.description) {
       properties[param.name].description = param.description;
     }
@@ -71,6 +85,22 @@ export const functionCall = createTrigger({
           displayName: "Tipo de dato",
           description: "El tipo de dato que acepta este parámetro.",
           required: true,
+          defaultValue: "string",
+          options: {
+            disabled: false,
+            options: [
+              { label: "Texto", value: "string" },
+              { label: "Número", value: "number" },
+              { label: "Booleano", value: "boolean" },
+              { label: "Array", value: "array" },
+            ],
+          },
+        }),
+        itemsType: Property.StaticDropdown({
+          displayName: "Tipo de elementos del array",
+          description:
+            "El tipo de dato de cada elemento dentro del array. Solo aplica si el tipo de dato es Array.",
+          required: false,
           defaultValue: "string",
           options: {
             disabled: false,
@@ -127,6 +157,7 @@ export const functionCall = createTrigger({
       fecha: "2024-01-20",
       hora: "10:00",
       servicio: "consulta",
+      servicios_adicionales: ["masaje", "facial", "manicure"],
     },
     agent_id: "660e8400-e29b-41d4-a716-446655440001",
     agent_version_id: "770e8400-e29b-41d4-a716-446655440002",

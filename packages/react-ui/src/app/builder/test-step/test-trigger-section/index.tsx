@@ -9,6 +9,7 @@ import { ChatDrawerSource } from '@/lib/types';
 import { FlowTrigger, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { FunctionCallTestingDialog } from '../custom-test-step/function-call-testing-dialog';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 import { testStepHooks } from '../utils/test-step-hooks';
@@ -121,6 +122,7 @@ const TestTriggerSection = React.memo(
           pollTrigger();
           break;
         case 'mcp-tool':
+        case 'diga-function-call':
           setIsTestingDialogOpen(true);
           break;
       }
@@ -211,6 +213,13 @@ const TestTriggerSection = React.memo(
         )}
         {testType === 'mcp-tool' && (
           <McpToolTestingDialog
+            open={isTestingDialogOpen}
+            onOpenChange={setIsTestingDialogOpen}
+            onTestingSuccess={onTestSuccess}
+          />
+        )}
+        {testType === 'diga-function-call' && (
+          <FunctionCallTestingDialog
             open={isTestingDialogOpen}
             onOpenChange={setIsTestingDialogOpen}
             onTestingSuccess={onTestSuccess}

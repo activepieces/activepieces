@@ -94,6 +94,27 @@ export const FirstTimeTestingSection = ({
       </div>
     );
   }
+
+  if (testType === 'diga-function-call') {
+    return (
+      <div className="flex justify-center">
+        <TestButtonTooltip invalid={!isValid}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onMcpToolTesting}
+            keyboardShortcut="G"
+            onKeyboardShortcut={onMcpToolTesting}
+            loading={isTesting}
+            disabled={!isValid || isLoadingDynamicProperties}
+          >
+            <Dot animation={true} variant={'primary'}></Dot>
+            {t('Generate Sample Data')}
+          </Button>
+        </TestButtonTooltip>
+      </div>
+    );
+  }
   return (
     <div className="flex justify-center">
       <TestButtonTooltip invalid={!isValid}>
