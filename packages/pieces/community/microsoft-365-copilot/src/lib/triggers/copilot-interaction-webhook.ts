@@ -1,4 +1,8 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import {
+  Property,
+  TriggerStrategy,
+  createTrigger,
+} from '@activepieces/pieces-framework';
 import { microsoft365CopilotAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
@@ -6,12 +10,14 @@ export const copilotInteractionWebhook = createTrigger({
   auth: microsoft365CopilotAuth,
   name: 'copilotInteractionWebhook',
   displayName: 'When Copilot creates or updates an interaction',
-  description: 'Trigger when a new Copilot AI interaction is created, updated, or deleted',
+  description:
+    'Trigger when a new Copilot AI interaction is created, updated, or deleted',
   type: TriggerStrategy.WEBHOOK,
   props: {
     scope: Property.StaticDropdown({
       displayName: 'Notify me about interactions from',
-      description: 'Choose whether to monitor a specific user or the entire organization',
+      description:
+        'Choose whether to monitor a specific user or the entire organization',
       required: true,
       options: {
         options: [
@@ -28,7 +34,8 @@ export const copilotInteractionWebhook = createTrigger({
     }),
     userId: Property.ShortText({
       displayName: 'User ID',
-      description: 'The ID of the user to monitor (required for Specific User scope)',
+      description:
+        'The ID of the user to monitor (required for Specific User scope)',
       required: false,
     }),
     changeTypes: Property.StaticMultiSelectDropdown({
@@ -48,48 +55,6 @@ export const copilotInteractionWebhook = createTrigger({
           {
             label: 'Interactions Deleted',
             value: 'deleted',
-          },
-        ],
-      },
-    }),
-    filterByApp: Property.StaticDropdown({
-      displayName: 'Filter by Application (optional)',
-      description: 'Only get notified about interactions from a specific app',
-      required: false,
-      options: {
-        options: [
-          {
-            label: 'All Applications',
-            value: '',
-          },
-          {
-            label: 'Microsoft Teams',
-            value: "appClass eq 'IPM.SkypeTeams.Message.Copilot.Teams'",
-          },
-          {
-            label: 'Microsoft 365 Apps',
-            value: "appClass eq 'IPM.Office.M365Apps'",
-          },
-        ],
-      },
-    }),
-    filterByType: Property.StaticDropdown({
-      displayName: 'Filter by Interaction Type (optional)',
-      description: 'Only get notified about specific types of interactions',
-      required: false,
-      options: {
-        options: [
-          {
-            label: 'All Types',
-            value: '',
-          },
-          {
-            label: 'User Questions Only',
-            value: "interactionType eq 'aiRequest'",
-          },
-          {
-            label: 'AI Responses Only',
-            value: "interactionType eq 'aiResponse'",
           },
         ],
       },
@@ -115,7 +80,8 @@ export const copilotInteractionWebhook = createTrigger({
     tenantId: 'tenant-id-example',
   },
   async onEnable(context) {
-    const { scope, userId, changeTypes, filterByApp, filterByType, expirationHours } = context.propsValue;
+    const { scope, userId, changeTypes, expirationHours } =
+      context.propsValue;
 
     const client = Client.initWithMiddleware({
       authProvider: {
@@ -133,19 +99,17 @@ export const copilotInteractionWebhook = createTrigger({
 
     // Add filters if specified
     const filters: string[] = [];
-    if (filterByApp) {
-      filters.push(filterByApp);
-    }
-    if (filterByType) {
-      filters.push(filterByType);
-    }
+
+    filters.push("interactionType eq 'aiResponse'");
 
     if (filters.length > 0) {
       resourcePath += `?$filter=${filters.join(' AND ')}`;
     }
 
     const expirationDateTime = new Date();
-    expirationDateTime.setHours(expirationDateTime.getHours() + (expirationHours || 24));
+    expirationDateTime.setHours(
+      expirationDateTime.getHours() + (expirationHours || 24)
+    );
 
     const subscriptionBody = {
       changeType: changeTypes.join(','),
@@ -156,7 +120,9 @@ export const copilotInteractionWebhook = createTrigger({
       clientState: 'activepieces-copilot-trigger',
     };
 
-    const subscription = await client.api('v1.0/subscriptions').post(subscriptionBody);
+    const subscription = await client
+      .api('v1.0/subscriptions')
+      .post(subscriptionBody);
 
     await context.store.put('subscription_id', subscription.id);
   },
@@ -178,7 +144,6 @@ export const copilotInteractionWebhook = createTrigger({
     }
   },
   async run(context) {
-   return [context.payload.body];
+    return [context.payload.body];
   },
-  
 });
