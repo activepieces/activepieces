@@ -13,8 +13,12 @@ export const microsoft365Copilot = createPiece({
   actions: [
     chatWithCopilot,
     retrieveGroundingData,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://graph.microsoft.com/v1.0/',
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
-  triggers: [
-    copilotInteractionWebhook,
-  ],
+  triggers: [copilotInteractionWebhook],
 });
