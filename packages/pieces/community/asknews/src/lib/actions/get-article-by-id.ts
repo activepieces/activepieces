@@ -13,7 +13,7 @@ export const getArticleById = createAction({
     articleIds: Property.Array({
       displayName: 'Article ID(s)',
       description:
-        'One or more article UUIDs to fetch. Can be a single UUID or multiple UUIDs separated by commas.',
+        'One or more article UUIDs to fetch.',
       required: true,
     }),
   },

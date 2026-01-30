@@ -8,6 +8,7 @@ import { searchStories } from './lib/actions/search-stories';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createANewsletter } from './lib/actions/create-a-newsletter';
+import { updateANewsletter } from './lib/actions/update-a-newsletter';
 
 export const asknews = createPiece({
   displayName: 'AskNews',
@@ -25,6 +26,7 @@ export const asknews = createPiece({
     asknewsChatCompletion,
     searchStories,
     createANewsletter,
+    updateANewsletter,
     createCustomApiCallAction({
       auth: asknewsAuth,
       baseUrl: () => 'https://api.asknews.com/v1',
