@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { ToolCallType, type ToolCallContentBlock } from '@activepieces/shared';
-
-import { piecesApi } from '../pieces/lib/pieces-api';
+import { type ToolCallConversationMessage } from '@activepieces/shared';
 
 type ToolMetadata = {
   displayName?: string | null;
@@ -10,35 +8,23 @@ type ToolMetadata = {
 };
 
 export const agentToolHooks = {
-  useToolMetadata(contentBlock: ToolCallContentBlock) {
+  useToolMetadata(toolCall: ToolCallConversationMessage) {
     return useQuery<ToolMetadata, Error>({
       queryKey: [
-        'mcp-tool-metadata',
-        contentBlock.toolName,
-        contentBlock.toolCallType,
+        'tool-metadata',
+        toolCall.toolName,
       ],
       queryFn: async () => {
-        switch (contentBlock.toolCallType) {
-          case ToolCallType.PIECE: {
-            const piece = await piecesApi.get({
-              name: contentBlock.pieceName,
-              version: contentBlock.pieceVersion,
-            });
-            const actionMetadata = piece.actions[contentBlock.actionName];
-            return {
-              displayName:
-                actionMetadata?.displayName ?? contentBlock.actionName,
-              logoUrl: piece.logoUrl,
-            };
-          }
-          case ToolCallType.FLOW:
-            return {
-              displayName: contentBlock.displayName,
-              logoUrl: null,
-            };
-          default:
-            return { displayName: null, logoUrl: null };
+        if (toolCall.toolType === 'piece') {
+          return {
+            displayName: toolCall.pieceMetadata?.actionName.replaceAll("_", " ").toUpperCase(),
+            logoUrl: null,
+          };
         }
+        return {
+          displayName: toolCall.toolName,
+          logoUrl: null,
+        };
       },
     });
   },

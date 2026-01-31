@@ -16,6 +16,7 @@ import { SSOPage } from '@/app/routes/platform/security/sso';
 import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
+import { QuickPage } from '@/app/routes/quick';
 import { RedirectPage } from '@/app/routes/redirect';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
@@ -71,6 +72,7 @@ import {
   TokenCheckerWrapper,
 } from './project-route-wrapper';
 import { TemplateDetailsWrapper } from './template-details-wrapper';
+import { SocketProvider } from '@/components/socket-provider';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -120,13 +122,15 @@ const routes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleFlow,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_FLOW}>
-        <PageTitle title="Builder">
-          <BuilderLayout>
-            <FlowBuilderPage />
-          </BuilderLayout>
-        </PageTitle>
-      </RoutePermissionGuard>
+      <SocketProvider>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Builder">
+            <BuilderLayout>
+              <FlowBuilderPage />
+            </BuilderLayout>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </SocketProvider>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -354,6 +358,16 @@ const routes = [
       <ProjectDashboardLayout>
         <PageTitle title="Leaderboard">
           <LeaderboardPage />
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  },
+  {
+    path: '/quick',
+    element: (
+      <ProjectDashboardLayout defaultSidebarOpen={false}>
+        <PageTitle title="Chat">
+          <QuickPage />
         </PageTitle>
       </ProjectDashboardLayout>
     ),

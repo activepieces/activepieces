@@ -1,7 +1,6 @@
 import { URL } from 'url'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
-import { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { pieceLoader } from '../helper/piece-loader'
@@ -9,7 +8,6 @@ import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
-import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
@@ -117,13 +115,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 token: constants.engineToken,
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
-            },
-            agent: {
-                tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
-                    engineConstants: constants,
-                    tools: params.tools,
-                    model: params.model,
-                }),
             },
             propsValue: processedInput,
             tags: createTagsManager(params),

@@ -333,6 +333,8 @@ import { AddImageToUser1768502658760 } from './migration/postgres/1768502658760-
 import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres/1768738475196-RemoveUsageCountFromTemplates'
 import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
 import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
+import { AddChatSessions1769369780193 } from './migration/postgres/1769369780193-AddChatSessions'
+import { AddRecordIdToCellEntity1769136998805 } from './migration/postgres/1769136998805-AddRecordIdToCellEntity'
 import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -683,6 +685,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveUsageCountFromTemplates1768738475196,
         AddTablesIntoTemplateEntity1768306510367,
         AddTemplateIdToFlowEntity1768829135202,
+        AddChatSessions1769369780193,
+        AddRecordIdToCellEntity1769136998805,
         RemoveOperatorRole1769613456917,
     ]
     return migrations

@@ -1,7 +1,13 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 

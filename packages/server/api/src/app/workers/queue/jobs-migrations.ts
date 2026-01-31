@@ -37,6 +37,9 @@ const migrations: JobMigration[] = [
 export const jobMigrations = (log: FastifyBaseLogger) => ({
     apply: async (job: Record<string, unknown>): Promise<JobData> => {
         let jobData = job as JobData
+        if (jobData.jobType === WorkerJobType.EXECUTE_AGENT) {
+            return jobData
+        }
         log.info({
             schemaVersion: jobData.schemaVersion,
             jobType: jobData.jobType,

@@ -21,11 +21,11 @@ export const isRunAgent = (step?: Step | null) => {
   );
 };
 
-export const defaultAgentOutput = {
+export const defaultAgentOutput: AgentResult = {
   prompt: '',
   status: AgentTaskStatus.IN_PROGRESS,
-  steps: [],
-  message: null,
+  conversation: [],
+  structuredOutput: undefined,
 };
 
 type AgentTestStepProps = {
