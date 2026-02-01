@@ -50,7 +50,7 @@ export type RunState = {
   setConsoleLogs: (stepName: string, consoleLogs: string | null) => void;
   getConsoleLogs: (stepName: string) => string | null;
   consoleLogs: Record<string, string | null>;
-  OnRunStateDestroyed: () => void;
+  removeAllStepTestsListeners: () => void;
   isStepBeingTested: (stepName: string) => boolean;
   /**Used to revert the sample data locally when the test is cancelled */
   revertSampleDataLocallyCallbacks: Record<string, (() => void) | undefined>;
@@ -80,6 +80,7 @@ export const createRunState = (
         : {},
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {
+        get().removeAllStepTestsListeners();
         const loopsIndexes = flowRunUtils.findLoopsState(
           run,
           state.loopsIndexes,
@@ -325,7 +326,7 @@ export const createRunState = (
       return get().consoleLogs[stepName] ?? null;
     },
     consoleLogs: {},
-    OnRunStateDestroyed: () => {
+    removeAllStepTestsListeners: () => {
       const stepTestListeners = get().stepTestListeners;
       Object.keys(stepTestListeners).forEach((stepName) => {
         get().removeStepTestListener(stepName);

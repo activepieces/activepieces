@@ -43,18 +43,18 @@ const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [flowVersion, rightSidebar, selectedStep, OnRunStateDestroyed] =
+  const [flowVersion, rightSidebar, selectedStep, removeAllStepTestsListeners] =
     useBuilderStateContext((state) => [
       state.flowVersion,
       state.rightSidebar,
       state.selectedStep,
-      state.OnRunStateDestroyed,
+      state.removeAllStepTestsListeners,
     ]);
   useEffect(() => {
     return () => {
-      OnRunStateDestroyed();
+      removeAllStepTestsListeners();
     };
-  }, [OnRunStateDestroyed]);
+  }, [removeAllStepTestsListeners]);
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   const { memorizedSelectedStep } = useBuilderStateContext((state) => {
     const flowVersion = state.flowVersion;
