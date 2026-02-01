@@ -28,7 +28,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
 import {
   useIsPlatformAdmin,
   useAuthorization,

@@ -16,6 +16,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlowActionType,
   flowStructureUtil,
+  FlowTriggerType,
   FlowVersion,
   isNil,
   Note,
@@ -277,7 +278,10 @@ const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
       }-${
-        step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
+        step.type === FlowActionType.PIECE ||
+        step.type === FlowTriggerType.PIECE
+          ? step.settings.pieceName
+          : ''
       }-${branchesNames}-${childrenKey}}`;
     }, '');
   const notesGraphKey = notes
