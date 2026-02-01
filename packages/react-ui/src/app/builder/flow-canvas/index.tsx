@@ -16,6 +16,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlowActionType,
   flowStructureUtil,
+  FlowTriggerType,
   FlowVersion,
   isNil,
   Note,
@@ -70,7 +71,7 @@ export const FlowCanvas = React.memo(
     flowCanvasHooks.useFocusOnStep();
     useHandleKeyPressOnCanvas();
     flowCanvasHooks.useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
-    const storeApi = useStoreApi();
+    const reactFlowStore = useStoreApi();
     const isShiftKeyPressed = useKeyPress('Shift');
     const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
     const onSelectionChange = useCallback(
@@ -83,7 +84,7 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
-    const graphKey = createGraphKey(flowVersion, notes);
+    const graphKey = createGraphKey(flowVersion, notes, selectedStep ?? '');
     const graph = useMemo(() => {
       return flowCanvasUtils.createFlowGraph(flowVersion, notes);
     }, [graphKey]);
@@ -106,7 +107,7 @@ export const FlowCanvas = React.memo(
 
           if (stepElement && stepName) {
             selectStepByName(stepName);
-            storeApi.getState().addSelectedNodes([stepName]);
+            reactFlowStore.getState().addSelectedNodes([stepName]);
           }
           const targetIsSelectionChevron = ev.target.closest(
             `[data-${flowCanvasConsts.SELECTION_RECT_CHEVRON_ATTRIBUTE}]`,
@@ -136,6 +137,14 @@ export const FlowCanvas = React.memo(
     );
 
     const onSelectionEnd = useCallback(() => {
+      const isUnselectingNodes =
+        document.querySelector(
+          `.${flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME}`,
+        ) !== null;
+      if (isUnselectingNodes) {
+        reactFlowStore.getState().addSelectedNodes([]);
+        return;
+      }
       const selectedSteps = selectedNodes
         .map((node) => flowStructureUtil.getStep(node, flowVersion.trigger))
         .filter((step) => !isNil(step));
@@ -156,10 +165,10 @@ export const FlowCanvas = React.memo(
       if (selectedNodes.length === 0 && step) {
         selectedSteps.push(step);
       }
-      storeApi
+      reactFlowStore
         .getState()
         .addSelectedNodes(selectedSteps.map((step) => step.name));
-    }, [selectedNodes, storeApi, selectedStep]);
+    }, [selectedNodes, reactFlowStore, selectedStep]);
 
     const { setCursorPosition } = useCursorPosition();
     const translateExtent = useMemo(() => {
@@ -197,7 +206,7 @@ export const FlowCanvas = React.memo(
               className="bg-builder-background"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
-                storeApi.getState().unselectNodesAndEdges();
+                reactFlowStore.getState().unselectNodesAndEdges();
               }}
               translateExtent={translateExtent}
               nodeTypes={flowCanvasConsts.nodeTypes}
@@ -265,7 +274,11 @@ const getChildrenKey = (step: Step) => {
       return '';
   }
 };
-const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
+const createGraphKey = (
+  flowVersion: FlowVersion,
+  notes: Note[],
+  selectedStep: string,
+) => {
   const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
@@ -277,11 +290,14 @@ const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
       }-${
-        step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
+        step.type === FlowActionType.PIECE ||
+        step.type === FlowTriggerType.PIECE
+          ? step.settings.pieceName
+          : ''
       }-${branchesNames}-${childrenKey}}`;
     }, '');
   const notesGraphKey = notes
     .map((note) => `${note.id}-${note.position.x}-${note.position.y}`)
     .join('-');
-  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}`;
+  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}-${selectedStep}`;
 };
