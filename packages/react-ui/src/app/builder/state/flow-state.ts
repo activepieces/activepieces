@@ -247,16 +247,17 @@ export const createFlowState = (
             operation.request.names.forEach((name) => {
               state.removeStepTestListener(name);
             });
-            set((state) => {
+            const inputSampleData = { ...state.inputSampleData };
+            const outputSampleData = { ...state.outputSampleData };
+            operation.request.names.forEach((name) => {
+              delete inputSampleData[name];
+              delete outputSampleData[name];
+              state.removeStepTestListener(name);
+            });
+            set(() => {
               return {
-                inputSampleData: {
-                  ...state.inputSampleData,
-                  [operation.request.names[0]]: undefined,
-                },
-                outputSampleData: {
-                  ...state.outputSampleData,
-                  [operation.request.names[0]]: undefined,
-                },
+                inputSampleData,
+                outputSampleData,
               };
             });
             flowUpdatesQueue.add(updateRequest);
