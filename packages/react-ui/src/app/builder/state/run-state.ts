@@ -200,22 +200,22 @@ export const createRunState = (
     removeStepTestListener: (stepName: string) => {
       set((state) => {
         const socket = initialState.socket;
-        const listners = state.stepTestListeners[stepName];
-        if (listners) {
+        const listeners = state.stepTestListeners[stepName];
+        if (listeners) {
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
-            listners.onFinish,
+            listeners.onFinish,
           );
           socket.off(
             WebsocketClientEvent.TEST_STEP_PROGRESS,
-            listners.onProgress,
+            listeners.onProgress,
           );
-          socket.off('error', listners.error);
+          socket.off('error', listeners.error);
         }
-        const stepListeners = { ...state.stepTestListeners };
-        stepListeners[stepName] = null;
+        const stepTestListeners = { ...state.stepTestListeners };
+        stepTestListeners[stepName] = null;
         return {
-          stepTestListeners: stepListeners,
+          stepTestListeners,
         };
       });
     },

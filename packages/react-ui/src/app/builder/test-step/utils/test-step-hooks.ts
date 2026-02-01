@@ -238,7 +238,7 @@ type TestActionMutationParams =
       onProgress: undefined;
     }
   | {
-      type: 'todoAction' | 'agentAction';
+      type: 'agentAction';
       onProgress: (progress: StepRunResponse) => void;
       onFinish?: () => void;
     }

@@ -132,7 +132,7 @@ export const TestSampleDataViewer = React.memo(
                   </>
                 )}
 
-                {errorMessage && (
+                {errorMessage && !isTesting && (
                   <>
                     <StepStatusIcon status={StepOutputStatus.FAILED} size="5" />
                     <span>{t('Testing Failed')}</span>
@@ -154,6 +154,9 @@ export const TestSampleDataViewer = React.memo(
                   !errorMessage &&
                   !isTesting &&
                   formatUtils.formatDate(new Date(lastTestDate))}
+                {errorMessage && !isTesting && (
+                  <span>{t('Errors are not saved on refresh')}</span>
+                )}
               </div>
             </div>
 
