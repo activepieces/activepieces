@@ -52,6 +52,7 @@ export type RunState = {
   consoleLogs: Record<string, string | null>;
   OnRunStateDestroyed: () => void;
   isStepBeingTested: (stepName: string) => boolean;
+  revertSampleDataLocallyCallbacks: Record<string, (() => void) | undefined>;
 };
 type RunStateInitialState = {
   run: FlowRun | null;
@@ -70,6 +71,7 @@ export const createRunState = (
   set: StoreApi<BuilderState>['setState'],
 ): RunState => {
   return {
+    revertSampleDataLocallyCallbacks: {},
     run: initialState.run,
     loopsIndexes:
       initialState.run && initialState.run.steps
@@ -218,22 +220,36 @@ export const createRunState = (
       });
     },
     stepTestListeners: {},
-    updateSampleData: (params: UpdateSampleDataParams) => {
+    updateSampleData: ({
+      stepName,
+      input,
+      output,
+      onlyLocally,
+    }: UpdateSampleDataParams) => {
       const { setSampleData, applyOperation, flowVersion } = get();
-      const step = flowStructureUtil.getStep(
-        params.stepName,
-        flowVersion.trigger,
-      );
+      const step = flowStructureUtil.getStep(stepName, flowVersion.trigger);
 
       if (isNil(step)) {
-        console.error(`Step ${params.stepName} not found`);
+        console.error(`Step ${stepName} not found`);
         internalErrorToast();
         return;
       }
-      const output = params.output;
+      const currentSampleData = get().outputSampleData[step.name];
+      if (onlyLocally) {
+        get().revertSampleDataLocallyCallbacks[step.name] = () => {
+          setSampleData({
+            stepName: step.name,
+            type: 'output',
+            value: currentSampleData,
+          });
+          get().revertSampleDataLocallyCallbacks[step.name] = undefined;
+        };
+      }
       setSampleData({ stepName: step.name, type: 'output', value: output });
-      if (!params.onlyLocally) {
-        const payload = isNil(output)? stringifyNullOrUndefined(output) : output;
+      if (!onlyLocally) {
+        const payload = isNil(output)
+          ? stringifyNullOrUndefined(output)
+          : output;
         applyOperation({
           type: FlowOperationType.SAVE_SAMPLE_DATA,
           request: {
@@ -244,10 +260,9 @@ export const createRunState = (
         });
       }
 
-      if (!isNil(params.input)) {
-        const input = params.input;
+      if (!isNil(input)) {
         setSampleData({ stepName: step.name, type: 'input', value: input });
-        if (!params.onlyLocally) {
+        if (!onlyLocally) {
           applyOperation({
             type: FlowOperationType.SAVE_SAMPLE_DATA,
             request: {
@@ -260,7 +275,7 @@ export const createRunState = (
       }
 
       // Invalidate so next time the user enters the builder, the sample data is refetched
-      if (!params.onlyLocally) {
+      if (!onlyLocally) {
         sampleDataHooks.invalidateSampleData(
           flowVersion.id,
           initialState.queryClient,

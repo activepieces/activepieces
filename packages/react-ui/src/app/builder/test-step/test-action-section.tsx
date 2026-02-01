@@ -52,6 +52,7 @@ const TestStepSectionImplementation = React.memo(
       consoleLogs,
       isStepBeingTested,
       removeStepTestListener,
+      revertSampleDataLocally,
     ] = useBuilderStateContext((state) => {
       return [
         state.outputSampleData[currentStep.name],
@@ -62,6 +63,7 @@ const TestStepSectionImplementation = React.memo(
           : null,
         state.isStepBeingTested,
         state.removeStepTestListener,
+        state.revertSampleDataLocallyCallbacks[currentStep.name],
       ];
     });
 
@@ -72,7 +74,9 @@ const TestStepSectionImplementation = React.memo(
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
     const sampleDataExists =
-      !isNil(lastTestDate) || !isNil(errorMessage) || isStepBeingTested(currentStep.name);
+      !isNil(lastTestDate) ||
+      !isNil(errorMessage) ||
+      isStepBeingTested(currentStep.name);
     const onTestButtonClick = async () => {
       if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
@@ -125,6 +129,7 @@ const TestStepSectionImplementation = React.memo(
             consoleLogs={consoleLogs}
             onCancelTesting={() => {
               removeStepTestListener(currentStep.name);
+              revertSampleDataLocally?.();
             }}
           ></TestSampleDataViewer>
         )}
