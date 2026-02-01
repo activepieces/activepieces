@@ -1,7 +1,5 @@
 import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
-import { useMemo } from 'react';
-
 import {
   AccordionContent,
   AccordionItem,
@@ -14,15 +12,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { AgentPieceTool } from '@activepieces/shared';
 
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
+import { agentToolHooks, sanitizeToolName } from '../../agent-tool-hooks';
 
-export function sanitizeToolName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
-}
 
 type AgentPieceToolProps = {
   disabled?: boolean;
@@ -37,21 +31,8 @@ export const AgentPieceToolComponent = ({
 }: AgentPieceToolProps) => {
   const { openAddPieceToolDialog } = usePieceToolsDialogStore();
 
-  const { metadata } = stepsHooks.useAllStepsMetadata({
-    searchQuery: '',
-    type: 'action',
-  });
-
-  const piecesMetadata = useMemo(() => {
-    return metadata?.filter(
-      (m): m is PieceStepMetadataWithSuggestions =>
-        'suggestedActions' in m && 'suggestedTriggers' in m,
-    );
-  }, [metadata]);
-
-  const pieceMetadata = piecesMetadata?.find(
-    (p) => p.pieceName === tools[0].pieceMetadata.pieceName,
-  );
+  
+  const { pieceMetadata } = agentToolHooks.usePieceMetadata(tools[0].pieceMetadata.pieceName);
 
   if (!pieceMetadata) {
     return (

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AgentTool, AgentToolType, isNil } from '@activepieces/shared';
 
-import { sanitizeToolName } from '../../componenets/piece-tool';
+import { sanitizeToolName } from '../../../agent-tool-hooks';
 import { usePieceToolsDialogStore } from '../../stores/pieces-tools';
 
 interface PieceActionsDialogProps {

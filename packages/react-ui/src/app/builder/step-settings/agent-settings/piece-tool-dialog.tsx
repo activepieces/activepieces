@@ -18,7 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { sanitizeToolName } from '@/features/agents/agent-tools/componenets/piece-tool';
+import { sanitizeToolName } from '@/features/agents/agent-tool-hooks';
 import { PieceActionsList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
 import { PiecesList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
 import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
