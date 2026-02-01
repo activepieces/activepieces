@@ -1,4 +1,6 @@
+import { QueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
+import { Socket } from 'socket.io-client';
 import { create, useStore } from 'zustand';
 
 import { CanvasState, createCanvasState } from './state/canvas-state';
@@ -39,7 +41,10 @@ export type BuilderInitialState = Pick<
   | 'run'
   | 'outputSampleData'
   | 'inputSampleData'
->;
+> & {
+  socket: Socket;
+  queryClient: QueryClient;
+};
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 export const createBuilderStore = (initialState: BuilderInitialState) =>
