@@ -35,11 +35,11 @@ export const memoryLocalPieceCache = (log: FastifyBaseLogger): LocalPieceCache =
             throw new Error('The cache is not yet initialized, this should not happen')
         }
         const devPieces = await loadDevPiecesIfEnabled(log)
-        const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }))
+        const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false }))
 
         const latestVersions = lastVersionOfEachPiece(cache)
         const translatedPieces = latestVersions.map((piece) => 
-            pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
+            pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false }),
         )
 
         return [...translatedPieces, ...translatedDevPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
