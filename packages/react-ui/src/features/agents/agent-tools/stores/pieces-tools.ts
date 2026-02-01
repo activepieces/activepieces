@@ -8,8 +8,7 @@ import {
   isNil,
   PredefinedInputsStructure,
 } from '@activepieces/shared';
-
-import { sanitizeToolName } from '../componenets/piece-tool';
+import { sanitizeToolName } from '../../agent-tool-hooks';
 
 type SelectedDialogPage = 'pieces-list' | 'actions-list' | 'action-inputs';
 

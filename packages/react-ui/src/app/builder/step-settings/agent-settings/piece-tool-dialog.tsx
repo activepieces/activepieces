@@ -18,13 +18,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { sanitizeToolName } from '@/features/agents/agent-tools/componenets/piece-tool';
+import { sanitizeToolName } from '@/features/agents/agent-tool-hooks';
 import { PieceActionsList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
 import { PiecesList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
 import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { AgentTool, isNil } from '@activepieces/shared';
+import { AgentTool, AgentToolType, isNil } from '@activepieces/shared';
 
 import { PredefinedInputsForm } from './predefined-inputs-form';
 
@@ -114,7 +114,7 @@ export function AgentPieceDialog({
 
     if (!isNil(editingPieceTool)) {
       const updatedTools = tools.map((tool) =>
-        tool.toolName === editingPieceTool.toolName ? newTool : tool,
+        tool.type === AgentToolType.PIECE && tool.pieceMetadata.actionName === editingPieceTool.pieceMetadata.actionName ? newTool : tool,
       );
       onToolsUpdate(updatedTools);
       toast('Piece tool updated');

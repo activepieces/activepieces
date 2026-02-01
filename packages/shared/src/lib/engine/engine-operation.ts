@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
+import { PredefinedInputsStructure } from '../generic-agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
@@ -15,6 +15,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
 }
 
 export enum TriggerHookType {
@@ -83,6 +84,7 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     pieceVersion: string
     predefinedInput?: PredefinedInputsStructure
     instruction: string
+    modelId?: string
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -218,6 +220,13 @@ export type ExecuteToolResponse = {
     resolvedInput: Record<string, unknown>
     errorMessage?: unknown
 }
+
+
+export enum ExecutionToolStatus {
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
 
 export type ExecuteActionResponse = {
     success: boolean

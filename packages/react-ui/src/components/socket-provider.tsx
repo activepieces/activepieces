@@ -20,6 +20,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const toastIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    console.info('token', token);
+    console.info('projectId', projectId);
+
     if (token) {
       socket.auth = { token, projectId };
       if (!socket.connected) {

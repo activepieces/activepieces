@@ -11,7 +11,6 @@ import {
 import { isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
-import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -90,20 +89,14 @@ export const ProjectRouterWrapper = ({
 }: ProjectRouterWrapperProps) => [
   {
     path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
-    element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
-        <TokenCheckerWrapper>{element}</TokenCheckerWrapper>
-      </AllowOnlyLoggedInUserOnlyGuard>
-    ),
+    element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
   },
   {
     path,
     element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
-        <RedirectToCurrentProjectRoute path={path}>
-          {element}
-        </RedirectToCurrentProjectRoute>
-      </AllowOnlyLoggedInUserOnlyGuard>
+      <RedirectToCurrentProjectRoute path={path}>
+        {element}
+      </RedirectToCurrentProjectRoute>
     ),
   },
 ];
