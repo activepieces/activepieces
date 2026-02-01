@@ -40,7 +40,8 @@ import { RouterSettings } from './router-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+  const { selectedStep, pieceModel, formSchema, hideTestStep } =
+    useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
     readonly,
@@ -126,8 +127,9 @@ const StepSettingsContainer = () => {
       pieceName: modifiedStep.settings.pieceName,
       triggerName: modifiedStep.settings.triggerName ?? '',
     });
-  const showGenerateSampleData = !readonly && !isManualTrigger;
-  const showStepInputOutFromRun = !isNil(run) && !isManualTrigger;
+  const showGenerateSampleData = !readonly && !isManualTrigger && !hideTestStep;
+  const showStepInputOutFromRun =
+    !isNil(run) && !isManualTrigger && !hideTestStep;
 
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
