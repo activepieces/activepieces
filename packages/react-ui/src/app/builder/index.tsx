@@ -54,7 +54,7 @@ const BuilderPage = () => {
     return () => {
       OnRunStateDestroyed();
     };
-  }, []);
+  }, [OnRunStateDestroyed]);
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   const { memorizedSelectedStep } = useBuilderStateContext((state) => {
     const flowVersion = state.flowVersion;

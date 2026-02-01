@@ -52,6 +52,7 @@ export type RunState = {
   consoleLogs: Record<string, string | null>;
   OnRunStateDestroyed: () => void;
   isStepBeingTested: (stepName: string) => boolean;
+  /**Used to revert the sample data locally when the test is cancelled */
   revertSampleDataLocallyCallbacks: Record<string, (() => void) | undefined>;
 };
 type RunStateInitialState = {
@@ -149,6 +150,15 @@ export const createRunState = (
       runId: string;
       stepName: string;
     }) => {
+      get().removeStepTestListener(stepName);
+      const step = flowStructureUtil.getStep(
+        stepName,
+        get().flowVersion.trigger,
+      );
+      if (isNil(step)) {
+        console.error(`Step ${stepName} not found`);
+        return;
+      }
       const socket = initialState.socket;
       const handleStepFinished = (response: StepRunResponse) => {
         if (response.runId === runId) {
@@ -160,14 +170,18 @@ export const createRunState = (
               input: response.input,
             });
           }
-          get().setErrorLogs(
-            stepName,
-            response.standardError === '' ? null : response.standardError,
-          );
-          get().setConsoleLogs(
-            stepName,
-            response.standardOutput === '' ? null : response.standardOutput,
-          );
+          if (!response.success) {
+            get().setErrorLogs(
+              stepName,
+              response.standardError === '' ? null : response.standardError,
+            );
+          }
+          if (step.type === FlowActionType.CODE) {
+            get().setConsoleLogs(
+              stepName,
+              response.standardOutput === '' ? null : response.standardOutput,
+            );
+          }
         }
       };
       const handleError = (error: any) => {
@@ -175,7 +189,6 @@ export const createRunState = (
         console.error(error);
         internalErrorToast();
       };
-
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
       socket.on('error', handleError);
       const handleOnProgress = (response: StepRunResponse) => {
@@ -188,14 +201,16 @@ export const createRunState = (
         }
       };
       socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
-      set((state) => {
-        state.stepTestListeners[stepName] = {
-          onProgress: handleOnProgress,
-          onFinish: handleStepFinished,
-          error: handleError,
-        };
-        return state;
-      });
+      set((state) => ({
+        stepTestListeners: {
+          ...state.stepTestListeners,
+          [stepName]: {
+            onProgress: handleOnProgress,
+            onFinish: handleStepFinished,
+            error: handleError,
+          },
+        },
+      }));
     },
     removeStepTestListener: (stepName: string) => {
       set((state) => {
@@ -284,8 +299,12 @@ export const createRunState = (
     },
     setErrorLogs: (stepName: string, error: string | null) => {
       set((state) => {
-        state.errorLogs[stepName] = error;
-        return state;
+        return {
+          errorLogs: {
+            ...state.errorLogs,
+            [stepName]: error,
+          },
+        };
       });
     },
     getErrorLogs: (stepName: string) => {
@@ -294,8 +313,12 @@ export const createRunState = (
     errorLogs: {},
     setConsoleLogs: (stepName: string, consoleLogs: string | null) => {
       set((state) => {
-        state.consoleLogs[stepName] = consoleLogs;
-        return state;
+        return {
+          consoleLogs: {
+            ...state.consoleLogs,
+            [stepName]: consoleLogs,
+          },
+        };
       });
     },
     getConsoleLogs: (stepName: string) => {

@@ -244,9 +244,6 @@ export const createFlowState = (
             break;
           }
           case FlowOperationType.DELETE_ACTION: {
-            operation.request.names.forEach((name) => {
-              state.removeStepTestListener(name);
-            });
             const inputSampleData = { ...state.inputSampleData };
             const outputSampleData = { ...state.outputSampleData };
             operation.request.names.forEach((name) => {
