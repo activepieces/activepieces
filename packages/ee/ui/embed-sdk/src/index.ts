@@ -381,12 +381,7 @@ class ActivepiecesEmbedded {
   async connect({ pieceName, connectionName, newWindow }: { 
     pieceName: string, 
     connectionName?: string, 
-    newWindow?:{
-      height?: number,
-      width?: number,
-      top?: number,
-      left?: number,
-    }
+    newWindow?:newWindowFeatures
   }) {
     this._cleanConnectionIframe();
     return this._addGracePeriodBeforeMethod({
@@ -439,12 +434,7 @@ class ActivepiecesEmbedded {
     stepName: string, 
     flowVersionId: string,
     flowId: string,
-    newWindow?:{
-      height?: number,
-      width?: number,
-      top?: number,
-      left?: number,
-    }
+    newWindow?:newWindowFeatures
   }) {
     this._cleanStepSettingsIframe();
     return this._addGracePeriodBeforeMethod({
