@@ -15,6 +15,7 @@ import {
   LoopStepOutput,
   SampleDataFileType,
   StepRunResponse,
+  stringifyNullOrUndefined,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 
@@ -232,11 +233,12 @@ export const createRunState = (
       const output = params.output;
       setSampleData({ stepName: step.name, type: 'output', value: output });
       if (!params.onlyLocally) {
+        const payload = isNil(output)? stringifyNullOrUndefined(output) : output;
         applyOperation({
           type: FlowOperationType.SAVE_SAMPLE_DATA,
           request: {
             stepName: step.name,
-            payload: output,
+            payload,
             type: SampleDataFileType.OUTPUT,
           },
         });
