@@ -1,8 +1,8 @@
+import { PieceCategory, PieceOrderBy, PieceSortBy, PlatformId, SuggestionType } from '@activepieces/shared'
 import { enterpriseFilteringUtils } from '../../../ee/pieces/filters/piece-filtering-utils'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { pieceSearching } from './piece-searching'
 import { pieceSorting } from './piece-sorting'
-import { PieceCategory, PieceOrderBy, PieceSortBy, PlatformId, SuggestionType } from '@activepieces/shared'
 
 export const pieceListUtils = {
     async filterPieces(params: FilterPiecesParams): Promise<PieceMetadataSchema[]> {
