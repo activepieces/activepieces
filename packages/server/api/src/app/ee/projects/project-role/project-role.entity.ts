@@ -32,17 +32,4 @@ export const ProjectRoleEntity = new EntitySchema<ProjectRoleSchema>({
             nullable: false,
         },
     },
-    relations: {
-        projectMembers: {
-            type: 'many-to-one',
-            target: 'project_member',
-            onDelete: 'CASCADE',
-            cascade: true,
-            joinColumn: {
-                name: 'id',
-                referencedColumnName: 'projectRoleId',
-                foreignKeyConstraintName: 'fk_project_role_project_member_id',
-            },
-        },
-    },
 })
