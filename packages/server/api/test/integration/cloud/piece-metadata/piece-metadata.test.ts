@@ -10,7 +10,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { localPieceCache } from '../../../../src/app/pieces/metadata/local-piece-cache'
+import { localPieceCache } from '../../../../src/app/pieces/metadata/cache'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
