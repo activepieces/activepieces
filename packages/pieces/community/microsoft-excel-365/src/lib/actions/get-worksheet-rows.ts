@@ -12,7 +12,8 @@ import {
 import { excelCommon } from '../common/common';
 import { excelAuth } from '../../index';
 import { FilterOperator, filterOperatorLabels } from '../common/constants';
-import { isNil } from '@activepieces/shared';
+import { Client } from '@microsoft/microsoft-graph-client';
+import { WorkbookRange } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
 export const getWorksheetRowsAction = createAction({
@@ -114,7 +115,7 @@ export const getWorksheetRowsAction = createAction({
 		const shouldApplyFilter = propsValue['useFilter'];
 		const filterConfig = propsValue['filterList'] ?? {};
 
-		let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
+		let url = `/me/drive/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
 
 		if (!range) {
 			url += 'usedRange(valuesOnly=true)';
@@ -122,41 +123,35 @@ export const getWorksheetRowsAction = createAction({
 			url += `range(address = '${range}')`;
 		}
 
-		const response = await httpClient.sendRequest({
-			method: HttpMethod.GET,
-			url: url,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth['access_token'],
+		const client = Client.initWithMiddleware({
+			authProvider: {
+				getAccessToken: () => Promise.resolve(auth.access_token),
 			},
 		});
 
-		const rows = response.body['values'] as any[][];
+		const response: WorkbookRange= await client.api(url).get()
 
+		const rows = response.values as any[][];
 		const filters = (filterConfig['filter'] as ColumnFilter[]) ?? [];
 
+		let headers: string[] | null = null;
+		let dataRows = rows;
+
+		if (headerRow && firstDataRow) {
+			headers = rows[headerRow - 1];
+			dataRows = rows.slice(firstDataRow - 1);
+		}
+
 		const filteredRows = shouldApplyFilter
-			? rows.filter((row) => evaluateFilters(filters, row))
-			: rows;
+			? dataRows.filter((row) => evaluateFilters(filters, row))
+			: dataRows;
 
 		console.log(JSON.stringify(propsValue,null,2))
 
-		// let filterRows: any[][] = [];
-		// if (shouldApplyFilter) {
-		// 	const filters = (filterListInput['filter'] as Array<ColumnFilter>) ?? [];
-		// 	for (const row of rows) {
-		// 		const filterConditionFinalValue = evaluteFilters(filters, row);
-		// 		if (filterConditionFinalValue) filterRows.push(row);
-		// 	}
-		// } else {
-		// 	filterRows = rows;
-		// }
-
-
-		if (headerRow && firstDataRow) {
-			return filteredRows.slice(firstDataRow - 1).map((row: any[]) => {
+		if (headers) {
+			return filteredRows.map((row: any[]) => {
 				const obj: { [key: string]: any } = {};
-				rows[headerRow - 1].forEach(
+				headers.forEach(
 					(header: any, colIndex: string | number) => {
 						obj[String(header)] = row[Number(colIndex)];
 					}
@@ -165,7 +160,7 @@ export const getWorksheetRowsAction = createAction({
 			});
 		}
 
-		return rows;
+		return filteredRows;
 	},
 });
 
@@ -238,6 +233,24 @@ function toNumber(value: string): number | string {
 	return isNaN(num) ? value : num;
 }
 
+function excelSerialToDate(serial: number): Date {
+  return new Date((serial - 25569) * 86400 * 1000);
+}
+
+function parseDate(value: unknown): dayjs.Dayjs | null {
+  if (typeof value === 'number') {
+    // detect likely Excel serial
+      return dayjs(excelSerialToDate(value));
+  }
+
+  if (typeof value === 'string' || value instanceof Date) {
+    const d = dayjs(value);
+    return d.isValid() ? d : null;
+  }
+
+  return null;
+}
+
 function isValidDate(date: unknown): boolean {
 	if (
 		typeof date === 'string' ||
@@ -250,15 +263,30 @@ function isValidDate(date: unknown): boolean {
 }
 
 function isAfterDate(a: any, b: any): boolean {
-	return isValidDate(a) && isValidDate(b) && dayjs(a).isAfter(dayjs(b));
+  const d1 = parseDate(a);
+  const d2 = parseDate(b);
+
+  if (!d1 || !d2) return false;
+
+  return d1.isAfter(d2);
 }
 
 function isSameDate(a: any, b: any): boolean {
-	return isValidDate(a) && isValidDate(b) && dayjs(a).isSame(dayjs(b));
+  const d1 = parseDate(a);
+  const d2 = parseDate(b);
+
+  if (!d1 || !d2) return false;
+
+  return d1.isSame(d2, 'day');
 }
 
 function isBeforeDate(a: any, b: any): boolean {
-	return isValidDate(a) && isValidDate(b) && dayjs(a).isBefore(dayjs(b));
+  const d1 = parseDate(a);
+  const d2 = parseDate(b);
+
+  if (!d1 || !d2) return false;
+
+  return d1.isBefore(d2);
 }
 
 // function evaluteFilters(
