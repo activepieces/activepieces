@@ -38,9 +38,7 @@ export type CanvasState = {
 type CanvasStateInitialState = Pick<
   BuilderState,
   'readonly' | 'hideTestWidget' | 'run' | 'flowVersion'
-> & {
-  onStepSettingsClose?: () => void;
-};
+>
 
 export const createCanvasState = (
   initialState: CanvasStateInitialState,
