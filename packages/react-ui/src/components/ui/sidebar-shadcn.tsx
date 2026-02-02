@@ -75,7 +75,6 @@ function SidebarProvider({
   const [keepElevatedZIndex, setKeepElevatedZIndex] = React.useState(false);
 
   const [_open, _setOpen] = React.useState(() => {
-    // In hover mode, always use defaultOpen (typically false) - don't persist state
     if (hoverMode) {
       return defaultOpen;
     }
@@ -91,7 +90,6 @@ function SidebarProvider({
 
   const isHoverExpanded = hoverMode && !persistedOpen && isHovered;
   const open = persistedOpen || isHoverExpanded;
-  // Keep elevated z-index while hover expanded OR during close animation
   const shouldElevateZIndex = isHoverExpanded || keepElevatedZIndex;
 
   const setOpen = React.useCallback(
@@ -104,7 +102,6 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // Only persist state when not in hover mode
       if (!hoverMode) {
         localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
@@ -134,9 +131,7 @@ function SidebarProvider({
       setIsHovered(true);
       setKeepElevatedZIndex(false);
     } else {
-      // Start close animation immediately
       setIsHovered(false);
-      // Keep z-index elevated during the close animation (200ms transition)
       setKeepElevatedZIndex(true);
       zIndexTimeoutRef.current = setTimeout(() => {
         setKeepElevatedZIndex(false);
@@ -144,7 +139,6 @@ function SidebarProvider({
     }
   }, []);
 
-  // Cleanup timeouts on unmount
   React.useEffect(() => {
     return () => {
       if (hoverTimeoutRef.current) {
@@ -703,7 +697,6 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<'div'> & {
   showIcon?: boolean;
 }) {
-  // Random width between 50 to 90%.
   const [width] = React.useState(() => {
     return `${Math.floor(Math.random() * 40) + 50}%`;
   });
