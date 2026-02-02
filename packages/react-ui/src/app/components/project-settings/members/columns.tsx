@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ChevronDown, Info, Trash2, User, Shield } from 'lucide-react';
+import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -9,12 +9,6 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
@@ -23,6 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { RoleDropdown } from '@/features/members/component/role-selector';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
@@ -143,31 +138,12 @@ const RoleCell = ({
 
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateRole}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-[150px] justify-between"
-            disabled={!userHasPermissionToUpdateRole}
-          >
-            <span>{roleName}</span>
-            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[150px]">
-          {roles.map((role) => (
-            <DropdownMenuItem
-              key={role.name}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleValueChange(role.name);
-              }}
-            >
-              {role.name}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <RoleDropdown
+        value={roleName}
+        onValueChange={handleValueChange}
+        disabled={!userHasPermissionToUpdateRole}
+        roles={roles}
+      />
     </PermissionNeededTooltip>
   );
 };
