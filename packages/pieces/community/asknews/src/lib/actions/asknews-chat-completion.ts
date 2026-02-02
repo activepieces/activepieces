@@ -6,7 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const asknewsChatCompletion = createAction({
   auth: asknewsAuth,
   name: 'asknewsChatCompletion',
-  displayName: 'AskNews Chat Completion',
+  displayName: 'Chat Completion',
   description:
     'Get chat completions from a news-infused AI assistant powered by OpenAI API',
   props: {
