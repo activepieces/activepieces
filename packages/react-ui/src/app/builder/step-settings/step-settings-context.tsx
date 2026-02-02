@@ -49,12 +49,14 @@ export type StepSettingsContextState = {
     propertyName: string,
     form: UseFormReturn,
   ) => void;
+  hideTestStep?: boolean;
 };
 
 export type StepSettingsProviderProps = {
   selectedStep: FlowAction | FlowTrigger;
   pieceModel: PieceMetadataModel | undefined;
   children: ReactNode;
+  hideTestStep?: boolean;
 };
 
 const StepSettingsContext = createContext<StepSettingsContextState | undefined>(
@@ -65,6 +67,7 @@ export const StepSettingsProvider = ({
   selectedStep,
   pieceModel,
   children,
+  hideTestStep = false,
 }: StepSettingsProviderProps) => {
   const [formSchema, setFormSchema] = useState<TObject<any>>(
     Type.Object(Type.Unknown()),
@@ -122,6 +125,7 @@ export const StepSettingsProvider = ({
         formSchema,
         updateFormSchema,
         updatePropertySettingsSchema,
+        hideTestStep,
       }}
     >
       {children}
