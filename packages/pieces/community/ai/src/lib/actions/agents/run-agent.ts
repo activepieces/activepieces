@@ -130,11 +130,6 @@ export const runAgent = createAction({
       structuredOutput
     });
 
-
-    console.log("11111111111111111111111111111111111111111");
-    console.log('tools', tools);
-    console.log("11111111111111111111111111111111111111111");
-
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
     try {
@@ -198,7 +193,7 @@ export const runAgent = createAction({
               break;
             }
           }
-          // await context.output.update({ data: outputBuilder.build() });
+          await context.output.update({ data: outputBuilder.build() });
         } catch (innerError) {
           errors.push({
             type: 'chunk-processing-error',
@@ -212,7 +207,7 @@ export const runAgent = createAction({
         const errorSummary = errors.map(e => `${e.type}: ${e.message}`).join('\n');
         outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
         outputBuilder.fail({ message: 'Agent completed with errors' });
-        // await context.output.update({ data: outputBuilder.build() });
+        await context.output.update({ data: outputBuilder.build() });
       } else {
         outputBuilder.setStatus(AgentTaskStatus.COMPLETED)
       }
@@ -220,7 +215,7 @@ export const runAgent = createAction({
     } catch (error) {
       const errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
       outputBuilder.fail({ message: errorMessage });
-      // await context.output.update({ data: outputBuilder.build() });
+      await context.output.update({ data: outputBuilder.build() });
       await Promise.all(mcpClients.map(async (client) => client.close()));
     }
 
