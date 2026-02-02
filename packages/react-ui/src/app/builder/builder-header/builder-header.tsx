@@ -10,6 +10,7 @@ import {
 } from 'react-router-dom';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -23,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
+import { Separator } from '@/components/ui/separator';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -100,78 +102,82 @@ export const BuilderHeader = () => {
   };
 
   const titleContent = (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {!embedState.disableNavigationInBuilder && (
-          <>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                onClick={goToFlowsPage}
-                className="cursor-pointer text-base"
-              >
-                {getProjectName(project)}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-          </>
-        )}
-        {!embedState.hideFlowNameInBuilder && (
-          <BreadcrumbItem>
-            <BreadcrumbPage>
-              <div
-                className={cn('flex items-center gap-1 text-base', {
-                  'max-w-[500px]': !isEditingFlowName,
-                })}
-              >
-                <EditableText
-                  className="hover:cursor-text"
-                  value={flowVersion.displayName}
-                  readonly={!isLatestVersion}
-                  onValueChange={(value) => {
-                    applyOperation(
-                      {
-                        type: FlowOperationType.CHANGE_NAME,
-                        request: {
-                          displayName: value,
-                        },
-                      },
-                      () => {
-                        flowHooks.invalidateFlowsQuery(queryClient);
-                      },
-                    );
-                  }}
-                  isEditing={isEditingFlowName}
-                  setIsEditing={setIsEditingFlowName}
-                  tooltipContent=""
-                />
-                <FlowActionMenu
-                  onVersionsListClick={() => {
-                    setRightSidebar(RightSideBarType.VERSIONS);
-                  }}
-                  insideBuilder={true}
-                  flow={flow}
-                  flowVersion={flowVersion}
-                  readonly={!isLatestVersion}
-                  onDelete={goToFlowsPage}
-                  onRename={() => {
-                    setIsEditingFlowName(true);
-                  }}
-                  onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-                  onDuplicate={() => {}}
+    <div className="flex items-center gap-2">
+      <ApSidebarToggle />
+      <Separator orientation="vertical" className="h-5 mr-2" />
+      <Breadcrumb>
+        <BreadcrumbList>
+          {!embedState.disableNavigationInBuilder && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  onClick={goToFlowsPage}
+                  className="cursor-pointer text-base"
                 >
-                  <Button
-                    variant="ghost"
-                    className="size-6 flex items-center justify-center"
+                  {getProjectName(project)}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
+          {!embedState.hideFlowNameInBuilder && (
+            <BreadcrumbItem>
+              <BreadcrumbPage>
+                <div
+                  className={cn('flex items-center gap-1 text-base', {
+                    'max-w-[500px]': !isEditingFlowName,
+                  })}
+                >
+                  <EditableText
+                    className="hover:cursor-text"
+                    value={flowVersion.displayName}
+                    readonly={!isLatestVersion}
+                    onValueChange={(value) => {
+                      applyOperation(
+                        {
+                          type: FlowOperationType.CHANGE_NAME,
+                          request: {
+                            displayName: value,
+                          },
+                        },
+                        () => {
+                          flowHooks.invalidateFlowsQuery(queryClient);
+                        },
+                      );
+                    }}
+                    isEditing={isEditingFlowName}
+                    setIsEditing={setIsEditingFlowName}
+                    tooltipContent=""
+                  />
+                  <FlowActionMenu
+                    onVersionsListClick={() => {
+                      setRightSidebar(RightSideBarType.VERSIONS);
+                    }}
+                    insideBuilder={true}
+                    flow={flow}
+                    flowVersion={flowVersion}
+                    readonly={!isLatestVersion}
+                    onDelete={goToFlowsPage}
+                    onRename={() => {
+                      setIsEditingFlowName(true);
+                    }}
+                    onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+                    onDuplicate={() => {}}
                   >
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </FlowActionMenu>
-              </div>
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        )}
-      </BreadcrumbList>
-    </Breadcrumb>
+                    <Button
+                      variant="ghost"
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </FlowActionMenu>
+                </div>
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          )}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
   );
 
   const rightContent = (

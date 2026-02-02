@@ -198,25 +198,10 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar
-        variant={'inset'}
-        collapsible="icon"
-        className="group p-0 z-50  border"
-      >
+      <Sidebar collapsible="icon">
         <AppSidebarHeader />
 
-        <div className="mt-1" />
-
-        <SidebarContent
-          className={cn(
-            state === 'collapsed' ? 'gap-2' : 'gap-0',
-            'scrollbar-hover',
-            'cursor-default',
-            'flex',
-            'flex-col',
-            'overflow-hidden',
-          )}
-        >
+        <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
             <SidebarMenu>
               {items.map((item) => (
@@ -224,12 +209,13 @@ export function ProjectDashboardSidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroup>
-          <SidebarSeparator className="shrink-0" />
 
-          <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
+          <SidebarSeparator />
+
+          <SidebarGroup className="flex-1">
             <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
               <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center gap-2">
                 {shouldShowNewProjectButton && (
                   <>
                     {!shouldDisableNewProjectButton ? (
@@ -354,24 +340,26 @@ export function ProjectDashboardSidebar() {
             </div>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter
-          onClick={(e) => e.stopPropagation()}
-          className="cursor-default"
-        >
-          <div
-            className={cn(
-              'mb-2 shrink-0 overflow-hidden origin-bottom-left transition-all duration-150 ease-in-out',
-              'opacity-100 max-h-[200px]',
-              'group-data-[collapsible=icon]:opacity-0',
-              'group-data-[collapsible=icon]:scale-0',
-              'group-data-[collapsible=icon]:max-h-0',
-            )}
-          >
-            <SidebarUsageLimits />
-          </div>
+        <SidebarFooter>
+          {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
     )
   );
+}
+
+function DelayedSidebarUsageLimits() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(true), 250);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return show ? (
+    <div>
+      <SidebarUsageLimits />
+    </div>
+  ) : null;
 }

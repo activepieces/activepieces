@@ -28,7 +28,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
 import {
   useIsPlatformAdmin,
   useAuthorization,
@@ -68,12 +68,10 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent group-data-[collapsible=icon]:px-2! px-2! data-[state=open]:text-sidebar-accent-foreground"
-            >
+          <DropdownMenuTrigger className="w-full">
+            <SidebarMenuButton className="h-10! group-data-[collapsible=icon]:h-10!">
               <UserAvatar
+                className={`scale-150`}
                 name={user.firstName + ' ' + user.lastName}
                 email={user.email}
                 imageUrl={user.imageUrl}
