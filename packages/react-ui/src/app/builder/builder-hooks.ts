@@ -44,6 +44,7 @@ export type BuilderInitialState = Pick<
 > & {
   socket: Socket;
   queryClient: QueryClient;
+  onStepSettingsClose?: () => void;
 };
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -53,7 +54,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     const pieceSelectorState = createPieceSelectorState(get, set);
     const runState = createRunState(initialState, get, set);
     const chatState = createChatState(set);
-    const canvasState = createCanvasState(initialState, set);
+    const canvasState = createCanvasState(initialState, set, get);
     const stepFormState = createStepFormState(set);
     const notesState = createNotesState(get, set);
     return {

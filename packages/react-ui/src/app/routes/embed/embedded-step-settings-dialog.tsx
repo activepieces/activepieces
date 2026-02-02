@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { memoryRouter } from '@/app/guards';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -37,14 +37,14 @@ export const EmbeddedStepSettingsDialog = () => {
     STEP_SETTINGS_QUERY_PARAMS.flowVersionId,
   );
   const flowId = queryParams.get(STEP_SETTINGS_QUERY_PARAMS.flowId);
-  const randomId = queryParams.get(STEP_SETTINGS_QUERY_PARAMS.randomId);
+  const dialogKey = `${stepName}-${flowVersionId}-${flowId}-${Date.now()}`;
 
   return (
     <EmbeddedStepSettingsDialogContent
       stepName={stepName}
       flowVersionId={flowVersionId}
       flowId={flowId}
-      key={randomId}
+      key={dialogKey}
     />
   );
 };
@@ -61,12 +61,23 @@ const EmbeddedStepSettingsDialogContent = ({
   flowId,
 }: EmbeddedStepSettingsDialogContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
-  const hasErrorRef = useRef(false);
+
+  const hideStepSettingsIframe = () => {
+    setIsDialogOpen(false);
+    postMessageToParent({
+      type: ActivepiecesClientEventName.CLIENT_STEP_SETTINGS_DIALOG_CLOSED,
+      data: {},
+    });
+  };
+
+  const postMessageToParent = (event: ActivepiecesStepSettingsDialogClosed) => {
+    parentWindow.postMessage(event, '*');
+  };
 
   const {
     data: flow,
     isLoading: isLoadingFlow,
-    isSuccess: isFlowSuccess,
+    isError: isFlowError,
   } = useQuery({
     queryKey: ['flow', flowId, flowVersionId],
     queryFn: () => flowsApi.get(flowId!, { versionId: flowVersionId! }),
@@ -87,17 +98,6 @@ const EmbeddedStepSettingsDialogContent = ({
       getExactVersion: false,
     });
 
-  const hideStepSettingsIframe = () => {
-    postMessageToParent({
-      type: ActivepiecesClientEventName.CLIENT_STEP_SETTINGS_DIALOG_CLOSED,
-      data: {},
-    });
-  };
-
-  const postMessageToParent = (event: ActivepiecesStepSettingsDialogClosed) => {
-    parentWindow.postMessage(event, '*');
-  };
-
   useEffect(() => {
     const showStepSettingsIframeEvent: ActivepiecesClientShowStepSettingsIframe =
       {
@@ -108,12 +108,10 @@ const EmbeddedStepSettingsDialogContent = ({
     document.body.style.background = 'transparent';
   }, []);
 
-  useEffect(() => {
-    if (!isFlowSuccess && !isLoadingFlow && !hasErrorRef.current) {
-      hideStepSettingsIframe();
-      hasErrorRef.current = true;
-    }
-  }, [isFlowSuccess, isLoadingFlow]);
+  if (isFlowError) {
+    hideStepSettingsIframe();
+    return null;
+  }
 
   const isLoading = isLoadingFlow || isLoadingPiece;
 
@@ -129,7 +127,6 @@ const EmbeddedStepSettingsDialogContent = ({
     >
       <DialogContent
         showOverlay={false}
-        onInteractOutside={(e) => e.preventDefault()}
         className={cn('max-w-[90vw] w-full h-[90vh] max-h-[90vh] p-0', {
           'bg-transparent! border-none! focus:outline-hidden border-transparent! shadow-none!':
             isLoading,
@@ -147,6 +144,7 @@ const EmbeddedStepSettingsDialogContent = ({
             selectedStep={selectedStep}
             pieceModel={pieceModel ?? null}
             flow={flow}
+            onClose={hideStepSettingsIframe}
           />
         )}
       </DialogContent>
@@ -158,12 +156,14 @@ type EmbeddedStepSettingsFormProps = {
   selectedStep: FlowAction | FlowTrigger;
   pieceModel: any;
   flow: any;
+  onClose: () => void;
 };
 
 const EmbeddedStepSettingsForm = ({
   selectedStep,
   pieceModel,
   flow,
+  onClose,
 }: EmbeddedStepSettingsFormProps) => {
   return (
     <BuilderStateProvider
@@ -174,6 +174,7 @@ const EmbeddedStepSettingsForm = ({
       hideTestWidget={true}
       inputSampleData={{}}
       outputSampleData={{}}
+      onStepSettingsClose={onClose}
     >
       <StepSettingsProvider
         pieceModel={pieceModel ?? undefined}

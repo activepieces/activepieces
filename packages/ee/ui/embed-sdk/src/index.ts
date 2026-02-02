@@ -86,7 +86,6 @@ export const STEP_SETTINGS_QUERY_PARAMS = {
   stepName: 'stepName',
   flowVersionId: 'flowVersionId',
   flowId: 'flowId',
-  randomId: 'randomId'
 };
 
 export type ActivepiecesClientEvent =
@@ -415,7 +414,7 @@ class ActivepiecesEmbedded {
   private _addStepSettingsIframe({stepName, flowVersionId, flowId}:{stepName:string, flowVersionId:string, flowId:string}) {
     const stepSettingsIframe = this.connectToEmbed({
       iframeContainer: document.body,
-      initialRoute: `/embed/step-settings?${STEP_SETTINGS_QUERY_PARAMS.stepName}=${stepName}&${STEP_SETTINGS_QUERY_PARAMS.flowVersionId}=${flowVersionId}&${STEP_SETTINGS_QUERY_PARAMS.flowId}=${flowId}&${STEP_SETTINGS_QUERY_PARAMS.randomId}=${Date.now()}`
+      initialRoute: `/embed/step-settings?${STEP_SETTINGS_QUERY_PARAMS.stepName}=${stepName}&${STEP_SETTINGS_QUERY_PARAMS.flowVersionId}=${flowVersionId}&${STEP_SETTINGS_QUERY_PARAMS.flowId}=${flowId}`
     });
     stepSettingsIframe.style.cssText = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
     return stepSettingsIframe;
@@ -426,7 +425,7 @@ class ActivepiecesEmbedded {
     if (!popup) {
       this._errorCreator('Failed to open popup window');
     }
-    this._setupInitialMessageHandler(popup, `/embed/step-settings?${STEP_SETTINGS_QUERY_PARAMS.stepName}=${stepName}&${STEP_SETTINGS_QUERY_PARAMS.flowVersionId}=${flowVersionId}&${STEP_SETTINGS_QUERY_PARAMS.flowId}=${flowId}&${STEP_SETTINGS_QUERY_PARAMS.randomId}=${Date.now()}`);
+    this._setupInitialMessageHandler(popup, `/embed/step-settings?${STEP_SETTINGS_QUERY_PARAMS.stepName}=${stepName}&${STEP_SETTINGS_QUERY_PARAMS.flowVersionId}=${flowVersionId}&${STEP_SETTINGS_QUERY_PARAMS.flowId}=${flowId}`);
     return popup;
   }
 

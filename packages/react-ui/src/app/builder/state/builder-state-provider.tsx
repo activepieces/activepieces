@@ -40,6 +40,16 @@ export function BuilderStateProvider({
     });
   }
 
+  if (
+    props.onStepSettingsClose &&
+    storeRef.current.getState().onStepSettingsClose !==
+      props.onStepSettingsClose
+  ) {
+    storeRef.current.setState({
+      onStepSettingsClose: props.onStepSettingsClose,
+    });
+  }
+
   return (
     <BuilderStateContext.Provider value={storeRef.current}>
       {children}
