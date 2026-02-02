@@ -24,7 +24,6 @@ import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
 
-
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
     CHANGE_STATUS = 'CHANGE_STATUS',
@@ -202,7 +201,6 @@ export const UpdateOwnerRequest = Type.Object({
     ownerId: Type.String(),
 })
 export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
-
 export const FlowOperationRequest = Type.Union([
     Type.Object(
         {
@@ -423,7 +421,10 @@ export const FlowOperationRequest = Type.Union([
             title: 'Add Note',
         },
     ),
+ 
 ])
+
+
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
 
@@ -519,6 +520,7 @@ export const flowOperations = {
                 clonedVersion = notesOperations.addNote(clonedVersion, operation.request)
                 break
             }
+      
             default:
                 break
         }
