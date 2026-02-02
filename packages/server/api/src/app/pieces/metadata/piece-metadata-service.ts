@@ -93,7 +93,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 })
             }
             const resolvedLocale = locale ?? LocalesEnum.ENGLISH
-            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale: resolvedLocale, mutate: true })
+            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale: resolvedLocale, mutate: false })
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
