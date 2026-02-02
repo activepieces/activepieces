@@ -38,7 +38,7 @@ export type CanvasState = {
 type CanvasStateInitialState = Pick<
   BuilderState,
   'readonly' | 'hideTestWidget' | 'run' | 'flowVersion'
->
+>;
 
 export const createCanvasState = (
   initialState: CanvasStateInitialState,
@@ -119,13 +119,12 @@ export const createCanvasState = (
         };
       });
     },
-    exitStepSettings: () => {
+    exitStepSettings: () =>
       set(() => ({
         rightSidebar: RightSideBarType.NONE,
         selectedStep: null,
         selectedBranchIndex: null,
-      }));
-    },
+      })),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     selectedBranchIndex: null,
     selectedNodes: [],
