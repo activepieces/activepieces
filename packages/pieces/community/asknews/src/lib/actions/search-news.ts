@@ -107,23 +107,23 @@ export const searchNews = createAction({
       similarityScoreThreshold,
     } = context.propsValue;
 
-    const body: any = {
+    const queryParams: any = {
       query: query,
     };
-    if (nArticles) body.n_articles = nArticles;
-    if (method) body.method = method;
-    if (returnType) body.return_type = returnType;
-    if (historical) body.historical = historical;
-    if (hoursBack) body.hours_back = hoursBack;
-    if (categories && categories.length > 0) body.categories = categories;
+    if (nArticles) queryParams.n_articles = nArticles;
+    if (method) queryParams.method = method;
+    if (returnType) queryParams.return_type = returnType;
+    if (historical) queryParams.historical = historical;
+    if (hoursBack) queryParams.hours_back = hoursBack;
+    if (categories && categories.length > 0) queryParams.categories = categories;
     if (similarityScoreThreshold)
-      body.similarity_score_threshold = similarityScoreThreshold;
+      queryParams.similarity_score_threshold = similarityScoreThreshold;
 
+    const queryString = new URLSearchParams(queryParams).toString();
     const response = await makeRequest(
       context.auth.secret_text,
-      HttpMethod.POST,
-      '/news/search',
-      body
+      HttpMethod.GET,
+      `/news/search?${queryString}`,
     );
 
     return response;

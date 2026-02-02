@@ -90,7 +90,7 @@ export const asknewsAlert = createTrigger({
       '/chat/alerts',
       alertRequestBody
     );
-
+    console.log('Created AskNews alert with ID:', response.id);
     await context.store?.put(`asknews_alert_id_${webhookUrl}`, response.id);
   },
   async onDisable(context) {
