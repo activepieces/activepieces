@@ -45,7 +45,6 @@ type CanvasStateInitialState = Pick<
 export const createCanvasState = (
   initialState: CanvasStateInitialState,
   set: StoreApi<BuilderState>['setState'],
-  get: StoreApi<BuilderState>['getState'],
 ): CanvasState => {
   const failedStepNameInRun = initialState.run?.steps
     ? flowRunUtils.findLastStepWithStatus(
