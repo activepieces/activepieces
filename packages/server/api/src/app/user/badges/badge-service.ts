@@ -6,6 +6,8 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { websocketService } from '../../core/websockets.service'
 import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents } from '../../helper/application-events'
+import { platformService } from '../../platform/platform.service'
+import { userService } from '../user-service'
 import { BadgeCheck } from './badge-check'
 import { UserBadgeEntity } from './badge-entity'
 import { flowsBadgesCheck } from './checks/active-flows-badges'
@@ -29,6 +31,11 @@ async function processBadgeChecks(
     log: FastifyBaseLogger,
 ): Promise<void> {
     const userId = event.userId
+    if (isNil(userId)) return
+
+    const user = await userService.getMetaInformation({ id: userId })
+    if (isNil(user)) return
+
     const checkResults = await Promise.all(checks.map(badgeCheck => badgeCheck.eval(event)))
 
     const badgesByUser = new Map<string, (keyof typeof BADGES)[]>()
@@ -63,7 +70,10 @@ async function processBadgeChecks(
                 userId,
             })
 
-            await emailService(log).sendBadgeAwardedEmail(userId, badgeName)
+            if (!isNil(user.platformId)) {
+                const platform = await platformService.getOneWithPlanOrThrow(user.platformId)
+                if (!platform.plan.embeddingEnabled) await emailService(log).sendBadgeAwardedEmail(userId, badgeName)
+            }
 
             websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
                 badge: badgeName,

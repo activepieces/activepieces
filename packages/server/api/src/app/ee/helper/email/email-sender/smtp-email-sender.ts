@@ -58,6 +58,13 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 to: emails.join(','),
                 subject: emailSubject,
                 html: emailBody,
+            }).catch((error) => {
+                log.error({
+                    error,
+                    emails,
+                    platformId,
+                    templateData,
+                }, '[smtpEmailSender#send] error sending email')
             })
         },
 
