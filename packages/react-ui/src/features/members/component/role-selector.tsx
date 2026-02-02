@@ -20,26 +20,29 @@ type RoleConfig<T = string> = {
 const PLATFORM_ROLES: RoleConfig<PlatformRole>[] = [
   {
     value: PlatformRole.ADMIN,
-    label: 'Admin',
-    description: 'Full access to all projects and platform settings',
+    label: t('Admin'),
+    description: t('Full access to all projects and platform settings'),
   },
   {
     value: PlatformRole.OPERATOR,
-    label: 'Operator',
-    description: 'Access and edit flows in all projects, no platform settings',
+    label: t('Operator'),
+    description: t(
+      'Access and edit flows in all projects, no platform settings',
+    ),
   },
   {
     value: PlatformRole.MEMBER,
-    label: 'Member',
-    description:
+    label: t('Member'),
+    description: t(
       "Access to personal project and any team projects they're invited to",
+    ),
   },
 ];
 
 const PROJECT_ROLE_DESCRIPTIONS: Record<string, string> = {
-  Admin: 'Manage project settings, members, connections, and git sync',
-  Editor: 'Build, publish, and manage flows',
-  Viewer: 'View flows and monitor run history',
+  Admin: t('Manage project settings, members, connections, and git sync'),
+  Editor: t('Build, publish, and manage flows'),
+  Viewer: t('View flows and monitor run history'),
 };
 
 export const getProjectRoleDescription = (roleName: string): string => {
@@ -63,58 +66,23 @@ export const RoleSelector = ({
   placeholder,
   roles = [],
 }: RoleSelectorProps) => {
-  const getSelectedRoleInfo = () => {
-    if (type === 'platform') {
-      const role = PLATFORM_ROLES.find((r) => r.value === value);
-      return role
-        ? { label: t(role.label), description: t(role.description) }
-        : null;
-    } else {
-      const role = roles.find((r) => r.name === value);
-      return role
-        ? {
-            label: role.name,
-            description: t(getProjectRoleDescription(role.name)),
-          }
-        : null;
-    }
-  };
+  const isPlatform = type === 'platform';
 
-  const selectedRole = getSelectedRoleInfo();
+  const label = isPlatform ? t('Platform Roles') : t('Project Roles');
 
-  if (type === 'platform') {
-    return (
-      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger className="h-auto py-2">
-          {selectedRole ? (
-            <div className="flex flex-col items-start gap-0.5 text-left w-full">
-              <span className="font-normal">{selectedRole.label}</span>
-              <span className="text-xs text-muted-foreground font-normal whitespace-normal">
-                {selectedRole.description}
-              </span>
-            </div>
-          ) : (
-            <SelectValue placeholder={placeholder || t('Select Role')} />
-          )}
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectLabel>{t('Platform Roles')}</SelectLabel>
-            {PLATFORM_ROLES.map((role) => (
-              <SelectItem key={role.value} value={role.value} className="py-3">
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium">{t(role.label)}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {t(role.description)}
-                  </span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    );
-  }
+  const options = isPlatform
+    ? PLATFORM_ROLES.map((role) => ({
+        value: role.value,
+        label: role.label,
+        description: role.description,
+      }))
+    : roles.map((role) => ({
+        value: role.name,
+        label: role.name,
+        description: getProjectRoleDescription(role.name),
+      }));
+
+  const selectedRole = options.find((r) => r.value === value);
 
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
@@ -132,13 +100,17 @@ export const RoleSelector = ({
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>{t('Project Roles')}</SelectLabel>
-          {roles.map((role) => (
-            <SelectItem key={role.name} value={role.name} className="py-3">
+          <SelectLabel>{label}</SelectLabel>
+          {options.map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className="py-3"
+            >
               <div className="flex flex-col gap-1">
-                <span className="font-medium">{role.name}</span>
+                <span className="font-medium">{t(option.label)}</span>
                 <span className="text-xs text-muted-foreground">
-                  {t(getProjectRoleDescription(role.name))}
+                  {t(option.description)}
                 </span>
               </div>
             </SelectItem>
