@@ -44,7 +44,6 @@ export type BuilderInitialState = Pick<
 > & {
   socket: Socket;
   queryClient: QueryClient;
-  onStepSettingsClose?: () => void;
 };
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;

@@ -144,7 +144,6 @@ const EmbeddedStepSettingsDialogContent = ({
             selectedStep={selectedStep}
             pieceModel={pieceModel ?? null}
             flow={flow}
-            onClose={hideStepSettingsIframe}
           />
         )}
       </DialogContent>
@@ -156,14 +155,12 @@ type EmbeddedStepSettingsFormProps = {
   selectedStep: FlowAction | FlowTrigger;
   pieceModel: any;
   flow: any;
-  onClose: () => void;
 };
 
 const EmbeddedStepSettingsForm = ({
   selectedStep,
   pieceModel,
   flow,
-  onClose,
 }: EmbeddedStepSettingsFormProps) => {
   return (
     <BuilderStateProvider
@@ -174,7 +171,6 @@ const EmbeddedStepSettingsForm = ({
       hideTestWidget={true}
       inputSampleData={{}}
       outputSampleData={{}}
-      onStepSettingsClose={onClose}
     >
       <StepSettingsProvider
         pieceModel={pieceModel ?? undefined}

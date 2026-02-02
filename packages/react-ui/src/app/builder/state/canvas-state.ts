@@ -15,7 +15,6 @@ export type CanvasState = {
   activeDraggingStep: string | null;
   selectedBranchIndex: number | null;
   showMinimap: boolean;
-  onStepSettingsClose?: () => void;
   setShowMinimap: (showMinimap: boolean) => void;
   setSelectedBranchIndex: (index: number | null) => void;
   exitStepSettings: () => void;
@@ -66,7 +65,6 @@ export const createCanvasState = (
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
     readonly: initialState.readonly,
     hideTestWidget: initialState.hideTestWidget ?? false,
-    onStepSettingsClose: initialState.onStepSettingsClose,
     selectedStep: initiallySelectedStep,
     activeDraggingStep: null,
     rightSidebar:
@@ -125,16 +123,11 @@ export const createCanvasState = (
       });
     },
     exitStepSettings: () => {
-      const state = get();
-      if (state.onStepSettingsClose) {
-        state.onStepSettingsClose();
-      } else {
-        set(() => ({
-          rightSidebar: RightSideBarType.NONE,
-          selectedStep: null,
-          selectedBranchIndex: null,
-        }));
-      }
+      set(() => ({
+        rightSidebar: RightSideBarType.NONE,
+        selectedStep: null,
+        selectedBranchIndex: null,
+      }));
     },
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     selectedBranchIndex: null,
