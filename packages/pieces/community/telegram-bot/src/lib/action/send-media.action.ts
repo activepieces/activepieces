@@ -68,11 +68,11 @@ export const telegramSendMediaAction = createAction({
       async props({ media_type }) {
         const propsBuilders: Record<string, () => DynamicPropsValue> = {
           photo: () => ({
-            photo: Property.File({
-              displayName: 'Image',
-              description: 'The image to be uploaded as a file',
-              required: false,
-            }),
+            // photo: Property.File({
+            //   displayName: 'Image',
+            //   description: 'The image to be uploaded as a file',
+            //   required: false,
+            // }),
             photoUrl: Property.ShortText({
               displayName: 'Image Url',
               description: 'The image url to be downloaded by Telegram',
@@ -86,11 +86,11 @@ export const telegramSendMediaAction = createAction({
             }),
           }),
           video: () => ({
-            video: Property.File({
-              displayName: 'Video',
-              description: 'The video to be uploaded as a file',
-              required: false,
-            }),
+            // video: Property.File({
+            //   displayName: 'Video',
+            //   description: 'The video to be uploaded as a file',
+            //   required: false,
+            // }),
             videoUrl: Property.ShortText({
               displayName: 'Video Url',
               description: 'The video url to be downloaded by Telegram',
@@ -104,12 +104,12 @@ export const telegramSendMediaAction = createAction({
             }),
           }),
           sticker: () => ({
-            sticker: Property.File({
-              displayName: 'Sticker',
-              description:
-                'The sticker to be uploaded as a file (supports .WEBP files for static and .TGS for animated)',
-              required: false,
-            }),
+            // sticker: Property.File({
+            //   displayName: 'Sticker',
+            //   description:
+            //     'The sticker to be uploaded as a file (supports .WEBP files for static and .TGS for animated)',
+            //   required: false,
+            // }),
             emoji: Property.ShortText({
               displayName: 'Emoji',
               description:
@@ -130,12 +130,12 @@ export const telegramSendMediaAction = createAction({
             }),
           }),
           animation: () => ({
-            animation: Property.File({
-              displayName: 'GIF',
-              description:
-                'The GIF or MPEG-4 without sound file to be uploaded as a auto-playing animation',
-              required: false,
-            }),
+            // animation: Property.File({
+            //   displayName: 'GIF',
+            //   description:
+            //     'The GIF or MPEG-4 without sound file to be uploaded as a auto-playing animation',
+            //   required: false,
+            // }),
             animationUrl: Property.ShortText({
               displayName: 'GIF Url',
               description:
@@ -199,8 +199,7 @@ export const telegramSendMediaAction = createAction({
     let method = 'sendMessage';
     if (typeof mediaType !== 'undefined') {
       // send media message
-      const [file, url, id] = [
-        ctx.propsValue.media?.[mediaType] as ApFile,
+      const [url, id] = [
         ctx.propsValue.media?.[mediaType + 'Url'] as string,
         ctx.propsValue.media?.[mediaType + 'Id'] as string,
       ];
@@ -219,22 +218,23 @@ export const telegramSendMediaAction = createAction({
       }
       method = mediaMethod;
 
-      if (typeof file !== 'undefined') {
-        // upload
-        headers['Content-Type'] = 'multipart/form-data';
-        const form = new FormData();
-        form.append('file', file.data, file.extension);
-        body = form;
-        queryParams.chat_id = ctx.propsValue['chat_id'];
-        queryParams.caption = ctx.propsValue['message'];
-        if (ctx.propsValue['message_thread_id'])
-          queryParams.message_thread_id = ctx.propsValue['message_thread_id'];
-        queryParams.parse_mode = ctx.propsValue['format'] ?? 'MarkdownV2';
+      // if (typeof file !== 'undefined') {
+      //   // upload
+      //   headers['Content-Type'] = 'multipart/form-data';
+      //   const form = new FormData();
+      //   form.append('file', file.data, file.extension);
+      //   body = form;
+      //   queryParams.chat_id = ctx.propsValue['chat_id'];
+      //   queryParams.caption = ctx.propsValue['message'];
+      //   if (ctx.propsValue['message_thread_id'])
+      //     queryParams.message_thread_id = ctx.propsValue['message_thread_id'];
+      //   queryParams.parse_mode = ctx.propsValue['format'] ?? 'MarkdownV2';
 
-        // TODO: research how to
-        // if (ctx.propsValue['reply_markup'])
-        //   queryParams.reply_markup = ctx.propsValue['reply_markup'];
-      } else if (typeof url !== 'undefined' || typeof id !== 'undefined') {
+      //   // TODO: research how to
+      //   // if (ctx.propsValue['reply_markup'])
+      //   //   queryParams.reply_markup = ctx.propsValue['reply_markup'];
+      // } else
+      if (typeof url !== 'undefined' || typeof id !== 'undefined') {
         // download
         body = body || {};
         body[mediaType] = url ?? id;
