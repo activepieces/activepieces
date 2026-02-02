@@ -73,7 +73,7 @@ export const createAList = createAction({
       }
     }
 
-    const response = await makeRequest(auth, HttpMethod.POST, '/Lists', body)
+    const response = await makeRequest(auth.secret_text, HttpMethod.POST, '/Lists', body)
     return response
   },
 });

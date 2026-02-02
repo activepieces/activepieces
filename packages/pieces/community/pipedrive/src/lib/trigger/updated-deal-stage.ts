@@ -98,6 +98,7 @@ export const updatedDealStageTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		stage_id: Property.Dropdown({
+			auth: pipedriveAuth,
 			displayName: 'Stage in Pipeline',
 			required: false,
 			refreshers: [],
@@ -218,7 +219,14 @@ export const updatedDealStageTrigger = createTrigger({
 		const currentDealData = payloadBody.data;
 		const previousDealData = payloadBody.previous;
 
+		// Check if previous data exists and has stage_id
+		if (!previousDealData || isNil(previousDealData.stage_id)) {
+			return [];
+		}
+
+		// Only trigger if stage_id actually changed
 		if (currentDealData.stage_id !== previousDealData.stage_id) {
+			// If stage filter is set, only trigger if new stage matches the filter
 			if (stageId && currentDealData.stage_id !== stageId) {
 				return [];
 			}

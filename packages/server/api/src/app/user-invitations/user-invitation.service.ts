@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, SeekPage, spreadIfDefined, User, UserIdentity, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, PlatformRole, SeekPage, spreadIfDefined, User, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -38,11 +38,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         }
         return invitation
     },
-    async provisionUserInvitation({ email }: ProvisionUserInvitationParams): Promise<void> {
-        const identity = await userIdentityService(log).getIdentityByEmail(email)
-        if (isNil(identity)) {
-            return
-        }
+    async provisionUserInvitation({ user, email }: ProvisionUserInvitationParams): Promise<void> {
         const invitations = await repo().createQueryBuilder('user_invitation')
             .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
             .andWhere({
@@ -53,7 +49,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         log.info({ count: invitations.length }, '[provisionUserInvitation] list invitations')
         for (const invitation of invitations) {
             log.info({ invitation }, '[provisionUserInvitation] provision')
-            const user = await getOrCreateUser(identity, invitation.platformId)
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
@@ -104,7 +99,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         invitationExpirySeconds,
         status,
     }: CreateParams): Promise<UserInvitationWithLink> {
-        const platform = await platformService.getOneOrThrow(platformId)
         const id = apId()
         await repo().upsert({
             id,
@@ -126,9 +120,14 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 invitationId: id,
                 platformId,
             })
+            if (smtpEmailSender(log).isSmtpConfigured()) {
+                await emailService(log).sendProjectMemberAdded({
+                    userInvitation,
+                })
+            }
             return userInvitation
         }
-        return enrichWithInvitationLink(platform, userInvitation, invitationExpirySeconds, log)
+        return enrichWithInvitationLink(userInvitation, invitationExpirySeconds, log)
     },
     async list(params: ListUserParams): Promise<SeekPage<UserInvitation>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
@@ -195,8 +194,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 registered: false,
             }
         }
+        const user = await userService.getOrCreateWithProject({
+            identity,
+            platformId: invitation.platformId,
+        })
         await this.provisionUserInvitation({
             email: invitation.email,
+            user,
         })
         return {
             registered: true,
@@ -227,20 +231,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function getOrCreateUser(identity: UserIdentity, platformId: string): Promise<User> {
-    const user = await userService.getOneByIdentityAndPlatform({
-        identityId: identity.id,
-        platformId,
-    })
-    if (isNil(user)) {
-        return userService.create({
-            identityId: identity.id,
-            platformId,
-            platformRole: PlatformRole.MEMBER,
-        })
-    }
-    return user
-}
 async function generateInvitationLink(userInvitation: UserInvitation, expireyInSeconds: number): Promise<string> {
     const token = await jwtUtils.sign({
         payload: {
@@ -255,9 +245,9 @@ async function generateInvitationLink(userInvitation: UserInvitation, expireyInS
         path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
     })
 }
-const enrichWithInvitationLink = async (platform: Platform, userInvitation: UserInvitation, expireyInSeconds: number, log: FastifyBaseLogger) => {
+const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyInSeconds: number, log: FastifyBaseLogger) => {
     const invitationLink = await generateInvitationLink(userInvitation, expireyInSeconds)
-    if (!smtpEmailSender(log).isSmtpConfigured(platform)) {
+    if (!smtpEmailSender(log).isSmtpConfigured()) {
         return {
             ...userInvitation,
             link: invitationLink,
@@ -283,6 +273,7 @@ type HasAnyAcceptedInvitationsParams = {
     platformId: string
 }
 type ProvisionUserInvitationParams = {
+    user: User
     email: string
 }
 

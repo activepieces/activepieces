@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -8,12 +8,12 @@ import dayjs from 'dayjs';
 import { ListObjectsV2CommandInput } from '@aws-sdk/client-s3';
 import { MarkdownVariant } from '@activepieces/shared';
 
-const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Auth>, { folderPath?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
 		const isTest = lastFetchEpochMS === 0;
 
-		const s3 = createS3(auth);
+		const s3 = createS3(auth.props);
 
 		const bucketFiles = [];
 
@@ -25,7 +25,7 @@ const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?:
 
 		do {
 			const params: ListObjectsV2CommandInput = {
-				Bucket: auth.bucket,
+				Bucket: auth.props.bucket,
 				MaxKeys: isTest ? 10 : 1000,
 				ContinuationToken: nextToken,
 			};

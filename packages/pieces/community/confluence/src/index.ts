@@ -36,12 +36,11 @@ export const confluence = createPiece({
   actions: [getPageContent,createPageFromTemplateAction,
     createCustomApiCallAction({
       baseUrl:(auth)=>{
-        const authValue = auth as PiecePropValueSchema<typeof confluenceAuth>;
-        return `${authValue.confluenceDomain}/wiki/api/v2`;
+        return `${ auth?.props.confluenceDomain?? ''}/wiki/api/v2`;
       },
       auth: confluenceAuth,
       authMapping: async (auth) => {
-        const authValue = auth as PiecePropValueSchema<typeof confluenceAuth>;
+        const authValue = auth.props
         return {
           Authorization: `Basic ${Buffer.from(`${authValue.username}:${authValue.password}`).toString('base64')}`,
         };

@@ -32,6 +32,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -69,6 +70,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 

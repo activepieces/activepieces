@@ -21,7 +21,7 @@ export const pdfPageCount = createAction({
   },
   async run({ propsValue }) {
     try {
-      const pdfDoc = await PDFDocument.load(propsValue.file.data);
+      const pdfDoc = await PDFDocument.load(propsValue.file.data as any);
       return pdfDoc.getPageCount();
     } catch (error) {
       throw new Error(`Failed to get page count: ${(error as Error).message}`);

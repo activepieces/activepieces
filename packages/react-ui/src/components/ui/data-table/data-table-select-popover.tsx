@@ -39,7 +39,7 @@ const DataTableSelectPopover = ({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button variant="outline" className="border-dashed">
           <ListFilterIcon className="mr-2 size-4" />
           {title}
           {selectedValues?.size > 0 && (
@@ -105,9 +105,9 @@ const DataTableSelectPopover = ({
                     >
                       <div
                         className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-secondary',
                           isSelected
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-secondary text-secondary-foreground'
                             : 'opacity-50 [&_svg]:invisible',
                         )}
                       >

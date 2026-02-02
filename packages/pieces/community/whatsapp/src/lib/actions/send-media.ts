@@ -21,6 +21,7 @@ export const sendMedia = createAction({
 			required: true,
 		}),
 		type: Property.Dropdown({
+			auth: whatsappAuth,
 			displayName: 'Type',
 			description: 'The type of media to send',
 			required: true,
@@ -52,7 +53,7 @@ export const sendMedia = createAction({
 	},
 	async run(context) {
 		const { to, caption, media, type, filename, phone_number_id } = context.propsValue;
-		const { access_token } = context.auth;
+		const { access_token } = context.auth.props;
 		const body = {
 			messaging_product: 'whatsapp',
 			recipient_type: 'individual',

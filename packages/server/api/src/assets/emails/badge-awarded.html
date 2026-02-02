@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You've earned a new badge!</title>
+  <style>
+    body {
+      font-family: 'Graphik', 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #000;
+      width: 100vw;
+      min-height: 100%;
+    }
+    .container {
+      max-width: 480px;
+      margin: 40px auto 0 auto;
+      text-align: left;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .logo {
+      width: 180px;
+      /* was 120px */
+      margin: 0 0 36px 0;
+      display: block;
+      text-align: left;
+    }
+    .headline {
+      font-size: 24px;
+      /* was 32px */
+      line-height: 1.4;
+      font-weight: 600;
+      margin-bottom: 22px;
+      margin-top: 0;
+      text-align: left;
+    }
+    .badge-img {
+      width: 160px;
+      max-width: 80vw;
+      border-radius: 10px;
+      margin: 22px 0 14px 0;
+      display: block;
+      text-align: left;
+    }
+    .badge-title {
+      font-size: 18px;
+      /* was 25px */
+      font-weight: 600;
+      margin: 8px 0 8px 0;
+      text-align: left;
+    }
+    .badge-desc {
+      font-size: 17px;
+      color: #444;
+      margin-bottom: 26px;
+      margin-top: 0;
+      text-align: left;
+    }
+    .footer {
+      font-size: 14px;
+      color: #444;
+      border-top: 1px solid #e9e9e9;
+      padding-top: 20px;
+      margin-top: 22px;
+      margin-bottom: 0;
+      text-align: left;
+    }
+    @media (max-width:600px) {
+      .container { max-width: 99vw; padding-left: 5vw; padding-right: 5vw;}
+      .badge-img { width: 62vw; }
+      .logo { width: 130px; }
+      /* was 90px */
+      .headline { font-size: 19px; }
+      .badge-title { font-size: 15px; }
+    }
+    @media (max-width:400px) {
+      .container { max-width: 99vw !important; padding-left: 2vw; padding-right: 2vw; }
+      .badge-img { width: 74vw; }
+      .logo { width: 90px; }
+      /* was 60px */
+      .headline { font-size: 15px; }
+      .badge-title { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="{{fullLogoUrl}}" alt="logo" class="logo" style="text-align:left;" />
+    <div class="headline">
+      Congratulations{{#firstName}}, {{firstName}}{{/firstName}}!<br>
+      You earned a new badge.
+    </div>
+    <img src="{{badgeImageUrl}}" alt="{{badgeTitle}}" class="badge-img" style="text-align:left;" />
+    <div class="badge-title">{{badgeTitle}}</div>
+    <div class="badge-desc">{{badgeDescription}}</div>
+    <div class="footer">
+      You're doing amazing things on <strong>{{platformName}}</strong>. Keep building and unlocking more badges!
+    </div>
+    {{> footer}}
+  </div>
+</body>
+</html>

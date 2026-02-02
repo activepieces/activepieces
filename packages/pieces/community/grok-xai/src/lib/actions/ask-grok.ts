@@ -129,6 +129,7 @@ export const askGrok = createAction({
     }),
     searchSources: Property.MultiSelectDropdown({
       displayName: 'Search Sources',
+      auth: grokAuth,
       required: false,
       description: 'Sources to search in.',
       refreshers: [],

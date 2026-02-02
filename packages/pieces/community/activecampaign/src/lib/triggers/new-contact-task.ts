@@ -12,7 +12,7 @@ export const newContactTaskTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		const res = await client.subscribeWebhook({
 			name: `Activepieces New Contact Task Hook`,
 			url: context.webhookUrl,
@@ -29,7 +29,7 @@ export const newContactTaskTrigger = createTrigger({
 			'activecampaign_new_contact_task',
 		);
 		if (webhook != null) {
-			const client = makeClient(context.auth);
+			const client = makeClient(context.auth.props);
 			await client.unsubscribeWebhook(webhook.webhook.id);
 		}
 	},

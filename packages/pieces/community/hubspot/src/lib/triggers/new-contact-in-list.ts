@@ -18,7 +18,8 @@ type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const listId = propsValue.listId;
@@ -54,21 +55,28 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			);
 		}
 
-		// Fetch detailed contact properties
-		const contactDetailsResponse = await client.crm.contacts.batchApi.read({
-			inputs: listMembers.map((member) => ({ id: member.recordId })),
-			properties: propertiesToRetrieve,
-			propertiesWithHistory: [],
-		});
+		// Fetch detailed contact properties in batches (HubSpot batch API limit is 100)
+		const BATCH_SIZE = 100;
+		const enrichedMembers = [];
 
-		// Merge `membershipTimestamp` with contact properties
-		const enrichedMembers = contactDetailsResponse.results.map((contact) => {
-			const correspondingMember = listMembers.find((member) => member.recordId === contact.id);
-			return {
-				...contact,
-				membershipTimestamp: correspondingMember?.membershipTimestamp,
-			};
-		});
+		for (let i = 0; i < listMembers.length; i += BATCH_SIZE) {
+			const chunk = listMembers.slice(i, i + BATCH_SIZE);
+			const contactDetailsResponse = await client.crm.contacts.batchApi.read({
+				inputs: chunk.map((member) => ({ id: member.recordId })),
+				properties: propertiesToRetrieve,
+				propertiesWithHistory: [],
+			});
+
+			// Merge `membershipTimestamp` with contact properties for this chunk
+			const enrichedChunk = contactDetailsResponse.results.map((contact) => {
+				const correspondingMember = chunk.find((member) => member.recordId === contact.id);
+				return {
+					...contact,
+					membershipTimestamp: correspondingMember?.membershipTimestamp,
+				};
+			});
+			enrichedMembers.push(...enrichedChunk);
+		}
 
 		return enrichedMembers.map((member) => ({
 			epochMilliSeconds: dayjs(member.membershipTimestamp).valueOf(),
@@ -86,6 +94,7 @@ export const newContactInListTrigger = createTrigger({
 	props: {
 		listId: Property.Dropdown({
 			displayName: 'Contact List',
+			auth: hubspotAuth,
 			refreshers: [],
 			required: true,
 			options: async ({ auth }) => {

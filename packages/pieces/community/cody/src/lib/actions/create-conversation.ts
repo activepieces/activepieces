@@ -24,7 +24,7 @@ export const createConversationAction = createAction({
   },
   async run(context) {
     const { bot_id, name, document_ids } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth;
 
     const docIds = document_ids as string[] | undefined;
 

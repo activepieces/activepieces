@@ -11,6 +11,7 @@ export const upsertRow = createAction({
     props: {
         table_name: supabaseCommon.table_name,
         on_conflict: Property.Dropdown({
+            auth: supabaseAuth,
             displayName: 'Conflict Column',
             description: 'Select the unique column to determine duplicates (required for upsert to work)',
             required: true,
@@ -25,7 +26,7 @@ export const upsertRow = createAction({
                 }
                 
                 try {
-                    const { url, apiKey } = auth as { url: string; apiKey: string };
+                    const { url, apiKey } = auth.props;
                     const supabase = createClient(url, apiKey);
                     
                     try {
@@ -134,7 +135,7 @@ export const upsertRow = createAction({
             count_upserted, 
             return_upserted 
         } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const supabase = createClient(url, apiKey);
         

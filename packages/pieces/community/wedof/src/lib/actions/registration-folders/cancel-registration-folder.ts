@@ -16,6 +16,7 @@ export const cancelRegistrationFolder = createAction({
       required: true,
     }),
     code: Property.Dropdown({
+      auth: wedofAuth,
       displayName: "Raison de l'annulation du dossier de formation",
       description: "Sélectionner la raison de l'annulation",
       required: true,
@@ -35,7 +36,7 @@ export const cancelRegistrationFolder = createAction({
               wedofCommon.baseUrl + '/registrationFoldersReasons?type=canceled',
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': auth as string,
+              'X-Api-Key': auth.secret_text,
             },
           })
         ).body;
@@ -73,7 +74,7 @@ export const cancelRegistrationFolder = createAction({
         body: message,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

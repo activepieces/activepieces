@@ -21,7 +21,7 @@ export const wooFindProduct = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
     const productId = configValue.propsValue['id'];
 
     const request: HttpRequest = {
@@ -29,8 +29,8 @@ export const wooFindProduct = createAction({
       url: `${trimmedBaseUrl}/wp-json/wc/v3/products/${productId}`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: configValue.auth.consumerKey,
-        password: configValue.auth.consumerSecret,
+        username: configValue.auth.props.consumerKey,
+        password: configValue.auth.props.consumerSecret,
       },
     };
 

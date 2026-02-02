@@ -4,13 +4,11 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     flowStructureUtil,
-    FlowTriggerType,
     FlowVersion,
     isNil,
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { mcpService } from '../../mcp/mcp-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -38,25 +36,8 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
             exceptionHandler.handle(e, log)
         }
     },
-    async postApplyOperation({
-        flowVersion,
-        operation,
-    }: PostApplyOperation): Promise<void> {
-        const isNotMcpTrigger =  !isMcpTriggerPiece(flowVersion) && [FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.LOCK_FLOW].includes(operation.type)
-        if (isNotMcpTrigger) {
-            await mcpService(log).deleteFlowTool({ flowId: flowVersion.flowId })
-        }
-    },
 })
 
-type PostApplyOperation = {
-    flowVersion: FlowVersion
-    operation: FlowOperationRequest
-}
-function isMcpTriggerPiece(flowVersion: FlowVersion): boolean {
-    return flowVersion.trigger.type === FlowTriggerType.PIECE && 
-           flowVersion.trigger.settings.pieceName === '@activepieces/piece-mcp'
-}
 
 async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest, log: FastifyBaseLogger): Promise<void> {
     if (operation.type !== FlowOperationType.UPDATE_TRIGGER && operation.type !== FlowOperationType.DELETE_ACTION) {

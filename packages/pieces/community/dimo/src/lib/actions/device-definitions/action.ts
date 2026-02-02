@@ -22,7 +22,7 @@ const deviceDefinitionApiAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { countryCode, vin } = context.propsValue;
 
@@ -82,7 +82,7 @@ const deviceDefinitionsSearchAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { query, makeSlug, modelSlug, year, page, pageSize } = context.propsValue;
 
 		const dimo = new DimoClient({

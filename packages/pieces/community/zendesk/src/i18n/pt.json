@@ -1,5 +1,4 @@
 {
-  "Zendesk": "zendesk",
   "Customer service software and support ticket system": "Software de atendimento ao cliente e sistema de suporte a pedidos",
   "Agent Email": "E-mail do representante",
   "Token": "Identificador",
@@ -98,6 +97,7 @@
   "Custom Query": "Consulta personalizada",
   "Sort By": "Classificar por",
   "Sort Order": "Ordem de classificação",
+  "Date Time Filter": "Filtro de Data",
   "Ticket ID": "ID Ticket",
   "Content": "Conteúdo",
   "Email Address": "Endereço de e-mail",

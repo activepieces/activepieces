@@ -32,13 +32,13 @@ export const createRecordAction = createAction({
     }
 
     const newFields: Record<string, unknown> = await createNewFields(
-      auth as PiecePropValueSchema<typeof APITableAuth>,
+      auth.props,
       datasheetId,
       fields
     );
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof APITableAuth>
+      context.auth.props
     );
     const response: any = await client.createRecord(datasheetId as string, {
       records: [

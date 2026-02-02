@@ -34,7 +34,7 @@
   "Documents": "Documents",
   "Filter": "Filtre",
   "Update": "Mise à jour",
-  "Upsert": "Mise à niveau",
+  "Upsert": "Mettre à jour et insérer",
   "Return Updated Documents": "Retourner les documents mis à jour",
   "Replacement Document": "Document de remplacement",
   "Return Document": "Document de retour",

@@ -4,8 +4,8 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
-import { MarkdownVariant } from '@activepieces/shared';
-import { OBJECT_TYPE } from '../common/constants';
+import { MarkdownVariant, isNil } from '@activepieces/shared';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { hubspotAuth } from '../..';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
@@ -14,22 +14,23 @@ type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
 		const propertiesToRetrieve = [...defaultCompanyProperties, ...additionalProperties];
 
 		const items = [];
-		let after;
+		let after: string | undefined;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.companies.searchApi.doSearch({
-				limit: isTest ? 10 : 100,
+				limit: isTest ? 10 : MAX_SEARCH_PAGE_SIZE,
 				properties: propertiesToRetrieve,
 				sorts: ['-createdate'],
 				filterGroups: isTest
@@ -51,6 +52,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 
 			// Stop fetching if it's a test
 			if (isTest) break;
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		return items.map((item) => ({

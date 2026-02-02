@@ -21,7 +21,7 @@ export const wooFindCustomer = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
     const email = configValue.propsValue['email'];
 
     const request: HttpRequest = {
@@ -29,8 +29,8 @@ export const wooFindCustomer = createAction({
       url: `${trimmedBaseUrl}/wp-json/wc/v3/customers?email=${email}`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: configValue.auth.consumerKey,
-        password: configValue.auth.consumerSecret,
+        username: configValue.auth.props.consumerKey,
+        password: configValue.auth.props.consumerSecret,
       },
     };
 

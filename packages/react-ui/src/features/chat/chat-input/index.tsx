@@ -3,10 +3,11 @@ import * as React from 'react';
 import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { FileInputPreview } from '@/components/ui/chat/chat-input/file-input-preview';
 import { ResizableTextareaProps, Textarea } from '@/components/ui/textarea';
 import { cn, useElementSize } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
+
+import { FileInputPreview } from './file-input-preview';
 
 export interface ChatMessage {
   textContent: string;
@@ -86,7 +87,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
         }}
       >
         <form onSubmit={handleSubmit} className="flex flex-col">
-          <div className="rounded-lg border shadow-sm">
+          <div className="rounded-lg border shadow-xs">
             {files.length > 0 && (
               <div
                 className="px-4 py-3 w-full transition-all overflow-hidden"
@@ -117,7 +118,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
               maxRows={6}
               name="message"
               className={cn(
-                'px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 w-full resize-none border-0 shadow-none focus-visible:ring-0',
+                'px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 w-full resize-none border-0 shadow-none focus-visible:ring-0',
                 className,
               )}
               value={input}

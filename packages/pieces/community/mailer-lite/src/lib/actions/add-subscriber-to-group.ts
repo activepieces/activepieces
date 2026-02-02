@@ -13,7 +13,7 @@ export const addSubscriberToGroupAction = createAction({
 		subscriberGroupId: mailerLiteCommon.subscriberGroupId(true),
 	},
 	async run(context) {
-		const client = new MailerLite({ api_key: context.auth });
+		const client = new MailerLite({ api_key: context.auth.secret_text });
 		const response = await client.groups.assignSubscriber(
 			context.propsValue.subscriberId!,
 			context.propsValue.subscriberGroupId!,

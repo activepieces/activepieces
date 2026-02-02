@@ -1,9 +1,10 @@
 import { ApplicationEventName, ProjectMemberWithUser } from '@activepieces/ee-shared'
-import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, Permission, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
+import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../../../helper/application-events'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
+import { applicationEvents } from '../../../helper/application-events'
+import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectRoleService } from './project-role.service'
 
@@ -33,11 +34,10 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateProjectRoleRequest, async (req, reply) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.plan.customRolesEnabled).call(app, req, reply)
         const projectRole = await projectRoleService.create(req.principal.platform.id, req.body)
 
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents(req.log).sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_ROLE_CREATED,
             data: {
                 projectRole,
@@ -47,7 +47,6 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateProjectRoleRequest, async (req, reply) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.plan.customRolesEnabled).call(app, req, reply)
         const projectRole = await projectRoleService.update({
             id: req.params.id,
@@ -55,7 +54,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
             name: req.body.name,
             permissions: req.body.permissions,
         })
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents(req.log).sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_ROLE_UPDATED,
             data: {
                 projectRole,
@@ -65,14 +64,13 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:name', DeleteProjectRoleRequest, async (req, reply) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.plan.customRolesEnabled).call(app, req, reply)
         
         const projectRole = await projectRoleService.getOneOrThrow({
             name: req.params.name,
             platformId: req.principal.platform.id,
         })
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents(req.log).sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_ROLE_DELETED,
             data: {
                 projectRole,
@@ -86,6 +84,9 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const GetProjectRoleRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
     schema: {
         params: Type.Object({
             id: ApId,
@@ -94,6 +95,9 @@ const GetProjectRoleRequest = {
 }
 
 const ListProjectRolesRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectRole),
@@ -102,6 +106,9 @@ const ListProjectRolesRequest = {
 }
 
 const CreateProjectRoleRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
     schema: {
         body: CreateProjectRoleRequestBody,
         response: {
@@ -111,6 +118,9 @@ const CreateProjectRoleRequest = {
 }
 
 const UpdateProjectRoleRequest = {
+    config: {   
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
     schema: {
         body: UpdateProjectRoleRequestBody,
         params: Type.Object({
@@ -123,6 +133,9 @@ const UpdateProjectRoleRequest = {
 }
 
 const DeleteProjectRoleRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
     schema: {
         params: Type.Object({
             name: Type.String(),
@@ -135,8 +148,7 @@ const DeleteProjectRoleRequest = {
 
 const ListProjectMembersForProjectRoleRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_PROJECT_MEMBER,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['project-members'],

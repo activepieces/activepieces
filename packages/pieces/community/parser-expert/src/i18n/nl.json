@@ -1,0 +1,17 @@
+{
+  "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API.": "Verwerk documenten en haal gegevens uit van PDF's, DOCX bestanden, afbeeldingen en webpagina's met behulp van Parser Experts krachtige API.",
+  "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.": "Uw Parser Expert API-sleutel. U vindt dit in uw dashboard onder Integratie -> Nieuwe API Key.",
+  "Upload Document": "Document uploaden",
+  "Get Extracted Data": "Uitgepakte gegevens ophalen",
+  "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).": "Upload een document of geef een webpagina URL om te parsen. Ondersteunde formaten: PDF, DOCX, Image, Txt Bestand (maximaal 10 pagina's per document).",
+  "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.": "Ophalen van de uitgepakte data met parser-ID en bucket-ID. De parser-ID wordt teruggestuurd bij het uploaden van een document.",
+  "Bucket ID": "Emmer ID",
+  "File": "Bestand",
+  "Webpage URL": "Webpagina URL",
+  "Parser ID": "Parser ID",
+  "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.": "De ID van de bucket waar de gegevens worden opgeslagen. U vindt dit in uw dashboard onder Beheer Bucket.",
+  "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.": "Het te uploaden bestand. Ondersteunde indelingen: PDF, DOCX, Image, Txt File (maximaal 10 pagina's per document). Dit wordt genegeerd als de URL van de webpagina is verstrekt.",
+  "The URL of the webpage to extract content from. This will be ignored if file is provided.": "De URL van de webpagina waaruit de inhoud wordt gewonnen. Dit wordt genegeerd als het bestand wordt verstrekt.",
+  "The ID of the parser. This is returned when content is uploaded.": "De ID van de parser. Dit wordt geretourneerd wanneer inhoud wordt geüpload.",
+  "The ID of the bucket where the data is stored.": "Het ID van de emcket waar de gegevens zijn opgeslagen."
+}

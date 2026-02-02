@@ -9,7 +9,7 @@ export const getBrandList = createAction({
   description: 'Find all Brands in your catalog',
   props: {},
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
 
     const brand = new Brand(hostUrl, appKey, appToken);
 

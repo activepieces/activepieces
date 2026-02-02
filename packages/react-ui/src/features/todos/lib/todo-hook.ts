@@ -6,7 +6,7 @@ import { PopulatedTodo, UNRESOLVED_STATUS } from '@activepieces/shared';
 
 import { todosApi } from './todos-api';
 
-const todoKeys = {
+export const todoKeys = {
   single: (id: string) => ['todo', id],
   list: (
     projectId: string,

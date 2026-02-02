@@ -1,10 +1,12 @@
 import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
+import { pdfmonkeyAuth } from './auth';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 
 export const BASE_URL = `https://api.pdfmonkey.io/api/v1`;
 
 export async function makeRequest<T>(
-    api_key: string,
+    api_key: AppConnectionValueForAuthProperty<typeof pdfmonkeyAuth>,
     method: HttpMethod,
     path: string,
     query?:QueryParams,
@@ -16,7 +18,7 @@ export async function makeRequest<T>(
             method,
             url: `${BASE_URL}${path}`,
             headers: {
-                'Authorization': `Bearer ${api_key}`,
+                'Authorization': `Bearer ${api_key.secret_text}`,
                 'Content-Type': 'application/json',
             },
             body,

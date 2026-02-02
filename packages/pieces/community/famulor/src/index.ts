@@ -48,12 +48,12 @@ export const famulorAuth =  PieceAuth.SecretText({
   })
 
 export const famulor = createPiece({
-  displayName: "Famulor",
+  displayName: "Famulor AI - Voice Agent",
   auth:famulorAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/famulor.png",
   description: "AI-powered calling and SMS platform. Automate outbound campaigns, manage leads, and get real-time call analytics.",
-  authors: ['Zebi15', 'onyedikachi-david'],
+  authors: ['bekservice', 'onyedikachi-david'],
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [addLead,sendSms,campaignControl,makePhoneCall,deleteLead],
   triggers: [phoneCallEnded,getAssistants,inboundCall],

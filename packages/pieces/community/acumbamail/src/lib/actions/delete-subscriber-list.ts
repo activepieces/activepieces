@@ -22,7 +22,7 @@ export const deleteSubscriberListAction = createAction({
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
       url: acumbamailCommon.baseUrl + '/deleteList/',
-      queryParams: { auth_token: context.auth, list_id: listId.toString() },
+      queryParams: { auth_token: context.auth.secret_text, list_id: listId.toString() },
     };
 
     const res = await httpClient.sendRequest(request);

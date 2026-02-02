@@ -38,7 +38,7 @@ export const createLeadListAction = createAction({
     return await makeRequest({
       endpoint: 'lead-lists',
       method: HttpMethod.POST,
-      apiKey: apiKey as string,
+      apiKey: apiKey,
       body: payload,
     });
   },

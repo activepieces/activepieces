@@ -1,8 +1,10 @@
 import { Property } from "@activepieces/pieces-framework";
 import { biginApiService } from "./request";
 import { handleDropdownError } from "./helpers";
+import { biginAuth } from "../..";
 
 export const usersDropdown = Property.Dropdown({
+  auth: biginAuth,
   displayName: 'Owner',
   description: 'Select the owner to which the record will be assigned.',
   required: false,
@@ -47,6 +49,7 @@ export const usersDropdown = Property.Dropdown({
 });
 
 export const companyDropdown = Property.Dropdown({
+  auth: biginAuth,
   displayName: 'Company',
   description:
     'The ID of the company to which the record will be associated. If not provided, the record will not be associated with any company.',
@@ -68,6 +71,7 @@ export const companyDropdown = Property.Dropdown({
 });
 
 export const contactsDropdown = Property.Dropdown({
+  auth: biginAuth,
   displayName: 'Contacts',
   description:
     'The ID of the contact to which the record will be associated. If not provided, the record will not be associated with any contact.',
@@ -89,6 +93,7 @@ export const contactsDropdown = Property.Dropdown({
 });
 
 export const multiContactsDropdown = Property.MultiSelectDropdown({
+  auth: biginAuth,
   displayName: 'Secondary Contacts',
   description:
     'Provide a list of additional contacts associated with the record',
@@ -110,6 +115,7 @@ export const multiContactsDropdown = Property.MultiSelectDropdown({
 });
 
 export const pipelineRecordsDropdown = Property.Dropdown({
+  auth: biginAuth,
   displayName: 'Pipeline Record',
   description:
     'Select a pipeline record',
@@ -131,6 +137,7 @@ export const pipelineRecordsDropdown = Property.Dropdown({
 });
 
 export const layoutsDropdown = (displayName: string, description: string, module_name: string) => Property.Dropdown({
+  auth: biginAuth,
   displayName,
   description,
   required: false,
@@ -153,6 +160,7 @@ export const layoutsDropdown = (displayName: string, description: string, module
 });
 
 export const productsDropdown = Property.MultiSelectDropdown({
+  auth: biginAuth,
   displayName: 'Associated Products',
   description:
     'Provide a list of products associated with the record',
@@ -179,6 +187,7 @@ export const productsDropdown = Property.MultiSelectDropdown({
 });
 
 export const tagsDropdown = (module: string, defaultValue?: string[]) => Property.MultiSelectDropdown({
+  auth: biginAuth,
   displayName: 'Tags',
   description: `Select tags to associate with this module, "${module}".`,
   required: false,
@@ -217,6 +226,7 @@ export const SubPipelineorStageDropdown = (
   defaultValue?: string
 ) =>
   Property.Dropdown({
+    auth: biginAuth,
     displayName,
     description,
     required: true,

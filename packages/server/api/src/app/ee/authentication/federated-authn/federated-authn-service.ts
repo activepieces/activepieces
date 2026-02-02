@@ -46,6 +46,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
             newsLetter: true,
             provider: UserIdentityProvider.GOOGLE,
             predefinedPlatformId: platformId ?? null,
+            imageUrl: idToken.imageUrl,
         })
     },
     async getThirdPartyRedirectUrl(

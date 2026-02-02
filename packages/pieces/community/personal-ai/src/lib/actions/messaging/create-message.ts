@@ -60,7 +60,7 @@ export const createMessage = createAction({
       url: `${BASE_URL}/v1/message`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       body: {
         Text: text,

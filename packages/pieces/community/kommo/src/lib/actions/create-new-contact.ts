@@ -54,10 +54,7 @@ export const createContactAction = createAction({
     const tagsToAdd = context.propsValue.tags_to_add ?? [];
 
 
-    const { subdomain, apiToken } = context.auth as {
-      subdomain: string;
-      apiToken: string;
-    };
+    const { subdomain, apiToken } = context.auth.props
 
     const customFields: KommoCustomFieldValue[] = [];
 

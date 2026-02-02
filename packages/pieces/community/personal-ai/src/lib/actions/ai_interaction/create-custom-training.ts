@@ -60,7 +60,7 @@ export const createCustomTraining = createAction({
       url: `${BASE_URL}/v1/training?cmd=custom`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       body: {
         Text: text,

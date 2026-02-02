@@ -72,7 +72,7 @@ export const createCompany = createAction({
         billingState,
         billingCountry,
         billingCode,
-      } = context.propsValue as any;
+      } = context.propsValue;
 
       const record: Record<string, any> = {
         Account_Name: accountName,
@@ -85,7 +85,7 @@ export const createCompany = createAction({
         Billing_Country: billingCountry,
         Billing_Code: billingCode,
         Owner: owner ? { id: owner } : undefined,
-        Tag: Array.isArray(tag) && tag.length > 0 ? tag.map((t: string) => ({ name: t })) : undefined,
+        Tag: Array.isArray(tag) && tag.length > 0 ? tag.map((t) => ({ name: t })) : undefined,
       };
 
       Object.keys(record).forEach((k) => {

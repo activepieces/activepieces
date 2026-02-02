@@ -15,7 +15,7 @@ export const findPost = createAction({
     const { postUrl } = propsValue;
 
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
       const postInfo = extractPostInfoFromUrl(postUrl);
       let atUri = postInfo.uri;

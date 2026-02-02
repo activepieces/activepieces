@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import {
@@ -90,12 +90,18 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
+    useEffect(() => {
+      if (token) {
+        redirectAfterLogin();
+      }
+    }, [token, redirectAfterLogin]);
+
     if (token) {
-      redirectAfterLogin();
+      return null;
     }
 
     return (
-      <Card className="w-[28rem] rounded-sm drop-shadow-xl">
+      <Card className="w-md rounded-sm drop-shadow-xl">
         {!showCheckYourEmailNote && (
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{data.title}</CardTitle>

@@ -9,12 +9,13 @@ import { SelectUtilButton } from '../custom/select-util-button';
 
 export type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   thin?: boolean;
+  defaultFileName?: string;
 };
 
 export const inputClass =
-  'flex h-9 w-full rounded-md border border-input-border bg-background px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
+  'flex h-9 w-full rounded-md border border-input-border  bg-background px-3 py-1 text-base shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground  focus-within:outline-hidden focus-within:ring-1 focus-within:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm placeholder:text-muted-foreground';
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, thin = false, ...props }, ref) => {
+  ({ className, type, thin = false, defaultFileName, ...props }, ref) => {
     const [fileName, setFileName] = React.useState<string | null>(null);
     const inputRef = React.useRef<HTMLInputElement>(null);
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,16 +42,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           onClick={handleDivClick}
           className={cn(inputClass, 'cursor-pointer items-center ', className)}
         >
-          <div
-            className={cn('flex truncate ', {
+          <input
+            className={cn('grow cursor-pointer outline-hidden bg-transparent', {
               'text-muted-foreground': !fileName,
             })}
-          >
-            {fileName || t('Select a file')}
-          </div>
+            value={fileName || defaultFileName || t('Select a file')}
+            readOnly
+          />
           <div className="basis-1">
             <SelectUtilButton
-              tooltipText={t('Select a file')}
+              onClick={(e) => e.preventDefault()}
+              tooltipText={fileName ? fileName : t('Select a file')}
               Icon={Paperclip}
             ></SelectUtilButton>
           </div>

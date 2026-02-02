@@ -53,7 +53,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.updateAbsence(propsValue.absence_id, {
       date_since: reformatDate(propsValue.date_since),
       date_until: reformatDate(propsValue.date_until),

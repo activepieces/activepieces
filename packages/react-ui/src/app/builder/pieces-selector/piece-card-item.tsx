@@ -52,7 +52,7 @@ const PieceCardListItem = ({
     <>
       <CardListItem
         className={cn('flex-col p-3 gap-1 items-start truncate', {
-          'hover:!bg-transparent': isTemporaryDisabledUntilNextCursorMove,
+          'hover:bg-transparent!': isTemporaryDisabledUntilNextCursorMove,
         })}
         style={{ height: `${itemHeight}px`, maxHeight: `${itemHeight}px` }}
         selected={
@@ -71,6 +71,7 @@ const PieceCardListItem = ({
           isMouseOver.current = false;
         }}
         id={pieceMetadata.displayName}
+        data-testid={pieceMetadata.displayName}
       >
         <div className="flex gap-2 items-center h-full">
           <PieceIcon
@@ -79,7 +80,7 @@ const PieceCardListItem = ({
             showTooltip={false}
             size={'sm'}
           />
-          <div className="flex-grow h-full flex items-center justify-left text-sm">
+          <div className="grow h-full flex items-center justify-left text-sm">
             {pieceMetadata.displayName}
           </div>
         </div>

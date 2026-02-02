@@ -1,5 +1,6 @@
 import {
   DynamicPropsValue,
+  PieceAuth,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -36,7 +37,8 @@ export const replyToMcpClient = createAction({
       },
     }),
     response: Property.DynamicProperties({
-      displayName: 'Response',
+      auth: PieceAuth.None(),
+      displayName: 'Response',      
       required: true,
       refreshers: ['mode'],
       props: async (propsValue) => {

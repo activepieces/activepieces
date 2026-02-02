@@ -27,7 +27,7 @@ const DynamicPropertiesErrorBoundary = ({
                 triedRerenderingRef.current = true;
               }}
             >
-              {<RefreshCcw className="w-4 h-4 !text-foreground"></RefreshCcw>}{' '}
+              {<RefreshCcw className="w-4 h-4 text-foreground!"></RefreshCcw>}{' '}
             </Button>
           </div>
         ) : (
@@ -40,7 +40,7 @@ const DynamicPropertiesErrorBoundary = ({
                 window.location.reload();
               }}
             >
-              {<RefreshCcw className="w-4 h-4 !text-foreground"></RefreshCcw>}{' '}
+              {<RefreshCcw className="w-4 h-4 text-foreground!"></RefreshCcw>}{' '}
             </Button>
           </div>
         )

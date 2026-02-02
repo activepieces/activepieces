@@ -1,47 +1,35 @@
-import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useContext, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useContext, useState } from 'react';
 
-import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
-import { todosHooks } from '@/features/todos/lib/todo-hook';
 import {
   FlowAction,
   FlowActionType,
   Step,
   TodoType,
-  PopulatedTodo,
   flowStructureUtil,
   isNil,
-  StepRunResponse,
 } from '@activepieces/shared';
 
-import { AgentRunDialog } from '../../../features/agents/agent-run-dialog';
-import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { testStepHooks } from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
-
+import { testStepHooks } from './utils/test-step-hooks';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
   projectId: string;
 };
 
-type ActionWithoutNext = Omit<FlowAction, 'nextAction'>;
 enum DialogType {
   NONE = 'NONE',
-  TODO_CREATE_TASK = 'TODO_CREATE_TASK',
-  AGENT = 'AGENT',
   WEBHOOK = 'WEBHOOK',
+  TODO = 'TODO',
 }
 
 const isTodoCreateTask = (step: FlowAction) => {
@@ -49,14 +37,6 @@ const isTodoCreateTask = (step: FlowAction) => {
     step.type === FlowActionType.PIECE &&
     step.settings.pieceName === '@activepieces/piece-todos' &&
     step.settings.actionName === 'createTodoAndWait'
-  );
-};
-
-const isRunAgent = (step: FlowAction) => {
-  return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-agent' &&
-    step.settings.actionName === 'run_agent'
   );
 };
 
@@ -71,84 +51,53 @@ const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
 const TestStepSectionImplementation = React.memo(
   ({
     isSaving,
-    flowVersionId,
     currentStep,
   }: TestActionComponentProps & { currentStep: FlowAction }) => {
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(
-      undefined,
-    );
-    const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
     const [activeDialog, setActiveDialog] = useState<DialogType>(
       DialogType.NONE,
     );
-    const socket = useSocket();
-    const [todoId, setTodoId] = useState<string | null>(null);
-    const [agentProgress, setAgentProgress] = useState<StepRunResponse | null>(
-      null,
-    );
-    const agentRunId = stepUtils.getAgentRunId(agentProgress);
-    const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
-      return {
-        sampleData: state.sampleData[currentStep.name],
-        sampleDataInput: state.sampleDataInput[currentStep.name],
-      };
+    const [
+      sampleData,
+      sampleDataInput,
+      errorMessage,
+      consoleLogs,
+      isStepBeingTested,
+      removeStepTestListener,
+      revertSampleDataLocally,
+    ] = useBuilderStateContext((state) => {
+      return [
+        state.outputSampleData[currentStep.name],
+        state.inputSampleData[currentStep.name],
+        state.errorLogs[currentStep.name],
+        currentStep.type === FlowActionType.CODE
+          ? state.consoleLogs[currentStep.name]
+          : null,
+        state.isStepBeingTested,
+        state.removeStepTestListener,
+        state.revertSampleDataLocallyCallbacks[currentStep.name],
+      ];
     });
-    const form = useFormContext<ActionWithoutNext>();
-    const abortControllerRef = useRef<AbortController>(new AbortController());
-    const [mutationKey, setMutationKey] = useState<string[]>([]);
+
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
-        mutationKey,
         currentStep,
-        setErrorMessage,
-        setConsoleLogs,
-        onSuccess: () => {
-          form.setValue(
-            `settings.sampleData.lastTestDate`,
-            dayjs().toISOString(),
-          );
-        },
-        onProgress: (progress: any) => {
-          if (isRunAgent(currentStep)) {
-            setAgentProgress(progress);
-          }
-        },
       });
-
-    const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-
-    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
-
-    const handleTodoCreateTask = async () => {
-      setActiveDialog(DialogType.TODO_CREATE_TASK);
-      const testStepResponse = await flowRunsApi.testStep(socket, {
-        flowVersionId,
-        stepName: currentStep.name,
-      });
-      const output = testStepResponse.output as PopulatedTodo;
-      if (testStepResponse.success && !isNil(output)) {
-        setTodoId(output.id as string);
-      }
+    const handleTodoTest = async () => {
+      setActiveDialog(DialogType.TODO);
+      testAction(undefined);
     };
-
-    const handleRunAgent = async () => {
-      setActiveDialog(DialogType.AGENT);
-      setAgentProgress(null);
-      abortControllerRef.current = new AbortController();
-      testAction({
-        abortSignal: abortControllerRef.current.signal,
-      });
-    };
-
+    const sampleDataExists =
+      !isNil(lastTestDate) ||
+      !isNil(errorMessage) ||
+      isStepBeingTested(currentStep.name);
     const onTestButtonClick = async () => {
-      if (isRunAgent(currentStep)) {
-        handleRunAgent();
-      } else if (isTodoCreateTask(currentStep)) {
-        handleTodoCreateTask();
-      } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
+      if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
+      } else if (isTodoCreateTask(currentStep)) {
+        setActiveDialog(DialogType.TODO);
+        handleTodoTest();
       } else {
         testAction(undefined);
       }
@@ -156,33 +105,25 @@ const TestStepSectionImplementation = React.memo(
 
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
-      setTodoId(null);
-      setAgentProgress(null);
-      abortControllerRef.current.abort();
-      setMutationKey([Date.now().toString()]);
     };
+
     const isTesting =
-      activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
+      activeDialog !== DialogType.NONE ||
+      isWatingTestResult ||
+      isStepBeingTested(currentStep.name);
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+
     return (
       <>
-        {!sampleDataExists && (
-          <div className="flex-grow flex justify-center items-center w-full h-full">
+        {!sampleDataExists && !isTesting && (
+          <div className="grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip invalid={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onTestButtonClick}
                 keyboardShortcut="G"
-                onKeyboardShortcut={() => {
-                  if (isTodoCreateTask(currentStep)) {
-                    handleTodoCreateTask();
-                  } else if (isRunAgent(currentStep)) {
-                    handleRunAgent();
-                  } else {
-                    testAction(undefined);
-                  }
-                }}
+                onKeyboardShortcut={onTestButtonClick}
                 loading={isTesting || isSaving}
                 disabled={!currentStep.valid || isLoadingDynamicProperties}
               >
@@ -192,45 +133,24 @@ const TestStepSectionImplementation = React.memo(
             </TestButtonTooltip>
           </div>
         )}
-        {sampleDataExists && (
+        {(sampleDataExists || isTesting) && (
           <TestSampleDataViewer
-            isValid={currentStep.valid}
-            isTesting={isTesting || isLoadingDynamicProperties}
+            isValid={currentStep.valid || isLoadingDynamicProperties}
+            currentStep={currentStep}
+            isTesting={isTesting}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
-            errorMessage={errorMessage}
             lastTestDate={lastTestDate}
-            consoleLogs={
-              currentStep.type === FlowActionType.CODE ? consoleLogs : null
-            }
             isSaving={isSaving}
             onRetest={onTestButtonClick}
+            errorMessage={errorMessage}
+            consoleLogs={consoleLogs}
+            onCancelTesting={() => {
+              removeStepTestListener(currentStep.name);
+              revertSampleDataLocally?.();
+            }}
           ></TestSampleDataViewer>
         )}
-        {activeDialog === DialogType.TODO_CREATE_TASK &&
-          currentStep.type === FlowActionType.PIECE &&
-          todo && (
-            <TodoTestingDialog
-              open={true}
-              onOpenChange={(open) => !open && handleCloseDialog()}
-              todo={todo}
-              currentStep={currentStep}
-              setErrorMessage={setErrorMessage}
-              type={
-                currentStep.settings.actionName === 'createTodoAndWait'
-                  ? TodoType.INTERNAL
-                  : TodoType.EXTERNAL
-              }
-            />
-          )}
-        {activeDialog === DialogType.AGENT &&
-          currentStep.type === FlowActionType.PIECE && (
-            <AgentRunDialog
-              open={true}
-              onOpenChange={(open) => !open && handleCloseDialog()}
-              agentRunId={agentRunId}
-            />
-          )}
         {activeDialog === DialogType.WEBHOOK && (
           <TestWebhookDialog
             testingMode="returnResponseAndWaitForNextWebhook"
@@ -239,6 +159,27 @@ const TestStepSectionImplementation = React.memo(
             currentStep={currentStep}
           />
         )}
+        {activeDialog === DialogType.TODO &&
+          currentStep.type === FlowActionType.PIECE &&
+          sampleData &&
+          typeof sampleData === 'object' &&
+          'id' in sampleData && (
+            <TodoTestingDialog
+              open={true}
+              onOpenChange={(open) => {
+                if (!open) {
+                  handleCloseDialog();
+                }
+              }}
+              id={sampleData.id as string}
+              currentStep={currentStep}
+              type={
+                currentStep.settings.actionName === 'createTodoAndWait'
+                  ? TodoType.INTERNAL
+                  : TodoType.EXTERNAL
+              }
+            />
+          )}
       </>
     );
   },

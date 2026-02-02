@@ -37,7 +37,7 @@ export const findConversation = createAction({
 
 
     const conversations = await makeRequest(
-      auth,
+      auth.secret_text,
       HttpMethod.GET,
       `/agents/${agentId}/conversations`
     );

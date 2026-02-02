@@ -14,8 +14,8 @@ export const deletePoints = createAction({
   },
   run: async ({ auth, propsValue }) => {
     const client = new QdrantClient({
-      apiKey: auth.key,
-      url: auth.serverAddress,
+      apiKey: auth.props.key,
+      url: auth.props.serverAddress,
     });
 
     const collectionName = propsValue.collectionName as string;

@@ -17,7 +17,7 @@ export const newClientTrigger = createTrigger({
   async onEnable(context) {
     // Store the list of existing clients
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+      { apiKey: context.auth.secret_text },
       HttpMethod.GET,
       '/clients.json'
     );
@@ -34,7 +34,7 @@ export const newClientTrigger = createTrigger({
   },
   async test(context) {
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+      { apiKey: context.auth.secret_text },
       HttpMethod.GET,
       '/clients.json'
     );
@@ -50,7 +50,7 @@ export const newClientTrigger = createTrigger({
 
     // Get all clients
     const response = await makeRequest(
-      { apiKey: context.auth as string },
+      { apiKey: context.auth.secret_text },
       HttpMethod.GET,
       '/clients.json'
     );

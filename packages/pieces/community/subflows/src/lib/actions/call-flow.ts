@@ -1,6 +1,7 @@
 import {
   createAction,
   DynamicPropsValue,
+  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -18,6 +19,7 @@ export const callFlow = createAction({
   description: 'Call a flow that has "Callable Flow" trigger',
   props: {
     flow: Property.Dropdown<FlowValue>({
+      auth: PieceAuth.None(),
       displayName: 'Flow',
       description: 'The flow to execute',
       required: true,
@@ -57,6 +59,7 @@ export const callFlow = createAction({
       },
     }),
     flowProps: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       description: '',
       displayName: '',
       required: true,
@@ -114,7 +117,7 @@ export const callFlow = createAction({
 
     const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${flow?.id}`,
+      url: `${context.server.apiUrl}v1/webhooks/${flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
         [PARENT_RUN_ID_HEADER]: context.run.id,

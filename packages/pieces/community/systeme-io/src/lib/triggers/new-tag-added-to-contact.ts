@@ -59,7 +59,7 @@ export const newTagAddedToContact = createTrigger({
         const response = await systemeIoCommon.createWebhook({
             eventType: 'CONTACT_TAG_ADDED',
             webhookUrl: context.webhookUrl,
-            auth: context.auth,
+            auth: context.auth.secret_text  ,
             secret: secret,
         });
         
@@ -71,7 +71,7 @@ export const newTagAddedToContact = createTrigger({
         if (webhookId) {
             await systemeIoCommon.deleteWebhook({
                 webhookId,
-                auth: context.auth,
+                auth: context.auth.secret_text,
             });
             await context.store.put('new_tag_added_webhook_id', null);
             await context.store.put('new_tag_added_webhook_secret', null);

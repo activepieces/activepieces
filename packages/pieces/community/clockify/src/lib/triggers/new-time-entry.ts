@@ -51,7 +51,7 @@ export const newTimeEntryTrigger = createTrigger({
 		}
 
 		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/webhooks`,
 			body: payload,
@@ -66,7 +66,7 @@ export const newTimeEntryTrigger = createTrigger({
 
 		if (!isNil(webhookId)) {
 			await clockifyApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});
@@ -75,7 +75,7 @@ export const newTimeEntryTrigger = createTrigger({
 	async test(context) {
 		const { workspaceId, projectId, taskId } = context.propsValue;
 		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/user`,
 		});
@@ -84,11 +84,11 @@ export const newTimeEntryTrigger = createTrigger({
 
 		const qs: QueryParams = { hydrated: 'true', page: '1', 'page-size': '5' };
 
-		if (projectId) qs['project'] = projectId;
-		if (taskId) qs['task'] = taskId;
+		if (projectId) qs['project'] = projectId as string;
+		if (taskId) qs['task'] = taskId as string;
 
 		const response = await clockifyApiCall<{id:string}[]>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
 			query: qs,

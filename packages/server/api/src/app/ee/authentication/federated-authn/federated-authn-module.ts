@@ -1,9 +1,8 @@
 import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared'
@@ -11,7 +10,7 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../../../helper/application-events'
+import { applicationEvents } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
@@ -36,7 +35,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: platformId ?? undefined,
             code: req.body.code,
         })
-        eventsHooks.get(req.log).sendUserEvent({
+        applicationEvents(req.log).sendUserEvent({
             platformId: response.platformId!,
             userId: response.id,
             projectId: response.projectId,
@@ -53,7 +52,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
 
 const LoginRequestSchema = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         querystring: Type.Object({
@@ -64,7 +63,7 @@ const LoginRequestSchema = {
 
 const ClaimTokenRequestSchema = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         body: ClaimTokenRequest,

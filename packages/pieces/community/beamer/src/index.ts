@@ -14,7 +14,7 @@ export const beamerAuth = PieceAuth.SecretText({
   description: 'API key acquired from your Beamer settings',
   validate: async ({ auth }) => {
     try {
-      const res = await httpClient.sendRequest({
+      await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${beamerCommon.baseUrl}/ping`,
         headers: {

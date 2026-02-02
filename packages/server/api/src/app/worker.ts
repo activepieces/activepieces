@@ -1,15 +1,17 @@
-import { AppSystemProp, PiecesSource, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { flowWorker, piecesBuilder } from 'server-worker'
+import { devPiecesBuilder, flowWorker } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { healthStatusService } from './health/health.service'
 import { system } from './helper/system/system'
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
-    const piecesSource = system.getOrThrow<PiecesSource>(AppSystemProp.PIECES_SOURCE)
     const devPieces = system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? []
-    await piecesBuilder(app, app.io, devPieces, piecesSource)
+    if (devPieces.length > 0) {
+        await devPiecesBuilder(app, app.io, devPieces)
+    }
     
     app.addHook('onClose', async () => {
         await flowWorker(app.log).close()
@@ -18,7 +20,7 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
 export async function workerPostBoot(app: FastifyInstance): Promise<void> {
     const workerToken = await generateWorkerToken()
-    await flowWorker(app.log).init({ workerToken })
+    await flowWorker(app.log).init({ workerToken, markAsHealthy: async () => healthStatusService(app.log).markWorkerHealthy() })
 }
 
 

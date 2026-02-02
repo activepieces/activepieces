@@ -16,7 +16,7 @@ export const newOpportunityAdded = createTrigger({
 	props: {},
 	async onEnable(context) {
 		const response = await closeApiCall<{ id: string; signature_key: string }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhook/',
 			body: {
@@ -46,7 +46,7 @@ export const newOpportunityAdded = createTrigger({
 		if (triggerData?.id) {
 			await closeApiCall({
 				method: HttpMethod.DELETE,
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				resourceUri: `/webhook/${triggerData.id}`,
 			});
 		}
@@ -77,7 +77,7 @@ export const newOpportunityAdded = createTrigger({
 		}
 
 		const opportunity = await closeApiCall({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text	,
 			method: HttpMethod.GET,
 			resourceUri: `/opportunity/${payload.event.data.id}/`,
 		});

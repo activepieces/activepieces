@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { getTaskListsDropdown } from '../common';
@@ -7,7 +7,7 @@ import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
 
-const polling: Polling<OAuth2PropertyValue, { task_list_id: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAuth>, { task_list_id: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, store, lastFetchEpochMS }) {
 		const taskListId = propsValue.task_list_id;
@@ -60,6 +60,7 @@ export const newOrUpdatedTaskTrigger = createTrigger({
 	auth: microsoftToDoAuth,
 	props: {
 		task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
 			displayName: 'Task List',
 			required: true,
 			refreshers: [],

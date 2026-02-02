@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-deepseek",
-  "version": "0.0.6"
+  "version": "0.1.0",
+  "dependencies": {
+    "openai": "4.67.1"
+  }
 }

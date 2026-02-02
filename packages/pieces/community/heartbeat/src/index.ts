@@ -34,7 +34,7 @@ export const Heartbeat = createPiece({
       baseUrl: () => 'https://api.heartbeat.chat/v0',
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

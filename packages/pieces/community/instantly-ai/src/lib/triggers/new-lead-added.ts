@@ -1,6 +1,6 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { instantlyAiAuth } from '../../index';
@@ -13,7 +13,7 @@ import {
 import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
 const polling: Polling<
-  PiecePropValueSchema<typeof instantlyAiAuth>,
+  AppConnectionValueForAuthProperty<typeof instantlyAiAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

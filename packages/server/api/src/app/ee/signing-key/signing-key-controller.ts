@@ -1,17 +1,19 @@
 import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
+    PrincipalType,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../../helper/application-events'
+import { applicationEvents } from '../../helper/application-events'
 import { signingKeyService } from './signing-key-service'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
@@ -22,7 +24,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
             displayName: req.body.displayName,
         })
 
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents(req.log).sendUserEvent(req, {
             action: ApplicationEventName.SIGNING_KEY_CREATED,
             data: {
                 signingKey: newSigningKey,
@@ -32,7 +34,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
         return res.status(StatusCodes.CREATED).send(newSigningKey)
     })
 
-    app.get('/', {}, async (req) => {
+    app.get('/', ListSigningKeysRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return signingKeyService.list({
@@ -68,13 +70,24 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+const ListSigningKeysRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
 const AddSigningKeyRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
     schema: {
         body: AddSigningKeyRequestBody,
     },
 }
 
 const GetSigningKeyRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
     schema: {
         params: Type.Object({
             id: ApId,
@@ -83,6 +96,9 @@ const GetSigningKeyRequest = {
 }
 
 const DeleteSigningKeyRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
     schema: {
         params: Type.Object({
             id: ApId,

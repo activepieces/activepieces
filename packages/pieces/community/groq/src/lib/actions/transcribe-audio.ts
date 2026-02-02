@@ -16,6 +16,7 @@ export const transcribeAudio = createAction({
 		}),
 		model: Property.Dropdown({
 			displayName: 'Model',
+			auth: groqAuth,
 			required: true,
 			description: 'The model to use for transcription.',
 			refreshers: [],
@@ -34,7 +35,7 @@ export const transcribeAudio = createAction({
 						method: HttpMethod.GET,
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,
-							token: auth as string,
+							token: auth.secret_text,
 						},
 					});
 					// Filter for whisper models only
@@ -98,7 +99,7 @@ export const transcribeAudio = createAction({
 
 		// Create form data
 		const formData = new FormData();
-		formData.append('file', new Blob([file.data]), file.filename);
+		formData.append('file', new Blob([file.data] as unknown as BlobPart[]), file.filename);
 		formData.append('model', model);
 
 		if (language) formData.append('language', language);
@@ -112,7 +113,7 @@ export const transcribeAudio = createAction({
 			url: 'https://api.groq.com/openai/v1/audio/transcriptions',
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			headers: {
 				'Content-Type': 'multipart/form-data',

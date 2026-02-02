@@ -66,7 +66,7 @@ export const createOrUpdateSubscriber = createAction({
 		}),
 	},
 	async run(context) {
-		const client = new MailerLite({ api_key: context.auth });
+		const client = new MailerLite({ api_key: context.auth.secret_text });
 		const response = await client.subscribers.createOrUpdate({
 			email: context.propsValue.email,
 			fields: context.propsValue.subscriberFields,

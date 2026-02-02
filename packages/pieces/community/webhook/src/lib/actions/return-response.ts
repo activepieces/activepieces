@@ -1,5 +1,6 @@
 import {
   DynamicPropsValue,
+  PieceAuth,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -45,6 +46,7 @@ export const returnResponse = createAction({
       },
     }),
     fields: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Response',
       refreshers: ['responseType'],
       required: true,

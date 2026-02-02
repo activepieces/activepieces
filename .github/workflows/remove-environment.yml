@@ -7,6 +7,9 @@ on:
 jobs:
   Remove-Preview-Environment:
     runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces' && github.event.pull_request.head.repo.full_name == 'activepieces/activepieces'
+    env:
+      NX_NO_CLOUD: true 
     steps:
       - name: Configure SSH
         run: |
@@ -27,4 +30,4 @@ jobs:
 
       - name: Remove Environment
         run: |
-          ssh preview-server -t -t 'bash -ic "cd /root/environments && node index.js remove ${{ github.head_ref }}; exit"'
+          ssh preview-server -t -t 'bash -ic "cd /root/environments && npm run build && node dist/index.js remove ${{ github.head_ref }}; exit"'

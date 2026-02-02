@@ -17,6 +17,7 @@ export const createItemAction = createAction({
   description: 'Create a new record in a Podio app with specified field values.',
   props: {
     orgId: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Organization (Optional)',
       description: 'Select an organization to filter apps by workspace. Leave empty to see all apps.',
       required: false,
@@ -62,6 +63,7 @@ export const createItemAction = createAction({
       },
     }),
     spaceId: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Space (Optional)',
       description: 'Select a workspace to filter apps. Leave empty to see all apps in the organization.',
       required: false,
@@ -124,6 +126,7 @@ export const createItemAction = createAction({
     }),
     
     appFields: Property.DynamicProperties({
+      auth: podioAuth,
       displayName: 'App Fields',
       description: 'Configure values for the fields in the selected app',
       required: true,

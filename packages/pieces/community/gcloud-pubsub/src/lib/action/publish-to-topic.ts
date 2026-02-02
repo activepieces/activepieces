@@ -15,15 +15,23 @@ export const publishToTopic = createAction({
     topic: Property.Dropdown({
       displayName: 'Topic',
       required: true,
-      refreshers: ['auth'],
+      refreshers: ['auth'], 
+      auth: googlePubsubAuth,
       options: async ({ auth }) => {
-        const json = (auth as { json: string }).json;
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const json = auth.props.json;
         return common.getTopics(json);
       },
     }),
   },
   async run(context) {
-    const client = common.getClient(context.auth.json);
+    const client = common.getClient(context.auth.props.json);
     const topic = context.propsValue.topic;
 
     const url = `https://pubsub.googleapis.com/v1/${topic}:publish`;

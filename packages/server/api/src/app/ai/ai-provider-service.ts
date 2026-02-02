@@ -1,296 +1,254 @@
 import {
-    AI_USAGE_AGENT_ID_HEADER,
-    AI_USAGE_FEATURE_HEADER,
-    AI_USAGE_MCP_ID_HEADER,
-    AIProvider,
-    AIProviderWithoutSensitiveData,
-    AIUsageFeature,
-    CreateAIProviderRequest,
-    SUPPORTED_AI_PROVIDERS,
-    SupportedAIProvider,
-} from '@activepieces/common-ai'
-import { AppSystemProp } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ApEdition,
+    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
+    CreateAIProviderRequest,
     ErrorCode,
+    GetProviderConfigResponse,
     isNil,
     PlatformId,
-    SeekPage,
+    spreadIfDefined,
+    UpdateAIProviderRequest,
 } from '@activepieces/shared'
-import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
+import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import cron from 'node-cron'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
+import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
+import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
-import { system } from '../helper/system/system'
-import { platformService } from '../platform/platform.service'
-import { platformUtils } from '../platform/platform.utils'
+import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
-import { aiProvidersStrategies, Usage } from './providers'
-import { StreamingParser } from './providers/types'
+import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
-const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
-export const aiProviderService = {
-    async list(userPlatformId: PlatformId): Promise<SeekPage<AIProviderWithoutSensitiveData>> {
-        const platformId = await this.getAIProviderPlatformId(userPlatformId)
+const modelsCache = new Map<string, AIProviderModel[]>()
 
-        const providers = await aiProviderRepo().findBy({ platformId })
-
-        const aiProviders = providers.map((provider): AIProviderWithoutSensitiveData => ({
-            id: provider.id,
-            created: provider.created,
-            updated: provider.updated,
-            provider: provider.provider,
-            platformId: provider.platformId,
-        }))
-
-        return {
-            data: aiProviders,
-            next: null,
-            previous: null,
-        }
-    },
-
-    async isAgentConfigured(): Promise<boolean> {
-        return aiProviderRepo().existsBy({
-            provider: 'openai',
+export const aiProviderService = (log: FastifyBaseLogger) => ({
+    async setup(): Promise<void> {
+        cron.schedule('0 0 * * *', () => {
+            log.info('Clearing AI provider models cache')
+            modelsCache.clear()
         })
     },
 
-    async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
-        assertOnlyCloudPlatformCanEditOnCloud(platformId)
+    async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
+        const activepiecesExists = await aiProviderRepo().existsBy({
+            platformId,
+            provider: AIProviderName.ACTIVEPIECES,
+        })
 
-        if (request.useAzureOpenAI && system.getEdition() !== ApEdition.ENTERPRISE) {
+        if (flagService.aiCreditsEnabled() && !activepiecesExists) {
+            await aiProviderRepo().save({
+                id: apId(),
+                auth: await encryptUtils.encryptObject({}),
+                config: {},
+                provider: AIProviderName.ACTIVEPIECES,
+                displayName: 'Activepieces',
+                platformId,
+            })
+        }
+        const configuredProviders = await aiProviderRepo().findBy({ platformId })
+
+        const formattedProviders: AIProviderWithoutSensitiveData[] = await Promise.all(configuredProviders.map(async p => {
+            return {
+                id: p.id,
+                name: p.displayName,
+                provider: p.provider,
+                config: p.config,
+            }
+        }))
+        return formattedProviders
+    },
+
+    async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
+        const { config, auth } = await this.getConfigOrThrow({ platformId, provider })
+
+        const cacheKey = `${provider}-${auth.apiKey}`
+        if (modelsCache.has(cacheKey) && !('models' in config)) {
+            return modelsCache.get(cacheKey)!
+        }
+
+        const data = await aiProviders[provider].listModels(auth, config)
+
+        modelsCache.set(cacheKey, data.map(model => ({
+            id: model.id,
+            name: model.name,
+            type: model.type,
+        })))
+
+        return modelsCache.get(cacheKey)!
+    },
+
+    async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+        await aiProviderRepo().save({
+            id: apId(),
+            auth: await encryptUtils.encryptObject(request.auth),
+            config: request.config,
+            provider: request.provider,
+            displayName: request.displayName,
+            platformId,
+        })
+    },
+    async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
+        const aiProvider = await aiProviderRepo().findOneBy({
+            platformId,
+            id: providerId,
+        })
+        if (isNil(aiProvider) || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
             throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: {
-                    message: 'Azure OpenAI is only available for enterprise customers',
-                },
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: providerId, entityType: 'AIProvider' },
             })
         }
 
-        await aiProviderRepo().upsert({
-            id: apId(),
-            config: encryptUtils.encryptObject({
-                apiKey: request.apiKey,
-                azureOpenAI: request.useAzureOpenAI ? {
-                    resourceName: request.resourceName,
-                } : undefined,
-            }),
-            provider: request.provider,
-            platformId,
-        }, ['provider', 'platformId'])
+        const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
+        await aiProviderRepo().update(providerId, {
+            ...spreadIfDefined('auth', encryptedAuth),
+            ...spreadIfDefined('config', request.config),
+            displayName: request.displayName,
+        })
     },
 
-    async delete(platformId: PlatformId, provider: string): Promise<void> {
-        assertOnlyCloudPlatformCanEditOnCloud(platformId)
-
+    async delete(platformId: PlatformId, providerId: string): Promise<void> {
         await aiProviderRepo().delete({
+            platformId,
+            id: providerId,
+        })
+    },
+    async getConfigOrThrow({ platformId, provider }: GetOrCreateActivepiecesConfigResponse): Promise<GetProviderConfigResponse> {
+        const aiProvider = await aiProviderRepo().findOneBy({
             platformId,
             provider,
         })
+        if (isNil(aiProvider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: provider,
+                    entityType: 'AIProvider',
+                },
+            })
+        }
+
+        let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
+
+        if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+            const doesHaveKeys = !isNil(auth) && !isNil(auth.apiKey) && auth.apiKey !== ''
+            if (!doesHaveKeys) {
+                const { auth: activePiecesAuth } = await enrichWithKeysIfNeeded(aiProvider, platformId, log)
+
+                auth = activePiecesAuth
+            }
+
+            await systemJobsSchedule(log).upsertJob({
+                job: {
+                    name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
+                    data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: dayjs(),
+                },
+            })
+        }
+        
+        
+        return { provider: aiProvider.provider, auth, config: aiProvider.config }
+    },
+    async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
+        const aiProvider = await aiProviderRepo().findOneBy({
+            platformId,
+            provider: AIProviderName.ACTIVEPIECES,
+        })
+        if (isNil(aiProvider)) {
+            return null
+        }
+        const doesHaveKeys = await doesActivepiecesProviderHasKeys(aiProvider)
+        if (!doesHaveKeys) {
+            return null
+        }
+        const { auth } = await this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
+
+        return auth as ActivePiecesProviderAuthConfig
     },
 
-    async getConfig(provider: string, platformId: PlatformId): Promise<AIProvider['config']> {
-        const aiProvider = await aiProviderRepo().findOneOrFail({
-            where: {
-                provider,
+    async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
+        const aiProvider = await aiProviderRepo().findOneBy({
+            platformId,
+            provider: AIProviderName.ACTIVEPIECES,
+        })
+        if (isNil(aiProvider)) {
+            await aiProviderRepo().save({
+                id: apId(),
+                auth: await encryptUtils.encryptObject({}),
+                config: {},
+                provider: AIProviderName.ACTIVEPIECES,
+                displayName: 'Activepieces',
                 platformId,
-            },
-            select: {
-                config: {
-                    iv: true,
-                    data: true,
-                },
+            })
+        }
+
+        const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
+        return auth as ActivePiecesProviderAuthConfig
+    },
+
+    async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {
+        const aiProviders = await aiProviderRepo().find({
+            where: {
+                provider: AIProviderName.ACTIVEPIECES,
+                platformId: platformIds?.length ? In(platformIds) : undefined,
             },
         })
 
-        return encryptUtils.decryptObject(aiProvider.config)
-    },
+        const result: { [platformId: string]: ActivePiecesProviderAuthConfig } = {}
+        for (const aiProvider of aiProviders) {
+            const hasKeys = await doesActivepiecesProviderHasKeys(aiProvider)
+            if (!hasKeys) continue
 
-    async getAIProviderPlatformId(userPlatformId: string): Promise<string> {
-        if (!isCloudEdition) return userPlatformId
-
-        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-        if (cloudPlatformId === userPlatformId) return cloudPlatformId
-
-        const platform = await platformService.getOneWithPlanOrThrow(userPlatformId)
-        const isEnterpriseCustomer = platformUtils.isCustomerOnDedicatedDomain(platform)
-        return isEnterpriseCustomer ? userPlatformId : cloudPlatformId
-    },
-
-    getBaseUrl(provider: string, config: AIProvider['config']): string {
-        const providerStrategy = aiProvidersStrategies[provider]
-        if (providerStrategy?.getBaseUrl) {
-            return providerStrategy.getBaseUrl(config)
-        }
-        const providerConfig = getProviderConfig(provider)!
-        return providerConfig.baseUrl
-    },
-
-    isNonUsageRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
-        const providerStrategy = aiProvidersStrategies[provider]
-        if (providerStrategy?.isNonUsageRequest) {
-            return providerStrategy.isNonUsageRequest(request)
-        }
-        return false
-    },
-
-    calculateUsage(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>, response: Record<string, unknown>): Usage | null {
-        const providerStrategy = aiProvidersStrategies[provider]
-        return providerStrategy.calculateUsage(request, response)
-    },
-
-    extractModelId(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): string | null {
-        const providerStrategy = aiProvidersStrategies[provider]
-        if (!providerStrategy) return null
-        return providerStrategy.extractModelId(request)
-    },
-
-    isModelSupported(provider: string, model: string | null, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
-        const providerConfig = getProviderConfig(provider)!
-        if (this.isNonUsageRequest(provider, request)) {
-            return true
-        }
-        return (
-            !isNil(model) &&
-            !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) ||
-            !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model)) ||
-            !isNil(providerConfig.videoModels.find((m) => m.instance.modelId === model))
-        )
-    },
-    getVideoModelCost({ provider, request }: { provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase> }) {
-        const providerStrategy = aiProvidersStrategies[provider]
-        const modelConfig = providerStrategy.extractModelId(request)
-        const providerConfig = getProviderConfig(provider)
-        const videoModelConfig = providerConfig?.videoModels.find((m) => m.instance.modelId === modelConfig)
-        if (videoModelConfig) {
-            return videoModelConfig.pricing.costPerSecond * videoModelConfig.minimumDurationInSeconds
-        }
-        return 0
-    },
-    isStreaming(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): boolean {
-        const providerStrategy = aiProvidersStrategies[provider]
-        return providerStrategy.isStreaming(request)
-    },
-
-    providerSupportsStreaming(provider: string): boolean {
-        const providerConfig = getProviderConfig(provider)!
-        return providerConfig.streaming
-    },
-
-    streamingParser(provider: string): StreamingParser {
-        const providerStrategy = aiProvidersStrategies[provider]
-        return providerStrategy.streamingParser!()
-    },
-
-    rewriteUrl(provider: string, config: AIProvider['config'], originalUrl: string): string {
-        const providerStrategy = aiProvidersStrategies[provider]
-        if (providerStrategy?.rewriteUrl) {
-            return providerStrategy.rewriteUrl(config, originalUrl)
-        }
-        return originalUrl
-    },
-
-    getAuthHeaders(provider: string, config: AIProvider['config']): Record<string, string> {
-        const providerStrategy = aiProvidersStrategies[provider]
-        if (providerStrategy.getAuthHeaders) {
-            return providerStrategy.getAuthHeaders(config)
+            result[aiProvider.platformId] = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
         }
 
-        const providerConfig = getProviderConfig(provider)!
-        return {
-            [providerConfig.auth.headerName]: providerConfig.auth.bearer ? `Bearer ${config.apiKey}` : config.apiKey,
-        }
+        return result
     },
+})
 
-    validateRequest(provider: string, request: FastifyRequest<RequestGenericInterface, RawServerBase>): void {
-        validateAIUsageHeaders(request.headers)
-
-        if (this.isStreaming(provider, request) && !this.providerSupportsStreaming(provider)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
-                params: {
-                    message: 'Streaming is not supported for this provider',
-                },
-            })
-        }
-
-        const model = this.extractModelId(provider, request)
-        if (!this.isModelSupported(provider, model, request)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
-                params: {
-                    provider,
-                    model: model ?? 'unknown',
-                },
-            })
-        }
-
-        const providerStrategy = aiProvidersStrategies[provider]
-        if (providerStrategy.validateRequest) {
-            providerStrategy.validateRequest(request)
-        }
-    },
+type GetOrCreateActivepiecesConfigResponse = {
+    platformId: PlatformId
+    provider: AIProviderName
 }
 
-function assertOnlyCloudPlatformCanEditOnCloud(platformId: PlatformId): void {
-    if (!isCloudEdition) {
-        return
-    }
-    const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-    if (platformId === cloudPlatformId) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.AUTHORIZATION,
-        params: {
-            message: 'invalid route for principal type',
-        },
+async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger): Promise<GetProviderConfigResponse> {
+    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    const limit = platformPlan.includedAiCredits / 1000
+    const { key, data } = await openRouterApi.createKey({
+        name: `Platform ${platformId}`, 
+        limit,
     })
+    const rawAuth: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
+    const savedAiProvider = await aiProviderRepo().save({
+        id: aiProvider.id,
+        platformId,
+        provider: AIProviderName.ACTIVEPIECES,
+        displayName: 'Activepieces',
+        config: {},
+        auth: await encryptUtils.encryptObject(rawAuth),
+    })
+    await platformPlanService(log).update({
+        platformId,
+        lastFreeAiCreditsRenewalDate: new Date().toISOString(),
+    })
+    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config }
 }
 
-function getProviderConfig(provider: string | undefined): SupportedAIProvider | undefined {
-    if (isNil(provider)) {
-        return undefined
+
+async function doesActivepiecesProviderHasKeys(aiProvider: AIProviderSchema): Promise<boolean> {
+    if (isNil(aiProvider) || isNil(aiProvider.auth)) {
+        return false
     }
-    return SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)
-}
-
-
-function validateAIUsageHeaders(headers: Record<string, string | string[] | undefined>): void {
-    const feature = headers[AI_USAGE_FEATURE_HEADER] as AIUsageFeature
-    const agentId = headers[AI_USAGE_AGENT_ID_HEADER] as string | undefined
-    const mcpId = headers[AI_USAGE_MCP_ID_HEADER] as string | undefined
-
-    // Validate feature header
-    const supportedFeatures = Object.values(AIUsageFeature).filter(f => f !== AIUsageFeature.UNKNOWN) as AIUsageFeature[]
-    if (feature && !supportedFeatures.includes(feature)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `${AI_USAGE_FEATURE_HEADER} header must be one of the following: ${supportedFeatures.join(', ')}`,
-            },
-        })
-    }
-
-    if (feature === AIUsageFeature.AGENTS && !agentId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `${AI_USAGE_AGENT_ID_HEADER} header is required when feature is ${AIUsageFeature.AGENTS}`,
-            },
-        })
-    }
-
-    if (feature === AIUsageFeature.MCP && !mcpId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `${AI_USAGE_MCP_ID_HEADER} header is required when feature is ${AIUsageFeature.MCP}`,
-            },
-        })
-    }
+    const decryptedAuth = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
+    return !isNil(decryptedAuth) && !isNil(decryptedAuth.apiKey) && decryptedAuth.apiKey !== ''
 }

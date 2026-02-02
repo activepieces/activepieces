@@ -14,7 +14,7 @@ export const getAssemblyAIClient = (
 ): AssemblyAI => {
   if (!context.auth) throw new Error('The AssemblyAI API key is required.');
   return new AssemblyAI({
-    apiKey: context.auth,
+    apiKey: context.auth.secret_text,
     userAgent: {
       integration: {
         name: 'Activepieces',

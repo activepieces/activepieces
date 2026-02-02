@@ -40,7 +40,7 @@ export const editPresentationAction = createAction({
       method: HttpMethod.POST,
       url: BASE_URL + '/presentation/edit',
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
         ...formData.getHeaders()
       },
       body: formData,

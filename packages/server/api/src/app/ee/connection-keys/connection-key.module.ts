@@ -5,7 +5,8 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, AppConnectionScope } from '@activepieces/shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -26,17 +27,13 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Querystring: GetOrDeleteConnectionFromTokenRequest
-            }>,
-        ) => {
+        async (request) => {
             const appConnection = await connectionKeyService(request.log).getConnection(
                 request.query,
             )
@@ -56,7 +53,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -75,17 +72,13 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 body: UpsertConnectionFromToken,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Body: UpsertConnectionFromToken
-            }>,
-        ) => {
+        async (request) => {
             return connectionKeyService(request.log).createConnection(request.body)
         },
     )
@@ -96,14 +89,21 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             schema: {
                 querystring: ListConnectionKeysRequest,
             },
+            config: {
+                security: securityAccess.project(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    undefined,
+                    {
+                        type: ProjectResourceType.QUERY,
+                    },
+                ),
+            },
         },
         async (
-            request: FastifyRequest<{
-                Querystring: ListConnectionKeysRequest
-            }>,
+            request,
         ) => {
             return connectionKeyService(request.log).list(
-                request.principal.projectId,
+                request.projectId,
                 request.query.cursor ?? null,
                 request.query.limit ?? DEFAULT_LIMIT_SIZE,
             )
@@ -116,14 +116,21 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             schema: {
                 body: UpsertSigningKeyConnection,
             },
+            config: {
+                security: securityAccess.project(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    undefined,
+                    {
+                        type: ProjectResourceType.BODY,
+                    },
+                ),
+            },
         },
         async (
-            request: FastifyRequest<{
-                Body: UpsertSigningKeyConnection
-            }>,
+            request,
         ) => {
             return connectionKeyService(request.log).upsert({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 request: request.body,
             })
         },

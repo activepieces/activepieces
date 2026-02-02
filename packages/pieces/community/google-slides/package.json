@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-google-slides",
-  "version": "0.0.8"
+  "version": "0.1.1",
+  "dependencies": {
+    "googleapis": "129.0.0"
+  }
 }

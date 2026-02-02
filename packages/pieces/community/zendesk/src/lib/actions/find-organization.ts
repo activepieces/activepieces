@@ -94,7 +94,7 @@ export const findOrganizationAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       search_type,
       name,
@@ -163,12 +163,12 @@ export const findOrganizationAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
+        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
       });
 

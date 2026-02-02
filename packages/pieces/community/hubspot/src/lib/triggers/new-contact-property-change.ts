@@ -5,8 +5,9 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { chunk, isNil } from '@activepieces/shared';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
@@ -16,10 +17,11 @@ type Props = {
 	propertyName?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		const propertyToCheck = propsValue.propertyName as string;
 
@@ -42,10 +44,10 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 		//fetch updated contacts
 		const updatedContacts = [];
-		let after;
+		let after: string | undefined;
 		do {
 			const response = await client.crm.contacts.searchApi.doSearch({
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				after,
 				sorts: ['-lastmodifieddate'],
 				filterGroups: [
@@ -66,24 +68,43 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 			after = response.paging?.next?.after;
 			updatedContacts.push(...response.results);
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		if (updatedContacts.length === 0) {
 			return [];
 		}
 
-		// Fetch contacts with property history
-		const updatedContcatsWithPropertyHistory = await client.crm.contacts.batchApi.read({
-			propertiesWithHistory: [propertyToCheck],
-			properties: propertiesToRetrieve,
-			inputs: updatedContacts.map((contact) => {
-				return {
-					id: contact.id,
-				};
-			}),
-		});
+		// Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
+    const batchApiChunks = chunk(updatedContacts, 50);
 
-		for (const contact of updatedContcatsWithPropertyHistory.results) {
+    // Fetch contacts with property history
+    const batchApiResps = await Promise.all(
+      batchApiChunks.map((batch) => {
+        return client.crm.contacts.batchApi.read({
+          propertiesWithHistory: [propertyToCheck],
+          properties: propertiesToRetrieve,
+          inputs: batch.map((contact) => {
+            return {
+              id: contact.id,
+            };
+          }),
+        });
+      })
+    );
+
+    const updatedContcatsWithPropertyHistory = batchApiResps.flatMap(
+      (resp) => resp.results
+    );
+
+		for (const contact of updatedContcatsWithPropertyHistory) {
 			const history = contact.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;

@@ -1,6 +1,7 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { retellAiApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
 // For typing purposes in the client
 export const RetellAiAuth = PieceAuth.SecretText({
@@ -25,7 +26,10 @@ export const retellAiAuth = PieceAuth.CustomAuth({
       await retellAiApiCall({
         method: HttpMethod.GET,
         url: '/list-chat',
-        auth: auth,
+        auth: {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
       });
       return { valid: true };
     } catch (e) {

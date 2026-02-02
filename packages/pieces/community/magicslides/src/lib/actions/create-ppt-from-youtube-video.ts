@@ -99,8 +99,8 @@ export const createPptFromYoutubeVideo = createAction({
 
     const payload: any = {
       youtubeURL,
-      accessId: context.auth.accessId,
-      email: context.auth.email,
+      accessId: context.auth.props.accessId,
+      email: context.auth.props.email,
       template,
       language,
       slideCount,

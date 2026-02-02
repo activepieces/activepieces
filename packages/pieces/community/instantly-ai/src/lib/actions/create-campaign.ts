@@ -279,7 +279,7 @@ export const createCampaignAction = createAction({
     return await makeRequest({
       endpoint: 'campaigns',
       method: HttpMethod.POST,
-      apiKey: apiKey as string,
+      apiKey: apiKey,
       body: payload,
     });
   },

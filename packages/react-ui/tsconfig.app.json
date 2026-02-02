@@ -29,8 +29,8 @@
       "ee-embed-sdk": [
         "../../packages/ee/ui/embed-sdk/src"
       ],
-      "@activepieces/common-ai": [
-        "../../packages/pieces/community/common-ai/src"
+      "@activepieces/piece-ai": [
+        "../../packages/pieces/community/ai/src"
       ]
     }
   },

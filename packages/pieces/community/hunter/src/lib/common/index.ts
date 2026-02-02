@@ -4,6 +4,8 @@ import {
     httpClient,
     HttpRequest,
 } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { hunterAuth } from '../..';
 
 export async function hunterApiCall({
     apiKey,
@@ -12,7 +14,7 @@ export async function hunterApiCall({
     qparams,
     body,
 }: {
-    apiKey: string;
+    apiKey: AppConnectionValueForAuthProperty<typeof hunterAuth>;
     endpoint: string;
     method: HttpMethod;
     qparams?: QueryParams;
@@ -20,7 +22,7 @@ export async function hunterApiCall({
 }) {
     const queryParams: QueryParams = {
         ...(qparams ?? {}),
-        api_key: apiKey,
+        api_key: apiKey.secret_text,
     };
 
     const request: HttpRequest = {

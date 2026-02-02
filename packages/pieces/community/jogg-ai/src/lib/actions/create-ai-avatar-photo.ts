@@ -163,7 +163,7 @@ export const createAiAvatarPhoto = createAction({
       method: HttpMethod.POST,
       url: 'https://api.jogg.ai/v1/photo_avatar/photo/generate',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,

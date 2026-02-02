@@ -1,5 +1,4 @@
 {
-  "Zoom": "Inzoomen",
   "Video conferencing, web conferencing, webinars, screen sharing": "Videoconferentie, webconferentie, webinars, schermdelen",
   "\n  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.\n  2. In the upper-right corner, click **Develop** then **Build App**.\n  3. Select **General App**.\n  4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.\n  5. Go to **Scopes** from left side bar and add **meeting:write:meeting** and **meeting:write:registrant** as scopes.": "\n  1. Ga naar [marketplace.zoom.us](https://marketplace.zoom.us/) en log in op je account.\n  2. Klik in de rechterbovenhoek op **Ontwikkelen** en vervolgens **Build App**.\n  3. Selecteer **General App**.\n  4. Kopieer de Client ID en Client Secret.Voeg Redirect URL toe en druk op doorgaan.\n  5. Ga naar **Scopes** van linker zijbalk en voeg **meeting:schrijven:meeting** en **meeting:schrijven:registrant** toe als scopes.",
   "Create Zoom Meeting": "Maak Zoom Vergadering",

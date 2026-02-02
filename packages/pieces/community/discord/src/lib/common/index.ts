@@ -1,6 +1,7 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Channel, Guild } from '../common/models';
 import { Property } from '@activepieces/pieces-framework';
+import { discordAuth } from '../..';
 
 export interface Member {
   user: {
@@ -10,7 +11,8 @@ export interface Member {
 }
 
 export const discordCommon = {
-  channel: Property.Dropdown<string>({
+  channel: Property.Dropdown({
+    auth: discordAuth,
     displayName: 'Channel',
     description: 'List of channels',
     required: true,
@@ -28,7 +30,7 @@ export const discordCommon = {
         method: HttpMethod.GET,
         url: 'https://discord.com/api/v9/users/@me/guilds',
         headers: {
-          Authorization: 'Bot ' + auth,
+           Authorization: 'Bot ' + auth.secret_text,
         },
       };
 
@@ -50,7 +52,7 @@ export const discordCommon = {
             method: HttpMethod.GET,
             url: 'https://discord.com/api/v9/guilds/' + guild.id + '/channels',
             headers: {
-              Authorization: 'Bot ' + auth,
+               Authorization: 'Bot ' + auth.secret_text,
             },
           };
 
@@ -69,7 +71,8 @@ export const discordCommon = {
       return options;
     },
   }),
-  roles: Property.Dropdown<string>({
+  roles: Property.Dropdown({
+    auth: discordAuth,
     displayName: 'Roles',
     description: 'List of roles',
     required: true,
@@ -95,7 +98,7 @@ export const discordCommon = {
         method: HttpMethod.GET,
         url: `https://discord.com/api/v9/guilds/${guild_id}/roles`,
         headers: {
-          Authorization: 'Bot ' + auth,
+           Authorization: 'Bot ' + auth.secret_text,
         },
       };
 
@@ -124,7 +127,8 @@ export const discordCommon = {
       return options;
     },
   }),
-  guilds: Property.Dropdown<string>({
+  guilds: Property.Dropdown({
+    auth: discordAuth,
     displayName: 'Guilds',
     description: 'List of guilds',
     required: true,
@@ -142,7 +146,7 @@ export const discordCommon = {
         method: HttpMethod.GET,
         url: 'https://discord.com/api/v9/users/@me/guilds',
         headers: {
-          Authorization: 'Bot ' + auth,
+           Authorization: 'Bot ' + auth.secret_text,
         },
       };
 

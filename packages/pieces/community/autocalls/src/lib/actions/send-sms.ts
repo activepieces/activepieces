@@ -9,6 +9,7 @@ export const sendSms = createAction({
   description: "Send an SMS to a customer using a phone number from our platform.",
   props: {
     from: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'From phone number',
       description: 'Select an SMS capable phone number to send the SMS from',
       required: true,
@@ -19,7 +20,7 @@ export const sendSms = createAction({
           method: HttpMethod.GET,
           url: baseApiUrl + 'api/user/phone-numbers',
           headers: {
-            Authorization: "Bearer " + auth,
+            Authorization: "Bearer " + auth?.secret_text,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
@@ -69,7 +70,7 @@ export const sendSms = createAction({
         body: context.propsValue['body'],
       },
       headers: {
-        Authorization: "Bearer " + context.auth,
+        Authorization: "Bearer " + context.auth.secret_text,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },

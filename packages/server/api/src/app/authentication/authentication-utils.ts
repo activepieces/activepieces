@@ -1,6 +1,6 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
@@ -18,6 +18,7 @@ export const authenticationUtils = {
         const isInvited = await userInvitationsService(log).hasAnyAcceptedInvitations({
             platformId,
             email,
+            
         })
         if (!isInvited) {
             throw new ActivepiecesError({
@@ -34,6 +35,7 @@ export const authenticationUtils = {
         const projects = await projectService.getAllForUser({
             platformId: params.platformId,
             userId: params.userId,
+            isPrivileged: userService.isUserPrivileged(user),
         })
         const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
         if (isNil(project)) {
@@ -64,7 +66,6 @@ export const authenticationUtils = {
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: project.id,
             platform: {
                 id: params.platformId,
             },
@@ -178,20 +179,22 @@ export const authenticationUtils = {
                     body: JSON.stringify({ email: identity.email }),
                 },
             )
-            return await response.json()
+            await response.json()
         }
         catch (error) {
             log.warn(error)
         }
     },
-    async extractUserIdFromPrincipal(
-        principal: Principal,
+    async extractUserIdFromRequest(
+        request: FastifyRequest,
     ): Promise<string> {
-        if (principal.type === PrincipalType.USER) {
-            return principal.id
+        if (request.principal.type === PrincipalType.USER) {
+            return request.principal.id
         }
         // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
-        const project = await projectService.getOneOrThrow(principal.projectId)
+        const projectId = request.principal.type === PrincipalType.ENGINE ? request.principal.projectId : request.projectId
+        assertNotNullOrUndefined(projectId, 'projectId')
+        const project = await projectService.getOneOrThrow(projectId)
         return project.ownerId
     },
 }
@@ -222,4 +225,5 @@ type GetProjectAndTokenParams = {
     userId: string
     platformId: string
     projectId: string | null
+    scope?: EndpointScope
 }

@@ -1,12 +1,10 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     ErrorCode,
     File,
     FileLocation,
     FileType,
-    PrincipalType,
     StepFileUpsertRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -88,7 +86,7 @@ async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Om
 
 const SignedFileRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         querystring: Type.Object({
@@ -99,7 +97,7 @@ const SignedFileRequest = {
 
 const UpsertStepFileRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: securityAccess.engine(),
     },
     schema: {
         body: StepFileUpsertRequest,

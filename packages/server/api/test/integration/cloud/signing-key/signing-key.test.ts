@@ -35,7 +35,10 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                platform: { id: mockPlatform.id },
+                
+                platform: {
+                    id: mockPlatform.id,
+                },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -83,6 +86,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -119,6 +123,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -165,7 +170,9 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                platform: { id: mockPlatformOne.id },
+                platform: {
+                    id: mockPlatformOne.id,
+                },
             })
 
             // act
@@ -202,7 +209,9 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                platform: {
+                    id: mockPlatformOne.id,
+                },
             })
             // act
             const response = await app?.inject({

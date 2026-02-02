@@ -7,11 +7,13 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import {
+  ApFile,
   createAction,
   DynamicPropsValue,
+  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isEmpty } from '@activepieces/shared';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -57,6 +59,7 @@ export const httpSendRequestAction = createAction({
     authFields: Property.DynamicProperties({
       displayName: 'Authentication Fields',
       required: false,
+      auth: PieceAuth.None(),
       refreshers: ['authType'],
       props: async ({ authType }) => {
         if (!authType) {
@@ -127,6 +130,7 @@ export const httpSendRequestAction = createAction({
       displayName: 'Body',
       refreshers: ['body_type'],
       required: false,
+      auth: PieceAuth.None(),
       props: async ({ body_type }) => {
         if (!body_type) return {};
 
@@ -150,9 +154,34 @@ export const httpSendRequestAction = createAction({
             });
             break;
           case 'form_data':
-            fields['data'] = Property.Object({
+            fields['data'] = Property.Array({
               displayName: 'Form Data',
               required: true,
+              properties: {
+                fieldName: Property.ShortText({
+                  displayName: 'Field Name',
+                  required: true
+                }),
+                fieldType: Property.StaticDropdown({
+                  displayName: 'Field Type',
+                  required: true,
+                  options: {
+                    disabled: false,
+                    options: [
+                      { label: 'Text', value: 'text' },
+                      { label: 'File', value: 'file' }
+                    ]
+                  }
+                }),
+                textFieldValue: Property.LongText({
+                  displayName: 'Text Field Value',
+                  required: false
+                }),
+                fileFieldValue: Property.File({
+                  displayName: 'File Field Value',
+                  required: false
+                })
+              }
             });
             break;
         }
@@ -173,6 +202,7 @@ export const httpSendRequestAction = createAction({
       required: false,
     }),
     proxy_settings: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Proxy Settings',
       refreshers: ['use_proxy'],
       required: false,
@@ -208,10 +238,15 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
+    followRedirects: Property.Checkbox({
+      displayName: 'Follow redirects',
+      required: false,
+      defaultValue: false,
+    }),
     failureMode: Property.StaticDropdown({
       displayName: 'On Failure',
       required: false,
-      defaultValue:'continue_none',
+      defaultValue: 'continue_none',
       options: {
         disabled: false,
         options: [
@@ -223,11 +258,7 @@ export const httpSendRequestAction = createAction({
           { label: 'Do not continue (stop the flow)', value: 'continue_none' },
         ],
       },
-    }),
-    stopFlow: Property.Checkbox({
-      displayName: 'Stop the flow on Failure ?',
-      required: false,
-    }),
+    })
   },
   errorHandlingOptions: {
     continueOnFailure: { hide: true, defaultValue: false },
@@ -247,7 +278,7 @@ export const httpSendRequestAction = createAction({
       use_proxy,
       authType,
       authFields,
-      stopFlow,
+      followRedirects,
     } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -259,6 +290,7 @@ export const httpSendRequestAction = createAction({
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,
+      followRedirects,
     };
 
     switch (authType) {
@@ -289,10 +321,23 @@ export const httpSendRequestAction = createAction({
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
+        const formBodyInput = bodyInput as Array<{
+          fieldName: string;
+          fieldType: 'text' | 'file';
+          textFieldValue?: string;
+          fileFieldValue?: ApFile;
+        }>;
+
         const formData = new FormData();
-        for (const key in bodyInput) {
-          formData.append(key, bodyInput[key]);
+
+        for (const { fieldName, fieldType, textFieldValue, fileFieldValue } of formBodyInput) {
+          if (fieldType === 'text' && !isEmpty(textFieldValue)) {
+            formData.append(fieldName, textFieldValue);
+          } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
+            formData.append(fieldName, fileFieldValue!.data,{filename:fileFieldValue?.filename});
+          }
         }
+
         request.body = formData;
         request.headers = { ...request.headers, ...formData.getHeaders() };
       } else {
@@ -338,13 +383,6 @@ export const httpSendRequestAction = createAction({
       } catch (error) {
         attempts++;
 
-        if (stopFlow) {
-          context.run.stop({
-            response: (error as HttpError).response,
-          });
-          return (error as HttpError).response;
-        }
-
         switch (failureMode) {
           case 'retry_all': {
             if (attempts < 3) continue;
@@ -373,10 +411,7 @@ export const httpSendRequestAction = createAction({
             if (attempts < 3) continue;
             throw error;
           case 'continue_none':
-            context.run.stop({
-              response: (error as HttpError).response,
-            });
-            return (error as HttpError).response;
+            throw error;
           default:
             throw error;
         }
@@ -396,7 +431,7 @@ const handleBinaryResponse = (
   let body;
 
   if (isBinary && isBinaryBody(bodyContent)) {
-    body = Buffer.from(bodyContent).toString('base64');
+    body = Buffer.from(bodyContent as unknown as string).toString('base64');
   } else {
     body = bodyContent;
   }

@@ -24,7 +24,7 @@ export const searchAgents = createAction({
   async run({ auth, propsValue }) {
     const { name, id } = propsValue;
 
-    const agents = await makeRequest(auth, HttpMethod.GET, "/agents");
+    const agents = await makeRequest(auth.secret_text, HttpMethod.GET, "/agents");
 
     if (!Array.isArray(agents)) {
       throw new Error("Unexpected response from AgentX API: expected an array of agents.");

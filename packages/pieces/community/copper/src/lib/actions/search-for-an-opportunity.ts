@@ -64,6 +64,7 @@ export const searchForAnOpportunity = createAction({
     }),
     pipeline_ids: multiPipelinesDropdown({ refreshers: ['auth'] }),
     pipeline_stage_ids: Property.MultiSelectDropdown({
+      auth: CopperAuth,
       displayName: 'Pipeline Stage',
       description: 'Select a stage',
       refreshers: ['auth', 'pipeline_ids'],

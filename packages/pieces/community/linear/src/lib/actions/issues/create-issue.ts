@@ -36,7 +36,7 @@ export const linearCreateIssue = createAction({
       labelIds: propsValue.labels,
       templateId: propsValue.template_id
     };
-    const client = makeClient(auth as string);
+    const client = makeClient(auth);
     const result = await client.createIssue(issue);
     if (result.success) {
       const createdIssue = await result.issue;

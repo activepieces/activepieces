@@ -1,8 +1,9 @@
 import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { CAPTAIN_DATA_BASE_URL, CaptainDataAuthType } from '..';
+import { CAPTAIN_DATA_BASE_URL, captainDataAuth } from '..';
 
 export const workflowProp = Property.Dropdown({
+  auth: captainDataAuth,
   displayName: 'Workflow',
   required: true,
   refreshers: [],
@@ -17,8 +18,8 @@ export const workflowProp = Property.Dropdown({
       url: `${CAPTAIN_DATA_BASE_URL}/workflows`,
       method: HttpMethod.GET,
       headers: {
-        Authorization: `x-api-key ${(auth as CaptainDataAuthType).apiKey}`,
-        'x-project-id': (auth as CaptainDataAuthType).projectId,
+        Authorization: `x-api-key ${auth.props.apiKey}`,
+        'x-project-id': auth.props.projectId,
       },
     });
     return {

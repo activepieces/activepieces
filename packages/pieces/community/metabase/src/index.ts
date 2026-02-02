@@ -10,6 +10,7 @@ import { queryMetabaseApi } from './lib/common';
 import { HttpMethod, is_chromium_installed } from '@activepieces/pieces-common';
 import { getGraphQuestion } from './lib/actions/get-graph-question';
 import { embedQuestion } from './lib/actions/embed-question';
+import { AppConnectionType } from '@activepieces/shared';
 
 const baseProps = {
   baseUrl: Property.ShortText({
@@ -48,7 +49,10 @@ export const metabaseAuth = PieceAuth.CustomAuth({
           endpoint: 'login-history/current',
           method: HttpMethod.GET,
         },
-        auth
+        {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        }
       );
       return {
         valid: true,

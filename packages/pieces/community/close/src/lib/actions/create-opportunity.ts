@@ -79,7 +79,7 @@ export const createOpportunity = createAction({
 
 		try {
 			const response = await closeApiCall({
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				method: HttpMethod.POST,
 				resourceUri: '/opportunity/',
 				body: opportunityData,

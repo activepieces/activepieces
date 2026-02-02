@@ -16,12 +16,14 @@ export const deleteRecord = createAction({
     }),
   },
   async run(context) {
-    const { records_ids } = context.propsValue;
+    const { records_ids, table_id } = context.propsValue;
+    const tableId = await tablesCommon.convertTableExternalIdToId(table_id, context);
 
     await httpClient.sendRequest({
       method: HttpMethod.DELETE,
       url: `${context.server.apiUrl}v1/records/`,
       body: {
+        tableId,
         ids: records_ids,
       },
       authentication: {

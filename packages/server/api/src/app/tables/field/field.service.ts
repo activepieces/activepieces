@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil, UpdateFieldRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, UpdateFieldRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { FieldEntity } from './field.entity'
@@ -16,6 +16,45 @@ export const fieldService = {
             externalId: request.externalId ?? apId(),
         })
         return field
+    },
+
+    async createFromState({ projectId, field, tableId }: CreateFromStateParams): Promise<Field> {
+        switch (field.type) {
+            case FieldType.STATIC_DROPDOWN: {
+                assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
+                return this.create({
+                    projectId,
+                    request: {
+                        name: field.name,
+                        type: field.type,
+                        tableId,
+                        data: field.data,
+                        externalId: field.externalId,
+                    },
+                })
+            }
+            case FieldType.DATE:
+            case FieldType.NUMBER:
+            case FieldType.TEXT: {
+                return this.create({
+                    projectId,
+                    request: {
+                        name: field.name,
+                        type: field.type,
+                        tableId,
+                        externalId: field.externalId,
+                    },
+                })
+            }
+            default: {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Unsupported field type: ${field.type}`,
+                    },
+                })
+            }
+        }
     },
 
     async getAll({ projectId, tableId }: GetAllParams): Promise<Field[]> {
@@ -82,6 +121,12 @@ export const fieldService = {
 type CreateParams = {
     projectId: string
     request: CreateFieldRequest
+}
+
+type CreateFromStateParams = {
+    projectId: string
+    field: FieldState
+    tableId: string
 }
 
 type GetAllParams = {

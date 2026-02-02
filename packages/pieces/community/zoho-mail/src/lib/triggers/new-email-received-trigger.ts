@@ -6,6 +6,7 @@ import {
 	pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+	AppConnectionValueForAuthProperty,
 	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
@@ -19,7 +20,7 @@ type Props = {
 	folderId?: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof zohoMailAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof zohoMailAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const { accountId, folderId } = propsValue;

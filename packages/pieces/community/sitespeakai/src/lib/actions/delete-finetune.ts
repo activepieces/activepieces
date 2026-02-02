@@ -17,7 +17,7 @@ export const deleteFinetune = createAction({
     const props = propsValue as { chatbotId: string; finetuneId: string };
 
     const response = await makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.DELETE,
       `/${props.chatbotId}/finetunes/${props.finetuneId}`
     );

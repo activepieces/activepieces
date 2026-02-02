@@ -63,7 +63,7 @@ export const linearNewIssue = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const webhook = await client.createWebhook({
       label: 'ActivePieces New Issue',
       url: context.webhookUrl,
@@ -79,7 +79,7 @@ export const linearNewIssue = createTrigger({
     }
   },
   async onDisable(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const response = await context.store?.get<WebhookInformation>(
       '_new_issue_trigger'
     );

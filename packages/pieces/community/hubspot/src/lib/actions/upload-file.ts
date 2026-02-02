@@ -14,6 +14,7 @@ export const uploadFileAction = createAction({
 	description: 'Uploads a file to HubSpot File Manager.',
 	props: {
 		folderId: Property.Dropdown({
+			auth: hubspotAuth,
 			displayName: 'Folder',
 			refreshers: [],
 			required: true,

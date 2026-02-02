@@ -89,7 +89,7 @@ export const triggers = [
                     action: trigger.action,
                 },
                 headers: {
-                    'X-API-KEY': context.auth.apiKey,
+                    'X-API-KEY': context.auth.props.apiKey,
                 },
             });
             await context.store.put('_webhook_id', response.body.id);
@@ -103,7 +103,7 @@ export const triggers = [
                     hookUrl: webhookId,
                 },
                 headers: {
-                    'X-API-KEY': context.auth.apiKey,
+                    'X-API-KEY': context.auth.props.apiKey,
                 },
             });
         },

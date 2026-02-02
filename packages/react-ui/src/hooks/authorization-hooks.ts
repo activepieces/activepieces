@@ -22,7 +22,9 @@ export const useAuthorization = () => {
     queryFn: async () => {
       const platform = await platformApi.getCurrentPlatform();
       if (platform.plan.projectRolesEnabled) {
-        const projectRole = await authenticationApi.getCurrentProjectRole();
+        const projectRole = await authenticationApi.getCurrentProjectRole({
+          projectId: authenticationSession.getProjectId() ?? '',
+        });
         return projectRole;
       }
       return null;
@@ -42,7 +44,7 @@ export const useAuthorization = () => {
   return { checkAccess };
 };
 
-export const useShowPlatformAdminDashboard = () => {
+export const useIsPlatformAdmin = () => {
   const platformRole = userHooks.getCurrentUserPlatformRole();
   return platformRole === PlatformRole.ADMIN;
 };

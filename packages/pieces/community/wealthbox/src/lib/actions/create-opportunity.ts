@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fetchContacts, fetchUsers, fetchUserGroups, fetchOpportunityStages, fetchCustomFields, WEALTHBOX_API_BASE, handleApiError, DOCUMENT_TYPES, OPPORTUNITY_AMOUNT_KINDS, CURRENCIES } from '../common';
+import { wealthboxAuth } from '../..';
 
 export const createOpportunity = createAction({
   name: 'create_opportunity',
+  auth: wealthboxAuth,
   displayName: 'Create Opportunity',
   description: 'Logs an opportunity including stage, close date, amount. Automate opportunity tracking after meetings.',
   props: {
@@ -59,6 +61,7 @@ export const createOpportunity = createAction({
     }),
 
     stage: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Stage',
       description: 'Select the current stage of this opportunity',
       required: true,
@@ -67,7 +70,7 @@ export const createOpportunity = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const stages = await fetchOpportunityStages(auth as unknown as string);
+          const stages = await fetchOpportunityStages(auth.secret_text);
           return {
             options: stages.map((stage: any) => ({
               label: stage.name,
@@ -84,6 +87,7 @@ export const createOpportunity = createAction({
     }),
 
     contact_id: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Linked Contact',
       description: 'Select the contact linked to this opportunity',
       required: true,
@@ -92,7 +96,7 @@ export const createOpportunity = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const contacts = await fetchContacts(auth as unknown as string, { active: true, order: 'recent' });
+          const contacts = await fetchContacts(auth.secret_text, { active: true, order: 'recent' });
           return {
             options: contacts.map((contact: any) => ({
               label: contact.name || `${contact.first_name} ${contact.last_name}`.trim() || `Contact ${contact.id}`,
@@ -115,6 +119,7 @@ export const createOpportunity = createAction({
     }),
 
     manager: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Opportunity Manager',
       description: 'Select the user designated as manager of this opportunity',
       required: false,
@@ -123,7 +128,7 @@ export const createOpportunity = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const users = await fetchUsers(auth as unknown as string);
+          const users = await fetchUsers(auth.secret_text);
           const assignableUsers = users.filter((user: any) => !user.excluded_from_assignments);
           return {
             options: assignableUsers.map((user: any) => ({
@@ -141,6 +146,7 @@ export const createOpportunity = createAction({
     }),
 
     visible_to: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Visible To',
       description: 'Select who can view this opportunity',
       required: false,
@@ -149,7 +155,7 @@ export const createOpportunity = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const userGroups = await fetchUserGroups(auth as unknown as string);
+          const userGroups = await fetchUserGroups(auth.secret_text);
           return {
             options: userGroups.map((group: any) => ({
               label: group.name,
@@ -166,6 +172,7 @@ export const createOpportunity = createAction({
     }),
 
     custom_fields: Property.DynamicProperties({
+      auth: wealthboxAuth,
       displayName: 'Custom Fields',
       description: 'Add custom fields to this opportunity',
       required: false,
@@ -194,7 +201,7 @@ export const createOpportunity = createAction({
         }
 
         try {
-          const customFields = await fetchCustomFields(auth as unknown as string, DOCUMENT_TYPES.OPPORTUNITY);
+          const customFields = await fetchCustomFields(auth.secret_text, DOCUMENT_TYPES.OPPORTUNITY);
           const customFieldOptions = customFields.map((field: any) => ({
             label: field.name,
             value: field.name
@@ -274,7 +281,7 @@ export const createOpportunity = createAction({
 
     if (propsValue.contact_id) {
       try {
-        const contacts = await fetchContacts(auth as unknown as string, { active: true });
+        const contacts = await fetchContacts(auth.secret_text, { active: true });
         const selectedContact = contacts.find((contact: any) => contact.id === propsValue.contact_id);
 
         requestBody.linked_to = [{
@@ -306,7 +313,7 @@ export const createOpportunity = createAction({
     const customFieldsArray = (propsValue as any).custom_fields_array;
     if (customFieldsArray && Array.isArray(customFieldsArray) && customFieldsArray.length > 0) {
       try {
-        const customFields = await fetchCustomFields(auth as unknown as string, DOCUMENT_TYPES.OPPORTUNITY);
+        const customFields = await fetchCustomFields(auth.secret_text, DOCUMENT_TYPES.OPPORTUNITY);
         const customFieldMap = new Map(customFields.map((field: any) => [field.name, field.id]));
 
         requestBody.custom_fields = customFieldsArray.map((field: any) => {
@@ -336,7 +343,7 @@ export const createOpportunity = createAction({
         method: HttpMethod.POST,
         url: `${WEALTHBOX_API_BASE}/opportunities`,
         headers: {
-          ACCESS_TOKEN: auth as unknown as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Content-Type': 'application/json'
         },
         body: requestBody

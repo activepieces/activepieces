@@ -1,8 +1,8 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { renderTemplate } from './actions/renderTemplate.action';
 import { PieceCategory } from '@activepieces/shared';
+import { generatebannersAuth } from './src/index';
 export const generatebanners = createPiece({
-  name: 'generatebanners',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
   authors: ['tpatel'],
@@ -10,5 +10,5 @@ export const generatebanners = createPiece({
   actions: [renderTemplate],
   displayName: 'GenerateBanners',
   triggers: [],
-  version: '0.1.0',
+  auth: generatebannersAuth,
 });

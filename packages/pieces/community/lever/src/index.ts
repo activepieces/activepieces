@@ -1,4 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import {
+  AppConnectionValueForAuthProperty,
+  createPiece,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { getOpportunity } from './lib/actions/get-opportunity';
 import { updateOpportunityStage } from './lib/actions/update-opportunity-stage';
@@ -19,9 +23,7 @@ export const leverAuth = PieceAuth.CustomAuth({
   required: true,
 });
 
-export type LeverAuth = {
-  apiKey: string;
-};
+export type LeverAuth = AppConnectionValueForAuthProperty<typeof leverAuth>;
 export const lever = createPiece({
   displayName: 'Lever',
   auth: leverAuth,
@@ -43,7 +45,7 @@ export const lever = createPiece({
       },
       auth: leverAuth,
       authMapping: async (auth) => {
-        const { apiKey } = auth as LeverAuth;
+        const { apiKey } = auth.props;
         return {
           Authorization:
             'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),

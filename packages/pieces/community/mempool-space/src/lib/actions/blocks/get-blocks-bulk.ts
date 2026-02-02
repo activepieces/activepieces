@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getBlocksBulk = createAction({
+ auth:PieceAuth.None(),
     name: 'get_blocks_bulk',
     displayName: 'Get Blocks (Bulk)',
     description: 'Returns details on the range of blocks between minHeight and maxHeight, inclusive, up to 10 blocks',

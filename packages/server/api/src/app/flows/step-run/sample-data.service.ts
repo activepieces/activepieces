@@ -15,6 +15,7 @@ import {
     SampleDataFileType,
     SaveSampleDataResponse,
     Step,
+    stringifyNullOrUndefined,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -59,7 +60,8 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             if (response.metadata?.[DATA_TYPE_KEY_IN_FILE_METADATA] === SampleDataDataType.STRING) {
                 return response.data.toString('utf-8')
             }
-            return JSON.parse(response.data.toString('utf-8'))
+            const decodedData = new TextDecoder('utf-8').decode(response.data)
+            return JSON.parse(decodedData)
         }
         return undefined
 
@@ -99,13 +101,13 @@ export async function saveSampleData({
     stepName,
     payload,
     type,
-    dataType,
 }: SaveSampleDataParams, log: FastifyBaseLogger): Promise<SaveSampleDataResponse> {
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
     const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
     const fileType = type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
     const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step, fileType, log)
-    const data = Buffer.from(JSON.stringify(payload))
+    const payloadWithStringifiedNullOrUndefined = isNil(payload) ? stringifyNullOrUndefined(payload) : payload
+    const data = typeof payloadWithStringifiedNullOrUndefined === 'string' ? Buffer.from(payloadWithStringifiedNullOrUndefined) : Buffer.from(JSON.stringify(payloadWithStringifiedNullOrUndefined))
     return fileService(log).save({
         projectId,
         fileId,
@@ -117,7 +119,7 @@ export async function saveSampleData({
             flowId: flowVersion.flowId,
             flowVersionId,
             stepName,
-            [DATA_TYPE_KEY_IN_FILE_METADATA]: dataType,
+            [DATA_TYPE_KEY_IN_FILE_METADATA]: typeof payloadWithStringifiedNullOrUndefined === 'string' ? SampleDataDataType.STRING : SampleDataDataType.JSON,
         },
     })
 }
@@ -167,5 +169,4 @@ type SaveSampleDataParams = {
     stepName: string
     payload: unknown
     type: SampleDataFileType
-    dataType: SampleDataDataType
 }

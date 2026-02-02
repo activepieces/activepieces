@@ -80,7 +80,7 @@ export const findNewsEventsByDomainAction = createAction({
     const categories = context.propsValue.categories
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {
@@ -114,7 +114,7 @@ export const findNewsEventByIdAction = createAction({
     const id = context.propsValue.id;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {

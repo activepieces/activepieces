@@ -3,6 +3,7 @@ import { foreplayCoApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { getAdsByPage as getAdsByPageProperties } from '../properties';
 import { getAdsByPageSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
 export const getAdsByPage = createAction({
   name: 'getAdsByPage',
@@ -10,6 +11,7 @@ export const getAdsByPage = createAction({
   description:
     'Get all ads for a Facebook Page ID with filtering and pagination.',
   props: getAdsByPageProperties(),
+  auth: foreplayCoAuth,
   async run({ auth, propsValue }) {
     // Validate props using Zod schema
     const validation = getAdsByPageSchema.safeParse(propsValue);
@@ -78,7 +80,7 @@ export const getAdsByPage = createAction({
       : '/api/brand/getAdsByPageId';
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: fullUrl,
     });

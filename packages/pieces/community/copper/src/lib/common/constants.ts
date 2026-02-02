@@ -1,5 +1,6 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { CopperApiService } from './requests';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const BASE_URL = 'https://api.copper.com/developer_api';
 
@@ -20,7 +21,7 @@ export const CopperAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      await CopperApiService.fetchCurrentUser(auth)
+      await CopperApiService.fetchCurrentUser({props: auth, type: AppConnectionType.CUSTOM_AUTH})
       return {
         valid: true,
       };
@@ -45,10 +46,7 @@ export const API_ENDPOINTS = {
   PROJECTS: '/projects',
 };
 
-export type CopperAuthType = {
-  email: string;
-  apiKey: string;
-};
+export type CopperAuthType = AppConnectionValueForAuthProperty<typeof CopperAuth>;
 
 export const isNonEmptyStr = (v: any) => typeof v === 'string' && v.trim().length > 0;
 

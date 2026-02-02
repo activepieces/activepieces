@@ -16,6 +16,7 @@ export const updateEvent = createAction({
   description: 'Updates an existing event in Bigin',
   props: {
     eventId: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Select Event',
       description: 'Choose the event to update',
       required: true,
@@ -24,7 +25,8 @@ export const updateEvent = createAction({
         if (!auth)
           return handleDropdownError('Please connect your account first');
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         try {
           const response = await biginApiService.fetchEvents(
@@ -45,13 +47,15 @@ export const updateEvent = createAction({
       },
     }),
     eventFields: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Event Fields',
       refreshers: ['auth', 'eventId'],
       required: false,
       props: async ({ eventId, auth }: any): Promise<InputPropertyMap> => {
         if (!eventId) return {};
         const event = JSON.parse(eventId);
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fieldsResp = await biginApiService.fetchModuleFields(
           access_token,
@@ -207,6 +211,7 @@ export const updateEvent = createAction({
       displayName: 'Recurring Info',
       refreshers: ['enableRecurring'],
       required: false,
+      auth: biginAuth,
       props: (propsValue, ctx): any => {
         if (propsValue['enableRecurring']) {
           return {
@@ -286,6 +291,7 @@ export const updateEvent = createAction({
       required: false,
     }),
     reminderInfo: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Reminder Information',
       refreshers: ['enableReminder'],
       required: false,
@@ -325,6 +331,7 @@ export const updateEvent = createAction({
     owner: usersDropdown,
 
     relatedModule: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Related Module',
       description: 'Select the type of entity the event is related to',
       required: false,
@@ -338,6 +345,7 @@ export const updateEvent = createAction({
       }),
     }),
     relatedTo: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Related To',
       description: 'Select the specific record the event is related to',
       required: false,

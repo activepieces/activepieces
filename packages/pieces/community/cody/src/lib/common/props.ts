@@ -1,7 +1,9 @@
 import { Property } from '@activepieces/pieces-framework';
 import { codyClient } from './client';
+import { codyAuth } from '../..';
 
 export const folderIdDropdown = Property.Dropdown({
+    auth: codyAuth,
     displayName: 'Folder',
     required: true,
     refreshers: [],
@@ -15,7 +17,7 @@ export const folderIdDropdown = Property.Dropdown({
         }
         try {
             // Note: Comment removed as the endpoint is now confirmed.
-            const folders = await codyClient.listFolders(auth as string);
+            const folders = await codyClient.listFolders(auth);
             if (folders.length === 0) {
                     return {
                     disabled: true,
@@ -42,6 +44,7 @@ export const folderIdDropdown = Property.Dropdown({
 
 export const conversationIdDropdown = Property.Dropdown({
     displayName: 'Conversation',
+    auth: codyAuth,
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -53,8 +56,7 @@ export const conversationIdDropdown = Property.Dropdown({
             };
         }
         try {
-            // NOTE: Comment removed as endpoint is confirmed
-            const conversations = await codyClient.listConversations(auth as string);
+            const conversations = await codyClient.listConversations(auth);
             if (conversations.length === 0) {
                     return {
                     disabled: true,
@@ -81,6 +83,7 @@ export const conversationIdDropdown = Property.Dropdown({
 
 // Add the new dropdown for bots
 export const botIdDropdown = Property.Dropdown({
+    auth: codyAuth,
     displayName: 'Bot',
     required: true,
     refreshers: [],
@@ -93,7 +96,7 @@ export const botIdDropdown = Property.Dropdown({
             };
         }
         try {
-            const bots = await codyClient.listBots(auth as string);
+            const bots = await codyClient.listBots(auth);
             if (bots.length === 0) {
                     return {
                     disabled: true,

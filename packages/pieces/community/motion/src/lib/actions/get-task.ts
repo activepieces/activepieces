@@ -19,7 +19,7 @@ export const getTask = createAction({
       method: HttpMethod.GET,
       url:`${BASE_URL}/tasks/${propsValue.taskId}`,
       headers: {
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
     });
 

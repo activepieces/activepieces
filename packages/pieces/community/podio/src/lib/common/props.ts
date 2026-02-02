@@ -2,6 +2,7 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { podioApiCall } from './client';
 import { getAccessToken } from './auth';
+import { podioAuth } from '../..';
 
 export const appIdProperty = Property.Number({
   displayName: 'App ID',
@@ -10,6 +11,7 @@ export const appIdProperty = Property.Number({
 });
 
 export const dynamicAppProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'App',
   description: 'Select a Podio app',
   required: true,
@@ -61,6 +63,7 @@ export const dynamicAppProperty = Property.Dropdown({
 });
 
 export const dynamicSpaceProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Space',
   description: 'Select a Podio workspace',
   required: true,
@@ -117,6 +120,7 @@ export const dynamicSpaceProperty = Property.Dropdown({
 });
 
 export const dynamicOrgProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Organization',
   description: 'Select a Podio organization',
   required: true,
@@ -163,6 +167,7 @@ export const dynamicOrgProperty = Property.Dropdown({
 });
 
 export const dynamicItemProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Item',
   description: 'Select a Podio item',
   required: true,
@@ -210,6 +215,7 @@ export const dynamicItemProperty = Property.Dropdown({
 });
 
 export const dynamicRefTypeProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Reference Type',
   description: 'The type of object to reference',
   required: false,
@@ -228,6 +234,7 @@ export const dynamicRefTypeProperty = Property.Dropdown({
 });
 
 export const dynamicRefIdProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Reference Object',
   description: 'Select the specific object to reference',
   required: false,
@@ -418,6 +425,7 @@ export const taskIdProperty = Property.Number({
 });
 
 export const dynamicFileProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'File',
   description: 'Select a file from the space',
   required: true,
@@ -505,6 +513,7 @@ export const dynamicFileProperty = Property.Dropdown({
 });
 
 export const dynamicTaskProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Task',
   description: 'Select a Podio task',
   required: true,
@@ -600,6 +609,7 @@ export const orgIdProperty = Property.Number({
 });
 
 export const refTypeProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Reference Type',
   description: 'The type of object',
   required: true,
@@ -618,6 +628,7 @@ export const refTypeProperty = Property.Dropdown({
 });
 
 export const statusProperty = Property.Dropdown({
+      auth: podioAuth,
   displayName: 'Status',
   description: 'The status filter',
   required: false,

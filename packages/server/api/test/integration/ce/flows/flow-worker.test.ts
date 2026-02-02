@@ -53,7 +53,6 @@ describe('Flow API for Worker', () => {
             const mockToken = await generateMockToken({
                 id: apId(),
                 type: PrincipalType.WORKER,
-                projectId: mockProject2.id,
             })
 
             const response = await app?.inject({
