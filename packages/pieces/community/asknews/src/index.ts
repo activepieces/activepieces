@@ -9,7 +9,6 @@ import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createANewsletter } from './lib/actions/create-a-newsletter';
 import { updateANewsletter } from './lib/actions/update-a-newsletter';
-import { asknewsAlert } from './lib/triggers/asknews-alert';
 
 export const asknews = createPiece({
   displayName: 'AskNews',
@@ -38,5 +37,5 @@ export const asknews = createPiece({
       },
     }),
   ],
-  triggers: [asknewsAlert],
+  triggers: [],
 });
