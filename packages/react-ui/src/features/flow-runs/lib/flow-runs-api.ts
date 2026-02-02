@@ -58,23 +58,21 @@ export const flowRunsApi = {
     onUpdate({
       flowRun: initialRun,
     });
-    if (!isForManualTrigger) {
-      const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
-        if (response.flowRun.id === initialRun.id) {
-          onUpdate(response);
-          if (response.flowRun.finishTime) {
-            socket.off(
-              WebsocketClientEvent.UPDATE_RUN_PROGRESS,
-              handleUpdateRunProgress,
-            );
-          }
+    const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
+      if (response.flowRun.id === initialRun.id) {
+        onUpdate(response);
+        if (response.flowRun.finishTime) {
+          socket.off(
+            WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+            handleUpdateRunProgress,
+          );
         }
-      };
-      socket.on(
-        WebsocketClientEvent.UPDATE_RUN_PROGRESS,
-        handleUpdateRunProgress,
-      );
-    }
+      }
+    };
+    socket.on(
+      WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+      handleUpdateRunProgress,
+    );
   },
   async testStep(params: TestStepParams): Promise<{ runId: string }> {
     const { request } = params;
