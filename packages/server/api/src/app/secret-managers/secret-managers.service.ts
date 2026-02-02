@@ -1,8 +1,34 @@
-import { isString, getByPath, jsonParseWithCallback } from "@activepieces/shared"
+import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil } from "@activepieces/shared"
+import { secretManagerProviders, secretManagerProvidersMetadata } from "./secret-manager-providers/secret-manager-providers"
+import { FastifyBaseLogger } from "fastify"
+import { databaseConnection } from "../database/database-connection"
+import { SecretManagerEntity } from "./secret-manager.entity"
 
-export const secretManagersService = () => ({
+const secretManagerRepository = databaseConnection().getRepository(SecretManagerEntity)
 
-  async resolve({ key }: {key: string}) {
+export const secretManagersService = (log: FastifyBaseLogger) => ({
+  list: async ({ platformId }: { platformId: string }): Promise<SecretManagerProviderMetaData[]> => {
+    const secretManagers = await secretManagerRepository.find({
+      where: {
+        platformId,
+      },
+    })
+    return await Promise.all(secretManagerProvidersMetadata().map(async (metadata) => {
+      const provider = secretManagerProviders(log)[metadata.id]
+      const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
+
+      return {
+        ...metadata,
+        connected: !isNil(savedConfig) && await provider.checkConnection(savedConfig),
+      }
+    }))
+  },
+  connect: async (request: ConnectSecretManagerRequest & { platformId: string }) => {
+    const provider = secretManagerProviders(log)[request.providerId]
+    return provider.connect(request.config)
+  },
+
+  async resolve({ key }: { key: string }) {
 
     key = checkKeyIsSecret(key)
     const { providerName, secretName, valuePath } = validateSecret(key)

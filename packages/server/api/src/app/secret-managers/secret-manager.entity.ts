@@ -1,0 +1,47 @@
+import { Platform, SecretManager } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import {
+    ApIdSchema,
+    BaseColumnSchemaPart,
+} from '../database/database-common'
+
+export type SecretManagerEntitySchema = SecretManager & {
+    platform?: Platform
+}
+
+export const SecretManagerEntity = new EntitySchema<SecretManagerEntitySchema>({
+    name: 'secret_manager',
+    columns: {
+        ...BaseColumnSchemaPart,
+        platformId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
+        providerId: {
+            type: String,
+            nullable: false,
+        },
+        auth: {
+            type: 'jsonb',
+            nullable: true,
+        },
+    },
+    indices: [
+        {
+            name: 'idx_secret_manager_platform_id',
+            columns: ['platformId'],
+        },
+    ],
+    relations: {
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_secret_manager_platform_id',
+            },
+        },
+    },
+})

@@ -7,7 +7,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useState } from 'react';
-import { SecretManagerMetaData } from '.';
+import { ConnectSecretManagerRequest, SecretManagerProviderMetaData } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Form,
@@ -19,11 +19,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
-import { useMutation } from '@tanstack/react-query';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 
 type ConnectSecretManagerDialogProps = {
-  manager: SecretManagerMetaData;
+  manager: SecretManagerProviderMetaData;
   children: React.ReactNode;
 };
 
@@ -33,24 +33,25 @@ const ConnectSecretManagerDialog = ({
 }: ConnectSecretManagerDialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm();
+  const { mutate, isPending } = secretManagersHooks.useConnectSecretManager();
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (): Promise<void> => {
-      return Promise.resolve()
+  const connect = () => {
+    mutate({
+      providerId: manager.id,
+      config: form.getValues() as ConnectSecretManagerRequest['config'],
     },
-    onSuccess: () => {
-      form.reset();
-      setOpen(false);
-      toast({
-        title: t("Success"),
-        description: t("Connected successfully"),
-      })
-    },
-    
-    onError: () => {
-      setOpen(false);
-    },
-  });
+    {
+      onSuccess: () => {
+        form.reset();
+        setOpen(false);
+        toast.success(t("Connected successfully"))
+      },
+      onError: (error) => {
+        toast.error(error.message)
+      },
+    }
+  );
+  }
 
   return (
     <Dialog
@@ -72,19 +73,19 @@ const ConnectSecretManagerDialog = ({
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             {
-              manager.fields.map((fieldName)=> (
+              Object.entries(manager.fields).map(([fieldId, field]) => (
                 <FormField
                   rules={{ required: true }}
-                  name={fieldName.displayName}
-                  render={({ field }) => (
+                  name={fieldId}
+                  render={({ field: formField }) => (
                     <FormItem className="grid space-y-3">
-                      <Label htmlFor="fieldName">{fieldName.displayName}</Label>
+                      <Label htmlFor="fieldName">{field.displayName}</Label>
                       <div className="flex gap-2 items-center justify-center">
                         <Input
-                          {...field}
+                          {...formField}
                           required
-                          id={fieldName.id}
-                          placeholder={fieldName.placeholder}
+                          id={fieldId}
+                          placeholder={field.placeholder}
                           className="rounded-sm"
                         />
                       </div>
@@ -113,7 +114,7 @@ const ConnectSecretManagerDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              mutate();
+              connect();
             }}
           >
             {t('Save')}

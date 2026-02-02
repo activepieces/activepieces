@@ -74,6 +74,7 @@ import { tagsModule } from './pieces/tags/tags-module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
+import { secretManagersModule } from './secret-managers/secret-managers.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
 import { templateModule } from './template/template.module'
@@ -184,6 +185,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
     await app.register(flagModule)
+    await app.register(secretManagersModule)
     await app.register(storeEntryModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
