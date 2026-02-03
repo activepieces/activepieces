@@ -39,7 +39,7 @@ export type FlowState = {
     onSuccess?: () => void,
   ) => void;
   setFlow: (flow: PopulatedFlow) => void;
-  setSampleData: (params: {
+  setSampleDataLocally: (params: {
     stepName: string;
     type: 'input' | 'output';
     value: unknown;
@@ -114,7 +114,7 @@ export const createFlowState = (
       });
     },
     setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
-    setSampleData: ({
+    setSampleDataLocally: ({
       stepName,
       value,
       type,

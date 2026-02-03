@@ -90,11 +90,15 @@ export const DictionaryProperty = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-    onChange(
-      items.reduce((acc, current) => {
-        return { ...acc, [current.key]: current.value };
-      }, {}),
-    );
+    const value = items.reduce((acc, current) => {
+      return { ...acc, [current.key]: current.value };
+    }, {});
+    // Wrap in event-like object to prevent RHF from breaking when
+    // the dictionary has a "target" key. RHF's getEventValue extracts
+    // target.value from event-like objects, so this ensures the actual
+    // dictionary value is preserved.
+    // See: https://github.com/react-hook-form/react-hook-form/issues/13078
+    onChange({ target: { value } } as unknown as Record<string, string>);
   };
   return (
     <div className="flex w-full flex-col gap-4">
