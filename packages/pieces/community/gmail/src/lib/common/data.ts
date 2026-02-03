@@ -116,6 +116,53 @@ export const GmailRequests = {
       },
     });
   },
+  createLabel: async (authentication: OAuth2PropertyValue, name: string) => {
+    return await httpClient.sendRequest<GmailLabel>({
+      method: HttpMethod.POST,
+      url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: (authentication as OAuth2PropertyValue).access_token,
+      },
+      body: {
+        name,
+      },
+    });
+  },
+  addLabelToMessage: async (
+    authentication: OAuth2PropertyValue,
+    messageId: string,
+    labelId: string
+  ) => {
+    return await httpClient.sendRequest<GmailMessage>({
+      method: HttpMethod.POST,
+      url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/modify`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: (authentication as OAuth2PropertyValue).access_token,
+      },
+      body: {
+        addLabelIds: [labelId],
+      },
+    });
+  },
+  addLabelToThread: async (
+    authentication: OAuth2PropertyValue,
+    threadId: string,
+    labelId: string
+  ) => {
+    return await httpClient.sendRequest<GmailThread>({
+      method: HttpMethod.POST,
+      url: `https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}/modify`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: (authentication as OAuth2PropertyValue).access_token,
+      },
+      body: {
+        addLabelIds: [labelId],
+      },
+    });
+  },
   searchMail: async ({
     access_token,
     max_results = 1,
