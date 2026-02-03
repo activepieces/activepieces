@@ -4,17 +4,17 @@ import {
 	DynamicPropsValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import {
-	httpClient,
-	HttpMethod,
-	AuthenticationType,
-} from '@activepieces/pieces-common';
 import { excelCommon } from '../common/common';
 import { excelAuth } from '../../index';
 import { FilterOperator, filterOperatorLabels } from '../common/constants';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { WorkbookRange } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 export const getWorksheetRowsAction = createAction({
 	auth: excelAuth,
@@ -129,38 +129,39 @@ export const getWorksheetRowsAction = createAction({
 			},
 		});
 
-		const response: WorkbookRange= await client.api(url).get()
+		const response: WorkbookRange = await client.api(url).get();
 
-		const rows = response.values as any[][];
+		const rows = response.text as any[][];
+		if (!rows || rows.length === 0) return [];
+
 		const filters = (filterConfig['filter'] as ColumnFilter[]) ?? [];
+		const hasFilters = shouldApplyFilter && filters.length > 0;
 
-		let headers: string[] | null = null;
-		let dataRows = rows;
+		const headerIdx = headerRow ? headerRow - 1 : -1;
+		const dataStartIdx = firstDataRow ? firstDataRow - 1 : 0;
+		const headers = headerIdx >= 0 ? rows[headerIdx] : null;
 
-		if (headerRow && firstDataRow) {
-			headers = rows[headerRow - 1];
-			dataRows = rows.slice(firstDataRow - 1);
-		}
+		const result = [];
 
-		const filteredRows = shouldApplyFilter
-			? dataRows.filter((row) => evaluateFilters(filters, row))
-			: dataRows;
+		for (let i = dataStartIdx; i < rows.length; i++) {
+			const row = rows[i];
 
-		console.log(JSON.stringify(propsValue,null,2))
-
-		if (headers) {
-			return filteredRows.map((row: any[]) => {
+			if (hasFilters && !evaluateFilters(filters, row)) {
+				continue;
+			}
+			if (headers) {
 				const obj: { [key: string]: any } = {};
-				headers.forEach(
-					(header: any, colIndex: string | number) => {
-						obj[String(header)] = row[Number(colIndex)];
-					}
-				);
-				return obj;
-			});
+				for (let j = 0; j < headers.length; j++) {
+					obj[String(headers[j])] = row[j];
+				}
+				result.push(obj);
+			}
+			else{
+				result.push(row);
+			}
 		}
 
-		return filteredRows;
+		return result;
 	},
 });
 
@@ -215,6 +216,12 @@ function evaluateFilters(filters: ColumnFilter[], row: any[]): boolean {
 			case FilterOperator.DATE_IS_BEFORE:
 				return isBeforeDate(cellValue, value);
 
+			case FilterOperator.DATE_IS_ON_OR_AFTER:
+				return isSameOrAfterDate(cellValue, value);
+
+			case FilterOperator.DATE_IS_ON_OR_BEFORE:
+				return isSameOrBeforeDate(cellValue, value);
+
 			default:
 				return true;
 		}
@@ -233,24 +240,6 @@ function toNumber(value: string): number | string {
 	return isNaN(num) ? value : num;
 }
 
-function excelSerialToDate(serial: number): Date {
-  return new Date((serial - 25569) * 86400 * 1000);
-}
-
-function parseDate(value: unknown): dayjs.Dayjs | null {
-  if (typeof value === 'number') {
-    // detect likely Excel serial
-      return dayjs(excelSerialToDate(value));
-  }
-
-  if (typeof value === 'string' || value instanceof Date) {
-    const d = dayjs(value);
-    return d.isValid() ? d : null;
-  }
-
-  return null;
-}
-
 function isValidDate(date: unknown): boolean {
 	if (
 		typeof date === 'string' ||
@@ -263,118 +252,21 @@ function isValidDate(date: unknown): boolean {
 }
 
 function isAfterDate(a: any, b: any): boolean {
-  const d1 = parseDate(a);
-  const d2 = parseDate(b);
-
-  if (!d1 || !d2) return false;
-
-  return d1.isAfter(d2);
+	return isValidDate(a) && isValidDate(b) && dayjs(a).isAfter(dayjs(b));
 }
 
 function isSameDate(a: any, b: any): boolean {
-  const d1 = parseDate(a);
-  const d2 = parseDate(b);
-
-  if (!d1 || !d2) return false;
-
-  return d1.isSame(d2, 'day');
+	return isValidDate(a) && isValidDate(b) && dayjs(a).isSame(dayjs(b));
 }
 
 function isBeforeDate(a: any, b: any): boolean {
-  const d1 = parseDate(a);
-  const d2 = parseDate(b);
-
-  if (!d1 || !d2) return false;
-
-  return d1.isBefore(d2);
+	return isValidDate(a) && isValidDate(b) && dayjs(a).isBefore(dayjs(b));
 }
 
-// function evaluteFilters(
-// 	columnFilters: Array<ColumnFilter>,
-// 	row: any[]
-// ): boolean {
-// 	let andCondition = true;
-// 	for (const condition of columnFilters) {
-// 		const { filterColumn, filterOperator, filterValue } = condition;
+function isSameOrAfterDate(a: any, b: any): boolean {
+	return isValidDate(a) && isValidDate(b) && dayjs(a).isSameOrAfter(dayjs(b));
+}
 
-// 		if (isNil(filterColumn) || isNil(filterOperator) || isNil(filterValue))
-// 			continue;
-
-// 		const cellValue = row[filterColumn];
-
-// 		switch (filterOperator) {
-// 			case FilterOperator.TEXT_CONTAINS: {
-// 				const firstValueContains = String(cellValue)
-// 					.toLowerCase()
-// 					.includes(filterValue.toLowerCase());
-// 				andCondition = andCondition && firstValueContains;
-// 				break;
-// 			}
-// 			case FilterOperator.TEXT_DOES_NOT_CONTAIN: {
-// 				const firstValueDoesNotContain = !String(cellValue)
-// 					.toLowerCase()
-// 					.includes(filterValue.toLowerCase());
-// 				andCondition = andCondition && firstValueDoesNotContain;
-// 				break;
-// 			}
-// 			case FilterOperator.TEXT_EXACTLY_MATCHES: {
-// 				const firstValueExactlyMatches =
-// 					String(cellValue).toLowerCase() === filterValue.toLowerCase();
-// 				andCondition = andCondition && firstValueExactlyMatches;
-// 				break;
-// 			}
-// 			case FilterOperator.TEXT_DOES_NOT_EXACTLY_MATCH: {
-// 				const firstValueDoesNotExactlyMatch =
-// 					String(cellValue).toLowerCase() !== filterValue.toLowerCase();
-// 				andCondition = andCondition && firstValueDoesNotExactlyMatch;
-// 				break;
-// 			}
-// 			case FilterOperator.NUMBER_IS_GREATER_THAN: {
-// 				const firstValue = parseStringToNumber(cellValue);
-// 				const secondValue = parseStringToNumber(filterValue);
-// 				andCondition = andCondition && firstValue > secondValue;
-// 				break;
-// 			}
-// 			case FilterOperator.NUMBER_IS_LESS_THAN: {
-// 				const firstValue = parseStringToNumber(cellValue);
-// 				const secondValue = parseStringToNumber(filterValue);
-// 				andCondition = andCondition && firstValue < secondValue;
-// 				break;
-// 			}
-// 			case FilterOperator.NUMBER_IS_EQUAL_TO: {
-// 				const firstValue = parseStringToNumber(cellValue);
-// 				const secondValue = parseStringToNumber(filterValue);
-// 				andCondition = andCondition && firstValue == secondValue;
-// 				break;
-// 			}
-// 			case FilterOperator.DATE_IS_AFTER:
-// 				andCondition =
-// 					andCondition &&
-// 					isValidDate(cellValue) &&
-// 					isValidDate(filterValue) &&
-// 					dayjs(cellValue).isAfter(dayjs(filterValue));
-// 				break;
-// 			case FilterOperator.DATE_IS_EQUAL:
-// 				andCondition =
-// 					andCondition &&
-// 					isValidDate(cellValue) &&
-// 					isValidDate(filterValue) &&
-// 					dayjs(cellValue).isSame(dayjs(filterValue));
-// 				break;
-// 			case FilterOperator.DATE_IS_BEFORE:
-// 				andCondition =
-// 					andCondition &&
-// 					isValidDate(cellValue) &&
-// 					isValidDate(filterValue) &&
-// 					dayjs(cellValue).isBefore(dayjs(filterValue));
-// 				break;
-// 		}
-// 	}
-
-// 	return Boolean(andCondition);
-// }
-
-// function parseStringToNumber(str: string): number | string {
-// 	const num = Number(str);
-// 	return isNaN(num) ? str : num;
-// }
+function isSameOrBeforeDate(a: any, b: any): boolean {
+	return isValidDate(a) && isValidDate(b) && dayjs(a).isSameOrBefore(dayjs(b));
+}
