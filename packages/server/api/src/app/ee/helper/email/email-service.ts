@@ -1,4 +1,5 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
+import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { system } from '../../../helper/system/system'
@@ -9,7 +10,6 @@ import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
