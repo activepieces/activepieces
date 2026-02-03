@@ -123,6 +123,7 @@ export const flowRunUtils = {
     variant: 'default' | 'success' | 'error';
     Icon: LucideIcon;
     text: string;
+    extraClassName?: string;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
@@ -130,6 +131,7 @@ export const flowRunUtils = {
           variant: 'default',
           Icon: Timer,
           text: t('Running'),
+          extraClassName: 'text-foreground',
         };
       case StepOutputStatus.PAUSED:
         return {
@@ -143,12 +145,14 @@ export const flowRunUtils = {
           variant: 'success',
           Icon: CircleCheck,
           text: t('Succeeded'),
+          extraClassName: 'text-green-700 dark:text-green-200',
         };
       case StepOutputStatus.FAILED:
         return {
           variant: 'error',
           Icon: CircleAlert,
           text: t('Failed'),
+          extraClassName: 'text-red-700 dark:text-red-200',
         };
     }
   },

@@ -32,33 +32,45 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
             }
         },
         async send({ emails, platformId, templateData }) {
-            const platform = await getPlatform(platformId)
-            const emailSubject = getEmailSubject(templateData.name, templateData.vars)
-            const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
-            const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
-
-            if (!smtpEmailSender(log).isSmtpConfigured()) {
-                log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
-                return
+            try {
+                const platform = await getPlatform(platformId)
+                const emailSubject = getEmailSubject(templateData.name, templateData.vars)
+                const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
+                const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
+    
+                if (!smtpEmailSender(log).isSmtpConfigured()) {
+                    log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
+                    return
+                }
+    
+                const emailBody = await renderEmailBody({
+                    platform,
+                    templateData,
+                })
+    
+                const smtpClient = initSmtpClient()
+                log.info({
+                    emails,
+                    platformId,
+                    templateData,
+                }, '[smtpEmailSender#send] sending email')
+                await smtpClient.sendMail({
+                    from: `${senderName} <${senderEmail}>`,
+                    to: emails.join(','),
+                    subject: emailSubject,
+                    html: emailBody,
+                })
             }
-
-            const emailBody = await renderEmailBody({
-                platform,
-                templateData,
-            })
-
-            const smtpClient = initSmtpClient()
-            log.info({
-                emails,
-                platformId,
-                templateData,
-            }, '[smtpEmailSender#send] sending email')
-            await smtpClient.sendMail({
-                from: `${senderName} <${senderEmail}>`,
-                to: emails.join(','),
-                subject: emailSubject,
-                html: emailBody,
-            })
+            catch (e) {
+                log.error({
+                    error: e,
+                    emails,
+                    platformId,
+                    title: templateData.name,
+                }, '[smtpEmailSender#send] error sending email')
+                throw e
+            }
+          
         },
 
         isSmtpConfigured(): boolean {

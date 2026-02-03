@@ -2,9 +2,9 @@ import { t } from 'i18next';
 import { Info, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
@@ -73,7 +73,7 @@ export const FlowStepInputOutput = () => {
     run.status !== FlowRunStatus.PAUSED &&
     isNil(selectedStepOutput)
   ) {
-    return <OutputSkeleton />;
+    return <StepOutputSkeleton className="p-4" />;
   }
 
   const message = handleRunFailureOrEmptyLog(run, rententionDays);
@@ -137,7 +137,7 @@ export const FlowStepInputOutput = () => {
           )}
           <TabsContent value="output">
             {isStepRunning ? (
-              <OutputSkeleton />
+              <StepOutputSkeleton className="p-4" />
             ) : (
               <JsonViewer json={parsedOutput} title={t('Output')} />
             )}
@@ -145,19 +145,6 @@ export const FlowStepInputOutput = () => {
         </Tabs>
       </div>
     </ScrollArea>
-  );
-};
-
-const OutputSkeleton = () => {
-  return (
-    <div className="flex  w-full  h-full  p-4">
-      <div className="space-y-2 grow">
-        <div className="flex items-center gap-2">
-          <Skeleton className="w-40 h-4" />
-        </div>
-        <Skeleton className="w-full h-40" />
-      </div>
-    </div>
   );
 };
 

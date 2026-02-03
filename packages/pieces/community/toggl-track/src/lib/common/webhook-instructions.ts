@@ -7,14 +7,21 @@ export function generateTogglWebhookInstructions(
   return `
 ## Setup Instructions
 
-To use this trigger, you need to manually create a webhook in your Toggl Track account:
+**IMPORTANT: Publish Your Flow First**
 
-### 1. Access Toggl Track Webhooks
+Before you can set up the webhook in Toggl Track, you must **publish this flow in ActivePieces first**. The webhook URL will only be available after publishing.
+
+### Step 1: Publish Your Flow in ActivePieces
+1. Click the **"Publish"**
+2.  Once published, the webhook URL will be available in this trigger's setup
+---
+
+### Step 2: Access Toggl Track Webhooks
 - Log in to your Toggl Track account
 - Go to **Integrations > Webhooks** (Admin access required)
 - Click **"Create Webhook"** or **"Create your first webhook"**
 
-### 2. Configure the Webhook
+### Step 3: Configure the Webhook
 1. **Name**: Enter a descriptive name (e.g., "Activepieces ${triggerName}")
 2. **Events**: Select **"${eventName}"** from the events dropdown
 3. **URL Endpoint**: Paste this webhook URL:
@@ -23,12 +30,12 @@ To use this trigger, you need to manually create a webhook in your Toggl Track a
 \`\`\`
 4. **Secret**: Enter a secret key for security (optional but recommended)
 
-### 3. Complete Setup
+### Step 4: Complete Setup
 - Click **"Add Webhook"**
 - Toggl Track will validate your endpoint
 - The webhook will appear in your webhooks list when ready
 
-### 4. Verification
+### Step 5: Verification
 - Your webhook status should show as **"Validated"** (happens automatically)
 - You can use the **"Test"** option to verify it's working
 - ${description}

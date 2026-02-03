@@ -49,7 +49,7 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 }
 const CreateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.BODY,
@@ -69,7 +69,7 @@ const CreateRequest = {
 
 const GetFieldByIdRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),
@@ -97,7 +97,7 @@ const DeleteFieldRequest = {
 
 const GetFieldsRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.QUERY,
@@ -114,7 +114,7 @@ const GetFieldsRequest = {
 
 const UpdateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),

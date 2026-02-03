@@ -3,6 +3,7 @@ import { ChevronsUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { Button } from '@/components/ui/button';
 import {
   SidebarHeader,
   SidebarMenu,
@@ -21,17 +22,19 @@ function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const branding = flagsHooks.useWebsiteBranding();
   const navigate = useNavigate();
   return (
-    <SidebarMenuButton
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! items-center"
+      className="h-10! w-8! p-0! group-data-[collapsible=icon]:h-10! items-center justify-center"
     >
       <img
         src={branding.logos.logoIconUrl}
         alt={t('home')}
-        className="h-5! w-5!"
+        className="h-5! w-5! shrink-0"
         draggable={false}
       />
-    </SidebarMenuButton>
+    </Button>
   );
 }
 
@@ -42,12 +45,12 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
   return (
     <SidebarMenuButton
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! items-center"
+      className="h-10! group-data-[collapsible=icon]:h-10! justify-center items-center"
     >
       <img
         src={branding.logos.fullLogoUrl}
         alt={t('home')}
-        className="h-5! object-contain"
+        className="h-8 object-contain animate-in fade-in duration-100 delay-[100ms] fill-mode-backwards"
         draggable={false}
       />
     </SidebarMenuButton>
@@ -62,7 +65,6 @@ export const AppSidebarHeader = () => {
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
-  const branding = flagsHooks.useWebsiteBranding();
 
   if (!showSwitcher) {
     return (
@@ -83,24 +85,19 @@ export const AppSidebarHeader = () => {
   return (
     <SidebarHeader>
       <SidebarMenu>
-        <SidebarMenuItem>
-          {state === 'collapsed' ? (
-            <SidebarLogoCollapsed linkTo={defaultRoute} />
-          ) : (
-            <PlatformSwitcher>
-              <SidebarMenuButton className="h-10! group-data-[collapsible=icon]:h-10!">
-                <img
-                  src={branding.logos.logoIconUrl}
-                  alt={currentPlatform?.name ?? t('platform')}
-                  className="size-4 object-contain"
-                  draggable={false}
-                />
-                <span className="truncate font-medium flex-1 text-left text-sm">
-                  {currentPlatform?.name ?? t('platform')}
-                </span>
-                <ChevronsUpDown className="ml-auto size-3! shrink-0" />
-              </SidebarMenuButton>
-            </PlatformSwitcher>
+        <SidebarMenuItem className="flex items-center">
+          <SidebarLogoCollapsed linkTo={defaultRoute} />
+          {state !== 'collapsed' && (
+            <div className="flex-1 min-w-0">
+              <PlatformSwitcher>
+                <SidebarMenuButton className="h-10! w-full">
+                  <span className="truncate font-medium flex-1 text-left text-sm">
+                    {currentPlatform?.name ?? t('platform')}
+                  </span>
+                  <ChevronsUpDown className="ml-auto size-3! shrink-0" />
+                </SidebarMenuButton>
+              </PlatformSwitcher>
+            </div>
           )}
         </SidebarMenuItem>
       </SidebarMenu>

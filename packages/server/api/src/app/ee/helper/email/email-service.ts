@@ -1,6 +1,7 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -164,7 +165,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
     async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
         const user = await userService.getMetaInformation({ id: userId })
 
-        if (isNil(user)) {
+        if (isNil(user) || !isValidEmail(user.email)) {
+            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
             return
         }
         const badge = BADGES[badgeName as keyof typeof BADGES]
@@ -211,6 +213,10 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
 
 function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+}
+
+function isValidEmail(email: string): boolean {
+    return z.email().safeParse(email).success
 }
 
 type SendInvitationArgs = {

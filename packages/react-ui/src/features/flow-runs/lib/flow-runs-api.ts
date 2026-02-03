@@ -9,7 +9,6 @@ import {
   WebsocketServerEvent,
   WebsocketClientEvent,
   CreateStepRunRequestBody,
-  StepRunResponse,
   SeekPage,
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
@@ -18,11 +17,7 @@ import {
 } from '@activepieces/shared';
 
 type TestStepParams = {
-  socket: Socket;
   request: CreateStepRunRequestBody;
-  // optional callback for steps like agent and todo
-  onProgress?: (progress: StepRunResponse) => void;
-  onFinish?: () => void;
 };
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
@@ -79,45 +74,13 @@ export const flowRunsApi = {
       handleUpdateRunProgress,
     );
   },
-  async testStep(params: TestStepParams): Promise<StepRunResponse> {
-    const { socket, request, onProgress, onFinish } = params;
+  async testStep(params: TestStepParams): Promise<{ runId: string }> {
+    const { request } = params;
     const stepRun = await api.post<FlowRun>(
       '/v1/sample-data/test-step',
       request,
     );
-
-    return new Promise<StepRunResponse>((resolve, reject) => {
-      const handleStepFinished = (response: StepRunResponse) => {
-        if (response.runId === stepRun.id) {
-          onFinish?.();
-          socket.off(
-            WebsocketClientEvent.TEST_STEP_FINISHED,
-            handleStepFinished,
-          );
-          socket.off('error', handleError);
-          resolve(response);
-        }
-      };
-
-      const handleError = (error: any) => {
-        onFinish?.();
-        socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        socket.off('error', handleError);
-        reject(error);
-      };
-
-      socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      socket.on('error', handleError);
-
-      if (onProgress) {
-        const handleOnProgress = (response: StepRunResponse) => {
-          if (response.runId === stepRun.id) {
-            onProgress(response);
-          }
-        };
-        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
-      }
-    });
+    return { runId: stepRun.id };
   },
 };
 function getInitialRun(

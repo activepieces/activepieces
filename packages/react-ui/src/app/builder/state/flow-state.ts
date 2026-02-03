@@ -243,6 +243,23 @@ export const createFlowState = (
             debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
             break;
           }
+          case FlowOperationType.DELETE_ACTION: {
+            const inputSampleData = { ...state.inputSampleData };
+            const outputSampleData = { ...state.outputSampleData };
+            operation.request.names.forEach((name) => {
+              delete inputSampleData[name];
+              delete outputSampleData[name];
+              state.removeStepTestListener(name);
+            });
+            set(() => {
+              return {
+                inputSampleData,
+                outputSampleData,
+              };
+            });
+            flowUpdatesQueue.add(updateRequest);
+            break;
+          }
           default: {
             flowUpdatesQueue.add(updateRequest);
           }
@@ -303,6 +320,7 @@ export const createFlowState = (
         selectStepByName,
         flowVersion,
         setOpenedPieceSelectorStepNameOrAddButtonId,
+        removeStepTestListener,
       } = get();
       const defaultValues = pieceSelectorUtils.getDefaultStepValues({
         stepName: pieceSelectorUtils.getStepNameFromOperationType(
@@ -383,6 +401,7 @@ export const createFlowState = (
               valid: defaultValues.valid,
             },
           });
+          removeStepTestListener(operation.stepName);
           break;
         }
       }
