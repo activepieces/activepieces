@@ -37,7 +37,7 @@ export const valyu = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/valyu.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.PRODUCTIVITY],
-  authors: [],
+  authors: ['onyedikachi-david'],
   actions: [
     searchAction,
     extractContentAction,
