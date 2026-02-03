@@ -32,7 +32,7 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
 
   const jsonConfiguration = {
     mcpServers: {
-      activepieces: {
+      automationx: {
         url: serverUrl,
         headers: {
           Authorization: `Bearer ${mcpServer?.token ?? ''}`,
@@ -82,7 +82,7 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
           />
           <ButtonWithTooltip
             tooltip={t(
-              'Create a new token. The current one will stop working.',
+              'Create a new token. The current one will stop working.'
             )}
             onClick={() => rotateToken()}
             variant="outline"
@@ -101,7 +101,7 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
         </div>
         <p className="text-xs text-muted-foreground mt-1">
           {t(
-            'Use this token with the Authorization header (Bearer) for requests to this server.',
+            'Use this token with the Authorization header (Bearer) for requests to this server.'
           )}
         </p>
       </div>
@@ -111,7 +111,7 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
         json={jsonConfiguration}
         label={t('MCP Client Configuration (JSON)')}
         description={t(
-          'Copy this configuration to your MCP client settings file (e.g., Cursor).',
+          'Copy this configuration to your MCP client settings file (e.g., Cursor).'
         )}
         defaultOpen={false}
       />
