@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mailchimp",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "dependencies": {
     "@mailchimp/mailchimp_marketing": "3.0.80"
   }

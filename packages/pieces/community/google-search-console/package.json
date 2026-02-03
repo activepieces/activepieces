@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-google-search-console",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "dependencies": {
     "googleapis": "129.0.0"
   }
