@@ -95,6 +95,8 @@ export type ApErrorParams =
     | MachineNotConnectedParams
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
+    | SecretManagerConnectionFailedParams
+    | SecretManagerGetSecretFailedParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -509,6 +511,17 @@ export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DO
     message: string
 }>
 
+export type SecretManagerConnectionFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_CONNECTION_FAILED, {
+    message: string
+    provider: string
+}>
+
+export type SecretManagerGetSecretFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED, {
+    message: string
+    provider: string
+    request: any
+}>
+
 export enum ErrorCode {
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
@@ -581,5 +594,7 @@ export enum ErrorCode {
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
     PIECE_SYNC_NOT_SUPPORTED = 'PIECE_SYNC_NOT_SUPPORTED',
+    SECRET_MANAGER_CONNECTION_FAILED = 'SECRET_MANAGER_CONNECTION_FAILED',
+    SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
 }
 

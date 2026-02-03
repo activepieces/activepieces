@@ -38,8 +38,8 @@ const ConnectSecretManagerDialog = ({
   const connect = () => {
     mutate({
       providerId: manager.id,
-      config: form.getValues() as ConnectSecretManagerRequest['config'],
-    },
+      config: form.getValues(),
+    } as ConnectSecretManagerRequest,
     {
       onSuccess: () => {
         form.reset();

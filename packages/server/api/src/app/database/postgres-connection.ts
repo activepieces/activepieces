@@ -335,6 +335,7 @@ import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/176
 import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
 import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
 import { AddSecretManagersEntity1770045419675 } from './migration/postgres/1770045419675-AddSecretManagersEntity'
+import { AddSecretManagerPlatformProviderUnique1770045419676 } from './migration/postgres/1770045419676-AddSecretManagerPlatformProviderUnique'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -685,7 +686,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTablesIntoTemplateEntity1768306510367,
         AddTemplateIdToFlowEntity1768829135202,
         RemoveOperatorRole1769613456917,
-        AddSecretManagersEntity1770045419675,
+        // AddSecretManagersEntity1770045419675,
+        AddSecretManagerPlatformProviderUnique1770045419676,
     ]
     return migrations
 }

@@ -32,6 +32,12 @@ export const SecretManagerEntity = new EntitySchema<SecretManagerEntitySchema>({
             columns: ['platformId'],
         },
     ],
+    uniques: [
+        {
+            name: 'idx_secret_manager_platform_id_provider_id',
+            columns: ['platformId', 'providerId'],
+        },
+    ],
     relations: {
         platform: {
             type: 'many-to-one',

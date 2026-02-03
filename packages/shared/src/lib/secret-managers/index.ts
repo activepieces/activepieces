@@ -1,15 +1,22 @@
 import { Type, Static } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common/base-model'
 import { DiscriminatedUnion } from '../common'
-import { HashicorpProviderConfigSchema } from './dto'
+import { AWSProviderConfigSchema, HashicorpProviderConfigSchema } from './dto'
 
 export * from './dto'
+
+export const SecretManagerConfigSchema = Type.Union([
+  HashicorpProviderConfigSchema,
+  AWSProviderConfigSchema,
+])
+export type SecretManagerConfig = Static<typeof SecretManagerConfigSchema>
+
 
 export const SecretManagerEntitySchema = Type.Object({
   ...BaseModelSchema,
   platformId: Type.String(),
   providerId: Type.String(),
-  auth: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+  auth: SecretManagerConfigSchema,
 })
 
 export type SecretManager = Static<typeof SecretManagerEntitySchema>
@@ -21,13 +28,14 @@ export const SecretManagerFieldSchema =  Type.Object({
 
 export enum SecretManagerProviderId {
   HASHICORP = "hashicorp",
+  AWS = "aws",
 }
 
 export const SecretManagerProviderMetaDataBaseSchema = Type.Object({
   id: Type.Enum(SecretManagerProviderId),
   name: Type.String(),
   logo: Type.String(),
-  connected: Type.Boolean(),
+  connected: Type.Optional(Type.Boolean()),
 })
 
 export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
@@ -35,6 +43,11 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
     ...SecretManagerProviderMetaDataBaseSchema.properties,
     id: Type.Literal(SecretManagerProviderId.HASHICORP),
     fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema)
+  }),
+  Type.Object({
+    ...SecretManagerProviderMetaDataBaseSchema.properties,
+    id: Type.Literal(SecretManagerProviderId.AWS),
+    fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema)
   }),
 ])
 

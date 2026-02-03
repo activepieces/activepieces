@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ConnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
+import { ConnectSecretManagerRequestSchema, GetSecretManagerSecretRequestSchema, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { secretManagersService } from './secret-managers.service'
 
@@ -12,6 +12,10 @@ export const secretManagersController: FastifyPluginAsyncTypebox = async (app) =
 
     app.post('/connect', ConnectSecretManager, async (request) => {
         return service.connect({ ...request.body, platformId: request.principal.platform.id })
+    })
+
+    app.post('/get-secret', GetSecretManagerSecretRequest, async (request) => {
+        return service.getSecret({ ...request.body, platformId: request.principal.platform.id })
     })
 }
 
@@ -27,5 +31,14 @@ const ConnectSecretManager = {
     },
     schema: {
         body: ConnectSecretManagerRequestSchema,
+    },
+}
+
+const GetSecretManagerSecretRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        body: GetSecretManagerSecretRequestSchema,
     },
 }

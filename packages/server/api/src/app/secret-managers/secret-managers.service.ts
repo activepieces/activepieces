@@ -1,20 +1,21 @@
-import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil } from "@activepieces/shared"
-import { secretManagerProviders, secretManagerProvidersMetadata } from "./secret-manager-providers/secret-manager-providers"
+import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil, apId, GetSecretManagerSecretRequest } from "@activepieces/shared"
+import { secretManagerProvider, secretManagerProvidersMetadata } from "./secret-manager-providers/secret-manager-providers"
 import { FastifyBaseLogger } from "fastify"
 import { databaseConnection } from "../database/database-connection"
 import { SecretManagerEntity } from "./secret-manager.entity"
+import { repoFactory } from "../core/db/repo-factory"
 
-const secretManagerRepository = databaseConnection().getRepository(SecretManagerEntity)
+const secretManagerRepository = repoFactory(SecretManagerEntity)
 
 export const secretManagersService = (log: FastifyBaseLogger) => ({
   list: async ({ platformId }: { platformId: string }): Promise<SecretManagerProviderMetaData[]> => {
-    const secretManagers = await secretManagerRepository.find({
+    const secretManagers = await secretManagerRepository().find({
       where: {
         platformId,
       },
     })
     return await Promise.all(secretManagerProvidersMetadata().map(async (metadata) => {
-      const provider = secretManagerProviders(log)[metadata.id]
+      const provider = secretManagerProvider(log, metadata.id)
       const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
 
       return {
@@ -24,8 +25,32 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     }))
   },
   connect: async (request: ConnectSecretManagerRequest & { platformId: string }) => {
-    const provider = secretManagerProviders(log)[request.providerId]
-    return provider.connect(request.config)
+    const provider = secretManagerProvider(log, request.providerId)
+    await provider.connect(request.config)
+    const existing = await secretManagerRepository().findOne({
+      where: { platformId: request.platformId, providerId: request.providerId },
+    })
+    if (existing) {
+      return secretManagerRepository().update(
+        { platformId: request.platformId, providerId: request.providerId },
+        { auth: request.config },
+      )
+    }
+    return secretManagerRepository().save({
+      id: apId(),
+      platformId: request.platformId,
+      providerId: request.providerId,
+      auth: request.config,
+    })
+  },
+
+  getSecret: async (request: GetSecretManagerSecretRequest & { platformId: string }) => {
+    const provider = secretManagerProvider(log, request.providerId)
+    const secretManager = await secretManagerRepository().findOneOrFail({
+      where: { platformId: request.platformId, providerId: request.providerId },
+    })
+    await provider.checkConnection(secretManager.auth)
+    return { secret: await provider.getSecret(request.request, secretManager.auth) }
   },
 
   async resolve({ key }: { key: string }) {
