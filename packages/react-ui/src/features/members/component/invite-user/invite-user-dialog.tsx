@@ -3,7 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -22,15 +22,6 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { TagInput } from '@/components/ui/tag-input';
 import {
   Tooltip,
@@ -38,6 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PlatformRoleSelect } from '@/features/members/component/platform-role-select';
+import { RoleSelector } from '@/features/members/component/role-selector';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -54,7 +46,9 @@ import {
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
-import { userInvitationsHooks } from '../lib/user-invitations-hooks';
+import { userInvitationsHooks } from '../../lib/user-invitations-hooks';
+
+import { UserSuggestionsPopover } from './user-suggestions-popover';
 
 const FormSchema = Type.Object({
   emails: Type.Array(Type.String(), {
@@ -89,6 +83,10 @@ export const InviteUserDialog = ({
 }) => {
   const { embedState } = useEmbedding();
   const [invitationLink, setInvitationLink] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [tagInputKey, setTagInputKey] = useState(0);
+  const inputRef = useRef<HTMLDivElement>(null);
   const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -164,10 +162,13 @@ export const InviteUserDialog = ({
         : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
-      platformRole: PlatformRole.ADMIN,
+      platformRole: PlatformRole.MEMBER,
       projectRole: defaultProjectRole,
     },
   });
+
+  // Watch emails to update suggestions
+  const currentEmails = form.watch('emails');
 
   const onSubmit = (data: FormSchema) => {
     if (data.emails.length === 0) {
@@ -190,14 +191,19 @@ export const InviteUserDialog = ({
       return;
     }
 
-    if (data.type === InvitationType.PROJECT && !data.projectRole) {
+    const projectRole = data.projectRole || defaultProjectRole;
+    if (data.type === InvitationType.PROJECT && !projectRole) {
       form.setError('projectRole', {
         type: 'required',
         message: t('Please select a project role'),
       });
       return;
     }
-    mutate(data);
+
+    mutate({
+      ...data,
+      projectRole,
+    });
   };
 
   const copyInvitationLink = () => {
@@ -205,6 +211,20 @@ export const InviteUserDialog = ({
     toast.success(t('Invitation link copied successfully'), {
       duration: 3000,
     });
+  };
+
+  const handleSelectUser = (email: string) => {
+    const currentEmails = form.getValues('emails');
+    form.setValue('emails', [...currentEmails, email]);
+    setInputValue('');
+    setShowSuggestions(false);
+    // Force TagInput to remount and clear its internal input state
+    setTagInputKey((prev) => prev + 1);
+  };
+
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+    setShowSuggestions(value.trim().length > 0 && !isPlatformPage);
   };
 
   if (embedState.isEmbedded || !userHasPermissionToInviteUser) {
@@ -221,12 +241,19 @@ export const InviteUserDialog = ({
             setOpen(open);
             form.reset();
             setInvitationLink('');
+            setInputValue('');
+            setShowSuggestions(false);
+            setTagInputKey(0);
           }}
         >
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[475px]">
             <DialogHeader>
               <DialogTitle>
-                {invitationLink ? t('Invitation Link') : t('Invite User')}
+                {invitationLink
+                  ? t('Invitation Link')
+                  : isPlatformPage
+                  ? t('Invite to Your Platform')
+                  : t('Add Members')}
               </DialogTitle>
               <DialogDescription>
                 {invitationLink ? (
@@ -235,17 +262,18 @@ export const InviteUserDialog = ({
                   )
                 ) : isPlatformPage ? (
                   t(
-                    'Type email addresses separated by commas to invite multiple users to the entire platform. Invitations expire in 7 days.',
+                    'Invite team members to collaborate and build amazing flows together.',
                   )
                 ) : (
                   <>
-                    {t(
-                      'Type email addresses separated by commas to add members to',
-                    )}{' '}
+                    {t('Add new members to')}{' '}
                     <span className="text-foreground font-semibold">
                       {project.displayName}
                     </span>
-                    . {t('Invitations expire in 7 days')}.
+                    {'. '}
+                    {t(
+                      'They will be added immediately and receive an email notification.',
+                    )}
                   </>
                 )}
               </DialogDescription>
@@ -263,15 +291,24 @@ export const InviteUserDialog = ({
                     render={({ field }) => (
                       <FormItem className="grid gap-2">
                         <Label htmlFor="emails">{t('Emails')}</Label>
-                        <TagInput
-                          {...field}
-                          placeholder={t('Invite users by email')}
-                          validateItem={(email) =>
-                            formatUtils.emailRegex.test(email.trim())
-                          }
-                          badgeClassName="rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 font-normal"
-                          invalidBadgeClassName="bg-destructive border-destructive text-white font-light"
-                        />
+                        <UserSuggestionsPopover
+                          open={showSuggestions}
+                          onOpenChange={setShowSuggestions}
+                          inputValue={inputValue}
+                          currentEmails={currentEmails}
+                          onSelectUser={handleSelectUser}
+                          isPlatformPage={isPlatformPage}
+                        >
+                          <div ref={inputRef}>
+                            <TagInput
+                              key={tagInputKey}
+                              {...field}
+                              type="email"
+                              placeholder={t('Invite users by email')}
+                              onInputChange={handleInputChange}
+                            />
+                          </div>
+                        </UserSuggestionsPopover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -287,29 +324,13 @@ export const InviteUserDialog = ({
                       render={({ field }) => (
                         <FormItem className="grid gap-2">
                           <Label>{t('Project Role')}</Label>
-                          <Select
-                            onValueChange={(value) => {
-                              const selectedRole = roles.find(
-                                (role) => role.name === value,
-                              );
-                              field.onChange(selectedRole?.name);
-                            }}
+                          <RoleSelector
+                            type="project"
                             value={field.value || defaultProjectRole}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder={t('Select Role')} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>{t('Roles')}</SelectLabel>
-                                {roles.map((role) => (
-                                  <SelectItem key={role.name} value={role.name}>
-                                    {role.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
+                            onValueChange={field.onChange}
+                            roles={roles}
+                            placeholder={t('Select Role')}
+                          />
                           <FormMessage />
                         </FormItem>
                       )}
@@ -328,7 +349,7 @@ export const InviteUserDialog = ({
                       </Button>
                     </DialogClose>
                     <Button type="submit" loading={isPending}>
-                      {t('Invite')}
+                      {isPlatformPage ? t('Invite') : t('Add')}
                     </Button>
                   </DialogFooter>
                 </form>

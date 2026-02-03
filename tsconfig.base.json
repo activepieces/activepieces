@@ -1774,6 +1774,15 @@
       ],
       "@activepieces/piece-manual-trigger": [
         "packages/pieces/community/manual-trigger/src/index.ts"
+      ],
+      "@activepieces/piece-zeplin": [
+        "packages/pieces/community/zeplin/src/index.ts"
+      ],
+      "@activepieces/piece-google-search": [
+        "packages/pieces/community/google-search/src/index.ts"
+      ],
+      "@activepieces/piece-asknews": [
+        "packages/pieces/community/asknews/src/index.ts"
       ]
     },
     "resolveJsonModule": true

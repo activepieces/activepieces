@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { FlowTrigger, TriggerEventWithPayload } from '@activepieces/shared';
 
-import { testStepHooks } from '../utils/test-step-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 type TriggerEventSelectProps = {
   pollResults: { data: TriggerEventWithPayload[] } | undefined;
@@ -26,8 +26,8 @@ export const TriggerEventSelect = React.memo(
     const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
     const formValues = form.getValues();
 
-    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-      formValues.name,
+    const updateSampleData = useBuilderStateContext(
+      (state) => state.updateSampleData,
     );
 
     return (
@@ -40,11 +40,8 @@ export const TriggerEventSelect = React.memo(
             );
             if (triggerEvent) {
               updateSampleData({
-                response: {
-                  testType: 'trigger',
-                  output: triggerEvent.payload,
-                  success: true,
-                },
+                stepName: formValues.name,
+                output: triggerEvent.payload,
               });
             }
           }}

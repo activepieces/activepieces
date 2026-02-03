@@ -30,7 +30,7 @@ export const defaultAgentOutput = {
 
 type AgentTestStepProps = {
   agentResult?: AgentResult;
-  errorMessage?: string;
+  errorMessage?: string | null;
 };
 
 export const AgentTestStep = ({

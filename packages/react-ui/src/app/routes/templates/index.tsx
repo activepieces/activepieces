@@ -3,9 +3,9 @@ import { Plus, Search } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
@@ -97,7 +97,7 @@ const TemplatesPage = () => {
       <div>
         <div className="sticky top-0 z-10 bg-background mb-6 pt-4">
           <div className="flex flex-row w-full justify-between gap-2">
-            <SidebarTrigger />
+            <ApSidebarToggle />
             <InputWithIcon
               icon={<Search className="text-gray-500 w-4 h-4" />}
               type="text"

@@ -28,14 +28,15 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
 import {
   useIsPlatformAdmin,
   useAuthorization,
 } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission } from '@activepieces/shared';
+import { cn } from '@/lib/utils';
+import { isNil, Permission } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
@@ -67,56 +68,50 @@ export function SidebarUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu modal open={isCollapsed ? false : undefined}>
-          {isCollapsed ? (
-            <div className="flex items-center p-2 justify-center size-12">
-              <UserAvatar
-                name={user.firstName + ' ' + user.lastName}
-                email={user.email}
-                imageUrl={user.imageUrl}
-                size={32}
-                disableTooltip={true}
-              />
-            </div>
-          ) : (
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent px-2 data-[state=open]:text-sidebar-accent-foreground"
-              >
-                <div className="flex items-center gap-2 w-full text-left text-sm">
-                  <UserAvatar
-                    name={user.firstName + ' ' + user.lastName}
-                    email={user.email}
-                    imageUrl={user.imageUrl}
-                    size={32}
-                    disableTooltip={true}
-                  />
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate">
-                      {user.firstName + ' ' + user.lastName}
-                    </span>
-                  </div>
+        <DropdownMenu modal>
+          <DropdownMenuTrigger className="w-full">
+            <SidebarMenuButton className="h-10! pl-1! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-1!">
+              <div className="size-6 shrink-0 overflow-hidden flex items-center justify-center rounded-full">
+                <UserAvatar
+                  className={cn('size-full object-cover', {
+                    'scale-150': isNil(user.imageUrl),
+                  })}
+                  name={user.firstName + ' ' + user.lastName}
+                  email={user.email}
+                  imageUrl={user.imageUrl}
+                  size={24}
+                  disableTooltip={true}
+                />
+              </div>
+
+              {!isCollapsed && (
+                <>
+                  <span className="truncate">
+                    {user.firstName + ' ' + user.lastName}
+                  </span>
                   <ChevronsUpDown className="ml-auto size-4" />
-                </div>
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-          )}
+                </>
+              )}
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-[9999999]"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-999"
             side="top"
             align="start"
             sideOffset={10}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <UserAvatar
-                  name={user.firstName + ' ' + user.lastName}
-                  email={user.email}
-                  imageUrl={user.imageUrl}
-                  size={32}
-                  disableTooltip={true}
-                />
+                <div className="size-8 shrink-0 overflow-hidden rounded-full">
+                  <UserAvatar
+                    className="size-full object-cover"
+                    name={user.firstName + ' ' + user.lastName}
+                    email={user.email}
+                    imageUrl={user.imageUrl}
+                    size={32}
+                    disableTooltip={true}
+                  />
+                </div>
 
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">
