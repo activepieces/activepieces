@@ -18,11 +18,9 @@ import {
   FlowTrigger,
   TriggerEventWithPayload,
   TriggerTestStrategy,
-  AgentTaskStatus,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { isRunAgent } from '../agent-test-step';
 
 import { testStepUtils } from './test-step-utils';
 
@@ -181,22 +179,10 @@ export const testStepHooks = {
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
   useTestAction: ({ currentStep }: { currentStep: FlowAction }) => {
-    const { flowVersionId, addActionTestListener, updateSampleData } =
+    const { flowVersionId, addActionTestListener } =
       useRequiredStateToTestSteps().builderState;
     return useMutation<{ runId: string }, Error, TestActionMutationParams>({
       mutationFn: async () => {
-        if (isRunAgent(currentStep)) {
-          const defaultAgentOutput = {
-            status: AgentTaskStatus.IN_PROGRESS,
-            steps: [],
-            prompt: '',
-          };
-          updateSampleData({
-            stepName: currentStep.name,
-            output: defaultAgentOutput,
-            onlyLocally: true,
-          });
-        }
         const response = await flowRunsApi.testStep({
           request: {
             projectId: authenticationSession.getProjectId()!,
