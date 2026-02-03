@@ -1,0 +1,36 @@
+{
+  "name": "pieces-canva",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/canva/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/canva",
+        "tsConfig": "packages/pieces/community/canva/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/canva/package.json",
+        "main": "packages/pieces/community/canva/src/index.ts",
+        "assets": [
+          "packages/pieces/community/canva/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    }
+  },
+  "tags": []
+}
