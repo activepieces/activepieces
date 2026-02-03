@@ -45,12 +45,12 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
   return (
     <SidebarMenuButton
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! items-center"
+      className="h-10! group-data-[collapsible=icon]:h-10! justify-center items-center"
     >
       <img
         src={branding.logos.fullLogoUrl}
         alt={t('home')}
-        className="h-8 object-contain"
+        className="h-8 object-contain animate-in fade-in duration-100 delay-[100ms] fill-mode-backwards"
         draggable={false}
       />
     </SidebarMenuButton>
