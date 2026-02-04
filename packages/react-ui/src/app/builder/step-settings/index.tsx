@@ -76,7 +76,7 @@ const StepSettingsContainer = () => {
     mode: 'all',
     disabled: readonly,
     reValidateMode: 'onChange',
-    defaultValues: selectedStep,
+    values: selectedStep,
     resolver: async (values, context, options) => {
       const result = await typeboxResolver(formSchema)(
         values,
