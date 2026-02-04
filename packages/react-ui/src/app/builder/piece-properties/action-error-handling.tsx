@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 type ActionErrorHandlingFormProps = {
@@ -32,7 +33,7 @@ const ActionErrorHandlingForm = React.memo(
     const form = useFormContext<FlowAction | FlowTrigger>();
 
     return (
-      <div className="grid gap-4">
+      <div className={cn('grid', GAP_SIZE_FOR_STEP_SETTINGS)}>
         {hideContinueOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.continueOnFailure.value"
