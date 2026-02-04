@@ -34,4 +34,4 @@ jobs:
 
       - name: Deploy App
         run: |
-          ssh ops -t -t 'bash -ic "cd flow && git pull && sudo docker compose -p activepieces down -d && sudo docker compose -p activepieces up -d --build; exit"'
+          ssh ops -t -t 'bash -ic "cd flow && git pull && sudo docker compose -p activepieces down && sudo docker compose -p activepieces up -d --build; exit"'
