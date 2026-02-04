@@ -18,15 +18,18 @@ import {
     TableWebhookEventType,
     TemplateStatus,
     TemplateType,
+    UncategorizedFolderId,
     UpdateTableRequest,
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, ILike, In } from 'typeorm'
+import { ArrayContains, ILike, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectStateService } from '../../ee/projects/project-release/project-state/project-state.service'
+import { flowFolderService } from '../../flows/folder/folder.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
@@ -37,16 +40,36 @@ export const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 const tablePieceName = '@activepieces/piece-tables'
 
+const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
+    if (folderId) {
+        return folderId
+    }
+    if (folderName) {
+        return (await flowFolderService(log).upsert({
+            projectId,
+            request: {
+                projectId,
+                displayName: folderName,
+            },
+        })).id
+    }
+    return null
+}
+
+
+
 export const tableService = {
     async create({
         projectId,
         request,
     }: CreateParams): Promise<Table> {
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log: system.globalLogger() })
         const table = await tableRepo().save({
             id: apId(),
             externalId: request.externalId ?? apId(),
             name: request.name,
             projectId,
+            folderId,
         })
         if (request.fields) {
             await Promise.all(request.fields.map(async (field) => {
@@ -55,7 +78,7 @@ export const tableService = {
         }
         return table
     },
-    async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
+    async list({ projectId, cursor, limit, name, externalIds, folderId, includeRowCount }: ListParams): Promise<SeekPage<Table & { rowCount?: number }>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
         const paginator = buildPaginator({
@@ -74,9 +97,23 @@ export const tableService = {
         if (!isNil(externalIds)) {
             queryWhere.externalId = In(externalIds)
         }
-        const paginationResult = await paginator.paginate(
-            tableRepo().createQueryBuilder('table').where(queryWhere),
-        )
+
+        if (folderId !== undefined) {
+            queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
+        }
+
+        const queryBuilder = tableRepo().createQueryBuilder('table').where(queryWhere)
+
+        if (includeRowCount) {
+            queryBuilder.addSelect((subQuery) => {
+                return subQuery
+                    .select('COUNT(*)::int', 'rowCount')
+                    .from('record', 'record')
+                    .where('record."tableId" = table.id')
+            }, 'rowCount')
+        }
+
+        const paginationResult = await paginator.paginate<Table & { rowCount?: number }>(queryBuilder)
 
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
@@ -263,17 +300,23 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
-        await tableRepo().update({ id, projectId }, { 
+        const updateData: Record<string, unknown> = {
             ...spreadIfDefined('name', request.name),
             ...spreadIfDefined('trigger', request.trigger),
             ...spreadIfDefined('status', request.status),
-        })
+        }
+        if (request.folderId !== undefined) {
+            updateData.folderId = request.folderId
+        }
+        await tableRepo().update({ id, projectId }, updateData)
         return this.getOneOrThrow({ projectId, id })
     },
-    async count({ projectId }: CountParams): Promise<number> {
-        return tableRepo().count({
-            where: { projectId },
-        })
+    async count({ projectId, folderId }: CountParams): Promise<number> {
+        const where: Record<string, unknown> = { projectId }
+        if (!isNil(folderId)) {
+            where.folderId = folderId === UncategorizedFolderId ? null : folderId
+        }
+        return tableRepo().count({ where })
     },
 
 }
@@ -289,6 +332,8 @@ type ListParams = {
     limit: number
     name: string | undefined
     externalIds: string[] | undefined
+    folderId: string | undefined
+    includeRowCount?: boolean
 }
 
 type GetByIdParams = {
@@ -337,6 +382,7 @@ type UpdateParams = {
 
 type CountParams = {
     projectId: string
+    folderId?: string
 }
 
 type GetTemplateParams = {

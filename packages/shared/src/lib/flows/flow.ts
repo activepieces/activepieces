@@ -50,9 +50,7 @@ export const PopulatedFlow = Type.Composite([
         triggerSource: Type.Optional(Type.Pick(TriggerSource, ['schedule'])),
     }),
 ])
-
 export type PopulatedFlow = Static<typeof PopulatedFlow>
-
 
 export const PopulatedTriggerSource = Type.Composite([
     TriggerSource,

@@ -1,6 +1,6 @@
 import { GitPushOperationType } from '@activepieces/ee-shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
+import { ApId, CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
@@ -37,6 +37,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             name: request.query.name,
             externalIds: request.query.externalIds,
+            folderId: request.query.folderId,
         })
     })
 
@@ -68,16 +69,21 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             id: request.params.id,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
-    },
-    )
+    })
+
+    fastify.get('/count', CountTablesRequestOptions, async (request) => {
+        return tableService.count({
+            projectId: request.projectId,
+            folderId: request.query.folderId,
+        })
+    })
 
     fastify.get('/:id', GetTableByIdRequest, async (request) => {
         return tableService.getOneOrThrow({
             projectId: request.projectId,
             id: request.params.id,
         })
-    },
-    )
+    })
 
     fastify.get('/:id/export', ExportTableRequest, async (request) => {
         return tableService.exportTable({
@@ -145,6 +151,23 @@ const GetTablesRequest = {
         querystring: ListTablesRequest,
         response: {
             [StatusCodes.OK]: SeekPage(Table),
+        },
+    },
+}
+
+const CountTablesRequestOptions = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+            type: ProjectResourceType.QUERY,
+        }),
+    },
+    schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Count tables',
+        querystring: CountTablesRequest,
+        response: {
+            [StatusCodes.OK]: Type.Number(),
         },
     },
 }

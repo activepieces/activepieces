@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, NullableEnum } from '../common'
+import { BaseModelSchema, Nullable, NullableEnum } from '../common'
 import { Field } from './field'
 
 export enum TableAutomationTrigger {
@@ -15,6 +15,7 @@ export enum TableAutomationStatus {
 export const Table = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
+    folderId: Nullable(Type.String()),
     projectId: Type.String(),
     externalId: Type.String(),
     status: NullableEnum(Type.Enum(TableAutomationStatus)),
