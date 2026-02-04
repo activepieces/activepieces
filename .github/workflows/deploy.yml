@@ -1,0 +1,36 @@
+name: Deploy Activepieces App
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [merged]
+    branches:
+      - main
+    merged: true
+
+jobs:
+  Release:
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+
+      - name: Deploy App
+        run: |
+          ssh ops -t -t 'bash -ic "cd flow && git pull && sudo docker compose -p activepieces down -d && sudo docker compose -p activepieces up -d --build; exit"'
