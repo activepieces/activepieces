@@ -111,6 +111,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The campaign member status (e.g., 'Sent', 'Responded').": "The campaign member status (e.g., 'Sent', 'Responded').",
   "Select the Object": "Select the Object",
   "The record to select. The list shows the 20 most recently created records.": "The record to select. The list shows the 20 most recently created records.",

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
@@ -9,14 +9,11 @@ import {
   Step,
   flowStructureUtil,
   isNil,
-  StepRunResponse,
-  AgentResult,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { defaultAgentOutput, isRunAgent } from './agent-test-step';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
@@ -29,7 +26,7 @@ type TestActionComponentProps = {
 
 enum DialogType {
   NONE = 'NONE',
-  WEBHOOK = 'WEBHOOK',
+  WEBHOOK = 'WEBHOOK'
 }
 
 const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
@@ -45,56 +42,44 @@ const TestStepSectionImplementation = React.memo(
     isSaving,
     currentStep,
   }: TestActionComponentProps & { currentStep: FlowAction }) => {
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(
-      undefined,
-    );
-    const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
     const [activeDialog, setActiveDialog] = useState<DialogType>(
       DialogType.NONE,
     );
-    const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
-      return {
-        sampleData: state.outputSampleData[currentStep.name],
-        sampleDataInput: state.inputSampleData[currentStep.name],
-      };
+    const [
+      sampleData,
+      sampleDataInput,
+      errorMessage,
+      consoleLogs,
+      isStepBeingTested,
+      removeStepTestListener,
+      revertSampleDataLocally,
+    ] = useBuilderStateContext((state) => {
+      return [
+        state.outputSampleData[currentStep.name],
+        state.inputSampleData[currentStep.name],
+        state.errorLogs[currentStep.name],
+        currentStep.type === FlowActionType.CODE
+          ? state.consoleLogs[currentStep.name]
+          : null,
+        state.isStepBeingTested,
+        state.removeStepTestListener,
+        state.revertSampleDataLocallyCallbacks[currentStep.name],
+      ];
     });
-    const abortControllerRef = useRef<AbortController>(new AbortController());
-    const [mutationKey, setMutationKey] = useState<string[]>([]);
-    const [liveAgentResult, setLiveAgentResult] = useState<
-      AgentResult | undefined
-    >(undefined);
+
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
-        mutationKey,
         currentStep,
-        setErrorMessage,
-        setConsoleLogs,
-        onSuccess: undefined,
       });
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const handleAgentTest = async () => {
-      testAction({
-        type: 'agentAction',
-        onProgress: async (progress: StepRunResponse) => {
-          const outputProgress = progress.output;
-          if (!isNil(outputProgress)) {
-            setLiveAgentResult(outputProgress as AgentResult);
-          }
-        },
-        onFinish: () => {
-          setLiveAgentResult(undefined);
-        },
-      });
-    };
-
+    const sampleDataExists =
+      !isNil(lastTestDate) ||
+      !isNil(errorMessage) ||
+      isStepBeingTested(currentStep.name);
     const onTestButtonClick = async () => {
-      if (isRunAgent(currentStep)) {
-        setLiveAgentResult(defaultAgentOutput);
-        handleAgentTest();
-      } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
+      if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
       } else {
         testAction(undefined);
@@ -103,16 +88,17 @@ const TestStepSectionImplementation = React.memo(
 
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
-      abortControllerRef.current.abort();
-      setMutationKey([Date.now().toString()]);
     };
 
-    const isTesting = activeDialog !== DialogType.NONE || isWatingTestResult;
+    const isTesting =
+      activeDialog !== DialogType.NONE ||
+      isWatingTestResult ||
+      isStepBeingTested(currentStep.name);
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
     return (
       <>
-        {!sampleDataExists && (
+        {!sampleDataExists && !isTesting && (
           <div className="grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip invalid={!currentStep.valid}>
               <Button
@@ -130,21 +116,22 @@ const TestStepSectionImplementation = React.memo(
             </TestButtonTooltip>
           </div>
         )}
-        {sampleDataExists && (
+        {(sampleDataExists || isTesting) && (
           <TestSampleDataViewer
-            isValid={currentStep.valid}
+            isValid={currentStep.valid || isLoadingDynamicProperties}
             currentStep={currentStep}
-            agentResult={liveAgentResult}
-            isTesting={isTesting || isLoadingDynamicProperties}
+            isTesting={isTesting}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
-            errorMessage={errorMessage}
             lastTestDate={lastTestDate}
-            consoleLogs={
-              currentStep.type === FlowActionType.CODE ? consoleLogs : null
-            }
             isSaving={isSaving}
             onRetest={onTestButtonClick}
+            errorMessage={errorMessage}
+            consoleLogs={consoleLogs}
+            onCancelTesting={() => {
+              removeStepTestListener(currentStep.name);
+              revertSampleDataLocally?.();
+            }}
           ></TestSampleDataViewer>
         )}
         {activeDialog === DialogType.WEBHOOK && (
@@ -155,6 +142,7 @@ const TestStepSectionImplementation = React.memo(
             currentStep={currentStep}
           />
         )}
+      
       </>
     );
   },

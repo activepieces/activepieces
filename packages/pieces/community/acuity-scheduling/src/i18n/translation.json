@@ -62,6 +62,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The start date and time for the block (ISO 8601 format).": "The start date and time for the block (ISO 8601 format).",
   "The end date and time for the block (ISO 8601 format).": "The end date and time for the block (ISO 8601 format).",
   "The numeric ID of the calendar to add this block to.": "The numeric ID of the calendar to add this block to.",

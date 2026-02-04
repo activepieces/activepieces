@@ -41,6 +41,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "You can obtain website ID by navigating to Settings -> Workspace Settings -> Setup & Integrations.": "You can obtain website ID by navigating to Settings -> Workspace Settings -> Setup & Integrations.",
   "You can obtain session from URL address bar.It starts with 'session_'.": "You can obtain session from URL address bar.It starts with 'session_'.",
   "The email address of the user to find.": "The email address of the user to find.",

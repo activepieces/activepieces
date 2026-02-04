@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../helper/system/system'
 
 const CLOUD_TELEMETRY_URL = 'https://cloud.activepieces.com/api/v1/templates-telemetry'
-const INTERNAL_TELEMETRY_URL = 'https://template-manager.activepieces.com/api/public/analytics'
+const INTERNAL_TELEMETRY_URL = 'https://template-manager.activepieces.com/api/public/analytics/event'
 const TEMPLATE_TELEMETRY_API_KEY = system.get(AppSystemProp.TEMPLATE_MANAGER_API_KEY)
 const TEMPLATE_TELEMETRY_API_KEY_HEADER = 'X-API-Key'
 
@@ -61,27 +61,13 @@ async function sendToInternal(event: TemplateTelemetryEvent, log: FastifyBaseLog
 function getEventConfig(event: TemplateTelemetryEvent): { url: string, body?: Record<string, unknown> } {
     switch (event.eventType) {
         case TemplateTelemetryEventType.VIEW:
-            return {
-                url: `${INTERNAL_TELEMETRY_URL}/templates/${event.templateId}/view`,
-            }
         case TemplateTelemetryEventType.INSTALL:
-            return {
-                url: `${INTERNAL_TELEMETRY_URL}/templates/${event.templateId}/install`,
-                body: event,
-            }
         case TemplateTelemetryEventType.ACTIVATE:
-            return {
-                url: `${INTERNAL_TELEMETRY_URL}/templates/${event.templateId}/activate`,
-                body: event,
-            }
         case TemplateTelemetryEventType.DEACTIVATE:
-            return {
-                url: `${INTERNAL_TELEMETRY_URL}/templates/${event.templateId}/deactivate`,
-                body: event,
-            }
         case TemplateTelemetryEventType.EXPLORE_VIEW:
             return {
-                url: `${INTERNAL_TELEMETRY_URL}/explore/view`,
+                url: INTERNAL_TELEMETRY_URL,
+                body: event,
             }
         default:
             throw new Error(`Unknown template telemetry event type: ${(event as { eventType: string }).eventType}`)

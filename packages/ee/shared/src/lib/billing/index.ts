@@ -71,14 +71,12 @@ export const PRICE_ID_MAP = {
 
 export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'standard',
+    tablesEnabled: true,
+    eventStreamingEnabled: false,
     includedAiCredits: 200,
     activeFlowsLimit: 10,
     projectsLimit: 1,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
-    agentsEnabled: true,
-    tablesEnabled: true,
-    todosEnabled: true,
-    mcpsEnabled: true,
     embeddingEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
@@ -97,15 +95,13 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
+    tablesEnabled: true,
     embeddingEnabled: false,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
-    mcpsEnabled: true,
-    tablesEnabled: true,
-    todosEnabled: true,
-    agentsEnabled: true,
     includedAiCredits: 0,
     environmentsEnabled: false,
+    eventStreamingEnabled: false,
     analyticsEnabled: true,
     showPoweredBy: false,
     auditLogEnabled: false,
@@ -126,6 +122,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
     ...STANDARD_CLOUD_PLAN,
     plan: planName,
+    eventStreamingEnabled: false,
     activeFlowsLimit: undefined,
 })
 

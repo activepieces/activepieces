@@ -1,9 +1,10 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
-import { usePrevious } from 'react-use';
+import { useLocation, usePrevious } from 'react-use';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useSocket } from '@/components/socket-provider';
@@ -17,6 +18,8 @@ import {
   Permission,
   isNil,
   WebsocketClientEvent,
+  RunEnvironment,
+  isFlowRunStateTerminal,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -40,34 +43,46 @@ export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
 
 const useSetSocketListener = (refetchPiece: () => void) => {
   const socket = useSocket();
-  const { mutate: fetchAndUpdateRun } = useMutation({
-    mutationFn: flowRunsApi.getPopulated,
-  });
+  const [run] = useBuilderStateContext((state) => [state.run]);
+  useEffect(() => {
+    socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
+      refetchPiece();
+    });
+    return () => {
+      socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
+    };
+  }, [socket.id, run?.id]);
+};
+
+const useListenToExistingRun = () => {
   const [run, setRun, flowVersion] = useBuilderStateContext((state) => [
     state.run,
     state.setRun,
     state.flowVersion,
   ]);
-  useEffect(() => {
-    socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
-      refetchPiece();
-    });
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (data) => {
-      const runId = data?.runId;
-      if (run && run?.id === runId) {
-        fetchAndUpdateRun(runId, {
-          onSuccess: (run) => {
-            setRun(run, flowVersion);
-          },
-        });
+  const location = useLocation();
+  const inRunsPage = location.pathname?.includes('/runs');
+  useQuery({
+    queryKey: ['refetched-run', run?.id],
+    queryFn: async () => {
+      if (isNil(run)) {
+        return null;
       }
-    });
-    return () => {
-      socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
-      socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-    };
-  }, [socket.id, run?.id]);
+      const flowRun = await flowRunsApi.getPopulated(run.id);
+      setRun(flowRun, flowVersion);
+    },
+    enabled:
+      !isNil(run) &&
+      run.environment === RunEnvironment.PRODUCTION &&
+      !isFlowRunStateTerminal({
+        status: run.status,
+        ignoreInternalError: false,
+      }) &&
+      inRunsPage,
+    refetchInterval: 5000,
+  });
 };
+
 const useShowBuilderIsSavingWarningBeforeLeaving = () => {
   const {
     embedState: { isEmbedded },
@@ -107,8 +122,10 @@ export const useSwitchToDraft = () => {
       state.setFlow,
     ],
   );
+  const socket = useSocket();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
+
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
     useMutation({
       mutationFn: async () => {
@@ -119,6 +136,7 @@ export const useSwitchToDraft = () => {
         setFlow(flow);
         setVersion(flow.version);
         clearRun(userHasPermissionToEditFlow);
+        socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
       },
     });
   return {
@@ -170,18 +188,18 @@ export const useFocusOnStep = () => {
     previousStatus ?? FlowRunStatus.RUNNING,
     currentRun?.steps ?? {},
   );
-  const lastStep = usePrevious(currentStep);
+
+  const focusCurrentStep = useDebouncedCallback(() => {
+    if (!isNil(currentStep)) {
+      fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
+      selectStep(currentStep);
+    }
+  }, 500);
 
   const { fitView } = useReactFlow();
   useEffect(() => {
-    if (!isNil(lastStep) && lastStep !== currentStep && !isNil(currentStep)) {
-      setTimeout(() => {
-        console.log('focusing on step', currentStep);
-        fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
-        selectStep(currentStep);
-      });
-    }
-  }, [lastStep, currentStep, selectStep, fitView]);
+    focusCurrentStep();
+  }, [currentStep, selectStep, fitView]);
 };
 
 export const useResizeCanvas = (
@@ -224,4 +242,5 @@ export const flowCanvasHooks = {
   useFocusOnStep,
   useResizeCanvas,
   useSwitchToDraft,
+  useListenToExistingRun,
 };

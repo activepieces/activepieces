@@ -35,6 +35,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The space to create the discussion in": "The space to create the discussion in",
   "The title of the discussion": "The title of the discussion",
   "The content of the discussion": "The content of the discussion",

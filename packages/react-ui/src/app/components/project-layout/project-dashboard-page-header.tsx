@@ -3,15 +3,17 @@ import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -100,6 +102,8 @@ export const ProjectDashboardPageHeader = ({
 
   const titleContent = (
     <div className="flex items-center gap-2">
+      <ApSidebarToggle />
+      <Separator orientation="vertical" className="h-5 mr-2" />
       <ApProjectDisplay
         title={getProjectName(project)}
         maxLengthToNotShowTooltip={30}
@@ -153,7 +157,7 @@ export const ProjectDashboardPageHeader = ({
           onClick={() => setInviteOpen(true)}
         >
           <UserPlus className="w-4 h-4" />
-          <span className="text-sm font-medium">Invite</span>
+          <span className="text-sm font-medium">{t('Add Members')}</span>
         </Button>
       )}
       <Button

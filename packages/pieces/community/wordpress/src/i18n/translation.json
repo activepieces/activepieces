@@ -38,6 +38,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Title of the post about to be added": "Title of the post about to be added",
   "Uses the WordPress Text Editor which supports HTML": "Uses the WordPress Text Editor which supports HTML",
   "Post publish date (ISO-8601)": "Post publish date (ISO-8601)",

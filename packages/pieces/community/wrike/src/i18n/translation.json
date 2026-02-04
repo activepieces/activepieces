@@ -61,6 +61,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The ID of the folder where the task will be created": "The ID of the folder where the task will be created",
   "The title of the task": "The title of the task",
   "The description of the task": "The description of the task",

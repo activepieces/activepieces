@@ -24,6 +24,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select Agent ": "Select Agent ",
   "Dynamic input fields based on agent configuration. Can include text or file inputs.": "Dynamic input fields based on agent configuration. Can include text or file inputs.",
   "Optional metadata as JSON object": "Optional metadata as JSON object",

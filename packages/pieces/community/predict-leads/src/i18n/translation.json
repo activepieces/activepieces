@@ -56,6 +56,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "A min-max size range. Examples: \"11-50\"\". For now, only single range is supported.": "A min-max size range. Examples: \"11-50\"\". For now, only single range is supported.",
   "Page number of shown items": "Page number of shown items",
   "Limit the number of shown items per page. Max 1000.": "Limit the number of shown items per page. Max 1000.",

@@ -80,6 +80,11 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                         ...params,
                     })
                 }
+                case TriggerStrategy.MANUAL: {
+                    return {
+                        scheduleOptions: undefined,
+                    }
+                }
             }
         },
         async disable(params: DisableFlowTriggerParams): Promise<void> {
@@ -120,6 +125,8 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                     await jobQueue(log).removeRepeatingJob({
                         flowVersionId,
                     })
+                    break
+                case TriggerStrategy.MANUAL:
                     break
             }
         },
@@ -176,7 +183,6 @@ async function handleWebhookTrigger({ flowId, flowVersionId, projectId, pieceTri
 
 async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionId, projectId, log }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
     const pollingFrequencyCronExpression = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
-
     if (isNil(engineHelperResponse.result.scheduleOptions)) {
         engineHelperResponse.result.scheduleOptions = {
             cronExpression: pollingFrequencyCronExpression,

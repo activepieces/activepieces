@@ -17,7 +17,6 @@ import { downloadFile, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
-  FlowRun,
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
@@ -33,6 +32,7 @@ import {
   SeekPage,
   Template,
   UncategorizedFolderId,
+  UpdateRunProgressRequest,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -272,25 +272,29 @@ export const flowHooks = {
       staleTime: 0,
     });
   },
-  useTestFlow: ({
+  useTestFlowOrStartManualTrigger: ({
     flowVersionId,
     onUpdateRun,
+    isForManualTrigger,
   }: {
     flowVersionId: string;
-    onUpdateRun: (run: FlowRun) => void;
+    onUpdateRun: (stepResponse: UpdateRunProgressRequest) => void;
+    isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
     return useMutation<void>({
       mutationFn: () =>
-        flowRunsApi.testFlow(
+        flowRunsApi.subscribeToTestFlowOrManualRun(
           socket,
           {
             flowVersionId,
           },
           onUpdateRun,
+          isForManualTrigger,
         ),
     });
   },
+
   useListFlowVersions: (flowId: string) => {
     return useQuery<SeekPage<FlowVersionMetadata>, Error>({
       queryKey: ['flow-versions', flowId],

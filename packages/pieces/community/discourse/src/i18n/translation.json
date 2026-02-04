@@ -34,6 +34,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Content of the post": "Content of the post",
   "ID of the topic to post in": "ID of the topic to post in",
   "Title of the Topic": "Title of the Topic",

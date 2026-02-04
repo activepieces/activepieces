@@ -1,6 +1,7 @@
 import Avatar from 'boring-avatars';
 
 import { cn } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
@@ -10,6 +11,7 @@ type UserAvatarProps = {
   size: number;
   disableTooltip?: boolean;
   imageUrl?: string | null;
+  className?: string;
 };
 
 export function UserAvatar({
@@ -18,17 +20,18 @@ export function UserAvatar({
   size,
   disableTooltip = false,
   imageUrl,
+  className,
 }: UserAvatarProps) {
   const tooltip = `${name} (${email})`;
 
-  const avatarElement = imageUrl ? (
+  const avatarElement = !isNil(imageUrl) ? (
     <img
       src={imageUrl}
       alt={name}
       width={size}
       height={size}
-      className={cn('rounded-full object-cover')}
-      style={{ width: size, height: size }}
+      className={cn('rounded-full object-cover', className)}
+      style={{ width: `${size}px !important`, height: `${size}px !important` }}
     />
   ) : (
     <Avatar
@@ -37,7 +40,7 @@ export function UserAvatar({
       colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
       variant="beam"
       square
-      className="rounded-full"
+      className={cn('rounded-full', className)}
     />
   );
 
@@ -48,7 +51,7 @@ export function UserAvatar({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div>
+        <div className="size-12 border">
           {avatarElement} {disableTooltip}
         </div>
       </TooltipTrigger>

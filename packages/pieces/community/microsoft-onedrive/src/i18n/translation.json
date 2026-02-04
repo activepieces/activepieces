@@ -24,6 +24,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The name the file should be saved as (e.g. file.txt)": "The name the file should be saved as (e.g. file.txt)",
   "The file URL or base64 to upload": "The file URL or base64 to upload",
   "**Note**: If you can't find the folder in the dropdown list (which fetches up to 1000 folders), please click on the **(F)** and type the folder ID directly.\n\n\n      you can find the folder ID in the OneDrive URL after **?id=**, e.g., \"onedrive.live.com/?id=**folder-id**&cid=some-other-id\"\n\n    ": "**Note**: If you can't find the folder in the dropdown list (which fetches up to 1000 folders), please click on the **(F)** and type the folder ID directly.\n\n\n      you can find the folder ID in the OneDrive URL after **?id=**, e.g., \"onedrive.live.com/?id=**folder-id**&cid=some-other-id\"\n\n    ",

@@ -53,9 +53,9 @@ function AutoFormFieldWrapper({
       property={property ?? null}
       dynamicInputModeToggled={dynamicInputModeToggled}
     >
-      <FormItem className="flex flex-col gap-1">
+      <FormItem className="flex flex-col">
         {(!hideLabel || placeBeforeLabelText) && (
-          <FormLabel className="flex items-center gap-1 ">
+          <FormLabel className="flex items-center gap-1 h-7.5 max-h-7.5">
             {placeBeforeLabelText && !dynamicInputModeToggled && children}
             <div className="pt-1">
               <span>
@@ -68,6 +68,7 @@ function AutoFormFieldWrapper({
             {property && !isAuthProperty && (
               <PropertyTypeTooltip property={property} />
             )}
+
             <span className="grow"></span>
             {allowDynamicValues && (
               <DynamicValueToggle
@@ -101,11 +102,10 @@ function AutoFormFieldWrapper({
         {!placeBeforeLabelText && !dynamicInputModeToggled && (
           <div>{children}</div>
         )}
-
         {!isForConnectionSelect &&
           !Array.isArray(property) &&
           property.description && (
-            <ReadMoreDescription text={t(property.description)} />
+            <ReadMoreDescription text={property.description} />
           )}
       </FormItem>
     </AutoFormFielWrapperErrorBoundary>
@@ -236,6 +236,7 @@ function DynamicValueToggle({
               )
             }
             disabled={disabled}
+            size="sm"
           >
             <SquareFunction
               className={cn('size-5', {
@@ -308,7 +309,6 @@ type AutoFormFieldWrapperProps = {
   hideLabel?: boolean;
   allowDynamicValues: boolean;
   propertyName: string;
-  hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
   disabled: boolean;
   field: ControllerRenderProps<any, string>;
