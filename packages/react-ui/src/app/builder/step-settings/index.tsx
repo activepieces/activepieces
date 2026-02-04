@@ -2,7 +2,6 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
@@ -15,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { cn, GAP_SIZE_FOR_STEP_SETTINGS, parentWindow } from '@/lib/utils';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import {
   FlowAction,
   FlowActionType,
@@ -24,7 +23,6 @@ import {
   FlowTriggerType,
   isNil,
 } from '@activepieces/shared';
-import { ActivepiecesClientEventName } from 'ee-embed-sdk';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
@@ -43,9 +41,7 @@ import { RouterSettings } from './router-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-  const location = useLocation();
-  const { selectedStep, pieceModel, formSchema, hideTestStep } =
-    useStepSettingsContext();
+  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
     readonly,
@@ -135,9 +131,8 @@ const StepSettingsContainer = () => {
       pieceName: modifiedStep.settings.pieceName,
       triggerName: modifiedStep.settings.triggerName ?? '',
     });
-  const showGenerateSampleData = !readonly && !isManualTrigger && !hideTestStep;
-  const showStepInputOutFromRun =
-    !isNil(run) && !isManualTrigger && !hideTestStep;
+  const showGenerateSampleData = !readonly && !isManualTrigger;
+  const showStepInputOutFromRun = !isNil(run) && !isManualTrigger;
 
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
@@ -157,19 +152,6 @@ const StepSettingsContainer = () => {
 
   const { height, setHeight } = useResizableVerticalPanelsContext();
 
-  const handleClose = () => {
-    if (location.pathname.includes('/embed/step-settings')) {
-      parentWindow.postMessage(
-        {
-          type: ActivepiecesClientEventName.CLIENT_STEP_SETTINGS_DIALOG_CLOSED,
-          data: {},
-        },
-        '*',
-      );
-    }
-    exitStepSettings();
-  };
-
   return (
     <Form {...form}>
       <form
@@ -178,7 +160,7 @@ const StepSettingsContainer = () => {
         className="w-full h-full"
       >
         <div ref={sidebarHeaderContainerRef}>
-          <SidebarHeader onClose={handleClose}>
+          <SidebarHeader onClose={() => exitStepSettings()}>
             <EditableStepName
               selectedBranchIndex={selectedBranchIndex}
               setDisplayName={(value) => {
