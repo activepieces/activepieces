@@ -2,7 +2,6 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
@@ -42,7 +41,6 @@ import { RouterSettings } from './router-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
