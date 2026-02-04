@@ -86,12 +86,6 @@ const initialPermissions = [
     write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
   },
   {
-    name: 'Todos',
-    description: 'Read and write todos',
-    read: [Permission.READ_TODOS],
-    write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
-  },
-  {
     name: 'MCP',
     description: 'Read and write MCP',
     read: [Permission.READ_MCP],

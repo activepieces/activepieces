@@ -170,7 +170,6 @@ const HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS = [
   AI_PIECE_NAME,
   '@activepieces/piece-http',
   '@activepieces/piece-tables',
-  '@activepieces/piece-todos',
   '@activepieces/piece-forms',
   '@activepieces/piece-webhook',
   '@activepieces/piece-text-helper',
