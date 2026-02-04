@@ -1,11 +1,10 @@
-import { QueryClient } from '@tanstack/react-query';
 import { Socket } from 'socket.io-client';
 import { StoreApi } from 'zustand';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import {
+  FlowAction,
   FlowActionType,
   FlowOperationType,
   FlowRun,
@@ -20,12 +19,12 @@ import {
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
+import { defaultAgentOutput, isRunAgent } from '../test-step/agent-test-step';
 
 export type UpdateSampleDataParams = {
   stepName: string;
   input?: unknown;
   output?: unknown;
-  onlyLocally?: boolean;
 };
 
 export type RunState = {
@@ -54,12 +53,12 @@ export type RunState = {
   isStepBeingTested: (stepName: string) => boolean;
   /**Used to revert the sample data locally when the test is cancelled */
   revertSampleDataLocallyCallbacks: Record<string, (() => void) | undefined>;
+  beforeStepTestPreparation: (step: FlowAction) => void;
 };
 type RunStateInitialState = {
   run: FlowRun | null;
   flowVersion: FlowVersion;
   socket: Socket;
-  queryClient: QueryClient;
 };
 type StepTestListener = {
   onProgress: (response: StepRunResponse) => void;
@@ -151,16 +150,16 @@ export const createRunState = (
       runId: string;
       stepName: string;
     }) => {
-      get().removeStepTestListener(stepName);
       const step = flowStructureUtil.getStep(
         stepName,
         get().flowVersion.trigger,
       );
-      if (isNil(step)) {
-        console.error(`Step ${stepName} not found`);
+      if (isNil(step) || !flowStructureUtil.isAction(step?.type)) {
+        console.error(`Step ${stepName} not found or is not an action`);
         return;
       }
       const socket = initialState.socket;
+      get().beforeStepTestPreparation(step);
       const handleStepFinished = (response: StepRunResponse) => {
         if (response.runId === runId) {
           get().removeStepTestListener(stepName);
@@ -187,6 +186,7 @@ export const createRunState = (
       };
       const handleError = (error: any) => {
         get().removeStepTestListener(stepName);
+        get().revertSampleDataLocallyCallbacks[stepName]?.();
         console.error(error);
         internalErrorToast();
       };
@@ -194,10 +194,10 @@ export const createRunState = (
       socket.on('error', handleError);
       const handleOnProgress = (response: StepRunResponse) => {
         if (response.runId === runId && response.output) {
-          get().updateSampleData({
+          get().setSampleDataLocally({
             stepName: stepName,
-            output: response.output,
-            onlyLocally: true,
+            type: 'output',
+            value: response.output,
           });
         }
       };
@@ -236,66 +236,42 @@ export const createRunState = (
       });
     },
     stepTestListeners: {},
-    updateSampleData: ({
-      stepName,
-      input,
-      output,
-      onlyLocally,
-    }: UpdateSampleDataParams) => {
-      const { setSampleData, applyOperation, flowVersion } = get();
+    updateSampleData: ({ stepName, input, output }: UpdateSampleDataParams) => {
+      const { setSampleDataLocally, applyOperation, flowVersion } = get();
       const step = flowStructureUtil.getStep(stepName, flowVersion.trigger);
-
       if (isNil(step)) {
         console.error(`Step ${stepName} not found`);
         internalErrorToast();
         return;
       }
-      const currentSampleData = get().outputSampleData[step.name];
-      if (onlyLocally) {
-        get().revertSampleDataLocallyCallbacks[step.name] = () => {
-          setSampleData({
-            stepName: step.name,
-            type: 'output',
-            value: currentSampleData,
-          });
-          get().revertSampleDataLocallyCallbacks[step.name] = undefined;
-        };
-      }
-      setSampleData({ stepName: step.name, type: 'output', value: output });
-      if (!onlyLocally) {
-        const payload = isNil(output)
-          ? stringifyNullOrUndefined(output)
-          : output;
+      setSampleDataLocally({
+        stepName: step.name,
+        type: 'output',
+        value: output,
+      });
+      const payload = isNil(output) ? stringifyNullOrUndefined(output) : output;
+      applyOperation({
+        type: FlowOperationType.SAVE_SAMPLE_DATA,
+        request: {
+          stepName: step.name,
+          payload,
+          type: SampleDataFileType.OUTPUT,
+        },
+      });
+      if (!isNil(input)) {
+        setSampleDataLocally({
+          stepName: step.name,
+          type: 'input',
+          value: input,
+        });
         applyOperation({
           type: FlowOperationType.SAVE_SAMPLE_DATA,
           request: {
             stepName: step.name,
-            payload,
-            type: SampleDataFileType.OUTPUT,
+            payload: input,
+            type: SampleDataFileType.INPUT,
           },
         });
-      }
-
-      if (!isNil(input)) {
-        setSampleData({ stepName: step.name, type: 'input', value: input });
-        if (!onlyLocally) {
-          applyOperation({
-            type: FlowOperationType.SAVE_SAMPLE_DATA,
-            request: {
-              stepName: step.name,
-              payload: input,
-              type: SampleDataFileType.INPUT,
-            },
-          });
-        }
-      }
-
-      // Invalidate so next time the user enters the builder, the sample data is refetched
-      if (!onlyLocally) {
-        sampleDataHooks.invalidateSampleData(
-          flowVersion.id,
-          initialState.queryClient,
-        );
       }
     },
     setErrorLogs: (stepName: string, error: string | null) => {
@@ -334,6 +310,64 @@ export const createRunState = (
     },
     isStepBeingTested: (stepName: string) => {
       return !isNil(get().stepTestListeners[stepName]);
+    },
+    beforeStepTestPreparation: (step: FlowAction) => {
+      const stepName = step.name;
+      get().removeStepTestListener(stepName);
+      const currentSampleData = get().outputSampleData[stepName];
+      const currentErrorLogs = get().errorLogs[stepName];
+      const currentConsoleLogs = get().consoleLogs[stepName];
+      const currentSampleDataInput = get().inputSampleData[stepName];
+      if (isRunAgent(step)) {
+        get().setSampleDataLocally({
+          stepName: stepName,
+          type: 'output',
+          value: defaultAgentOutput,
+        });
+      } else {
+        get().setSampleDataLocally({
+          stepName: stepName,
+          type: 'output',
+          value: null,
+        });
+      }
+      get().setErrorLogs(stepName, null);
+      get().setConsoleLogs(stepName, null);
+      get().setSampleDataLocally({
+        stepName: stepName,
+        type: 'input',
+        value: null,
+      });
+      const revertSampleDataLocallyCallback = () => {
+        get().setSampleDataLocally({
+          stepName: stepName,
+          type: 'output',
+          value: currentSampleData,
+        });
+        get().setSampleDataLocally({
+          stepName: stepName,
+          type: 'input',
+          value: currentSampleDataInput,
+        });
+        get().setErrorLogs(stepName, currentErrorLogs);
+        get().setConsoleLogs(stepName, currentConsoleLogs);
+        set((state) => {
+          return {
+            revertSampleDataLocallyCallbacks: {
+              ...state.revertSampleDataLocallyCallbacks,
+              [stepName]: undefined,
+            },
+          };
+        });
+      };
+      set((state) => {
+        return {
+          revertSampleDataLocallyCallbacks: {
+            ...state.revertSampleDataLocallyCallbacks,
+            [stepName]: revertSampleDataLocallyCallback,
+          },
+        };
+      });
     },
   };
 };

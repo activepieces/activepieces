@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Calendar, SquareFunction, File, Info } from 'lucide-react';
+import { Calendar, SquareFunction, File } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
@@ -52,9 +53,9 @@ function AutoFormFieldWrapper({
       property={property ?? null}
       dynamicInputModeToggled={dynamicInputModeToggled}
     >
-      <FormItem className="flex flex-col gap-1">
+      <FormItem className="flex flex-col">
         {(!hideLabel || placeBeforeLabelText) && (
-          <FormLabel className="flex items-center gap-1 ">
+          <FormLabel className="flex items-center gap-1 h-7.5 max-h-7.5">
             {placeBeforeLabelText && !dynamicInputModeToggled && children}
             <div className="pt-1">
               <span>
@@ -67,18 +68,7 @@ function AutoFormFieldWrapper({
             {property && !isAuthProperty && (
               <PropertyTypeTooltip property={property} />
             )}
-            {!isAuthProperty &&
-              !Array.isArray(property) &&
-              property.description && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="text-muted-foreground w-3 h-3 ml-1 mt-0.5 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    {t(property.description)}
-                  </TooltipContent>
-                </Tooltip>
-              )}
+
             <span className="grow"></span>
             {allowDynamicValues && (
               <DynamicValueToggle
@@ -112,6 +102,11 @@ function AutoFormFieldWrapper({
         {!placeBeforeLabelText && !dynamicInputModeToggled && (
           <div>{children}</div>
         )}
+        {!isForConnectionSelect &&
+          !Array.isArray(property) &&
+          property.description && (
+            <ReadMoreDescription text={property.description} />
+          )}
       </FormItem>
     </AutoFormFielWrapperErrorBoundary>
   );
@@ -241,6 +236,7 @@ function DynamicValueToggle({
               )
             }
             disabled={disabled}
+            size="sm"
           >
             <SquareFunction
               className={cn('size-5', {
