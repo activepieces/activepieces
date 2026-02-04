@@ -21,7 +21,6 @@ import {
   FlowTriggerType,
   FlowVersionState,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
@@ -43,34 +42,28 @@ const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [flowVersion, rightSidebar, selectedStep, removeAllStepTestsListeners] =
-    useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.rightSidebar,
-      state.selectedStep,
-      state.removeAllStepTestsListeners,
-    ]);
+  const [
+    flowVersion,
+    rightSidebar,
+    selectedStepName,
+    removeAllStepTestsListeners,
+    selectedStep,
+  ] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.rightSidebar,
+    state.selectedStep,
+    state.removeAllStepTestsListeners,
+    flowStructureUtil.getStep(
+      state.selectedStep ?? '',
+      state.flowVersion.trigger,
+    ),
+  ]);
   useEffect(() => {
     return () => {
       removeAllStepTestsListeners();
     };
   }, [removeAllStepTestsListeners]);
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
-  const { memorizedSelectedStep } = useBuilderStateContext((state) => {
-    const flowVersion = state.flowVersion;
-    if (isNil(state.selectedStep) || isNil(flowVersion)) {
-      return {
-        memorizedSelectedStep: undefined,
-      };
-    }
-    const step = flowStructureUtil.getStep(
-      state.selectedStep,
-      flowVersion.trigger,
-    );
-    return {
-      memorizedSelectedStep: step,
-    };
-  });
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
@@ -78,11 +71,11 @@ const BuilderPage = () => {
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
-      name: memorizedSelectedStep?.settings.pieceName,
-      version: memorizedSelectedStep?.settings.pieceVersion,
+      name: selectedStep?.settings.pieceName,
+      version: selectedStep?.settings.pieceVersion,
       enabled:
-        memorizedSelectedStep?.type === FlowActionType.PIECE ||
-        memorizedSelectedStep?.type === FlowTriggerType.PIECE,
+        selectedStep?.type === FlowActionType.PIECE ||
+        selectedStep?.type === FlowTriggerType.PIECE,
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
@@ -114,7 +107,7 @@ const BuilderPage = () => {
                   canvasHeight={middlePanelRef.current?.clientHeight ?? 0}
                   canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
                   hasCanvasBeenInitialised={hasCanvasBeenInitialised}
-                  selectedStep={selectedStep}
+                  selectedStep={selectedStepName}
                 ></CanvasControls>
               )}
 
@@ -157,14 +150,14 @@ const BuilderPage = () => {
         >
           <div ref={rightSidePanelRef} className="h-full w-full">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              memorizedSelectedStep && (
+              selectedStep && (
                 <ResizableVerticalPanelsProvider>
                   <StepSettingsProvider
                     pieceModel={pieceModel}
-                    selectedStep={memorizedSelectedStep}
+                    selectedStep={selectedStep}
                     key={constructContainerKey({
                       flowVersionId: flowVersion.id,
-                      step: memorizedSelectedStep,
+                      step: selectedStep,
                       hasPieceModelLoaded: !!pieceModel,
                     })}
                   >
