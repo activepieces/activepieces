@@ -21,7 +21,6 @@ import {
   FlowTriggerType,
   FlowVersionState,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
@@ -38,20 +37,27 @@ import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
-import { useQueryClient } from '@tanstack/react-query';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [flowVersion, rightSidebar, selectedStepName, removeAllStepTestsListeners, selectedStep] =
-    useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.rightSidebar,
-      state.selectedStep,
-      state.removeAllStepTestsListeners,
-      flowStructureUtil.getStep(state.selectedStep?? '', state.flowVersion.trigger),
-    ]);
+  const [
+    flowVersion,
+    rightSidebar,
+    selectedStepName,
+    removeAllStepTestsListeners,
+    selectedStep,
+  ] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.rightSidebar,
+    state.selectedStep,
+    state.removeAllStepTestsListeners,
+    flowStructureUtil.getStep(
+      state.selectedStep ?? '',
+      state.flowVersion.trigger,
+    ),
+  ]);
   useEffect(() => {
     return () => {
       removeAllStepTestsListeners();
@@ -65,7 +71,7 @@ const BuilderPage = () => {
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
-        name: selectedStep?.settings.pieceName,
+      name: selectedStep?.settings.pieceName,
       version: selectedStep?.settings.pieceVersion,
       enabled:
         selectedStep?.type === FlowActionType.PIECE ||

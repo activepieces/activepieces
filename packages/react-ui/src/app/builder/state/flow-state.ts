@@ -1,7 +1,8 @@
-import dayjs from 'dayjs';
+import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
@@ -75,7 +76,9 @@ export type FlowState = {
 export type FlowInitialState = Pick<
   FlowState,
   'flow' | 'flowVersion' | 'outputSampleData' | 'inputSampleData'
->;
+> & {
+  queryClient: QueryClient;
+};
 
 export const createFlowState = (
   initialState: FlowInitialState,
@@ -169,22 +172,34 @@ export const createFlowState = (
           console.warn('Cannot apply operation while readonly');
           return state;
         }
-        let newFlowVersion = flowOperations.apply(state.flowVersion, operation);
+        const newFlowVersion = flowOperations.apply(
+          state.flowVersion,
+          operation,
+        );
         state.operationListeners.forEach((listener) => {
           listener(state.flowVersion, operation);
         });
         set({ saving: true });
         const updateRequest = async () => {
           try {
-            const {version: serverFlowVersion} = await flowsApi.update(
+            const { version: serverFlowVersion } = await flowsApi.update(
               state.flow.id,
               operation,
               true,
             );
+            if (operation.type === FlowOperationType.SAVE_SAMPLE_DATA) {
+              sampleDataHooks.invalidateSampleData(
+                serverFlowVersion.id,
+                initialState.queryClient,
+              );
+            }
             set((state) => {
-              const updatedFlowVersionWithUpdatedSampleData = handleUpdatingSampleDataForStepLocallyAfterServerUpdate({operation,
-                localFlowVersion:state.flowVersion,
-                updatedFlowVersion: serverFlowVersion});
+              const updatedFlowVersionWithUpdatedSampleData =
+                handleUpdatingSampleDataForStepLocallyAfterServerUpdate({
+                  operation,
+                  localFlowVersion: state.flowVersion,
+                  updatedFlowVersion: serverFlowVersion,
+                });
               return {
                 flowVersion: {
                   ...updatedFlowVersionWithUpdatedSampleData,
@@ -204,7 +219,7 @@ export const createFlowState = (
         switch (operation.type) {
           case FlowOperationType.SAVE_SAMPLE_DATA: {
             flowUpdatesQueue.add(updateRequest);
-          
+
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:
@@ -389,20 +404,39 @@ export const createFlowState = (
   };
 };
 
-
-const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({operation, localFlowVersion, updatedFlowVersion}: {operation: FlowOperationRequest, localFlowVersion: FlowVersion, updatedFlowVersion: FlowVersion}) => {
-  if(operation.type !== FlowOperationType.SAVE_SAMPLE_DATA) {
+const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
+  operation,
+  localFlowVersion,
+  updatedFlowVersion,
+}: {
+  operation: FlowOperationRequest;
+  localFlowVersion: FlowVersion;
+  updatedFlowVersion: FlowVersion;
+}) => {
+  if (operation.type !== FlowOperationType.SAVE_SAMPLE_DATA) {
     return localFlowVersion;
   }
-  const localStep = flowStructureUtil.getStep(operation.request.stepName, updatedFlowVersion.trigger);
-  const updatedStep = flowStructureUtil.getStep(operation.request.stepName, updatedFlowVersion.trigger);
-  if(isNil(localStep) || isNil(updatedStep)) {
+  const localStep = flowStructureUtil.getStep(
+    operation.request.stepName,
+    updatedFlowVersion.trigger,
+  );
+  const updatedStep = flowStructureUtil.getStep(
+    operation.request.stepName,
+    updatedFlowVersion.trigger,
+  );
+  if (isNil(localStep) || isNil(updatedStep)) {
     console.error(`Step ${operation.request.stepName} not found`);
     return localFlowVersion;
   }
-  const clonedLocalStepWithUpdatedSampleDataProperty: FlowAction | FlowTrigger = JSON.parse(JSON.stringify(localStep));
-  clonedLocalStepWithUpdatedSampleDataProperty.settings.sampleData = updatedStep.settings.sampleData;
-  if(flowStructureUtil.isAction(clonedLocalStepWithUpdatedSampleDataProperty.type)) {
+  const clonedLocalStepWithUpdatedSampleDataProperty: FlowAction | FlowTrigger =
+    JSON.parse(JSON.stringify(localStep));
+  clonedLocalStepWithUpdatedSampleDataProperty.settings.sampleData =
+    updatedStep.settings.sampleData;
+  if (
+    flowStructureUtil.isAction(
+      clonedLocalStepWithUpdatedSampleDataProperty.type,
+    )
+  ) {
     return flowOperations.apply(localFlowVersion, {
       type: FlowOperationType.UPDATE_ACTION,
       request: clonedLocalStepWithUpdatedSampleDataProperty as FlowAction,
@@ -413,4 +447,4 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({operation, loc
       request: clonedLocalStepWithUpdatedSampleDataProperty as FlowTrigger,
     });
   }
-}
+};
