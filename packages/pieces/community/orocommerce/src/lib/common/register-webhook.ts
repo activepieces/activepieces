@@ -13,7 +13,7 @@ export const createOroCommerceWebhookTrigger = ({
   displayName,
   topic,
   event,
-  sampleData
+  sampleData,
 }: {
   name: string;
   description: string;
@@ -28,42 +28,58 @@ export const createOroCommerceWebhookTrigger = ({
     description,
     displayName,
     props: {},
-    sampleData: sampleData,
+    sampleData,
     type: TriggerStrategy.WEBHOOK,
 
     async onEnable(context) {
       const response = await oroCommerceApiCall({
         method: HttpMethod.POST,
-        resourceUri: '/admin/api/remotenotifications',
+        resourceUri: '/remotenotifications',
         auth: context.auth,
         body: {
           data: {
             type: 'remotenotifications',
             attributes: {
               channel: topic,
-              event: event,
+              event,
               enabled: true,
-              notificationUrl: context.webhookUrl
-            }
-          }
-        }
+              notificationUrl: context.webhookUrl,
+            },
+          },
+        },
       });
 
-      await context.store?.put(`orocommerce_webhook_id`, response.body.data.id);
-      console.log('webhook created', response.body.data.id);
+      await context.store.put<WebhookInformation>(
+        `_orocommerce_${name}_trigger`,
+        {
+          webhookId: response.body.data.id,
+          topic,
+          event,
+        }
+      );
     },
 
     async onDisable(context) {
-      const webhookId = await context.store.get<string>(`orocommerce_webhook_id`);
-      await oroCommerceApiCall({
-        method: HttpMethod.DELETE,
-        resourceUri: '/admin/api/remotenotifications/' + webhookId,
-        auth: context.auth
-      });
-      await context.store?.put(`orocommerce_webhook_id`, null);
+      const webhookInfo = await context.store.get<WebhookInformation>(
+        `_orocommerce_${name}_trigger`
+      );
+
+      if (webhookInfo !== null && webhookInfo !== undefined) {
+        await oroCommerceApiCall({
+          method: HttpMethod.DELETE,
+          resourceUri: `/remotenotifications/${webhookInfo.webhookId}`,
+          auth: context.auth,
+        });
+      }
     },
+
     async run(context) {
-      console.debug('trigger running', context);
       return [context.payload.body];
     },
   });
+
+interface WebhookInformation {
+  webhookId: string;
+  topic: string;
+  event: string;
+}
