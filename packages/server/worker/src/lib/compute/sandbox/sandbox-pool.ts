@@ -75,7 +75,7 @@ function canReuseWorkers(): boolean {
     const settings = workerMachine.getSettings()
 
     if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
-        return true
+        return false // TODO: enable reuse with worker generations
     }
     const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
     if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
