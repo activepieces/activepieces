@@ -3,8 +3,10 @@ import {
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
+  ExecuteToolResponse,
   FlowRunId,
   PopulatedFlow,
+  PredefinedInputsStructure,
   ProjectId,
   RespondResponse,
   ResumePayload,
@@ -239,6 +241,27 @@ export type ConstructToolParams = {
 
 export interface AgentContext {
   tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
+  resolveProperties: (params: ResolvePropertiesParams) => Promise<Record<string, unknown>>;
+  executeAction: (params: ExecuteActionParams) => Promise<ExecuteToolResponse>;
+}
+
+export type ResolvePropertiesParams = {
+  model: LanguageModel;
+  pieceName: string;
+  pieceVersion: string;
+  stepName: string;
+  stepType: 'trigger' | 'action';
+  instruction: string;
+  predefinedInput?: PredefinedInputsStructure;
+}
+
+export type ExecuteActionParams = {
+  model: LanguageModel;
+  pieceName: string;
+  pieceVersion: string;
+  actionName: string;
+  instruction: string;
+  predefinedInput?: PredefinedInputsStructure;
 }
 
 export interface FilesService {

@@ -124,6 +124,14 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     tools: params.tools,
                     model: params.model,
                 }),
+                resolveProperties: async (params: Omit<Parameters<typeof agentTools.resolveProperties>[0], 'engineConstants'>) => agentTools.resolveProperties({
+                    engineConstants: constants,
+                    ...params,
+                }),
+                executeAction: async (params: Omit<Parameters<typeof agentTools.executeAction>[0], 'engineConstants'>) => agentTools.executeAction({
+                    engineConstants: constants,
+                    ...params,
+                }),
             },
             propsValue: processedInput,
             tags: createTagsManager(params),

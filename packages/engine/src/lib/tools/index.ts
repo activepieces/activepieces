@@ -1,4 +1,4 @@
-import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
+import { DropdownOption, ExecutePropsResult, InputPropertyMap, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
 import { z } from 'zod'
@@ -30,7 +30,7 @@ export const agentTools = {
                         instruction,
                         pieceName: tool.pieceMetadata.pieceName,
                         pieceVersion: tool.pieceMetadata.pieceVersion,
-                        actionName: tool.pieceMetadata.actionName,
+                        stepName: tool.pieceMetadata.actionName,
                         predefinedInput: tool.pieceMetadata.predefinedInput,
                         model,
                     }),
@@ -41,12 +41,54 @@ export const agentTools = {
             ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
         }
     },
+    async resolveProperties({ engineConstants, model, pieceName, pieceVersion, stepName, stepType, instruction, predefinedInput }: ResolvePropertiesParams): Promise<Record<string, unknown>> {
+        const props = await getPropertiesForStep(pieceName, pieceVersion, stepName, stepType)
+        const depthToPropertyMap = tsort.sortPropertiesByDependencies(props)
+        const operation: ExecuteToolOperation = {
+            ...engineConstants,
+            instruction,
+            pieceName,
+            pieceVersion,
+            stepName,
+            predefinedInput,
+        }
+        return await resolveProperties(depthToPropertyMap, instruction, props, model, operation)
+    },
+    async executeAction({ engineConstants, model, pieceName, pieceVersion, actionName, instruction, predefinedInput }: ExecuteActionParams): Promise<ExecuteToolResponse> {
+        return await execute({
+            ...engineConstants,
+            instruction,
+            pieceName,
+            pieceVersion,
+            stepName: actionName,
+            predefinedInput,
+            model,
+        })
+    },
 }
 
+async function getPropertiesForStep(pieceName: string, pieceVersion: string, stepName: string, stepType: 'trigger' | 'action'): Promise<InputPropertyMap> {
+    if (stepType === 'action') {
+        const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
+            pieceName,
+            pieceVersion,
+            actionName: stepName,
+            devPieces: EngineConstants.DEV_PIECES,
+        })
+        return pieceAction.props
+    }
+    const { pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
+        pieceName,
+        pieceVersion,
+        triggerName: stepName,
+        devPieces: EngineConstants.DEV_PIECES,
+    })
+    return pieceTrigger.props
+}
 async function resolveProperties(
     depthToPropertyMap: Record<number, string[]>,
     instruction: string,
-    action: Action,
+    props: InputPropertyMap,
     model: LanguageModel,
     operation: ExecuteToolOperation,
 ): Promise<Record<string, unknown>> {
@@ -73,7 +115,7 @@ async function resolveProperties(
         const propertyDetails: PropertyDetail[] = []
 
         for (const property of properties) {
-            const propertyFromAction = action.props[property]
+            const propertyFromAction = props[property]
             const propertyType = propertyFromAction.type
             const skipTypes = [
                 PropertyType.BASIC_AUTH,
@@ -143,21 +185,16 @@ async function resolveProperties(
 
 async function execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
 
-    const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
-        pieceName: operation.pieceName,
-        pieceVersion: operation.pieceVersion,
-        actionName: operation.actionName,
-        devPieces: EngineConstants.DEV_PIECES,
-    })
-    const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
-    const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
+    const props = await getPropertiesForStep(operation.pieceName, operation.pieceVersion, operation.stepName, 'action')
+    const depthToPropertyMap = tsort.sortPropertiesByDependencies(props)
+    const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, props, operation.model, operation)
     const step: PieceAction = {
-        name: operation.actionName,
-        displayName: operation.actionName,
+        name: operation.stepName,
+        displayName: operation.stepName,
         type: FlowActionType.PIECE,
         settings: {
             input: resolvedInput,
-            actionName: operation.actionName,
+            actionName: operation.stepName,
             pieceName: operation.pieceName,
             pieceVersion: operation.pieceVersion,
             propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
@@ -172,7 +209,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
         executionState: FlowExecutorContext.empty(),
         constants: EngineConstants.fromExecuteActionInput(operation),
     })
-    const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
+    const { output: stepOutput, errorMessage, status } = output.steps[operation.stepName]
     return {
         status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
         output: stepOutput,
@@ -193,7 +230,9 @@ const constructExtractionPrompt = (
     const propertyNames = Object.keys(propertyToFill).join('", "')
 
     const existingValuesContext = Object.keys(existingValues).length > 0
-        ? buildExistingValuesSection(existingValues)
+        ? `
+**ALREADY FILLED VALUES** (use for context and consistency):
+${JSON.stringify(existingValues, null, 2)}`
         : ''
 
     const propertyDetailsSection = propertyDetails.length > 0
@@ -292,7 +331,7 @@ async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOp
     const response = await pieceHelper.executeProps({
         ...operation,
         propertyName,
-        actionOrTriggerName: operation.actionName,
+        actionOrTriggerName: operation.stepName,
         input: resolvedInput,
         sampleData: {},
         searchValue: undefined,
@@ -303,14 +342,6 @@ async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOp
         dynamicSchema[key] = await propertyToSchema(key, value, operation, resolvedInput)
     }
     return z.object(dynamicSchema)
-}
-
-type PropertyDetail = {
-    name: string
-    type: PropertyType
-    description?: string
-    options?: DropdownOption<unknown>[]
-    defaultValue?: unknown
 }
 
 async function buildPropertyDetail(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<PropertyDetail | null> {
@@ -341,7 +372,7 @@ async function loadOptions(propertyName: string, operation: ExecuteToolOperation
     const response = await pieceHelper.executeProps({
         ...operation,
         propertyName,
-        actionOrTriggerName: operation.actionName,
+        actionOrTriggerName: operation.stepName,
         input,
         sampleData: {},
         searchValue: undefined,
@@ -350,12 +381,6 @@ async function loadOptions(propertyName: string, operation: ExecuteToolOperation
     return options.options
 }
 
-function buildExistingValuesSection(existingValues: Record<string, unknown>): string {
-    return `
-**ALREADY FILLED VALUES** (use for context and consistency):
-${JSON.stringify(existingValues, null, 2)}
-`
-}
 
 function buildPropertyDetailsSection(propertyDetails: PropertyDetail[]): string {
     const sections = propertyDetails.map(detail => {
@@ -379,4 +404,33 @@ type ConstructToolParams = {
     engineConstants: EngineConstants
     tools: AgentPieceTool[]
     model: LanguageModel
+}
+
+type ResolvePropertiesParams = {
+    engineConstants: EngineConstants
+    model: LanguageModel
+    pieceName: string
+    pieceVersion: string
+    stepName: string
+    stepType: 'trigger' | 'action'
+    instruction: string
+    predefinedInput?: ExecuteToolOperation['predefinedInput']
+}
+
+type ExecuteActionParams = {
+    engineConstants: EngineConstants
+    model: LanguageModel
+    pieceName: string
+    pieceVersion: string
+    actionName: string
+    instruction: string
+    predefinedInput?: ExecuteToolOperation['predefinedInput']
+}
+
+type PropertyDetail = {
+    name: string
+    type: PropertyType
+    description?: string
+    options?: DropdownOption<unknown>[]
+    defaultValue?: unknown
 }

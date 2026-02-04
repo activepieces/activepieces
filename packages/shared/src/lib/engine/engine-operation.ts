@@ -78,7 +78,7 @@ export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformI
 export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number, platformId: PlatformId }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
-    actionName: string
+    stepName: string
     pieceName: string
     pieceVersion: string
     predefinedInput?: PredefinedInputsStructure
