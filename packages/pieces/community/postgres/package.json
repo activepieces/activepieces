@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-postgres",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "dependencies": {
     "pg": "8.11.3",
     "pg-format": "1.0.4"

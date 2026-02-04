@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-csv",
-  "version": "0.4.10",
+  "version": "0.4.11",
   "dependencies": {
     "csv-parse": "5.6.0",
     "csv-stringify": "6.5.2",

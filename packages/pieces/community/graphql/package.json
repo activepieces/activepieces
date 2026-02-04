@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-graphql",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "dependencies": {
     "https-proxy-agent": "7.0.4"
   }

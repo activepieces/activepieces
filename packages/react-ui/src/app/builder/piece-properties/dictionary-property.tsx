@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
 
@@ -90,14 +91,18 @@ export const DictionaryProperty = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-    onChange(
-      items.reduce((acc, current) => {
-        return { ...acc, [current.key]: current.value };
-      }, {}),
-    );
+    const value = items.reduce((acc, current) => {
+      return { ...acc, [current.key]: current.value };
+    }, {});
+    // Wrap in event-like object to prevent RHF from breaking when
+    // the dictionary has a "target" key. RHF's getEventValue extracts
+    // target.value from event-like objects, so this ensures the actual
+    // dictionary value is preserved.
+    // See: https://github.com/react-hook-form/react-hook-form/issues/13078
+    onChange({ target: { value } } as unknown as Record<string, string>);
   };
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className={cn('flex w-full flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
       {valuesArrayRef.current.map(({ key, value, id }, index) => (
         <div
           key={'dictionary-input-' + id}

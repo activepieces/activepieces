@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-gcloud-pubsub",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "dependencies": {
     "google-auth-library": "8.9.0"
   }

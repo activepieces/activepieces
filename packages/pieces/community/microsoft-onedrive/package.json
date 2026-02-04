@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-onedrive",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "dependencies": {
     "@microsoft/microsoft-graph-client": "3.0.7",
     "@microsoft/microsoft-graph-types": "2.40.0"
