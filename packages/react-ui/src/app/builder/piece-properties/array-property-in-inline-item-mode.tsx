@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { ArraySubProps } from '@activepieces/pieces-framework';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -43,7 +44,12 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
     return (
       <div className="w-full" ref={containerRef}>
         {props.arrayProperties ? (
-          <div className="p-4 border rounded-md flex flex-col gap-4">
+          <div
+            className={cn(
+              'p-4 border rounded-md flex flex-col',
+              GAP_SIZE_FOR_STEP_SETTINGS,
+            )}
+          >
             <GenericPropertiesForm
               prefixValue={inputName}
               props={props.arrayProperties}
