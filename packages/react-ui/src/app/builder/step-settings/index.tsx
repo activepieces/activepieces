@@ -79,7 +79,7 @@ const StepSettingsContainer = () => {
     defaultValues: selectedStep,
     resetOptions: {
       keepDefaultValues: false,
-      keepValues: false,
+      keepDirtyValues: true,
     },
     resolver: async (values, context, options) => {
       const result = await typeboxResolver(formSchema)(
