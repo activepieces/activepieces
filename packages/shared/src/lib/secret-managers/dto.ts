@@ -1,7 +1,11 @@
 import { Type } from "@sinclair/typebox"
 import { Static } from "@sinclair/typebox"
 import { DiscriminatedUnion } from "../common"
-import { SecretManagerProviderId } from "."
+
+export enum SecretManagerProviderId {
+  HASHICORP = "hashicorp",
+  AWS = "aws",
+}
 
 export const HashicorpProviderConfigSchema = Type.Object({
   url: Type.String(),
@@ -11,7 +15,7 @@ export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchem
 
 export const HashicorpGetSecretRequestSchema = Type.Object({
   mountPath: Type.String(),
-  secretPath: Type.String(),
+  secretKey: Type.String(),
 })
 export type HashicorpGetSecretRequest = Static<typeof HashicorpGetSecretRequestSchema>
 

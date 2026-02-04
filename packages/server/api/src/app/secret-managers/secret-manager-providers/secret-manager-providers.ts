@@ -3,11 +3,13 @@ import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from "./hashicorp-prov
 import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from "@activepieces/shared"
 import { awsProvider } from "./aws-provider"
 
-export interface SecretManagerProvider<T, P> {
-  checkConnection: (config: T) => Promise<boolean>
-  connect: (config: T) => Promise<void>
+export interface SecretManagerProvider<K extends SecretManagerProviderId> {
+  checkConnection: (config: SecretManagerConfigFor<K>) => Promise<boolean>
+  connect: (config: SecretManagerConfigFor<K>) => Promise<void>
   disconnect: () => Promise<void>
-  getSecret: (params: P, config: T) => Promise<string>
+  getSecret: (params: GetSecretManagerSecretRequestFor<K>, config: SecretManagerConfigFor<K>) => Promise<string>
+  resolve: (key: string) => Promise<GetSecretManagerSecretRequestFor<K>>
+
 }
 
 export type SecretManagerConfigFor<K extends SecretManagerProviderId> =
@@ -17,7 +19,7 @@ export type GetSecretManagerSecretRequestFor<K extends SecretManagerProviderId> 
   Extract<GetSecretManagerSecretRequest, { providerId: K }>['request']
 
 export type SecretManagerProvidersMap = {
-  [K in SecretManagerProviderId]: SecretManagerProvider<SecretManagerConfigFor<K>, GetSecretManagerSecretRequestFor<K>>
+  [K in SecretManagerProviderId]: SecretManagerProvider<K>
 }
 
 const secretManagerProvidersMap = (log: FastifyBaseLogger): SecretManagerProvidersMap => {
@@ -27,8 +29,8 @@ const secretManagerProvidersMap = (log: FastifyBaseLogger): SecretManagerProvide
   }
 }
 
-export const secretManagerProvider = (log: FastifyBaseLogger, providerId: SecretManagerProviderId): SecretManagerProvider<SecretManagerConfigFor<typeof providerId>, GetSecretManagerSecretRequestFor<typeof providerId>> => {
-  return secretManagerProvidersMap(log)[providerId] as SecretManagerProvider<SecretManagerConfigFor<typeof providerId>, GetSecretManagerSecretRequestFor<typeof providerId>>
+export const secretManagerProvider = (log: FastifyBaseLogger, providerId: SecretManagerProviderId): SecretManagerProvider<typeof providerId> => {
+  return secretManagerProvidersMap(log)[providerId] as SecretManagerProvider<typeof providerId>
 }
 
 export const secretManagerProvidersMetadata = (): SecretManagerProviderMetaData[] => [

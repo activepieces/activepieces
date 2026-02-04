@@ -135,10 +135,10 @@ function CreateOrEditConnectionSection({
       </DialogHeader>
 
       <Form {...form}>
-        <form className="flex flex-col gap-3 ">
+        <form className="flex flex-col gap-3">
           <ScrollArea
             className="px-2"
-            viewPortClassName="max-h-[calc(70vh-180px)] px-4 mb-1"
+            viewPortClassName="max-h-[calc(70vh-180px)] px-4 py-2 mb-1"
           >
             {' '}
             <ApMarkdown

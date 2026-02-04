@@ -1,7 +1,7 @@
 import { Type, Static } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common/base-model'
 import { DiscriminatedUnion } from '../common'
-import { AWSProviderConfigSchema, HashicorpProviderConfigSchema } from './dto'
+import { AWSGetSecretRequestSchema, AWSProviderConfigSchema, HashicorpGetSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
 
 export * from './dto'
 
@@ -26,10 +26,6 @@ export const SecretManagerFieldSchema =  Type.Object({
   placeholder: Type.String(),
 })
 
-export enum SecretManagerProviderId {
-  HASHICORP = "hashicorp",
-  AWS = "aws",
-}
 
 export const SecretManagerProviderMetaDataBaseSchema = Type.Object({
   id: Type.Enum(SecretManagerProviderId),
@@ -42,12 +38,14 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
   Type.Object({
     ...SecretManagerProviderMetaDataBaseSchema.properties,
     id: Type.Literal(SecretManagerProviderId.HASHICORP),
-    fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema)
+    fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema),
+    getSecretParams: Type.Record(Type.KeyOf(HashicorpGetSecretRequestSchema), SecretManagerFieldSchema),
   }),
   Type.Object({
     ...SecretManagerProviderMetaDataBaseSchema.properties,
     id: Type.Literal(SecretManagerProviderId.AWS),
-    fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema)
+    fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema),
+    getSecretParams: Type.Record(Type.KeyOf(AWSGetSecretRequestSchema), SecretManagerFieldSchema),
   }),
 ])
 

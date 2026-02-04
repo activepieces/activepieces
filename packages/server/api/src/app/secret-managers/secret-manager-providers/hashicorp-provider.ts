@@ -19,9 +19,19 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
       placeholder: "token",
     },
   },
+  getSecretParams: {
+    mountPath: {
+      displayName: "Mount Path",
+      placeholder: "eg: /secret/data/app",
+    },
+    secretKey: {
+      displayName: "Secret Key",
+      placeholder: "key of the secret",
+    },
+  },
 }
 
-export const hashicorpProvider = (log: FastifyBaseLogger) : SecretManagerProvider<HashicorpProviderConfig, HashicorpGetSecretRequest> => ({
+export const hashicorpProvider = (log: FastifyBaseLogger) : SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
   checkConnection: async (config) => {
     await vaultApi({
       url: `${config.url}/v1/sys/mounts`,
@@ -51,7 +61,11 @@ export const hashicorpProvider = (log: FastifyBaseLogger) : SecretManagerProvide
       token: config.token,
       method: "GET",
     }).catch((error) => {
-      console.error(error)
+      log.error({
+        message: error.message,
+        provider: SecretManagerProviderId.HASHICORP,
+        request: request,
+      }, "[hashicorpProvider#getSecret]")
       throw new ActivepiecesError({
         code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
         params: {
@@ -62,7 +76,12 @@ export const hashicorpProvider = (log: FastifyBaseLogger) : SecretManagerProvide
       })
     })
     const data = response.data?.data?.data
-    if (!data || !data[request.secretPath]) {
+    if (!data || !data[request.secretKey]) {
+      log.error({
+        message: "No secret found at requested path",
+        provider: SecretManagerProviderId.HASHICORP,
+        request: request,
+      }, "[hashicorpProvider#getSecret]")
       throw new ActivepiecesError({
         code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
         params: {
@@ -72,7 +91,23 @@ export const hashicorpProvider = (log: FastifyBaseLogger) : SecretManagerProvide
         },
       })
     }
-    return data[request.secretPath]
+    return data[request.secretKey]
+  },
+  resolve: async (key: string) => {
+    let splits = key.split(":")
+    console.error(splits)
+    if (splits.length < 3) {
+      throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+          message: "Wrong format . should be providerName:mountPath:secretKey",
+        },
+      })
+    }
+    return {
+      mountPath: key.split(":")[1],
+      secretKey: key.split(":")[2],
+    }
   }
 })
 

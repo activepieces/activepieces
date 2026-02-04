@@ -30,6 +30,7 @@ import {
 } from '@activepieces/shared';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
+import { SecretInput } from './secret-input';
 
 function OAuth2ConnectionSettings({
   authProperty,
@@ -85,7 +86,7 @@ function OAuth2ConnectionSettings({
               <FormItem className="flex flex-col">
                 <FormLabel>{t('Client ID')}</FormLabel>
                 <FormControl>
-                  <Input {...field} type="text" placeholder={t('Client ID')} />
+                  <SecretInput {...field} type="text" placeholder={t('Client ID')} />
                 </FormControl>
               </FormItem>
             )}
@@ -97,7 +98,7 @@ function OAuth2ConnectionSettings({
               <FormItem className="flex flex-col">
                 <FormLabel>{t('Client Secret')}</FormLabel>
                 <FormControl>
-                  <Input
+                  <SecretInput
                     {...field}
                     type="password"
                     placeholder={t('Client Secret')}

@@ -17,6 +17,7 @@ import {
     EngineResponseStatus,
     ErrorCode,
     ExecuteValidateAuthResponse,
+    fieldsResolvableBySecretManager,
     isNil,
     Metadata,
     OAuth2GrantType,
@@ -57,6 +58,7 @@ import {
 import { appConnectionHandler } from './app-connection.handler'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
+import { secretManagersService } from '../../secret-managers/secret-managers.service'
 export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
@@ -69,7 +71,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
-            value,
+            value: await this.resolveSecrets(value, platformId),
             pieceName,
             projectId: projectIds[0],
             platformId,
@@ -374,6 +376,31 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }))
         return [...platformAdmins, ...projectMembersDetails]
     },
+    async resolveSecrets<T extends UpsertAppConnectionRequestBody['value'] | AppConnectionValue>(value: T, platformId: string): Promise<T> {
+        let newValue = value
+        await Promise.all(
+            fieldsResolvableBySecretManager.map(async (field) => {
+                // @ts-ignore
+                if (value[field as keyof typeof value]) {
+                    // @ts-ignore
+                    newValue[field] = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
+                        if (error.message === "Key is not a secret") {
+                            // @ts-ignore
+                            return value[field]
+                        }
+                        throw new ActivepiecesError({
+                            code: ErrorCode.VALIDATION,
+                            params: {
+                                message: error.message,
+                            },
+                        })
+                    })
+                }
+            })
+        )
+
+        return newValue
+    }
 })
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil, apId, GetSecretManagerSecretRequest } from "@activepieces/shared"
+import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil, apId, GetSecretManagerSecretRequest, tryCatch, SecretManagerProviderId } from "@activepieces/shared"
 import { secretManagerProvider, secretManagerProvidersMetadata } from "./secret-manager-providers/secret-manager-providers"
 import { FastifyBaseLogger } from "fastify"
 import { databaseConnection } from "../database/database-connection"
@@ -50,36 +50,44 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
       where: { platformId: request.platformId, providerId: request.providerId },
     })
     await provider.checkConnection(secretManager.auth)
-    return { secret: await provider.getSecret(request.request, secretManager.auth) }
+    return provider.getSecret(request.request, secretManager.auth) 
   },
 
-  async resolve({ key }: { key: string }) {
+  async resolve({ key, platformId }: { key: string, platformId: string }) {
 
     key = checkKeyIsSecret(key)
-    const { providerName, secretName, valuePath } = validateSecret(key)
+    let splits = key.split(":")
 
-    const provider = await Promise.resolve(mockProvider) // Should return get provider from provider service
+    if (!Object.values(SecretManagerProviderId).includes(splits[0] as SecretManagerProviderId)) {
+      throw Error("Invalid provider id")
+    }
+    const providerId = splits[0] as SecretManagerProviderId
 
-    const value = await provider.getSecret(secretName)
+    return secretManagersService(log).getSecret({
+      providerId,
+      request: await secretManagerProvider(log, providerId).resolve(key),
+      platformId,
+    } as GetSecretManagerSecretRequest & { platformId: string })
 
-    const resolvedValue = jsonParseWithCallback({
-      str: value,
-      onSuccess: (parsed) => {
-        const resolvedValue = getByPath(parsed, valuePath)
-        if (!isString(resolvedValue)) {
-          throw Error("Value is not a string")
-        }
-        return resolvedValue
-      },
-      onError: () => { // this is json parse error
-        if (valuePath && valuePath.length > 0) {
-          throw Error("Value is not a json object. can't resolve value path")
-        }
-        return value
-      }
-    })
+    // const { data: resolvedValue, error } = await tryCatch(async () => {
+    //   const parsed = JSON.parse(value)
+    //   const resolvedValue = getByPath(parsed, valuePath)
+    //   if (!isString(resolvedValue)) {
+    //     throw Error("Value is not a string")
+    //   }
+    //   return resolvedValue as string
+    // })
+    // if (error) {
+    //   if (error.message === "Value is not a string") {
+    //     throw error
+    //   }
+    //   if (valuePath && valuePath.length > 0) {
+    //     throw Error("Value is not a json object. can't resolve value path")
+    //   }
+    //   return value
+    // }
 
-    return resolvedValue
+    // return resolvedValue
   }
 })
 
@@ -92,11 +100,15 @@ const checkKeyIsSecret = (key: string) => {
 }
 
 const validateSecret = (key: string) : {
-  providerName: string,
-  secretName: string,
-  valuePath?: string[]
+  providerId: SecretManagerProviderId,
+  request: GetSecretManagerSecretRequest['request']
 } => {
   let splits = key.split(":")
+
+  if (!(splits[0] in SecretManagerProviderId)) {
+    throw Error("Invalid provider id")
+  }
+  const providerId = splits[0] as SecretManagerProviderId
 
   if (splits.length < 2) {
     throw Error("Wrong format . should be providerName:secretName optionally followed by json path")
@@ -105,12 +117,9 @@ const validateSecret = (key: string) : {
   splits = splits.map(split => split.trim())
 
   return {
-    providerName: splits[0],
-    secretName: splits[1],
-    valuePath: splits.slice(2)
+    providerId,
+    request: {
+      secretPath: splits[1],
+    }
   }
-}
-
-const mockProvider = {
-  getSecret: async (secretName: string) => Promise.resolve("{\"sec\": {\"secret\": [\"secret-1\"] }}")
 }

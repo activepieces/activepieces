@@ -17,20 +17,31 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
       placeholder: "secretAccessKey",
     },
   },
+  getSecretParams: {
+    secretPath: {
+      displayName: "Secret Path",
+      placeholder: "secretPath",
+    },
+  },
 }
 
-export const awsProvider = (log: FastifyBaseLogger) : SecretManagerProvider<AWSProviderConfig, AWSGetSecretRequest> => ({
-  checkConnection: async (config) => {
+export const awsProvider = (_log: FastifyBaseLogger) : SecretManagerProvider<SecretManagerProviderId.AWS> => ({
+  checkConnection: async (_config) => {
    
     return Promise.resolve(true)
   },
-  connect: async (config) => {
+  connect: async (_config) => {
     return Promise.resolve()
   },
   disconnect: async () => {
     return Promise.resolve()
   },
-  getSecret: async (request: AWSGetSecretRequest, config: AWSProviderConfig) => {
+  getSecret: async (_request: AWSGetSecretRequest, _config: AWSProviderConfig) => {
     return Promise.resolve("secret")
+  },
+  resolve: async (key: string) => {
+    return {
+      secretPath: key,
+    }
   }
 })
