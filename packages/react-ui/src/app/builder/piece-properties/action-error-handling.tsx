@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
 
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;
@@ -42,7 +43,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="continueOnFailure"
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -53,17 +54,12 @@ const ActionErrorHandlingForm = React.memo(
                     />
                   </FormControl>
                   <span className="ml-2">{t('Continue on Failure')}</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 stroke-foreground/55 cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      {t(
-                        'Enable this option to skip this step and continue the flow normally if it fails.',
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
                 </FormLabel>
+                <ReadMoreDescription
+                  text={t(
+                    'Enable this option to skip this step and continue the flow normally if it fails.',
+                  )}
+                />
               </FormItem>
             )}
           />
@@ -76,7 +72,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="retryOnFailure"
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -87,17 +83,12 @@ const ActionErrorHandlingForm = React.memo(
                     />
                   </FormControl>
                   <span className="ml-2">{t('Retry on Failure')}</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 stroke-foreground/55 cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      {t(
-                        'Automatically retry up to four attempts when failed.',
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
                 </FormLabel>
+                <ReadMoreDescription
+                  text={t(
+                    'Automatically retry up to four attempts when failed.',
+                  )}
+                />
               </FormItem>
             )}
           />
