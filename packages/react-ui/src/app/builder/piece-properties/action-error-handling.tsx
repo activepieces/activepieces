@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -9,15 +8,10 @@ import {
   FormLabel,
   FormControl,
 } from '@/components/ui/form';
+import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
-import { ReadMoreDescription } from '@/components/ui/read-more-description';
 
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;
