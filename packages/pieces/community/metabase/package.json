@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-metabase",
-  "version": "0.1.10"
+  "version": "0.2.2",
+  "dependencies": {
+    "playwright": "1.56.0"
+  }
 }

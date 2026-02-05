@@ -1,23 +1,21 @@
-import { Static, Type } from "@sinclair/typebox";
-import { NotificationStatus, Nullable, PiecesFilterType, SAFE_STRING_PATTERN, Metadata } from "@activepieces/shared";
+import { Metadata, Nullable, PiecesFilterType, ProjectIcon, ProjectType, SAFE_STRING_PATTERN } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export const UpdateProjectPlatformRequest = Type.Object({
-    notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
     releasesEnabled: Type.Optional(Type.Boolean()),
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),
     externalId: Type.Optional(Type.String()),
     metadata: Type.Optional(Metadata),
+    icon: Type.Optional(ProjectIcon),
     plan: Type.Optional(Type.Object({
-        tasks: Type.Optional(Type.Number({})),
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
-        aiCredits: Type.Optional(Type.Number({})),
     })),
 })
 
-export type UpdateProjectPlatformRequest = Static<typeof UpdateProjectPlatformRequest>;
+export type UpdateProjectPlatformRequest = Static<typeof UpdateProjectPlatformRequest>
 
 export const CreatePlatformProjectRequest = Type.Object({
     displayName: Type.String({
@@ -25,6 +23,17 @@ export const CreatePlatformProjectRequest = Type.Object({
     }),
     externalId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
+    maxConcurrentJobs: Nullable(Type.Number()),
 })
 
-export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>;
+export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>
+
+export const ListProjectRequestForPlatformQueryParams = Type.Object({
+    externalId: Type.Optional(Type.String()),
+    limit: Type.Optional(Type.Number({})),
+    cursor: Type.Optional(Type.String({})),
+    displayName: Type.Optional(Type.String()),
+    types: Type.Optional(Type.Array(Type.Enum(ProjectType))),
+})
+
+export type ListProjectRequestForPlatformQueryParams = Static<typeof ListProjectRequestForPlatformQueryParams>

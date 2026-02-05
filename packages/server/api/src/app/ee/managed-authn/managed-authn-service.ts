@@ -3,11 +3,11 @@ import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     isNil,
-    NotificationStatus,
     PiecesFilterType,
     PlatformRole,
     PrincipalType,
     Project,
+    ProjectType,
     User,
     UserIdentity,
     UserIdentityProvider,
@@ -15,9 +15,9 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { pieceTagService } from '../../pieces/tags/pieces/piece-tag.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { projectLimitsService } from '../projects/project-plan/project-plan.service'
@@ -31,18 +31,25 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalAccessToken,
         )
 
-        const { project, isNewProject } = await getOrCreateProject({
+        const { project } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         })
-        await updateProjectLimits({ platformId: project.platformId,
-            projectId: project.id, 
+
+        if (!isNil(externalPrincipal.projectDisplayName)) {
+            await projectService.update(project.id, {
+                type: project.type,
+                displayName: externalPrincipal.projectDisplayName,
+            })
+        }
+
+        await updateProjectLimits({
+            platformId: project.platformId,
+            projectId: project.id,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
-            tasks: externalPrincipal.tasks,
-            aiCredits: externalPrincipal.aiCredits, 
-            log, 
-            isNewProject })
+            log,
+        })
 
         const user = await getOrCreateUser(externalPrincipal, log)
 
@@ -59,12 +66,11 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: project.id,
             platform: {
                 id: externalPrincipal.platformId,
             },
             tokenVersion: identity.tokenVersion,
-        }, 7 * 24 * 60 * 60 * 1000)
+        }, 7 * 24 * 60 * 60)
         return {
             id: user.id,
             platformRole: user.platformRole,
@@ -89,28 +95,18 @@ type UpdateProjectLimitsParams =
         projectId: string
         piecesTags: string[]
         piecesFilterType: PiecesFilterType
-        tasks: number | undefined
-        aiCredits: number | undefined
         log: FastifyBaseLogger
-        isNewProject: boolean
     }
 
-const updateProjectLimits = async (
-    { platformId, projectId, piecesTags, piecesFilterType, tasks, aiCredits, log, isNewProject }:
-    UpdateProjectLimitsParams,
-): Promise<void> => {
+const updateProjectLimits = async ({ platformId, projectId, piecesTags, piecesFilterType, log }: UpdateProjectLimitsParams): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
         projectId,
         piecesTags,
         piecesFilterType,
     })
-    const tasksLimit = isNewProject ? (tasks ?? 50000) : tasks
-    const aiCreditsLimit = isNewProject ? (aiCredits ?? 1000) : aiCredits
     await projectLimitsService(log).upsert({
         nickname: 'default-embeddings-limit',
-        tasks: tasksLimit,
-        aiCredits: aiCreditsLimit,
         pieces,
         piecesFilterType,
     }, projectId)
@@ -178,8 +174,8 @@ const getOrCreateProject = async ({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,
-        notifyStatus: NotificationStatus.NEVER,
         externalId: externalProjectId,
+        type: ProjectType.TEAM,
     })
 
     return { project, isNewProject: true }

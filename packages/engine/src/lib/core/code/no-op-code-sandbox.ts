@@ -8,9 +8,13 @@ export const noOpCodeSandbox: CodeSandbox = {
         return codeModule.code(inputs)
     },
 
-    async runScript({ script, scriptContext }) {
-        const params = Object.keys(scriptContext)
-        const args = Object.values(scriptContext)
+    async runScript({ script, scriptContext, functions }) {
+        const newContext = {
+            ...scriptContext,
+            ...functions,
+        }   
+        const params = Object.keys(newContext)
+        const args = Object.values(newContext)
         const body = `return (${script})`
         const fn = Function(...params, body)
         return fn(...args)

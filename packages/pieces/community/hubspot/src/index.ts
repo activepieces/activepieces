@@ -87,6 +87,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'crm.objects.deals.write',
 		'crm.objects.line_items.read',
 		'crm.objects.owners.read',
+		'crm.objects.leads.read',
+		'crm.objects.leads.write',
 		'crm.schemas.companies.read',
 		'crm.schemas.contacts.read',
 		'crm.schemas.custom.read',
@@ -100,7 +102,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'settings.users.read',
 		'settings.users.teams.read',
 		'files',
-		'forms'
+		'forms',
+		'scheduler.meetings.meeting-link.read'
 		// 'business_units_view.read'
 	],
 });
@@ -162,7 +165,7 @@ export const hubspot = createPiece({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Bearer ${(auth).access_token}`,
 			}),
 		}),
 	],

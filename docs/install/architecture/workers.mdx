@@ -19,7 +19,7 @@ This documentation will not discuss how the engine works other than stating that
 
 ## Sandboxing
 
-Sandbox in Activepieces means in which environment the engine will execute the flow. There are three types of sandboxes, each with different trade-offs:
+Sandbox in Activepieces means in which environment the engine will execute the flow. There are four types of sandboxes, each with different trade-offs:
 
 <Snippet file="execution-mode.mdx" />
 
@@ -34,10 +34,10 @@ These are the steps that are used to execute the flow:
 
 <Steps>
   <Step title="Prepare Code Pieces">
-    If the code doesn't exist, it will be compiled using TypeScript Compiler (tsc) and the necessary npm packages will be prepared, if possible.
+    If the code doesn't exist, it will be built with bun with the necessary npm packages will be prepared, if possible.
   </Step>
   <Step title="Install Pieces">
-    Pieces are npm packages, we perform a simple check. If they don't exist, we use `pnpm` to install the pieces.
+    Pieces are npm packages, we use `bun` to install the pieces.
   </Step>
   <Step title="Execution">
     There is a pool of worker threads kept warm and the engine stays running and listening. Each thread executes one engine operation and sends back the result upon completion.

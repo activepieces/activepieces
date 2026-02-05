@@ -100,9 +100,11 @@ const EditableText = ({
           {value}
         </div>
       </TooltipTrigger>
-      <TooltipContent className="font-normal z-50" side="bottom">
-        {tooltipContent}
-      </TooltipContent>
+      {tooltipContent && (
+        <TooltipContent className="font-normal z-50" side="bottom">
+          {tooltipContent}
+        </TooltipContent>
+      )}
     </Tooltip>
   ) : (
     <div
@@ -110,7 +112,7 @@ const EditableText = ({
       ref={editableTextRef}
       contentEditable
       suppressContentEditableWarning={true}
-      className={`${className}  focus:outline-none break-all`}
+      className={`${className}  focus:outline-hidden break-all`}
       onBlur={() => {
         emitChangedValue();
         setIsEditing(false);

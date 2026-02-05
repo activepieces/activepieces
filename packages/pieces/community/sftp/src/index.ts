@@ -22,18 +22,37 @@ export async function getProtocolBackwardCompatibility(protocol: string | undefi
   }
   return protocol;
 }
-export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, allow_unauthorized_certificates: boolean | undefined, username: string, password: string }) {
-  const { protocol, host, port, allow_unauthorized_certificates, username, password } = auth;
+export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, allow_unauthorized_certificates: boolean | undefined, allow_anonymous_login: boolean | undefined, username: string, password: string | undefined, privateKey: string | undefined, algorithm: string[] | undefined }): Promise<T> {
+  const { protocol, host, port, allow_unauthorized_certificates, allow_anonymous_login, username, password, privateKey, algorithm } = auth;
   const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(protocol);
   if (protocolBackwardCompatibility === 'sftp') {
     const sftp = new Client();
-    await sftp.connect({
-      host,
-      port,
-      username,
-      password,
-      timeout: 10000,
-    });
+
+    if (password) {
+      await sftp.connect({
+        host,
+        port,
+        username,
+        password,
+        timeout: 10000,
+      });
+    }
+    else if (privateKey) {
+      if (!algorithm || algorithm.length === 0) {
+        throw new Error('At least one algorithm must be selected for SFTP Private Key authentication.');
+      }
+      await sftp.connect({
+        host,
+        port,
+        username,
+        privateKey: privateKey.replace(/\\n/g, '\n').trim(),
+        algorithms: {
+          serverHostKey: algorithm 
+        }  as Client.ConnectOptions['algorithms'],
+        timeout: 10000,
+      });
+    }
+
     return sftp as T;
   } else {
     const ftpClient = new FTPClient();
@@ -81,6 +100,13 @@ export const sftpAuth = PieceAuth.CustomAuth({
       defaultValue: false,
       required: false,
     }),
+    allow_anonymous_login: Property.Checkbox({
+      displayName: 'Allow Anonymous Login',
+      description:
+        'Allow anonymous login to FTP servers (only applicable for FTP/FTPS)',
+      defaultValue: false,
+      required: false,
+    }),
     host: Property.ShortText({
       displayName: 'Host',
       description: 'The host of the server',
@@ -99,16 +125,52 @@ export const sftpAuth = PieceAuth.CustomAuth({
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'The password to authenticate with',
-      required: true,
+      description: 'The password to authenticate with. Either this or private key is required',
+      required: false,
     }),
+    privateKey: PieceAuth.SecretText({
+      displayName: 'Private Key',
+      description: 'The private key to authenticate with. Either this or password is required',
+      required: false,
+    }),
+    algorithm: Property.StaticMultiSelectDropdown({
+      displayName: 'Host Key Algorithm',
+      description: 'The host key algorithm to use for SFTP Private Key authentication',
+      required: false,
+      options: {
+        options: [
+          { value: 'ssh-rsa', label: 'ssh-rsa' },
+          { value: 'ssh-dss', label: 'ssh-dss' },
+          { value: 'ecdsa-sha2-nistp256', label: 'ecdsa-sha2-nistp256' },
+          { value: 'ecdsa-sha2-nistp384', label: 'ecdsa-sha2-nistp384' },
+          { value: 'ecdsa-sha2-nistp521', label: 'ecdsa-sha2-nistp521' },
+          { value: 'ssh-ed25519', label: 'ssh-ed25519' },
+          { value: 'rsa-sha2-256', label: 'rsa-sha2-256' },
+          { value: 'rsa-sha2-512', label: 'rsa-sha2-512' }
+        ],
+      },
+    })
   },
   validate: async ({ auth }) => {
     let client: Client | FTPClient | null = null;
     const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.protocol);
     try {
+      if (!auth.privateKey && !auth.password && !auth.allow_anonymous_login) {
+        return {
+          valid: false,
+          error: 'Either password or private key must be provided for non-anonymous authentication.',
+        };
+      }
+
       switch (protocolBackwardCompatibility) {
         case 'sftp': {
+          if (auth.allow_anonymous_login) {
+            return {
+              valid: false,
+              error: 'Anonymous login is not supported for SFTP protocol.',
+            };
+          }
+
           client = await getClient<Client>(auth);
           break;
         }
@@ -138,7 +200,7 @@ export const ftpSftp = createPiece({
   displayName: 'FTP/SFTP',
   description: 'Connect to FTP, FTPS or SFTP servers',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/sftp.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/sftp.svg',
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
   authors: [
     'Abdallah-Alwarawreh',
@@ -146,6 +208,7 @@ export const ftpSftp = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
+    'prasanna2000-max',
   ],
   auth: sftpAuth,
   actions: [

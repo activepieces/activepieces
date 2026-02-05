@@ -126,10 +126,21 @@ const updateProjectJsonConfig = async (
     '[updateProjectJsonConfig] targets.build.options is required'
   );
 
+  projectJson.targets.build.dependsOn = ['prebuild', '^build'];
+  projectJson.targets.prebuild = {
+    dependsOn: ['^build'],
+    executor: 'nx:run-commands',
+    options: {
+      cwd: `packages/pieces/${pieceType}/${pieceName}`,
+      command: 'bun install --no-save --silent'
+    }
+  };
+
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType =
     'dependencies';
   projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson =
     true;
+  projectJson.targets.build.options.clean = false;
    if(projectJson.targets.build.options.assets){
     projectJson.targets.build.options.assets.push(i18nAsset);
    }
@@ -156,14 +167,27 @@ const updateProjectJsonConfig = async (
     projectJson
   );
 };
-const updateEslintFile = async (pieceName: string, pieceType: string) => {
-  const eslintFile = await readPackageEslint(
-    `packages/pieces/${pieceType}/${pieceName}`
-  );
-  eslintFile.overrides.splice(
-    eslintFile.overrides.findIndex((rule: any) => rule.files[0] == '*.json'),
-    1
-  );
+const addEslintFile = async (pieceName: string, pieceType: string) => {
+  const eslintFile ={
+    "extends": ["../../../../.eslintrc.base.json"],
+    "ignorePatterns": ["!**/*"],
+    "overrides": [
+      {
+        "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+        "rules": {}
+      },
+      {
+        "files": ["*.ts", "*.tsx"],
+        "rules": {}
+      },
+      {
+        "files": ["*.js", "*.jsx"],
+        "rules": {}
+      }
+    ]
+  }
+  
+ 
   await writePackageEslint(
     `packages/pieces/${pieceType}/${pieceName}`,
     eslintFile
@@ -173,7 +197,7 @@ const setupGeneratedLibrary = async (pieceName: string, pieceType: string) => {
   await removeUnusedFiles(pieceName, pieceType);
   await generateIndexTsFile(pieceName, pieceType);
   await updateProjectJsonConfig(pieceName, pieceType);
-  await updateEslintFile(pieceName, pieceType);
+  await addEslintFile(pieceName, pieceType);
 };
 
 export const createPiece = async (

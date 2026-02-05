@@ -5,6 +5,7 @@ import { GlobeIcon, WorkflowIcon } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -20,14 +21,13 @@ import {
 import { Form, FormField, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useToast } from '@/components/ui/use-toast';
 import {
   appConnectionsMutations,
   appConnectionsQueries,
 } from '@/features/connections/lib/app-connections-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { cn } from '@/lib/utils';
 import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 
@@ -56,7 +56,6 @@ const ReplaceConnectionsDialog = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [step, setStep] = useState<STEP>(STEP.SELECT);
   const [affectedFlows, setAffectedFlows] = useState<Array<PopulatedFlow>>([]);
-  const { toast } = useToast();
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
 
   const { data: connections, isLoading: connectionsLoading } =
@@ -91,10 +90,8 @@ const ReplaceConnectionsDialog = ({
         setStep(STEP.CONFIRM);
       },
       onError: () => {
-        toast({
-          title: t('Error'),
+        toast.error(t('Error'), {
           description: t('Failed to get affected flows'),
-          variant: 'destructive',
         });
       },
     });
@@ -436,7 +433,7 @@ const ReplaceConnectionsDialog = ({
             </ScrollArea>
 
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={handleBack}>
+              <Button type="button" variant="accent" onClick={handleBack}>
                 {t('Back')}
               </Button>
               <Button

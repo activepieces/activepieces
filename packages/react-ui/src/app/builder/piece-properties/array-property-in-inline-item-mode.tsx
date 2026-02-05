@@ -1,13 +1,14 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useFormContext } from 'react-hook-form';
 
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { ArraySubProps } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 
-import {
-  useBuilderStateContext,
-  useIsFocusInsideListMapperModeInput,
-} from '../builder-hooks';
+import { useBuilderStateContext } from '../builder-hooks';
+import { flowCanvasHooks } from '../flow-canvas/hooks';
 
-import { AutoPropertiesFormComponent } from './auto-properties-form';
+import { GenericPropertiesForm } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 type BaseArrayPropertyProps = {
@@ -36,22 +37,28 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
       state.setIsFocusInsideListMapperModeInput,
     ]);
     const { inputName, disabled } = props;
-    useIsFocusInsideListMapperModeInput({
+    flowCanvasHooks.useIsFocusInsideListMapperModeInput({
       containerRef,
       setIsFocusInsideListMapperModeInput,
       isFocusInsideListMapperModeInput,
     });
-
+    useFixInlineArrayPropertyValue(inputName, props);
     return (
       <div className="w-full" ref={containerRef}>
         {props.arrayProperties ? (
-          <div className="p-4 border rounded-md flex flex-col gap-4">
-            <AutoPropertiesFormComponent
+          <div
+            className={cn(
+              'p-4 border rounded-md flex flex-col',
+              GAP_SIZE_FOR_STEP_SETTINGS,
+            )}
+          >
+            <GenericPropertiesForm
               prefixValue={inputName}
               props={props.arrayProperties}
               useMentionTextInput={true}
-              allowDynamicValues={false}
+              propertySettings={null}
               disabled={disabled}
+              dynamicPropsInfo={null}
             />
           </div>
         ) : (
@@ -69,3 +76,23 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
 ArrayPiecePropertyInInlineItemMode.displayName =
   'ArrayPiecePropertyInInlineItemMode';
 export { ArrayPiecePropertyInInlineItemMode };
+
+/**
+ * we had a bug where the value for inline array property was not an object
+ * this will always insure the value is an object
+ */
+const useFixInlineArrayPropertyValue = (
+  inputName: string,
+  props: ArrayPiecePropertyInInlineItemModeProps,
+) => {
+  const form = useFormContext();
+  useEffect(() => {
+    const value = form.getValues(inputName);
+    if (
+      props.arrayProperties &&
+      (isNil(value) || typeof value !== 'object' || Array.isArray(value))
+    ) {
+      form.setValue(inputName, {}, { shouldValidate: true });
+    }
+  }, []);
+};

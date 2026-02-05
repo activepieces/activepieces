@@ -1,9 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
-import { PackageType, PieceType, VersionType } from '../../pieces'
+import { VersionType } from '../../pieces'
+import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
-import { PieceTriggerSettings } from '../triggers/trigger'
 
-export enum ActionType {
+export enum FlowActionType {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
@@ -25,19 +25,22 @@ const commonActionProps = {
     valid: Type.Boolean({}),
     displayName: Type.String({}),
     skip: Type.Optional(Type.Boolean({})),
-    customLogoUrl: Type.Optional(Type.String({})),
+}
+const commonActionSettings = {
+    sampleData: Type.Optional(SampleDataSetting),
+    customLogoUrl: Type.Optional(Type.String()),
 }
 
 export const ActionErrorHandlingOptions = Type.Optional(
     Type.Object({
         continueOnFailure: Type.Optional(
             Type.Object({
-                value: Type.Boolean(),
+                value: Type.Optional(Type.Boolean()),
             }),
         ),
         retryOnFailure: Type.Optional(
             Type.Object({
-                value: Type.Boolean(),
+                value: Type.Optional(Type.Boolean()),
             }),
         ),
     }),
@@ -54,9 +57,9 @@ export const SourceCode = Type.Object({
 export type SourceCode = Static<typeof SourceCode>
 
 export const CodeActionSettings = Type.Object({
+    ...commonActionSettings,
     sourceCode: SourceCode,
     input: Type.Record(Type.String({}), Type.Any()),
-    inputUiInfo: Type.Optional(SampleDataSetting),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 
@@ -64,31 +67,30 @@ export type CodeActionSettings = Static<typeof CodeActionSettings>
 
 export const CodeActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.CODE),
+    type: Type.Literal(FlowActionType.CODE),
     settings: CodeActionSettings,
 })
 export const PieceActionSettings = Type.Object({
-    packageType: Type.Enum(PackageType),
-    pieceType: Type.Enum(PieceType),
+    ...commonActionSettings,
+    propertySettings: Type.Record(Type.String(), PropertySettings),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Unknown()),
-    inputUiInfo: SampleDataSetting,
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 export type PieceActionSettings = Static<typeof PieceActionSettings>
 
 export const PieceActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.PIECE),
+    type: Type.Literal(FlowActionType.PIECE),
     settings: PieceActionSettings,
 })
 
 // Loop Items
 export const LoopOnItemsActionSettings = Type.Object({
+    ...commonActionSettings,
     items: Type.String(),
-    inputUiInfo: SampleDataSetting,
 })
 export type LoopOnItemsActionSettings = Static<
   typeof LoopOnItemsActionSettings
@@ -96,7 +98,7 @@ export type LoopOnItemsActionSettings = Static<
 
 export const LoopOnItemsActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.LOOP_ON_ITEMS),
+    type: Type.Literal(FlowActionType.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
 })
 
@@ -239,11 +241,6 @@ export type BranchSingleValueCondition = Static<
   typeof BranchSingleValueCondition
 >
 
-export const BranchActionSettings = Type.Object({
-    conditions: Type.Array(Type.Array(BranchConditionValid(false))),
-    inputUiInfo: SampleDataSetting,
-})
-export type BranchActionSettings = Static<typeof BranchActionSettings>
 
 export const RouterBranchesSchema = (addMinLength: boolean) =>
     Type.Array(
@@ -261,15 +258,14 @@ export const RouterBranchesSchema = (addMinLength: boolean) =>
     )
 
 export const RouterActionSettings = Type.Object({
+    ...commonActionSettings,
     branches: RouterBranchesSchema(false),
     executionType: Type.Enum(RouterExecutionType),
-    inputUiInfo: SampleDataSetting,
 })
 
 export const RouterActionSettingsWithValidation = Type.Object({
     branches: RouterBranchesSchema(true),
     executionType: Type.Enum(RouterExecutionType),
-    inputUiInfo: SampleDataSetting,
 })
 
 export type RouterActionSettings = Static<typeof RouterActionSettings>
@@ -278,7 +274,7 @@ export type RouterActionSettings = Static<typeof RouterActionSettings>
 
 // Union of all actions
 
-export const Action = Type.Recursive((action) =>
+export const FlowAction = Type.Recursive((action) =>
     Type.Union([
         Type.Intersect([
             CodeActionSchema,
@@ -302,7 +298,7 @@ export const Action = Type.Recursive((action) =>
         Type.Intersect([
             Type.Object({
                 ...commonActionProps,
-                type: Type.Literal(ActionType.ROUTER),
+                type: Type.Literal(FlowActionType.ROUTER),
                 settings: RouterActionSettings,
             }),
             Type.Object({
@@ -314,7 +310,7 @@ export const Action = Type.Recursive((action) =>
 )
 export const RouterActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(ActionType.ROUTER),
+    type: Type.Literal(FlowActionType.ROUTER),
     settings: RouterActionSettings,
 })
 
@@ -324,33 +320,27 @@ export const SingleActionSchema = Type.Union([
     LoopOnItemsActionSchema,
     RouterActionSchema,
 ])
-export type Action = Static<typeof Action>
+export type FlowAction = Static<typeof FlowAction>
 
 
 export type RouterAction = Static<typeof RouterActionSchema> & {
-    nextAction?: Action
-    children: (Action | null)[]
+    nextAction?: FlowAction
+    children: (FlowAction | null)[]
 }
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & {
-    nextAction?: Action
-    firstLoopAction?: Action
+    nextAction?: FlowAction
+    firstLoopAction?: FlowAction
 }
 
 export type PieceAction = Static<typeof PieceActionSchema> & {
-    nextAction?: Action
+    nextAction?: FlowAction
 }
 
 export type CodeAction = Static<typeof CodeActionSchema> & {
-    nextAction?: Action
+    nextAction?: FlowAction
 }
 
-export type StepSettings =
-  | CodeActionSettings
-  | PieceActionSettings
-  | PieceTriggerSettings
-  | BranchActionSettings
-  | LoopOnItemsActionSettings
 
 export const emptyCondition: ValidBranchCondition = {
     firstValue: '',

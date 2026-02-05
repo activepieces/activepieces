@@ -1,635 +1,236 @@
-import React, { useState, useMemo, useRef } from 'react';
+import { t } from 'i18next';
+import {
+  CheckCircle2Icon,
+  LayoutGridIcon,
+  PuzzleIcon,
+  SparklesIcon,
+  WrenchIcon,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
-import {
-  PieceTagEnum,
-  PieceTagGroup,
-} from '@/app/builder/pieces-selector/piece-tag-group';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { PiecesSearchInput } from '@/features/pieces/components/piece-selector-search';
+import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-tabs';
 import {
-  StepMetadata,
-  PieceSelectorOperation,
-  HandleSelectCallback,
-  StepMetadataWithSuggestions,
-  PieceSelectorItem,
-  PieceStepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
+  PieceSelectorTabsProvider,
+  PieceSelectorTabType,
+} from '@/features/pieces/lib/piece-selector-tabs-provider';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { PieceSelectorOperation } from '@/lib/types';
+import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
+
 import {
-  Action,
-  ActionType,
-  BranchExecutionType,
-  BranchOperator,
-  flowOperations,
-  FlowOperationType,
-  flowStructureUtil,
-  isNil,
-  RouterExecutionType,
-  StepLocationRelativeToParent,
-  TodoType,
-  Trigger,
-  TriggerType,
-} from '@activepieces/shared';
+  PieceSearchProvider,
+  usePieceSearchContext,
+} from '../../../features/pieces/lib/piece-search-context';
 
-import { SearchInput } from '../../../components/ui/search-input';
-
-import { AskAiButton } from './ask-ai';
+import { AITabContent } from './ai-tab-content';
+import { ApprovalsTabContent } from './approvals-tab-content';
+import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
-import { StepsCardList } from './steps-card-list';
+
+const getTabsList = (
+  operationType: FlowOperationType,
+  isEmbeddingEnabled: boolean,
+) => {
+  const baseTabs = [
+    {
+      value: PieceSelectorTabType.EXPLORE,
+      name: t('Explore'),
+      icon: <LayoutGridIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.APPS,
+      name: t('Apps'),
+      icon: <PuzzleIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.UTILITY,
+      name: t('Utility'),
+      icon: <WrenchIcon className="size-5" />,
+    },
+  ];
+
+  const replaceOrAddAction = [
+    FlowOperationType.ADD_ACTION,
+    FlowOperationType.UPDATE_ACTION,
+  ].includes(operationType);
+
+  if (replaceOrAddAction && !isEmbeddingEnabled) {
+    baseTabs.splice(1, 0, {
+      value: PieceSelectorTabType.AI_AND_AGENTS,
+      name: t('AI & Agents'),
+      icon: <SparklesIcon className="size-5" />,
+    });
+    baseTabs.push({
+      value: PieceSelectorTabType.APPROVALS,
+      name: t('Approvals'),
+      icon: <CheckCircle2Icon className="size-5" />,
+    });
+  }
+
+  return baseTabs;
+};
 
 type PieceSelectorProps = {
   children: React.ReactNode;
-  open: boolean;
-  asChild?: boolean;
-  initialSelectedPiece?: string | undefined;
-  onOpenChange: (open: boolean) => void;
-} & { operation: PieceSelectorOperation };
-
-type PieceGroup = {
-  title: string;
-  pieces: StepMetadataWithSuggestions[];
+  id: string;
+  operation: PieceSelectorOperation;
+  openSelectorOnClick?: boolean;
+  stepToReplacePieceDisplayName?: string;
 };
 
-const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval'];
+const PieceSelectorWrapper = (props: PieceSelectorProps) => {
+  return (
+    <PieceSearchProvider>
+      <PieceSelectorContent {...props} />
+    </PieceSearchProvider>
+  );
+};
 
-const PieceSelector = ({
+const PieceSelectorContent = ({
   children,
-  open,
-  asChild = true,
-  onOpenChange,
   operation,
-  initialSelectedPiece,
+  id,
+  openSelectorOnClick = true,
+  stepToReplacePieceDisplayName,
 }: PieceSelectorProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [
+    openedPieceSelectorStepNameOrAddButtonId,
+    setOpenedPieceSelectorStepNameOrAddButtonId,
+    setSelectedPieceMetadataInPieceSelector,
+    isForEmptyTrigger,
+    deselectStep,
+  ] = useBuilderStateContext((state) => [
+    state.openedPieceSelectorStepNameOrAddButtonId,
+    state.setOpenedPieceSelectorStepNameOrAddButtonId,
+    state.setSelectedPieceMetadataInPieceSelector,
+    state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
+      id === 'trigger',
+    state.deselectStep,
+  ]);
+  const { searchQuery, setSearchQuery } = usePieceSearchContext();
+  const isForReplace =
+    operation.type === FlowOperationType.UPDATE_ACTION ||
+    (operation.type === FlowOperationType.UPDATE_TRIGGER && !isForEmptyTrigger);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [selectedPieceMetadata, setSelectedMetadata] = useState<
-    StepMetadata | undefined
-  >(undefined);
+  const isOpen = openedPieceSelectorStepNameOrAddButtonId === id;
+  const isMobile = useIsMobile();
+  const { listHeightRef, popoverTriggerRef } =
+    pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
+  const listHeight = Math.min(listHeightRef.current, 300);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      });
+    }
+  }, [isOpen]);
 
-  const initiallySelectedMetaDataRef = useRef<StepMetadata | undefined>(
-    undefined,
-  );
-
-  const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
-    PieceTagEnum.ALL,
-  );
-  const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] =
-    useBuilderStateContext((state) => [
-      state.applyOperation,
-      state.selectStepByName,
-      state.flowVersion,
-      state.setAskAiButtonProps,
-    ]);
-
-  const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
-  const { metadata, isLoading: isLoadingPieces } =
-    piecesHooks.useAllStepsMetadata({
-      searchQuery: debouncedQuery,
-      type: isTrigger ? 'trigger' : 'action',
-    });
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSelectedPieceMetadataInPieceSelector(null);
+  };
 
   const { platform } = platformHooks.useCurrentPlatform();
+  const tabsList = useMemo(
+    () => getTabsList(operation.type, platform?.plan.embeddingEnabled ?? false),
+    [operation.type, platform?.plan.embeddingEnabled],
+  );
 
-  const pieceGroups = useMemo(() => {
-    if (!metadata) return [];
-
-    const filteredMetadataOnTag = metadata.filter((stepMetadata) => {
-      switch (selectedTag) {
-        case PieceTagEnum.CORE:
-          return pieceSelectorUtils.isCorePiece(stepMetadata);
-        case PieceTagEnum.AI:
-          return pieceSelectorUtils.isAiPiece(stepMetadata);
-        case PieceTagEnum.APPS:
-          return pieceSelectorUtils.isAppPiece(stepMetadata);
-        case PieceTagEnum.ALL:
-        default:
-          return true;
-      }
-    });
-
-    const piecesMetadata =
-      debouncedQuery.length > 0
-        ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag)
-        : filteredMetadataOnTag;
-
-    initiallySelectedMetaDataRef.current = piecesMetadata.find(
-      (p) => p.displayName === initialSelectedPiece,
-    );
-    setSelectedMetadata(initiallySelectedMetaDataRef.current);
-
-    if (debouncedQuery.length > 0 && piecesMetadata.length > 0) {
-      return [{ title: 'Search Results', pieces: piecesMetadata }];
-    }
-
-    const flowControllerPieces = piecesMetadata.filter(
-      (p) => pieceSelectorUtils.isFlowController(p) && !isTrigger,
-    );
-    const universalAiPieces = piecesMetadata.filter(
-      (p) => pieceSelectorUtils.isUniversalAiPiece(p) && !isTrigger,
-    );
-    const utilityCorePieces = piecesMetadata.filter(
-      (p) => pieceSelectorUtils.isUtilityCorePiece(p, platform) && !isTrigger,
-    );
-    const popularPieces = piecesMetadata.filter(
-      (p) =>
-        pieceSelectorUtils.isPopularPieces(p, platform) &&
-        selectedTag !== PieceTagEnum.AI,
-    );
-    const other = piecesMetadata.filter(
-      (p) =>
-        !popularPieces.includes(p) &&
-        !utilityCorePieces.includes(p) &&
-        !flowControllerPieces.includes(p) &&
-        !universalAiPieces.includes(p),
-    );
-
-    const groups: PieceGroup[] = [
-      { title: 'Popular', pieces: popularPieces },
-      { title: 'Flow Control', pieces: flowControllerPieces },
-      { title: 'Utility', pieces: utilityCorePieces },
-      { title: 'Universal AI', pieces: universalAiPieces },
-      { title: 'Other', pieces: other },
-    ];
-
-    return groups.filter((group) => group.pieces.length > 0);
-  }, [
-    metadata,
-    selectedTag,
-    debouncedQuery,
-    platform,
-    isTrigger,
-    initialSelectedPiece,
-  ]);
-
-  const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
-  const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
-
-  const {
-    listHeightRef,
-    popoverTriggerRef,
-    aboveListSectionHeight,
-    maxListHeight,
-  } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
-
-  const resetField = () => {
-    setSearchQuery('');
-    setSelectedMetadata(initiallySelectedMetaDataRef.current);
-    setSelectedTag(PieceTagEnum.ALL);
-  };
-
-  const handleAddAction = (
-    stepName: string,
-    stepMetadata: StepMetadata,
-    parentStep: Action | Trigger,
-    actionOrTrigger: PieceSelectorItem,
-    settings?: Record<string, unknown>,
-    valid?: boolean,
-  ) => {
-    const stepData = pieceSelectorUtils.getDefaultStep({
-      stepName: stepName,
-      stepMetadata,
-      actionOrTrigger,
-      settings: settings,
-    });
-
-    applyOperation({
-      type: FlowOperationType.ADD_ACTION,
-      request: {
-        parentStep: parentStep.name,
-        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-        action: {
-          ...stepData,
-          valid: valid ?? stepData.valid,
-        } as Action,
-      },
-    });
-  };
-
-  const handleAddCreateTodoAction = (
-    stepMetadata: StepMetadata,
-    actionOrTrigger: PieceSelectorItem,
-    type?: string,
-  ) => {
-    if (operation.type !== FlowOperationType.ADD_ACTION) {
-      return;
-    }
-    const routerAction = {
-      name: 'router',
-      displayName: 'Check Todo Status',
-      description: 'Split your flow into branches depending on todo status',
-      type: ActionType.ROUTER,
-    } as PieceSelectorItem;
-
-    const routerStepMetadata = {
-      displayName: 'Check Todo Status',
-      logoUrl: stepMetadata.logoUrl,
-      description: 'Split your flow into branches depending on todo status',
-      type: ActionType.ROUTER,
-    } as StepMetadata;
-
-    const newStepNames = pieceSelectorUtils.getStepNames(
-      stepMetadata,
-      flowVersion,
-      3,
-    );
-
-    const stepData = pieceSelectorUtils.getDefaultStep({
-      stepName: newStepNames[0],
-      stepMetadata,
-      actionOrTrigger,
-    });
-
-    applyOperation({
-      type: FlowOperationType.ADD_ACTION,
-      request: {
-        ...operation.actionLocation,
-        action: stepData as Action,
-      },
-    });
-    flowOperations.apply(flowVersion, {
-      type: FlowOperationType.ADD_ACTION,
-      request: {
-        ...operation.actionLocation,
-        action: stepData as Action,
-      },
-    });
-    selectStepByName(stepData.name);
-
-    switch (type) {
-      case TodoType.INTERNAL: {
-        const routerInternalSettings = {
-          branches: [
-            {
-              conditions: [
-                [
-                  {
-                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                    firstValue: `{{ ${stepData.name}['status'] }}`,
-                    secondValue: 'Accepted',
-                    caseSensitive: false,
-                  },
-                ],
-              ],
-              branchType: BranchExecutionType.CONDITION,
-              branchName: 'Accepted',
-            },
-            {
-              branchType: BranchExecutionType.FALLBACK,
-              branchName: 'Rejected',
-            },
-          ],
-          executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-          inputUiInfo: {
-            customizedInputs: {
-              logoUrl: stepMetadata.logoUrl,
-              description: routerStepMetadata.description,
-            },
-          },
-        };
-
-        handleAddAction(
-          newStepNames[1],
-          routerStepMetadata,
-          stepData,
-          routerAction,
-          routerInternalSettings,
-          true,
-        );
-        break;
-      }
-      case TodoType.EXTERNAL: {
-        const waitForApprovalAction = (
-          stepMetadata as PieceStepMetadataWithSuggestions
-        )?.suggestedActions?.find(
-          (action: any) => action.name === 'wait_for_approval',
-        ) as PieceSelectorItem;
-
-        const waitForApprovalStepName = newStepNames[1];
-
-        const waitForApprovalStepData = pieceSelectorUtils.getDefaultStep({
-          stepName: waitForApprovalStepName,
-          stepMetadata,
-          actionOrTrigger: waitForApprovalAction,
-        });
-
-        const waitForApprovalStepDataSettings = {
-          ...waitForApprovalStepData.settings,
-          input: {
-            ...waitForApprovalStepData.settings.input,
-            taskId: `{{ ${stepData.name}['id'] }}`,
-          },
-        };
-
-        handleAddAction(
-          waitForApprovalStepName,
-          stepMetadata,
-          stepData,
-          waitForApprovalAction,
-          waitForApprovalStepDataSettings,
-          true,
-        );
-
-        const routerExternalSettings = {
-          branches: [
-            {
-              conditions: [
-                [
-                  {
-                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                    firstValue: `{{ ${waitForApprovalStepData.name}['status'] }}`,
-                    secondValue: 'Accepted',
-                    caseSensitive: false,
-                  },
-                ],
-              ],
-              branchType: BranchExecutionType.CONDITION,
-              branchName: 'Accepted',
-            },
-            {
-              branchType: BranchExecutionType.FALLBACK,
-              branchName: 'Rejected',
-            },
-          ],
-          executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-          inputUiInfo: {
-            customizedInputs: {
-              logoUrl: stepMetadata.logoUrl,
-              description: routerStepMetadata.description,
-            },
-          },
-        };
-
-        handleAddAction(
-          newStepNames[2],
-          routerStepMetadata,
-          waitForApprovalStepData,
-          routerAction,
-          routerExternalSettings,
-          true,
-        );
-        break;
-      }
-    }
-  };
-
-  const handleSelect: HandleSelectCallback = async (
-    stepMetadata,
-    actionOrTrigger,
-    type?: string,
-  ) => {
-    resetField();
-    onOpenChange(false);
-
-    const newStepName = pieceSelectorUtils.getStepName(
-      stepMetadata,
-      flowVersion,
-    );
-
-    const stepData = pieceSelectorUtils.getDefaultStep({
-      stepName: newStepName,
-      stepMetadata,
-      actionOrTrigger,
-    });
-
-    switch (operation.type) {
-      case FlowOperationType.UPDATE_TRIGGER: {
-        applyOperation({
-          type: FlowOperationType.UPDATE_TRIGGER,
-          request: stepData as Trigger,
-        });
-        selectStepByName('trigger');
-        break;
-      }
-      case FlowOperationType.ADD_ACTION: {
-        if (
-          stepData.settings.pieceName === '@activepieces/piece-todos' &&
-          type
-        ) {
-          handleAddCreateTodoAction(stepMetadata, actionOrTrigger, type);
-          break;
-        }
-        applyOperation({
-          type: FlowOperationType.ADD_ACTION,
-          request: {
-            ...operation.actionLocation,
-            action: stepData as Action,
-          },
-        });
-        selectStepByName(stepData.name);
-        break;
-      }
-      case FlowOperationType.UPDATE_ACTION: {
-        const currentAction = flowStructureUtil.getStep(
-          operation.stepName,
-          flowVersion.trigger,
-        );
-        if (isNil(currentAction)) {
-          console.error(
-            "Trying to update an action that's not in the displayed flow version",
-          );
-          return;
-        }
-        if (
-          currentAction.type === TriggerType.EMPTY ||
-          currentAction.type === TriggerType.PIECE
-        ) {
-          console.error(
-            "Trying to update an action that's actually the trigger in the displayed flow version",
-          );
-          return;
-        }
-        if (
-          (currentAction.type !== ActionType.PIECE &&
-            stepData.type !== ActionType.PIECE &&
-            stepData.type === currentAction.type) ||
-          (currentAction.type === ActionType.PIECE &&
-            stepData.type === ActionType.PIECE &&
-            stepData.settings.actionName === currentAction.settings.actionName)
-        ) {
-          return;
-        }
-
-        applyOperation({
-          type: FlowOperationType.UPDATE_ACTION,
-          request: {
-            type: (stepData as Action).type,
-            displayName: stepData.displayName,
-            name: operation.stepName,
-            skip: (stepData as Action).skip,
-            settings: {
-              ...stepData.settings,
-            },
-            valid: stepData.valid,
-          },
-        });
-        break;
-      }
-    }
-
-    setAskAiButtonProps(null);
-  };
-  const isMobile = useIsMobile();
   return (
     <Popover
-      open={open}
+      open={isOpen}
       modal={true}
       onOpenChange={(open) => {
         if (!open) {
-          resetField();
-          listHeightRef.current = maxListHeight;
+          clearSearch();
+          setOpenedPieceSelectorStepNameOrAddButtonId(null);
+          if (isForEmptyTrigger) {
+            deselectStep();
+          }
         }
-        onOpenChange(open);
       }}
     >
-      <PopoverTrigger ref={popoverTriggerRef} asChild={asChild}>
-        {children}
-      </PopoverTrigger>
-      <PopoverContent
-        onContextMenu={(e) => {
-          e.stopPropagation();
-        }}
-        className="w-[340px] md:w-[600px] p-0 shadow-lg"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
+      <PopoverTrigger
+        ref={popoverTriggerRef}
+        asChild={true}
+        onClick={() => {
+          if (openSelectorOnClick) {
+            setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          }
         }}
       >
-        <>
-          <div
-            style={{
-              height: `${aboveListSectionHeight}px`,
-            }}
-          >
-            <div className="p-2 flex gap-1 items-center">
-              <SearchInput
-                placeholder="Search"
-                value={searchQuery}
-                showDeselect={searchQuery.length > 0}
-                onChange={(e) => {
-                  setSearchQuery(e);
-                  setSelectedTag(PieceTagEnum.ALL);
-                  setSelectedMetadata(undefined);
+        {children}
+      </PopoverTrigger>
+
+      <PieceSelectorTabsProvider
+        initiallySelectedTab={
+          isForReplace || isMobile
+            ? PieceSelectorTabType.NONE
+            : PieceSelectorTabType.EXPLORE
+        }
+        onTabChange={clearSearch}
+        key={isOpen ? 'open' : 'closed'}
+      >
+        <PopoverContent
+          onContextMenu={(e) => {
+            e.stopPropagation();
+          }}
+          className="w-[340px] md:w-[600px] p-0 shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <>
+            <div>
+              <PiecesSearchInput
+                searchInputRef={searchInputRef}
+                onSearchChange={(e) => {
+                  setSelectedPieceMetadataInPieceSelector(null);
+                  if (e === '') {
+                    clearSearch();
+                  }
                 }}
               />
-              {operation.type !== FlowOperationType.UPDATE_TRIGGER && (
-                <AskAiButton
-                  varitant="ghost"
-                  operation={operation}
-                  onClick={() => {
-                    onOpenChange(false);
-                  }}
-                ></AskAiButton>
-              )}
+              {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
+              <Separator orientation="horizontal" className="mt-1" />
             </div>
-
-            <PieceTagGroup
-              selectedTag={selectedTag}
-              type={
-                operation.type === FlowOperationType.UPDATE_TRIGGER
-                  ? 'trigger'
-                  : 'action'
-              }
-              onSelectTag={(value) => {
-                setSelectedTag(value);
-                setSelectedMetadata(undefined);
-              }}
-            />
-            <Separator orientation="horizontal" />
-          </div>
-          {!isMobile && (
             <div
-              className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
+              className=" flex flex-row max-h-[300px]"
               style={{
-                height: listHeightRef.current + 'px',
+                height: listHeight + 'px',
               }}
             >
-              <PiecesCardList
-                closePieceSelector={() => onOpenChange(false)}
-                debouncedQuery={debouncedQuery}
-                selectedTag={selectedTag}
-                piecesIsLoaded={piecesIsLoaded}
-                noResultsFound={noResultsFound}
-                selectedPieceMetadata={selectedPieceMetadata}
-                setSelectedMetadata={setSelectedMetadata}
-                operation={operation}
-                handleSelect={handleSelect}
-                pieceGroups={pieceGroups}
-                isLoadingPieces={isLoadingPieces}
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-              />
+              <ExploreTabContent operation={operation} />
+              <AITabContent operation={operation} />
+              <ApprovalsTabContent operation={operation} />
 
-              {debouncedQuery.length === 0 &&
-                piecesIsLoaded &&
-                !noResultsFound && (
-                  <>
-                    <Separator orientation="vertical" className="h-full" />
-                    <StepsCardList
-                      hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                      selectedPieceMetadata={selectedPieceMetadata}
-                      handleSelect={handleSelect}
-                    />
-                  </>
-                )}
-            </div>
-          )}
-
-          {isMobile && (
-            <div
-              className=" max-h-[300px] h-[300px]"
-              style={{
-                height: listHeightRef.current + 'px',
-              }}
-            >
               <PiecesCardList
-                closePieceSelector={() => onOpenChange(false)}
-                debouncedQuery={debouncedQuery}
-                selectedTag={selectedTag}
-                piecesIsLoaded={piecesIsLoaded}
-                noResultsFound={noResultsFound}
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                selectedPieceMetadata={selectedPieceMetadata}
-                setSelectedMetadata={setSelectedMetadata}
+                //this is done to avoid debounced results when user clears search
+                searchQuery={searchQuery === '' ? '' : debouncedQuery}
                 operation={operation}
-                handleSelect={handleSelect}
-                pieceGroups={pieceGroups}
-                isLoadingPieces={isLoadingPieces}
+                stepToReplacePieceDisplayName={
+                  isMobile ? undefined : stepToReplacePieceDisplayName
+                }
               />
             </div>
-          )}
-        </>
-      </PopoverContent>
+          </>
+        </PopoverContent>
+      </PieceSelectorTabsProvider>
     </Popover>
   );
 };
 
-export { PieceSelector };
-
-function filterOutPiecesWithNoSuggestions(
-  metadata: StepMetadataWithSuggestions[],
-) {
-  return metadata.filter((step) => {
-    const isActionWithSuggestions =
-      step.type === ActionType.PIECE &&
-      step.suggestedActions &&
-      step.suggestedActions.length > 0;
-    const isTriggerWithSuggestions =
-      step.type === TriggerType.PIECE &&
-      step.suggestedTriggers &&
-      step.suggestedTriggers.length > 0;
-    const isNotPieceType =
-      step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE;
-
-    return (
-      isActionWithSuggestions || isTriggerWithSuggestions || isNotPieceType
-    );
-  });
-}
+export { PieceSelectorWrapper as PieceSelector };

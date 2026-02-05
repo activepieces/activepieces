@@ -9,6 +9,7 @@ export const generateImage = createAction({
   description: 'Generate an image using text-to-image models',
   props: {
     model: Property.Dropdown({
+  auth: openaiAuth,
       displayName: 'Model',
       required: true,
       description: 'The model which will generate the image.',
@@ -34,6 +35,7 @@ export const generateImage = createAction({
       required: true,
     }),
     resolution: Property.Dropdown({
+  auth: openaiAuth,
       displayName: 'Resolution',
       description: 'The resolution to generate the image in.',
       required: false,
@@ -76,6 +78,7 @@ export const generateImage = createAction({
       },
     }),
     quality: Property.Dropdown({
+  auth: openaiAuth,
       displayName: 'Quality',
       required: false,
       description: 'Standard is faster, HD has better details.',
@@ -99,7 +102,7 @@ export const generateImage = createAction({
   },
   async run({ auth, propsValue }) {
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
 
     const { quality, resolution, model, prompt } = propsValue;

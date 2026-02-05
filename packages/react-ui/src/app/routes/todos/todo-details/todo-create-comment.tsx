@@ -5,14 +5,20 @@ import { TodoTextarea } from './todo-textarea';
 
 type TodoCreateCommentProps = {
   todo: Todo;
+  refetchComments: () => void;
 };
 
-export const TodoCreateComment = ({ todo }: TodoCreateCommentProps) => {
+export const TodoCreateComment = ({
+  todo,
+  refetchComments,
+}: TodoCreateCommentProps) => {
   const handleSubmitComment = async (content: string) => {
     if (todo.locked) return;
-    await todoActivityApi.create(todo.id, {
-      content,
+    await todoActivityApi.create({
+      todoId: todo.id,
+      content: content,
     });
+    refetchComments();
   };
 
   return (

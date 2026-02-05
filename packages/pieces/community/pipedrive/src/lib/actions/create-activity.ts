@@ -6,66 +6,69 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 
 export const createActivityAction = createAction({
-	auth: pipedriveAuth,
-	name: 'create-activity',
-	displayName: 'Create Activity',
-	description: 'Creates a new activity.',
-	props: {
-		subject: Property.ShortText({
-			displayName: 'Subject',
-			required: true,
-		}),
-		...activityCommonProps,
-	},
-	async run(context) {
-		const {
-			subject,
-			organizationId,
-			personId,
-			dealId,
-			leadId,
-			assignTo,
-			type,
-			dueDate,
-			dueTime,
-			duration,
-			idDone,
-			isBusy,
-			note,
-			publicDescription,
-		} = context.propsValue;
+    auth: pipedriveAuth,
+    name: 'create-activity',
+    displayName: 'Create Activity',
+    description: 'Creates a new activity.', 
+    props: {
+        subject: Property.ShortText({
+            displayName: 'Subject',
+            required: true,
+        }),
+        ...activityCommonProps, 
+    },
+    async run(context) {
+        const {
+            subject,
+            organizationId,
+            personId,
+            dealId,
+            leadId,
+            assignTo, 
+            type,
+            dueDate,
+            dueTime,
+            duration,
+            isDone,
+            busy, 
+            note,
+            publicDescription,
+        } = context.propsValue;
 
-		const activityDefaultFields: Record<string, any> = {
-			subject,
-			org_id: organizationId,
-			person_id: personId,
-			deal_id: dealId,
-			lead_id: leadId,
-			note,
-			public_description: publicDescription,
-			type,
-			user_id: assignTo,
-			due_time: dueTime,
-			duration,
-			done: idDone ? 1 : 0,
-		};
+        const activityPayload: Record<string, any> = {
+            subject,
+            org_id: organizationId, 
+            deal_id: dealId,       
+            lead_id: leadId,  
+            public_description: publicDescription,
+            type,
+            owner_id: assignTo, 
+            due_time: dueTime,
+            duration,
+            done: isDone, 
+            note
+        };
 
-		if (isBusy) {
-			activityDefaultFields.busy_flag = isBusy === 'busy' ? true : false;
+         if (personId) {
+            activityPayload.participants = [{ person_id: personId, primary: true }];
+        }
+
+        if (busy) {
+			activityPayload.busy = busy === 'busy' ? true : false;
 		}
 
-		if (dueDate) {
-			activityDefaultFields.due_date = dayjs(dueDate).format('YYYY-MM-DD');
-		}
+        if (dueDate) {
+            activityPayload.due_date = dayjs(dueDate).format('YYYY-MM-DD');
+        }
 
-		const response = await pipedriveApiCall({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/activities',
-			body: activityDefaultFields,
-		});
+        const response = await pipedriveApiCall({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.POST,
+            resourceUri: '/v2/activities', 
+            body: activityPayload,
+        });
 
-		return response;
-	},
+        return response;
+    },
 });

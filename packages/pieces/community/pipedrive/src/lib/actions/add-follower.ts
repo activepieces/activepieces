@@ -71,7 +71,7 @@ export const addFollowerAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
-			resourceUri: endpoint,
+			resourceUri: `/v2${endpoint}`,
 			body: {
 				user_id: followerId,
 			},

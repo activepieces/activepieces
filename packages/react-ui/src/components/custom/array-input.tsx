@@ -107,7 +107,7 @@ const ArrayInput = React.memo(
 
     return (
       <>
-        <div className="flex w-full flex-col gap-4 ">
+        <div className="flex w-full flex-col gap-2.5 ">
           <Sortable
             value={fields}
             onMove={({ activeIndex, overIndex }) => {

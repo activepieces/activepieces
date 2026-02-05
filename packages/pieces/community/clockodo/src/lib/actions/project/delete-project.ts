@@ -11,7 +11,7 @@ export default createAction({
     project_id: clockodoCommon.project_id(true, false, false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     await client.deleteProject(propsValue.project_id as number);
   },
 });

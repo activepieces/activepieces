@@ -8,6 +8,13 @@ export function isNil<T>(value: T | null | undefined): value is null | undefined
     return value === null || value === undefined
 }
 
+export function stringifyNullOrUndefined(data: undefined | null): string {
+    if (data === undefined) {
+        return 'undefined'
+    }
+    return 'null'
+}
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setAtPath<T, K extends keyof any>(obj: T, path: K | K[], value: any): void {
@@ -26,16 +33,17 @@ export function insertAt<T>(array: T[], index: number, item: T): T[] {
     return [...array.slice(0, index), item, ...array.slice(index)]
 }
 
-export function debounce<T>(func: (...args: T[]) => void, wait: number): (...args: T[]) => void {
+export function debounce<T>(func: (...args: T[]) => void, wait: number): (key?: string, ...args: T[]) => void {
     let timeout: NodeJS.Timeout
-
-    return function (...args: T[]) {
+    let currentKey: string | undefined
+    return function (key?: string, ...args: T[]) {
         const later = () => {
-            clearTimeout(timeout)
             func(...args)
         }
-
-        clearTimeout(timeout)
+        if (currentKey === key) {
+            clearTimeout(timeout)
+        }
+        currentKey = key
         timeout = setTimeout(later, wait)
     }
 }
@@ -125,4 +133,47 @@ export function chunk<T>(records: T[], size: number) {
         chunks.push(records.slice(i, i + size))
     }
     return chunks
+}
+
+export function partition<T>(array: T[], predicate: (item: T, index: number, arr: T[]) => boolean): [T[], T[]] {
+    const truthy: T[] = []
+    const falsy: T[] = []
+    array.forEach((item, idx) => {
+        if (predicate(item, idx, array)) {
+            truthy.push(item)
+        }
+        else {
+            falsy.push(item)
+        }
+    })
+    return [truthy, falsy]
+}
+
+export function unique<T>(array: T[]): T[] {
+    return array.filter((item, index, self) => index === self.findIndex(other => JSON.stringify(other) === JSON.stringify(item)))
+}
+
+export function mapsAreSame<K, V>(a: Map<K, V>, b: Map<K, V>): boolean {
+    if (a.size !== b.size) return false
+    for (const [key, value] of a) {
+        if (!b.has(key)) return false
+        if (b.get(key) !== value) return false
+    }
+    return true
+}
+
+export function validateIndexBound({
+    index, limit,
+}: { index: number, limit: number }) {
+    if (index < 0) {
+        return 0
+    }
+    if (index >= limit) {
+        return limit - 1
+    }
+    return index
+}
+
+export function isManualPieceTrigger({ pieceName, triggerName }: { pieceName: string, triggerName: string }) {
+    return pieceName === '@activepieces/piece-manual-trigger' && triggerName === 'manual_trigger'
 }

@@ -33,6 +33,7 @@ export const createEventsBatch = createAction({
             eye_color: 'brown',
             person_occupation: 'marketing',
           },
+          custom_field: '',
           phone_number: '+12025551111',
           campaign_tags: 'post-purchase',
           sharing_channels: ['facebook', 'custom'],
@@ -58,7 +59,7 @@ export const createEventsBatch = createAction({
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const createEventsBatch = await httpClient
       .sendRequest<string[]>({
         method: HttpMethod.POST,

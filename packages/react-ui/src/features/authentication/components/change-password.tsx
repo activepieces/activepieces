@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +18,6 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { toast } from '@/components/ui/use-toast';
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
 import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
 import { HttpError } from '@/lib/api';
@@ -49,9 +49,7 @@ const ChangePasswordForm = () => {
   >({
     mutationFn: authenticationApi.resetPassword,
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your password was changed successfully'),
+      toast.success(t('Your password was changed successfully'), {
         duration: 3000,
       });
       navigate('/sign-in');
@@ -69,7 +67,7 @@ const ChangePasswordForm = () => {
   };
 
   return (
-    <Card className="w-[28rem] rounded-sm drop-shadow-xl">
+    <Card className="w-md rounded-sm drop-shadow-xl">
       <CardHeader>
         <CardTitle className="text-2xl">{t('Reset Password')}</CardTitle>
         <CardDescription>{t('Enter your new password')}</CardDescription>

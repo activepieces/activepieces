@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 interface ImageWithFallbackProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
 }
-
-// In-memory cache to track loaded images
-const loadedImages = new Set<string>();
 
 const ImageWithFallback = ({
   src,
@@ -17,18 +15,10 @@ const ImageWithFallback = ({
   ...props
 }: ImageWithFallbackProps) => {
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(!src || !loadedImages.has(src));
-  useEffect(() => {
-    if (src && loadedImages.has(src)) {
-      setIsLoading(false);
-    }
-  }, [src]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleLoad = () => {
-    if (src) {
-      loadedImages.add(src); // Mark the image as loaded
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   };
 
   const handleError = () => {
@@ -39,10 +29,10 @@ const ImageWithFallback = ({
   const { className, ...rest } = props;
 
   return (
-    <span className="relative inline-block h-full ">
+    <span className={cn('relative inline-block h-full w-full', className)}>
       {isLoading && !hasError && (
         <span className="absolute inset-0 flex items-center justify-center">
-          {fallback ?? <span className="w-full h-full bg-muted"></span>}
+          {fallback ?? <Skeleton className="w-full h-full" />}
         </span>
       )}
       {!hasError ? (
@@ -52,7 +42,7 @@ const ImageWithFallback = ({
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
-            `transition-opacity duration-500`,
+            `transition-opacity duration-500 w-full h-full object-contain`,
             {
               'opacity-0': isLoading,
               'opacity-100': !isLoading,
@@ -63,7 +53,7 @@ const ImageWithFallback = ({
         />
       ) : (
         <span className="absolute inset-0 flex items-center justify-center">
-          {fallback ?? <span className="w-full h-full bg-muted"></span>}
+          {fallback ?? <Skeleton className="w-full h-full" />}
         </span>
       )}
     </span>

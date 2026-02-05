@@ -1,12 +1,12 @@
 import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { findPiece } from '../utils/piece-utils';
+import { buildPiece, findPiece, findPieces } from '../utils/piece-utils';
 import { makeFolderRecursive } from '../utils/files';
-import { join } from 'node:path';
+import { join, basename } from 'node:path';
 import { exec } from '../utils/exec';
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import keys from '../../../../pieces/community/framework/translation-keys.json';
+import { pieceTranslation } from '@activepieces/pieces-framework';
+import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
     const module = await import(pieceOutputFile);
@@ -22,7 +22,7 @@ const findPieceInModule= async (pieceOutputFile: string) => {
 
 const installDependencies = async (pieceFolder: string) => {
     console.log(chalk.blue(`Installing dependencies ${pieceFolder}`))
-    await exec(`npm install`, {cwd: pieceFolder,})
+    await exec(`bun install`, {cwd: pieceFolder,})
     console.log(chalk.green(`Dependencies installed ${pieceFolder}`))
 }
 
@@ -39,18 +39,17 @@ function getPropertyValue(object: Record<string, unknown>, path: string): unknow
   return nextObject;
 }
 
-
 const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
   try {
-    keys.forEach(key => {
-      const value = getPropertyValue(piece, key)
+    pieceTranslation.pathsToValuesToTranslate.forEach(path => {
+      const value = getPropertyValue(piece, path)
       if (value) {
         if (typeof value === 'string') {
-          translation[value] = value
+          translation[value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = value
         }
         else if (Array.isArray(value)) {
           value.forEach(item => {
-            translation[item] = item
+            translation[item.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] = item
           })
         }
       }
@@ -67,6 +66,7 @@ const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { c
 
 const generateTranslationFile = async (pieceName: string) => {
   const pieceRoot = await findPiece(pieceName)
+  await buildPiece(pieceRoot)
   const outputFolder = pieceRoot.replace('packages/', 'dist/packages/')
   try{
     await installDependencies(outputFolder)
@@ -87,4 +87,26 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
   .argument('<pieceName>', 'The name of the piece to generate i18n for')
   .action(async (pieceName: string) => {
     await generateTranslationFile(pieceName);
+  });
+  export const generateTranslationFileForAllPiecesCommand = new Command('generate-translation-file-for-all-pieces')
+  .description('Generate i18n for all pieces')
+  .requiredOption('--shard-index <shardIndex>', 'Zero-based shard index to process', (value) => parseInt(value, 10))
+  .requiredOption('--shard-total <shardTotal>', 'Total number of shards', (value) => parseInt(value, 10))
+  .action(async ({shardIndex, shardTotal}: { shardIndex: number; shardTotal: number }) => {
+    const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
+    const pieces = (await findPieces(piecesDirectory)).map(piece => piece.split('/').pop());
+    let totalTime = 0
+    let indexAcrossAllPieces = 0
+    for (const piece of pieces) {
+      if ((indexAcrossAllPieces % shardTotal) !== shardIndex) {
+        indexAcrossAllPieces++
+        continue
+      }
+      const time= performance.now()
+      await generateTranslationFile(piece);
+      console.log(chalk.yellow('✨'), `Translation file for piece ${piece} created in ${(performance.now() - time)/1000}s`)
+      totalTime += (performance.now() - time)/1000
+      indexAcrossAllPieces++
+    }
+    console.log(chalk.yellow('✨'), `Total time taken to generate translation files for selected pieces: ${totalTime}s`)
   });

@@ -4,33 +4,29 @@ import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  StepLocationRelativeToParent,
-  isNil,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasConsts } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApButtonData } from '../utils/types';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly] =
+  const [activeDraggingStep, readonly, isPieceSelectorOpen] =
     useBuilderStateContext((state) => [
       state.activeDraggingStep,
       state.readonly,
+      state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
     ]);
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
     data: {
-      accepts: flowUtilConsts.DRAGGED_STEP_TAG,
+      accepts: flowCanvasConsts.DRAGGED_STEP_TAG,
       ...props,
     },
   });
-
-  const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
   const showDropIndicator = !isNil(activeDraggingStep);
 
@@ -48,85 +44,61 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       {showDropIndicator && !readonly && (
         <div
           style={{
-            width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-            height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+            width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+            height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
           }}
-          className={cn('transition-all bg-primary/90  rounded-xss', {
+          className={cn('transition-all bg-primary/90  rounded-md', {
             'shadow-add-button': isStepInsideDropZone,
           })}
         >
           <div
             style={{
-              width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px',
-              height: flowUtilConsts.AP_NODE_SIZE.STEP.height + 'px',
-              left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
-              top: `${-flowUtilConsts.AP_NODE_SIZE.STEP.height / 2}px`,
+              width: flowCanvasConsts.AP_NODE_SIZE.STEP.width + 'px',
+              height: flowCanvasConsts.AP_NODE_SIZE.STEP.height + 'px',
+              left: `${-flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2}px`,
+              top: `${-flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2}px`,
             }}
-            className={cn(' absolute    rounded-xss box-content ')}
+            className={cn(' absolute    rounded-md box-content ')}
             ref={setNodeRef}
           ></div>
         </div>
       )}
       {!showDropIndicator && !readonly && (
         <PieceSelector
-          operation={
-            props.stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_BRANCH
-              ? {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                    branchIndex: props.branchIndex,
-                  },
-                }
-              : {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                  },
-                }
-          }
-          open={actionMenuOpen}
-          onOpenChange={setActionMenuOpen}
-          asChild={true}
+          operation={flowCanvasUtils.createAddOperationFromAddButtonData(props)}
+          id={props.edgeId}
         >
           <div
             style={{
-              width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-              height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+              width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+              height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
             }}
           >
             <div
               style={{
-                width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+                height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
-              className={cn(
-                'rounded-xss cursor-pointer transition-all z-50',
-                {
-                  'shadow-add-button': actionMenuOpen,
-                },
-              )}
+              className={cn('rounded-md cursor-pointer transition-all z-50', {
+                'shadow-add-button': isPieceSelectorOpen,
+              })}
             >
               <div
                 style={{
-                  width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+                  width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
                   height:
-                    flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                    flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
-                  'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                  'bg-background  border border-border border-solid relative group overflow-visible rounded-md cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                   {
-                    'bg-primary ': actionMenuOpen,
+                    'bg-primary border-primary': isPieceSelectorOpen,
                   },
                 )}
+                data-testid="add-action-button"
               >
-                {!actionMenuOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-white" />
+                {!isPieceSelectorOpen && (
+                  <Plus className="w-3 h-3 stroke-[3px] text-foreground" />
                 )}
               </div>
             </div>

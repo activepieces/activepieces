@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { useContext } from 'react';
 
 import {
   Tooltip,
@@ -7,21 +8,31 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
+
 type TestButtonTooltipProps = {
   children: React.ReactNode;
-  disabled: boolean;
+  invalid: boolean;
 };
 
-const TestButtonTooltip = ({ children, disabled }: TestButtonTooltipProps) => {
+const TestButtonTooltip = ({ children, invalid }: TestButtonTooltipProps) => {
+  const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild className="disabled:pointer-events-auto">
           {children}
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          {disabled ? t('Please fix inputs first') : ''}
-        </TooltipContent>
+        {invalid && (
+          <TooltipContent side="bottom">
+            {t('Please fix inputs first')}
+          </TooltipContent>
+        )}
+        {isLoadingDynamicProperties && (
+          <TooltipContent side="bottom">
+            {t('Please wait until all inputs are loaded')}
+          </TooltipContent>
+        )}
       </Tooltip>
     </TooltipProvider>
   );

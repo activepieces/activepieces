@@ -6,8 +6,15 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
+import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
+import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
+import { requestApprovalInEmail } from './lib/actions/request-approval-in-email';
+import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
+import { gmailNewLabelTrigger } from './lib/triggers/new-label';
+import { gmailSearchMailAction } from './lib/actions/search-email-action';
+import { gmailGetEmailAction } from './lib/actions/get-mail-action';
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
@@ -31,6 +38,11 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
+    requestApprovalInEmail,
+    gmailReplyToEmailAction,
+    gmailCreateDraftReplyAction,
+    gmailGetEmailAction,
+    gmailSearchMailAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -53,7 +65,14 @@ export const gmail = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'sanket-a11y',
+    'onyedikachi-david',
   ],
-  triggers: [gmailNewEmailTrigger, gmailNewLabeledEmailTrigger],
+  triggers: [
+    gmailNewEmailTrigger,
+    gmailNewLabeledEmailTrigger,
+    gmailNewAttachmentTrigger,
+    gmailNewLabelTrigger,
+  ],
   auth: gmailAuth,
 });

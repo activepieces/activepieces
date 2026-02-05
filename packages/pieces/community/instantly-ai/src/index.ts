@@ -39,7 +39,7 @@ export const instantlyAi = createPiece({
       auth:instantlyAiAuth,
       baseUrl:()=>BASE_URL,
       authMapping: async (auth) => ({
-				Authorization: `Bearer ${auth}`,
+				Authorization: `Bearer ${auth.secret_text}`,
 			}),
     })
   ],

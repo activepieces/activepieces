@@ -1,48 +1,342 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss';
+@import "tw-animate-css";
+@custom-variant dark (&:is(.dark *));
 
+
+/* inter-regular - latin */
+@font-face {
+  font-display: swap; 
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  src: url('assets/fonts/inter-v20-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* inter-700 - latin */
+@font-face {
+  font-display: swap; 
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  src: url('assets/fonts/inter-v20-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* inter-800 - latin */
+@font-face {
+  font-display: swap; 
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 800;
+  src: url('assets/fonts/inter-v20-latin-800.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme {
+  --ease-*: initial;
+  --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
+
+  --width-4_5: 1.125rem;
+
+  --height-4_5: 1.125rem;
+
+  --transition-duration-1500: 1500ms;
+
+  --color-light-blue: hsl(var(--light-blue));
+
+  --color-warning-100: hsl(var(--warning-100));
+  --color-warning-300: hsl(var(--warning-300));
+  --color-warning: hsl(var(--warning));
+
+  --color-border: var(--border);
+
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-progress: var(--sidebar-progress);
+
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary-100: hsl(var(--primary-100));
+  --color-primary-300: hsl(var(--primary-300));
+  --color-primary:  hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-success-100: hsl(var(--success-100));
+  --color-success-300: hsl(var(--success-300));
+  --color-success: hsl(var(--success));
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive-100: hsl(var(--destructive-100));
+  --color-destructive-300: hsl(var(--destructive-300));
+  --color-destructive: hsl(var(--destructive));
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xs: calc(var(--radius) - 8px);
+  --radius-xss: calc(var(--radius) - 10px);
+
+
+  --text-xss: 0.65rem;
+  --text-3xl: 1.75rem;
+  --text-4xl: 2rem;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade: fade 0.2s ease-out;
+  --animate-highlight: highlight 1s ease-out;
+  --animate-typing: typing 0.7s steps(7) alternate;
+  --animate-typing-sm: typing 0.5s steps(5) alternate;
+  --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
+  --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
+    alternate;
+  --font-sans: "Inter",ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji";
+  --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.4);
+  --shadow-add-button: var(--add-button-shadow);
+  --color-builder-background: var(--builder-background);
+  --color-builder-background-pattern: var(--builder-background-pattern);
+  @keyframes primary-color-pulse {
+    from {
+      color: hsl(var(--primary));
+    }
+    to {
+      color: hsl(var(--primary) / 0.7);
+    }
+  }
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes fade {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes highlight {
+    0% {
+      background-color: hsl(var(--primary-100));
+    }
+    100% {
+      background-color: var(--color-secondary);
+    }
+  }
+  @keyframes typing {
+    0% {
+      width: 0%;
+      visibility: hidden;
+    }
+    100% {
+      width: 100%;
+    }
+  }
+ 
+  @keyframes slide-in-from-bottom {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0%);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
 @layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+
+}
+
+@utility scrollbar-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    transition: opacity 0.2s;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .group:hover &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark &:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .group:hover &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark &:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .group:hover & {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark .group:hover & {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
+
+@utility group {
+  &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &:hover .scrollbar-hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark &:hover .scrollbar-hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
+
+@utility dark {
+  & .scrollbar-hover:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  & .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  & .scrollbar-hover:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  & .group:hover .scrollbar-hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* You can add global styles to this file, and also import other style files */
+@layer base {
+
   input[type='number']::-webkit-inner-spin-button,
   input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
 
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --border: 220 13% 87%;
-    --input: 220 13% 87%;
+:root {
+    --background: theme('colors.white');
+    --foreground: theme('colors.neutral.950');
+    --popover: theme('colors.white');
+  
+    --secondary: theme('colors.black');
+    --secondary-foreground: theme('colors.white');
 
-    --ring: 240 5.9% 10%;
-    --radius: 0.75rem;
+    --muted: theme('colors.neutral.100');
+    --muted-foreground: theme('colors.neutral.500');
+
+    --accent: theme('colors.neutral.50');
+    --accent-foreground: theme('colors.neutral.900');
+
+    --border: theme('colors.neutral.200');
+    --input: theme('colors.neutral.200');
+
+    --ring: theme('colors.neutral.400');
+    --radius: 0.625rem;
 
     --primary-100: 257 75% 85%;
     --primary: 257 74% 57%;
     --primary-300: 257 74% 25%;
     --primary-foreground: 210 20% 98%;
 
+
+    --success-100: 148 48% 80%;
+    --success: 148 48% 46%;
+    --success-300: 148 48% 10%;
+
     --destructive-100: 0 84.2% 90%;
     --destructive: 0 84.2% 60.2%;
     --destructive-300: 0 84.2% 40%;
-
-    --success-100: 148 48% 90%;
-    --success: 148 48% 46%;
-    --success-300: 148 48% 40%;
-
-
+    
     --warning-100: 51.72, 93.55%, 93.92%;
     --warning: 47 96% 53%;
     --warning-300: 28 80% 31%;
@@ -55,74 +349,78 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 224 71.4% 4.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --sidebar-background: theme('colors.neutral.50');
+    --sidebar-foreground: theme('colors.neutral.950');
+    --sidebar-primary: 257 74% 57%;
+    --sidebar-primary-foreground: theme('colors.neutral.50');
+    --sidebar-accent: color-mix(in srgb, theme('colors.neutral.200') 60%, transparent);
+    --sidebar-accent-foreground: theme('colors.neutral.900');
+    --sidebar-border: theme('colors.neutral.200');
+    --sidebar-ring: theme('colors.neutral.400');
+    --sidebar-progress: 0 0% 50%;
+    --builder-background: #FBFBFB;
+    --builder-background-pattern: #b2b2b2;
   }
 
-  .dark {
-    --background: 20 14.3% 4.1%;
-    --foreground: 0 0% 95%;
-    --card: 24 9.8% 10%;
-    --card-foreground: 0 0% 95%;
+.dark {
+  --background: theme('colors.neutral.950');
+  --foreground: theme('colors.neutral.50');
+  --popover: theme('colors.neutral.800');
+  --muted: theme('colors.neutral.800');
+  --muted-foreground: theme('colors.neutral.400');
 
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 95%;
+  --secondary: theme('colors.neutral.800');
+  --secondary-foreground: theme('colors.neutral.50');
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+  --accent: theme('colors.neutral.700');
+  --accent-foreground: theme('colors.neutral.50');
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 240 5% 64.9%;
+  --primary-100: 210 80% 40%;
+  --primary: 210 90% 50%;
+  --primary-300: 210 100% 85%;
+  --primary-foreground: 210 90% 98%;
 
-    --accent: 12 6.5% 15.1%;
-    --accent-foreground: 0 0% 98%;
+  --success-100: 140 60% 40%;
+  --success: 140 80% 50%;
+  --success-300: 140 90% 85%;
 
-    --border: 240 3.7% 35%;
-    --input: 240 3.7% 35%;
-    --ring: 240 4.9% 83.9%;
+  --destructive-100: 0 70% 38%;
+  --destructive: 0 80% 50%;
+  --destructive-300: 0 85% 88%;
 
-    --primary-100: 257 74% 25%;
-    --primary: 257 74% 57%;
-    --primary-300: 257 75% 85%;
-    --primary-foreground: 210 20% 98%;
+  --warning-100: 40 90% 50%;
+  --warning: 40 100% 45%;
+  --warning-300: 40 100% 30%;
 
-    --destructive-100: 4 100% 20%;
-    --destructive: 4 100% 30%;
-    --destructive-300: 0 96.3% 55%;
+  --border: hsla(0, 0%, 100%, 0.1);
+  --input:hsla(0, 0%, 100%, 0.1);
 
-    --success-100: 166 97% 20%;
-    --success: 166 97% 14%;
-    --success-300: 166 97% 60%;
+  --ring: theme('colors.neutral.500');
+  --radius: 0.625rem;
+
+  --add-button-shadow: 0 0 0 6px hsl(var(--primary-100) / 0.4);
+
+  --chart-1: 210 85% 55%;
+  --chart-2: 160 80% 50%;
+  --chart-3: 35 90% 55%;
+  --chart-4: 280 75% 65%;
+  --chart-5: 340 80% 60%;
+
+  --sidebar-background:theme('colors.neutral.800');
+  --sidebar-foreground: theme('colors.neutral.50');
+  --sidebar-primary: 210 85% 65%;
+  --sidebar-primary-foreground: 210 90% 98%;
+  --sidebar-accent: theme('colors.neutral.700');
+  --sidebar-accent-foreground: theme('colors.neutral.50');
+  --sidebar-border: hsla(0, 0%, 100%, 0.1);
+  --sidebar-ring: theme('colors.neutral.600');
+  --sidebar-progress: 210 15% 40%;
+  --builder-background: hsla(0, 0%, 9%, 1);
+  --builder-background-pattern: hsla(0, 0%, 45%, 1);
+}
 
 
-    --warning-100: 51.72, 93.55%, 17.92%;
-    --warning: 47 96% 53%;
-    --warning-300: 52 96% 70%;
-
-    --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100) / 0.5);
-
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-
-    --sidebar-background: 20 14.3% 6%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;  
-  }
 }
 
 @layer base {
@@ -134,27 +432,152 @@
     @apply bg-background text-foreground;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
+
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
 }
 
-.react-flow__panel.react-flow__attribution.bottom.right {
-  display: none;
+@layer utilities {
+  .react-flow__panel.react-flow__attribution.bottom.right {
+    display: none;
+  }
+
+  .react-flow {
+    --xy-edge-stroke: rgba(163, 163, 163, 0.5) !important;
+    --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7 !important;
+    --selection-border-default: 0px solid #b1b1b7 !important;
+    --node-border-default: 0px solid #b1b1b7 !important;
+    --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
+    --xy-selection-background-color-default: hsl(
+      var(--primary-100) / 0.25
+    ) !important;
+    --xy-resize-background-color:transparent !important;
+    .react-flow__resize-control.handle{
+      border: 0 !important;
+    }
+  }
+
+  .react-flow__pane.selection,
+  .react-flow__nodesselection-rect {
+    cursor: default !important;
+  }
+
+  .react-flow__edge.selectable > path {
+    /* If necessary, add !important to the rule */
+    pointer-events: none !important;
+  }
+
+  /* This is a hack to fix the issue with the pointer events being set to none when the vaul drawer is open */
+  body {
+    pointer-events: auto !important;
+  }
+
+  [data-state="open"] {
+    --tw-enter-translate-y: initial !important;
+    --tw-enter-translate-x: initial !important;
+  }
+  [data-state="closed"] {
+    --tw-exit-translate-y: initial !important;  
+    --tw-exit-translate-x: initial !important;
+  }
 }
 
-.react-flow {
-  --xy-edge-stroke-selected-default: #b1b1b7 !important;
-  --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7 !important;
-  --selection-border-default: 0px solid #b1b1b7 !important;
-  --node-border-default: 0px solid #b1b1b7 !important;
-  --xy-selection-border-default: 1px dotted hsl(var(--primary-300))!important;
-  --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
+@layer base {
+
+  body {
+    @apply font-sans;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }
 
-.react-flow__pane.selection,.react-flow__nodesselection-rect
-{
-  cursor: default !important;
-}
-.react-flow__edge.selectable > path {
-  /* If necessary, add !important to the rule */
-  pointer-events: none !important;
+
+
+.note-node,.note-drag-overlay {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 100px;
+    border: 1px;
+   }
+
 }
 
+.note-node:focus-within:hover  {
+  ::-webkit-scrollbar-thumb {
+    background: hsla(0, 1%, 66%, 0.328);
+    border-radius: 100px;
+    border: 1px;
+   }
+}
+
+.tiptap {
+  overflow-wrap: break-word;
+}
+
+.tiptap > :first-child {
+  margin-top: 0;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+  list-style-position: outside;
+  padding-left: 1.5rem;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  padding-left: 1.5rem;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+}
+
+.tiptap li p {
+  margin: 0.25em 0;
+}
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3,
+.tiptap h4,
+.tiptap h5,
+.tiptap h6 {
+  line-height: 1;
+  margin-top: 1rem;
+  text-wrap: pretty;
+}
+
+.tiptap h1 {
+  font-size: 1.4rem;
+}
+
+.tiptap h2 {
+  font-size: 1.2rem;
+}
+
+.tiptap h3 {
+  font-size: 1.1rem;
+}
+
+.tiptap h4,
+.tiptap h5,
+.tiptap h6 {
+  font-size: 1rem;
+}

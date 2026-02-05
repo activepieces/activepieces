@@ -1,8 +1,14 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { textToSpeech } from './lib/actions/text-to-speech-action';
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { ElevenLabsClient } from 'elevenlabs';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { textToSpeech } from './lib/actions/text-to-speech-action';
+import {
+  createClient,
+  ELEVEN_RESIDENCY,
+  ElevenResidency,
+  getApiKey,
+  getRegionApiUrl
+} from './lib/common';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -12,23 +18,48 @@ Follow these instructions to get your API Key:
 4. Copy the API Key.
 `;
 
-export const elevenlabsAuth = PieceAuth.SecretText({
-  description: markdownDescription,
-  displayName: 'API Key',
+const customApiCallDescription = `
+Check [Elevenlabs API reference](https://elevenlabs.io/docs/api-reference/introduction)
+for the list of available endpoints.
+`
+
+export const elevenlabsAuth = PieceAuth.CustomAuth({
   required: true,
+  description: markdownDescription,
+  props: {
+    region: Property.StaticDropdown<ElevenResidency>({
+      displayName: 'Region',
+      description: 'Use according URL in Custom API Call pieces',
+      required: true,
+      options: {
+        placeholder: 'Please select your account region...',
+        options: [
+          { label: `default - ${ELEVEN_RESIDENCY['default'].base}`, value: 'default' },
+          { label: `US - ${ELEVEN_RESIDENCY['us'].base}`, value: 'us' },
+          { label: `EU - ${ELEVEN_RESIDENCY['eu'].base}`, value: 'eu' },
+        ],
+      },
+    }),
+    apiKey: PieceAuth.SecretText({
+      displayName: 'API Key',
+      required: true,
+    }),
+  },
   validate: async ({ auth }) => {
     try {
-      const elevenlabs = new ElevenLabsClient({
-        apiKey: `${auth}`,
+      const elevenlabs = createClient({
+        type: AppConnectionType.CUSTOM_AUTH,
+        props: auth,
       });
       await elevenlabs.user.get();
+
       return {
         valid: true,
       };
     } catch (error) {
       return {
         valid: false,
-        error: 'Invalid API Key.',
+        error: 'Invalid API Key or Region.',
       };
     }
   },
@@ -45,11 +76,20 @@ export const elevenlabs = createPiece({
   actions: [
     textToSpeech,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.elevenlabs.io',
+      // it would be more useful to have hint for URL
+      description: customApiCallDescription,
+      // missing propsValue to not override url when credentials are changed
+      // @see packages/pieces/community/common/src/lib/helpers/index.ts:65
+      baseUrl: (auth) => {
+        return getRegionApiUrl(auth?.props.region)
+      },
       auth: elevenlabsAuth,
-      authMapping: async (auth) => ({
-        'xi-api-key': `${auth}`,
-      }),
+      authMapping: async (auth) => {
+        return ({
+          // keep old plain value for bc
+          'xi-api-key': `${getApiKey(auth.props.apiKey)}`,
+        })
+      },
     }),
   ],
   triggers: [],

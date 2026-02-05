@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import React from 'react';
 
+import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +13,8 @@ import { StepOutputStatus } from '@activepieces/shared';
 
 type StepStatusIconProps = {
   status: StepOutputStatus;
-  size: '3' | '4' | '5';
+  size: '3' | '4' | '5' | '4.5';
+  hideTooltip?: boolean;
 };
 
 const statusText = {
@@ -23,29 +25,30 @@ const statusText = {
   [StepOutputStatus.FAILED]: t('Step Failed'),
 };
 
-const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
-  const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Icon
-          className={cn('', {
-            'w-3': size === '3',
-            'w-4': size === '4',
-            'h-3': size === '3',
-            'h-4': size === '4',
-            'w-5': size === '5',
-            'h-5': size === '5',
-            'text-success-300': variant === 'success',
-            'text-destructive-300': variant === 'error',
-            'text-foreground': variant === 'default',
-          })}
-        ></Icon>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{statusText[status]}</TooltipContent>
-    </Tooltip>
-  );
-});
+const StepStatusIcon = React.memo(
+  ({ status, size, hideTooltip = false }: StepStatusIconProps) => {
+    const { Icon, extraClassName } = flowRunUtils.getStatusIconForStep(status);
+    const sizeClassName = {
+      'size-3': size === '3',
+      'size-4.5': size === '4.5',
+      'size-4': size === '4',
+      'size-5': size === '5',
+    };
+    const className = cn(extraClassName, sizeClassName);
+    if (status === StepOutputStatus.RUNNING) {
+      return <LoadingSpinner className={className}></LoadingSpinner>;
+    }
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Icon className={className}></Icon>
+        </TooltipTrigger>
+        {!hideTooltip && (
+          <TooltipContent side="bottom">{statusText[status]}</TooltipContent>
+        )}
+      </Tooltip>
+    );
+  },
+);
 StepStatusIcon.displayName = 'StepStatusIcon';
 export { StepStatusIcon };

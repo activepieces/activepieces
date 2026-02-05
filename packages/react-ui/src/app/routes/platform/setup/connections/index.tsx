@@ -1,25 +1,36 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Globe } from 'lucide-react';
+import {
+  CheckIcon,
+  Trash,
+  Globe,
+  Search,
+  Tag,
+  Activity,
+  Clock,
+  FolderOpen,
+  Puzzle,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   DataTable,
+  DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import {
@@ -38,19 +49,25 @@ import {
 } from '@activepieces/shared';
 
 const STATUS_QUERY_PARAM = 'status';
-const filters = [
+const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
+  {
+    type: 'input',
+    title: t('Search'),
+    accessorKey: 'displayName',
+    icon: Search,
+  },
   {
     type: 'select',
     title: t('Status'),
     accessorKey: STATUS_QUERY_PARAM,
     options: Object.values(AppConnectionStatus).map((status) => {
       return {
-        label: formatUtils.convertEnumToHumanReadable(status),
+        label: formatUtils.convertEnumToReadable(status),
         value: status,
       };
     }),
     icon: CheckIcon,
-  } as const,
+  },
 ];
 
 const GlobalConnectionsTable = () => {
@@ -67,74 +84,14 @@ const GlobalConnectionsTable = () => {
     unknown
   >[] = [
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-
-              const newSelectedRows = [...allRows, ...selectedRows];
-              const uniqueRows = Array.from(
-                new Map(
-                  newSelectedRows.map((item) => [item.id, item]),
-                ).values(),
-              );
-              setSelectedRows(uniqueRows);
-            } else {
-              const filteredRows = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.id === row.id);
-              });
-              setSelectedRows(filteredRows);
-            }
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
-      accessorKey: 'select',
-    },
-    {
       accessorKey: 'pieceName',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('App')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Piece')}
+          icon={Puzzle}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -146,8 +103,9 @@ const GlobalConnectionsTable = () => {
     },
     {
       accessorKey: 'displayName',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return (
@@ -162,8 +120,13 @@ const GlobalConnectionsTable = () => {
     },
     {
       accessorKey: 'status',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Status')}
+          icon={Activity}
+        />
       ),
       cell: ({ row }) => {
         const status = row.original.status;
@@ -173,7 +136,7 @@ const GlobalConnectionsTable = () => {
           <div className="text-left">
             <StatusIconWithText
               icon={Icon}
-              text={formatUtils.convertEnumToHumanReadable(status)}
+              text={formatUtils.convertEnumToReadable(status)}
               variant={variant}
             />
           </div>
@@ -182,21 +145,32 @@ const GlobalConnectionsTable = () => {
     },
     {
       accessorKey: 'updated',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Connected At')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Connected At')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.updated))}
-          </div>
+          <FormattedDate
+            date={new Date(row.original.updated)}
+            className="text-left"
+          />
         );
       },
     },
     {
       accessorKey: 'projectsCount',
+      size: 100,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Projects')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Projects')}
+          icon={FolderOpen}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -238,6 +212,7 @@ const GlobalConnectionsTable = () => {
     refetch: refetchGlobalConnections,
   } = globalConnectionsQueries.useGlobalConnections({
     request: {
+      displayName: searchParams.get('displayName') ?? undefined,
       cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
       limit: searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
@@ -301,23 +276,6 @@ const GlobalConnectionsTable = () => {
           );
         },
       },
-      {
-        render: () => {
-          return (
-            <NewConnectionDialog
-              isGlobalConnection={true}
-              onConnectionCreated={() => {
-                setRefresh(refresh + 1);
-                refetchGlobalConnections();
-              }}
-            >
-              <Button variant="default" size="sm">
-                {t('New Connection')}
-              </Button>
-            </NewConnectionDialog>
-          );
-        },
-      },
     ],
     [bulkDeleteGlobalConnections, selectedRows, refresh],
   );
@@ -333,13 +291,24 @@ const GlobalConnectionsTable = () => {
         )}
         lockVideoUrl="https://cdn.activepieces.com/videos/showcase/global-connections.mp4"
       >
-        <TableTitle
+        <DashboardPageHeader
           description={t(
             'Manage platform-wide connections to external systems.',
           )}
+          title={t('Global Connections')}
         >
-          {t('Global Connections')}
-        </TableTitle>
+          <NewConnectionDialog
+            isGlobalConnection={true}
+            onConnectionCreated={() => {
+              setRefresh(refresh + 1);
+              refetchGlobalConnections();
+            }}
+          >
+            <Button variant="default" size="sm">
+              {t('New Connection')}
+            </Button>
+          </NewConnectionDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No global connections found')}
           emptyStateTextDescription={t(
@@ -350,6 +319,8 @@ const GlobalConnectionsTable = () => {
           page={globalConnections}
           isLoading={isLoadingGlobalConnections}
           filters={filters}
+          selectColumn={true}
+          onSelectedRowsChange={setSelectedRows}
           bulkActions={bulkActions}
         />
       </LockedFeatureGuard>

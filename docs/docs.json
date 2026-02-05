@@ -1,0 +1,512 @@
+{
+   "$schema": "https://mintlify.com/docs.json",
+   "theme": "mint",
+   "name": "Activepieces",
+   "colors": {
+      "primary": "#9675FF",
+      "light": "#9675FF",
+      "dark": "#9675FF"
+   },
+   "navbar": {
+      "links": [
+         {
+            "label": "GitHub",
+            "href": "https://github.com/activepieces/activepieces"
+         },
+         {
+            "label": "Pieces",
+            "href": "https://www.activepieces.com/pieces"
+         }
+      ],
+      "primary": {
+         "type": "button",
+         "label": "Get Started",
+         "href": "https://www.activepieces.com/plans"
+      }
+   },
+   "redirects": [
+      {
+         "source": "/getting-started/introduction",
+         "destination": "/overview/welcome"
+      }
+   ],
+   "background": {
+      "color": {
+         "light": "#ffffff",
+         "dark": "#090d0d"
+      }
+   },
+   "favicon": "/favicon.svg",
+   "navigation": {
+      "tabs": [
+         {
+            "tab": "Overview",
+            "groups": [
+               {
+                  "group": "Overview",
+                  "pages": [
+                     "overview/welcome"
+                  ]
+               },
+               {
+                  "group": "Flows",
+                  "pages": [
+                     "flows/building-flows",
+                     "flows/passing-data",
+                     "flows/publishing-flows",
+                     "flows/debugging-runs",
+                     "flows/versioning",
+                     "flows/known-limits"
+                  ]
+               },
+               {
+                  "group": "About",
+                  "pages": [
+                     "about/i18n",
+                     "about/changelog",
+                     "about/license"
+                  ]
+               }
+            ]
+         },
+         {
+            "tab": "Admin Guide",
+            "groups": [
+               {
+                  "group": "Guides",
+                  "pages": [
+                     "admin-guide/guides/structure-projects",
+                     "admin-guide/guides/manage-pieces",
+                     "admin-guide/guides/sso",
+                     "admin-guide/guides/manage-oauth2",
+                     "admin-guide/guides/setup-ai-providers",
+                     "admin-guide/guides/permissions",
+                     "admin-guide/guides/event-streaming",
+                     "admin-guide/guides/project-releases"
+                  ]
+               },
+               {
+                  "group": "Security",
+                  "pages": [
+                     "admin-guide/security/practices",
+                     {
+                        "group": "Audit Logs",
+                        "icon": "book",
+                        "pages": [
+                           "admin-guide/security/audit-logs/overview",
+                           "admin-guide/security/audit-logs/flow-created",
+                           "admin-guide/security/audit-logs/flow-updated",
+                           "admin-guide/security/audit-logs/flow-deleted",
+                           "admin-guide/security/audit-logs/connection-upserted",
+                           "admin-guide/security/audit-logs/connection-deleted",
+                           "admin-guide/security/audit-logs/flow-run-started",
+                           "admin-guide/security/audit-logs/flow-run-finished",
+                           "admin-guide/security/audit-logs/folder-created",
+                           "admin-guide/security/audit-logs/folder-updated",
+                           "admin-guide/security/audit-logs/folder-deleted",
+                           "admin-guide/security/audit-logs/user-signed-in",
+                           "admin-guide/security/audit-logs/user-signed-up",
+                           "admin-guide/security/audit-logs/user-email-verified",
+                           "admin-guide/security/audit-logs/user-password-reset",
+                           "admin-guide/security/audit-logs/signing-key-created"
+                        ]
+                     }
+                  ]
+               }
+            ]
+         },
+         {
+            "tab": "Deploy",
+            "groups": [
+               {
+                  "group": "Get Started",
+                  "pages": [
+                     "install/overview",
+                     "install/options/docker",
+                     "install/options/docker-compose",
+                     {
+                        "group": "Others Options",
+                        "pages": [
+                           "install/options/helm",
+                           "install/options/easypanel",
+                           "install/options/aws",
+                           "install/options/gcp",
+                           "install/options/railway",
+                           "install/options/elestio"
+                        ]
+                     }
+                  ]
+               },
+               {
+                  "group": "Configuration",
+                  "pages": [
+                     "install/configuration/overview",
+                     "install/configuration/environment-variables",
+                     "install/configuration/hardware",
+                     "install/configuration/breaking-changes",
+                     "install/configuration/telemetry"
+                  ]
+               },
+               {
+                  "group": "Guides",
+                  "pages": [
+                     "install/guides/setup-ssl",
+                     "install/guides/setup-opentelemetry",
+                     "install/guides/setup-s3",
+                     "install/guides/separate-workers",
+                     "install/guides/setup-app-webhooks"
+                  ]
+               },
+               {
+                  "group": "Troubleshooting",
+                  "pages": [
+                     "install/troubleshooting/bullboard",
+                     "install/troubleshooting/reset-password",
+                     "install/troubleshooting/truncated-logs",
+                     "install/troubleshooting/websocket-issues"
+                  ]
+               },
+               {
+                  "group": "Architecture",
+                  "pages": [
+                     "install/architecture/overview",
+                     "install/architecture/workers",
+                     "install/architecture/engine",
+                     "install/architecture/performance"
+                  ]
+               }
+            ]
+         },
+         {
+            "tab": "Embedding",
+            "groups": [
+               {
+                  "group": "Essentials",
+                  "pages": [
+                     "embedding/overview",
+                     "embedding/provision-users",
+                     "embedding/embed-builder"
+                  ]
+               },
+               {
+                  "group": "Misc",
+                  "pages": [
+                     "embedding/customize-pieces",
+                     "embedding/embed-connections",
+                     "embedding/navigation",
+                     "embedding/predefined-connection",
+                     "embedding/sdk-changelog",
+                     "embedding/sdk-server-requests"
+                  ]
+               }
+            ]
+         },
+         {
+            "tab": "Build Pieces",
+            "description": "Learn how to build, test, and publish your own custom pieces in Activepieces.",
+            "groups": [
+               {
+                  "group": "Build a Piece",
+                  "pages": [
+                     "build-pieces/building-pieces/overview",
+                     "build-pieces/building-pieces/start-building",
+                     "build-pieces/building-pieces/setup-fork",
+                     "build-pieces/building-pieces/development-setup",
+                     "build-pieces/building-pieces/piece-definition",
+                     "build-pieces/building-pieces/piece-authentication",
+                     "build-pieces/building-pieces/create-action",
+                     "build-pieces/building-pieces/create-trigger",
+                     {
+                        "group": "Sharing Pieces",
+                        "icon": "circle-7",
+                        "pages": [
+                           "build-pieces/sharing-pieces/overview",
+                           "build-pieces/sharing-pieces/contribute",
+                           "build-pieces/sharing-pieces/community",
+                           "build-pieces/sharing-pieces/private"
+                        ]
+                     }
+                  ]
+               },
+               {
+                  "group": "Piece Reference",
+                  "pages": [
+                     "build-pieces/piece-reference/authentication",
+                     {
+                        "group": "Triggers",
+                        "icon": "bolt",
+                        "pages": [
+                           "build-pieces/piece-reference/triggers/overview",
+                           "build-pieces/piece-reference/triggers/polling-trigger",
+                           "build-pieces/piece-reference/triggers/webhook-trigger"
+                        ]
+                     },
+                     "build-pieces/piece-reference/properties",
+                     "build-pieces/piece-reference/properties-validation",
+                     "build-pieces/piece-reference/flow-control",
+                     "build-pieces/piece-reference/persistent-storage",
+                     "build-pieces/piece-reference/files",
+                     "build-pieces/piece-reference/external-libraries",
+                     "build-pieces/piece-reference/piece-versioning",
+                     "build-pieces/piece-reference/examples",
+                     "build-pieces/piece-reference/custom-api-calls",
+                     "build-pieces/piece-reference/i18n"
+                  ]
+               },
+               {
+                  "group": "Misc",
+                  "pages": [
+                     "build-pieces/misc/build-piece",
+                     "build-pieces/misc/publish-piece",
+                     "build-pieces/misc/pieces-ci-cd",
+                     "build-pieces/misc/private-fork",
+                     "build-pieces/misc/dev-container",
+                     "build-pieces/misc/codespaces"
+                  ]
+               }
+            ]
+         },
+         {
+            "tab": "API Reference",
+            "groups": [
+               {
+                  "group": "Get Started",
+                  "pages": [
+                     "endpoints/overview"
+                  ]
+               },
+               {
+                  "group": "Endpoints",
+                  "pages": [
+                     {
+                        "group": "Projects",
+                        "icon": "building",
+                        "pages": [
+                           "endpoints/projects/schema",
+                           "endpoints/projects/create",
+                           "endpoints/projects/update",
+                           "endpoints/projects/list",
+                           "endpoints/projects/delete"
+                        ]
+                     },
+                     {
+                        "group": "Users",
+                        "icon": "user",
+                        "pages": [
+                           "endpoints/users/schema",
+                           "endpoints/users/update",
+                           "endpoints/users/list"
+                        ]
+                     },
+                     {
+                        "group": "User Invitations",
+                        "icon": "paper-plane",
+                        "pages": [
+                           "endpoints/user-invitations/schema",
+                           "endpoints/user-invitations/upsert",
+                           "endpoints/user-invitations/list",
+                           "endpoints/user-invitations/delete"
+                        ]
+                     },
+                     {
+                        "group": "Project Members",
+                        "icon": "user",
+                        "pages": [
+                           "endpoints/project-members/schema",
+                           "endpoints/project-members/list",
+                           "endpoints/project-members/delete"
+                        ]
+                     },
+                     {
+                        "group": "Connections",
+                        "icon": "link",
+                        "pages": [
+                           "endpoints/connections/schema",
+                           "endpoints/connections/upsert",
+                           "endpoints/connections/list",
+                           "endpoints/connections/delete"
+                        ]
+                     },
+                     {
+                        "group": "Flows",
+                        "icon": "bolt",
+                        "pages": [
+                           "endpoints/flows/schema",
+                           "endpoints/flows/create",
+                           "endpoints/flows/update",
+                           "endpoints/flows/get",
+                           "endpoints/flows/list",
+                           "endpoints/flows/delete"
+                        ]
+                     },
+                     {
+                        "group": "Flow Runs",
+                        "icon": "play",
+                        "pages": [
+                           "endpoints/flow-runs/schema",
+                           "endpoints/flow-runs/get",
+                           "endpoints/flow-runs/list"
+                        ]
+                     },
+                     {
+                        "group": "Sample Data",
+                        "icon": "database",
+                        "pages": [
+                           "endpoints/sample-data/get"
+                        ]
+                     },
+                     {
+                        "group": "Pieces",
+                        "icon": "plug",
+                        "pages": [
+                           "endpoints/pieces/schema",
+                           "endpoints/pieces/install"
+                        ]
+                     },
+                     {
+                        "group": "Project Releases",
+                        "icon": "cube",
+                        "pages": [
+                           "endpoints/project-releases/schema",
+                           "endpoints/project-releases/create"
+                        ]
+                     },
+                     {
+                        "group": "Global Connections",
+                        "icon": "globe",
+                        "pages": [
+                           "endpoints/global-connections/schema",
+                           "endpoints/global-connections/upsert",
+                           "endpoints/global-connections/update",
+                           "endpoints/global-connections/list",
+                           "endpoints/global-connections/delete"
+                        ]
+                     },
+                     {
+                        "group": "Git Sync",
+                        "icon": "git",
+                        "pages": [
+                           "endpoints/git-repos/schema",
+                           "endpoints/git-repos/configure"
+                        ]
+                     },
+                     {
+                        "group": "Folders",
+                        "icon": "folder",
+                        "pages": [
+                           "endpoints/folders/schema",
+                           "endpoints/folders/create",
+                           "endpoints/folders/update",
+                           "endpoints/folders/get",
+                           "endpoints/folders/list",
+                           "endpoints/folders/delete"
+                        ]
+                     },
+                     {
+                        "group": "Templates",
+                        "icon": "copy",
+                        "pages": [
+                           "endpoints/templates/schema",
+                           "endpoints/templates/create",
+                           "endpoints/templates/delete",
+                           "endpoints/templates/get",
+                           "endpoints/templates/list"
+                        ]
+                     },
+                     {
+                        "group": "Queue Metrics",
+                        "icon": "gauge-high",
+                        "pages": [
+                           "endpoints/queue-metrics/metrics"
+                        ]
+                     }
+                  ]
+               }
+            ]
+         },
+         {
+            "tab": "Handbook",
+            "groups": [
+               {
+                  "group": "Handbook",
+                  "pages": [
+                     "handbook/overview",
+                     "handbook/team"
+                  ]
+               },
+               {
+                  "group": "Hiring",
+                  "icon": "user",
+                  "pages": [
+                     "handbook/hiring/hiring",
+                     "handbook/hiring/levels",
+                     "handbook/hiring/team",
+                     "handbook/hiring/compensation"
+                  ]
+               },
+               {
+                  "group": "Customer Support",
+                  "icon": "hero",
+                  "pages": [
+                     "handbook/customer-support/overview",
+                     "handbook/customer-support/tone",
+                     "handbook/customer-support/pylon",
+                     "handbook/customer-support/handle-requests"
+                  ]
+               },
+               {
+                  "group": "Engineering Onboarding",
+                  "icon": "code",
+                  "pages": [
+                     "handbook/engineering/overview",
+                     "handbook/engineering/onboarding/onboarding-check-list",
+                     "handbook/engineering/onboarding/how-we-work",
+                     "handbook/engineering/onboarding/on-call",
+                     "handbook/engineering/onboarding/downtime-incident",
+                     "handbook/engineering/onboarding/stack"
+                  ]
+               },
+               {
+                  "group": "Engineering Playbooks",
+                  "icon": "code",
+                  "pages": [
+                     "handbook/engineering/playbooks/run-ee",
+                     "handbook/engineering/playbooks/setup-incident-io",
+                     "handbook/engineering/playbooks/releases",
+                     "handbook/engineering/playbooks/infrastructure",
+                     "handbook/engineering/playbooks/database-migration",
+                     "handbook/engineering/playbooks/product-announcement",
+                     "handbook/engineering/playbooks/frontend-best-practices",
+                     "handbook/engineering/playbooks/e2e-tests"
+                  ]
+               },
+               {
+                  "group": "Product",
+                  "icon": "tool",
+                  "pages": [
+                     "handbook/product/interface-design"
+                  ]
+               }
+            ]
+         }
+      ],
+      "global": {}
+   },
+   "logo": {
+      "light": "./resources/logo/light.svg",
+      "dark": "./resources/logo/dark.svg",
+      "href": "https://www.activepieces.com"
+   },
+   "api": {
+      "openapi": [
+         "openapi.json"
+      ]
+   },
+   "footer": {
+      "socials": {
+         "x": "https://x.com/activepieces",
+         "github": "https://github.com/activepieces/activepieces",
+         "linkedin": "https://linkedin.com/company/activepieces"
+      }
+   }
+}

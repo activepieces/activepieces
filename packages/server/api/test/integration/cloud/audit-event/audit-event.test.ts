@@ -106,6 +106,7 @@ describe('Audit Event API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 

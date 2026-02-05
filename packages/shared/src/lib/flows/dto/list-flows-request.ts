@@ -10,8 +10,10 @@ export const ListFlowsRequest = Type.Object({
     status: Type.Optional(Type.Array(Type.Enum(FlowStatus))),
     projectId: Type.String({}),
     name: Type.Optional(Type.String({})),
+    agentExternalIds: Type.Optional(Type.Array(Type.String({}))),
     versionState: Type.Optional(Type.Enum(FlowVersionState)),
     connectionExternalIds: Type.Optional(Type.Array(Type.String({}))),
+    externalIds: Type.Optional(Type.Array(Type.String({}))),
 })
 
 export type ListFlowsRequest = Omit<Static<typeof ListFlowsRequest>, 'cursor'> & { cursor: Cursor | undefined }

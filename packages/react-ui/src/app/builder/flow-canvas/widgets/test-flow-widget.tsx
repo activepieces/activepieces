@@ -1,98 +1,121 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useEffect } from 'react';
+import { useRef } from 'react';
 
-import { useSocket } from '@/components/socket-provider';
-import { Button } from '@/components/ui/button';
+import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { ChatDrawerSource } from '@/lib/types';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { FlowRun, FlowVersion, isNil, TriggerType } from '@activepieces/shared';
+  isNil,
+  FlowTriggerType,
+  UpdateRunProgressRequest,
+  assertNotNullOrUndefined,
+} from '@activepieces/shared';
 
-import { flowRunsApi } from '../../../../features/flow-runs/lib/flow-runs-api';
+import { AboveTriggerButton } from './above-trigger-button';
 
-type TestFlowWidgetProps = {
-  flowVersion: FlowVersion;
-  setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
-};
-
-const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetProps) => {
-  const socket = useSocket();
-
-  const isMac = /(Mac)/i.test(navigator.userAgent);
+const TestFlowWidget = () => {
+  const [
+    setChatDrawerOpenSource,
+    flowVersion,
+    readonly,
+    hideTestWidget,
+    run,
+    setRun,
+    publishedVersionId,
+  ] = useBuilderStateContext((state) => [
+    state.setChatDrawerOpenSource,
+    state.flowVersion,
+    state.readonly,
+    state.hideTestWidget,
+    state.run,
+    state.setRun,
+    state.flow.publishedVersionId,
+  ]);
+  const runRef = useRef(run);
+  runRef.current = run;
 
   const triggerHasSampleData =
-    flowVersion.trigger.type === TriggerType.PIECE &&
-    !isNil(flowVersion.trigger.settings.inputUiInfo?.lastTestDate);
+    flowVersion.trigger.type === FlowTriggerType.PIECE &&
+    !isNil(flowVersion.trigger.settings.sampleData?.lastTestDate);
 
-  const { mutate, isPending } = useMutation<void>({
-    mutationFn: () =>
-      flowRunsApi.testFlow(
-        socket,
-        {
-          flowVersionId: flowVersion.id,
-        },
-        (run) => {
-          setRun(run, flowVersion);
-        },
-      ),
-    onError: (error) => {
-      console.log(error);
-      toast(INTERNAL_ERROR_TOAST);
-    },
+  const isChatTrigger = pieceSelectorUtils.isChatTrigger(
+    flowVersion.trigger.settings.pieceName,
+    flowVersion.trigger.settings.triggerName,
+  );
+  const isManualTrigger = pieceSelectorUtils.isManualTrigger({
+    pieceName: flowVersion.trigger.settings.pieceName,
+    triggerName: flowVersion.trigger.settings.triggerName,
   });
 
-  useEffect(() => {
-    const keydownHandler = (event: KeyboardEvent) => {
-      if (
-        (isMac && event.metaKey && event.key.toLocaleLowerCase() === 'd') ||
-        (!isMac && event.ctrlKey && event.key.toLocaleLowerCase() === 'd')
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        if (!isPending && triggerHasSampleData) {
-          mutate();
+  const { mutate: runFlow, isPending: isTestingFlow } =
+    flowHooks.useTestFlowOrStartManualTrigger({
+      flowVersionId: flowVersion.id,
+      isForManualTrigger: isManualTrigger,
+      onUpdateRun: (response: UpdateRunProgressRequest) => {
+        assertNotNullOrUndefined(response.flowRun, 'flowRun');
+        const steps = runRef.current?.steps ?? {};
+        const startTime =
+          response.flowRun.startTime ?? runRef.current?.startTime;
+        if (!isNil(response.step)) {
+          const updatedSteps = flowRunUtils.updateRunSteps(
+            steps,
+            response.step?.name,
+            response.step?.path,
+            response.step?.output,
+          );
+          setRun(
+            { ...response.flowRun, startTime, steps: updatedSteps },
+            flowVersion,
+          );
         }
-      }
-    };
+        setRun({ ...response.flowRun, startTime, steps }, flowVersion);
+      },
+    });
 
-    window.addEventListener('keydown', keydownHandler, { capture: true });
+  if (!flowVersion.valid) {
+    return null;
+  }
 
-    return () => {
-      window.removeEventListener('keydown', keydownHandler, { capture: true });
-    };
-  }, [isMac, isPending, triggerHasSampleData, mutate]);
+  if (hideTestWidget) {
+    return null;
+  }
+  if (
+    isManualTrigger &&
+    (publishedVersionId !== flowVersion.id || isNil(publishedVersionId))
+  ) {
+    return null;
+  }
+
+  if (readonly) {
+    return (
+      <EditFlowOrViewDraftButton onCanvas={true}></EditFlowOrViewDraftButton>
+    );
+  }
+
+  if (isChatTrigger) {
+    return (
+      <AboveTriggerButton
+        onClick={() => {
+          setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
+        }}
+        text={t('Open Chat')}
+        loading={isTestingFlow}
+      />
+    );
+  }
 
   return (
-    flowVersion.valid && (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 !bg-primary-100/80 text-primary-300 disabled:pointer-events-auto hover:!border-primary hover:!text-primary-300 border-primary/50 border border-solid rounded-full animate-fade"
-            disabled={!triggerHasSampleData}
-            loading={isPending}
-            onClick={() => mutate()}
-          >
-            <div className="flex justify-center items-center gap-2">
-              {t('Test Flow')}
-              <span className="text-[10px] tracking-widest whitespace-nowrap">
-                {isMac ? '⌘ + D' : 'Ctrl + D'}
-              </span>
-            </div>
-          </Button>
-        </TooltipTrigger>
-        {!triggerHasSampleData && (
-          <TooltipContent side="bottom">
-            {t('Please test the trigger first')}
-          </TooltipContent>
-        )}
-      </Tooltip>
-    )
+    <AboveTriggerButton
+      onClick={() => {
+        runFlow();
+      }}
+      text={isManualTrigger ? t('Run Flow') : t('Test Flow')}
+      disable={!triggerHasSampleData && !isManualTrigger}
+      loading={isTestingFlow}
+    />
   );
 };
 

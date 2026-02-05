@@ -11,7 +11,7 @@ export const listChatbotsAction = createAction({
 	props: {},
 
 	async run(context) {
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const response = await makeRequest(apiKey, HttpMethod.GET, '/get-chatbots');
 

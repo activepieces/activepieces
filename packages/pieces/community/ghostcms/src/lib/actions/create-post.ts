@@ -55,10 +55,10 @@ export const createPost = createAction({
 
   async run(context) {
     const response = await httpClient.sendRequest({
-      url: `${context.auth.baseUrl}/ghost/api/admin/posts`,
+      url: `${context.auth.props.baseUrl}/ghost/api/admin/posts`,
       method: HttpMethod.POST,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.props.apiKey)}`,
       },
       body: {
         posts: [

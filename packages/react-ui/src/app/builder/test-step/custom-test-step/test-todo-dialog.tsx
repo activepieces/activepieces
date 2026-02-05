@@ -2,38 +2,35 @@ import { useMutation } from '@tanstack/react-query';
 
 import { TodoDetails } from '@/app/routes/todos/todo-details';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   PopulatedTodo,
   TodoType,
-  Action,
+  FlowAction,
   CreateTodoResult,
   CreateAndWaitTodoResult,
 } from '@activepieces/shared';
 
-import { testStepHooks } from '../test-step-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 type TodoTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  todo: PopulatedTodo;
-  currentStep: Action;
+  currentStep: FlowAction;
   type: TodoType;
-  setErrorMessage: (errorMessage: string | undefined) => void;
+  id: string;
 };
 
 function TodoTestingDialog({
   open,
   onOpenChange,
-  todo,
   currentStep,
   type,
-  setErrorMessage,
+  id,
 }: TodoTestingDialogProps) {
-  const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-    currentStep.name,
-  );
+  const { updateSampleData } = useBuilderStateContext((state) => ({
+    updateSampleData: state.updateSampleData,
+  }));
 
   const formatTodoResult = (
     response: PopulatedTodo,
@@ -56,22 +53,18 @@ function TodoTestingDialog({
 
   const { mutate: resolveTodo } = useMutation({
     mutationFn: async (status: PopulatedTodo['status']) => {
-      return await todosApi.update(todo.id, {
+      return await todosApi.update(id, {
         status: status,
         isTest: true,
       });
     },
     onSuccess: (response) => {
-      setErrorMessage(undefined);
       const output = formatTodoResult(response);
       updateSampleData({
-        response: { output, success: true },
+        stepName: currentStep.name,
+        output,
       });
       onOpenChange(false);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
@@ -81,12 +74,8 @@ function TodoTestingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl  p-0 overflow-hidden">
-        <TodoDetails
-          todoId={todo.id}
-          className="h-[90vh] py-3 px-6"
-          onStatusChange={handleStatusChange}
-        />
+      <DialogContent className="w-full max-w-3xl  p-3 overflow-hidden">
+        <TodoDetails todoId={id} onStatusChange={handleStatusChange} />
       </DialogContent>
     </Dialog>
   );

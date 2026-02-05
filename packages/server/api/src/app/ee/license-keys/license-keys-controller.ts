@@ -1,26 +1,10 @@
-import { ActivepiecesError, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
+import { ActivepiecesError, ErrorCode, isNil, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
-import { StatusCodes } from 'http-status-codes'
 import { licenseKeysService } from './license-keys-service'
-import { licenseKeysTrialService } from './license-keys-trial.service'
 
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
-
-    app.post('/', GenerateTrialRequest, async (req, res) => {
-        const { email, companyName, selfHosting, ultimatePlan, productionKey } = req.body as { email: string, companyName: string, selfHosting: boolean, ultimatePlan: boolean, productionKey: boolean }
-        const { message } = await licenseKeysTrialService(req.log).requestTrial({ email, companyName, selfHosting, ultimatePlan, productionKey })
-        return res.status(StatusCodes.OK).send({ message })
-    })
-
-    app.post('/extend-trial', ExtendTrialRequest, async (req, res) => {
-        const { email, days } = req.body as { email: string, days: number }
-        await licenseKeysTrialService(req.log).extendTrial({ email, days })
-        return res.status(StatusCodes.OK).send({
-            message: 'Trial extended',
-        })
-    })
-
 
 
     app.get('/:licenseKey', GetLicenseKeyRequest, async (req) => {
@@ -47,47 +31,9 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
 }
-
-const GenerateTrialRequest = {
-    schema: {
-        body: {
-            type: 'object',
-            properties: {
-                email: { type: 'string' },
-                companyName: { type: 'string' },
-                selfHosting: { type: 'boolean' },
-                ultimatePlan: { type: 'boolean' },
-                productionKey: { type: 'boolean' },
-            },
-            required: ['email', 'companyName', 'selfHosting', 'ultimatePlan', 'productionKey'],
-        },
-    },
-    config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
-    },
-}
-
-const ExtendTrialRequest = {
-    schema: {
-        body: {
-            type: 'object',
-            properties: {
-                email: { type: 'string' },
-                days: { type: 'number' },
-            },
-        },
-    },
-    config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
-    },
-}
-
 const VerifyLicenseKeyRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.UNKNOWN,
-            PrincipalType.USER,
-        ],
+        security: securityAccess.public(),
     },
     schema: {
         body: VerifyLicenseKeyRequestBody,
@@ -96,10 +42,7 @@ const VerifyLicenseKeyRequest = {
 
 const GetLicenseKeyRequest = {
     config: {
-        allowedPrincipals: [
-            PrincipalType.UNKNOWN,
-            PrincipalType.USER,
-        ],
+        security: securityAccess.public(),
     },
     schema: {
         params: Type.Object({

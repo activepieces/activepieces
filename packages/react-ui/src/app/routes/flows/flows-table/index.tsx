@@ -1,20 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckIcon, Link2, Workflow } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable, DataTableFilters } from '@/components/ui/data-table';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
-import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import {
+  FolderFilterList,
+  folderIdParamName,
+} from '@/features/folders/component/folder-filter-list';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import {
+  FlowStatus,
+  PopulatedFlow,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 
 import { flowsTableColumns } from './columns';
 
@@ -31,7 +39,6 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { pieces } = piecesHooks.usePieces({});
 
   const { data, isLoading, refetch } = useQuery({
@@ -44,7 +51,7 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : 10;
-      const folderId = searchParams.get('folderId') ?? undefined;
+      const folderId = searchParams.get(folderIdParamName) ?? undefined;
       const connectionExternalId =
         searchParams.getAll('connectionExternalId') ?? undefined;
 
@@ -76,24 +83,24 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
     }
   };
 
-  const columns = useMemo(() => {
-    return flowsTableColumns({
+  const columns = ownerColumnHooks.useOwnerColumn<PopulatedFlow>(
+    flowsTableColumns({
       refetch: handleRefetch,
       refresh,
       setRefresh,
-      selectedRows,
-      setSelectedRows,
-    });
-  }, [refresh, handleRefetch, selectedRows]);
+    }),
+    3,
+  );
 
-  const filters = [
+  const filters: DataTableFilters<
+    keyof PopulatedFlow | 'connectionExternalId' | 'name'
+  >[] = [
     {
       type: 'input',
       title: t('Flow name'),
       accessorKey: 'name',
-      options: [],
       icon: CheckIcon,
-    } as const,
+    },
     {
       type: 'select',
       title: t('Status'),
@@ -123,31 +130,29 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
 
   const bulkActions = useFlowsBulkActions({
     selectedRows,
-    isDropdownOpen,
-    setIsDropdownOpen,
     refresh,
     setSelectedRows,
     setRefresh,
     refetch: handleRefetch,
+    folderId: searchParams.get(folderIdParamName) ?? UncategorizedFolderId,
   });
 
   return (
-    <div className="flex flex-row gap-4">
+    <div className="flex flex-row gap-8">
       {!embedState.hideFolders && (
         <FolderFilterList key="folder-filter" refresh={refresh} />
       )}
-      <div className="w-full">
+      <div className="overflow-hidden w-full ">
         <DataTable
           emptyStateTextTitle={t('No flows found')}
           emptyStateTextDescription={t('Create a workflow to start automating')}
           emptyStateIcon={<Workflow className="size-14" />}
-          columns={columns.filter(
-            (column) =>
-              !embedState.hideFolders || column.accessorKey !== 'folderId',
-          )}
+          columns={columns}
           page={data}
           isLoading={isLoading || isLoadingConnections}
           filters={filters}
+          selectColumn={true}
+          onSelectedRowsChange={setSelectedRows}
           bulkActions={bulkActions}
           onRowClick={(row, newWindow) => {
             if (newWindow) {

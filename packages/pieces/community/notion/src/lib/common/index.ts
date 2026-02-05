@@ -5,13 +5,16 @@ import {
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from './models';
+import { notionAuth } from '../..';
 
 export const notionCommon = {
   baseUrl: 'https://api.notion.com/v1',
-  database_id: Property.Dropdown<string>({
+  database_id: Property.Dropdown<string, true, typeof notionAuth>({
+    auth: notionAuth,
     displayName: 'Database',
     required: true,
-    description: 'Select the database you want to use',
+    description:
+      'Choose the Notion database you want to work with from your workspace',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -43,6 +46,7 @@ export const notionCommon = {
     },
   }),
   database_item_id: Property.Dropdown({
+    auth: notionAuth,
     displayName: 'Database Item',
     description: 'Select the item you want to update',
     required: true,
@@ -76,7 +80,67 @@ export const notionCommon = {
       };
     },
   }),
+  archived_database_item_id: Property.Dropdown({
+    auth: notionAuth,
+    displayName: 'Archived Item',
+    description:
+      'Choose which archived item to restore from the selected database',
+    required: true,
+    refreshers: ['database_id'],
+    options: async ({ auth, database_id }) => {
+      if (!auth || !database_id) {
+        return {
+          disabled: true,
+          placeholder:
+            'Please connect your Notion account first and select a database',
+          options: [],
+        };
+      }
+
+      try {
+        const notion = new Client({
+          auth: (auth as OAuth2PropertyValue).access_token,
+          notionVersion: '2022-02-22',
+        });
+
+        const { results } = await notion.databases.query({
+          database_id: database_id as string,
+          filter_properties: ['title'],
+          archived: true, // Only fetch archived items
+        });
+
+        if (results.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No archived items found in this database',
+          };
+        }
+
+        return {
+          disabled: false,
+          placeholder: 'Select an archived item to restore',
+          options: results.map((item: any) => {
+            const property: any = Object.values(item.properties)[0];
+            const title = property?.title?.[0]?.plain_text || 'Untitled';
+            return {
+              label: `${title} (archived)`,
+              value: item.id,
+            };
+          }),
+        };
+      } catch (error: any) {
+        return {
+          disabled: true,
+          placeholder:
+            'Error loading archived items. Please check your database permissions.',
+          options: [],
+        };
+      }
+    },
+  }),
   databaseFields: Property.DynamicProperties({
+    auth: notionAuth,
     displayName: 'Fields',
     required: true,
     refreshers: ['database_id'],
@@ -99,46 +163,55 @@ export const notionCommon = {
           database_id: database_id as unknown as string,
         });
         for (const key in properties) {
-          const property = properties[key];
-          if (
-            [
-              'rollup',
-              'button',
-              'files',
-              'verification',
-              'formula',
-              'unique_id',
-              'relation',
-              'created_by',
-              'created_time',
-              'last_edited_by',
-              'last_edited_time',
-            ].includes(property.type)
-          ) {
-            continue;
-          }
-          if (property.type === 'people') {
-            const { results } = await notion.users.list({ page_size: 100 });
-            fields[property.name] = Property.StaticMultiSelectDropdown({
-              displayName: property.name,
-              required: false,
-              options: {
-                disabled: false,
-                options: results
-                  .filter(
-                    (user) => user.type === 'person' && user.name !== null
-                  )
-                  .map((option: { id: string; name: any }) => {
-                    return {
-                      label: option.name,
-                      value: option.id,
-                    };
-                  }),
-              },
-            });
-          } else {
-            fields[property.name] =
-              NotionFieldMapping[property.type].buildActivepieceType(property);
+          try {
+            const property = properties[key];
+            if (
+              [
+                'rollup',
+                'button',
+                'files',
+                'verification',
+                'formula',
+                'unique_id',
+                'relation',
+                'created_by',
+                'created_time',
+                'last_edited_by',
+                'last_edited_time',
+              ].includes(property.type)
+            ) {
+              continue;
+            }
+            if (property.type === 'people') {
+              const { results } = await notion.users.list({ page_size: 100 });
+              fields[property.name] = Property.StaticMultiSelectDropdown({
+                displayName: property.name,
+                required: false,
+                options: {
+                  disabled: false,
+                  options: results
+                    .filter(
+                      (user) => user.type === 'person' && user.name !== null
+                    )
+                    .map((option: { id: string; name: any }) => {
+                      return {
+                        label: option.name,
+                        value: option.id,
+                      };
+                    }),
+                },
+              });
+            } else {
+              fields[property.name] =
+                NotionFieldMapping[property.type].buildActivepieceType(
+                  property
+                );
+            }
+          } catch (e) {
+            console.error(
+              'Notion: could not generate dynamic input property',
+              e
+            );
           }
         }
       } catch (e) {
@@ -148,6 +221,7 @@ export const notionCommon = {
     },
   }),
   filterDatabaseFields: Property.DynamicProperties({
+    auth: notionAuth,
     displayName: 'Fields',
     required: true,
     refreshers: ['database_id'],
@@ -202,11 +276,12 @@ export const notionCommon = {
     },
   }),
 
-  page: Property.Dropdown<string>({
+  page: Property.Dropdown({
+    auth: notionAuth,
     displayName: 'Page',
     required: true,
     description:
-      'Select the page you want to use. Only your most recently edited 100 pages will appear.',
+      'Choose the Notion page you want to work with. This list shows your 100 most recently edited pages for easy selection.',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {

@@ -25,7 +25,7 @@ export const listCadModelsAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/user/text-to-cad',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

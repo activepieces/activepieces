@@ -1,5 +1,5 @@
 import { HttpMethod, AuthenticationType, HttpRequest, httpClient } from "@activepieces/pieces-common";
-import { Property } from "@activepieces/pieces-framework";
+import { AppConnectionValueForAuthProperty, Property } from "@activepieces/pieces-framework";
 import { CreateTodoRequestBody, PopulatedTodo, SeekPage, STATUS_VARIANT,  UserWithMetaInformation } from "@activepieces/shared";
 
 
@@ -15,6 +15,7 @@ export const createTodoProps = {
     required: false,
   }),
   assigneeId: Property.Dropdown({
+    auth: undefined,
     displayName: 'Assignee',
     required: false,
     options: async (_, context) => {
@@ -75,6 +76,7 @@ export function constructTodoUrl(publicUrl: string, todoId: string, status: stri
 }
 
 type ApprovalParms = {
+  auth?: AppConnectionValueForAuthProperty<undefined>;
   propsValue: {
     title: string;
     description?: string;
@@ -98,7 +100,7 @@ type ApprovalParms = {
 export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) {
   const requestBody: CreateTodoRequestBody = {
     title: context.propsValue.title,
-    description: context.propsValue.description ?? undefined,
+    description: context.propsValue.description ?? '',
     statusOptions: context.propsValue.statusOptions.map((option: any) => ({
       name: option.name,
       description: option.description,

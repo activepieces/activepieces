@@ -1,7 +1,7 @@
 {
   "name": "@activepieces/piece-dust",
-  "version": "0.1.14",
+  "version": "0.2.3",
   "dependencies": {
-    "@dust-tt/client": "1.0.49"
+    "@dust-tt/client": "1.0.57"
   }
 }

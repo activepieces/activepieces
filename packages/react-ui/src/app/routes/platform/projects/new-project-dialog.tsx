@@ -1,6 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,13 +16,14 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { projectApi } from '@/lib/project-api';
+import { internalErrorToast } from '@/components/ui/sonner';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
+import { ProjectWithLimits } from '@activepieces/shared';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
-  onCreate: () => void;
+  onCreate?: (project: ProjectWithLimits) => void;
 };
 
 export const NewProjectDialog = ({
@@ -42,20 +42,16 @@ export const NewProjectDialog = ({
     ),
   });
 
-  const { toast } = useToast();
-
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['create-project'],
-    mutationFn: () => projectApi.create(form.getValues()),
-    onSuccess: () => {
-      onCreate();
+  const { mutate, isPending } = projectCollectionUtils.useCreateProject(
+    (data) => {
+      onCreate?.(data);
       setOpen(false);
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
+    (error) => {
+      console.error(error);
+      internalErrorToast();
     },
-  });
+  );
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
@@ -67,7 +63,9 @@ export const NewProjectDialog = ({
         <Form {...form}>
           <form
             className="grid space-y-4"
-            onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
+            onSubmit={(e) =>
+              form.handleSubmit(() => mutate(form.getValues()))(e)
+            }
           >
             <FormField
               name="displayName"
@@ -108,7 +106,7 @@ export const NewProjectDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              form.handleSubmit(() => mutate())(e);
+              form.handleSubmit(() => mutate(form.getValues()))(e);
             }}
           >
             {t('Save')}

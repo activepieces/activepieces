@@ -2,7 +2,8 @@ import {
     AddDomainRequest,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,
@@ -10,7 +11,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { HttpStatusCode } from 'axios'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { customDomainService } from './custom-domain.service'
 
 const GetOneRequest = Type.Object({
@@ -20,7 +21,6 @@ type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.customDomainsEnabled))
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 
@@ -30,6 +30,9 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         {
             schema: {
                 body: AddDomainRequest,
+            },
+            config: {
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
         },
         async (request, reply) => {
@@ -61,6 +64,9 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             schema: {
                 querystring: ListCustomDomainsRequest,
             },
+            config: {
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+            },
         },
         async (request) => {
             const platformId = request.principal.platform.id
@@ -78,6 +84,9 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         {
             schema: {
                 params: GetOneRequest,
+            },
+            config: {
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
         },
         async (request) => {

@@ -1,90 +1,141 @@
-import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
-import { FastifyRequest } from 'fastify'
+import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
+import { securityAccess } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
-import { platformUsageService } from '../platform-usage-service'
+import { platformAiCreditsService } from './platform-ai-credits.service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
-    fastify.get('/info', InfoRequest, async (request: FastifyRequest) => {
+    fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const [platformPlan, usage] = await Promise.all([
+            platformPlanService(request.log).getOrCreateForPlatform(platform.id),
+            platformPlanService(request.log).getUsage(platform.id),
+        ])
+
+        const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
+        const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformPlan)
+
+        const nextBillingAmount = await platformPlanService(request.log).getNextBillingAmount({ subscriptionId: platformPlan.stripeSubscriptionId })
+
         const response: PlatformBillingInformation = {
-            plan: await platformPlanService(request.log).getOrCreateForPlatform(platform.id),
-            usage: await platformUsageService(request.log).getPlatformUsage(platform.id),
-            nextBillingDate: platformUsageService(request.log).getCurrentBillingPeriodEnd(),
+            plan: platformPlan,
+            usage,
+            nextBillingAmount,
+            nextBillingDate,
+            cancelAt: cancelDate,
         }
         return response
     })
 
-    fastify.post('/portal', {}, async (request) => {
-        return {
-            portalLink: await stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id }),
-        }
+    fastify.post('/portal', {
+        config: {
+            security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        },
+    }, async (request) => {
+        return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
     })
 
-    fastify.post('/upgrade', UpgradeRequest, async (request, reply) => {
-        const stripe = stripeHelper(request.log).getStripe()
-        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        const projectBilling = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        const customerId = projectBilling.stripeCustomerId
+    fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
-        if (projectBilling.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE) {
-            await reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'Already subscribed',
-            })
-            return
-        }
 
-        await platformPlanService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks })
-        return {
-            paymentLink: await stripeHelper(request.log).createCheckoutUrl(customerId),
-        }
+        const { newActiveFlowsLimit } = request.body
+
+        const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
+        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
+
+        return stripeHelper(request.log).createNewSubscriptionCheckoutSession({
+            platformId: platformPlan.platformId,
+            customerId,
+            extraActiveFlows,
+        })
     })
 
-    fastify.post('/', UpdateLimitsRequest, async (request) => {
-        const platformId = request.principal.platform.id
-        const platformBilling = await platformPlanService(request.log).getOrCreateForPlatform(platformId)
-        if (platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'Platform does not have an active subscription',
-                },
-            })
-        }
-        return platformPlanService(request.log).update({ platformId, tasksLimit: request.body.tasksLimit })
+    fastify.post('/update-active-flows-addon', UpdateActiveFlowsAddonRequest, async (request) => {
+        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
+        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
+
+        const { newActiveFlowsLimit } = request.body
+
+        const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
+        const currentActiveFlowsLimit =  platformPlan.activeFlowsLimit ?? 0
+        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
+        const isFreeDowngrade = newActiveFlowsLimit === baseActiveFlowsLimit
+
+        assertNotNullOrUndefined(platformPlan.stripeSubscriptionId, 'Subscription doesnt exist')
+
+        const isUpgrade = newActiveFlowsLimit > currentActiveFlowsLimit
+        return stripeHelper(request.log).handleSubscriptionUpdate({
+            subscriptionId: platformPlan.stripeSubscriptionId,
+            extraActiveFlows,
+            isUpgrade, 
+            isFreeDowngrade,
+        })
+    })
+
+    // AI Credits
+    fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
+        return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
+    })
+    fastify.post('/ai-credits/auto-topup', UpdateAICreditsAutoTopUpRequest, async (request) => {
+        return platformAiCreditsService(request.log).updateAutoTopUp(request.principal.platform.id, request.body)
     })
 }
 
 const InfoRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
-    resposne: {
+    response: {
         [StatusCodes.OK]: PlatformBillingInformation,
     },
 }
 
-const UpdateLimitsRequest = {
+const UpdateActiveFlowsAddonRequest = {
     schema: {
-        body: Type.Object({
-            tasksLimit: Type.Optional(Type.Number()),
-        }),
+        body: UpdateActiveFlowsAddonParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
-const UpgradeRequest = {
+const CreateCheckoutSessionRequest = {
+    schema: {
+        body: CreateCheckoutSessionParamsSchema,
+    },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const CreateAICreditCheckoutSessionRequest = {
+    schema: {
+        body: CreateAICreditCheckoutSessionParamsSchema,
+        response: {
+            [StatusCodes.OK]: Type.Object({
+                stripeCheckoutUrl: Type.String(),
+            }),
+        },
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const UpdateAICreditsAutoTopUpRequest = {
+    schema: {
+        body: UpdateAICreditsAutoTopUpParamsSchema,
+        [StatusCodes.OK]: Type.Object({
+            stripeCheckoutUrl: Type.Optional(Type.String()),
+        }),
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }

@@ -1,4 +1,4 @@
-import { createTrigger, PieceAuth, PropertyType, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
 

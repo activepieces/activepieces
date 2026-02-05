@@ -1,10 +1,8 @@
-import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject } from '@activepieces/shared'
+import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
-
-
 
 type PropsValidationError = {
     [key: string]: string[] | PropsValidationError | PropsValidationError[]
@@ -14,28 +12,33 @@ export const propsProcessor = {
     applyProcessorsAndValidators: async (
         resolvedInput: StaticPropsValue<PiecePropertyMap>,
         props: InputPropertyMap,
-        auth: PieceAuthProperty | undefined,
+        auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
         requireAuth: boolean,
-        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined | null,
+        propertySettings: Record<string, PropertySettings>,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
+        let dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined = undefined
+        if (Object.keys(propertySettings).length > 0) {
+            dynamaicPropertiesSchema = Object.fromEntries(Object.entries(propertySettings).map(([key, propertySetting]) => [key, propertySetting.schema]))
+        }
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
-
-        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props) && requireAuth
-        if (isAuthenticationProperty) {
-            const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
-                resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-                auth.props,
-                undefined,
-                requireAuth,
-                undefined,
-            )
-            processedInput.auth = authProcessedInput
-            if (Object.keys(authErrors).length > 0) {
-                errors.auth = authErrors
+        const authValue: AppConnectionValue | undefined = resolvedInput[AUTHENTICATION_PROPERTY_NAME]
+        if (authValue && requireAuth) {
+            const authPropsToProcess = getAuthPropsToProcess(authValue, auth)
+            if (authPropsToProcess) {
+                const { processedInput: authProcessedInput, errors: authErrors } = await propsProcessor.applyProcessorsAndValidators(
+                    resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+                    authPropsToProcess,
+                    undefined,
+                    false,
+                    {},
+                )
+                processedInput[AUTHENTICATION_PROPERTY_NAME] = authProcessedInput
+                if (Object.keys(authErrors).length > 0) {
+                    errors[AUTHENTICATION_PROPERTY_NAME] = authErrors
+                }
             }
         }
-
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
             if (isNil(property)) {
@@ -47,7 +50,7 @@ export const propsProcessor = {
                     dynamaicPropertiesSchema[key],
                     undefined,
                     false,
-                    undefined,
+                    {},
                 )
                 processedInput[key] = itemProcessedInput
                 if (Object.keys(itemErrors).length > 0) {
@@ -55,7 +58,7 @@ export const propsProcessor = {
                 }
             }
             if (property.type === PropertyType.ARRAY && property.properties) {
-                const arrayOfObjects = arrayZipperProcessor(property, value)
+                const arrayOfObjects = arrayZipperProcessor(property, value) ?? []
                 const processedArray = []
                 const processedErrors = []
                 for (const item of arrayOfObjects) {
@@ -64,7 +67,7 @@ export const propsProcessor = {
                         property.properties,
                         undefined,
                         false,
-                        undefined,
+                        {},
                     )
                     processedArray.push(itemProcessedInput)
                     processedErrors.push(itemErrors)
@@ -110,41 +113,42 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
             schema = z.string({
-                required_error: `Expected string, received: ${originalValue}`,
-                invalid_type_error: `Expected string, received: ${originalValue}`,
+                error: `Expected string, received: ${originalValue}`,
             })
             break
         case PropertyType.NUMBER:
             schema = z.number({
-                required_error: `Expected number, received: ${originalValue}`,
-                invalid_type_error: `Expected number, received: ${originalValue}`,
+                error: `Expected number, received: ${originalValue}`,
             })
             break
         case PropertyType.CHECKBOX:
             schema = z.boolean({
-                required_error: `Expected boolean, received: ${originalValue}`,
-                invalid_type_error: `Expected boolean, received: ${originalValue}`,
+                error: `Expected boolean, received: ${originalValue}`,
             })
             break
         case PropertyType.DATE_TIME:
             schema = z.string({
-                required_error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
-                invalid_type_error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
+                error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
             })
             break
         case PropertyType.ARRAY:
             schema = z.array(z.any(), {
-                required_error: `Expected array, received: ${originalValue}`,
-                invalid_type_error: `Expected array, received: ${originalValue}`,
+                error: `Expected array, received: ${originalValue}`,
             })
             break
         case PropertyType.OBJECT:
-            schema = z.record(z.any(), {
-                required_error: `Expected object, received: ${originalValue}`,
-                invalid_type_error: `Expected object, received: ${originalValue}`,
+            schema = z.record(z.any(), z.any(), {
+                error: `Expected object, received: ${originalValue}`,
             })
             break
-        case PropertyType.JSON:
+        case PropertyType.JSON: {
+            if (!property.required && originalValue === '') {
+                return []
+            }
+            const originalValueProvidedAndFailed = !isNil(originalValue) && isNil(value)
+            if (originalValueProvidedAndFailed) {
+                return [`Expected JSON, received: ${originalValue}`]
+            }
             schema = z.any().refine(
                 (val) => isObject(val) || Array.isArray(val),
                 {
@@ -152,12 +156,16 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
                 },
             )
             break
-        case PropertyType.FILE:
-            schema = z.record(z.any(), {
-                required_error: `Expected file url or base64 with mimeType, received: ${originalValue}`,
-                invalid_type_error: `Expected file url or base64 with mimeType, received: ${originalValue}`,
-            })
+        }
+        case PropertyType.FILE: {
+            schema = z.any().refine(
+                (val) => isObject(val),
+                {
+                    message: `Expected file url or base64 with mimeType, received: ${originalValue}`,
+                },
+            )
             break
+        }
         default:
             schema = z.any()
     }
@@ -175,8 +183,23 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
     }
     catch (err) {
         if (err instanceof z.ZodError) {
-            return err.errors.map(e => e.message)
+            return err.issues.map(e => e.message)
         }
         return []
     }
+}
+
+function getAuthPropsToProcess(authValue: AppConnectionValue, auth: PieceAuthProperty | PieceAuthProperty[] | undefined): | null {
+    if (isNil(auth)) {
+        return null
+    }
+    const usedAuthProperty = getAuthPropertyForValue({
+        authValueType: authValue.type,
+        pieceAuth: auth,
+    })
+    const doesAuthHaveProps = usedAuthProperty?.type === PropertyType.CUSTOM_AUTH || usedAuthProperty?.type === PropertyType.OAUTH2
+    if (doesAuthHaveProps && !isNil(usedAuthProperty?.props)) {
+        return usedAuthProperty.props
+    }
+    return null
 }

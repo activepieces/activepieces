@@ -8,13 +8,14 @@ import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import {
   ArrayProperty,
   ArraySubProps,
   PropertyType,
 } from '@activepieces/pieces-framework';
 
-import { AutoPropertiesFormComponent } from './auto-properties-form';
+import { GenericPropertiesForm } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 type ArrayPropertyProps = {
@@ -49,6 +50,7 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
+      case PropertyType.DATE_TIME:
         return {
           ...acc,
           [key]: null,
@@ -69,6 +71,7 @@ const ArrayPieceProperty = React.memo(
     arrayProperty,
   }: ArrayPropertyProps) => {
     const form = useFormContext();
+
     const [fields, setFields] = useState<ArrayField[]>(() => {
       const formValues = form.getValues(inputName);
       if (formValues) {
@@ -123,10 +126,15 @@ const ArrayPieceProperty = React.memo(
       <>
         {arrayProperty.properties && (
           <>
-            <div className="flex w-full flex-col gap-4">
+            <div
+              className={cn('flex w-full flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}
+            >
               {fields.map((field, index) => (
                 <div
-                  className="p-4 border rounded-md flex flex-col gap-4"
+                  className={cn(
+                    'p-4 border rounded-md flex flex-col',
+                    GAP_SIZE_FOR_STEP_SETTINGS,
+                  )}
                   key={'array-item-' + field.id}
                 >
                   <div className="flex justify-between">
@@ -147,13 +155,17 @@ const ArrayPieceProperty = React.memo(
                       <span className="sr-only">{t('Remove')}</span>
                     </Button>
                   </div>
-                  <AutoPropertiesFormComponent
+                  <GenericPropertiesForm
                     prefixValue={`${inputName}.[${index}]`}
                     props={arrayProperty.properties!}
                     useMentionTextInput={useMentionTextInput}
-                    allowDynamicValues={false}
+                    propertySettings={null}
+                    dynamicPropsInfo={null}
                     disabled={disabled}
-                  ></AutoPropertiesFormComponent>
+                    onValueChange={() => {
+                      form.trigger(inputName);
+                    }}
+                  ></GenericPropertiesForm>
                 </div>
               ))}
             </div>

@@ -39,7 +39,7 @@ export const createLeadAction = createAction({
 
 		const tagsToAdd = context.propsValue.tags_to_add ?? [];
 
-		const { apiToken, subdomain } = context.auth;
+		const { apiToken, subdomain } = context.auth.props;
 
 		const body: Record<string, unknown> = {
 			name,

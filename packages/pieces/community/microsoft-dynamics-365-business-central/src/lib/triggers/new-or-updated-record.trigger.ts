@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import {
   createTrigger,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import { TRIGGER_ENTITY_DROPDOWN_OPTIONS } from '../common/constants';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof businessCentralAuth>,
+  AppConnectionValueForAuthProperty<typeof businessCentralAuth>,
   { company_id: string; record_type: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

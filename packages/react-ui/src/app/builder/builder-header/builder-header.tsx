@@ -1,206 +1,223 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, HistoryIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
   createSearchParams,
-  useLocation,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { RightSideBarType } from '@/lib/types';
+import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
   FlowVersionState,
   Permission,
   supportUrl,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
-import { BuilderFlowStatusSection } from '../builder-flow-status-section';
+import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
-import { UserAvatarMenu } from './user-avatar-menu';
+import { BuilderFlowStatusSection } from './flow-status';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
+  const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  const isInRunsPage = useMemo(
-    () => location.pathname.includes('/runs'),
-    [location.pathname],
-  );
+
   const hasPermissionToReadRuns = useAuthorization().checkAccess(
     Permission.READ_FLOW,
   );
   const [
     flow,
     flowVersion,
-    setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
+    setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
-    state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
+    state.setRightSidebar,
   ]);
 
   const { embedState } = useEmbedding();
+  const { project } = projectCollectionUtils.useCurrentProject();
 
-  const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
+  const { data: folderData } = foldersHooks.useFolder(
+    flow.folderId ?? UncategorizedFolderId,
+  );
 
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
-  const folderName = folderData?.displayName ?? t('Uncategorized');
   const [isEditingFlowName, setIsEditingFlowName] = useState(false);
   useEffect(() => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
   }, []);
 
-  return (
-    <div className="bg-background select-none">
-      <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
-        <div className="flex items-center gap-2">
-          <HomeButton
-            route={'/flows'}
-            showBackButton={embedState.homeButtonIcon === 'back'}
-          />
-          <div className="flex gap-2 items-center">
-            {!embedState.hideFolders &&
-              !embedState.disableNavigationInBuilder && (
-                <>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger
-                        onClick={() =>
-                          navigate({
-                            pathname:
-                              authenticationSession.appendProjectRoutePrefix(
-                                '/flows',
-                              ),
-                            search: createSearchParams({
-                              folderId: folderData?.id ?? 'NULL',
-                            }).toString(),
-                          })
-                        }
-                      >
-                        {folderName}
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <span>
-                          {t('Go to folder')} {folderName}
-                        </span>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  {' / '}
-                </>
-              )}
-            {!embedState.hideFlowNameInBuilder && (
-              <EditableText
-                className="font-semibold"
-                value={flowVersion.displayName}
-                readonly={!isLatestVersion}
-                onValueChange={(value) =>
-                  applyOperation({
-                    type: FlowOperationType.CHANGE_NAME,
-                    request: {
-                      displayName: value,
-                    },
-                  })
-                }
-                isEditing={isEditingFlowName}
-                setIsEditing={setIsEditingFlowName}
-              />
-            )}
-          </div>
+  const goToFlowsPage = () => {
+    navigate({
+      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      search: createSearchParams({
+        folderId: folderData?.id ?? UncategorizedFolderId,
+      }).toString(),
+    });
+  };
+
+  const titleContent = (
+    <div className="flex items-center gap-2">
+      <Breadcrumb>
+        <BreadcrumbList>
+          {!embedState.disableNavigationInBuilder && (
+            <>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  onClick={goToFlowsPage}
+                  className="cursor-pointer text-base"
+                >
+                  {getProjectName(project)}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </>
+          )}
           {!embedState.hideFlowNameInBuilder && (
-            <FlowActionMenu
-              insideBuilder={true}
-              flow={flow}
-              flowVersion={flowVersion}
-              readonly={!isLatestVersion}
-              onDelete={() => {
-                navigate(
-                  authenticationSession.appendProjectRoutePrefix('/flows'),
-                );
-              }}
-              onRename={() => {
-                setIsEditingFlowName(true);
-              }}
-              onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-              onDuplicate={() => {}}
-            >
-              <ChevronDown className="h-8 w-8" />
-            </FlowActionMenu>
+            <BreadcrumbItem>
+              <BreadcrumbPage>
+                <div
+                  className={cn('flex items-center gap-1 text-base', {
+                    'max-w-[500px]': !isEditingFlowName,
+                  })}
+                >
+                  <EditableText
+                    className="hover:cursor-text"
+                    value={flowVersion.displayName}
+                    readonly={!isLatestVersion}
+                    onValueChange={(value) => {
+                      applyOperation(
+                        {
+                          type: FlowOperationType.CHANGE_NAME,
+                          request: {
+                            displayName: value,
+                          },
+                        },
+                        () => {
+                          flowHooks.invalidateFlowsQuery(queryClient);
+                        },
+                      );
+                    }}
+                    isEditing={isEditingFlowName}
+                    setIsEditing={setIsEditingFlowName}
+                    tooltipContent=""
+                  />
+                  <FlowActionMenu
+                    onVersionsListClick={() => {
+                      setRightSidebar(RightSideBarType.VERSIONS);
+                    }}
+                    insideBuilder={true}
+                    flow={flow}
+                    flowVersion={flowVersion}
+                    readonly={!isLatestVersion}
+                    onDelete={goToFlowsPage}
+                    onRename={() => {
+                      setIsEditingFlowName(true);
+                    }}
+                    onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+                    onDuplicate={() => {}}
+                  >
+                    <Button
+                      variant="ghost"
+                      className="size-6 flex items-center justify-center"
+                    >
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </FlowActionMenu>
+                </div>
+              </BreadcrumbPage>
+            </BreadcrumbItem>
           )}
-        </div>
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
+  );
 
-        <div className="grow"></div>
-        <div className="flex items-center justify-center gap-4">
-          {showSupport && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => openNewWindow(supportUrl)}
-            >
-              <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
-              {t('Support')}
-            </Button>
-          )}
-          {hasPermissionToReadRuns && (
-            <Button
-              variant="ghost"
-              onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
-              className="gap-2 px-2"
-            >
-              <Logs className="w-4 h-4" />
-              {t('Runs')}
-            </Button>
-          )}
+  const rightContent = (
+    <div className="flex items-center justify-center gap-4">
+      {showSupport && (
+        <Button
+          variant="ghost"
+          className="gap-2 px-2"
+          onClick={() => openNewWindow(supportUrl)}
+        >
+          <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
+          {t('Support')}
+        </Button>
+      )}
+      {hasPermissionToReadRuns && (
+        <Button
+          variant="ghost"
+          onClick={() => setRightSidebar(RightSideBarType.RUNS)}
+          className="gap-2 px-2"
+        >
+          <HistoryIcon className="w-4 h-4" />
+          {t('Runs')}
+        </Button>
+      )}
 
-          {!isInRunsPage && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-            >
-              <History className="w-4 h-4" />
-              {t('Versions')}
-            </Button>
-          )}
+      <BuilderFlowStatusSection></BuilderFlowStatusSection>
+    </div>
+  );
 
-          <BuilderFlowStatusSection></BuilderFlowStatusSection>
-          <UserAvatarMenu></UserAvatarMenu>
-        </div>
-      </div>
+  const leftContent = embedState.isEmbedded ? <HomeButton /> : null;
+
+  return (
+    <div
+      style={{
+        height: `$${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
+      }}
+    >
+      <PageHeader
+        title={titleContent}
+        rightContent={rightContent}
+        leftContent={leftContent}
+        showBorder={true}
+        className="select-none"
+      />
     </div>
   );
 };

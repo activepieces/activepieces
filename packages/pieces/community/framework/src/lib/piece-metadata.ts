@@ -1,9 +1,10 @@
 import { PiecePropertyMap } from "./property";
-import { WebhookRenewConfiguration, TriggerStrategy } from "./trigger/trigger";
+import { WebhookRenewConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Static, Type } from "@sinclair/typebox";
-import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
+import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
+import { ContextVersion } from "./context/versioning";
 
 const I18nForPiece =  Type.Optional(Type.Partial(Type.Record(Type.Enum(LocalesEnum), Type.Record(Type.String(), Type.String()))));
 export type I18nForPiece = Static<typeof I18nForPiece>
@@ -13,11 +14,10 @@ export const PieceBase = Type.Object({
   displayName: Type.String(),
   logoUrl: Type.String(),
   description: Type.String(),
-  projectId: Type.Optional(Type.String()),
   authors: Type.Array(Type.String()),
   platformId: Type.Optional(Type.String()),
   directoryPath: Type.Optional(Type.String()),
-  auth: Type.Optional(PieceAuthProperty),
+  auth: Type.Optional(Type.Union([PieceAuthProperty, Type.Array(PieceAuthProperty)])),
   version: Type.String(),
   categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
   minimumSupportedRelease: Type.Optional(Type.String()),
@@ -31,16 +31,17 @@ export type PieceBase = {
   displayName: string;
   logoUrl: string;
   description: string;
-  projectId?: ProjectId;
   platformId?: string;
   authors: string[],
   directoryPath?: string;
-  auth?: PieceAuthProperty;
+  auth?: PieceAuthProperty | PieceAuthProperty[];
   version: string;
   categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
   i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
+  // this method didn't exist in older version
+  getContextInfo: (() => { version: ContextVersion }) | undefined;
 }
 
 
@@ -88,9 +89,11 @@ export const PieceMetadata = Type.Composite([
   })
 ])
 
-export type PieceMetadata = PieceBase & {
+export type PieceMetadata = Omit<PieceBase, 'getContextInfo'> & {
   actions: Record<string, ActionBase>;
   triggers: Record<string, TriggerBase>;
+  // this property didn't exist in older version
+  contextInfo: { version: ContextVersion } | undefined;
 };
 
 export const PieceMetadataSummary = Type.Composite([
@@ -115,6 +118,7 @@ const PiecePackageMetadata = Type.Object({
   tags: Type.Optional(Type.Array(Type.String())),
   pieceType: Type.Enum(PieceType),
   packageType: Type.Enum(PackageType),
+  platformId: Type.Optional(Type.String()),
   archiveId: Type.Optional(Type.String()),
 })
 type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
@@ -130,3 +134,9 @@ export const PieceMetadataModelSummary = Type.Composite([
   PiecePackageMetadata
 ])
 export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata;
+
+export const PiecePackageInformation = Type.Object({
+  name: Type.String(),
+  version: Type.String(),
+})
+export type PiecePackageInformation = Static<typeof PiecePackageInformation>

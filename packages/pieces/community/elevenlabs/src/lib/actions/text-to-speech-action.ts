@@ -1,20 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { ElevenLabsClient } from 'elevenlabs';
+import { createClient, ExtendedReadableStream } from '../common';
+import { elevenlabsAuth } from '../..';
 
 export const textToSpeech = createAction({
   description: 'Convert text to speech using Elevenlabs',
   displayName: 'Text to Speech',
   name: 'elevenlabs-text-to-speech',
+  auth: elevenlabsAuth,
   props: {
-    voice: Property.Dropdown({
-      displayName: 'Voice',
-      required: true,
-      description: 'Select the voice for the text to speech',
+    model: Property.Dropdown({
+      auth: elevenlabsAuth,
+      displayName: 'Model',
+      required: false,
       refreshers: [],
+      refreshOnSearch: false,
       options: async ({ auth }) => {
-        if (!auth) {
+        const apiAuth = auth
+
+        if (!apiAuth) {
           return {
             disabled: true,
             placeholder: 'Enter your API key first',
@@ -23,19 +26,57 @@ export const textToSpeech = createAction({
         }
 
         try {
-          const request = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `https://api.elevenlabs.io/v1/voices`,
-            headers: {
-              'xi-api-key': `${auth}`,
-            },
-          });
+          const elevenlabs = createClient(apiAuth);
+          const models = await elevenlabs.models.list()
+
           return {
             disabled: false,
-            options: request.body['voices'].map((template: any) => {
+            placeholder: 'Default model',
+            options: models.map((template) => {
               return {
-                label: template.name,
-                value: template.voice_id,
+                // there are models with the same name
+                label: `${template.name} (${template.modelId})`,
+                value: template.modelId,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: "Couldn't load models, check your API key.",
+          };
+        }
+      },
+    }),
+    voice: Property.Dropdown({
+      auth: elevenlabsAuth,
+      displayName: 'Voice',
+      required: true,
+      description: 'Select the voice for the text to speech',
+      refreshers: [],
+      refreshOnSearch: false,
+      options: async ({ auth }) => {
+        const apiAuth = auth
+
+        if (!apiAuth) {
+          return {
+            disabled: true,
+            placeholder: 'Enter your API key first',
+            options: [],
+          };
+        }
+
+        try {
+          const elevenlabs = createClient(apiAuth);
+          const response = await elevenlabs.voices.getAll()
+
+          return {
+            disabled: false,
+            options: response.voices.map((template) => {
+              return {
+                label: `${template.name}`,
+                value: template.voiceId,
               };
             }),
           };
@@ -55,17 +96,19 @@ export const textToSpeech = createAction({
     }),
   },
   async run({ auth, propsValue, files }) {
-    const elevenlabs = new ElevenLabsClient({
-      apiKey: `${auth}`,
-    });
+    const elevenlabs = createClient(auth);
 
-    const audio = await elevenlabs.generate({
-      voice: propsValue.voice,
-      text: propsValue.text,
-    });
+    const audioStream = await elevenlabs.textToSpeech.stream(
+      propsValue.voice,
+      {
+        modelId: propsValue.model || undefined,
+        text: propsValue.text,
+      }
+      // node implementation of ReadableStream<Uint8Array> has asyncInterator
+    ) as ExtendedReadableStream<Buffer>;
 
-    const chunks: any[] = [];
-    for await (const chunk of audio) {
+    const chunks: Buffer[] = [];
+    for await (const chunk of audioStream) {
       chunks.push(chunk);
     }
 

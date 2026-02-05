@@ -9,6 +9,7 @@ import {
 } from '@activepieces/pieces-common';
 import { hubspotAuth } from '../../';
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
@@ -20,7 +21,7 @@ type SubscriptionTimeLineResponse = {
 	timeline: Array<Record<string, any>>;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Record<string, any>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Record<string, any>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
 		const qs: QueryParams = { limit: '100' };

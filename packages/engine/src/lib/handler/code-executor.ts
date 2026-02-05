@@ -1,11 +1,13 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { ActionType, assertNotNullOrUndefined, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
+import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
-import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { progressService } from '../services/progress.service'
+import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { ExecutionVerdict } from './context/flow-execution-context'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -22,39 +24,55 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<Record<string, unknown>>({
+    const stepStartTime = performance.now() 
+    const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
     })
 
     const stepOutput = GenericStepOutput.create({
         input: censoredInput,
-        type: ActionType.CODE,
-        status: StepOutputStatus.SUCCEEDED,
+        type: FlowActionType.CODE,
+        status: StepOutputStatus.RUNNING,
     })
+    
+    const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
+        await progressService.sendUpdate({
+            engineConstants: constants,
+            flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+            stepNameToUpdate: action.name,
+        })
+    
+        if (isNil(constants.runEnvironment)) {
+            throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
+        }
 
-    try {
-        assertNotNullOrUndefined(constants.runEnvironment, 'Run environment is required')
-        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/${constants.runEnvironment.toString()}/index.js`)
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
         const codeModule: CodeModule = await importFresh(artifactPath)
         const codeSandbox = await initCodeSandbox()
-
+    
         const output = await codeSandbox.runCodeModule({
             codeModule,
             inputs: resolvedInput,
         })
+    
+        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
+    }))
 
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
-    }
-    catch (e) {
-        const handledError = handleExecutionError(e)
-
+    if (executionStateError) {
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)
-            .setErrorMessage(handledError.message)
+            .setErrorMessage(utils.formatError(executionStateError))
+            .setDuration(performance.now() - stepStartTime)
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
+            .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+                name: action.name,
+                displayName: action.displayName,
+                message: utils.formatError(executionStateError),
+            } })
     }
+
+    return executionStateResult
 }

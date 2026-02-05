@@ -1,24 +1,21 @@
-import { useMutation } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useEffect, useRef, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { FieldValues, UseFormReturn, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import {
-  DropdownState,
-  PropertyType,
-  ExecutePropsResult,
-} from '@activepieces/pieces-framework';
-import { Action, isNil, Trigger } from '@activepieces/shared';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
+import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
+import { DynamicPropertiesContext } from './dynamic-properties-context';
 
-type SelectPiecePropertyProps = {
+type DynamicDropdownProps = {
   refreshers: string[];
   propertyName: string;
   value?: unknown;
@@ -26,71 +23,90 @@ type SelectPiecePropertyProps = {
   disabled: boolean;
   onChange: (value: unknown | undefined) => void;
   showDeselect?: boolean;
+  shouldRefreshOnSearch?: boolean;
+  actionOrTriggerName: string;
+  pieceName: string;
+  pieceVersion: string;
+  form: UseFormReturn<FieldValues, any, undefined>;
+  placedInside: 'stepSettings' | 'predefinedAgentInputs';
 };
 const DynamicDropdownPiecePropertyImplementation = React.memo(
-  (props: SelectPiecePropertyProps) => {
+  (props: DynamicDropdownProps) => {
     const [flowVersion, readonly] = useBuilderStateContext((state) => [
       state.flowVersion,
       state.readonly,
     ]);
-    const form = useFormContext<Action | Trigger>();
+
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
-
-    const newRefreshers = [...props.refreshers, 'auth'];
+    const firstDropdownState = useRef<DropdownState<unknown> | undefined>(
+      undefined,
+    );
+    const refreshersWithAuth = [
+      ...props.refreshers,
+      AUTHENTICATION_PROPERTY_NAME,
+    ];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
       disabled: false,
       placeholder: t('Select an option'),
       options: [],
     });
-    const { mutate, isPending } = useMutation<
-      ExecutePropsResult<
-        PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN
-      >,
-      Error,
-      { input: Record<string, unknown> }
+    const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
+      DynamicPropertiesContext,
+    );
+    const { mutate, isPending, error } = piecesHooks.usePieceOptions<
+      PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN
     >({
-      mutationFn: async ({ input }) => {
-        const { settings } = form.getValues();
-        const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-        const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options(
-          {
-            pieceName,
-            pieceVersion,
-            pieceType,
-            packageType,
-            propertyName: props.propertyName,
-            actionOrTriggerName: actionOrTriggerName,
-            input,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
-          },
-          PropertyType.DROPDOWN,
-        );
+      onMutate: () => {
+        propertyLoadingStarted(props.propertyName);
       },
       onError: (error) => {
         console.error(error);
+        propertyLoadingFinished(props.propertyName);
+      },
+      onSuccess: () => {
+        propertyLoadingFinished(props.propertyName);
       },
     });
+    if (error) {
+      throw error;
+    }
 
-    /* eslint-disable react-hooks/rules-of-hooks */
-    const refresherValues = newRefreshers.map((refresher) =>
-      useWatch({
-        name: `settings.input.${refresher}` as const,
-        control: form.control,
+    const refresherValues = useWatch({
+      name: refreshersWithAuth.map((refresher) => {
+        if (props.placedInside === 'stepSettings') {
+          return `settings.input.${refresher}`;
+        }
+        return refresher;
       }),
-    );
-    /* eslint-enable react-hooks/rules-of-hooks */
-    const refresh = () => {
+      control: props.form.control,
+    });
+
+    const refresh = (term?: string) => {
       const input: Record<string, unknown> = {};
-      newRefreshers.forEach((refresher, index) => {
+      refreshersWithAuth.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
       mutate(
-        { input },
+        {
+          request: {
+            projectId: authenticationSession.getProjectId()!,
+            pieceName: props.pieceName,
+            pieceVersion: props.pieceVersion,
+            propertyName: props.propertyName,
+            actionOrTriggerName: props.actionOrTriggerName,
+            input,
+            flowVersionId: flowVersion.id,
+            flowId: flowVersion.flowId,
+            searchValue: term,
+          },
+          propertyType: PropertyType.DROPDOWN,
+        },
         {
           onSuccess: (response) => {
+            if (!firstDropdownState.current) {
+              firstDropdownState.current = response.options;
+            }
             setDropdownState(response.options);
           },
         },
@@ -112,26 +128,28 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
 
     const selectOptions = dropdownState.options.map((option) => ({
       label: option.label,
-      value: option.value as React.Key,
+      value: option.value,
     }));
+    const isDisabled = dropdownState.disabled || props.disabled;
     return props.multiple ? (
       <MultiSelectPieceProperty
         placeholder={dropdownState.placeholder ?? t('Select an option')}
         options={selectOptions}
         loading={isPending}
         onChange={(value) => props.onChange(value)}
-        disabled={dropdownState.disabled || props.disabled}
+        disabled={isDisabled}
         initialValues={props.value as unknown[]}
         showDeselect={
           props.showDeselect &&
           !isNil(props.value) &&
           Array.isArray(props.value) &&
           props.value.length > 0 &&
-          !props.disabled &&
-          !dropdownState.disabled
+          !isDisabled
         }
         showRefresh={!isPending && !readonly}
         onRefresh={refresh}
+        refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
+        cachedOptions={firstDropdownState.current?.options ?? []}
       />
     ) : (
       <SearchableSelect
@@ -139,20 +157,22 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         disabled={dropdownState.disabled || props.disabled}
         loading={isPending}
         placeholder={dropdownState.placeholder ?? t('Select an option')}
-        value={props.value as React.Key}
+        value={props.value}
         onChange={(value) => props.onChange(value)}
         showDeselect={
           props.showDeselect && !isNil(props.value) && !props.disabled
         }
         onRefresh={refresh}
         showRefresh={!isPending && !readonly}
+        refreshOnSearch={props.shouldRefreshOnSearch ? refresh : undefined}
+        cachedOptions={firstDropdownState.current?.options ?? []}
       />
     );
   },
 );
 
 const DynamicDropdownPieceProperty = React.memo(
-  (props: SelectPiecePropertyProps) => {
+  (props: DynamicDropdownProps) => {
     return (
       <DynamicPropertiesErrorBoundary>
         <DynamicDropdownPiecePropertyImplementation {...props} />

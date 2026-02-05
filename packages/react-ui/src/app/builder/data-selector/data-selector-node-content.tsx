@@ -6,7 +6,7 @@ import { flowStructureUtil } from '@activepieces/shared';
 import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
-import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
+import { stepsHooks } from '../../../features/pieces/lib/steps-hooks';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { DataSelectorTreeNode } from './type';
@@ -52,12 +52,12 @@ const DataSelectorNodeContent = ({
       ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
       : undefined;
   const stepMetadata = step
-    ? piecesHooks.useStepMetadata({ step }).stepMetadata
+    ? stepsHooks.useStepMetadata({ step }).stepMetadata
     : undefined;
   const showInsertButton =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
   const showNodeValue = !node.children && node.data.type === 'value';
-
+  const depthMultiplier = 23 / (1 + depth * 0.05);
   return (
     <div
       tabIndex={0}
@@ -76,16 +76,18 @@ const DataSelectorNodeContent = ({
           insertMention(node.data.propertyPath);
         }
       }}
-      className="w-full max-w-full select-none focus:outline-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
+      className="w-full max-w-full select-none focus:outline-hidden hover:bg-accent dark:hover:bg-accent/20 focus:bg-accent focus:bg-opacity-75 cursor-pointer group"
     >
-      <div className="flex-grow  max-w-full flex items-center gap-2 min-h-[48px] pr-3 select-none">
+      <div className="grow  max-w-full flex items-center gap-2 min-h-[48px] pr-3 select-none">
         <div
           style={{
-            minWidth: `${depth * 25 + (depth === 0 ? 0 : 25) + 18}px`,
+            minWidth: `${
+              depth * depthMultiplier + (depth === 0 ? 0 : 12) + 18
+            }px`,
           }}
         ></div>
         {stepMetadata && (
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <PieceIcon
               displayName={stepMetadata.displayName}
               logoUrl={stepMetadata.logoUrl}
@@ -102,17 +104,17 @@ const DataSelectorNodeContent = ({
 
         {showNodeValue && (
           <>
-            <div className="flex-shrink-0">:</div>
+            <div className="shrink-0">:</div>
             <div className="flex-1 text-primary truncate">
               {`${node.data.type === 'value' ? node.data.value : ''}`}
             </div>
           </>
         )}
 
-        <div className="ml-auto flex flex-shrink-0 gap-2 items-center">
+        <div className="ml-auto flex shrink-0 gap-2 items-center">
           {showInsertButton && (
             <Button
-              className="z-50 hover:opacity-100 opacity-0 p-0  w-0 group-hover:w-full group-hover:p-1  group-hover:opacity-100 focus:opacity-100"
+              className="z-50 hover:opacity-100  opacity-0 p-0  group-hover:p-1  group-hover:opacity-100 focus:opacity-100"
               variant="basic"
               size="sm"
               onClick={(e) => {
@@ -128,7 +130,7 @@ const DataSelectorNodeContent = ({
             </Button>
           )}
           {node.children && node.children.length > 0 && (
-            <div className="flex-shrink-0 pr-5">
+            <div className="shrink-0 pr-5">
               <ToggleIcon expanded={expanded}></ToggleIcon>
             </div>
           )}

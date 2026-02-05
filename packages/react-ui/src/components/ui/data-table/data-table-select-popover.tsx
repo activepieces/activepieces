@@ -39,14 +39,14 @@ const DataTableSelectPopover = ({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button variant="outline" className="border-dashed">
           <ListFilterIcon className="mr-2 size-4" />
           {title}
           {selectedValues?.size > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
-                variant="secondary"
+                variant="accent"
                 className="rounded-sm px-1 font-normal lg:hidden"
               >
                 {selectedValues.size}
@@ -54,7 +54,7 @@ const DataTableSelectPopover = ({
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
                   <Badge
-                    variant="secondary"
+                    variant="accent"
                     className="rounded-sm px-1 font-normal"
                   >
                     {selectedValues.size} selected
@@ -64,7 +64,7 @@ const DataTableSelectPopover = ({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge
-                        variant="secondary"
+                        variant="accent"
                         key={option.value}
                         className="rounded-sm px-1 font-normal"
                       >
@@ -105,9 +105,9 @@ const DataTableSelectPopover = ({
                     >
                       <div
                         className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-secondary',
                           isSelected
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-secondary text-secondary-foreground'
                             : 'opacity-50 [&_svg]:invisible',
                         )}
                       >

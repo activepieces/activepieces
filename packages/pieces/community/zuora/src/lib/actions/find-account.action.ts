@@ -25,7 +25,7 @@ export const findAccountAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${context.auth.environment}/object-query/accounts`,
+      url: `${context.auth.props.environment}/object-query/accounts`,
       authentication: { type: AuthenticationType.BEARER_TOKEN, token },
       queryParams: {
         'filter[]': `name.EQ:${name}`,

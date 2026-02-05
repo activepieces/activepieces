@@ -23,7 +23,6 @@ export const googleDocsAuth = PieceAuth.OAuth2({
 export const googleDocs = createPiece({
 	displayName: 'Google Docs',
 	description: 'Create and edit documents online',
-
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/google-docs.png',
 	categories: [PieceCategory.CONTENT_AND_FILES],
@@ -46,7 +45,7 @@ export const googleDocs = createPiece({
 			baseUrl: () => 'https://docs.googleapis.com/v1',
 			auth: googleDocsAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Bearer ${(auth).access_token}`,
 			}),
 		}),
 		appendText,

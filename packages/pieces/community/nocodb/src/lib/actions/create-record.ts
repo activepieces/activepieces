@@ -14,7 +14,7 @@ export const createRecordAction = createAction({
 		tableColumns: nocodbCommon.tableColumns,
 	},
 	async run(context) {
-		const { tableId, tableColumns } = context.propsValue;
+		const { baseId, tableId, tableColumns } = context.propsValue;
 		const recordInput: DynamicPropsValue = {};
 
 		Object.entries(tableColumns).forEach(([key, value]) => {
@@ -26,6 +26,6 @@ export const createRecordAction = createAction({
 		});
 
 		const client = makeClient(context.auth);
-		return await client.createRecord(tableId, recordInput, context.auth.version || 3);
+		return await client.createRecord(baseId, tableId, recordInput, context.auth.props.version || 3);
 	},
 });

@@ -1,10 +1,10 @@
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { rabbitmqAuth } from '../..';
-import amqp, { Connection } from 'amqplib';
+import amqp, { ChannelModel, Connection } from 'amqplib';
 
 export async function rabbitmqConnect(
   auth: PiecePropValueSchema<typeof rabbitmqAuth>,
-): Promise<Connection> {
+): Promise<ChannelModel> {
   return amqp.connect(createAmqpURI(auth), (err: Error, conn: Connection) => {
     if (err) {
       throw err;

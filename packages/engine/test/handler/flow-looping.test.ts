@@ -1,5 +1,5 @@
-import { Action, LoopStepOutput } from '@activepieces/shared'
-import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { FlowAction, FlowRunStatus, LoopStepOutput } from '@activepieces/shared'
+import {  FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
@@ -20,11 +20,11 @@ describe('flow with looping', () => {
                 firstLoopAction: codeAction,
             }),
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
         })
 
         const loopOut = result.steps.loop as LoopStepOutput
-        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(loopOut.output?.iterations.length).toBe(3)
         expect(loopOut.output?.index).toBe(3)
         expect(loopOut.output?.item).toBe(6)
@@ -48,11 +48,11 @@ describe('flow with looping', () => {
         const result = await flowExecutor.execute({
             action: generateArray,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants(),
+            constants: generateMockEngineConstants({ stepNames: ['echo_step'] }),
         })
 
         const loopOut = result.steps.loop as LoopStepOutput
-        expect(result.verdict).toBe(ExecutionVerdict.FAILED)
+        expect(result.verdict.status).toBe(FlowRunStatus.FAILED)
         expect(loopOut.output?.iterations.length).toBe(1)
         expect(loopOut.output?.index).toBe(1)
         expect(loopOut.output?.item).toBe(4)
@@ -62,12 +62,12 @@ describe('flow with looping', () => {
         const result = await flowExecutor.execute({
             action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [4,5,6] }}', skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
-        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.loop).toBeUndefined()
     })
 
     it('should skip loop in flow', async () => {
-        const flow: Action = {
+        const flow: FlowAction = {
             ...buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [4,5,6] }}', skip: true }),
             nextAction: {
                 ...buildCodeAction({
@@ -83,7 +83,7 @@ describe('flow with looping', () => {
         const result = await flowExecutor.execute({
             action: flow, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
-        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.loop).toBeUndefined()
         expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
     })

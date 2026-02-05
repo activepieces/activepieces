@@ -1,6 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
+import { ActivepiecesError,
     AppConnection,
     AppConnectionType,
     assertNotNullOrUndefined,
@@ -9,10 +8,11 @@ import {
     ErrorCode,
     OAuth2GrantType,
     PlatformId,
+    resolveValueFromProps,
 } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 
 export const oauth2Util = (log: FastifyBaseLogger) => ({
     formatOAuth2Response: (response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue => {
@@ -65,22 +65,20 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         return false
     },
     getOAuth2TokenUrl: async ({
-        projectId,
         platformId,
         pieceName,
         props,
     }: OAuth2TokenUrlParams): Promise<string> => {
         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
             name: pieceName,
-            projectId,
             platformId,
             version: undefined,
         })
-        const auth = pieceMetadata.auth
-        assertNotNullOrUndefined(auth, 'auth')
-        switch (auth.type) {
+        const pieceAuth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2) : pieceMetadata.auth
+        assertNotNullOrUndefined(pieceAuth, 'auth')
+        switch (pieceAuth.type) {
             case PropertyType.OAUTH2:
-                return resolveUrl(auth.tokenUrl, props)
+                return resolveValueFromProps(props, pieceAuth.tokenUrl)
             default:
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_APP_CONNECTION,
@@ -107,21 +105,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
 })
 
 type OAuth2TokenUrlParams = {
-    projectId: string | undefined
     platformId: PlatformId
     pieceName: string
-    props?: Record<string, string>
-}
-
-function resolveUrl(
-    url: string,
-    props: Record<string, unknown> | undefined,
-): string {
-    if (!props) {
-        return url
-    }
-    for (const [key, value] of Object.entries(props)) {
-        url = url.replace(`{${key}}`, String(value))
-    }
-    return url
+    props?: Record<string, unknown>
 }

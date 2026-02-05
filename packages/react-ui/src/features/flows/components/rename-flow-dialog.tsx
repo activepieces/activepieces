@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 
@@ -59,13 +59,10 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
     onSuccess: () => {
       setIsRenameDialogOpen(false);
       onRename(renameFlowForm.getValues().displayName);
-      toast({
-        title: t('Success'),
-        description: t('Flow has been renamed.'),
+      toast.success(t('Flow has been renamed.'), {
         duration: 3000,
       });
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   return (

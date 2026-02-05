@@ -18,7 +18,6 @@ const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
 
     return logEmailSender(log)
 }
-
 export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
 
 type BaseEmailTemplateData<Name extends string, Vars extends Record<string, string>> = {
@@ -27,13 +26,15 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectOrPlatformName: string
+    projectName: string
     role: string
     setupLink: string
 }>
 
-type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
-    resetDate: string
+type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
+    projectName: string
+    role: string
+    loginLink: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
@@ -51,26 +52,26 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
-type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
-    issuesUrl: string
-    issues: string
-    issuesCount: string
-    projectName: string
-}>
-
 type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
     flowName: string
     projectName: string
 }>
 
+type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
+    badgeTitle: string
+    badgeDescription: string
+    badgeImageUrl: string
+    firstName: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
-  | QuotaEmailTemplateData
+  | ProjectMemberAddedEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | IssuesReminderTemplateData
   | TriggerFailureThresholdTemplateData
+  | BadgeAwardedTemplateData
 
 type SendArgs = {
     emails: string[]

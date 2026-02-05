@@ -15,6 +15,6 @@ export const getOrderAction = createAction({
     }),
   },
   async run(context) {
-    return await getOrder(context.auth, context.propsValue.invoice);
+    return await getOrder(context.auth.props, context.propsValue.invoice);
   },
 });

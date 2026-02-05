@@ -1,4 +1,3 @@
-
 //Client ==> Activepieces
 //Vendor ==> Customers using our embed sdk
 export enum ActivepiecesClientEventName {
@@ -73,6 +72,12 @@ export const NEW_CONNECTION_QUERY_PARAMS = {
   randomId: 'randomId'
 };
 
+export const STEP_SETTINGS_QUERY_PARAMS = {
+  stepName: 'stepName',
+  flowVersionId: 'flowVersionId',
+  flowId: 'flowId',
+};
+
 export type ActivepiecesClientEvent =
   | ActivepiecesClientInit
   | ActivepiecesClientRouteChanged;
@@ -107,6 +112,8 @@ export interface ActivepiecesVendorInit {
     emitHomeButtonClickedEvent?: boolean;
     locale?: string;
     mode?: 'light' | 'dark';
+    hideFlowsPageNavbar?: boolean;
+    hidePageHeader?: boolean;
   };
 }
 
@@ -136,6 +143,8 @@ type EmbeddingParam = {
   };
   dashboard?: {
     hideSidebar?: boolean;
+    hideFlowsPageNavbar?: boolean;
+    hidePageHeader?: boolean;
   };
   hideExportAndImportFlow?: boolean;
   hideDuplicateFlow?: boolean;
@@ -153,7 +162,7 @@ type ConfigureParams = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.5.0";
+  readonly _sdkVersion = "0.8.1";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -162,6 +171,8 @@ class ActivepiecesEmbedded {
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _dashboardAndBuilderIframeWindow?: Window;
   _rejectNewConnectionDialogClosed?: (error: unknown) => void;
+  _resolveStepSettingsDialogClosed?: () => void;
+  _rejectStepSettingsDialogClosed?: (error: unknown) => void;
   _handleVendorNavigation?: (data: { route: string }) => void;
   _handleClientNavigation?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
@@ -235,13 +246,14 @@ class ActivepiecesEmbedded {
 
   private _setupInitialMessageHandler(targetWindow: Window, initialRoute: string, callbackAfterConfigurationFinished?: () => void) {
     const initialMessageHandler = (event: MessageEvent<ActivepiecesClientEvent>) => {
-      if (event.source === targetWindow) {
+      if (event.source === targetWindow && event.origin === new URL(this._instanceUrl).origin) {
         switch (event.data.type) {
           case ActivepiecesClientEventName.CLIENT_INIT: {
             const apEvent: ActivepiecesVendorInit = {
               type: ActivepiecesVendorEventName.VENDOR_INIT,
               data: {
                 hideSidebar: this._embeddingState?.dashboard?.hideSidebar ?? false,
+                hideFlowsPageNavbar: this._embeddingState?.dashboard?.hideFlowsPageNavbar ?? false,
                 disableNavigationInBuilder: this._embeddingState?.builder?.disableNavigation ?? false,
                 hideFolders: this._embeddingState?.hideFolders ?? false,
                 hideFlowNameInBuilder: this._embeddingState?.builder?.hideFlowName ?? false,
@@ -256,6 +268,7 @@ class ActivepiecesEmbedded {
                 homeButtonIcon: this._embeddingState?.builder?.homeButtonIcon ?? 'logo',
                 hideDuplicateFlow: this._embeddingState?.hideDuplicateFlow ?? false,
                 mode: this._embeddingState?.styling?.mode,
+                hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
               },
             };
             targetWindow.postMessage(apEvent, '*');
@@ -357,12 +370,7 @@ class ActivepiecesEmbedded {
   async connect({ pieceName, connectionName, newWindow }: { 
     pieceName: string, 
     connectionName?: string, 
-    newWindow?:{
-      height?: number,
-      width?: number,
-      top?: number,
-      left?: number,
-    }
+    newWindow?:newWindowFeatures
   }) {
     this._cleanConnectionIframe();
     return this._addGracePeriodBeforeMethod({
@@ -401,7 +409,7 @@ class ActivepiecesEmbedded {
     const event: ActivepiecesVendorRouteChanged = {
       type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
       data: {
-        vendorRoute: route,
+        vendorRoute: this._prependForwardSlashToRoute(route),
       },
     };
     this._dashboardAndBuilderIframeWindow.postMessage(event, '*');
@@ -497,7 +505,6 @@ class ActivepiecesEmbedded {
       this._removeEmbedding(target);
     }
   }
-
   private _removeTrailingSlashes(str: string) {
     return str.endsWith('/') ? str.slice(0, -1) : str;
   }

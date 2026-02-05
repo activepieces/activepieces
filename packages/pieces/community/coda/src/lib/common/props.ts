@@ -1,7 +1,9 @@
 import { DropdownOption, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { codaClient, CodaTableColumn } from './types';
+import { codaAuth } from '../..';
 
 export const docIdDropdown = Property.Dropdown({
+	auth: codaAuth,
 	displayName: 'Document',
 	required: true,
 	refreshers: [],
@@ -13,7 +15,7 @@ export const docIdDropdown = Property.Dropdown({
 				options: [],
 			};
 		}
-		const client = codaClient(auth as unknown as string);
+		const client = codaClient(auth);
 		const docs: DropdownOption<string>[] = [];
 		let nextPageToken: string | undefined = undefined;
 		try {
@@ -48,6 +50,7 @@ export const docIdDropdown = Property.Dropdown({
 });
 
 export const tableIdDropdown = Property.Dropdown({
+	auth: codaAuth,
 	displayName: 'Table',
 	required: true,
 	refreshers: ['docId'],
@@ -59,7 +62,7 @@ export const tableIdDropdown = Property.Dropdown({
 				options: [],
 			};
 		}
-		const client = codaClient(auth as unknown as string);
+		const client = codaClient(auth);
 		const tables: DropdownOption<string>[] = [];
 		let nextPageToken: string | undefined = undefined;
 
@@ -96,6 +99,7 @@ export const tableIdDropdown = Property.Dropdown({
 });
 
 export const tableRowsDynamicProps = Property.DynamicProperties({
+	auth: codaAuth,
 	displayName: 'Row Data',
 	description: 'Define the data for the new row based on table columns.',
 	required: true,
@@ -105,7 +109,7 @@ export const tableRowsDynamicProps = Property.DynamicProperties({
 			return {};
 		}
 
-		const client = codaClient(auth as unknown as string);
+		const client = codaClient(auth);
 		const fields: DynamicPropsValue = {};
 
 		try {
@@ -193,6 +197,7 @@ export const tableRowsDynamicProps = Property.DynamicProperties({
 export const columnIdsDropdown = (displayName: string, singleSelect = true) => {
 	const dropdownType = singleSelect ? Property.Dropdown : Property.MultiSelectDropdown;
 	return dropdownType({
+		auth: codaAuth,
 		displayName,
 		required: true,
 		refreshers: ['docId', 'tableId'],
@@ -204,7 +209,7 @@ export const columnIdsDropdown = (displayName: string, singleSelect = true) => {
 					options: [],
 				};
 			}
-			const client = codaClient(auth as unknown as string);
+			const client = codaClient(auth);
 			const columns: DropdownOption<string>[] = [];
 			let nextPageToken: string | undefined = undefined;
 			try {

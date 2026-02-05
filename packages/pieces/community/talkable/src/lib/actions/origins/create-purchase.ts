@@ -97,6 +97,11 @@ export const createPurchase = createAction({
       required: false,
       defaultValue: 'USD',
     }),
+    custom_field: Property.ShortText({
+      displayName: 'Custom field',
+      description: undefined,
+      required: false,
+    }),
     shipping_address: Property.ShortText({
       displayName: 'Shipping address',
       description: undefined,
@@ -113,13 +118,12 @@ export const createPurchase = createAction({
       required: false,
       defaultValue: [
         { price: 10, quantity: 1, product_id: 'SKU1' },
-        { price: 20, quantity: 1, product_id: 'SKU2' },
       ],
     }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const createPurchaseResponse = await httpClient
       .sendRequest<string[]>({
         method: HttpMethod.POST,

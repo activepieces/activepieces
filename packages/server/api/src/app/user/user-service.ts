@@ -2,27 +2,34 @@ import {
     ActivepiecesError,
     ApEdition,
     apId,
+    assertNotNullOrUndefined,
+    Cursor,
     ErrorCode,
     isNil,
     PlatformId,
     PlatformRole,
-    PlatformUsageMetric,
     ProjectId,
+    ProjectType,
     SeekPage,
     spreadIfDefined,
     User,
     UserId,
+    UserIdentity,
     UserStatus,
+    UserWithBadges,
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { checkQuotaOrThrow } from '../ee/platform/platform-plan/platform-plan-helper'
+import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
+import { buildPaginator } from '../helper/pagination/build-paginator'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
 
 
@@ -30,14 +37,6 @@ export const userRepo = repoFactory(UserEntity)
 
 export const userService = {
     async create(params: CreateParams): Promise<User> {
-
-        if (!isNil(params.platformId)) {
-            await checkQuotaOrThrow({
-                platformId: params.platformId,
-                metric: PlatformUsageMetric.USER_SEATS,
-            })
-        }
-
         const user: NewUser = {
             id: apId(),
             identityId: params.identityId,
@@ -48,9 +47,46 @@ export const userService = {
         }
         return userRepo().save(user)
     },
-    async update({ id, status, platformId, platformRole, externalId, lastChangelogDismissed }: UpdateParams): Promise<UserWithMetaInformation> {
+    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<User> {
+        const user = await this.getOneByIdentityAndPlatform({
+            identityId: identity.id,
+            platformId,
+        })
+        if (isNil(user)) {
+            const newUser = await this.create({
+                identityId: identity.id,
+                platformId,
+                platformRole: PlatformRole.MEMBER,
+            })
+
+            await projectService.create({
+                displayName: identity.firstName + '\'s Project',
+                ownerId: newUser.id,
+                platformId,
+                type: ProjectType.PERSONAL,
+            })
+            return newUser
+        }
+        return user
+    },
+    async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
+        await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
+    },
+    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
-        const platform = await platformService.getOneOrThrow(user.platformId!)
+        assertNotNullOrUndefined(user.platformId, 'platformId')
+
+        if (user.platformId !== platformId) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'user',
+                    entityId: id,
+                },
+            })
+        }
+
+        const platform = await platformService.getOneOrThrow(user.platformId)
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -60,37 +96,37 @@ export const userService = {
             })
         }
 
-        const updateResult = await userRepo().update({
+        await userRepo().update({
             id,
             platformId,
         }, {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
             ...spreadIfDefined('externalId', externalId),
-            ...spreadIfDefined('lastChangelogDismissed', lastChangelogDismissed),
         })
 
-        if (updateResult.affected !== 1) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'user',
-                    entityId: id,
-                },
-            })
-        }
         return this.getMetaInformation({ id })
     },
-    async list({ platformId }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
-        const users = await userRepo().findBy({
-            platformId,
+    async getUsersByIdentityId({ identityId }: GetUsersByIdentityIdParams): Promise<Pick<User, 'id' | 'platformId'>[]> {
+        return userRepo().find({ where: { identityId } }).then((users) => users.map((user) => ({ id: user.id, platformId: user.platformId })))
+    },
+    async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: UserEntity,
+            query: {
+                limit,
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
         })
+        const { data, cursor } = await paginator.paginate(userRepo().createQueryBuilder('user').where({
+            platformId,
+            ...spreadIfDefined('externalId', externalId),
+        }))
 
-        return {
-            data: await Promise.all(users.map(this.getMetaInformation)),
-            next: null,
-            previous: null,
-        }
+        const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
+        return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
     },
     async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
         return userRepo().findOneBy({ identityId })
@@ -117,7 +153,29 @@ export const userService = {
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneOrFail({ where: { id } })
     },
+    async getOneByIdAndPlatformIdOrThrow({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<UserWithBadges> {
+        const user = await userRepo().findOne({ where: { id, platformId }, relations: { badges: true } })
+        if (isNil(user)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'user', entityId: id },
+            })
+        }
+        const meta = await this.getMetaInformation({ id })
+        return {
+            ...meta,
+            badges: user.badges.map((badge) => ({
+                name: badge.name,
+                created: badge.created,
+            })),
+        }
+    },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
+
+        await platformProjectService(system.globalLogger()).deletePersonalProjectForUser({
+            userId: id,
+            platformId,
+        })
         await userRepo().delete({
             id,
             platformId,
@@ -153,9 +211,10 @@ export const userService = {
             platformRole: user.platformRole,
             status: user.status,
             externalId: user.externalId,
-            lastChangelogDismissed: user.lastChangelogDismissed,
             created: user.created,
             updated: user.updated,
+            lastActiveDate: user.lastActiveDate,
+            imageUrl: identity.imageUrl,
         }
     },
 
@@ -169,10 +228,14 @@ export const userService = {
             platformId,
         })
     },
+
+    isUserPrivileged(user: User): boolean {
+        return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
+    },
 }
 
 
-async function getUsersForProject(platformId: PlatformId, projectId: string) {
+async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
@@ -182,6 +245,14 @@ async function getUsersForProject(platformId: PlatformId, projectId: string) {
     return [...platformAdmins, ...projectMembers]
 }
 
+type UpdateLastActiveDateParams = {
+    id: UserId
+}
+
+type GetOneByIdAndPlatformIdParams = {
+    id: UserId
+    platformId: PlatformId
+}
 type ListUsersForProjectParams = {
     projectId: ProjectId
     platformId: PlatformId
@@ -195,6 +266,9 @@ type DeleteParams = {
 
 type ListParams = {
     platformId: PlatformId
+    externalId?: string
+    cursorRequest: Cursor
+    limit?: number
 }
 
 type GetOneByIdentityIdOnlyParams = {
@@ -217,7 +291,6 @@ type UpdateParams = {
     platformId: PlatformId
     platformRole?: PlatformRole
     externalId?: string
-    lastChangelogDismissed?: string
 }
 
 type CreateParams = {
@@ -225,6 +298,9 @@ type CreateParams = {
     platformId: string | null
     externalId?: string
     platformRole: PlatformRole
+}
+type GetUsersByIdentityIdParams = {
+    identityId: string
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>
@@ -240,5 +316,10 @@ type IdParams = {
 
 type UpdatePlatformIdParams = {
     id: UserId
+    platformId: string
+}
+
+type GetOrCreateWithProjectParams = {
+    identity: UserIdentity
     platformId: string
 }

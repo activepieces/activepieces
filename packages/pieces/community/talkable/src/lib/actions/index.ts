@@ -12,6 +12,8 @@ export { refund } from './origins/refund';
 // Loyalty
 export { getLoyaltyRedeemActions } from './loyalty/get-loyalty-redeem-actions';
 // Referral
-export { updateReferralStatus } from './referrals/update_referral_status';
+export { updateReferralStatus } from './referrals/update-referral-status';
 // Coupons
 export { findCoupon } from './coupons/find-coupon';
+// Rewards
+export { claimOffer } from './rewards/claim-offer';

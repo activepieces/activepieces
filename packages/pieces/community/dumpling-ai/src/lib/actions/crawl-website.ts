@@ -56,7 +56,7 @@ export const crawlWebsite = createAction({
 			url: 'https://app.dumplingai.com/api/v1/crawl',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

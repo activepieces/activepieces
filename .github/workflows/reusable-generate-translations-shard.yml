@@ -1,0 +1,81 @@
+name: Reusable - Generate Translations Shard
+
+on:
+  workflow_call:
+    inputs:
+      shard_index:
+        description: "Zero-based shard index"
+        required: true
+        type: number
+      shard_total:
+        description: "Total number of shards"
+        required: true
+        type: number
+      branch_name:
+        description: "Branch name to push changes to"
+        required: true
+        type: string
+
+jobs:
+  run-shard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: bun-
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Configure git
+        run: |
+          git config --local user.email "abdulyki+automatedcommits@activepieces.com"
+          git config --local user.name "automated-commits-ap"
+          git checkout -- bun.lock
+
+      - name: Prepare branch
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: |
+          git fetch origin
+          if git rev-parse --verify origin/$BRANCH_NAME >/dev/null 2>&1; then
+            git checkout -b $BRANCH_NAME origin/$BRANCH_NAME || git checkout $BRANCH_NAME
+          else
+            git checkout -b $BRANCH_NAME origin/main
+          fi
+
+      - name: Generate translation files for shard
+        run: |
+          npm run cli pieces generate-translation-file-for-all-pieces -- --shard-index ${{ inputs.shard_index }} --shard-total ${{ inputs.shard_total }}
+
+      - name: Commit and push changes (if any)
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "feat: generate translation files (shard ${{ inputs.shard_index }}/${{ inputs.shard_total }}) [skip-changelog]"
+            git push origin $BRANCH_NAME
+          else
+            echo "No changes in shard ${{ inputs.shard_index }}/${{ inputs.shard_total }}"
+          fi
+
+

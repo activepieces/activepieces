@@ -1,271 +1,230 @@
-import { t } from 'i18next';
-import { SearchX, WandSparkles } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 
-import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
-import {
-  CardList,
-  CardListItem,
-  CardListItemSkeleton,
-} from '@/components/custom/card-list';
-import { useEmbedding } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
+import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
-  StepMetadata,
-  PieceSelectorOperation,
-  HandleSelectCallback,
-  StepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+  PieceSelectorTabType,
+  usePieceSelectorTabs,
+} from '@/features/pieces/lib/piece-selector-tabs-provider';
+import {
+  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
+  pieceSelectorUtils,
+} from '@/features/pieces/lib/piece-selector-utils';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
-  ApFlagId,
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+  CategorizedStepMetadataWithSuggestions,
+} from '@/lib/types';
+import {
+  FlowActionType,
   FlowOperationType,
-  TriggerType,
-  supportUrl,
+  FlowTriggerType,
 } from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
+import { useBuilderStateContext } from '../builder-hooks';
 
-import { AskAiButton } from './ask-ai';
-import { PieceSearchSuggestions } from './piece-search-suggestions';
-import { PieceTagEnum } from './piece-tag-group';
-
-type PieceGroup = {
-  title: string;
-  pieces: StepMetadataWithSuggestions[];
-};
+import { NoResultsFound } from './no-results-found';
+import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
+import { PieceCardListItem } from './piece-card-item';
 
 type PiecesCardListProps = {
-  debouncedQuery: string;
-  selectedTag: PieceTagEnum;
-  selectedPieceMetadata: StepMetadata | undefined;
-  setSelectedMetadata: (metadata: StepMetadata) => void;
+  searchQuery: string;
   operation: PieceSelectorOperation;
-  handleSelect: HandleSelectCallback;
-  pieceGroups: PieceGroup[];
-  isLoadingPieces: boolean;
-  piecesIsLoaded: boolean;
-  noResultsFound: boolean;
-  closePieceSelector: () => void;
-  hiddenActionsOrTriggers: string[];
+  stepToReplacePieceDisplayName?: string;
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
-  debouncedQuery,
-  selectedPieceMetadata,
-  setSelectedMetadata,
-  handleSelect,
-  pieceGroups,
-  isLoadingPieces,
-  piecesIsLoaded,
-  noResultsFound,
+  searchQuery,
   operation,
-  closePieceSelector,
-  hiddenActionsOrTriggers,
+  stepToReplacePieceDisplayName,
 }) => {
-  const { data: showCommunityLinks } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
+  const isMobile = useIsMobile();
+  const [selectedPieceMetadataInPieceSelector] = useBuilderStateContext(
+    (state) => [state.selectedPieceMetadataInPieceSelector],
   );
-  const isEmbedding = useEmbedding().embedState.isEmbedded;
-  const showRequestPieceButton = showCommunityLinks && !isEmbedding;
-  const selectedItemRef = useRef<HTMLDivElement | null>(null);
-  const isCopilotEnabled = platformHooks.isCopilotEnabled();
-  useEffect(() => {
-    if (
-      piecesIsLoaded &&
-      selectedItemRef.current &&
-      debouncedQuery.length === 0
-    ) {
-      selectedItemRef.current?.scrollIntoView({
-        behavior: 'auto',
-        block: 'nearest',
-      });
-    }
-  }, [piecesIsLoaded, selectedPieceMetadata]);
+  const { isLoading: isLoadingPieces, data: categories } =
+    piecesHooks.usePiecesSearch({
+      shouldCaptureEvent: true,
+      searchQuery,
+      type:
+        operation.type === FlowOperationType.UPDATE_TRIGGER
+          ? 'trigger'
+          : 'action',
+    });
 
+  const noResultsFound = !isLoadingPieces && categories.length === 0;
+  const [mouseMoved, setMouseMoved] = useState(false);
+  const showActionsOrTriggersInsidePiecesList =
+    searchQuery.length > 0 || isMobile;
+  const virtualizedItems = transformPiecesMetadataToVirtualizedItems(
+    categories,
+    showActionsOrTriggersInsidePiecesList,
+  );
+
+  const initialIndexToScrollToInPiecesList = virtualizedItems.findIndex(
+    (item) => item.displayName === stepToReplacePieceDisplayName,
+  );
+  const { selectedTab } = usePieceSelectorTabs();
+
+  const isLoading = isLoadingPieces;
+  const showActionsOrTriggersList =
+    searchQuery.length === 0 && !isMobile && !noResultsFound && !isLoading;
+  const showPiecesList = !noResultsFound && !isLoading;
+  if (
+    [
+      PieceSelectorTabType.EXPLORE,
+      PieceSelectorTabType.AI_AND_AGENTS,
+      PieceSelectorTabType.APPROVALS,
+    ].includes(selectedTab)
+  ) {
+    return null;
+  }
   return (
-    <CardList
-      className={cn(' w-full md:w-[250px] md:min-w-[250px] transition-all ', {
-        'w-full md:w-full': debouncedQuery.length > 0 || noResultsFound,
-      })}
-      listClassName="gap-0"
-    >
-      {isLoadingPieces && (
-        <div className="flex flex-col gap-2">
-          <CardListItemSkeleton numberOfCards={2} withCircle={false} />
-        </div>
+    <>
+      <div
+        onMouseMove={() => {
+          setMouseMoved(!isLoadingPieces);
+        }}
+        className={cn('w-full md:w-[250px] md:min-w-[250px] transition-all ', {
+          'w-full md:w-full': searchQuery.length > 0 || noResultsFound,
+        })}
+      >
+        {isLoading && (
+          <div className="flex flex-col gap-2">
+            <CardListItemSkeleton numberOfCards={2} withCircle={false} />
+          </div>
+        )}
+
+        {showPiecesList && (
+          <VirtualizedScrollArea
+            key={`${selectedTab}-${searchQuery}`}
+            initialScroll={{
+              index: initialIndexToScrollToInPiecesList,
+              clickAfterScroll: true,
+            }}
+            items={virtualizedItems}
+            estimateSize={(index) => virtualizedItems[index].height}
+            getItemKey={(index) => virtualizedItems[index].id}
+            renderItem={(item) => {
+              if (item.isCategory) {
+                return (
+                  <div
+                    className={cn('p-2 pb-0 text-sm text-muted-foreground')}
+                    id={item.displayName}
+                  >
+                    {item.displayName}
+                  </div>
+                );
+              }
+              return (
+                <PieceCardListItem
+                  pieceMetadata={item.pieceMetadata}
+                  searchQuery={searchQuery}
+                  operation={operation}
+                  isTemporaryDisabledUntilNextCursorMove={!mouseMoved}
+                />
+              );
+            }}
+          />
+        )}
+
+        {noResultsFound && <NoResultsFound />}
+      </div>
+
+      {showActionsOrTriggersList && (
+        <>
+          <Separator orientation="vertical" className="h-full" />
+          <PieceActionsOrTriggersList
+            stepMetadataWithSuggestions={selectedPieceMetadataInPieceSelector}
+            hidePieceIconAndDescription={false}
+            operation={operation}
+          />
+        </>
       )}
-
-      {piecesIsLoaded &&
-        pieceGroups.map((group, index) => (
-          <React.Fragment key={group.title}>
-            {index > 0 && (
-              <div className="my-1">
-                <Separator />
-              </div>
-            )}
-            {pieceGroups.length > 1 && (
-              <div className="text-sm text-muted-foreground mx-2 mt-2">
-                {group.title}
-              </div>
-            )}
-
-            {group.pieces.map((pieceMetadata) => (
-              <PieceCardListItem
-                key={pieceSelectorUtils.toKey(pieceMetadata)}
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                pieceMetadata={pieceMetadata}
-                selectedPieceMetadata={selectedPieceMetadata}
-                debouncedQuery={debouncedQuery}
-                setSelectedMetadata={setSelectedMetadata}
-                handleSelect={handleSelect}
-                ref={
-                  pieceMetadata.displayName ===
-                  selectedPieceMetadata?.displayName
-                    ? selectedItemRef
-                    : null
-                }
-              />
-            ))}
-          </React.Fragment>
-        ))}
-
-      {noResultsFound &&
-        isCopilotEnabled &&
-        operation.type !== FlowOperationType.UPDATE_TRIGGER && (
-          <div className="flex flex-col gap-2 items-center justify-center h-full ">
-            <WandSparkles className="w-14 h-14" />
-            <div className="text-sm mb-3">
-              {t('Let our AI assistant help you out')}
-            </div>
-            <AskAiButton
-              varitant={'default'}
-              operation={operation}
-              onClick={closePieceSelector}
-            ></AskAiButton>
-            {showRequestPieceButton && (
-              <>
-                {t('Or')}
-                <Link
-                  to={`${supportUrl}/c/feature-requests/9`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="ghost" size="sm">
-                    {t('Request Piece')}
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        )}
-
-      {noResultsFound &&
-        (!isCopilotEnabled ||
-          operation.type === FlowOperationType.UPDATE_TRIGGER) && (
-          <div className="flex flex-col gap-2 items-center justify-center h-full ">
-            <SearchX className="w-14 h-14" />
-            <div className="text-sm ">{t('No pieces found')}</div>
-            <div className="text-sm ">{t('Try adjusting your search')}</div>
-            {showRequestPieceButton && (
-              <Link
-                to={`${supportUrl}/c/feature-requests/9`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button className="h-8 px-2 ">{t('Request Piece')}</Button>
-              </Link>
-            )}
-          </div>
-        )}
-    </CardList>
+    </>
   );
 };
 
-const PieceCardListItem = React.forwardRef<
-  HTMLDivElement,
-  {
-    pieceMetadata: StepMetadataWithSuggestions;
-    selectedPieceMetadata: StepMetadata | undefined;
-    debouncedQuery: string;
-    setSelectedMetadata: (metadata: StepMetadata) => void;
-    handleSelect: HandleSelectCallback;
-    hiddenActionsOrTriggers: string[];
-  }
->(
-  (
-    {
-      pieceMetadata,
-      selectedPieceMetadata,
-      debouncedQuery,
-      setSelectedMetadata,
-      handleSelect,
-      hiddenActionsOrTriggers,
-    },
-    ref,
-  ) => {
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
-    const handleMouseEnter = (element: HTMLDivElement) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        if (element.matches(':hover')) {
-          setSelectedMetadata(pieceMetadata);
-        }
-      }, 150);
-    };
-
-    const handleMouseLeave = () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-    const isMobile = useIsMobile();
-    return (
-      <div onMouseLeave={handleMouseLeave} ref={ref}>
-        <CardListItem
-          className="flex-col p-3 gap-1 items-start"
-          selected={
-            pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
-            debouncedQuery.length === 0
-          }
-          interactive={debouncedQuery.length === 0}
-          onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-        >
-          <div className="flex gap-2 items-center h-full">
-            <PieceIcon
-              logoUrl={pieceMetadata.logoUrl}
-              displayName={pieceMetadata.displayName}
-              showTooltip={false}
-              size={'sm'}
-            />
-            <div className="flex-grow h-full flex items-center justify-left text-sm">
-              {pieceMetadata.displayName}
-            </div>
-          </div>
-        </CardListItem>
-
-        {(debouncedQuery.length > 0 || isMobile) &&
-          pieceMetadata.type !== TriggerType.EMPTY && (
-            <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
-              <PieceSearchSuggestions
-                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                pieceMetadata={pieceMetadata}
-                handleSelectOperationSuggestion={handleSelect}
-              />
-            </div>
-          )}
-      </div>
-    );
-  },
+type VirtualizedItem = {
+  id: string;
+  displayName: string;
+  height: number;
+} & (
+  | {
+      isCategory: true;
+    }
+  | {
+      isCategory: false;
+      pieceMetadata: StepMetadataWithSuggestions;
+    }
 );
+const transformPiecesMetadataToVirtualizedItems = (
+  searchResult: CategorizedStepMetadataWithSuggestions[],
+  showActionsOrTriggersInsidePiecesList: boolean,
+) => {
+  return searchResult.reduce<VirtualizedItem[]>((result, category) => {
+    if (!showActionsOrTriggersInsidePiecesList) {
+      result.push({
+        id: category.title,
+        displayName: category.title,
+        height: PIECE_SELECTOR_ELEMENTS_HEIGHTS.CATEGORY_ITEM_HEIGHT,
+        isCategory: true,
+      });
+    }
+    category.metadata.forEach((pieceMetadata, index) => {
+      result.push({
+        id: `${pieceMetadata.displayName}-${index}`,
+        height: getItemHeight(
+          pieceMetadata,
+          showActionsOrTriggersInsidePiecesList,
+        ),
+        isCategory: false,
+        pieceMetadata,
+        displayName: pieceMetadata.displayName,
+      });
+    });
+    return result;
+  }, []);
+};
 
-PieceCardListItem.displayName = 'PieceCardListItem';
+const getItemHeight = (
+  pieceMetadata: StepMetadataWithSuggestions,
+  showActionsOrTriggersInsidePiecesList: boolean,
+) => {
+  const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
+    PIECE_SELECTOR_ELEMENTS_HEIGHTS;
+  if (
+    pieceMetadata.type === FlowActionType.PIECE &&
+    showActionsOrTriggersInsidePiecesList
+  ) {
+    const actionsListWithoutHiddenActions =
+      pieceSelectorUtils.removeHiddenActions(pieceMetadata);
+    return (
+      ACTION_OR_TRIGGER_ITEM_HEIGHT *
+        Object.values(actionsListWithoutHiddenActions).length +
+      PIECE_ITEM_HEIGHT
+    );
+  }
+  if (
+    pieceMetadata.type === FlowTriggerType.PIECE &&
+    showActionsOrTriggersInsidePiecesList
+  ) {
+    return (
+      ACTION_OR_TRIGGER_ITEM_HEIGHT *
+        Object.values(pieceMetadata.suggestedTriggers ?? {}).length +
+      PIECE_ITEM_HEIGHT
+    );
+  }
+  const isCoreAction =
+    pieceMetadata.type === FlowActionType.CODE ||
+    pieceMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
+    pieceMetadata.type === FlowActionType.ROUTER;
+  if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
+    return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
+  }
+  return PIECE_ITEM_HEIGHT;
+};

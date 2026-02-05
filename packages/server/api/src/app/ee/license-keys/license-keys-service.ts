@@ -1,12 +1,12 @@
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { platformService } from '../../platform/platform.service'
-import { userService } from '../../user/user-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -84,7 +84,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         }
         return response.json()
     },
-    async verifyKeyOrReturnNull({ platformId, license }: { license: string | undefined, platformId: string }): Promise<LicenseKeyEntity | null  > {
+    async verifyKeyOrReturnNull({ platformId, license }: { license: string | undefined, platformId: string }): Promise<LicenseKeyEntity | null> {
         if (isNil(license)) {
             return null
         }
@@ -119,16 +119,21 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         }
     },
     async downgradeToFreePlan(platformId: string): Promise<void> {
-        await platformService.update({
-            id: platformId,
-            ...turnedOffFeatures,
-        })
-        await deactivatePlatformUsersOtherThanAdmin(platformId)
-    },
-    async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
+        await platformPlanService(log).update({ ...turnedOffFeatures, platformId })
         await platformService.update({
             id: platformId,
             plan: {
+                ...turnedOffFeatures,
+            },
+        })
+    },
+    async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
+        const isInternalPlan = !key.ssoEnabled && !key.embeddingEnabled && system.getEdition() === ApEdition.CLOUD
+        const teamProjectsLimit = key.manageProjectsEnabled ? TeamProjectsLimit.UNLIMITED : system.getEdition() === ApEdition.CLOUD ? TeamProjectsLimit.ONE : TeamProjectsLimit.NONE
+        await platformService.update({
+            id: platformId,
+            plan: {
+                plan: isInternalPlan ? 'internal' : PlanName.ENTERPRISE,
                 licenseKey: key.key,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
@@ -139,33 +144,22 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 customAppearanceEnabled: key.customAppearanceEnabled,
                 globalConnectionsEnabled: key.globalConnectionsEnabled,
                 customRolesEnabled: key.customRolesEnabled,
-                manageProjectsEnabled: key.manageProjectsEnabled,
+                teamProjectsLimit,
                 managePiecesEnabled: key.managePiecesEnabled,
+                activeFlowsLimit: undefined,
+                projectsLimit: undefined,
+                stripeSubscriptionId: undefined,
+                stripeSubscriptionStatus: undefined,
                 manageTemplatesEnabled: key.manageTemplatesEnabled,
                 apiKeysEnabled: key.apiKeysEnabled,
                 customDomainsEnabled: key.customDomainsEnabled,
                 projectRolesEnabled: key.projectRolesEnabled,
-                alertsEnabled: key.alertsEnabled,
                 analyticsEnabled: key.analyticsEnabled,
+                eventStreamingEnabled: key.eventStreamingEnabled,
             },
         })
     },
 })
-
-const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
-    const { data } = await userService.list({
-        platformId,
-    })
-    const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
-        return userService.update({
-            id: u.id,
-            status: UserStatus.INACTIVE,
-            platformId,
-            platformRole: u.platformRole,
-        })
-    })
-    await Promise.all(users)
-}
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,
@@ -183,6 +177,5 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     projectRolesEnabled: false,
-    flowIssuesEnabled: false,
-    alertsEnabled: false,
+    eventStreamingEnabled: false,
 }

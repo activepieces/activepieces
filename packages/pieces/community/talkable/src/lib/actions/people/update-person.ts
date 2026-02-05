@@ -43,15 +43,39 @@ export const updatePerson = createAction({
       description: undefined,
       required: false,
     }),
-    gated_param_subscribed: Property.Checkbox({
+    gated_param_subscribed: Property.StaticDropdown({
       displayName: 'Opt-in status',
-      description: undefined,
+      description: 'Opt-in status true/false',
       required: false,
+      options: {
+        options: [
+          {
+            label: 'true',
+            value: 'true',
+          },
+          {
+            label: 'false',
+            value: 'false',
+          },
+        ],
+      },
     }),
-    unsubscribed: Property.Checkbox({
+    unsubscribed: Property.StaticDropdown({
       displayName: 'Unsubscribe status',
-      description: undefined,
+      description: 'Unsubscribe status true/false',
       required: false,
+      options: {
+        options: [
+          {
+            label: 'true',
+            value: 'true',
+          },
+          {
+            label: 'false',
+            value: 'false',
+          },
+        ],
+      },
     }),
     unsubscribed_at: Property.DateTime({
       displayName: 'Unsubscribed date',
@@ -61,7 +85,7 @@ export const updatePerson = createAction({
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
+    const { site, api_key } = context.auth.props;
     const {
       email,
       first_name,

@@ -17,7 +17,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
 import {
   AddSigningKeyRequestBody,
@@ -41,17 +40,11 @@ export const NewSigningKeyDialog = ({
     resolver: typeboxResolver(AddSigningKeyRequestBody),
   });
 
-  const { toast } = useToast();
-
   const { mutate, isPending } = useMutation({
     mutationFn: () => signingKeyApi.create(form.getValues()),
     onSuccess: (key) => {
       setSigningKey(key);
       onCreate();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
     },
   });
 
@@ -136,7 +129,7 @@ export const NewSigningKeyDialog = ({
             </>
           ) : (
             <Button
-              variant={'secondary'}
+              variant={'accent'}
               onClick={() => {
                 setSigningKey(undefined);
                 setOpen(false);

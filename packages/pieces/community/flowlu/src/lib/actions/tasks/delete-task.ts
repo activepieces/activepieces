@@ -17,7 +17,7 @@ export const deleteTaskAction = createAction({
   async run(context) {
     const task_id = context.propsValue.task_id!;
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.deleteAction(
       FlowluModule.TASK,

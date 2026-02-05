@@ -19,7 +19,7 @@ export const stopTimerAction = createAction({
 		const { workspaceId } = context.propsValue;
 
 		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/user`,
 		});
@@ -27,7 +27,7 @@ export const stopTimerAction = createAction({
 		const userId = currentUserResponse.id;
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.PATCH,
 			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
 			body: {

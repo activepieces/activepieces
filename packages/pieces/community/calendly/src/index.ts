@@ -17,7 +17,7 @@ export const calendlyAuth = PieceAuth.SecretText({
   description: markdown,
   validate: async ({ auth }) => {
     try {
-      const user = calendlyCommon.getUser(auth);
+      calendlyCommon.getUser(auth);
       return {
         valid: true,
       };
@@ -43,7 +43,7 @@ export const calendly = createPiece({
       baseUrl: () => calendlyCommon.baseUrl, // Replace with the actual base URL
       auth: calendlyAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

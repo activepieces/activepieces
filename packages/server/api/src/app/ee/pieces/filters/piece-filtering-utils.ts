@@ -1,6 +1,6 @@
-import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, PlatformWithoutSensitiveData } from '@activepieces/shared'
+import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, Platform } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
-import { PieceMetadataSchema } from '../../../pieces/piece-metadata-entity'
+import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
 import { platformService } from '../../../platform/platform.service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
@@ -15,7 +15,7 @@ export const enterpriseFilteringUtils = {
             return pieces
         }
 
-        const platformWithPlan = await platformService.getOneWithPlan(platformId)
+        const platformWithPlan = await platformService.getOne(platformId)
         if (isNil(platformWithPlan)) {
             return pieces
         }
@@ -48,21 +48,11 @@ type FilterParams = {
     projectId?: string
 }
 
-// TODO(agents): after we enable agents for everyone.
-async function filterAgentsPieceIfPlatformHasLimit(platformWithPlan: PlatformWithoutSensitiveData, pieces: PieceMetadataSchema[]): Promise<PieceMetadataSchema[]> {
-    return pieces.filter((piece) => {
-        if (piece.name === '@activepieces/agent') {
-            return platformWithPlan.plan.agentsLimit && platformWithPlan.plan.agentsLimit > 0
-        }
-        return true
-    })
-}
-
 async function filterBasedOnProject(
     projectId: string,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
-    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getPlanWithPlatformLimits(projectId)
+    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getOrCreateDefaultPlan(projectId)
 
     const filterPredicate: Record<
     PiecesFilterType,
@@ -81,7 +71,7 @@ async function filterBasedOnProject(
     @deprecated This function is deprecated and will be removed in the future. replaced with project filtering
 */
 async function filterPiecesBasedPlatform(
-    platformWithPlan: PlatformWithoutSensitiveData,
+    platformWithPlan: Platform,
     pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
 
@@ -97,5 +87,5 @@ async function filterPiecesBasedPlatform(
 
     const predicate = filterPredicate[platformWithPlan.filteredPieceBehavior]
     const filteredPieces = pieces.slice().filter(predicate)
-    return filterAgentsPieceIfPlatformHasLimit(platformWithPlan, filteredPieces)
+    return filteredPieces
 }

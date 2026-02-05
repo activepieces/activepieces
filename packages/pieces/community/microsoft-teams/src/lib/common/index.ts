@@ -6,6 +6,7 @@ import { microsoftTeamsAuth } from '../../';
 
 export const microsoftTeamsCommon = {
 	teamId: Property.Dropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Team ID',
 		refreshers: [],
 		required: true,
@@ -46,6 +47,7 @@ export const microsoftTeamsCommon = {
 		},
 	}),
 	channelId: Property.Dropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Channel ID',
 		refreshers: ['teamId'],
 		required: true,
@@ -85,7 +87,86 @@ export const microsoftTeamsCommon = {
 			};
 		},
 	}),
+	memberId:(isRequired=false) =>Property.Dropdown({
+		auth: microsoftTeamsAuth,
+		displayName: 'Member',
+		refreshers: ['teamId'],
+		required: isRequired,
+		options: async ({ auth, teamId }) => {
+			if (!auth || !teamId) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your account first and select team.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			let response: PageCollection = await client.api(`/teams/${teamId}/members`).get();
+			while (response.value.length > 0) {
+				for (const member of response.value as ConversationMember[]) {
+					options.push({ label: member.displayName!, value: member.id! });
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
+	memberIds:(isRequired=false) =>Property.MultiSelectDropdown({
+		auth: microsoftTeamsAuth,
+		displayName: 'Member',
+		refreshers: ['teamId'],
+		required: isRequired,
+		options: async ({ auth, teamId }) => {
+			if (!auth || !teamId) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your account first and select team.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			let response: PageCollection = await client.api(`/teams/${teamId}/members`).get();
+			while (response.value.length > 0) {
+				for (const member of response.value as ConversationMember[]) {
+					options.push({ label: member.displayName!, value: member.id! });
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
 	chatId: Property.Dropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Chat ID',
 		refreshers: [],
 		required: true,
@@ -118,7 +199,7 @@ export const microsoftTeamsCommon = {
 							.map((member: ConversationMember) => member.displayName)
 							.join(',');
 					options.push({
-						label: `(${CHAT_TYPE[chat.chatType!]} Chat) ${chatName || '(no title)'}`,
+						label: `(${CHAT_TYPE[chat.chatType! as keyof typeof CHAT_TYPE]} Chat) ${chatName || '(no title)'}`,
 						value: chat.id!,
 					});
 				}

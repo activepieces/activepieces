@@ -1,228 +1,113 @@
-import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { ImperativePanelHandle } from 'react-resizable-panels';
 
-import {
-  LeftSideBarType,
-  RightSideBarType,
-  useBuilderStateContext,
-  useSwitchToDraft,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
+import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/show-powered-by';
-import { useSocket } from '@/components/socket-provider';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { RightSideBarType } from '@/lib/types';
 import {
-  ActionType,
-  PieceTrigger,
-  TriggerType,
-  WebsocketClientEvent,
+  FlowAction,
+  FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
+  FlowVersionState,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
-import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
+import { flowCanvasHooks } from './flow-canvas/hooks';
+import { flowCanvasConsts } from './flow-canvas/utils/consts';
+import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
+import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
+import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
 import { FlowVersionsList } from './flow-versions';
-import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
+import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
-
+import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
-const animateResizeClassName = `transition-all duration-200`;
+const animateResizeClassName = `transition-all `;
 
-const useAnimateSidebar = (
-  sidebarValue: LeftSideBarType | RightSideBarType,
-) => {
-  const handleRef = useRef<ImperativePanelHandle>(null);
-  const sidebarClosed = [LeftSideBarType.NONE, RightSideBarType.NONE].includes(
-    sidebarValue,
-  );
-  useEffect(() => {
-    const sidebarSize = handleRef.current?.getSize() ?? 0;
-    if (sidebarClosed) {
-      handleRef.current?.resize(0);
-    } else if (sidebarSize === 0) {
-      handleRef.current?.resize(25);
-    }
-  }, [handleRef, sidebarValue, sidebarClosed]);
-  return handleRef;
-};
-
-const constructContainerKey = (
-  flowId: string,
-  stepName: string,
-  triggerOrActionName?: string,
-) => {
-  return flowId + stepName + (triggerOrActionName ?? '');
-};
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const [
-    setRun,
     flowVersion,
-    leftSidebar,
     rightSidebar,
-    run,
-    canExitRun,
+    selectedStepName,
+    removeAllStepTestsListeners,
     selectedStep,
   ] = useBuilderStateContext((state) => [
-    state.setRun,
     state.flowVersion,
-    state.leftSidebar,
     state.rightSidebar,
-    state.run,
-    state.canExitRun,
     state.selectedStep,
+    state.removeAllStepTestsListeners,
+    flowStructureUtil.getStep(
+      state.selectedStep ?? '',
+      state.flowVersion.trigger,
+    ),
   ]);
-
-  const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
-    (state) => {
-      const flowVersion = state.flowVersion;
-      if (isNil(state.selectedStep) || isNil(flowVersion)) {
-        return {
-          memorizedSelectedStep: undefined,
-          containerKey: undefined,
-        };
-      }
-      const step = flowStructureUtil.getStep(
-        state.selectedStep,
-        flowVersion.trigger,
-      );
-      const triggerOrActionName =
-        step?.type === TriggerType.PIECE
-          ? (step as PieceTrigger).settings.triggerName
-          : step?.settings.actionName;
-      return {
-        memorizedSelectedStep: step,
-        containerKey: constructContainerKey(
-          state.flow.id,
-          state.selectedStep,
-          triggerOrActionName,
-        ),
-      };
-    },
-  );
+  useEffect(() => {
+    return () => {
+      removeAllStepTestsListeners();
+    };
+  }, [removeAllStepTestsListeners]);
+  flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
-  const rightHandleRef = useAnimateSidebar(rightSidebar);
-  const leftHandleRef = useAnimateSidebar(leftSidebar);
-  const leftSidePanelRef = useRef<HTMLDivElement>(null);
+  const rightHandleRef = flowCanvasHooks.useAnimateSidebar(rightSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
-
-  const { versions, refetch: refetchPiece } =
-    piecesHooks.useMostRecentAndExactPieceVersion({
-      name: memorizedSelectedStep?.settings.pieceName,
-      version: memorizedSelectedStep?.settings.pieceVersion,
+  const { pieceModel, refetch: refetchPiece } =
+    piecesHooks.usePieceModelForStepSettings({
+      name: selectedStep?.settings.pieceName,
+      version: selectedStep?.settings.pieceVersion,
       enabled:
-        memorizedSelectedStep?.type === ActionType.PIECE ||
-        memorizedSelectedStep?.type === TriggerType.PIECE,
+        selectedStep?.type === FlowActionType.PIECE ||
+        selectedStep?.type === FlowTriggerType.PIECE,
+      getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
+  flowCanvasHooks.useSetSocketListener(refetchPiece);
+  flowCanvasHooks.useListenToExistingRun();
 
-  const pieceModel = versions
-    ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
-    : undefined;
-  const socket = useSocket();
-
-  const { mutate: fetchAndUpdateRun } = useMutation({
-    mutationFn: flowRunsApi.getPopulated,
-  });
-  useEffect(() => {
-    socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
-      refetchPiece();
-    });
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
-      if (run && run?.id === runId) {
-        fetchAndUpdateRun(runId, {
-          onSuccess: (run) => {
-            setRun(run, flowVersion);
-          },
-        });
-      }
-    });
-    return () => {
-      socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
-      socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-    };
-  }, [socket.id, run?.id]);
-
-  const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
   return (
-    <div className="flex h-screen w-screen flex-col relative">
-      {run && (
-        <RunDetailsBar
-          canExitRun={canExitRun}
-          run={run}
-          isLoading={isSwitchingToDraftPending}
-          exitRun={() => {
-            socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-            switchToDraft();
-          }}
-        />
-      )}
-      <div className="z-50">
+    <div className="flex h-full w-full flex-col relative">
+      <div className="z-40">
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel
-          id="left-sidebar"
-          defaultSize={0}
-          minSize={0}
-          maxSize={39}
-          order={1}
-          ref={leftHandleRef}
-          className={cn('min-w-0 bg-background z-20', {
-            [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
-            [animateResizeClassName]: !isDraggingHandle,
-          })}
-        >
-          <div ref={leftSidePanelRef} className="w-full h-full">
-            {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
-            {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
-            {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-            {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
-          </div>
-        </ResizablePanel>
-        <ResizableHandle
-          disabled={leftSidebar === LeftSideBarType.NONE}
-          withHandle={leftSidebar !== LeftSideBarType.NONE}
-          onDragging={setIsDraggingHandle}
-          className="z-20"
-        />
-
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-            <div className="absolute left-0 top-0 h-full w-full z-10 "></div>
-            <FlowCanvas
-              setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-              lefSideBarContainerWidth={
-                leftSidePanelRef.current?.clientWidth || 0
-              }
-            ></FlowCanvas>
+            <CursorPositionProvider>
+              <FlowCanvas
+                setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
+              ></FlowCanvas>
+            </CursorPositionProvider>
+
+            <PublishFlowReminderWidget />
+            <RunInfoWidget />
+            <ViewingOldVersionWidget />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
                   canvasHeight={middlePanelRef.current?.clientHeight ?? 0}
                   canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
                   hasCanvasBeenInitialised={hasCanvasBeenInitialised}
-                  selectedStep={selectedStep}
+                  selectedStep={selectedStepName}
                 ></CanvasControls>
               )}
 
@@ -237,48 +122,89 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
 
-        <>
-          <ResizableHandle
-            disabled={rightSidebar === RightSideBarType.NONE}
-            withHandle={rightSidebar !== RightSideBarType.NONE}
-            onDragging={setIsDraggingHandle}
-            className="z-50"
-          />
+        <ResizableHandle
+          disabled={rightSidebar === RightSideBarType.NONE}
+          withHandle={rightSidebar !== RightSideBarType.NONE}
+          onDragging={setIsDraggingHandle}
+          className={
+            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
+          }
+        />
 
-          <ResizablePanel
-            ref={rightHandleRef}
-            id="right-sidebar"
-            defaultSize={0}
-            minSize={0}
-            maxSize={60}
-            order={3}
-            className={cn('min-w-0 bg-background z-30', {
-              [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
-              [animateResizeClassName]: !isDraggingHandle,
-            })}
-          >
-            <div ref={rightSidePanelRef} className="h-full w-full">
-              {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-                memorizedSelectedStep && (
+        <ResizablePanel
+          ref={rightHandleRef}
+          id="right-sidebar"
+          defaultSize={0}
+          minSize={0}
+          maxSize={60}
+          order={3}
+          className={cn('min-w-0 bg-background z-30', {
+            [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
+            [animateResizeClassName]: !isDraggingHandle,
+          })}
+          style={{
+            transitionDuration: `${
+              isDraggingHandle ? 0 : flowCanvasConsts.SIDEBAR_ANIMATION_DURATION
+            }ms`,
+          }}
+        >
+          <div ref={rightSidePanelRef} className="h-full w-full">
+            {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+              selectedStep && (
+                <ResizableVerticalPanelsProvider>
                   <StepSettingsProvider
                     pieceModel={pieceModel}
-                    selectedStep={memorizedSelectedStep}
-                    key={
-                      containerKey +
-                      (pieceModel?.name ?? '') +
-                      memorizedSelectedStep.type
-                    }
+                    selectedStep={selectedStep}
+                    key={constructContainerKey({
+                      flowVersionId: flowVersion.id,
+                      step: selectedStep,
+                      hasPieceModelLoaded: !!pieceModel,
+                    })}
                   >
                     <StepSettingsContainer />
                   </StepSettingsProvider>
-                )}
-            </div>
-          </ResizablePanel>
-        </>
+                </ResizableVerticalPanelsProvider>
+              )}
+            {rightSidebar === RightSideBarType.RUNS && <RunsList />}
+            {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}
+          </div>
+        </ResizablePanel>
       </ResizablePanelGroup>
+
+      <ChatDrawer />
     </div>
   );
 };
 
 BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };
+
+function constructContainerKey({
+  flowVersionId,
+  step,
+  hasPieceModelLoaded,
+}: {
+  flowVersionId: string;
+  step?: FlowAction | FlowTrigger;
+  hasPieceModelLoaded: boolean;
+}) {
+  const stepName = step?.name;
+  const triggerOrActionName =
+    step?.type === FlowTriggerType.PIECE
+      ? step?.settings.triggerName
+      : step?.settings.actionName;
+  const pieceName =
+    step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
+      ? step?.settings.pieceName
+      : undefined;
+  //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
+  const isSkipped =
+    step?.type != FlowTriggerType.EMPTY &&
+    step?.type != FlowTriggerType.PIECE &&
+    step?.skip;
+  return `${flowVersionId}-${stepName ?? ''}-${triggerOrActionName ?? ''}-${
+    pieceName ?? ''
+  }-${'skipped-' + !!isSkipped}-${
+    hasPieceModelLoaded ? 'loaded' : 'not-loaded'
+  }`;
+}

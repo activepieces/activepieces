@@ -7,11 +7,13 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import {
+  ApFile,
   createAction,
   DynamicPropsValue,
+  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isEmpty } from '@activepieces/shared';
 import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -57,6 +59,7 @@ export const httpSendRequestAction = createAction({
     authFields: Property.DynamicProperties({
       displayName: 'Authentication Fields',
       required: false,
+      auth: PieceAuth.None(),
       refreshers: ['authType'],
       props: async ({ authType }) => {
         if (!authType) {
@@ -127,6 +130,7 @@ export const httpSendRequestAction = createAction({
       displayName: 'Body',
       refreshers: ['body_type'],
       required: false,
+      auth: PieceAuth.None(),
       props: async ({ body_type }) => {
         if (!body_type) return {};
 
@@ -150,14 +154,46 @@ export const httpSendRequestAction = createAction({
             });
             break;
           case 'form_data':
-            fields['data'] = Property.Object({
+            fields['data'] = Property.Array({
               displayName: 'Form Data',
               required: true,
+              properties: {
+                fieldName: Property.ShortText({
+                  displayName: 'Field Name',
+                  required: true
+                }),
+                fieldType: Property.StaticDropdown({
+                  displayName: 'Field Type',
+                  required: true,
+                  options: {
+                    disabled: false,
+                    options: [
+                      { label: 'Text', value: 'text' },
+                      { label: 'File', value: 'file' }
+                    ]
+                  }
+                }),
+                textFieldValue: Property.LongText({
+                  displayName: 'Text Field Value',
+                  required: false
+                }),
+                fileFieldValue: Property.File({
+                  displayName: 'File Field Value',
+                  required: false
+                })
+              }
             });
             break;
         }
         return fields;
       },
+    }),
+    response_is_binary: Property.Checkbox({
+      displayName: 'Response is Binary',
+      description:
+        'Enable for files like PDFs, images, etc. A base64 body will be returned.',
+      required: false,
+      defaultValue: false,
     }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
@@ -166,6 +202,7 @@ export const httpSendRequestAction = createAction({
       required: false,
     }),
     proxy_settings: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Proxy Settings',
       refreshers: ['use_proxy'],
       required: false,
@@ -201,14 +238,31 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+    followRedirects: Property.Checkbox({
+      displayName: 'Follow redirects',
       required: false,
+      defaultValue: false,
     }),
+    failureMode: Property.StaticDropdown({
+      displayName: 'On Failure',
+      required: false,
+      defaultValue: 'continue_none',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Retry on all errors (4xx, 5xx)', value: 'retry_all' },
+          { label: 'Retry on internal errors (5xx)', value: 'retry_5xx' },
+          { label: 'Do not retry', value: 'retry_none' },
+          { label: 'Continue flow on all errors', value: 'continue_all' },
+          { label: 'Continue flow on 4xx errors', value: 'continue_4xx' },
+          { label: 'Do not continue (stop the flow)', value: 'continue_none' },
+        ],
+      },
+    })
   },
   errorHandlingOptions: {
-    continueOnFailure: { hide: true },
-    retryOnFailure: { defaultValue: true },
+    continueOnFailure: { hide: true, defaultValue: false },
+    retryOnFailure: { hide: true, defaultValue: false },
   },
   async run(context) {
     const {
@@ -218,11 +272,13 @@ export const httpSendRequestAction = createAction({
       queryParams,
       body,
       body_type,
+      response_is_binary,
       timeout,
-      failsafe,
+      failureMode,
       use_proxy,
       authType,
       authFields,
+      followRedirects,
     } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -234,6 +290,7 @@ export const httpSendRequestAction = createAction({
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,
+      followRedirects,
     };
 
     switch (authType) {
@@ -256,13 +313,31 @@ export const httpSendRequestAction = createAction({
         break;
     }
 
+    // Set response type to arraybuffer if binary response is expected
+    if (response_is_binary) {
+      request.responseType = 'arraybuffer';
+    }
+
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
+        const formBodyInput = bodyInput as Array<{
+          fieldName: string;
+          fieldType: 'text' | 'file';
+          textFieldValue?: string;
+          fileFieldValue?: ApFile;
+        }>;
+
         const formData = new FormData();
-        for (const key in bodyInput) {
-          formData.append(key, bodyInput[key]);
+
+        for (const { fieldName, fieldType, textFieldValue, fileFieldValue } of formBodyInput) {
+          if (fieldType === 'text' && !isEmpty(textFieldValue)) {
+            formData.append(fieldName, textFieldValue);
+          } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
+            formData.append(fieldName, fileFieldValue!.data,{filename:fileFieldValue?.filename});
+          }
         }
+
         request.body = formData;
         request.headers = { ...request.headers, ...formData.getHeaders() };
       } else {
@@ -270,7 +345,7 @@ export const httpSendRequestAction = createAction({
       }
     }
 
-    try {
+    const apiRequest = async () => {
       if (use_proxy) {
         const proxySettings = context.propsValue.proxy_settings;
         assertNotNullOrUndefined(proxySettings, 'Proxy Settings');
@@ -289,16 +364,81 @@ export const httpSendRequestAction = createAction({
           httpsAgent,
         });
 
-        const proxied_response = await axiosClient.request(request);
-        return proxied_response.data;
+        return await httpClient.sendRequest(request, axiosClient);
       }
       return await httpClient.sendRequest(request);
-    } catch (error) {
-      if (failsafe) {
-        return (error as HttpError).errorMessage();
-      }
+    };
 
-      throw error;
+    let attempts = 0;
+
+    while (attempts < 3) {
+      try {
+        const response = await apiRequest();
+        return handleBinaryResponse(
+          response.body,
+          response.status,
+          response.headers,
+          response_is_binary
+        );
+      } catch (error) {
+        attempts++;
+
+        switch (failureMode) {
+          case 'retry_all': {
+            if (attempts < 3) continue;
+            throw error;
+          }
+          case 'retry_5xx': {
+            if (
+              (error as HttpError).response.status >= 500 &&
+              (error as HttpError).response.status < 600
+            ) {
+              if (attempts < 3) continue;
+              throw error; // after 3 tries, throw
+            }
+            return (error as HttpError).errorMessage(); //throw error; // non 5xxx error
+          }
+
+          case 'continue_all':
+            return (error as HttpError).errorMessage();
+          case 'continue_4xx':
+            if (
+              (error as HttpError).response?.status >= 400 &&
+              (error as HttpError).response?.status < 500
+            ) {
+              return (error as HttpError).errorMessage();
+            }
+            if (attempts < 3) continue;
+            throw error;
+          case 'continue_none':
+            throw error;
+          default:
+            throw error;
+        }
+      }
     }
+
+    throw new Error('Unexpected error occured');
   },
 });
+
+const handleBinaryResponse = (
+  bodyContent: string | ArrayBuffer | Buffer,
+  status: number,
+  headers?: HttpHeaders,
+  isBinary?: boolean
+) => {
+  let body;
+
+  if (isBinary && isBinaryBody(bodyContent)) {
+    body = Buffer.from(bodyContent as unknown as string).toString('base64');
+  } else {
+    body = bodyContent;
+  }
+
+  return { status, headers, body };
+};
+
+const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
+  return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};

@@ -35,7 +35,7 @@ export const retableCreateRecordAction = createAction({
         method: HttpMethod.POST,
         url: `${retableCommon.baseUrl}/retable/${retable_id}/data`,
         headers: {
-          ApiKey: context.auth as string,
+          ApiKey: context.auth.secret_text,
         },
         body: {
           data: [{ columns: outputData }],

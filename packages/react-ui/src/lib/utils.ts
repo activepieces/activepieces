@@ -1,9 +1,11 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { LocalesEnum, Permission } from '@activepieces/shared';
 
@@ -12,6 +14,8 @@ import { authenticationSession } from './authentication-session';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const GAP_SIZE_FOR_STEP_SETTINGS = 'gap-3';
 const emailRegex =
   /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
@@ -26,10 +30,15 @@ export const formatUtils = {
       )
       .join(' ');
   },
-  formatNumber(number: number) {
-    return new Intl.NumberFormat('en-US').format(number);
+  convertEnumToReadable(value: string): string {
+    return (
+      value.charAt(0).toUpperCase() +
+      value.slice(1).toLowerCase().replace(/_/g, ' ')
+    );
   },
-
+  formatNumber(number: number) {
+    return new Intl.NumberFormat(i18next.language).format(number);
+  },
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);
@@ -38,31 +47,42 @@ export const formatUtils = {
     }
   },
   formatDateOnly(date: Date) {
-    return Intl.DateTimeFormat('en-US', {
+    return Intl.DateTimeFormat(i18next.language, {
       month: 'numeric',
       day: 'numeric',
       year: 'numeric',
     }).format(date);
   },
-  formatDate(date: Date) {
+  formatDateWithTime(date: Date, hideCurrentYear: boolean) {
     const now = dayjs();
     const inputDate = dayjs(date);
-
     const isToday = inputDate.isSame(now, 'day');
     const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
+    const isSameYear = inputDate.isSame(now, 'year');
 
-    const timeFormat = new Intl.DateTimeFormat('en-US', {
+    const timeFormat = new Intl.DateTimeFormat(i18next.language, {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
     });
 
     if (isToday) {
-      return `Today at ${timeFormat.format(date)}`;
+      return `${t('Today')}, ${timeFormat.format(date)}`;
     } else if (isYesterday) {
-      return `Yesterday at ${timeFormat.format(date)}`;
+      return `${t('Yesterday')}, ${timeFormat.format(date)}`;
     }
-    return Intl.DateTimeFormat('en-US', {
+
+    if (isSameYear && !hideCurrentYear) {
+      return Intl.DateTimeFormat(i18next.language, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      }).format(date);
+    }
+
+    return Intl.DateTimeFormat(i18next.language, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -70,6 +90,41 @@ export const formatUtils = {
       minute: 'numeric',
       hour12: true,
     }).format(date);
+  },
+  formatDate(date: Date) {
+    const now = dayjs();
+    const inputDate = dayjs(date);
+    const isToday = inputDate.isSame(now, 'day');
+    const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
+    const isSameYear = inputDate.isSame(now, 'year');
+
+    if (isToday) {
+      return t('Today');
+    }
+
+    if (isYesterday) {
+      return t('Yesterday');
+    }
+
+    if (isSameYear) {
+      return Intl.DateTimeFormat(i18next.language, {
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+    }
+
+    return Intl.DateTimeFormat(i18next.language, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(date);
+  },
+  formatToHoursAndMinutes(minutes: number) {
+    if (minutes < 60) {
+      return `${formatUtils.formatNumber(minutes)} mins`;
+    }
+    const hours = Math.floor(minutes / 60);
+    return `${formatUtils.formatNumber(hours)} hours`;
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();
@@ -122,6 +177,21 @@ export const formatUtils = {
     }
     return short ? `${seconds} s` : `${seconds} seconds`;
   },
+  urlIsNotLocalhostOrIp(url: string): boolean {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '::1'
+    ) {
+      return false;
+    }
+    const ipv4Regex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+    if (ipv4Regex.test(parsed.hostname)) {
+      return false;
+    }
+    return parsed.protocol === 'https:';
+  },
 };
 
 export const validationUtils = {
@@ -153,29 +223,25 @@ export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
 }
 
 export const localesMap = {
-  [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
-  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.ENGLISH]: 'English',
   [LocalesEnum.SPANISH]: 'Español',
   [LocalesEnum.FRENCH]: 'Français',
-  [LocalesEnum.ITALIAN]: 'Italiano',
   [LocalesEnum.JAPANESE]: '日本語',
-  [LocalesEnum.HUNGARIAN]: 'Magyar',
   [LocalesEnum.DUTCH]: 'Nederlands',
-  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
-  [LocalesEnum.UKRAINIAN]: 'Українська',
-  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+  [LocalesEnum.PORTUGUESE]: 'Português',
+  [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
 };
 
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const debouncedSetSize = useDebouncedCallback(setSize, 150);
   useEffect(() => {
     const handleResize = (entries: ResizeObserverEntry[]) => {
       if (entries[0]) {
         const { width, height } = entries[0].contentRect;
-        setSize({ width, height });
+        debouncedSetSize({ width, height });
       }
     };
 
@@ -241,15 +307,10 @@ export const determineDefaultRoute = (
   if (checkAccess(Permission.READ_RUN)) {
     return authenticationSession.appendProjectRoutePrefix('/runs');
   }
-  if (checkAccess(Permission.READ_ISSUES)) {
-    return authenticationSession.appendProjectRoutePrefix('/issues');
-  }
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
-
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
-export const NEW_MCP_QUERY_PARAM = 'newMcp';
 export const parentWindow: Window = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {
   return url.startsWith('/') ? url.slice(1) : url;
@@ -318,4 +379,33 @@ export const downloadFile = async ({
 
 export const wait = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
+export const scrollToElementAndClickIt = (elementId: string) => {
+  const element = document.getElementById(elementId);
+  element?.scrollIntoView({
+    behavior: 'instant',
+    block: 'start',
+  });
+  element?.click();
+};
+
+export const routesThatRequireProjectId = {
+  runs: '/runs',
+  singleRun: '/runs/:runId',
+  flows: '/flows',
+  singleFlow: '/flows/:flowId',
+  connections: '/connections',
+  singleConnection: '/connections/:connectionId',
+  tables: '/tables',
+  singleTable: '/tables/:tableId',
+  todos: '/todos',
+  singleTodo: '/todos/:todoId',
+  settings: '/settings',
+  releases: '/releases',
+  singleRelease: '/releases/:releaseId',
+};
+
+export const isMac = () => {
+  return /(Mac)/i.test(navigator.userAgent);
 };

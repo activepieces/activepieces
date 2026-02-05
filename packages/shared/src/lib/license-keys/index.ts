@@ -1,16 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 
-export const CreateTrialLicenseKeyRequestBody = Type.Object({
-    email: Type.String(),
-    companyName: Type.String(),
-    goal: Type.String(),
-    keyType: Type.Optional(Type.String()),
-    disabledFeatures: Type.Optional(Type.Array(Type.String())),
-    isEmbeddingsEnabled: Type.Optional(Type.Boolean()),
-})
-
-export type CreateTrialLicenseKeyRequestBody = Static<typeof CreateTrialLicenseKeyRequestBody>
-
 export const VerifyLicenseKeyRequestBody = Type.Object({
     licenseKey: Type.String(),
     platformId: Type.String(),
@@ -24,7 +13,6 @@ export const LicenseKeyEntity = Type.Object({
     expiresAt: Type.String(),
     activatedAt: Type.String(),
     createdAt: Type.String(),
-    isTrial: Type.Boolean(),
     key: Type.String(),
     ssoEnabled: Type.Boolean(),
     environmentsEnabled: Type.Boolean(),
@@ -38,11 +26,21 @@ export const LicenseKeyEntity = Type.Object({
     apiKeysEnabled: Type.Boolean(),
     customDomainsEnabled: Type.Boolean(),
     projectRolesEnabled: Type.Boolean(),
-    flowIssuesEnabled: Type.Boolean(),
-    alertsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
+    eventStreamingEnabled: Type.Boolean(),
 })
+
+
+export const CreateTrialLicenseKeyRequestBody = Type.Composite([Type.Object({
+    email: Type.String(),
+    companyName: Type.String(),
+    goal: Type.String(),
+    keyType: Type.Optional(Type.String()),
+}), Type.Omit(LicenseKeyEntity, ['id', 'email', 'expiresAt', 'activatedAt', 'key', 'createdAt'])])
+
+export type CreateTrialLicenseKeyRequestBody = Static<typeof CreateTrialLicenseKeyRequestBody>
+
 
 export type LicenseKeyEntity = Static<typeof LicenseKeyEntity>

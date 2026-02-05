@@ -28,6 +28,7 @@ export const updateRecord = createAction({
   props: {
     elementType: elementTypeProperty,
     id: Property.Dropdown({
+      auth: vtigerAuth,
       displayName: 'Id',
       description: "The record's id",
       required: true,
@@ -46,9 +47,9 @@ export const updateRecord = createAction({
         let instance = null;
         while (!instance && c < 3) {
           instance = await instanceLogin(
-            (auth as VTigerAuthValue).instance_url,
-            (auth as VTigerAuthValue).username,
-            (auth as VTigerAuthValue).password
+            auth.props.instance_url,
+            auth.props.username,
+            auth.props.password
           );
           await sleep(1500);
           c++;
@@ -67,7 +68,7 @@ export const updateRecord = createAction({
           result: Record<string, string>[];
         }>({
           method: HttpMethod.GET,
-          url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
+          url: `${auth.props.instance_url}/webservice.php`,
           queryParams: {
             sessionName: instance.sessionId ?? instance.sessionName,
             operation: 'query',
@@ -86,15 +87,18 @@ export const updateRecord = createAction({
         const element: string = elementType as unknown as string;
 
         return {
-          options: response.body.result.map((r) => ({
-            label: Modules[element](r),
-            value: r['id'],
+          options: await Promise.all(response.body.result.map(async (record) => {
+            return {
+              label: await Modules[element]?.(record) || record['id'],
+              value: record['id'] as string,
+            };
           })),
           disabled: false,
         };
       },
     }),
     record: Property.DynamicProperties({
+      auth: vtigerAuth,
       displayName: 'Record Fields',
       description: 'Add new fields to be created in the new record',
       required: true,
@@ -105,9 +109,9 @@ export const updateRecord = createAction({
         }
 
         const instance = await instanceLogin(
-          auth['instance_url'],
-          auth['username'],
-          auth['password']
+          auth.props.instance_url,
+          auth.props.username,
+          auth.props.password
         );
         if (!instance) return {};
 
@@ -118,7 +122,7 @@ export const updateRecord = createAction({
             result: Record<string, unknown>;
           }>({
             method: HttpMethod.GET,
-            url: `${auth['instance_url']}/webservice.php`,
+            url: `${auth.props.instance_url}/webservice.php`,
             queryParams: {
               operation: 'retrieve',
               sessionName: instance.sessionId ?? instance.sessionName,
@@ -140,7 +144,7 @@ export const updateRecord = createAction({
           result: { fields: Field[] };
         }>({
           method: HttpMethod.GET,
-          url: `${auth['instance_url']}/webservice.php`,
+          url: `${auth.props.instance_url}/webservice.php`,
           queryParams: {
             sessionName: instance.sessionId ?? instance.sessionName,
             operation: 'describe',
@@ -151,6 +155,8 @@ export const updateRecord = createAction({
         const fields: DynamicPropsValue = {};
 
         if (describe_response.body.success) {
+          let limit = 30; // Limit to show 30 input property, more than this will cause frontend unresponsive
+
           const generateField = async (field: Field) => {
             const params = {
               displayName: field.label,
@@ -190,12 +196,12 @@ export const updateRecord = createAction({
                 };
               } else if (field.type.name === 'owner') {
                 options = await getRecordReference(
-                  auth as PiecePropValueSchema<typeof vtigerAuth>,
+                  auth,
                   ['Users']
                 );
               } else if (field.type.refersTo) {
                 options = await getRecordReference(
-                  auth as PiecePropValueSchema<typeof vtigerAuth>,
+                   auth,
                   field.type.refersTo ?? []
                 );
               } else {
@@ -219,7 +225,7 @@ export const updateRecord = createAction({
                 displayName: field.label,
                 description: `The fields to fill in the object type ${elementType}`,
                 required: field.mandatory,
-                defaultValue: defaultValue?.[field.name] as boolean,
+                defaultValue: defaultValue?.[field.name] ? true : false,
               });
             } else if (['date', 'datetime', 'time'].includes(field.type.name)) {
               fields[field.name] = Property.DateTime({
@@ -231,10 +237,35 @@ export const updateRecord = createAction({
             }
           };
 
-          for (const field of describe_response.body.result.fields) {
-            if (field.name === 'id') continue;
+          const skipFields = [
+            'id',
+          ];
 
-            await generateField(field);
+          // Prioritize mandatory fields
+          for (const field of describe_response.body.result.fields) {
+            if (skipFields.includes(field.name)) {
+              continue;
+            }
+
+            if (field.mandatory) {
+              await generateField(field);
+              limit--;
+            }
+          }
+
+          // Let's add the rest...
+          for (const field of describe_response.body.result.fields) {
+            if (skipFields.includes(field.name)) {
+              continue;
+            }
+
+            // Skip the rest of field to avoid unresponsive frontend
+            if (limit < 0) break;
+
+            if (!field.mandatory) {
+              await generateField(field);
+              limit--;
+            }
           }
         }
 
@@ -244,15 +275,15 @@ export const updateRecord = createAction({
   },
   async run({ propsValue: { elementType, id, record }, auth }) {
     const instance = await instanceLogin(
-      auth.instance_url,
-      auth.username,
-      auth.password
+      auth.props.instance_url,
+      auth.props.username,
+      auth.props.password
     );
 
     if (instance !== null) {
       const response = await httpClient.sendRequest<Record<string, unknown>[]>({
         method: HttpMethod.POST,
-        url: `${auth.instance_url}/webservice.php`,
+        url: `${auth.props.instance_url}/webservice.php`,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },

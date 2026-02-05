@@ -1,10 +1,15 @@
+import { ApEdition } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class ModifyProjectMembers1717961669938 implements MigrationInterface {
     name = 'ModifyProjectMembers1717961669938'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         const projectMembers = await queryRunner.query('SELECT * FROM project_member WHERE status = \'ACTIVE\'')
         await queryRunner.query('TRUNCATE TABLE project_member CASCADE')
         await queryRunner.query(`
@@ -51,6 +56,9 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         const projectMembers = await queryRunner.query('SELECT * FROM project_member')
         await queryRunner.query('TRUNCATE TABLE project_member CASCADE')
 

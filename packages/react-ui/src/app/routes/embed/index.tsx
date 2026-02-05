@@ -4,13 +4,19 @@ import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffectOnce } from 'react-use';
 
-import { memoryRouter } from '@/app/router';
+import { memoryRouter } from '@/app/guards';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
-import { combinePaths, parentWindow } from '@/lib/utils';
+import {
+  combinePaths,
+  determineDefaultRoute,
+  parentWindow,
+  routesThatRequireProjectId,
+} from '@/lib/utils';
 import {
   ActivepiecesClientAuthenticationFailed,
   ActivepiecesClientAuthenticationSuccess,
@@ -44,10 +50,9 @@ const handleVendorNavigation = ({ projectId }: { projectId: string }) => {
       event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
     ) {
       const targetRoute = event.data.data.vendorRoute;
-      const targetRouteRequiresProjectId =
-        targetRoute.includes('/runs') ||
-        targetRoute.includes('/flows') ||
-        targetRoute.includes('/connections');
+      const targetRouteRequiresProjectId = Object.values(
+        routesThatRequireProjectId,
+      ).some((route) => targetRoute.includes(route));
       if (!targetRouteRequiresProjectId) {
         memoryRouter.navigate(targetRoute);
       } else {
@@ -100,6 +105,7 @@ const EmbedPage = React.memo(() => {
   });
   const { setTheme } = useTheme();
   const { i18n } = useTranslation();
+  const { checkAccess } = useAuthorization();
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
       event.source === parentWindow &&
@@ -117,7 +123,11 @@ const EmbedPage = React.memo(() => {
           {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data, true);
-              const initialRoute = event.data.data.initialRoute ?? '/';
+              const configuredRoute = event.data.data.initialRoute ?? '/';
+
+              const defaultRoute = determineDefaultRoute(checkAccess);
+              const initialRoute =
+                configuredRoute === '/' ? defaultRoute : configuredRoute;
               //must use it to ensure that the correct router in RouterProvider is used before navigation
               flushSync(() => {
                 setEmbedState({
@@ -144,6 +154,9 @@ const EmbedPage = React.memo(() => {
                     event.data.data.emitHomeButtonClickedEvent ?? false,
                   homeButtonIcon: event.data.data.homeButtonIcon ?? 'logo',
                   hideDuplicateFlow: event.data.data.hideDuplicateFlow ?? false,
+                  hideFlowsPageNavbar:
+                    event.data.data.hideFlowsPageNavbar ?? false,
+                  hidePageHeader: event.data.data.hidePageHeader ?? false,
                 });
               });
               memoryRouter.navigate(initialRoute);

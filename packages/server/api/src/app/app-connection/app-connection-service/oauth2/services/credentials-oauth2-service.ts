@@ -1,14 +1,15 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
+import { apAxios } from '@activepieces/server-shared'
+import { ActivepiecesError,
     AppConnectionType,
     BaseOAuth2ConnectionValue,
     ErrorCode,
     isNil,
     OAuth2ConnectionValueWithApp,
     OAuth2GrantType,
+    resolveValueFromProps,
 } from '@activepieces/shared'
-import axios, { AxiosError } from 'axios'
+import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import {
     ClaimOAuth2Request,
@@ -17,13 +18,14 @@ import {
 } from '../oauth2-service'
 import { oauth2Util } from '../oauth2-util'
 
+
 export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<OAuth2ConnectionValueWithApp> => ({
     async claim({
         request,
     }: ClaimOAuth2Request): Promise<OAuth2ConnectionValueWithApp> {
         try {
             const grantType = request.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE
-            const body: Record<string, string> = {
+            const body: Record<string, unknown> = {
                 grant_type: grantType,
             }
             switch (grantType) {
@@ -34,10 +36,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 }
                 case OAuth2GrantType.CLIENT_CREDENTIALS:
                     if (request.scope) {
-                        body.scope = request.scope
-                        Object.entries(request.props ?? {}).forEach(([key, value]) => {
-                            body.scope = body.scope.replace(`{${key}}`, String(value))
-                        })
+                        body.scope = resolveValueFromProps(request.props, request.scope)
                     }
                     if (request.props) {
                         Object.entries(request.props).forEach(([key, value]) => {
@@ -69,8 +68,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 default:
                     throw new Error(`Unknown authorization method: ${authorizationMethod}`)
             }
+            const urlSearchParams = new URLSearchParams(Object.fromEntries(Object.entries(body).map(([key, value]) => [key, String(value)])))
             const response = (
-                await axios.post(request.tokenUrl, new URLSearchParams(body), {
+                await apAxios.post(request.tokenUrl, urlSearchParams, {
                     headers,
                 })
             ).data
@@ -128,15 +128,13 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 break
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
-                body.grant_type = grantType
+                body.grant_type = OAuth2GrantType.CLIENT_CREDENTIALS
                 if (appConnection.scope) {
-                    body.scope = appConnection.scope
+                    body.scope = resolveValueFromProps(appConnection.props, appConnection.scope)
                 }
                 if (appConnection.props) {
                     Object.entries(appConnection.props).forEach(([key, value]) => {
-                        if (typeof value === 'string') {
-                            body[key] = value
-                        }
+                        body[key] = String(value)
                     })
                 }
                 break
@@ -165,9 +163,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 throw new Error(`Unknown authorization method: ${authorizationMethod}`)
         }
         const response = (
-            await axios.post(appConnection.token_url, new URLSearchParams(body), {
+            await apAxios.post(appConnection.token_url, new URLSearchParams(body), {
                 headers,
-                timeout: 10000,
+                timeout: 20000,
             })
         ).data
         const mergedObject = mergeNonNull(

@@ -1,5 +1,7 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+pieces-cache-db-*.sqlite
+
 # compiled output
 dist
 tmp
@@ -8,6 +10,7 @@ tmp
 firebase-admin-sdk.json
 dev
 /cache
+/logs/
 .env
 
 # SDK Build
@@ -65,3 +68,10 @@ scratch.md
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/redis-binaries/

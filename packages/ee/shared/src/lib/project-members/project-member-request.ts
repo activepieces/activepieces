@@ -1,24 +1,24 @@
-import { Type, Static } from "@sinclair/typebox";
+import { Static, Type } from '@sinclair/typebox'
 
 export const AcceptInvitationRequest = Type.Object({
-    token: Type.String()
+    token: Type.String(),
 })
-export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>;
+export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>
 
 export const ListProjectMembersRequestQuery = Type.Object({
     projectId: Type.String(),
     projectRoleId: Type.Optional(Type.String()),
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
-});
+})
 
-export type ListProjectMembersRequestQuery = Static<typeof ListProjectMembersRequestQuery>;
+export type ListProjectMembersRequestQuery = Static<typeof ListProjectMembersRequestQuery>
 
 export const AcceptProjectResponse = Type.Object({
     registered: Type.Boolean(),
-});
+})
 
-export type AcceptProjectResponse = Static<typeof AcceptProjectResponse>;
+export type AcceptProjectResponse = Static<typeof AcceptProjectResponse>
 
 
 export const UpdateProjectMemberRoleRequestBody = Type.Object({
@@ -26,3 +26,9 @@ export const UpdateProjectMemberRoleRequestBody = Type.Object({
 })
 
 export type UpdateProjectMemberRoleRequestBody = Static<typeof UpdateProjectMemberRoleRequestBody>
+
+export const GetCurrentProjectMemberRoleQuery = Type.Object({
+    projectId: Type.String(),
+})
+
+export type GetCurrentProjectMemberRoleQuery = Static< typeof GetCurrentProjectMemberRoleQuery>

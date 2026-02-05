@@ -1,0 +1,324 @@
+# Default values for activepieces.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: ghcr.io/activepieces/activepieces
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# This is for setting Kubernetes Annotations to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+# This is for setting Kubernetes Labels to a Pod.
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# Container configuration
+container:
+  port: 80
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  type: ClusterIP
+  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  port: 80
+
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+livenessProbe:
+  httpGet:
+    path: /v1/health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /v1/health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+persistence:
+  enabled: true
+  size: 2Gi
+  mountPath: "/usr/src/app/cache"
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+activepieces:
+  # ============================================================================
+  # REQUIRED: Core configuration that must be set for production deployment
+  # ============================================================================
+  
+  # The URL where Activepieces will be accessible (e.g., https://activepieces.yourdomain.com)
+  frontendUrl: "http://localhost:4200"
+  
+  # Edition: ce (Community) or ee (Enterprise)
+  # Community Edition (ce) is the default open-source version
+  edition: "ce"
+  
+  # Execution mode for flows - see: https://www.activepieces.com/docs/install/architecture/workers
+  # Options: SANDBOX_CODE_ONLY, UNSANDBOXED
+  executionMode: "SANDBOX_CODE_ONLY"
+  
+  # Environment: prod or dev
+  environment: "prod"
+  
+  # ============================================================================
+  # OPTIONAL: Additional configuration (defaults are usually sufficient)
+  # ============================================================================
+  
+  telemetryEnabled: true
+  templatesSourceUrl: "https://cloud.activepieces.com/api/v1/templates"
+  flowWorkerConcurrency: ""
+  scheduledWorkerConcurrency: ""
+  triggerDefaultPollInterval: ""
+  triggerTimeoutSeconds: ""
+  flowTimeoutSeconds: ""
+  webhookTimeoutSeconds: ""
+  executionDataRetentionDays: ""
+  issueArchiveDays: ""
+  pausedFlowTimeoutDays: ""
+  logLevel: "info"
+  logPretty: false
+  apiRateLimiting:
+    authn:
+      enabled: false
+      max: 100
+      window: 60
+  projectRateLimiter:
+    enabled: false
+  piecesSource: ""
+  devPieces: false
+  piecesSyncMode: ""
+
+  # ============================================================================
+  # OPTIONAL: Advanced configuration (only set if needed)
+  # ============================================================================
+  
+  # Networking & API
+  clientRealIpHeader: ""              # Header to extract real client IP (e.g., X-Forwarded-For)
+  apiKey: ""                          # API key for platform authentication
+  internalUrl: ""                     # Internal URL for service communication
+  
+  # Performance & Limits
+  maxConcurrentJobsPerProject: ""     # Limit concurrent jobs per project
+  maxFileSizeMb: ""                   # Maximum file upload size in MB
+  sandboxMemoryLimit: ""              # Memory limit for sandbox execution
+  sandboxPropagatedEnvVars: ""        # Environment variables to pass to sandbox
+  
+  # Integrations
+  perplexityBaseUrl: ""               # Custom Perplexity AI base URL
+  featurebaseApiKey: ""               # Featurebase API key for feedback
+  appWebhookSecrets: ""               # Secrets for app webhooks
+  
+  # UI & Behavior
+  showChangelog: true                 # Show changelog to users
+  enableFlowOnPublish: true           # Auto-enable flows when published
+  
+  # System Paths
+  configPath: ""                      # Custom config file path
+  engineExecutablePath: "dist/packages/engine/main.js"  # Engine executable path
+
+  # OpenTelemetry Configuration (for observability)
+  otel:
+    enabled: false
+    exporterOtlpEndpoint: ""
+    exporterOtlpHeaders: ""
+
+# ============================================================================
+# Database Configuration
+# PostgreSQL is deployed by default using the Bitnami subchart
+# ============================================================================
+postgresql:
+  # Set to true to deploy PostgreSQL subchart (Bitnami)
+  # Set to false and provide host/url to use external PostgreSQL
+  enabled: true
+  # External PostgreSQL host (required if enabled=false and using external PostgreSQL)
+  host: ""
+  # PostgreSQL port
+  port: 5432
+  # Enable SSL for PostgreSQL connection
+  useSSL: false
+  # PostgreSQL connection URL (alternative to host/port/auth)
+  # If provided, host/port/auth will be ignored
+  url: ""
+  # SSL CA certificate for PostgreSQL (if useSSL is true)
+  sslCa: ""
+  auth:
+    database: "activepieces"
+    username: "postgres"
+    # Password for PostgreSQL
+    # - If using subchart (enabled=true), password is automatically generated if not provided
+    # - If using external PostgreSQL, provide password here or use externalSecret
+    password: ""
+    # External secret reference for password (alternative to password field)
+    # Use this when password is stored in a Kubernetes secret (e.g., External Secrets Operator)
+    # externalSecret:
+    #   name: "postgresql-credentials"
+    #   key: "password"
+  primary:
+    persistence:
+      enabled: true
+
+# ============================================================================
+# Queue Configuration
+# Redis is deployed by default using the Bitnami subchart
+# ============================================================================
+redis:
+  # Set to true to deploy Redis subchart (Bitnami)
+  # Set to false and provide host/url to use external Redis
+  enabled: true
+  # External Redis host (required if enabled=false and using external Redis)
+  host: ""
+  # Redis port
+  port: 6379
+  # Enable SSL for Redis connection
+  useSSL: false
+  # SSL CA certificate file path for Redis (if useSSL is true)
+  sslCaFile: ""
+  # Redis database number
+  db: 0
+  # Redis connection URL (alternative to host/port/auth)
+  # If provided, host/port/auth will be ignored
+  url: ""
+  # Redis type: "standalone" or "sentinel"
+  type: "standalone"
+  # Redis username (for Redis 6+ ACL)
+  user: ""
+  sentinel:
+    name: ""
+    hosts: ""
+    role: ""
+  failedJob:
+    retentionDays: 7
+    retentionMaxCount: 100
+  auth:
+    # Set to true if Redis requires authentication
+    # - If using subchart (enabled=true), password is automatically generated if not provided
+    # - If using external Redis, provide password or use externalSecret
+    enabled: true
+    # Password for Redis
+    password: ""
+    # External secret reference for password (alternative to password field)
+    # Use this when password is stored in a Kubernetes secret (e.g., External Secrets Operator)
+    # externalSecret:
+    #   name: "redis-credentials"
+    #   key: "password"
+  master:
+    persistence:
+      enabled: true
+
+# ============================================================================
+# OPTIONAL: Email Configuration
+# Enable SMTP to send email notifications
+# ============================================================================
+smtp:
+  enabled: false                      # Set to true and configure below to enable emails
+  host: ""
+  port: 587
+  username: ""
+  password: ""
+  senderEmail: ""
+  senderName: ""
+
+# ============================================================================
+# OPTIONAL: S3 Storage Configuration
+# Enable S3 for file storage (alternative to local storage)
+# ============================================================================
+s3:
+  enabled: false                      # Set to true and configure below to use S3
+  accessKeyId: ""
+  secretAccessKey: ""
+  bucket: ""
+  endpoint: ""                        # For S3-compatible services like MinIO
+  region: ""
+  useSignedUrls: false
+  useIrsa: false                      # Use IAM Roles for Service Accounts (EKS)
+
+# ============================================================================
+# OPTIONAL: Queue UI Configuration
+# Enable BullMQ Board for monitoring job queues
+# ============================================================================
+queueUi:
+  enabled: false                      # Set to true and configure credentials below
+  username: ""
+  password: ""

@@ -1,84 +1,31 @@
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { ShortcutProps } from '@/components/ui/shortcut';
-
-import { BuilderState } from '../../builder-hooks';
 
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
 export type CanvasShortcutsProps = Record<
-  'Paste' | 'Delete' | 'Copy' | 'Skip',
+  'Minimap' | 'Paste' | 'Delete' | 'Copy' | 'Skip' | 'ExitDrag',
   ShortcutProps
 >;
-export const CanvasShortcuts: CanvasShortcutsProps = {
-  Paste: {
-    withCtrl: true,
-    withShift: false,
-    shortcutKey: 'v',
-  },
-  Delete: {
-    withCtrl: false,
-    withShift: true,
-    shortcutKey: 'Delete',
-  },
-  Copy: {
-    withCtrl: true,
-    withShift: false,
-    shortcutKey: 'c',
-    shouldNotPreventDefault: true,
-  },
-  Skip: {
-    withCtrl: true,
-    withShift: false,
-    shortcutKey: 'e',
-  },
-};
+
 export enum ContextMenuType {
   CANVAS = 'CANVAS',
   STEP = 'STEP',
 }
-export type CanvasContextMenuProps = Pick<
-  BuilderState,
-  | 'applyOperation'
-  | 'selectedStep'
-  | 'flowVersion'
-  | 'exitStepSettings'
-  | 'readonly'
-  | 'selectedNodes'
-  | 'setPieceSelectorStep'
-> & {
+export type CanvasContextMenuProps = {
   children?: React.ReactNode;
   contextMenuType: ContextMenuType;
 };
 export const CanvasContextMenu = ({
-  selectedNodes,
-  applyOperation,
-  selectedStep,
-  flowVersion,
-  children,
-  exitStepSettings,
-  readonly,
-  setPieceSelectorStep,
   contextMenuType,
+  children,
 }: CanvasContextMenuProps) => {
   return (
-    <ContextMenu modal={false}>
+    <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent>
-        <CanvasContextMenuContent
-          selectedNodes={selectedNodes}
-          applyOperation={applyOperation}
-          selectedStep={selectedStep}
-          flowVersion={flowVersion}
-          exitStepSettings={exitStepSettings}
-          readonly={readonly}
-          setPieceSelectorStep={setPieceSelectorStep}
-          contextMenuType={contextMenuType}
-        ></CanvasContextMenuContent>
-      </ContextMenuContent>
+      <CanvasContextMenuContent
+        contextMenuType={contextMenuType}
+      ></CanvasContextMenuContent>
     </ContextMenu>
   );
 };

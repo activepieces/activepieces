@@ -1,59 +1,34 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
-import { McpTool, McpToolType } from './tools/mcp-tool'
+import { PopulatedFlow } from '../flows/flow'
 
 export type McpId = ApId
 
-export const Mcp = Type.Object({
-    ...BaseModelSchema,
-    name: Type.String(),
-    projectId: ApId,
-    token: ApId,
-    agentId: Type.Optional(ApId),
-})
+export const MCP_TRIGGER_PIECE_NAME = '@activepieces/piece-mcp'
 
-export type Mcp = Static<typeof Mcp>
-
-export const McpWithTools = Type.Composite([
-    Mcp,
-    Type.Object({
-        tools: Type.Array(McpTool),
-    }),
-])
-
-
-const MAX_TOOL_NAME_LENGTH = 47
-
-export const McpToolMetadata = Type.Object({
-    displayName: Type.String(),
-    logoUrl: Type.Optional(Type.String()),
-})
-
-export type McpToolMetadata = Static<typeof McpToolMetadata>
-
-
-export const mcpToolNaming = {
-    fixTool: (name: string, id: string, type: McpToolType) => {
-        const spaceToReserve = id.length + 1
-        const baseName = name.replace(/[\s/@-]+/g, '_')
-        switch (type) {
-            case McpToolType.FLOW:
-                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${id}`
-            case McpToolType.PIECE:{
-                return `${baseName.slice(0, MAX_TOOL_NAME_LENGTH - spaceToReserve)}_${id}` 
-            }
-        }
-    },
-    fixProperty: (schemaName: string) => {
-        return schemaName.replace(/[\s/@-]+/g, '_')
-    },
-    extractToolId: (toolName: string) => {
-        const splitted = toolName.split('_')
-        return splitted[splitted.length - 1]
-    },
+export enum McpServerStatus {
+    ENABLED = 'ENABLED',
+    DISABLED = 'DISABLED',
 }
 
+export const McpServer = Type.Object({
+    ...BaseModelSchema,
+    projectId: ApId,
+    status: Type.Enum(McpServerStatus),
+    token: ApId,
+})
+
+export const PopulatedMcpServer = Type.Composite([McpServer, Type.Object({
+    flows: Type.Array(PopulatedFlow),
+})])
+export type PopulatedMcpServer = Static<typeof PopulatedMcpServer>
+
+export type McpServer = Static<typeof McpServer>
 
 
-export type McpWithTools = Static<typeof McpWithTools>
+export const UpdateMcpServerRequest = Type.Object({
+    status: Type.Enum(McpServerStatus),
+})
+
+export type UpdateMcpServerRequest = Static<typeof UpdateMcpServerRequest>

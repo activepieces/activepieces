@@ -20,6 +20,7 @@ const CopyTextTooltip = ({
           <CopyButton
             withoutTooltip={true}
             variant="ghost"
+            className="hover:text-background"
             textToCopy={text || ''}
           ></CopyButton>
         </div>

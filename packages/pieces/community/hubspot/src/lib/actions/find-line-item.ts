@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { hubspotAuth } from '../../';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';
 
 export const findLineItemAction = createAction({
@@ -83,7 +83,7 @@ export const findLineItemAction = createAction({
         const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
 
         const response = client.crm.lineItems.searchApi.doSearch({
-            limit: 100,
+            limit: MAX_SEARCH_PAGE_SIZE,
             properties: [...defaultLineItemProperties, ...additionalPropertiesToRetrieve],
             filterGroups: [{ filters }],
         });

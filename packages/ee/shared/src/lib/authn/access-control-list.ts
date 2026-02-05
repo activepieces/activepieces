@@ -1,4 +1,4 @@
-import { Permission, DefaultProjectRole } from '@activepieces/shared'
+import { DefaultProjectRole, Permission } from '@activepieces/shared'
 
 export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
     [DefaultProjectRole.ADMIN]: [
@@ -15,8 +15,6 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_PROJECT_RELEASE,
         Permission.READ_RUN,
         Permission.WRITE_RUN,
-        Permission.READ_ISSUES,
-        Permission.WRITE_ISSUES,
         Permission.WRITE_ALERT,
         Permission.READ_ALERT,
         Permission.WRITE_PROJECT,
@@ -42,8 +40,6 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_PROJECT_RELEASE,
         Permission.READ_RUN,
         Permission.WRITE_RUN,
-        Permission.READ_ISSUES,
-        Permission.WRITE_ISSUES,
         Permission.READ_PROJECT,
         Permission.WRITE_FOLDER,
         Permission.READ_FOLDER,
@@ -54,30 +50,11 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_MCP,
         Permission.WRITE_MCP,
     ],
-    [DefaultProjectRole.OPERATOR]: [
-        Permission.READ_APP_CONNECTION,
-        Permission.WRITE_APP_CONNECTION,
-        Permission.READ_FLOW,
-        Permission.UPDATE_FLOW_STATUS,
-        Permission.READ_PROJECT_MEMBER,
-        Permission.READ_INVITATION,
-        Permission.READ_PROJECT_RELEASE,
-        Permission.READ_RUN,
-        Permission.WRITE_RUN,
-        Permission.READ_ISSUES,
-        Permission.READ_PROJECT,
-        Permission.READ_FOLDER,
-        Permission.READ_TODOS,
-        Permission.WRITE_TODOS,
-        Permission.READ_TABLE,
-        Permission.READ_MCP,
-    ],
     [DefaultProjectRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
         Permission.READ_FLOW,
         Permission.READ_PROJECT_MEMBER,
         Permission.READ_INVITATION,
-        Permission.READ_ISSUES,
         Permission.READ_PROJECT,
         Permission.READ_RUN,
         Permission.READ_FOLDER,

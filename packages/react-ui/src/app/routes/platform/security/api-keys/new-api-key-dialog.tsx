@@ -23,7 +23,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { ApiKeyResponseWithValue } from '@activepieces/ee-shared';
 
@@ -52,17 +51,11 @@ export const NewApiKeyDialog = ({
     resolver: typeboxResolver(FormSchema),
   });
 
-  const { toast } = useToast();
-
   const { mutate, isPending } = useMutation({
     mutationFn: () => apiKeyApi.create(form.getValues()),
     onSuccess: (apiKey) => {
       setApiKey(apiKey);
       onCreate();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
     },
   });
 
@@ -104,7 +97,7 @@ export const NewApiKeyDialog = ({
             </div>
             <DialogFooter>
               <Button
-                variant={'secondary'}
+                variant={'accent'}
                 onClick={() => {
                   setApiKey(undefined);
                   setOpen(false);

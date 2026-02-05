@@ -1,7 +1,10 @@
 {
   "name": "@activepieces/piece-qrcode",
-  "version": "0.0.1",
+  "version": "0.0.11",
   "devDependencies": {
     "@types/qrcode": "^1.5.5"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4"
   }
 }

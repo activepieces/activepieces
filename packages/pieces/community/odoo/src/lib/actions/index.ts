@@ -4,6 +4,7 @@ import getContacts from './get-contacts';
 import getRecords from './get-records';
 import createRecord from './create-record';
 import updateRecord from './update-record';
+import customOdooApiCall from './custom-api-call';
 
 export default [
     getContacts,
@@ -12,4 +13,5 @@ export default [
     getRecords,
     createRecord,
     updateRecord,
+    customOdooApiCall,
 ];

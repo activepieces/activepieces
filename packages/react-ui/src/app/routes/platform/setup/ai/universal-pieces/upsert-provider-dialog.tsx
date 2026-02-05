@@ -1,8 +1,9 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -14,145 +15,271 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormMessage,
+  FormLabel,
+  FormControl,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { SupportedAIProvider } from '@activepieces/shared';
+import {
+  AIProviderConfig,
+  AIProviderName,
+  AnthropicProviderAuthConfig,
+  AnthropicProviderConfig,
+  AzureProviderAuthConfig,
+  AzureProviderConfig,
+  CloudflareGatewayProviderAuthConfig,
+  CloudflareGatewayProviderConfig,
+  CreateAIProviderRequest,
+  GoogleProviderAuthConfig,
+  GoogleProviderConfig,
+  OpenAICompatibleProviderAuthConfig,
+  OpenAICompatibleProviderConfig,
+  OpenAIProviderAuthConfig,
+  OpenAIProviderConfig,
+  SUPPORTED_AI_PROVIDERS,
+  UpdateAIProviderRequest,
+} from '@activepieces/shared';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
-const UpsertAIProviderInput = Type.Object({
-  provider: Type.String(),
-  apiKey: Type.String(),
-});
-
-export type UpsertAIProviderInput = Static<typeof UpsertAIProviderInput>;
+import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 
 type UpsertAIProviderDialogProps = {
-  provider: string;
-  providerMetadata: SupportedAIProvider;
+  provider: AIProviderName;
+  providerId?: string;
+  config?: AIProviderConfig;
   children: React.ReactNode;
   onSave: () => void;
-  isConfigured?: boolean;
+  defaultDisplayName?: string;
 };
 
 export const UpsertAIProviderDialog = ({
   children,
   onSave,
+  config,
   provider,
-  providerMetadata,
-  isConfigured = false,
+  providerId,
+  defaultDisplayName = '',
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<UpsertAIProviderInput>({
-    resolver: typeboxResolver(UpsertAIProviderInput),
+
+  const currentProviderDef = useMemo(
+    () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)!,
+    [provider],
+  );
+
+  const form = useForm<CreateAIProviderRequest>({
+    resolver: typeboxResolver(createFormSchema(provider, !!providerId)),
     defaultValues: {
       provider,
-      apiKey: '',
-    },
+      displayName: defaultDisplayName,
+      config: config,
+    } as CreateAIProviderRequest,
   });
 
-  const { refetch } = flagsHooks.useFlags();
-
-  const { toast } = useToast();
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      if (providerId && config) {
+        // Edit mode
+        form.reset({
+          provider,
+          displayName: defaultDisplayName,
+          config: config,
+          auth: { apiKey: '' },
+        } as CreateAIProviderRequest);
+      } else {
+        // Create mode
+        form.reset({
+          provider,
+          displayName: currentProviderDef.name,
+          config: {},
+          auth: { apiKey: '' },
+        } as CreateAIProviderRequest);
+      }
+    }
+  }, [
+    open,
+    config,
+    defaultDisplayName,
+    form,
+    provider,
+    providerId,
+    currentProviderDef,
+  ]);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (): Promise<void> => {
-      return aiProviderApi.upsert(form.getValues());
+    mutationFn: (data: CreateAIProviderRequest): Promise<void> => {
+      if (providerId) {
+        const updateData: UpdateAIProviderRequest = {
+          displayName: data.displayName,
+          config: data.config,
+          ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
+        };
+        return aiProviderApi.update(providerId, updateData);
+      } else {
+        return aiProviderApi.upsert(data);
+      }
     },
     onSuccess: () => {
-      form.reset({ provider, apiKey: '' });
       setOpen(false);
-      refetch();
       onSave();
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
+    onError: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => {
+      const data = error.response?.data;
+
+      form.setError('root.serverError', {
+        type: 'manual',
+        message:
+          data?.message ?? data?.params?.message ?? JSON.stringify(error),
+      });
     },
   });
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset({ provider, apiKey: '' });
-        }
-        setOpen(open);
+      onOpenChange={(val) => {
+        setOpen(val);
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isConfigured ? t('Update AI Provider') : t('Enable AI Provider')} (
-            {providerMetadata.displayName})
+            {providerId ? t('Update AI Provider') : t('Add AI Provider')}
           </DialogTitle>
         </DialogHeader>
-
-        {providerMetadata.markdown && (
-          <div className="mb-4">
-            <ApMarkdown markdown={providerMetadata.markdown}></ApMarkdown>
-          </div>
-        )}
 
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
-              name="apiKey"
+              control={form.control}
+              name="displayName"
               render={({ field }) => (
-                <FormItem className="grid space-y-3">
-                  <Label htmlFor="apiKey">{t('API Key')}</Label>
-                  <div className="flex gap-2 items-center justify-center">
+                <FormItem
+                  className="space-y-3"
+                  hidden={currentProviderDef.provider !== AIProviderName.CUSTOM}
+                >
+                  <FormLabel>{t('Display Name')}</FormLabel>
+                  <FormControl>
                     <Input
-                      autoFocus
                       {...field}
-                      required
-                      id="apiKey"
-                      placeholder={t('sk_************************')}
-                      className="rounded-sm"
+                      placeholder={'My Provider'}
+                      disabled={isPending}
                     />
-                  </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {form?.formState?.errors?.root?.serverError && (
+            {currentProviderDef.markdown && (
+              <div className="mb-4 text-sm text-muted-foreground">
+                <ApMarkdown markdown={currentProviderDef.markdown}></ApMarkdown>
+              </div>
+            )}
+
+            <UpsertProviderConfigForm
+              form={form}
+              provider={provider}
+              apiKeyRequired={!config}
+              isLoading={isPending}
+              isEditMode={!!providerId}
+            />
+
+            {form.formState.errors.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
+
+            <DialogFooter>
+              <Button
+                variant={'outline'}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setOpen(false);
+                }}
+                disabled={isPending}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                disabled={!form.formState.isValid || isPending}
+                loading={isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  mutate(form.getValues());
+                }}
+              >
+                {t('Save')}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-        <DialogFooter>
-          <Button
-            variant={'outline'}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setOpen(false);
-            }}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            disabled={!form.formState.isValid}
-            loading={isPending}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              mutate();
-            }}
-          >
-            {t('Save')}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
+};
+
+const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
+  if (provider === AIProviderName.AZURE) {
+    return Type.Object({
+      provider: Type.Literal(AIProviderName.AZURE),
+      config: AzureProviderConfig,
+      auth: editMode
+        ? Type.Optional(AzureProviderAuthConfig)
+        : AzureProviderAuthConfig,
+    });
+  }
+  if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+    return Type.Object({
+      provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
+      config: CloudflareGatewayProviderConfig,
+      auth: editMode
+        ? Type.Optional(CloudflareGatewayProviderAuthConfig)
+        : CloudflareGatewayProviderAuthConfig,
+    });
+  }
+  if (provider === AIProviderName.CUSTOM) {
+    return Type.Object({
+      provider: Type.Literal(AIProviderName.CUSTOM),
+      config: OpenAICompatibleProviderConfig,
+      auth: editMode
+        ? Type.Optional(OpenAICompatibleProviderAuthConfig)
+        : OpenAICompatibleProviderAuthConfig,
+    });
+  }
+  return Type.Object({
+    provider: Type.Literal(provider),
+    auth: editMode
+      ? Type.Optional(
+          Type.Union([
+            AnthropicProviderAuthConfig,
+            GoogleProviderAuthConfig,
+            OpenAIProviderAuthConfig,
+          ]),
+        )
+      : Type.Union([
+          AnthropicProviderAuthConfig,
+          GoogleProviderAuthConfig,
+          OpenAIProviderAuthConfig,
+        ]),
+    config: Type.Union([
+      AnthropicProviderConfig,
+      GoogleProviderConfig,
+      OpenAIProviderConfig,
+    ]),
+  });
 };

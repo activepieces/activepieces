@@ -1,0 +1,203 @@
+---
+title: "Breaking Changes"
+description: "This list shows all versions that include breaking changes and how to upgrade."
+icon: "hammer"
+---
+
+## 0.78.1
+
+### What has changed?
+- The Platform `Operator` role can now edit all projects.
+
+### Do you need to take action?
+- Only if you want to restrict Operators from having editor access to every project. Review your Operator permissions as needed.
+
+## 0.78.0
+### What has changed?
+
+- Templates no longer include a `usageCount` field in API responses or the database.
+
+## 0.77.0
+### What has changed?
+
+- For Embed Plan users: the "Use a Template" dialog no longer appears when clicking the "New Flow" button.
+- The `/flow-templates` API endpoints have been removed and replaced by `/templates`.
+- Log size configuration has changed: `AP_MAX_FILE_SIZE_MB` no longer controls flow run logs. Use `AP_MAX_FLOW_RUN_LOG_SIZE_MB` instead.
+
+### Do you need to take action?
+
+- If you are on the embed plan, update your implementation to redirect users to the `/templates` page.
+- Review the new endpoints documentation: [Templates API Schema](https://www.activepieces.com/docs/endpoints/templates/schema).
+- If you use a custom value for `AP_MAX_FILE_SIZE_MB`, be sure to also set `AP_MAX_FLOW_RUN_LOG_SIZE_MB` accordingly.
+
+## 0.75.0
+
+### What has changed?
+- In **development mode**, loading piece translations are now off by default. Set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` to enable.
+
+### Do you need to take action?
+- If you want to load translations for pieces in development mode, set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` in your environment variables.
+
+## 0.74.0
+
+### What has changed?
+- The default embedded database for development and lightweight deployments has changed from **SQLite3** to [**PGLite**](https://pglite.dev/) (embedded PostgreSQL).
+- The environment variable `AP_DB_TYPE=SQLITE3` is now deprecated and replaced with `AP_DB_TYPE=PGLITE`.
+- Existing SQLite databases will be automatically migrated to PGLite on first startup.
+- Templates are broken in this version. A migration issue changed template IDs, breaking API endpoints. This will be fixed in the next patch release.
+- The `aiCredits` feature per project has been removed. In the next version, it will be replaced by integration with the AI Gateway.
+
+### Do you need to take action?
+- **If you are using `AP_DB_TYPE=SQLITE3`:** Update your configuration to use `AP_DB_TYPE=PGLITE` instead.
+- **If you are using templates:** Wait for the next patch release to fix the template IDs.
+
+
+## 0.73.0
+
+### What has changed?
+- Major change to MCP: [Read the announcement.](https://community.activepieces.com/t/mcp-update-easier-faster-and-more-secure/11177)
+- If you have SMTP configured in the platform admin, it's no longer supported—you need to use AP_SMTP_ [environment variables.](https://www.activepieces.com/docs/install/configuration/environment-variables#environment-variables)
+
+### Do you need to take action?
+- If you are currently using MCP, review the linked announcement for important migration details and upgrade guidance.
+
+
+## 0.71.0
+
+### What has changed?
+
+- In separate workers setup, now they have access to Redis.
+- `AP_EXECUTION_MODE` mode `SANDBOXED` is now deprecated and replaced with `SANDBOX_PROCESS`
+- Code Copilot has been deprecated. It will be reintroduced in a different, more powerful form in the future.
+
+### When is action necessary?
+
+- If you have separate workers setup, you should make sure that workers have access to Redis.
+- If you are using `AP_EXECUTION_MODE` mode `SANDBOXED`, you should replace it with `SANDBOX_PROCESS`
+
+## 0.70.0
+
+### What has changed?
+- `AP_QUEUE_MODE` is now deprecated and replaced with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
+### When is action necessary?
+
+- If you are using `AP_QUEUE_MODE`, you should replace it with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
+## 0.69.0
+
+### What has changed?
+- `AP_FLOW_WORKER_CONCURRENCY` and `AP_SCHEDULED_WORKER_CONCURRENCY` are now deprecated all jobs have single queue and replaced with `AP_WORKER_CONCURRENCY`
+
+### When is action necessary?
+
+- If you are using `AP_FLOW_WORKER_CONCURRENCY` or `AP_SCHEDULED_WORKER_CONCURRENCY`, you should replace them with `AP_WORKER_CONCURRENCY`
+
+## 0.66.0
+
+### What has changed?
+
+- If you use embedding the embedding SDK, please upgrade to version 0.6.0, `embedding.dashboard.hideSidebar` used to hide the navbar above the flows table in the dashboard now it relies on `embedding.dashboard.hideFlowsPageNavbar`
+
+
+## 0.64.0
+
+### What has changed?
+
+- MCP management is removed from the embedding SDK.
+
+
+## 0.63.0
+
+### What has changed?
+
+- Replicate provider's text models have been removed.
+
+### When is action necessary?
+
+- If you are using one of Replicate's text models, you should replace it with another model from another provider.
+
+## 0.46.0
+
+### What has changed?
+
+- The UI for "Array of Properties" inputs in the pieces has been updated, particularly affecting the "Dynamic Value" toggle functionality.
+
+### When is action necessary?
+
+- No action is required for this change.
+- Your published flows will continue to work without interruption.
+- When editing existing flows that use the "Dynamic Value" toggle on "Array of Properties" inputs (such as the "files" parameter in the "Extract Structured Data" action of the "Utility AI" piece), the end user will need to remap the values again.
+- For details on the new UI implementation, refer to this [announcement](https://community.activepieces.com/t/inline-items/8964).
+
+## 0.38.6
+
+### What has changed?
+
+- Workers no longer rely on the `AP_FLOW_WORKER_CONCURRENCY` and `AP_SCHEDULED_WORKER_CONCURRENCY` environment variables. These values are now retrieved from the app server.
+
+### When is action necessary?
+
+- If `AP_CONTAINER_TYPE` is set to `WORKER` on the worker machine, and `AP_SCHEDULED_WORKER_CONCURRENCY` or `AP_FLOW_WORKER_CONCURRENCY` are set to zero on the app server, workers will stop processing the queues. To fix this, check the [Separate Worker from App](https://www.activepieces.com/docs/install/configuration/separate-workers) documentation and set the `AP_CONTAINER_TYPE` to fetch the necessary values from the app server. If no container type is set on the worker machine, this is not a breaking change.
+
+## 0.35.1
+
+### What has changed?
+
+- The 'name' attribute has been renamed to 'externalId' in the `AppConnection` entity.
+- The 'displayName' attribute has been added to the `AppConnection` entity.
+
+### When is action necessary?
+- If you are using the connections API, you should update the `name` attribute to `externalId` and add the `displayName` attribute.
+
+## 0.35.0
+
+### What has changed?
+
+- All branches are now converted to routers, and downgrade is not supported.
+
+## 0.33.0
+
+### What has changed?
+
+- Files from actions or triggers are now stored in the database / S3 to support retries from certain steps, and the size of files from actions is now subject to the limit of `AP_MAX_FILE_SIZE_MB`.
+- Files in triggers were previously passed as base64 encoded strings; now they are passed as file paths in the database / S3. Paused flows that have triggers from version 0.29.0 or earlier will no longer work.
+
+### When is action necessary?
+- If you are dealing with large files in the actions, consider increasing the `AP_MAX_FILE_SIZE_MB` to a higher value, and make sure the storage system (database/S3) has enough capacity for the files.
+
+
+## 0.30.0
+
+### What has changed?
+
+- `AP_SANDBOX_RUN_TIME_SECONDS` is now deprecated and replaced with `AP_FLOW_TIMEOUT_SECONDS`
+- `AP_CODE_SANDBOX_TYPE` is now deprecated and replaced with new mode in `AP_EXECUTION_MODE`
+
+### When is action necessary?
+
+- If you are using `AP_CODE_SANDBOX_TYPE` to `V8_ISOLATE`, you should switch to `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY`
+- If you are using `AP_SANDBOX_RUN_TIME_SECONDS` to set the sandbox run time limit, you should switch to `AP_FLOW_TIMEOUT_SECONDS`
+
+## 0.28.0
+
+### What has changed?
+
+- **Project Members:**
+    - The `EXTERNAL_CUSTOMER` role has been deprecated and replaced with the `OPERATOR` role. Please check the permissions page for more details.
+    - All pending invitations will be removed.
+    - The User Invitation entity has been introduced to send invitations. You can still use the Project Member API to add roles for the user, but it requires the user to exist. If you want to send an email, use the User Invitation, and later a record in the project member will be created after the user accepts and registers an account.
+- **Authentication:**
+    - The `SIGN_UP_ENABLED` environment variable, which allowed multiple users to sign up for different platforms/projects, has been removed. It has been replaced with inviting users to the same platform/project. All old users should continue to work normally.
+
+### When is action necessary?
+
+- **Project Members:**
+
+If you use the embedding SDK or the create project member API with the `EXTERNAL_CUSTOMER` role, you should start using the `OPERATOR` role instead.
+
+- **Authentication:**
+
+Multiple platforms/projects are no longer supported in the community edition. Technically, everything is still there, but you have to hack using the API as the authentication system has now changed. If you have already created the users/platforms, they should continue to work, and no action is required.

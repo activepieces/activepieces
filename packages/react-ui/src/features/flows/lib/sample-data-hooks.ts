@@ -1,28 +1,13 @@
 import { useQuery, QueryClient } from '@tanstack/react-query';
 
-import { flowStructureUtil, FlowVersion, FileType } from '@activepieces/shared';
+import {
+  flowStructureUtil,
+  FlowVersion,
+  SampleDataFileType,
+} from '@activepieces/shared';
 
 import { sampleDataApi } from './sample-data-api';
 
-const getSampleData = async (
-  flowVersion: FlowVersion,
-  stepName: string,
-  projectId: string,
-  fileType: FileType,
-) => {
-  try {
-    return await sampleDataApi.get({
-      flowId: flowVersion!.flowId,
-      flowVersionId: flowVersion!.id,
-      stepName: stepName,
-      projectId: projectId,
-      fileType: fileType,
-    });
-  } catch (error) {
-    console.error(error);
-    return undefined;
-  }
-};
 export const sampleDataHooks = {
   useSampleDataForFlow: (
     flowVersion: FlowVersion | undefined,
@@ -43,7 +28,7 @@ export const sampleDataHooks = {
                 flowVersion!,
                 step.name,
                 projectId!,
-                FileType.SAMPLE_DATA,
+                SampleDataFileType.OUTPUT,
               ),
             };
           }),
@@ -71,12 +56,12 @@ export const sampleDataHooks = {
         const singleStepSampleDataInput = await Promise.all(
           steps.map(async (step) => {
             return {
-              [step.name]: step.settings.inputUiInfo?.sampleDataInputFileId
+              [step.name]: step.settings.sampleData?.sampleDataInputFileId
                 ? await getSampleData(
                     flowVersion!,
                     step.name,
                     projectId!,
-                    FileType.SAMPLE_DATA_INPUT,
+                    SampleDataFileType.INPUT,
                   )
                 : undefined,
             };
@@ -97,3 +82,23 @@ export const sampleDataHooks = {
     });
   },
 };
+
+async function getSampleData(
+  flowVersion: FlowVersion,
+  stepName: string,
+  projectId: string,
+  type: SampleDataFileType,
+): Promise<unknown> {
+  return sampleDataApi
+    .get({
+      flowId: flowVersion.flowId,
+      flowVersionId: flowVersion.id,
+      stepName,
+      projectId,
+      type,
+    })
+    .catch((error) => {
+      console.error(error);
+      return undefined;
+    });
+}

@@ -1,37 +1,45 @@
-import { ProjectId } from '@activepieces/shared'
+import { Flow, FlowId, FlowStatus, ProjectId } from '@activepieces/shared'
+import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
-    HARD_DELETE_PROJECT = 'hard-delete-project',
-    PLATFORM_USAGE_REPORT = 'platform-usage-report',
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
-    TRIAL_TRACKER = 'trial-tracker',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
-    ISSUES_REMINDER = 'issue-reminder',
+    TRIAL_TRACKER = 'trial-tracker',
     RUN_TELEMETRY = 'run-telemetry',
-    ISSUE_AUTO_ARCHIVE = 'archive-old-issues',
+    DELETE_FLOW = 'delete-flow',
+    UPDATE_FLOW_STATUS = 'update-flow-status',
+    AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
 }
 
-type HardDeleteProjectSystemJobData = {
-    projectId: ProjectId
+type DeleteFlowDurableSystemJobData =  {
+    flow: Flow
+    preDeleteDone: boolean
+    dbDeleteDone: boolean
 }
-type IssuesReminderSystemJobData = {
+
+type UpdateFlowStatusDurableSystemJobData =  {
+    id: FlowId
     projectId: ProjectId
-    projectName: string
+    newStatus: FlowStatus
+    preUpdateDone: boolean
+}
+
+type AiCreditUpdateCheckSystemJobData = {
+    apiKeyHash: string
     platformId: string
 }
 
 type SystemJobDataMap = {
-    [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
-    [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
-    [SystemJobName.PLATFORM_USAGE_REPORT]: Record<string, never>
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
-    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
-    [SystemJobName.ISSUE_AUTO_ARCHIVE]: Record<string, never>
+    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
+    [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
+    [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
+    [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -59,10 +67,12 @@ export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
 type UpsertJobParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
+    customConfig?: JobsOptions
 }
 
 export type SystemJobSchedule = {
     init(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
+    getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
     close(): Promise<void>
 }

@@ -22,6 +22,7 @@ export const getRecord = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
+      retries: 5,
     });
 
     return tablesCommon.formatRecord(response.body as PopulatedRecord);

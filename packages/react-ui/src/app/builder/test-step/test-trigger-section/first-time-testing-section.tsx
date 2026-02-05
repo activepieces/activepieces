@@ -1,19 +1,21 @@
 import { t } from 'i18next';
+import { useContext } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { isNil } from '@activepieces/shared';
 
+import { DynamicPropertiesContext } from '../../piece-properties/dynamic-properties-context';
 import { TestButtonTooltip } from '../test-step-tooltip';
+
+import { TestType } from './trigger-event-utils';
 
 type FirstTimeTestingSectionProps = {
   isValid: boolean;
-  isSimulation: boolean;
-  isMcpTool: boolean;
-  isPollingTesting: boolean;
-  isMcpToolTestingDialogOpen: boolean;
+  testType: TestType;
+  isTesting: boolean;
   mockData: unknown;
-  isSavingMockdata: boolean;
+  isSaving: boolean;
   onSimulateTrigger: () => void;
   onPollTrigger: () => void;
   onMcpToolTesting: () => void;
@@ -22,42 +24,47 @@ type FirstTimeTestingSectionProps = {
 
 export const FirstTimeTestingSection = ({
   isValid,
-  isSimulation,
-  isMcpTool,
-  isPollingTesting,
-  isMcpToolTestingDialogOpen,
+  testType,
   mockData,
-  isSavingMockdata,
+  isSaving,
+  isTesting,
   onSimulateTrigger,
   onPollTrigger,
   onMcpToolTesting,
   onSaveMockAsSampleData,
 }: FirstTimeTestingSectionProps) => {
-  if (isSimulation) {
+  const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
+  if (
+    testType === 'simulation' ||
+    testType === 'webhook' ||
+    testType === 'chat-trigger'
+  ) {
     return (
       <div className="flex justify-center flex-col gap-2 items-center">
-        <TestButtonTooltip disabled={!isValid}>
+        <TestButtonTooltip invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
             onClick={onSimulateTrigger}
             keyboardShortcut="G"
             onKeyboardShortcut={onSimulateTrigger}
-            disabled={!isValid}
+            disabled={!isValid || isLoadingDynamicProperties}
+            loading={isSaving}
+            data-testid="test-trigger-button"
           >
             <Dot animation={true} variant={'primary'}></Dot>
             {t('Test Trigger')}
           </Button>
         </TestButtonTooltip>
 
-        {!isNil(mockData) && (
+        {!isNil(mockData) && JSON.stringify(mockData) !== '{}' && (
           <>
             {t('Or')}
             <Button
               variant="outline"
               size="sm"
               onClick={() => onSaveMockAsSampleData(mockData)}
-              loading={isSavingMockdata}
+              loading={isSaving}
             >
               {t('Use Mock Data')}
             </Button>
@@ -67,18 +74,18 @@ export const FirstTimeTestingSection = ({
     );
   }
 
-  if (isMcpTool) {
+  if (testType === 'mcp-tool') {
     return (
       <div className="flex justify-center">
-        <TestButtonTooltip disabled={!isValid}>
+        <TestButtonTooltip invalid={!isValid}>
           <Button
             variant="outline"
             size="sm"
             onClick={onMcpToolTesting}
             keyboardShortcut="G"
             onKeyboardShortcut={onMcpToolTesting}
-            loading={isPollingTesting || isMcpToolTestingDialogOpen}
-            disabled={!isValid}
+            loading={isTesting}
+            disabled={!isValid || isLoadingDynamicProperties}
           >
             <Dot animation={true} variant={'primary'}></Dot>
             {t('Test Tool')}
@@ -87,18 +94,17 @@ export const FirstTimeTestingSection = ({
       </div>
     );
   }
-
   return (
     <div className="flex justify-center">
-      <TestButtonTooltip disabled={!isValid}>
+      <TestButtonTooltip invalid={!isValid}>
         <Button
           variant="outline"
           size="sm"
           onClick={onPollTrigger}
           keyboardShortcut="G"
           onKeyboardShortcut={onPollTrigger}
-          loading={isPollingTesting || isMcpToolTestingDialogOpen}
-          disabled={!isValid}
+          loading={isTesting}
+          disabled={!isValid || isLoadingDynamicProperties}
         >
           <Dot animation={true} variant={'primary'}></Dot>
           {t('Load Sample Data')}

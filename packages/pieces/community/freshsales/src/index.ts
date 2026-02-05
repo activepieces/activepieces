@@ -51,7 +51,7 @@ export const freshsales = createPiece({
         }.myfreshworks.com/crm/sales/api`,
       auth: freshsalesAuth,
       authMapping: async (auth) => ({
-        Authorization: `Token token=${(auth as { password: string }).password}`,
+        Authorization: `Token token=${(auth.password)}`,
       }),
     }),
   ],

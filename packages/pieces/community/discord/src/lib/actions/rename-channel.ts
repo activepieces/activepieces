@@ -29,7 +29,7 @@ export const discordRenameChannel = createAction({
         name: configValue.propsValue.name,
       },
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     };

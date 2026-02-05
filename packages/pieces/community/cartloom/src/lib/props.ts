@@ -9,7 +9,7 @@ export async function buildProductsDropdown(auth: CartloomAuthType) {
       placeholder: 'Please authenticate first',
     };
   }
-  const response = await getProducts(auth as CartloomAuthType);
+  const response = await getProducts(auth);
   const options = response.data.map((product) => {
     return { label: product.name, value: product.pid };
   });

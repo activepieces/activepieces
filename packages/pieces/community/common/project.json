@@ -6,19 +6,40 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/common",
         "main": "packages/pieces/community/common/src/index.ts",
         "tsConfig": "packages/pieces/community/common/tsconfig.lib.json",
-        "assets": ["packages/pieces/community/common/*.md"],
+        "assets": [
+          "packages/pieces/community/common/*.md"
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
-      }
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/common",
+        "command": "bun install --no-save --silent"
+      }
     }
   },
   "tags": []

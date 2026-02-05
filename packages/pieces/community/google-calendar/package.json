@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-google-calendar",
-  "version": "0.5.6"
+  "version": "0.8.3",
+  "dependencies": {
+    "googleapis": "129.0.0"
+  }
 }

@@ -1,7 +1,6 @@
-import { CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { CodeAction, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
-import { ExecutionError, ExecutionErrorType } from './execution-errors'
+import {  FlowExecutorContext } from '../handler/context/flow-execution-context'
 
 export async function runWithExponentialBackoff<T extends CodeAction | PieceAction>(
     executionState: FlowExecutorContext,
@@ -16,7 +15,7 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
         executionFailedWithRetryableError(resultExecutionState) &&
         attemptCount < constants.retryConstants.maxAttempts &&
         retryEnabled &&
-        !constants.testSingleStepMode
+        isNil(constants.stepNameToTest)
     ) {
         const backoffTime = Math.pow(constants.retryConstants.retryExponential, attemptCount) * constants.retryConstants.retryInterval
         await new Promise(resolve => setTimeout(resolve, backoffTime))
@@ -34,31 +33,20 @@ export async function continueIfFailureHandler(
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
 
     if (
-        executionState.verdict === ExecutionVerdict.FAILED &&
+        executionState.verdict.status === FlowRunStatus.FAILED &&
         continueOnFailure &&
-        !constants.testSingleStepMode
+        isNil(constants.stepNameToTest)
     ) {
         return executionState
-            .setVerdict(ExecutionVerdict.RUNNING, undefined)
-            .increaseTask()
+            .setVerdict({ status: FlowRunStatus.RUNNING })
     }
 
     return executionState
 }
 
-export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
-    console.log(error)
-    const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
-    return {
-        message: error instanceof Error ? error.message : JSON.stringify(error),
-        verdictResponse: isEngineError ? {
-            reason: FlowRunStatus.INTERNAL_ERROR,
-        } : undefined,
-    }
-}
 
 const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorContext): boolean => {
-    return flowExecutorContext.verdict === ExecutionVerdict.FAILED
+    return flowExecutorContext.verdict.status === FlowRunStatus.FAILED
 }
 
 type Request<T extends CodeAction | PieceAction> = {
@@ -69,7 +57,3 @@ type Request<T extends CodeAction | PieceAction> = {
 
 type RequestFunction<T extends CodeAction | PieceAction> = (request: Request<T>) => Promise<FlowExecutorContext>
 
-type ErrorHandlingResponse = {
-    message: string
-    verdictResponse: VerdictResponse | undefined
-}

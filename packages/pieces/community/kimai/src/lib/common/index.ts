@@ -1,9 +1,10 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { kimaiAuth } from '../..';
 import { KimaiClient } from './client';
 
 export const kimaiCommon = {
   project: Property.Dropdown({
+    auth: kimaiAuth,
     description: 'Kimai project',
     displayName: 'Project',
     required: true,
@@ -18,7 +19,7 @@ export const kimaiCommon = {
       }
 
       const client = await makeClient(
-        auth as PiecePropValueSchema<typeof kimaiAuth>
+        auth
       );
       const projects = await client.getProjects();
       return {
@@ -33,6 +34,7 @@ export const kimaiCommon = {
     },
   }),
   activity: Property.Dropdown({
+    auth: kimaiAuth,
     description: 'Kimai activity',
     displayName: 'Activity',
     required: true,
@@ -55,7 +57,7 @@ export const kimaiCommon = {
       }
 
       const client = await makeClient(
-        auth as PiecePropValueSchema<typeof kimaiAuth>
+        auth
       );
       const activities = await client.getActivities(project as number);
       return {
@@ -78,8 +80,8 @@ export const kimaiCommon = {
 };
 
 export async function makeClient(
-  auth: PiecePropValueSchema<typeof kimaiAuth>
+  auth: AppConnectionValueForAuthProperty<typeof kimaiAuth>
 ): Promise<KimaiClient> {
-  const client = new KimaiClient(auth.base_url, auth.user, auth.api_password);
+  const client = new KimaiClient(auth.props.base_url, auth.props.user, auth.props.api_password);
   return client;
 }

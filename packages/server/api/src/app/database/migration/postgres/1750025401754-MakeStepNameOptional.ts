@@ -5,7 +5,7 @@ export class MakeStepNameOptional1750025401754 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_flowId_stepName"
+            DROP INDEX "idx_issue_flowId_stepName"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue"
@@ -18,7 +18,7 @@ export class MakeStepNameOptional1750025401754 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_issue_flowId_stepName"
+            DROP INDEX "idx_issue_flowId_stepName"
         `)
         await queryRunner.query(`
             ALTER TABLE "issue"

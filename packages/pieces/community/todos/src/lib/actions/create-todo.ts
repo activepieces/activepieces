@@ -1,9 +1,10 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { sendTodoApproval, createTodoProps, constructTodoUrl } from '../utils/utils';
 import { CreateTodoResult } from '@activepieces/shared';
 
 export const createTodo = createAction({
   name: 'createTodo',
+  auth: PieceAuth.None(),
   displayName: 'Create Todo',
   description:
     'Creates a todo for a user, requiring them to respond or take action.',

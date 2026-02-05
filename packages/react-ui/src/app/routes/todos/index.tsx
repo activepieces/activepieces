@@ -9,27 +9,28 @@ import {
   ListTodo,
   CheckCheck,
   Trash2,
+  Activity,
+  Clock,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/utils';
 import {
   Todo,
   PopulatedTodo,
@@ -140,7 +141,6 @@ function TodosPage() {
                 >
                   <Button
                     variant="destructive"
-                    size="sm"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -158,100 +158,30 @@ function TodosPage() {
 
   const columns: ColumnDef<RowDataWithActions<PopulatedTodo>, unknown>[] = [
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-
-              const newSelectedRows = [...allRows, ...selectedRows];
-
-              const uniqueRows = Array.from(
-                new Map(
-                  newSelectedRows.map((item) => [item.id, item]),
-                ).values(),
-              );
-
-              setSelectedRows(uniqueRows);
-            } else {
-              const filteredRows = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.id === row.id);
-              });
-              setSelectedRows(filteredRows);
-            }
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
-      accessorKey: 'select',
-    },
-    {
       accessorKey: 'title',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Title')} />
+        <DataTableColumnHeader column={column} title={t('Title')} icon={Tag} />
       ),
       cell: ({ row }) => {
-        return (
-          <div className="flex items-center gap-2">{row.original.title}</div>
-        );
+        return <TruncatedColumnTextValue value={row.original.title} />;
       },
     },
     {
       accessorKey: 'createdBy',
+      size: 180,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created by')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created by')}
+          icon={User}
+        />
       ),
       cell: ({ row }) => {
         const authorName = todoUtils.getAuthorName(row.original);
         return (
           <div className="text-left flex items-center gap-2">
-            <ApAvatar
-              size="small"
-              type={todoUtils.getAuthorType(row.original)}
-              fullName={authorName}
-              userEmail={row.original.createdByUser?.email ?? ''}
-              pictureUrl={todoUtils.getAuthorPictureUrl(row.original)}
-              profileUrl={todoUtils.getAuthorProfileUrl(row.original)}
-            />
+            <ApAvatar size="small" id={row.original.createdByUser?.id ?? ''} />
             <div>{authorName}</div>
           </div>
         );
@@ -259,43 +189,22 @@ function TodosPage() {
     },
     {
       accessorKey: 'assignee',
+      size: 180,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Assigned to')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Assigned to')}
+          icon={User}
+        />
       ),
       cell: ({ row }) => {
-        const hasAgent = row.original.agent;
-        if (hasAgent) {
-          return (
-            <div className="text-left">
-              <ApAvatar
-                type="agent"
-                size="small"
-                includeName={true}
-                pictureUrl={row.original.agent?.profilePictureUrl}
-                profileUrl={
-                  row.original.agent?.id
-                    ? `/agents/${row.original.agent.id}`
-                    : undefined
-                }
-                fullName={row.original.agent?.displayName ?? ''}
-              />
-            </div>
-          );
-        }
-
         return (
           <div className="text-left">
             {row.original.assignee && (
               <ApAvatar
-                type="user"
                 size="small"
                 includeName={true}
-                userEmail={row.original.assignee.email}
-                fullName={
-                  row.original.assignee.firstName +
-                  ' ' +
-                  row.original.assignee.lastName
-                }
+                id={row.original.assignee.id}
               />
             )}
             {!row.original.assignee && <div className="text-left">-</div>}
@@ -305,8 +214,13 @@ function TodosPage() {
     },
     {
       accessorKey: 'status',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Status')}
+          icon={Activity}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -324,13 +238,18 @@ function TodosPage() {
 
     {
       accessorKey: 'created',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Date Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Date Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },
@@ -339,16 +258,6 @@ function TodosPage() {
 
   return (
     <div className="flex-col w-full">
-      <div className="flex items-center gap-2">
-        <TableTitle
-          description={t(
-            'Manage todos for your project that are created by automations',
-          )}
-        >
-          {t('Todos')}
-        </TableTitle>
-      </div>
-
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'all' | 'needs-action')}
@@ -388,6 +297,8 @@ function TodosPage() {
           setSelectedTask(row);
           setDrawerOpen(true);
         }}
+        selectColumn={true}
+        onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
       />
       {selectedTask && (

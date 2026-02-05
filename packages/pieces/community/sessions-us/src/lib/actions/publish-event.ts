@@ -10,6 +10,7 @@ export const publishEvent = createAction({
   description: 'Quickly publish an event.',
   props: {
     event: Property.Dropdown({
+      auth: sessionAuth,
       displayName: 'Event',
       description: 'The event you want to publish.',
       required: true,
@@ -22,7 +23,7 @@ export const publishEvent = createAction({
           };
         }
 
-        const events = await getEvents(auth as string);
+        const events = await getEvents(auth.secret_text);
         return {
           options: events.map((event) => {
             return {
@@ -40,7 +41,7 @@ export const publishEvent = createAction({
       method: HttpMethod.POST,
       url: `${baseUrl}/events/${propsValue.event}/publish`,
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
     });
     return response.body;

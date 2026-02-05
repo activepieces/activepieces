@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
+import { DynamicPropsValue, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/shared";
 import { z } from 'zod';
 import qs from 'qs';
@@ -29,6 +29,7 @@ const getFieldTypeText = (fieldType: FieldType) => {
 }
 export const tablesCommon = {
   table_id: Property.Dropdown({
+    auth: PieceAuth.None(),
     displayName: 'Table Name',
     required: true,
     refreshers: [],
@@ -122,21 +123,21 @@ export const tablesCommon = {
 
         switch (field.type) {
           case FieldType.NUMBER:
-            fields[field.id] = Property.Number({
+            fields[field.externalId] = Property.Number({
               displayName: field.name,
               description,
               required: false,
             });
             break;
           case FieldType.DATE:
-            fields[field.id] = Property.DateTime({
+            fields[field.externalId] = Property.DateTime({
               displayName: field.name,
               description,
               required: false,
             });
             break;
           case FieldType.STATIC_DROPDOWN:
-            fields[field.id] = Property.StaticDropdown({
+            fields[field.externalId] = Property.StaticDropdown({
               displayName: field.name,
               description,
               defaultValue:'',
@@ -147,7 +148,7 @@ export const tablesCommon = {
             });
             break;
           default:
-            fields[field.id] = Property.ShortText({
+            fields[field.externalId] = Property.ShortText({
               displayName: field.name,
               description,
               required: false,
@@ -266,10 +267,12 @@ export const tablesCommon = {
     }
   },
 
-  async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string } }) {
+  async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string }, project: { id: string } }) {
     const list: ListTablesRequest = {
       externalIds: [tableId],
+      projectId: context.project.id,
     }
+
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${context.server.apiUrl}v1/tables?${qs.stringify(list)}`,
@@ -284,10 +287,10 @@ export const tablesCommon = {
   }
 }
 
-const fetchAllTables = async (context: { server: { apiUrl: string, token: string } }): Promise<Table[]> => {
+const fetchAllTables = async (context: { server: { apiUrl: string, token: string }, project: { id: string } }): Promise<Table[]> => {
   const res = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: `${context.server.apiUrl}v1/tables?limit=100`,
+    url: `${context.server.apiUrl}v1/tables?limit=100&projectId=${context.project.id}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: context.server.token,
@@ -302,7 +305,7 @@ const fetchAllTables = async (context: { server: { apiUrl: string, token: string
   while (next) {
     const nextPage = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100`,
+      url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100&projectId=${context.project.id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,

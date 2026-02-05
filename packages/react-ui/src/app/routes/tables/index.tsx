@@ -1,171 +1,81 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  CheckIcon,
+  Table2,
+  UploadCloud,
+  EllipsisVertical,
+  Tag,
+  Clock,
+  Import,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   BulkAction,
   DataTable,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
-import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { recordsApi } from '@/features/tables/lib/records-api';
+import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
+import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { api } from '@/lib/api';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
+import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
-  const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Table[]>([]);
-  const { data: maxTables } = flagsHooks.useFlag(
-    ApFlagId.MAX_TABLES_PER_PROJECT,
-  );
-  const { data: project } = projectHooks.useCurrentProject();
-  const [searchParams] = useSearchParams();
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const { project } = projectCollectionUtils.useCurrentProject();
+  const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
   const userHasPermissionToPushToGit = useAuthorization().checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['tables', searchParams.toString(), project.id],
-    queryFn: () =>
-      tablesApi.list({
-        cursor: searchParams.get('cursor') ?? undefined,
-        limit: searchParams.get('limit')
-          ? parseInt(searchParams.get('limit')!)
-          : undefined,
-        name: searchParams.get('name') ?? undefined,
-      }),
-  });
-  const { mutate: createTable, isPending: isCreatingTable } = useMutation({
-    mutationFn: async (data: { name: string }) => {
-      const table = await tablesApi.create({ name: data.name });
-      const field = await fieldsApi.create({
-        name: 'Name',
-        type: FieldType.TEXT,
-        tableId: table.id,
-      });
-      await recordsApi.create({
-        records: [
-          ...Array.from({ length: 1 }, (_) => [
-            {
-              fieldId: field.id,
-              value: '',
-            },
-          ]),
-        ],
-        tableId: table.id,
-      });
-      return table;
-    },
-    onSuccess: (table) => {
-      refetch();
-      navigate(
-        `/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
-      );
-    },
-    onError: (err: Error) => {
-      if (
-        api.isError(err) &&
-        err.response?.status === api.httpStatus.Conflict
-      ) {
-        toast({
-          title: t('Max tables reached'),
-          description: t(`You can't create more than {maxTables} tables`, {
-            maxTables,
-          }),
-          variant: 'destructive',
-        });
-      } else {
-        toast(INTERNAL_ERROR_TOAST);
-      }
-    },
-  });
-
+  const { data, isLoading, refetch } = tableHooks.useTables();
+  const { mutate: createTable, isPending: isCreatingTable } =
+    tableHooks.useCreateTable();
+  const navigate = useNavigate();
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
-    {
-      id: 'select',
-      accessorKey: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-              setSelectedRows(allRows);
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                newSelectedRows.push(row.original);
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
-    },
     {
       accessorKey: 'name',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
+        <FormattedDate
+          date={new Date(row.original.created)}
+          className="text-left"
+        />
       ),
     },
     {
@@ -185,11 +95,11 @@ const ApTablesPage = () => {
             }}
             className="flex items-center justify-end w-full"
           >
-            <ApTableActionsMenu
-              table={row.original}
-              refetch={refetch}
-              deleteMutation={bulkDeleteMutation}
-            />
+            <ApTableActionsMenu table={row.original} refetch={refetch}>
+              <Button variant="ghost" size="icon">
+                <EllipsisVertical />
+              </Button>
+            </ApTableActionsMenu>
           </div>
         );
       },
@@ -202,9 +112,6 @@ const ApTablesPage = () => {
     },
     onSuccess: () => {
       refetch();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
@@ -260,6 +167,35 @@ const ApTablesPage = () => {
           </div>
         ),
       },
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => setIsImportDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Import className="h-4 w-4" />
+              {t('Import')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
     ],
     [bulkDeleteMutation, selectedRows, userHasPermissionToPushToGit],
   );
@@ -268,57 +204,51 @@ const ApTablesPage = () => {
   }
 
   return (
-    <div className="flex-col w-full gap-4">
-      <div className="flex justify-between items-center">
-        <TableTitle
-          description={t(
-            'Create and manage your tables to store your automation data',
+    <LockedFeatureGuard
+      featureKey="TABLES"
+      locked={!platform.plan.tablesEnabled}
+      lockTitle={t('Tables')}
+      lockDescription={t(
+        'Create and manage your tables to store your automation data',
+      )}
+    >
+      <div className="flex-col w-full gap-4">
+        <DataTable
+          filters={[
+            {
+              accessorKey: 'name',
+              type: 'input',
+              title: t('Name'),
+              icon: CheckIcon,
+            },
+          ]}
+          emptyStateIcon={<Table2 className="size-14" />}
+          emptyStateTextTitle={t('No tables have been created yet')}
+          emptyStateTextDescription={t(
+            'Create a table to get started and start managing your automation data',
           )}
-        >
-          {t('Tables')}
-        </TableTitle>
-        <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-          <Button
-            size="sm"
-            onClick={() => createTable({ name: t('New Table') })}
-            className="flex items-center gap-2"
-            disabled={!userHasTableWritePermission}
-          >
-            <Plus className="h-4 w-4" />
-            {t('New Table')}
-          </Button>
-        </PermissionNeededTooltip>
+          columns={columns}
+          page={data}
+          isLoading={isLoading}
+          onRowClick={(row, newWindow) => {
+            const path = `/projects/${project.id}/tables/${row.id}`;
+            if (newWindow) {
+              openNewWindow(path);
+            } else {
+              navigate(path);
+            }
+          }}
+          selectColumn={true}
+          onSelectedRowsChange={setSelectedRows}
+          bulkActions={bulkActions}
+        />
       </div>
-
-      <DataTable
-        filters={[
-          {
-            accessorKey: 'name',
-            type: 'input',
-            title: t('Name'),
-            icon: CheckIcon,
-            options: [],
-          },
-        ]}
-        emptyStateIcon={<Table2 className="size-14" />}
-        emptyStateTextTitle={t('No tables have been created yet')}
-        emptyStateTextDescription={t(
-          'Create a table to get started and start managing your automation data',
-        )}
-        columns={columns}
-        page={data}
-        isLoading={isLoading}
-        onRowClick={(row, newWindow) => {
-          const path = `/projects/${project.id}/tables/${row.id}`;
-          if (newWindow) {
-            openNewWindow(path);
-          } else {
-            navigate(path);
-          }
-        }}
-        bulkActions={bulkActions}
+      <ImportTableDialog
+        open={isImportDialogOpen}
+        setIsOpen={setIsImportDialogOpen}
+        showTrigger={false}
       />
-    </div>
+    </LockedFeatureGuard>
   );
 };
 

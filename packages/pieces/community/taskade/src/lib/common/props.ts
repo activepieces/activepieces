@@ -1,5 +1,6 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { TaskadeAPIClient } from './client';
+import { taskadeAuth } from '../..';
 
 const createEmptyOptions = (placeholder: string) => {
 	return {
@@ -11,6 +12,7 @@ const createEmptyOptions = (placeholder: string) => {
 
 export const taskadeProps = {
 	workspace_id: Property.Dropdown({
+	auth: taskadeAuth,
 		displayName: 'Workspace',
 		refreshers: [],
 		required: true,
@@ -19,7 +21,7 @@ export const taskadeProps = {
 				return createEmptyOptions('Please connect account first.');
 			}
 
-			const client = new TaskadeAPIClient(auth as string);
+			const client = new TaskadeAPIClient(auth.secret_text);
 			const response = await client.listWorkspaces();
 
 			const options: DropdownOption<string>[] = [];
@@ -35,6 +37,7 @@ export const taskadeProps = {
 		},
 	}),
 	folder_id: Property.Dropdown({
+	auth: taskadeAuth,
 		displayName: 'Folder',
 		refreshers: ['workspace_id'],
 		required: false,
@@ -46,7 +49,7 @@ export const taskadeProps = {
 				return createEmptyOptions('Please select workspace.');
 			}
 
-			const client = new TaskadeAPIClient(auth as string);
+			const client = new TaskadeAPIClient(auth.secret_text);
 			const response = await client.listWorkspaceFolders(workspace_id as string);
 
 			const options: DropdownOption<string>[] = [];
@@ -62,6 +65,7 @@ export const taskadeProps = {
 		},
 	}),
 	project_id: Property.Dropdown({
+	auth: taskadeAuth,
 		displayName: 'Project',
 		refreshers: ['workspace_id', 'folder_id'],
 		required: true,
@@ -76,7 +80,7 @@ export const taskadeProps = {
 			const workspaceId = workspace_id as string;
 			const folderId = (folder_id as string) ?? workspaceId;
 
-			const client = new TaskadeAPIClient(auth as string);
+			const client = new TaskadeAPIClient(auth.secret_text);
 			const response = await client.listProjects(folderId as string);
 
 			const options: DropdownOption<string>[] = [];
@@ -92,6 +96,7 @@ export const taskadeProps = {
 		},
 	}),
 	task_id: Property.Dropdown({
+	auth: taskadeAuth,
 		displayName: 'Task',
 		refreshers: ['project_id'],
 		required: true,
@@ -103,7 +108,7 @@ export const taskadeProps = {
 				return createEmptyOptions('Please select project.');
 			}
 
-			const client = new TaskadeAPIClient(auth as string);
+			const client = new TaskadeAPIClient(auth.secret_text);
 			const options: DropdownOption<string>[] = [];
 
 			let after;

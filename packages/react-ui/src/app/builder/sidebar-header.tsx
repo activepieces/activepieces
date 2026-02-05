@@ -9,7 +9,7 @@ type SidebarHeaderProps = {
 };
 const SidebarHeader = ({ children, onClose }: SidebarHeaderProps) => {
   return (
-    <div className="flex p-4 w-full gap-2 text-lg font-semibold  items-center">
+    <div className="flex px-4 py-3 w-full gap-2 text-lg items-center">
       {children}
       <div className="grow"></div>
       <Button

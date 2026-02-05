@@ -1,15 +1,15 @@
-import { Edit2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CalculatedColumn } from 'react-data-grid';
+import { ErrorBoundary } from 'react-error-boundary';
 
-import { Button } from '@/components/ui/button';
-import { cn, formatUtils } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
 
 import { ClientField } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
 
 import { useTableState } from './ap-table-state-provider';
+import { CellProvider } from './cell-context';
 import { DateEditor } from './date-editor';
 import { DropdownEditor } from './dropdown-editor';
 import { NumberEditor } from './number-editor';
@@ -17,156 +17,123 @@ import { TextEditor } from './text-editor';
 
 type EditableCellProps = {
   field: ClientField;
-  value: string;
+  value?: string;
   row: Row;
+  onClick?: () => void;
   column: CalculatedColumn<Row, { id: string }>;
-  onRowChange: (row: Row, commitChanges: boolean) => void;
   rowIdx: number;
   disabled?: boolean;
+  locked?: boolean;
 };
 
-const EditorSelector = ({
-  field,
-  row,
-  rowIdx,
-  column,
-  value,
-  onRowChange,
-  setValue,
-  setIsEditing,
-  setIsHovered,
-}: {
-  field: ClientField;
-  row: Row;
-  rowIdx: number;
-  column: CalculatedColumn<Row, { id: string }>;
-  value: string;
-  onRowChange: (row: Row, commitChanges: boolean) => void;
-  setValue: (value: string) => void;
-  setIsEditing: (isEditing: boolean) => void;
-  setIsHovered: (isHovered: boolean) => void;
-}) => {
-  const handleRowChange = (newRow: Row, commitChanges?: boolean) => {
-    if (commitChanges) {
-      setValue(newRow[column.key]);
-      onRowChange(newRow, commitChanges);
-      setIsEditing(false);
-    }
-  };
-  const onClose = () => {
-    setIsEditing(false);
-    setIsHovered(false);
-  };
-  const selectedCell = useTableState((state) => state.selectedCell);
-  if (
-    selectedCell?.rowIdx !== rowIdx ||
-    selectedCell?.columnIdx !== column.idx
-  ) {
-    onClose();
-    return null;
-  }
-  switch (field.type) {
+const EditorSelector = ({ fieldType }: { fieldType: FieldType }) => {
+  switch (fieldType) {
     case FieldType.DATE:
-      return (
-        <DateEditor
-          row={row}
-          rowIdx={rowIdx}
-          column={column}
-          value={value}
-          onRowChange={handleRowChange}
-          onClose={onClose}
-        />
-      );
+      return <DateEditor />;
     case FieldType.NUMBER:
-      return (
-        <NumberEditor
-          row={row}
-          rowIdx={rowIdx}
-          column={column}
-          value={value}
-          onRowChange={handleRowChange}
-          onClose={onClose}
-        ></NumberEditor>
-      );
+      return <NumberEditor />;
     case FieldType.STATIC_DROPDOWN:
-      return (
-        <DropdownEditor
-          row={row}
-          rowIdx={rowIdx}
-          column={column}
-          value={value}
-          onRowChange={handleRowChange}
-          onClose={onClose}
-          field={field}
-        ></DropdownEditor>
-      );
+      return <DropdownEditor></DropdownEditor>;
     default:
-      return (
-        <TextEditor
-          row={row}
-          rowIdx={rowIdx}
-          column={column}
-          value={value}
-          onRowChange={handleRowChange}
-          onClose={onClose}
-        />
-      );
+      return <TextEditor />;
   }
 };
+
+const useSetInitialFocus = (isSelected: boolean) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (isSelected) {
+        containerRef.current?.focus();
+      }
+    });
+  }, []);
+  return containerRef;
+};
+
 export function EditableCell({
   field,
-  value: initialValue,
-  row,
   column,
-  onRowChange,
   rowIdx,
+  onClick,
+  locked = false,
+  value,
   disabled = false,
 }: EditableCellProps) {
+  const [selectedCell, setSelectedCell, records, fields] = useTableState(
+    (state) => [
+      state.selectedCell,
+      state.setSelectedCell,
+      state.records,
+      state.fields,
+    ],
+  );
   const [isEditing, setIsEditing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [selectedCell, setSelectedCell] = useTableState((state) => [
-    state.selectedCell,
-    state.setSelectedCell,
-  ]);
-  const [value, setValue] = useState(initialValue);
   const isSelected =
     selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
-  if (isEditing) {
-    return (
-      <EditorSelector
-        field={field}
-        row={row}
-        rowIdx={rowIdx}
-        column={column}
-        value={value}
-        onRowChange={onRowChange}
-        setValue={setValue}
-        setIsEditing={setIsEditing}
-        setIsHovered={setIsHovered}
-      />
-    );
-  }
-  const displayedValue = value?.trim()?.replace(/\n/g, ' ');
+  const containerRef = useSetInitialFocus(isSelected);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const isTypingKey = e.key.length === 1 || e.key === 'Enter';
+    if (isTypingKey && !disabled && !isEditing) {
+      setIsEditing(true);
+      setSelectedCell({ rowIdx, columnIdx: column.idx });
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      return;
+    }
+    // react data grid cells are all focusable and they have no api to prevent focus
+    // so we need to prevent the default behavior of the arrow keys
+    switch (e.key) {
+      case 'ArrowUp': {
+        if (rowIdx === 0) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        break;
+      }
+      case 'ArrowDown': {
+        if (rowIdx === records.length - 1) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        break;
+      }
+      case 'ArrowLeft':
+        if (column.idx === 1) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        break;
+      case 'ArrowRight': {
+        if (column.idx === fields.length) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    }
+  };
+  const isDropdown = field.type === FieldType.STATIC_DROPDOWN;
   return (
     <div
+      ref={containerRef}
       id={`editable-cell-${rowIdx}-${column.idx}`}
-      className={cn(
-        'h-full flex items-center justify-between gap-2 pl-2 py-2  focus:outline-none  ',
-        'group cursor-pointer border',
-        isSelected ? 'border-primary' : 'border-transparent',
-      )}
-      onMouseEnter={() => {
-        if (!disabled) {
-          setIsHovered(true);
-        }
-      }}
+      className={
+        isEditing
+          ? 'h-full w-full'
+          : cn(
+              'h-full flex items-center justify-between gap-2  focus:outline-hidden  ',
+              'group cursor-pointer border',
+              isSelected && !locked ? 'border-primary' : 'border-transparent',
+              locked && 'locked-row',
+              !isDropdown && 'pl-2 py-2',
+            )
+      }
       tabIndex={0}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
+        onClick?.();
         setSelectedCell({ rowIdx, columnIdx: column.idx });
-        if (!disabled && field.type === FieldType.STATIC_DROPDOWN) {
-          setIsEditing(true);
-        }
       }}
       onFocus={() => {
         setSelectedCell({ rowIdx, columnIdx: column.idx });
@@ -176,32 +143,23 @@ export function EditableCell({
           setIsEditing(true);
         }
       }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !disabled) {
-          setIsEditing(true);
-        }
-      }}
+      onKeyDown={handleKeyDown}
     >
-      <span className="flex-1 truncate">
-        {field.type === FieldType.DATE && displayedValue
-          ? formatUtils.formatDateOnly(new Date(displayedValue))
-          : displayedValue}
-      </span>
-      {isHovered && (
-        <Button
-          variant="transparent"
-          size="sm"
-          className="text-gray-500"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(true);
-          }}
+      <ErrorBoundary fallback={<div>Error</div>}>
+        <CellProvider
+          rowIdx={rowIdx}
+          columnIdx={column.idx - 1}
+          fieldType={field.type}
+          value={value ?? ''}
+          handleCellChange={() => {}}
+          containerRef={containerRef}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          disabled={disabled}
         >
-          <div className="hover:bg-primary/10 p-1">
-            <Edit2 className="h-4 w-4 text-muted-foreground" />
-          </div>
-        </Button>
-      )}
+          <EditorSelector fieldType={field.type} />
+        </CellProvider>
+      </ErrorBoundary>
     </div>
   );
 }

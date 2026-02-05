@@ -1,42 +1,70 @@
 import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema, Nullable } from '../common/base-model'
+import { FlowStatus } from '../flows/flow'
+import { UserWithMetaInformation } from '../user'
 
+export enum AnalyticsTimePeriod {
+    LAST_WEEK = 'last-week',
+    LAST_MONTH = 'last-month',
+    ALL_TIME = 'all-time',
+}
 
-export const AnalyticsPieceReportItem = Type.Object({
-    name: Type.String(),        
-    displayName: Type.String(),
-    logoUrl: Type.String(),
-    usageCount: Type.Number(),
+export const AnalyticsRunsUsageItem = Type.Object({
+    day: Type.String(),
+    flowId: Type.String(),
+    runs: Type.Number(),
 })
-export type AnalyticsPieceReportItem = Static<typeof AnalyticsPieceReportItem>
+export type AnalyticsRunsUsageItem = Static<typeof AnalyticsRunsUsageItem>
 
-export const AnalyticsPieceReport = Type.Array(AnalyticsPieceReportItem)
-export type AnalyticsPieceReport = Static<typeof AnalyticsPieceReport>
+export const AnalyticsRunsUsage = Type.Array(AnalyticsRunsUsageItem)
+export type AnalyticsRunsUsage = Static<typeof AnalyticsRunsUsage>
 
-export const AnalyticsProjectReportItem = Type.Object({
-    id: Type.String(),
-    displayName: Type.String(),
-    activeFlows: Type.Number(),
-    totalFlows: Type.Number(),
+export const AnalyticsFlowReportItem = Type.Object({
+    flowId: Type.String(),
+    flowName: Type.String(),
+    projectId: Type.String(),
+    projectName: Type.String(),
+    status: Type.Enum(FlowStatus),
+    timeSavedPerRun: Nullable(Type.Number()),
+    ownerId: Nullable(Type.String()),
 })
-export type AnalyticsProjectReportItem = Static<typeof AnalyticsProjectReportItem>
+export type AnalyticsFlowReportItem = Static<typeof AnalyticsFlowReportItem>
 
-export const AnalyticsProjectReport = Type.Array(AnalyticsProjectReportItem)
-export type AnalyticsProjectReport = Static<typeof AnalyticsProjectReport>
+export const AnalyticsFlowReport = Type.Array(AnalyticsFlowReportItem)
+export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
 
-export const AnalyticsReportResponse = Type.Object({
-    totalFlows: Type.Number(),
-    activeFlows: Type.Number(),
-    totalUsers: Type.Number(),
-    activeUsers: Type.Number(),
-    totalProjects: Type.Number(),
-    activeProjects: Type.Number(),
-    uniquePiecesUsed: Type.Number(),
-    activeFlowsWithAI: Type.Number(),
-    topPieces: AnalyticsPieceReport,
-    tasksUsage: Type.Array(Type.Object({
-        day: Type.String(),
-        totalTasks: Type.Number(),
-    })),
-    topProjects: AnalyticsProjectReport,
+export const PlatformAnalyticsReport = Type.Object({
+    ...BaseModelSchema,
+    cachedAt: Type.String(),
+    runs: AnalyticsRunsUsage,
+    outdated: Type.Boolean(),
+    flows: AnalyticsFlowReport,
+    platformId: Type.String(),
+    users: Type.Array(UserWithMetaInformation),
 })
-export type AnalyticsReportResponse = Static<typeof AnalyticsReportResponse>
+export type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>
+
+export const ProjectLeaderboardItem = Type.Object({
+    projectId: Type.String(),
+    projectName: Type.String(),
+    flowCount: Type.Number(),
+    minutesSaved: Nullable(Type.Number()),
+})
+export type ProjectLeaderboardItem = Static<typeof ProjectLeaderboardItem>
+
+export const UserLeaderboardItem = Type.Object({
+    userId: Type.String(),
+    flowCount: Type.Number(),
+    minutesSaved: Nullable(Type.Number()),
+})
+export type UserLeaderboardItem = Static<typeof UserLeaderboardItem>
+
+export const AnalyticsReportRequest = Type.Object({
+    timePeriod: Type.Optional(Type.Enum(AnalyticsTimePeriod)),
+})
+export type AnalyticsReportRequest = Static<typeof AnalyticsReportRequest>
+
+export const LeaderboardRequest = Type.Object({
+    timePeriod: Type.Enum(AnalyticsTimePeriod),
+})
+export type LeaderboardRequest = Static<typeof LeaderboardRequest>

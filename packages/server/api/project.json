@@ -3,28 +3,40 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/server/api/src",
   "projectType": "application",
+  "tags": [],
   "implicitDependencies": ["engine"],
   "targets": {
     "build": {
-      "executor": "@nx/webpack:webpack",
+      "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
-        "target": "node",
-        "compiler": "tsc",
-        "outputPath": "dist/packages/server/api",
+        "external": ["@electric-sql/pglite"],
         "main": "packages/server/api/src/main.ts",
+        "outputPath": "dist/packages/server/api",
+        "outputFileName": "main.js",
         "tsConfig": "packages/server/api/tsconfig.app.json",
-        "assets": ["packages/server/api/src/assets"],
-        "webpackConfig": "packages/server/api/webpack.config.js",
+        "platform": "node",
+        "format": ["cjs"],
+        "bundle": true,
+        "sourcemap": true,
         "generatePackageJson": true,
-        "babelUpwardRootMode": true,
-        "sourceMap": true
+        "assets": [
+          {
+            "glob": "packages/server/api/README.md",
+            "input": ".",
+            "output": "."
+          },
+          "packages/server/api/src/assets"
+        ],
+        "clean": false
       },
       "configurations": {
+        "development": {
+          "minify": false
+        },
         "production": {
-          "optimization": true,
-          "extractLicenses": true,
-          "inspect": false
+          "minify": false
         }
       }
     },
@@ -54,7 +66,7 @@
         "jestConfig": "packages/server/api/jest.config.ts",
         "passWithNoTests": false,
         "bail": true,
-        "testPathPattern": ["packages/server/api/test/unit"]
+        "testPathPatterns": ["packages/server/api/test/unit"]
       }
     },
     "test-ce-command": {
@@ -64,7 +76,7 @@
         "jestConfig": "packages/server/api/jest.config.ts",
         "passWithNoTests": false,
         "bail": true,
-        "testPathPattern": ["packages/server/api/test/integration/ce"]
+        "testPathPatterns": ["packages/server/api/test/integration/ce"]
       }
     },
     "test-cloud-command": {
@@ -74,7 +86,7 @@
         "jestConfig": "packages/server/api/jest.config.ts",
         "passWithNoTests": false,
         "bail": true,
-        "testPathPattern": ["packages/server/api/test/integration/cloud"]
+        "testPathPatterns": ["packages/server/api/test/integration/cloud"]
       }
     },
     "test-ee-command": {
@@ -84,14 +96,14 @@
         "jestConfig": "packages/server/api/jest.config.ts",
         "passWithNoTests": false,
         "bail": true,
-        "testPathPattern": ["packages/server/api/test/integration/ee"]
+        "testPathPatterns": ["packages/server/api/test/integration/ee"]
       }
     },
     "test-ee": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=ee nx test-ee-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -101,7 +113,7 @@
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=ce nx test-ce-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -111,7 +123,7 @@
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=cloud nx test-cloud-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -120,9 +132,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx test-ee",
-          "nx test-ce",
-          "nx test-cloud"
+          "nx test-ee server-api",
+          "nx test-ce server-api",
+          "nx test-cloud server-api"
         ],
         "parallel": true
       }
@@ -139,9 +151,21 @@
     "db-migration": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx db server-api -- migration:generate -p -d packages/server/api/src/app/database/database-connection.ts packages/server/api/src/app/database/migration/{args.name}"
+        "command": "nx db server-api -- migration:generate -p -d packages/server/api/src/app/database/migration-data-source.ts packages/server/api/src/app/database/migration/postgres/{args.name} {args.flags}"
+      }
+    },
+    "check-migrations": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "echo '🔍 Checking for schema changes without migrations...'",
+          "export $(cat packages/server/api/.env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && nx db server-api -- migration:run -d packages/server/api/src/app/database/migration-data-source.ts > /dev/null 2>&1",
+          "echo 'Checking for schema drift...'",
+          "export $(cat packages/server/api/.env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && nx db-migration server-api --flags='--dryrun --check' || (echo '' && echo '❌ ERROR: Schema changes detected without corresponding migration!' && echo '' && echo 'The PR contains database schema changes without corresponding migration.' && echo 'Please generate a migration using:' && echo '  nx db-migration server-api --name=<DESCRIPTIVE_NAME>' && echo '' && echo 'For more information, see: docs/handbook/engineering/playbooks/database-migration.mdx' && echo '' && exit 1)",
+          "echo '✅ No missing migrations detected'"
+        ],
+        "parallel": false
       }
     }
-  },
-  "tags": []
+  }
 }

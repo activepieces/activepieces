@@ -1,5 +1,4 @@
-import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
-import { flagService } from '../../flags/flag.service'
+import { ApEdition, ApFlagId, isNil, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
@@ -11,9 +10,10 @@ import { appearanceHelper } from '../helper/appearance-helper'
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
-        const platformId = await platformUtils.getPlatformIdForRequest(request)
+        const platformIdFromPrincipal = !request.principal || request.principal.type === PrincipalType.UNKNOWN || request.principal.type === PrincipalType.WORKER ? null : request.principal.platform.id
+        const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
+        const edition = system.getEdition()
         if (isNil(platformId)) {
-            const edition = system.getEdition()
             if (edition === ApEdition.CLOUD) {
                 modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
                     [ThirdPartyAuthnProviderEnum.GOOGLE]: true,
@@ -21,7 +21,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             }
             return modifiedFlags
         }
-        modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = flagService.isCloudPlatform(platformId)
+        modifiedFlags[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] = edition !== ApEdition.CLOUD
         const platformWithPlan = await platformService.getOneWithPlanOrThrow(platformId)
         const platform = await platformService.getOneOrThrow(platformId)
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
@@ -38,10 +38,9 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             platformId,
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_CHANGELOG] = platformWithPlan.plan.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_BILLING] = false
-        modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
+        modifiedFlags[ApFlagId.SHOW_BILLING_PAGE] = flags[ApFlagId.SHOW_BILLING_PAGE] && !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan)
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
+        modifiedFlags[ApFlagId.SHOW_BADGES] = !platformWithPlan.plan.embeddingEnabled
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
             path: '',
             platformId,

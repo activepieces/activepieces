@@ -1,0 +1,33 @@
+import { api } from '@/lib/api';
+import {
+  ProjectSyncPlan,
+  SeekPage,
+  CreateProjectReleaseRequestBody,
+  ProjectRelease,
+  DiffReleaseRequest,
+  ListProjectReleasesRequest,
+} from '@activepieces/shared';
+
+export const projectReleaseApi = {
+  async get(releaseId: string) {
+    return await api.get<ProjectRelease>(`/v1/project-releases/${releaseId}`);
+  },
+  async list(query: ListProjectReleasesRequest) {
+    return await api.get<SeekPage<ProjectRelease>>(
+      `/v1/project-releases`,
+      query,
+    );
+  },
+  async create(requestBody: CreateProjectReleaseRequestBody) {
+    return await api.post<ProjectRelease>('/v1/project-releases', requestBody);
+  },
+  async delete(id: string) {
+    return await api.delete<void>(`/v1/project-releases/${id}`);
+  },
+  async diff(request: DiffReleaseRequest) {
+    return await api.post<ProjectSyncPlan>(
+      `/v1/project-releases/diff`,
+      request,
+    );
+  },
+};

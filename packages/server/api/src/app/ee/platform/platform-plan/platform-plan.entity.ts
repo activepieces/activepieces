@@ -14,17 +14,41 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         platformId: ApIdSchema,
-        includedTasks: {
-            type: Number,
-        },
-        tasksLimit: {
-            type: Number,
+        plan: {
+            type: String,
             nullable: true,
         },
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsLimit: {
+        aiCreditsAutoTopUpCreditsToAdd: {
+            type: Number,
+            nullable: true,
+        },
+        lastFreeAiCreditsRenewalDate: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
+        maxAutoTopUpCreditsMonthly: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpThreshold: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpState: {
+            type: String,
+        },
+        stripeSubscriptionStartDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripeSubscriptionEndDate: {
+            type: Number,
+            nullable: true,
+        },
+        stripeSubscriptionCancelDate: {
             type: Number,
             nullable: true,
         },
@@ -52,8 +76,8 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         customAppearanceEnabled: {
             type: Boolean,
         },
-        manageProjectsEnabled: {
-            type: Boolean,
+        teamProjectsLimit: {
+            type: String,
         },
         projectRolesEnabled: {
             type: Boolean,
@@ -68,9 +92,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         apiKeysEnabled: {
-            type: Boolean,
-        },
-        alertsEnabled: {
             type: Boolean,
         },
         ssoEnabled: {
@@ -88,38 +109,26 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        agentsLimit: {
-            type: Number,
-            nullable: true,
-        },
         stripeSubscriptionStatus: {
             type: String,
-            nullable: true,
-        },
-        tablesEnabled: {
-            type: Boolean,
-        },
-        todosEnabled: {
-            type: Boolean,
-        },
-        userSeatsLimit: {
-            type: Number,
             nullable: true,
         },
         projectsLimit: {
             type: Number,
             nullable: true,
         },
-        tablesLimit: {
-            type: Number,
-            nullable: true,
-        },
-        mcpLimit: {
-            type: Number,
-            nullable: true,
+        tablesEnabled: {
+            type: Boolean,
         },
         activeFlowsLimit: {
             type: Number,
+            nullable: true,
+        },
+        eventStreamingEnabled: {
+            type: Boolean,
+        },
+        dedicatedWorkers: {
+            type: 'jsonb',
             nullable: true,
         },
     },

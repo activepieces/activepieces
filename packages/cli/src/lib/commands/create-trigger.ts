@@ -6,10 +6,8 @@ import { join } from 'node:path';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import {
     assertPieceExists,
-  customPiecePath,
   displayNameToCamelCase,
   displayNameToKebabCase, findPiece,
-  findPieces,
 } from '../utils/piece-utils';
 
 function createTriggerTemplate(displayName: string, description: string, technique: string) {
@@ -17,12 +15,12 @@ function createTriggerTemplate(displayName: string, description: string, techniq
     let triggerTemplate = ''
     if (technique === 'polling') {
         triggerTemplate = `
-import { createTrigger, TriggerStrategy, PiecePropValueSchema  } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty  } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 
 // replace auth with piece auth variable
-const polling: Polling< PiecePropValueSchema<typeof auth>, Record<string, never> > = {
+const polling: Polling<AppConnectionValueForAuthProperty<undefined>, Record<string, never> > = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ propsValue, lastFetchEpochMS }) => {
         // implement the logic to fetch the items

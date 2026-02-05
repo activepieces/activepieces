@@ -18,7 +18,7 @@ export const bubbleGetThingAction = createAction({
     thing_id: bubbleCommon.thing_id,
   },
   async run(context) {
-    const { appname, token } = context.auth;
+    const { appname, token } = context.auth.props;
     const { typename, thing_id } = context.propsValue;
 
     const server_url = `https://${appname}.bubbleapps.io/api/1.1/obj/${typename}`;

@@ -28,6 +28,7 @@ export const createTask = createAction({
     destination: common.destination,
     unparsedDestination: common.unparsedDestination,
     recipient: Property.DynamicProperties({
+      auth: onfleetAuth,
       displayName: 'Destination',
       description: 'The task destination',
       required: true,
@@ -118,7 +119,7 @@ export const createTask = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
     let address;
     if (context.propsValue.unparsedDestination) {
       address = {

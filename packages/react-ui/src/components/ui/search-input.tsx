@@ -2,35 +2,49 @@ import { t } from 'i18next';
 import { Search, X } from 'lucide-react';
 import * as React from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { SelectUtilButton } from '../custom/select-util-button';
+
+import { Input, inputClass } from './input';
 
 export type SearchInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   'onChange'
 > & {
   onChange: (value: string) => void;
-  showDeselect: boolean;
 };
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ type, showDeselect, ...props }, ref) => {
+  ({ type, placeholder = t('Search'), ...props }, ref) => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    React.useImperativeHandle(ref, () => inputRef.current!);
+
     return (
-      <div className="flex-grow flex  items-center gap-2 w-full  bg-background px-3 focus-within:outline-none first:disabled:cursor-not-allowed first:disabled:opacity-50 box-border">
+      <div
+        className={cn(
+          'grow flex items-center gap-2 w-full bg-background px-3 box-border',
+          inputClass,
+        )}
+      >
         <Search className="size-4 shrink-0 opacity-50"></Search>
-        <input
-          className="rounded-md bg-transparent  h-8 grow text-sm outline-none placeholder:text-muted-foreground"
-          type={type}
-          ref={ref}
+        <Input
           {...props}
+          type={type}
+          ref={inputRef}
+          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none p-0 bg-transparent"
+          placeholder={placeholder}
           onChange={(e) => props.onChange(e.target.value)}
         />
-        {showDeselect && (
+        {props.value !== '' && (
           <SelectUtilButton
-            tooltipText={t('Unset')}
+            tooltipText={t('Clear')}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
               props.onChange('');
+              inputRef.current?.focus();
             }}
             Icon={X}
           ></SelectUtilButton>

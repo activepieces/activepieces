@@ -1,7 +1,7 @@
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
-    EndpointScope,
     ErrorCode,
     PieceScope,
     PrincipalType,
@@ -13,8 +13,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { pieceService } from '../../pieces/piece-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { pieceInstallService } from '../../pieces/piece-install-service'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -29,24 +28,20 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
         assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
-        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-        await pieceService(req.log).installPiece(
+        await pieceInstallService(req.log).installPiece(
             platformId,
-            undefined,
             req.body,
         )
         await reply.status(StatusCodes.CREATED).send({})
     },
     )
-
     done()
 }
 
 
 const installPieceParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['pieces'],

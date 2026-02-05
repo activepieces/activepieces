@@ -1,8 +1,7 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, PopulatedTodo, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoEnvironment, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
+import { Server } from 'socket.io'
 import { Like } from 'typeorm'
-import { agentsService } from '../agents/agents-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -18,16 +17,11 @@ export const todoService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<PopulatedTodo> {
         const todo = await todoRepo().save({
             id: apId(),
-            status: UNRESOLVED_STATUS,
+            status: UNRESOLVED_STATUS,  
             locked: params.locked ?? false,
             ...params,
         })
         return enrichTodoWithAssignee(todo, log)
-    },
-    async countBy(params: CountByParams): Promise<number> {
-        return todoRepo().countBy({
-            ...spreadIfDefined('agentId', params.agentId),
-        })
     },
     async getOne(params: GetParams): Promise<Todo | null> {
         const todo = await todoRepo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
@@ -115,11 +109,6 @@ export const todoService = (log: FastifyBaseLogger) => ({
             projectId: params.projectId,
             ...spreadIfDefined('flowId', params.flowId),
         })
-        if (!isNil(params.agentId)) {
-            query = query.andWhere({
-                agentId: params.agentId,
-            })
-        }
         if (!isNil(params.assigneeId)) {
             query = query.andWhere({
                 assigneeId: params.assigneeId,
@@ -180,9 +169,6 @@ async function enrichTodoWithAssignee(
         assignee: isNil(todo.assigneeId) ? null : await userService.getMetaInformation({
             id: todo.assigneeId,
         }),
-        agent: isNil(todo.agentId) ? null : await agentsService(log).getOneOrThrow({
-            id: todo.agentId,
-        }),
         createdByUser: isNil(todo.createdByUserId) ? null : await userService.getMetaInformation({
             id: todo.createdByUserId,
         }),
@@ -193,15 +179,11 @@ async function enrichTodoWithAssignee(
     }
 }
 
-type CountByParams = {
-    agentId: string
-}
-
 type ResolveParams = {
     id: string
     status: string
     isTest?: boolean
-    socket: Socket
+    socket: Server
 }
 
 type GetParams = {
@@ -212,7 +194,6 @@ type GetParams = {
 
 type ListParams = {
     platformId: PlatformId
-    agentId?: string
     projectId: ProjectId
     flowId?: FlowId
     assigneeId?: UserId
@@ -225,7 +206,7 @@ type ListParams = {
 
 type CreateParams = {
     title: string
-    description?: string
+    description: string
     statusOptions: StatusOption[]
     platformId: string
     createdByUserId?: string
@@ -234,7 +215,6 @@ type CreateParams = {
     environment: TodoEnvironment
     flowId?: string
     runId?: string
-    agentId?: string
     assigneeId?: string
     resolveUrl?: string
 }
@@ -249,5 +229,5 @@ type UpdateParams = {
     statusOptions?: StatusOption[]
     assigneeId?: string
     isTest?: boolean
-    socket: Socket
+    socket: Server
 }

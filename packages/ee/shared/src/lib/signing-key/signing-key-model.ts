@@ -1,5 +1,5 @@
-import { ApId, BaseModelSchema } from "@activepieces/shared";
-import { Static, Type } from "@sinclair/typebox";
+import { ApId, BaseModelSchema } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export enum KeyAlgorithm {
     RSA = 'RSA',

@@ -1,18 +1,23 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva, VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const cardVariants = cva('rounded-lg border bg-card text-card-foreground', {
+const cardVariants = cva('rounded-lg border bg-background text-foreground', {
   variants: {
     variant: {
-      default: ' shadow-sm',
+      default: ' shadow-xs',
       interactive:
         'cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between',
+    },
+    isSelected: {
+      true: 'border-gray-400',
+      false: '',
     },
   },
   defaultVariants: {
     variant: 'default',
+    isSelected: false,
   },
 });
 
@@ -21,10 +26,10 @@ interface CardProps
     VariantProps<typeof cardVariants> {}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, ...props }, ref) => (
+  ({ className, variant, isSelected, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(cardVariants({ variant }), className)}
+      className={cn(cardVariants({ variant, isSelected }), className)}
       {...props}
     />
   ),
@@ -44,25 +49,22 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = 'CardHeader';
 
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <h3
+  <div
     ref={ref}
-    className={cn(
-      'text-2xl font-semibold leading-none tracking-tight',
-      className,
-    )}
+    className={cn('font-semibold leading-none tracking-tight', className)}
     {...props}
   />
 ));
 CardTitle.displayName = 'CardTitle';
 
 const CardDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <p
+  <div
     ref={ref}
     className={cn('text-sm text-muted-foreground', className)}
     {...props}

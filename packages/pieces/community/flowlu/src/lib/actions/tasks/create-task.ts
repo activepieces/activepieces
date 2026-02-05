@@ -21,7 +21,7 @@ export const createTaskAction = createAction({
   },
   async run(context) {
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.createTask({
       name: context.propsValue.name,

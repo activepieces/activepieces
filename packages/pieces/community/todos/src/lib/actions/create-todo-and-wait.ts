@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import {
   ExecutionType,
   PauseType,
@@ -7,6 +7,7 @@ import {
 import { sendTodoApproval, createTodoProps } from '../utils/utils';
 
 export const createTodoAndWait = createAction({
+  auth: PieceAuth.None(),
   name: 'createTodoAndWait',
   displayName: 'Create Todo and Wait',
   description:
@@ -33,6 +34,7 @@ export const createTodoAndWait = createAction({
     } else {
       return {
         status: context.resumePayload.queryParams['status'],
+        message: context.resumePayload.queryParams['message'] ?? 'Sample message',
       };
     }
   },
@@ -49,6 +51,7 @@ export const createTodoAndWait = createAction({
     } else {
       const result: CreateAndWaitTodoResult = {
         status: context.resumePayload.queryParams['status'],
+        message: context.resumePayload.queryParams['message'],
       }
       return result;
     }

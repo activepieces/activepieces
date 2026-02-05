@@ -61,4 +61,12 @@ export const delayUntilAction = createAction({
       };
     }
   },
+
+  async test(ctx) {
+    const delayTill = new Date(ctx.propsValue.delayUntilTimestamp);
+    return {
+      delayTill,
+      success: true,
+    };
+  }
 });

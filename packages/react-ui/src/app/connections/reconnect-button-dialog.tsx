@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
@@ -29,6 +29,7 @@ const ReconnectButtonDialog = ({
   const [open, setOpen] = useState(false);
   const { pieceModel, isLoading } = piecesHooks.usePiece({
     name: connection.pieceName,
+    version: connection.pieceVersion,
   });
 
   return (

@@ -1,4 +1,10 @@
 {
   "name": "@activepieces/piece-text-helper",
-  "version": "0.4.0"
+  "version": "0.4.12",
+  "dependencies": {
+    "showdown": "2.1.0",
+    "slugify": "1.6.6",
+    "string-strip-html": "8.5.0",
+    "turndown": "7.2.0"
+  }
 }

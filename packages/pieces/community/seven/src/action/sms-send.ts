@@ -45,7 +45,7 @@ export const sendSmsAction = createAction({
         to
       },
       method: HttpMethod.POST
-    }, 'sms', context.auth as string);
+    }, 'sms', context.auth.secret_text);
 
     return response.body;
 

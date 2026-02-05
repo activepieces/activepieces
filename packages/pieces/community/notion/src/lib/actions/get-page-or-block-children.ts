@@ -26,6 +26,7 @@ export const getPageOrBlockChildren = createAction({
       defaultValue: false,
     }),
     dynamic: Property.DynamicProperties({
+      auth: notionAuth,
       displayName: 'Dynamic properties',
       refreshers: ['markdown'],
       required: true,

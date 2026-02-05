@@ -1,19 +1,20 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/ee-shared'
-import { fileExists } from '@activepieces/server-shared'
-import { AppConnectionScope, ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState, TableState } from '@activepieces/shared'
+import { fileSystemUtils } from '@activepieces/server-shared'
+import { AppConnectionScope, ConnectionState, FlowState, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
+import { projectStateService } from '../project-state/project-state.service'
 import { gitHelper } from './git-helper'
 
-export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
+export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
-            const flows = await readFlowsFromGit(flowPath)
+            const flows = await readFlowsFromGit(flowPath, log)
             const connections = await readConnectionsFromGit(connectionsFolderPath)
-            const tables = await readTablesFromGit(tablesFolderPath)
+            const tables = await readTablesFromGit(tablesFolderPath, log)
             return {
                 flows,
                 connections,
@@ -21,7 +22,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
             }
         }
         catch (error) {
-            _log.error(`Failed to read flow files: ${error}`)
+            log.error(`Failed to read flow files: ${error}`)
             throw error
         }
     },
@@ -30,10 +31,11 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         try {
             const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
-            await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
+            const flowState = await projectStateService(log).getFlowState(flow)
+            await fs.writeFile(flowJsonPath, JSON.stringify(flowState, null, 2))
         }
         catch (error) {
-            _log.error(`Failed to write flow file ${fileName}: ${error}`)
+            log.error(`Failed to write flow file ${fileName}: ${error}`)
             throw error
         }
     },
@@ -41,7 +43,8 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     async upsertTableToGit({ fileName, table, tablesFolderPath }: UpsertTableIntoProjectParams): Promise<void> {
         const tableJsonPath = path.join(tablesFolderPath, `${fileName}.json`)
         await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
-        await fs.writeFile(tableJsonPath, JSON.stringify(table, null, 2))
+        const tableState = projectStateService(log).getTableState(table)
+        await fs.writeFile(tableJsonPath, JSON.stringify(tableState, null, 2))
     },
 
     async upsertConnectionToGit({ fileName, connection, folderPath }: UpsertConnectionIntoProjectParams): Promise<void> {
@@ -52,7 +55,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
 
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
         const jsonPath = path.join(folderPath, `${fileName}.json`)
-        const exists = await fileExists(jsonPath)
+        const exists = await fileSystemUtils.fileExists(jsonPath)
         if (exists) {
             await fs.unlink(jsonPath)
         }
@@ -63,7 +66,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         const oldConnections = await readConnectionsFromGit(connectionsFolderPath)
         await Promise.all(oldConnections.map((connection) => this.deleteFromGit({ fileName: connection.externalId, folderPath: connectionsFolderPath })))
 
-        const flows = await readFlowsFromGit(flowFolderPath)
+        const flows = await readFlowsFromGit(flowFolderPath, log)
         const connectionsInFlows = flows.flatMap((flow) => flow.version.connectionIds)
         const currentConnections = await appConnectionService(log).list({
             projectId: gitRepo.projectId,
@@ -87,25 +90,19 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
                 folderPath: connectionsFolderPath,
             })
         }))
-        
+
         await gitHelper.commitAndPush(git, gitRepo, 'chore: update and remove unused connections')
     },
-    
+
 })
 
-async function readFlowsFromGit(flowFolderPath: string): Promise<FlowState[]> {
+async function readFlowsFromGit(flowFolderPath: string, log: FastifyBaseLogger): Promise<FlowState[]> {
     const flowFiles = await fs.readdir(flowFolderPath)
     const flows: FlowState[] = []
     for (const file of flowFiles) {
-        const flow: PopulatedFlow = JSON.parse(
-            await fs.readFile(path.join(flowFolderPath, file), 'utf-8'),
-        )
-        const migratedFlowVersion = flowMigrations.apply(flow.version)
-        flows.push({
-            ...flow,
-            externalId: flow.externalId ?? flow.id,
-            version: migratedFlowVersion,
-        })
+        const flow: PopulatedFlow = JSON.parse(await fs.readFile(path.join(flowFolderPath, file), 'utf-8'))
+        const flowState = await projectStateService(log).getFlowState(flow)
+        flows.push(flowState)
     }
     return flows
 }
@@ -122,14 +119,15 @@ async function readConnectionsFromGit(connectionsFolderPath: string): Promise<Co
     return connections
 }
 
-async function readTablesFromGit(tablesFolderPath: string): Promise<TableState[]> {
+async function readTablesFromGit(tablesFolderPath: string, log: FastifyBaseLogger): Promise<TableState[]> {
     const tableFiles = await fs.readdir(tablesFolderPath)
     const tables: TableState[] = []
     for (const file of tableFiles) {
-        const table: TableState = JSON.parse(
+        const table = JSON.parse(
             await fs.readFile(path.join(tablesFolderPath, file), 'utf-8'),
         )
-        tables.push(table)
+        const tableState = projectStateService(log).getTableState(table)
+        tables.push(tableState)
     }
     return tables
 }
@@ -142,7 +140,7 @@ type GetStateFromGitParams = {
 
 type UpsertFlowIntoProjectParams = {
     fileName: string
-    flow: Flow
+    flow: FlowState
     flowFolderPath: string
 }
 
@@ -154,7 +152,7 @@ type UpsertConnectionIntoProjectParams = {
 
 type UpsertTableIntoProjectParams = {
     fileName: string
-    table: TableState
+    table: PopulatedTable
     tablesFolderPath: string
 }
 
