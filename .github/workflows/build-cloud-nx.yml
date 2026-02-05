@@ -1,8 +1,10 @@
 name: CI
-
 on:
   pull_request:
-  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   actions: read
@@ -14,116 +16,61 @@ env:
 jobs:
   main:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.repository == 'activepieces/activepieces'
-
+    
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
-
-      - uses: actions/setup-node@v3
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
+          cache: 'bun'
+          
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      # ⚠️ Keeping this because you had it (not recommended but not breaking)
-      - run: npx nx reset
-
+      
       - uses: nrwl/nx-set-shas@v4
-
-      - name: List all nx targets
-        run: npx nx show projects --all
-
-      - name: Get changed files
-        id: changed-files
+      
+      - run: bun install
+      
+      - name: Determine changed scope
+        id: scope
         run: |
-          echo "files=$(git diff --name-only HEAD origin/main | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
-      - name: Check if framework or common pieces are changed
-        id: check-framework-common
-        run: |
-          CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
-          if echo "$CHANGED_FILES" | grep -q "community/framework\|community/common"; then
-            echo "framework_or_common_changed=true" >> $GITHUB_OUTPUT
+          CHANGED=$(git diff --name-only $NX_BASE..$NX_HEAD)
+          
+          if echo "$CHANGED" | grep -q "community/framework\|community/common"; then
+            echo "lint_scope=pieces-*" >> $GITHUB_OUTPUT
+            echo "build_scope=pieces-*" >> $GITHUB_OUTPUT
           else
-            echo "framework_or_common_changed=false" >> $GITHUB_OUTPUT
+            PIECES=$(echo "$CHANGED" | grep -oP "packages/pieces/[^/]+/[^/]+" | \
+              awk -F'/' '{print "pieces-" $4}' | sort -u | paste -sd "," -)
+            echo "lint_scope=${PIECES:-none}" >> $GITHUB_OUTPUT
+            echo "build_scope=${PIECES:-none}" >> $GITHUB_OUTPUT
           fi
-
-      - name: Extract pieces projects from changed files
-        id: extract-pieces
+      
+      - name: Lint
         run: |
-          PIECES=$(echo "${{ steps.changed-files.outputs.files }}" \
-            | grep -o "packages/pieces/[^/]*/[^/]*/" \
-            | awk -F'/' '{print "pieces-" $4}' \
-            | sort -u \
-            | tr '\n' ',' \
-            | sed 's/,$//')
-          echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
-
-      ###################################
-      # LINT
-      ###################################
-
-      - name: Lint affected projects excluding pieces
-        run: npx nx affected --target=lint --exclude="pieces-*"
-
-      - name: Lint changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-
-      - name: Lint all pieces projects
-        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx nx run-many --target=lint --projects="pieces-*"
-
-      ###################################
-      # BUILD
-      ###################################
-
-      - name: Build affected projects excluding pieces
-        run: npx nx affected --target=build -c production --exclude="pieces-*"
-
-      - name: Build changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-
-      - name: Build all pieces projects
-        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx nx run-many --target=build -c production --projects="pieces-*"
-
-      ###################################
-      # TESTS
-      ###################################
-
-      - name: Run all tests and migration check in parallel
+          npx nx affected --target=lint --exclude="pieces-*"
+          if [ "${{ steps.scope.outputs.lint_scope }}" != "none" ]; then
+            npx nx run-many --target=lint --projects="${{ steps.scope.outputs.lint_scope }}"
+          fi
+      
+      - name: Build
         run: |
-          set -euo pipefail
-          pids=()
-
+          npx nx affected --target=build -c production --exclude="pieces-*"
+          if [ "${{ steps.scope.outputs.build_scope }}" != "none" ]; then
+            npx nx run-many --target=build -c production --projects="${{ steps.scope.outputs.build_scope }}"
+          fi
+      
+      - name: Test
+        run: |
           npx nx run-many --target=test --projects=engine,shared &
-          pids+=($!)
-
           npx nx run server-api:test-ce &
-          pids+=($!)
-
           npx nx run server-api:test-ee &
-          pids+=($!)
-
           npx nx run server-api:test-cloud &
-          pids+=($!)
-
           npx nx run server-api:check-migrations &
-          pids+=($!)
-
-          status=0
-          for pid in "${pids[@]}"; do
-            if ! wait "$pid"; then
-              status=1
-            fi
-          done
-          exit $status
+          wait
