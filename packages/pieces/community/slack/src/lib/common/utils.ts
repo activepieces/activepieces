@@ -1,5 +1,21 @@
 import { ApFile } from '@activepieces/pieces-framework';
-import { Block, WebClient } from '@slack/web-api';
+import { Block, KnownBlock, WebClient } from '@slack/web-api';
+
+export function buildFlowOriginContextBlock(context: {
+  server: { publicUrl: string };
+  project: { id: string };
+  flows: { current: { id: string } };
+}): KnownBlock {
+  return {
+    type: 'context',
+    elements: [
+      {
+        type: 'mrkdwn',
+        text: `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
+      }
+    ]
+  };
+}
 
 export const slackSendMessage = async ({
   text,

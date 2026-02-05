@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackSendMessage } from '../common/utils';
+import { buildFlowOriginContextBlock, slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
@@ -49,12 +49,7 @@ export const slackSendDirectMessageAction = createAction({
     }
 
     if(mentionOriginFlow) {
-      (blockList as KnownBlock[])?.push({ type: 'context', elements: [
-        {
-          "type": "mrkdwn",
-          "text": `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
-        }
-      ] })
+      blockList.push(buildFlowOriginContextBlock(context));
     }
 
     return slackSendMessage({
