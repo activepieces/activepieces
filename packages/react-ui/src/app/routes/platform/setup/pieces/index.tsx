@@ -158,10 +158,7 @@ const PlatformPiecesPage = () => {
                     isEnabled={true}
                   />
                 )}
-                <PieceActions
-                  pieceName={row.original.name}
-                  isEnabled={true}
-                />
+                <PieceActions pieceName={row.original.name} isEnabled={true} />
               </div>
             );
           },

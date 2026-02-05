@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/form';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import { UpsertBasicAuthRequest } from '@activepieces/shared';
+
 import { SecretInput } from './secret-input';
 
 type BasicAuthConnectionSettingsProps = {

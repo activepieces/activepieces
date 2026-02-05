@@ -98,7 +98,7 @@ export type ApErrorParams =
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
-    
+
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -520,7 +520,7 @@ export type SecretManagerConnectionFailedParams = BaseErrorParams<ErrorCode.SECR
 export type SecretManagerGetSecretFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED, {
     message: string
     provider: string
-    request: any
+    request: Record<string, unknown>
 }>
 
 export type SecretManagerKeyNotSecretParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET, {

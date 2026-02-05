@@ -51,6 +51,7 @@ import {
     pieceMetadataService,
 } from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
+import { secretManagersService } from '../../secret-managers/secret-managers.service'
 import { userService } from '../../user/user-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import {
@@ -60,7 +61,6 @@ import {
 import { appConnectionHandler } from './app-connection.handler'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-import { secretManagersService } from '../../secret-managers/secret-managers.service'
 export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
@@ -379,14 +379,15 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return [...platformAdmins, ...projectMembersDetails]
     },
     async resolveSecrets<T extends Record<string, unknown>>(value: T, platformId: string): Promise<T> {
-        let newValue = { ...value }
+        const newValue = { ...value }
         await Promise.all(
             Object.keys(value).map(async (field: keyof T) => {
                 if (isObject(value[field])) {
                     newValue[field] = await this.resolveSecrets(value[field] as Record<string, unknown>, platformId) as T[keyof T]
-                } else if (isString(value[field])) {
+                }
+                else if (isString(value[field])) {
                     newValue[field] = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
-                        const apError = error.error as ApErrorParams;
+                        const apError = error.error as ApErrorParams
                         if (apError && apError.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET) {
                             return value[field]
                         }
@@ -396,16 +397,16 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                         throw new ActivepiecesError({
                             code: ErrorCode.VALIDATION,
                             params: {
-                                message: error.message ?? "Failed to resolve secret",
+                                message: error.message ?? 'Failed to resolve secret',
                             },
                         })
                     }) as T[keyof T]
                 }
-            })
+            }),
         )
 
         return newValue
-    }
+    },
 })
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {

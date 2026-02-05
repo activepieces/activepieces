@@ -145,31 +145,31 @@ export function getByPath(obj: Record<string, unknown> | string, path?: string[]
         return obj
     }
   
-    let current = obj as Record<string, unknown>
+    const current = obj as Record<string, unknown>
     const currentPath = path[0]
   
     const arrayMatch = currentPath.match(/^(.+)\[(\d+)\]$/)
     
     if (arrayMatch) {
-      const [, keyName, indexStr] = arrayMatch
-      const index = parseInt(indexStr, 10)
+        const [, keyName, indexStr] = arrayMatch
+        const index = parseInt(indexStr, 10)
       
-      if (!current[keyName]) {
-        throw Error(`Could not resolve value path for key ${keyName}`)
-      }
+        if (!current[keyName]) {
+            throw Error(`Could not resolve value path for key ${keyName}`)
+        }
       
-      const arrayValue = current[keyName] as unknown[]
-      if (!Array.isArray(arrayValue)) {
-        throw Error(`Value of key ${keyName} is not an array`)
-      }
+        const arrayValue = current[keyName] as unknown[]
+        if (!Array.isArray(arrayValue)) {
+            throw Error(`Value of key ${keyName} is not an array`)
+        }
       
-      if (index >= arrayValue.length) {
-        throw Error(`Array index out of bounds for key ${keyName}`)
-      }
+        if (index >= arrayValue.length) {
+            throw Error(`Array index out of bounds for key ${keyName}`)
+        }
       
-      const value = arrayValue[index]
+        const value = arrayValue[index]
       
-      return getByPath(value as Record<string, unknown> | string, path.slice(1))
+        return getByPath(value as Record<string, unknown> | string, path.slice(1))
     }
   
     if (!current[currentPath]) {
@@ -177,18 +177,19 @@ export function getByPath(obj: Record<string, unknown> | string, path?: string[]
     }
   
     return getByPath(current[currentPath] as Record<string, unknown> | string, path.slice(1))
-  }
+}
 
 export function jsonParseWithCallback(
-    {str, onSuccess, onError} : {
-        str: string,
-        onSuccess: (obj: Record<string, unknown>) => unknown,
-        onError: (error: Error) => unknown}
-    ) : unknown {
+    { str, onSuccess, onError }: {
+        str: string
+        onSuccess: (obj: Record<string, unknown>) => unknown
+        onError: (error: Error) => unknown },
+): unknown {
     try {
         return onSuccess(JSON.parse(str))
-    } catch (error) {
-        if (error instanceof Error && error.name === "SyntaxError") {
+    }
+    catch (error) {
+        if (error instanceof Error && error.name === 'SyntaxError') {
             return onError(error as Error)
         }
         throw error

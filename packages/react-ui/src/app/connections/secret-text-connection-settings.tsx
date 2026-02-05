@@ -33,10 +33,7 @@ const SecretTextConnectionSettings = React.memo(
           <FormItem className="flex flex-col">
             <FormLabel>{authProperty.displayName}</FormLabel>
             <FormControl>
-              <SecretInput
-                {...field} 
-                type="password"
-              />
+              <SecretInput {...field} type="password" />
             </FormControl>
           </FormItem>
         )}

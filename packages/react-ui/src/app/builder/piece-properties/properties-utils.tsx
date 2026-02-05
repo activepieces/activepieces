@@ -5,6 +5,7 @@ import {
   UseFormReturn,
 } from 'react-hook-form';
 
+import { SecretInput } from '@/app/connections/secret-input';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
@@ -28,7 +29,6 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
-import { SecretInput } from '@/app/connections/secret-input';
 
 export const selectGenericFormComponentForProperty = ({
   field,

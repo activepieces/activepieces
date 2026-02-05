@@ -1,5 +1,8 @@
-import { ConnectSecretManagerRequest, SecretManagerProviderMetaData } from "@activepieces/shared";
-import { api } from "@/lib/api";
+import { api } from '@/lib/api';
+import {
+  ConnectSecretManagerRequest,
+  SecretManagerProviderMetaData,
+} from '@activepieces/shared';
 
 export const secretManagersApi = {
   list() {
@@ -8,4 +11,4 @@ export const secretManagersApi = {
   connect(config: ConnectSecretManagerRequest) {
     return api.post<void>('/v1/secret-managers/connect', config);
   },
-}
+};

@@ -48,6 +48,7 @@ import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
+import SecretMangersPage from '../routes/platform/security/secret-managers';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { PlatformTemplatesPage } from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
@@ -70,7 +71,6 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import SecretMangersPage from '../routes/platform/security/secret-managers';
 import { TemplateDetailsWrapper } from './template-details-wrapper';
 
 const SettingsRerouter = () => {
