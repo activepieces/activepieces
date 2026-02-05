@@ -3,6 +3,7 @@ import {
     ActivepiecesError,
     ApEdition,
     ApEnvironment,
+    ApErrorParams,
     apId,
     AppConnection,
     AppConnectionId,
@@ -17,8 +18,9 @@ import {
     EngineResponseStatus,
     ErrorCode,
     ExecuteValidateAuthResponse,
-    fieldsResolvableBySecretManager,
     isNil,
+    isObject,
+    isString,
     Metadata,
     OAuth2GrantType,
     PlatformId,
@@ -376,25 +378,28 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }))
         return [...platformAdmins, ...projectMembersDetails]
     },
-    async resolveSecrets<T extends UpsertAppConnectionRequestBody['value'] | AppConnectionValue>(value: T, platformId: string): Promise<T> {
+    async resolveSecrets<T extends Record<string, unknown>>(value: T, platformId: string): Promise<T> {
         let newValue = value
         await Promise.all(
-            fieldsResolvableBySecretManager.map(async (field) => {
-                // @ts-ignore
-                if (value[field as keyof typeof value]) {
-                    // @ts-ignore
+            Object.keys(value).map(async (field: keyof T) => {
+                if (isObject(value[field])) {
+                    newValue[field] = await this.resolveSecrets(value[field] as Record<string, unknown>, platformId) as T[keyof T]
+                } else if (isString(value[field])) {
                     newValue[field] = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
-                        if (error.message === "Key is not a secret") {
-                            // @ts-ignore
+                        const apError = error.error as ApErrorParams;
+                        if (apError && apError.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET) {
                             return value[field]
+                        }
+                        if (apError) {
+                            throw error
                         }
                         throw new ActivepiecesError({
                             code: ErrorCode.VALIDATION,
                             params: {
-                                message: error.message,
+                                message: error.message ?? "Failed to resolve secret",
                             },
                         })
-                    })
+                    }) as T[keyof T]
                 }
             })
         )

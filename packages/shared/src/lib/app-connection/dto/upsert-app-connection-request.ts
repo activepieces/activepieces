@@ -205,12 +205,3 @@ export const ListFlowsFromAppConnectionRequestQuery = Type.Object({
     projectId: Type.String(),
 })
 export type ListFlowsFromAppConnectionRequestQuery = Static<typeof ListFlowsFromAppConnectionRequestQuery>
-
-export const fieldsResolvableBySecretManager = [
-    'client_id',
-    'client_secret',
-    'redirect_url',
-    'username',
-    'password',
-    'secret_text',
-]

@@ -1,8 +1,6 @@
 import { FastifyBaseLogger } from "fastify";
 import { SecretManagerProvider } from "./secret-manager-providers";
 import { HashicorpProviderConfig, SecretManagerProviderMetaData, SecretManagerProviderId, ActivepiecesError, ErrorCode, HashicorpGetSecretRequest } from "@activepieces/shared";
-import vault from "node-vault"
-import dotenv from "dotenv"
 import { apAxios } from "@activepieces/server-shared";
 
 export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
@@ -22,11 +20,11 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
   getSecretParams: {
     mountPath: {
       displayName: "Mount Path",
-      placeholder: "eg: /secret/data/app",
+      placeholder: "eg: secret/data/app",
     },
     secretKey: {
       displayName: "Secret Key",
-      placeholder: "key of the secret",
+      placeholder: "secret key",
     },
   },
 }
@@ -95,7 +93,6 @@ export const hashicorpProvider = (log: FastifyBaseLogger) : SecretManagerProvide
   },
   resolve: async (key: string) => {
     let splits = key.split(":")
-    console.error(splits)
     if (splits.length < 3) {
       throw new ActivepiecesError({
         code: ErrorCode.VALIDATION,

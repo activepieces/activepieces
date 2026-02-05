@@ -144,6 +144,22 @@ export const appConnectionsMutations = {
               );
               break;
             }
+            case ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED: {
+              setErrorMessage(
+                t('Failed to resolve secret with error: "{msg}"', {
+                  msg: apError.params.message,
+                }),
+              );
+              break;
+            }
+            case ErrorCode.SECRET_MANAGER_CONNECTION_FAILED: {
+              setErrorMessage(
+                t('Failed to connect to secret manager with error: "{msg}"', {
+                  msg: apError.params.message,
+                }),
+              );
+              break;
+            }
 
             default: {
               setErrorMessage('Unexpected error, please contact support');

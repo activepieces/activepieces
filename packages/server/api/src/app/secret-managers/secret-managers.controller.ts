@@ -13,10 +13,7 @@ export const secretManagersController: FastifyPluginAsyncTypebox = async (app) =
     app.post('/connect', ConnectSecretManager, async (request) => {
         return service.connect({ ...request.body, platformId: request.principal.platform.id })
     })
-
-    app.post('/get-secret', GetSecretManagerSecretRequest, async (request) => {
-        return service.getSecret({ ...request.body, platformId: request.principal.platform.id })
-    })
+    
 }
 
 const ListSecretManagers = {

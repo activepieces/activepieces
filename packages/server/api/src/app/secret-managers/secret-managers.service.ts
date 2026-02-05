@@ -1,4 +1,4 @@
-import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil, apId, GetSecretManagerSecretRequest, tryCatch, SecretManagerProviderId } from "@activepieces/shared"
+import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil, apId, GetSecretManagerSecretRequest, tryCatch, SecretManagerProviderId, ActivepiecesError, ErrorCode } from "@activepieces/shared"
 import { secretManagerProvider, secretManagerProvidersMetadata } from "./secret-manager-providers/secret-manager-providers"
 import { FastifyBaseLogger } from "fastify"
 import { databaseConnection } from "../database/database-connection"
@@ -59,7 +59,12 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     let splits = key.split(":")
 
     if (!Object.values(SecretManagerProviderId).includes(splits[0] as SecretManagerProviderId)) {
-      throw Error("Invalid provider id")
+      throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+          message: "Invalid provider id",
+        },
+      })
     }
     const providerId = splits[0] as SecretManagerProviderId
 
@@ -68,58 +73,18 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
       request: await secretManagerProvider(log, providerId).resolve(key),
       platformId,
     } as GetSecretManagerSecretRequest & { platformId: string })
-
-    // const { data: resolvedValue, error } = await tryCatch(async () => {
-    //   const parsed = JSON.parse(value)
-    //   const resolvedValue = getByPath(parsed, valuePath)
-    //   if (!isString(resolvedValue)) {
-    //     throw Error("Value is not a string")
-    //   }
-    //   return resolvedValue as string
-    // })
-    // if (error) {
-    //   if (error.message === "Value is not a string") {
-    //     throw error
-    //   }
-    //   if (valuePath && valuePath.length > 0) {
-    //     throw Error("Value is not a json object. can't resolve value path")
-    //   }
-    //   return value
-    // }
-
-    // return resolvedValue
   }
 })
 
 const checkKeyIsSecret = (key: string) => {
   key = key.trim()
   if (!(key.startsWith("{{") && key.endsWith("}}"))) {
-    throw Error("Key is not a secret")
+    throw new ActivepiecesError({
+      code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
+      params: {
+        message: "Key is not a secret",
+      },
+    })
   }
   return key.substring(2, key.length - 2)
-}
-
-const validateSecret = (key: string) : {
-  providerId: SecretManagerProviderId,
-  request: GetSecretManagerSecretRequest['request']
-} => {
-  let splits = key.split(":")
-
-  if (!(splits[0] in SecretManagerProviderId)) {
-    throw Error("Invalid provider id")
-  }
-  const providerId = splits[0] as SecretManagerProviderId
-
-  if (splits.length < 2) {
-    throw Error("Wrong format . should be providerName:secretName optionally followed by json path")
-  }
-
-  splits = splits.map(split => split.trim())
-
-  return {
-    providerId,
-    request: {
-      secretPath: splits[1],
-    }
-  }
 }

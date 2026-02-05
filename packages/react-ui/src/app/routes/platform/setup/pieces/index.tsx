@@ -155,12 +155,12 @@ const PlatformPiecesPage = () => {
                       refetchPieces();
                       refetchPiecesOAuth2AppsMap();
                     }}
-                    isEnabled={isEnabled}
+                    isEnabled={true}
                   />
                 )}
                 <PieceActions
                   pieceName={row.original.name}
-                  isEnabled={isEnabled}
+                  isEnabled={true}
                 />
               </div>
             );

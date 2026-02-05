@@ -116,6 +116,7 @@ function OAuth2ConnectionSettings({
           useMentionTextInput={false}
           propertySettings={null}
           dynamicPropsInfo={null}
+          isConnectionProperty={true}
         />
       )}
 
