@@ -1,6 +1,9 @@
 name: CI
+
 on:
   pull_request:
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -9,68 +12,270 @@ concurrency:
 permissions:
   actions: read
   contents: read
+  pull-requests: read
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  NODE_VERSION: '20'
+  BUN_VERSION: 'latest'
 
 jobs:
   main:
+    name: CI Pipeline
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     if: github.repository == 'activepieces/activepieces'
     
     steps:
-      - uses: actions/checkout@v4.1.1
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
       
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'bun'
-          
-      - uses: oven-sh/setup-bun@v2
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: ${{ env.BUN_VERSION }}
       
-      - uses: nrwl/nx-set-shas@v4
+      - name: Cache Nx
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.cache/nx
+            .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            nx-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}-
+            nx-${{ runner.os }}-
       
-      - run: bun install
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
       
-      - name: Determine changed scope
-        id: scope
+      - name: Set Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+      
+      - name: List all Nx projects
+        run: npx nx show projects --all
+      
+      - name: Get changed files
+        id: changed-files
         run: |
-          CHANGED=$(git diff --name-only $NX_BASE..$NX_HEAD)
-          
-          if echo "$CHANGED" | grep -q "community/framework\|community/common"; then
-            echo "lint_scope=pieces-*" >> $GITHUB_OUTPUT
-            echo "build_scope=pieces-*" >> $GITHUB_OUTPUT
+          if [ -n "$NX_BASE" ] && [ -n "$NX_HEAD" ]; then
+            FILES=$(git diff --name-only $NX_BASE..$NX_HEAD | tr '\n' ' ')
           else
-            PIECES=$(echo "$CHANGED" | grep -oP "packages/pieces/[^/]+/[^/]+" | \
-              awk -F'/' '{print "pieces-" $4}' | sort -u | paste -sd "," -)
-            echo "lint_scope=${PIECES:-none}" >> $GITHUB_OUTPUT
-            echo "build_scope=${PIECES:-none}" >> $GITHUB_OUTPUT
+            FILES=$(git diff --name-only origin/main...HEAD | tr '\n' ' ')
+          fi
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "Changed files: $FILES"
+      
+      - name: Check if framework or common pieces changed
+        id: check-framework-common
+        run: |
+          CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
+          if echo "$CHANGED_FILES" | grep -qE "community/framework|community/common"; then
+            echo "framework_or_common_changed=true" >> $GITHUB_OUTPUT
+            echo "Framework or common pieces changed - will lint/build all pieces"
+          else
+            echo "framework_or_common_changed=false" >> $GITHUB_OUTPUT
+            echo "Framework and common pieces unchanged - will lint/build only affected pieces"
           fi
       
-      - name: Lint
+      - name: Extract pieces projects from changed files
+        id: extract-pieces
         run: |
-          npx nx affected --target=lint --exclude="pieces-*"
-          if [ "${{ steps.scope.outputs.lint_scope }}" != "none" ]; then
-            npx nx run-many --target=lint --projects="${{ steps.scope.outputs.lint_scope }}"
+          CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "pieces_projects=" >> $GITHUB_OUTPUT
+            echo "No changed files detected"
+            exit 0
+          fi
+          
+          PIECES=$(echo "$CHANGED_FILES" | \
+            tr ' ' '\n' | \
+            grep -E "^packages/pieces/[^/]+/[^/]+" | \
+            sed 's|packages/pieces/\([^/]*\)/\([^/]*\).*|pieces-\2|' | \
+            sort -u | \
+            paste -sd "," -)
+          
+          if [ -z "$PIECES" ]; then
+            echo "pieces_projects=" >> $GITHUB_OUTPUT
+            echo "No pieces projects changed"
+          else
+            echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
+            echo "Changed pieces projects: $PIECES"
           fi
       
-      - name: Build
+      - name: Determine lint scope
+        id: lint-scope
         run: |
-          npx nx affected --target=build -c production --exclude="pieces-*"
-          if [ "${{ steps.scope.outputs.build_scope }}" != "none" ]; then
-            npx nx run-many --target=build -c production --projects="${{ steps.scope.outputs.build_scope }}"
+          if [ "${{ steps.check-framework-common.outputs.framework_or_common_changed }}" == "true" ]; then
+            echo "scope=all-pieces" >> $GITHUB_OUTPUT
+            echo "Lint scope: all pieces"
+          elif [ -n "${{ steps.extract-pieces.outputs.pieces_projects }}" ]; then
+            echo "scope=changed-pieces" >> $GITHUB_OUTPUT
+            echo "Lint scope: changed pieces only"
+          else
+            echo "scope=none" >> $GITHUB_OUTPUT
+            echo "Lint scope: no pieces"
           fi
       
-      - name: Test
+      - name: Determine build scope
+        id: build-scope
         run: |
+          if [ "${{ steps.check-framework-common.outputs.framework_or_common_changed }}" == "true" ]; then
+            echo "scope=all-pieces" >> $GITHUB_OUTPUT
+            echo "Build scope: all pieces"
+          elif [ -n "${{ steps.extract-pieces.outputs.pieces_projects }}" ]; then
+            echo "scope=changed-pieces" >> $GITHUB_OUTPUT
+            echo "Build scope: changed pieces only"
+          else
+            echo "scope=none" >> $GITHUB_OUTPUT
+            echo "Build scope: no pieces"
+          fi
+      
+      # ========================================
+      # LINT PHASE
+      # ========================================
+      
+      - name: Lint affected projects (excluding pieces)
+        run: |
+          echo "Linting affected projects (excluding pieces)..."
+          npx nx affected --target=lint --exclude="pieces-*" --verbose
+      
+      - name: Lint changed pieces projects
+        if: steps.lint-scope.outputs.scope == 'changed-pieces'
+        run: |
+          echo "Linting changed pieces: ${{ steps.extract-pieces.outputs.pieces_projects }}"
+          npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --verbose
+      
+      - name: Lint all pieces projects
+        if: steps.lint-scope.outputs.scope == 'all-pieces'
+        run: |
+          echo "Linting all pieces projects..."
+          npx nx run-many --target=lint --projects="pieces-*" --verbose
+      
+      # ========================================
+      # BUILD PHASE
+      # ========================================
+      
+      - name: Build affected projects (excluding pieces)
+        run: |
+          echo "Building affected projects (excluding pieces)..."
+          npx nx affected --target=build -c production --exclude="pieces-*" --verbose
+      
+      - name: Build changed pieces projects
+        if: steps.build-scope.outputs.scope == 'changed-pieces'
+        run: |
+          echo "Building changed pieces: ${{ steps.extract-pieces.outputs.pieces_projects }}"
+          npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --verbose
+      
+      - name: Build all pieces projects
+        if: steps.build-scope.outputs.scope == 'all-pieces'
+        run: |
+          echo "Building all pieces projects..."
+          npx nx run-many --target=build -c production --projects="pieces-*" --verbose
+      
+      # ========================================
+      # TEST PHASE
+      # ========================================
+      
+      - name: Run tests in parallel
+        run: |
+          set -euo pipefail
+          
+          echo "Starting parallel test execution..."
+          pids=()
+          
+          # Run engine and shared tests
+          echo "Starting engine,shared tests..."
           npx nx run-many --target=test --projects=engine,shared &
+          pids+=($!)
+          
+          # Run server-api CE tests
+          echo "Starting server-api CE tests..."
           npx nx run server-api:test-ce &
+          pids+=($!)
+          
+          # Run server-api EE tests
+          echo "Starting server-api EE tests..."
           npx nx run server-api:test-ee &
+          pids+=($!)
+          
+          # Run server-api Cloud tests
+          echo "Starting server-api Cloud tests..."
           npx nx run server-api:test-cloud &
+          pids+=($!)
+          
+          # Run migration check
+          echo "Starting migration check..."
           npx nx run server-api:check-migrations &
-          wait
+          pids+=($!)
+          
+          # Wait for all processes and collect exit codes
+          status=0
+          for i in "${!pids[@]}"; do
+            pid="${pids[$i]}"
+            if wait "$pid"; then
+              echo "Process $((i+1)) (PID: $pid) completed successfully"
+            else
+              exit_code=$?
+              echo "Process $((i+1)) (PID: $pid) failed with exit code $exit_code"
+              status=1
+            fi
+          done
+          
+          if [ $status -eq 0 ]; then
+            echo "All tests passed successfully!"
+          else
+            echo "One or more tests failed!"
+          fi
+          
+          exit $status
+      
+      # ========================================
+      # ARTIFACTS & REPORTING
+      # ========================================
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/test-results/**/*.xml
+            **/coverage/**
+          retention-days: 7
+          if-no-files-found: ignore
+      
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/**
+            **/dist/**
+          retention-days: 7
+          if-no-files-found: ignore
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "### CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Framework/Common Changed:** ${{ steps.check-framework-common.outputs.framework_or_common_changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lint Scope:** ${{ steps.lint-scope.outputs.scope }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Scope:** ${{ steps.build-scope.outputs.scope }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "${{ steps.extract-pieces.outputs.pieces_projects }}" ]; then
+            echo "- **Changed Pieces:** ${{ steps.extract-pieces.outputs.pieces_projects }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
