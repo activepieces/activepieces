@@ -1,7 +1,6 @@
 import path from 'path'
 import { pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { isNil, LocalesEnum } from '@activepieces/shared'
 import KeyvSqlite from '@keyv/sqlite'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -11,8 +10,9 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { pubsub } from '../../../helper/pubsub'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
-import { fetchPiecesFromDB, filterPieceBasedOnType, isSupportedRelease, loadDevPiecesIfEnabled } from '../utils'
+import { fetchPiecesFromDB, filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from '../utils'
 import { GetListParams, GetPieceVersionParams, GetRegistryParams, LocalPieceCache, PieceRegistryEntry, REDIS_REFRESH_LOCAL_PIECES_CHANNEL, State } from '.'
+import { isNil, LocalesEnum } from '@activepieces/shared'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -43,10 +43,14 @@ export const diskLocalPieceCache = (log: FastifyBaseLogger): LocalPieceCache => 
     async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
         const { platformId, locale = LocalesEnum.ENGLISH } = params
         const cache = await getOrCreateCache()
-        const list = (await cache.db.get(META_LIST_KEY(locale))) as PieceMetadataSchema[] | undefined
+        const allPieces = (await cache.db.get(META_LIST_KEY(locale))) as PieceMetadataSchema[] | undefined
         const devPieces = await loadDevPiecesIfEnabled(log)
         const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }))
-        return [...(list ?? []), ...translatedDevPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
+        
+        // Filter FIRST by platformId, then de-duplicate - this ensures each platform
+        // sees both official pieces and their own custom pieces correctly
+        const filteredPieces = [...(allPieces ?? []), ...translatedDevPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
+        return lastVersionOfEachPiece(filteredPieces)
     },
     async getPieceVersion(params: GetPieceVersionParams): Promise<PieceMetadataSchema | null> {
         const { pieceName, version, platformId } = params
@@ -135,11 +139,11 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
 
 async function storePieces(sortedPieces: PieceMetadataSchema[]): Promise<void> {
     const { db } = await getOrCreateCache()
-    const latestVersions = sortedPieces.filter((piece, index, self) => index === self.findIndex((t) => t.name === piece.name))
-    
+    // Store ALL pieces (not de-duplicated) - de-duplication happens at query time
+    // after filtering by platformId to ensure correct visibility per platform
     const supportedLocales = Object.values(LocalesEnum)
     for (const locale of supportedLocales) {
-        const translatedPieces = latestVersions.map((piece) => 
+        const translatedPieces = sortedPieces.map((piece) => 
             pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale }),
         )
         await db.set(META_LIST_KEY(locale), translatedPieces)

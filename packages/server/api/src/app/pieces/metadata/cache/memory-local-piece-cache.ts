@@ -1,6 +1,5 @@
 import { pieceTranslation } from '@activepieces/pieces-framework'
 import { memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { isNil, LocalesEnum, Result, tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -9,6 +8,7 @@ import { pubsub } from '../../../helper/pubsub'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 import { fetchPiecesFromDB, filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from '../utils'
 import { GetListParams, GetPieceVersionParams, GetRegistryParams, LocalPieceCache, PieceRegistryEntry, REDIS_REFRESH_LOCAL_PIECES_CHANNEL, State } from '.'
+import { isNil, LocalesEnum, Result, tryCatch } from '@activepieces/shared'
 
 let cache: PieceMetadataSchema[] | null = null
 const repo = repoFactory(PieceMetadataEntity)
@@ -35,14 +35,17 @@ export const memoryLocalPieceCache = (log: FastifyBaseLogger): LocalPieceCache =
             throw new Error('The cache is not yet initialized, this should not happen')
         }
         const devPieces = await loadDevPiecesIfEnabled(log)
-        const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false }))
-
-        const latestVersions = lastVersionOfEachPiece(cache)
+        
+        // Filter FIRST by platformId, then de-duplicate - this ensures each platform
+        // sees both official pieces and their own custom pieces correctly
+        const filteredPieces = [...cache, ...devPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
+        const latestVersions = lastVersionOfEachPiece(filteredPieces)
+        
         const translatedPieces = latestVersions.map((piece) => 
             pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false }),
         )
 
-        return [...translatedPieces, ...translatedDevPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
+        return translatedPieces
     },
     async getPieceVersion(params: GetPieceVersionParams): Promise<PieceMetadataSchema | null> {
         const { pieceName, version, platformId } = params
