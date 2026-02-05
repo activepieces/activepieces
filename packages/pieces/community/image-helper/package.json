@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-image-helper",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "dependencies": {
     "jimp": "^0.22.12",
     "exifreader": "4.20.0"
