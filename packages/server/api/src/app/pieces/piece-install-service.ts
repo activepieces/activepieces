@@ -105,7 +105,7 @@ const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, log
         jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
         platformId: request.platformId,
         piece: request,
-        projectId:undefined
+        projectId: undefined,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
