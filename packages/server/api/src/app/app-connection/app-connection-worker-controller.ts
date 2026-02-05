@@ -33,7 +33,6 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
                 },
             })
         }
-        console.log("appConnection", await appConnectionService(request.log).resolveSecrets(appConnection.value, enginePrincipal.platform.id))
         return {
             ...appConnection,
             value: await appConnectionService(request.log).resolveSecrets(appConnection.value, enginePrincipal.platform.id),

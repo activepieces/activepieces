@@ -1,9 +1,9 @@
-import { isString, getByPath, jsonParseWithCallback, SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil, apId, GetSecretManagerSecretRequest, tryCatch, SecretManagerProviderId, ActivepiecesError, ErrorCode } from "@activepieces/shared"
+import { SecretManagerProviderMetaData, ConnectSecretManagerRequest, isNil, apId, GetSecretManagerSecretRequest, SecretManagerProviderId, ActivepiecesError, ErrorCode, SecretManagerConfig } from "@activepieces/shared"
 import { secretManagerProvider, secretManagerProvidersMetadata } from "./secret-manager-providers/secret-manager-providers"
 import { FastifyBaseLogger } from "fastify"
-import { databaseConnection } from "../database/database-connection"
 import { SecretManagerEntity } from "./secret-manager.entity"
 import { repoFactory } from "../core/db/repo-factory"
+import { encryptUtils } from "../helper/encryption"
 
 const secretManagerRepository = repoFactory(SecretManagerEntity)
 
@@ -17,10 +17,11 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     return await Promise.all(secretManagerProvidersMetadata().map(async (metadata) => {
       const provider = secretManagerProvider(log, metadata.id)
       const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
+      const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
 
       return {
         ...metadata,
-        connected: !isNil(savedConfig) && await provider.checkConnection(savedConfig),
+        connected: !isNil(decryptedConfig) && await provider.checkConnection(decryptedConfig),
       }
     }))
   },
@@ -30,17 +31,18 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     const existing = await secretManagerRepository().findOne({
       where: { platformId: request.platformId, providerId: request.providerId },
     })
+    const encryptedConfig = await encryptUtils.encryptObject(request.config)
     if (existing) {
       return secretManagerRepository().update(
         { platformId: request.platformId, providerId: request.providerId },
-        { auth: request.config },
+        { auth: encryptedConfig },
       )
     }
     return secretManagerRepository().save({
       id: apId(),
       platformId: request.platformId,
       providerId: request.providerId,
-      auth: request.config,
+      auth: encryptedConfig,
     })
   },
 
@@ -49,8 +51,18 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     const secretManager = await secretManagerRepository().findOneOrFail({
       where: { platformId: request.platformId, providerId: request.providerId },
     })
-    await provider.checkConnection(secretManager.auth)
-    return provider.getSecret(request.request, secretManager.auth) 
+    const decryptedConfig = secretManager.auth ? await encryptUtils.decryptObject<SecretManagerConfig>(secretManager.auth) : undefined
+    if (!decryptedConfig) {
+      throw new ActivepiecesError({
+        code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
+        params: {
+          message: "Secret manager configuration is not valid",
+          provider: request.providerId,
+          request: request.request,
+        },
+      })
+    }
+    return provider.getSecret(request.request, decryptedConfig) 
   },
 
   async resolve({ key, platformId }: { key: string, platformId: string }) {

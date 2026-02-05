@@ -5,8 +5,8 @@ import { apAxios } from "@activepieces/server-shared";
 
 export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
   id: SecretManagerProviderId.HASHICORP,
-  name: "Hashicorp",
-  logo: "https://www.hashicorp.com/logo.png",
+  name: "Hashicorp Vault",
+  logo: "https://icon.icepanel.io/Technology/svg/HashiCorp-Vault.svg",
   fields: {
     url: {
       displayName: "URL",

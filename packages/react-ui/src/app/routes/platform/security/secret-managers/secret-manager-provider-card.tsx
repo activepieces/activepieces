@@ -13,8 +13,8 @@ const SecretManagerProviderCard = ({
 }: SecretManagerProviderCardProps) => {
   return (
     <Card className="w-full flex justify-between items-center px-4 py-4">
-      <div className="flex gap-2 items-center">
-        <img className='w-20' src={provider.logo} alt={provider.name} />
+      <div className="flex gap-8 items-center">
+        <img className='w-10' src={provider.logo} alt={provider.name} />
         <div>
           <div className='text-lg'>{provider.name}</div>
           <div className='text-sm text-muted-foreground'>

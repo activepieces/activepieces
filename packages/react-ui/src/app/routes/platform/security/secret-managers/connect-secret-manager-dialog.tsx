@@ -7,7 +7,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useState } from 'react';
-import { ConnectSecretManagerRequest, SecretManagerProviderMetaData } from '@activepieces/shared';
+import { ApErrorParams, ConnectSecretManagerRequest, SecretManagerProviderMetaData } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Form,
@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 
 type ConnectSecretManagerDialogProps = {
@@ -44,11 +43,7 @@ const ConnectSecretManagerDialog = ({
       onSuccess: () => {
         form.reset();
         setOpen(false);
-        toast.success(t("Connected successfully"))
-      },
-      onError: (error) => {
-        toast.error(error.message)
-      },
+      }
     }
   );
   }

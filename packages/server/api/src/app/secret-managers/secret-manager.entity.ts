@@ -4,9 +4,11 @@ import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../database/database-common'
+import { EncryptedObject } from '../helper/encryption'
 
-export type SecretManagerEntitySchema = SecretManager & {
+export type SecretManagerEntitySchema = Omit<SecretManager, 'auth'> & {
     platform?: Platform
+    auth?: EncryptedObject
 }
 
 export const SecretManagerEntity = new EntitySchema<SecretManagerEntitySchema>({
