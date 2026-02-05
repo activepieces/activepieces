@@ -1,7 +1,8 @@
-import dayjs from 'dayjs';
+import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
@@ -21,6 +22,8 @@ import {
   StepSettings,
   FlowTriggerType,
   debounce,
+  FlowAction,
+  FlowTrigger,
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
@@ -39,7 +42,7 @@ export type FlowState = {
     onSuccess?: () => void,
   ) => void;
   setFlow: (flow: PopulatedFlow) => void;
-  setSampleData: (params: {
+  setSampleDataLocally: (params: {
     stepName: string;
     type: 'input' | 'output';
     value: unknown;
@@ -73,7 +76,9 @@ export type FlowState = {
 export type FlowInitialState = Pick<
   FlowState,
   'flow' | 'flowVersion' | 'outputSampleData' | 'inputSampleData'
->;
+> & {
+  queryClient: QueryClient;
+};
 
 export const createFlowState = (
   initialState: FlowInitialState,
@@ -114,7 +119,7 @@ export const createFlowState = (
       });
     },
     setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
-    setSampleData: ({
+    setSampleDataLocally: ({
       stepName,
       value,
       type,
@@ -167,25 +172,39 @@ export const createFlowState = (
           console.warn('Cannot apply operation while readonly');
           return state;
         }
-        let newFlowVersion = flowOperations.apply(state.flowVersion, operation);
-
+        const newFlowVersion = flowOperations.apply(
+          state.flowVersion,
+          operation,
+        );
         state.operationListeners.forEach((listener) => {
           listener(state.flowVersion, operation);
         });
         set({ saving: true });
         const updateRequest = async () => {
           try {
-            const updatedFlowVersion = await flowsApi.update(
+            const { version: serverFlowVersion } = await flowsApi.update(
               state.flow.id,
               operation,
               true,
             );
+            if (operation.type === FlowOperationType.SAVE_SAMPLE_DATA) {
+              sampleDataHooks.invalidateSampleData(
+                serverFlowVersion.id,
+                initialState.queryClient,
+              );
+            }
             set((state) => {
+              const updatedFlowVersionWithUpdatedSampleData =
+                handleUpdatingSampleDataForStepLocallyAfterServerUpdate({
+                  operation,
+                  localFlowVersion: state.flowVersion,
+                  updatedFlowVersion: serverFlowVersion,
+                });
               return {
                 flowVersion: {
-                  ...state.flowVersion,
-                  id: updatedFlowVersion.version.id,
-                  state: updatedFlowVersion.version.state,
+                  ...updatedFlowVersionWithUpdatedSampleData,
+                  id: serverFlowVersion.id,
+                  state: serverFlowVersion.state,
                 },
                 saving: flowUpdatesQueue.size() !== 0,
               };
@@ -200,32 +219,6 @@ export const createFlowState = (
         switch (operation.type) {
           case FlowOperationType.SAVE_SAMPLE_DATA: {
             flowUpdatesQueue.add(updateRequest);
-            const step = flowStructureUtil.getStep(
-              operation.request.stepName,
-              newFlowVersion.trigger,
-            );
-            if (isNil(step)) {
-              console.error(`Step ${operation.request.stepName} not found`);
-              return state;
-            }
-            step.settings.sampleData = {
-              ...step.settings.sampleData,
-              lastTestDate: dayjs().toISOString(),
-            };
-            if (
-              step.type === FlowTriggerType.PIECE ||
-              step.type === FlowTriggerType.EMPTY
-            ) {
-              newFlowVersion = flowOperations.apply(newFlowVersion, {
-                type: FlowOperationType.UPDATE_TRIGGER,
-                request: step,
-              });
-            } else {
-              newFlowVersion = flowOperations.apply(newFlowVersion, {
-                type: FlowOperationType.UPDATE_ACTION,
-                request: step,
-              });
-            }
 
             break;
           }
@@ -409,4 +402,49 @@ export const createFlowState = (
       return defaultValues.name;
     },
   };
+};
+
+const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
+  operation,
+  localFlowVersion,
+  updatedFlowVersion,
+}: {
+  operation: FlowOperationRequest;
+  localFlowVersion: FlowVersion;
+  updatedFlowVersion: FlowVersion;
+}) => {
+  if (operation.type !== FlowOperationType.SAVE_SAMPLE_DATA) {
+    return localFlowVersion;
+  }
+  const localStep = flowStructureUtil.getStep(
+    operation.request.stepName,
+    updatedFlowVersion.trigger,
+  );
+  const updatedStep = flowStructureUtil.getStep(
+    operation.request.stepName,
+    updatedFlowVersion.trigger,
+  );
+  if (isNil(localStep) || isNil(updatedStep)) {
+    console.error(`Step ${operation.request.stepName} not found`);
+    return localFlowVersion;
+  }
+  const clonedLocalStepWithUpdatedSampleDataProperty: FlowAction | FlowTrigger =
+    JSON.parse(JSON.stringify(localStep));
+  clonedLocalStepWithUpdatedSampleDataProperty.settings.sampleData =
+    updatedStep.settings.sampleData;
+  if (
+    flowStructureUtil.isAction(
+      clonedLocalStepWithUpdatedSampleDataProperty.type,
+    )
+  ) {
+    return flowOperations.apply(localFlowVersion, {
+      type: FlowOperationType.UPDATE_ACTION,
+      request: clonedLocalStepWithUpdatedSampleDataProperty as FlowAction,
+    });
+  } else {
+    return flowOperations.apply(localFlowVersion, {
+      type: FlowOperationType.UPDATE_TRIGGER,
+      request: clonedLocalStepWithUpdatedSampleDataProperty as FlowTrigger,
+    });
+  }
 };

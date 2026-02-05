@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-airtable",
-  "version": "0.6.2",
+  "version": "0.6.4",
   "dependencies": {
     "airtable": "0.11.6"
   }

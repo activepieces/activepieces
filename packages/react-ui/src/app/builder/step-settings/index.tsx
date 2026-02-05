@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import {
   FlowAction,
   FlowActionType,
@@ -72,6 +73,10 @@ const StepSettingsContainer = () => {
     disabled: readonly,
     reValidateMode: 'onChange',
     defaultValues: selectedStep,
+    resetOptions: {
+      keepDefaultValues: false,
+      keepDirtyValues: true,
+    },
     resolver: async (values, context, options) => {
       const result = await typeboxResolver(formSchema)(
         values,
@@ -196,7 +201,12 @@ const StepSettingsContainer = () => {
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
-                <div className="flex flex-col gap-3 px-4 pb-6">
+                <div
+                  className={cn(
+                    'flex flex-col px-4 pb-6',
+                    GAP_SIZE_FOR_STEP_SETTINGS,
+                  )}
+                >
                   {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-google-contacts",
-  "version": "0.4.1",
+  "version": "0.4.3",
   "dependencies": {
     "googleapis": "129.0.0"
   }

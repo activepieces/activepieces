@@ -1,7 +1,7 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateText, LanguageModel, Output, Tool } from 'ai'
-import { z } from 'zod/v3'
+import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
+import { z } from 'zod'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
@@ -107,7 +107,7 @@ async function resolveProperties(
 
         if (Object.keys(propertyToFill).length === 0) continue
 
-        const schemaObject = z.object(propertyToFill) as z.ZodTypeAny
+        const schemaObject = zodSchema(z.object(propertyToFill).strict())
         const extractionPrompt = constructExtractionPrompt(
             instruction,
             propertyToFill,
@@ -120,7 +120,16 @@ async function resolveProperties(
             prompt: extractionPrompt,
             output: Output.object({
                 schema: schemaObject,
+
             }),
+            
+        }).catch(error => {
+            if (NoObjectGeneratedError.isInstance(error) && JSONParseError.isInstance(error.cause) && error.text?.startsWith('```json') && error.text?.endsWith('```')) {
+                return {
+                    output: JSON.parse(error.text.replace('```json', '').replace('```', '')),
+                }
+            }
+            throw error
         })
 
         result = {
@@ -238,12 +247,12 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
             break
         case PropertyType.DROPDOWN:
         case PropertyType.STATIC_DROPDOWN: {
-            schema = z.union([z.string(), z.number(), z.record(z.string(), z.unknown())])
+            schema = z.union([z.string(), z.number(), z.object({}).loose()])
             break
         }
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN: {
-            schema = z.union([z.array(z.string()), z.array(z.record(z.string(), z.unknown()))])
+            schema = z.union([z.array(z.string()), z.array(z.object({}).loose())])
             break
         }
         case PropertyType.NUMBER:
@@ -252,10 +261,10 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.ARRAY:
             return z.array(z.string())
         case PropertyType.OBJECT:
-            schema = z.record(z.string(), z.unknown())
+            schema = z.object({}).loose()
             break
         case PropertyType.JSON:
-            schema = z.record(z.string(), z.unknown())
+            schema = z.object({}).loose()
             break
         case PropertyType.DYNAMIC: {
             schema = await buildDynamicSchema(propertyName, operation, resolvedInput)
@@ -272,9 +281,6 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.CUSTOM_AUTH:
         case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`)
-    }
-    if (property.defaultValue) {
-        schema = schema.default(property.defaultValue)
     }
     if (property.description) {
         schema = schema.describe(property.description)
@@ -304,6 +310,7 @@ type PropertyDetail = {
     type: PropertyType
     description?: string
     options?: DropdownOption<unknown>[]
+    defaultValue?: unknown
 }
 
 async function buildPropertyDetail(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<PropertyDetail | null> {
@@ -311,6 +318,7 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
         name: propertyName,
         type: property.type,
         description: property.description,
+        defaultValue: property.defaultValue,
     }
 
     if (

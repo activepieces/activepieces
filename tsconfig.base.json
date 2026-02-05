@@ -1780,6 +1780,12 @@
       ],
       "@activepieces/piece-google-search": [
         "packages/pieces/community/google-search/src/index.ts"
+      ],
+      "@activepieces/piece-asknews": [
+        "packages/pieces/community/asknews/src/index.ts"
+      ],
+      "@activepieces/piece-valyu": [
+        "packages/pieces/community/valyu/src/index.ts"
       ]
     },
     "resolveJsonModule": true

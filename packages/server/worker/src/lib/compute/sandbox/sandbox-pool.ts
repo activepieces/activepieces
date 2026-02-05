@@ -1,10 +1,12 @@
 import { ApEnvironment, ExecutionMode, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import { devPiecesState } from '../../cache/pieces/development/dev-pieces-state'
 import { workerMachine } from '../../utils/machine'
 import { createSandbox, Sandbox } from './sandbox'
 
 const sandboxes: Map<string, Sandbox> = new Map()
+const sandboxGenerations: Map<string, number> = new Map()
 let sandboxQueue: string[] = []
 let workerConcurrency: number
 let sandboxMemoryLimit: number
@@ -23,14 +25,24 @@ export const sandboxPool = {
         reusable = canReuseWorkers()
         sandboxQueue = Array.from({ length: workerConcurrency }, () => nanoid())
     },
-    allocate: (log: FastifyBaseLogger): Sandbox => {
+    allocate: async (log: FastifyBaseLogger): Promise<Sandbox> => {
         const sandboxId = sandboxQueue.shift()
         if (!sandboxId) {
             throw new Error('No sandbox available')
         }
         const existingSandbox = sandboxes.get(sandboxId)
         if (!isNil(existingSandbox)) {
-            return existingSandbox
+            const workerGeneration = sandboxGenerations.get(sandboxId) ?? 0
+            if (devPiecesState.isWorkerGenerationStale(workerGeneration)) {
+                log.debug({ sandboxId, workerGeneration }, 'Sandbox generation stale, restarting')
+                await existingSandbox.shutdown()
+                sandboxes.delete(sandboxId)
+                sandboxGenerations.delete(sandboxId)
+            }
+            else {
+                log.debug({ sandboxId, workerGeneration }, 'Sandbox generation is up to date, reusing')
+                return existingSandbox
+            }
         }
         const workerSettings = workerMachine.getSettings()
         const allowedEnvVariables = workerSettings.SANDBOX_PROPAGATED_ENV_VARS
@@ -51,6 +63,7 @@ export const sandboxPool = {
             reusable,
         })
         sandboxes.set(sandboxId, newSandbox)
+        sandboxGenerations.set(sandboxId, devPiecesState.getGeneration())
         return newSandbox
     },
     release: async (sandbox: Sandbox | undefined) => {
@@ -68,6 +81,7 @@ export const sandboxPool = {
             await sandbox.shutdown()
         }
         sandboxes.clear()
+        sandboxGenerations.clear()
     },
 }
 

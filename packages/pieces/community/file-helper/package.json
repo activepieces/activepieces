@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-file-helper",
-  "version": "0.1.18",
+  "version": "0.1.21",
   "dependencies": {
     "@zip.js/zip.js": "^2.8.15"
   }
