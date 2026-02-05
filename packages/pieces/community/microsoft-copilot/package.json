@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-microsoft-365-copilot",
+  "name": "@activepieces/piece-microsoft-copilot",
   "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",

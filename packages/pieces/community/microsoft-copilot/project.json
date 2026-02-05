@@ -1,7 +1,7 @@
 {
-  "name": "pieces-microsoft-365-copilot",
+  "name": "pieces-microsoft-copilot",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/microsoft-365-copilot/src",
+  "sourceRoot": "packages/pieces/community/microsoft-copilot/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/microsoft-365-copilot",
-        "tsConfig": "packages/pieces/community/microsoft-365-copilot/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/microsoft-365-copilot/package.json",
-        "main": "packages/pieces/community/microsoft-365-copilot/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/microsoft-copilot",
+        "tsConfig": "packages/pieces/community/microsoft-copilot/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/microsoft-copilot/package.json",
+        "main": "packages/pieces/community/microsoft-copilot/src/index.ts",
         "assets": [
-          "packages/pieces/community/microsoft-365-copilot/*.md",
+          "packages/pieces/community/microsoft-copilot/*.md",
           {
-            "input": "packages/pieces/community/microsoft-365-copilot/src/i18n",
+            "input": "packages/pieces/community/microsoft-copilot/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
@@ -52,7 +52,7 @@
       ],
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "packages/pieces/community/microsoft-365-copilot",
+        "cwd": "packages/pieces/community/microsoft-copilot",
         "command": "bun install --no-save --silent"
       }
     },

@@ -1781,8 +1781,8 @@
       "@activepieces/piece-google-search": [
         "packages/pieces/community/google-search/src/index.ts"
       ],
-      "@activepieces/piece-microsoft-365-copilot": [
-        "packages/pieces/community/microsoft-365-copilot/src/index.ts"
+      "@activepieces/piece-microsoft-copilot": [
+        "packages/pieces/community/microsoft-copilot/src/index.ts"
       ],
       "@activepieces/piece-asknews": [
         "packages/pieces/community/asknews/src/index.ts"
