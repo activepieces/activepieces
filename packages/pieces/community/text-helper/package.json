@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-text-helper",
-  "version": "0.4.10",
+  "version": "0.4.11",
   "dependencies": {
     "showdown": "2.1.0",
     "slugify": "1.6.6",

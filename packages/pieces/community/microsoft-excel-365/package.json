@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-excel-365",
-  "version": "0.3.3",
+  "version": "0.4.2",
   "dependencies": {
     "@microsoft/microsoft-graph-client": "3.0.7",
     "@microsoft/microsoft-graph-types": "2.40.0"

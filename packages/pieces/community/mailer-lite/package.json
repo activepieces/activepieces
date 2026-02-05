@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mailer-lite",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "dependencies": {
     "@mailerlite/mailerlite-nodejs": "1.1.0"
   }
