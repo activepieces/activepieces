@@ -2,6 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { alaiAuth } from '../common/auth';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const generatePresentation = createAction({
   auth: alaiAuth,
   name: 'generatePresentation',
@@ -15,7 +17,8 @@ export const generatePresentation = createAction({
     }),
     additionalInstructions: Property.LongText({
       displayName: 'Additional Instructions',
-      description: 'Extra instructions for how the presentation should be generated.',
+      description:
+        'Extra instructions for how the presentation should be generated.',
       required: false,
     }),
     exportFormats: Property.StaticMultiSelectDropdown({
@@ -32,33 +35,20 @@ export const generatePresentation = createAction({
     }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'A title for the presentation. If not provided, one will be generated.',
+      description:
+        'A title for the presentation. If not provided, one will be generated.',
       required: false,
     }),
-    themeId: Property.StaticDropdown({
-      displayName: 'Theme',
-      description: 'The visual theme for the presentation.',
+    themeId: Property.ShortText({
+      displayName: 'Theme ID',
+      description:
+        'The ID of the presentation theme to use. If not provided, a default theme will be applied.',
       required: false,
-      options: {
-        options: [
-          { label: 'Default', value: 'default' },
-          { label: 'Starter', value: 'starter' },
-          { label: 'Modern', value: 'modern' },
-          { label: 'Corporate', value: 'corporate' },
-          { label: 'Creative', value: 'creative' },
-          { label: 'Elegant', value: 'elegant' },
-          { label: 'Playful', value: 'playful' },
-          { label: 'Bold', value: 'bold' },
-          { label: 'Minimal', value: 'minimal' },
-          { label: 'Academic', value: 'academic' },
-          { label: 'Tech', value: 'tech' },
-          { label: 'Nature', value: 'nature' },
-        ],
-      },
     }),
     slideRange: Property.ShortText({
       displayName: 'Slide Range',
-      description: 'Number of slides to generate (e.g., "8-12").',
+      description:
+        'Target slide count: auto, 1, 2-5, 6-10, 11-15, 16-20, 21-25, 26-50.',
       required: false,
     }),
     tone: Property.StaticDropdown({
@@ -67,42 +57,79 @@ export const generatePresentation = createAction({
       required: false,
       options: {
         options: [
-          { label: 'Professional', value: 'professional' },
-          { label: 'Casual', value: 'casual' },
-          { label: 'Enthusiastic', value: 'enthusiastic' },
-          { label: 'Informative', value: 'informative' },
-          { label: 'Persuasive', value: 'persuasive' },
-          { label: 'Inspirational', value: 'inspirational' },
-          { label: 'Educational', value: 'educational' },
-          { label: 'Storytelling', value: 'storytelling' },
-          { label: 'Technical', value: 'technical' },
-          { label: 'Humorous', value: 'humorous' },
-          { label: 'Formal', value: 'formal' },
+          { label: 'Default', value: 'DEFAULT' },
+          { label: 'Professional', value: 'PROFESSIONAL' },
+          { label: 'Casual', value: 'CASUAL' },
+          { label: 'Technical', value: 'TECHNICAL' },
+          { label: 'Educational', value: 'EDUCATIONAL' },
+          { label: 'Inspirational', value: 'INSPIRATIONAL' },
+          { label: 'Narrative', value: 'NARRATIVE' },
+          { label: 'Persuasive', value: 'PERSUASIVE' },
+          { label: 'Authoritative', value: 'AUTHORITATIVE' },
+          { label: 'Empathetic', value: 'EMPATHETIC' },
         ],
       },
     }),
     contentMode: Property.StaticDropdown({
       displayName: 'Content Mode',
-      description: 'How the input text should be used.',
+      description: 'How the input text should be handled.',
       required: false,
       options: {
         options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Document', value: 'document' },
-          { label: 'Topic', value: 'topic' },
+          { label: 'Preserve', value: 'PRESERVE' },
+          { label: 'Condense', value: 'CONDENSE' },
+          { label: 'Enhance', value: 'ENHANCE' },
+          { label: 'Custom', value: 'CUSTOM' },
+        ],
+      },
+    }),
+    amountMode: Property.StaticDropdown({
+      displayName: 'Text Density',
+      description: 'The amount of text to include per slide.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Minimal', value: 'MINIMAL' },
+          { label: 'Essential', value: 'ESSENTIAL' },
+          { label: 'Balanced', value: 'BALANCED' },
+          { label: 'Detailed', value: 'DETAILED' },
         ],
       },
     }),
     includeAiImages: Property.Checkbox({
       displayName: 'Include AI Images',
-      description: 'Whether to include AI-generated images in the presentation.',
+      description:
+        'Whether to include AI-generated images in the presentation.',
       required: false,
       defaultValue: true,
     }),
-    imageStyle: Property.ShortText({
+    imageStyle: Property.StaticDropdown({
       displayName: 'Image Style',
-      description: 'The style for AI-generated images (e.g., "photorealistic", "illustration").',
+      description: 'The style for AI-generated images.',
       required: false,
+      options: {
+        options: [
+          { label: 'Auto', value: 'auto' },
+          { label: 'Realistic', value: 'realistic' },
+          { label: 'Artistic', value: 'artistic' },
+          { label: 'Cartoon', value: 'cartoon' },
+          { label: '3D', value: 'three_d' },
+        ],
+      },
+    }),
+    waitForCompletion: Property.Checkbox({
+      displayName: 'Wait for Completion',
+      description:
+        'Wait for the presentation generation to complete before returning.',
+      required: false,
+      defaultValue: false,
+    }),
+    maxWaitTime: Property.Number({
+      displayName: 'Max Wait Time (seconds)',
+      description:
+        'Maximum time to wait for completion (default 300 seconds / 5 minutes).',
+      required: false,
+      defaultValue: 300,
     }),
   },
   async run(context) {
@@ -115,35 +142,48 @@ export const generatePresentation = createAction({
       slideRange,
       tone,
       contentMode,
+      amountMode,
       includeAiImages,
       imageStyle,
+      waitForCompletion,
+      maxWaitTime,
     } = context.propsValue;
+
     const body: Record<string, unknown> = {
       input_text: inputText,
     };
-    if (additionalInstructions) body['additional_instructions'] = additionalInstructions;
-    if (exportFormats && exportFormats.length > 0) body['export_formats'] = exportFormats;
-    if (title) body['title'] = title;
+
+    if (additionalInstructions)
+      body['additional_instructions'] = additionalInstructions;
+    if (exportFormats && exportFormats.length > 0)
+      body['export_formats'] = exportFormats;
+    else body['export_formats'] = ['link'];
+
     const presentationOptions: Record<string, unknown> = {};
+    if (title) presentationOptions['title'] = title;
     if (themeId) presentationOptions['theme_id'] = themeId;
     if (slideRange) presentationOptions['slide_range'] = slideRange;
     if (Object.keys(presentationOptions).length > 0) {
       body['presentation_options'] = presentationOptions;
     }
+
     const textOptions: Record<string, unknown> = {};
     if (tone) textOptions['tone'] = tone;
     if (contentMode) textOptions['content_mode'] = contentMode;
+    if (amountMode) textOptions['amount_mode'] = amountMode;
     if (Object.keys(textOptions).length > 0) {
       body['text_options'] = textOptions;
     }
+
     const imageOptions: Record<string, unknown> = {};
     if (includeAiImages !== undefined && includeAiImages !== null) {
       imageOptions['include_ai_images'] = includeAiImages;
     }
-    if (imageStyle) imageOptions['image_style'] = imageStyle;
+    if (imageStyle) imageOptions['style'] = imageStyle;
     if (Object.keys(imageOptions).length > 0) {
       body['image_options'] = imageOptions;
     }
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://slides-api.getalai.com/api/v1/generations',
@@ -153,6 +193,52 @@ export const generatePresentation = createAction({
       },
       body,
     });
-    return response.body;
+
+    const generationId = response.body?.generation_id;
+
+    if (!generationId) {
+      throw new Error(
+        `Failed to get generation_id from response: ${JSON.stringify(
+          response.body
+        )}`
+      );
+    }
+
+    if (!waitForCompletion) {
+      return response.body;
+    }
+
+    // Wait a bit before polling to ensure the generation is indexed in the database
+    await sleep(1000);
+
+    // Poll for completion
+    const maxWait = (maxWaitTime || 300) * 1000; // Convert to milliseconds
+    const startTime = Date.now();
+    const pollInterval = 5000; // Poll every 5 seconds
+
+    while (Date.now() - startTime < maxWait) {
+      const statusResponse = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://slides-api.getalai.com/api/v1/generations/${generationId}`,
+        headers: {
+          Authorization: `Bearer ${context.auth.props.apiKey}`,
+        },
+      });
+
+      const status = statusResponse.body?.status;
+
+      if (status === 'completed') {
+        return statusResponse.body;
+      } else if (status === 'failed') {
+        throw new Error(
+          `Generation failed: ${statusResponse.body?.error || 'Unknown error'}`
+        );
+      }
+
+      // Wait before polling again
+      await sleep(pollInterval);
+    }
+
+    throw new Error(`Generation timed out after ${maxWaitTime || 300} seconds`);
   },
 });

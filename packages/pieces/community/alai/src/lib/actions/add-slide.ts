@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { alaiAuth } from '../common/auth';
+import { presentationId } from '../common/props';
 
 export const addSlide = createAction({
   auth: alaiAuth,
@@ -8,19 +9,20 @@ export const addSlide = createAction({
   displayName: 'Add Slide',
   description: 'Add a new slide to an existing presentation.',
   props: {
-    presentationId: Property.ShortText({
-      displayName: 'Presentation ID',
-      description: 'The ID of the presentation to add a slide to.',
-      required: true,
-    }),
-    inputText: Property.LongText({
-      displayName: 'Input Text',
-      description: 'The text content for the new slide.',
+    presentationId: presentationId,
+    slide_context: Property.LongText({
+      displayName: 'Slide Context',
+      description: 'The content or topic for the slide to be generated.',
       required: true,
     }),
     additionalInstructions: Property.LongText({
       displayName: 'Additional Instructions',
       description: 'Extra instructions for how the slide should be generated.',
+      required: false,
+    }),
+    slide_order: Property.ShortText({
+      displayName: 'Slide Order',
+      description: 'The position to insert the new slide (e.g., "0" for the first slide, "end" to add at the end).',
       required: false,
     }),
     includeAiImages: Property.Checkbox({
@@ -36,20 +38,28 @@ export const addSlide = createAction({
     }),
   },
   async run(context) {
-    const { presentationId, inputText, additionalInstructions, includeAiImages, imageStyle } =
+    const { presentationId, slide_context, additionalInstructions, slide_order, includeAiImages, imageStyle } =
       context.propsValue;
+    
+    const options: Record<string, unknown> = {};
+    if (additionalInstructions) {
+      options['additional_instructions'] = additionalInstructions;
+    }
+    if (slide_order) {
+      options['slide_order'] = isNaN(Number(slide_order)) ? slide_order : Number(slide_order);
+    }
+    if (includeAiImages) {
+      options['num_image_variants'] = imageStyle ? 2 : 1;
+    } else {
+      options['num_image_variants'] = 0;
+    }
+
     const body: Record<string, unknown> = {
-      input_text: inputText,
+      slide_context: slide_context,
+      options,
+      export_formats: ['link'],
     };
-    if (additionalInstructions) body['additional_instructions'] = additionalInstructions;
-    const imageOptions: Record<string, unknown> = {};
-    if (includeAiImages !== undefined && includeAiImages !== null) {
-      imageOptions['include_ai_images'] = includeAiImages;
-    }
-    if (imageStyle) imageOptions['image_style'] = imageStyle;
-    if (Object.keys(imageOptions).length > 0) {
-      body['image_options'] = imageOptions;
-    }
+    
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://slides-api.getalai.com/api/v1/presentations/${presentationId}/slides`,
