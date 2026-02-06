@@ -1,11 +1,11 @@
 {
-  "Stay updated with RSS feeds": "Stay updated with RSS feeds",
-  "New Item In Feed": "New Item In Feed",
-  "New Items in Multiple Feeds": "New Items in Multiple Feeds",
-  "Runs when a new item is added in the RSS feed": "Runs when a new item is added in the RSS feed",
-  "Runs when a new item is added in one of the RSS feed": "Runs when a new item is added in one of the RSS feed",
+  "Stay updated with RSS feeds": "随时更新 RSS 源",
+  "New Item In Feed": "新闻源中的新项目",
+  "New Items in Multiple Feeds": "多种源中的新项目",
+  "Runs when a new item is added in the RSS feed": "当一个新项目添加到RSS feed时运行",
+  "Runs when a new item is added in one of the RSS feed": "当一个RSS种子中添加一个新项目时运行",
   "RSS Feed URL": "RSS Feed URL",
-  "RSS Feed URLs": "RSS Feed URLs",
-  "Single RSS feed URL": "Single RSS feed URL",
-  "List of RSS feed URLs": "List of RSS feed URLs"
+  "RSS Feed URLs": "RSS Feed URL",
+  "Single RSS feed URL": "单个RSS feed URL",
+  "List of RSS feed URLs": "RSS feed URL 列表"
 }
