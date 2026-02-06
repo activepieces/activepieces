@@ -1,15 +1,15 @@
 {
   "Base URL": "基本网址",
-  "API key": "API key",
-  "Enter the base URL": "Enter the base URL",
-  "Enter the API key from your Aminos One panel": "Enter the API key from your Aminos One panel",
-  "Enter Aminos One authentication details": "Enter Aminos One authentication details",
-  "Create User on Aminos One": "Create User on Aminos One",
-  "Create a user and plan in Aminos One Panel": "Create a user and plan in Aminos One Panel",
-  "Username (e-mail)": "Username (e-mail)",
-  "Name of user": "Name of user",
-  "Plan ID": "Plan ID",
-  "Username, should be an e-mail address": "Username, should be an e-mail address",
-  "The name of the user": "The name of the user",
-  "Plan ID number from the plans in your Aminos One panel": "Plan ID number from the plans in your Aminos One panel"
+  "API key": "API 密钥",
+  "Enter the base URL": "输入基础URL",
+  "Enter the API key from your Aminos One panel": "从您的 Aminos 一面板输入 API 密钥",
+  "Enter Aminos One authentication details": "输入Aminos One 身份验证详细信息",
+  "Create User on Aminos One": "在 Aminos One 上创建用户",
+  "Create a user and plan in Aminos One Panel": "在 Aminos One 面板中创建用户和计划",
+  "Username (e-mail)": "用户名 (e-mail)",
+  "Name of user": "用户名称",
+  "Plan ID": "计划 ID",
+  "Username, should be an e-mail address": "用户名，应为电子邮件地址",
+  "The name of the user": "用户名称",
+  "Plan ID number from the plans in your Aminos One panel": "Plan ID 编号来自您的Aminos One 面板的计划"
 }
