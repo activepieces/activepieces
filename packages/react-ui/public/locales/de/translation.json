@@ -486,8 +486,6 @@
   "Time Saved": "",
   "Estimated hours saved through automation in the last 3 months. Each automated task saves valuable employee time that can be redirected to high-impact work.": "",
   "Equivalent to {days} workdays saved": "",
-  "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_one": "",
-  "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
   "Click the": "",
   "pencil icon in the table below to set time saved per run": "",
   "Trends": "",
@@ -844,11 +842,7 @@
   "By": "",
   "No flow preview available": "",
   "Flow created successfully": "",
-  "{count} flows created successfully in a new folder_one": "",
-  "{count} flows created successfully in a new folder_other": "",
   "Failed to create flow from template": "",
-  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._one": "",
-  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": "",
   "Select the project and folder where you want to use this template.": "",
   "Select a project": "",
   "Select a folder": "Ordner auswählen",
@@ -1388,5 +1382,11 @@
   "License activated successfully!": "Lizenz erfolgreich aktiviert!",
   "Activation failed, invalid license key": "Aktivierung fehlgeschlagen, ungültiger Lizenzschlüssel",
   "Today": "Heute",
-  "Yesterday": "Gestern"
+  "Yesterday": "Gestern",
+  "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_one": "",
+  "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
+  "{count} flows created successfully in a new folder_one": "",
+  "{count} flows created successfully in a new folder_other": "",
+  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._one": "",
+  "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": ""
 }
