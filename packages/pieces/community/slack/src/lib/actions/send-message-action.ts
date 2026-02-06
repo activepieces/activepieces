@@ -68,7 +68,7 @@ export const slackSendMessageAction = createAction({
     const blockList: (KnownBlock | Block)[] = [];
 
 
-    if (text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+    if (text) {
       blockList.push(...textToSectionBlocks(text));
     }
 
