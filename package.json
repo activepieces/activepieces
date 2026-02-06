@@ -414,7 +414,7 @@
     "vite-plugin-html": "3.2.2",
     "vitest": "3.0.8",
     "wait-on": "7.2.0",
-    "webpack": "5.101.3",
+    "webpack": "5.104.1",
     "webpack-cli": "5.1.4",
     "webpack-ignore-dynamic-require": "1.0.0"
   },
