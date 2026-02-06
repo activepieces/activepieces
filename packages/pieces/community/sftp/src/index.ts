@@ -59,7 +59,7 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
         if (beginMatch && endMatch) {
           const header = beginMatch[1];
           const footer = endMatch[1];
-          let base64Content = processedKey
+          const base64Content = processedKey
             .replace(header, '')
             .replace(footer, '')
             .replace(/\s+/g, ''); // Remove all whitespace from base64
