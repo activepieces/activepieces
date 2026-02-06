@@ -1783,6 +1783,9 @@
       ],
       "@activepieces/piece-asknews": [
         "packages/pieces/community/asknews/src/index.ts"
+      ],
+      "@activepieces/piece-valyu": [
+        "packages/pieces/community/valyu/src/index.ts"
       ]
     },
     "resolveJsonModule": true

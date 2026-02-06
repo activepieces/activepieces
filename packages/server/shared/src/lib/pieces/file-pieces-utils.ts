@@ -2,7 +2,6 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
-import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
@@ -73,6 +72,14 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
             return []
         }
     },
+
+
+    clearPieceModuleCache: (distFolderPath: string): void => {
+        const indexPath = join(distFolderPath, 'src', 'index')
+        const packageJsonPath = join(distFolderPath, 'package.json')
+        clearModule(indexPath)
+        clearModule(packageJsonPath)
+    },
 })
 
 const findAllPiecesFolder = async (folderPath: string): Promise<string[]> => {
@@ -100,13 +107,11 @@ const loadPieceFromFolder = async (
     folderPath: string,
 ): Promise<PieceMetadata | null> => {
     const indexPath = join(folderPath, 'src', 'index')
-    clearModule(indexPath)
-    const packageJson = importFresh<Record<string, string>>(
-        join(folderPath, 'package.json'),
-    )
-    const module = importFresh<Record<string, unknown>>(
-        indexPath,
-    )
+    const packageJsonPath = join(folderPath, 'package.json')
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const packageJson = require(packageJsonPath)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const module = require(indexPath)
     const { name: pieceName, version: pieceVersion } = packageJson
     const piece = extractPieceFromModule<Piece>({
         module,

@@ -53,9 +53,9 @@ function AutoFormFieldWrapper({
       property={property ?? null}
       dynamicInputModeToggled={dynamicInputModeToggled}
     >
-      <FormItem className="flex flex-col gap-1">
+      <FormItem className="flex flex-col">
         {(!hideLabel || placeBeforeLabelText) && (
-          <FormLabel className="flex items-center gap-1 ">
+          <FormLabel className="flex items-center gap-1 h-7.5 max-h-7.5">
             {placeBeforeLabelText && !dynamicInputModeToggled && children}
             <div className="pt-1">
               <span>
@@ -236,6 +236,7 @@ function DynamicValueToggle({
               )
             }
             disabled={disabled}
+            size="sm"
           >
             <SquareFunction
               className={cn('size-5', {

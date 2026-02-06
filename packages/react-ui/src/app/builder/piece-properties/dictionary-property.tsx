@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
 
@@ -101,7 +102,7 @@ export const DictionaryProperty = ({
     onChange({ target: { value } } as unknown as Record<string, string>);
   };
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className={cn('flex w-full flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
       {valuesArrayRef.current.map(({ key, value, id }, index) => (
         <div
           key={'dictionary-input-' + id}
