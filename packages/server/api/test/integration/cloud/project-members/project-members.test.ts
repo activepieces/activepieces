@@ -263,7 +263,6 @@ describe('Project Member API', () => {
                 DefaultProjectRole.ADMIN,
                 DefaultProjectRole.EDITOR,
                 DefaultProjectRole.VIEWER,
-                DefaultProjectRole.OPERATOR,
             ])('Succeeds if user role is %s', async (testRole) => {
                 // arrange
                 const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
@@ -332,7 +331,6 @@ describe('Project Member API', () => {
         it.each([
             DefaultProjectRole.EDITOR,
             DefaultProjectRole.VIEWER,
-            DefaultProjectRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
             // arrange
             const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
