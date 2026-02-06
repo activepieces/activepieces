@@ -32,6 +32,6 @@ export const microsoft365CopilotAuth = PieceAuth.OAuth2({
   authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
-  scope: ['Sites.Read.All', 'Mail.Read', 'People.Read.All', 'OnlineMeetingTranscript.Read.All', 'Chat.Read', 'ChannelMessage.Read.All', 'ExternalItem.Read.All', 'AiEnterpriseInteraction.Read'],
+  scope: ['Sites.Read.All', 'Mail.Read', 'Files.ReadWrite.All', 'People.Read.All', 'OnlineMeetingTranscript.Read.All', 'Chat.Read', 'ChannelMessage.Read.All', 'ExternalItem.Read.All', 'AiEnterpriseInteraction.Read'],
   prompt: 'omit',
 });

@@ -1,9 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365CopilotAuth } from '../common/auth';
 import { Client } from '@microsoft/microsoft-graph-client';
-import { 
-  CopilotRetrievalRequest,
-} from '@microsoft/microsoft-graph-types';
 
 export const retrieveGroundingData = createAction({
   auth: microsoft365CopilotAuth,
@@ -76,7 +73,7 @@ export const retrieveGroundingData = createAction({
       },
     });
 
-    const body: CopilotRetrievalRequest = {
+    const body: any = {
       queryString,
       dataSource: dataSource as 'sharePoint' | 'oneDriveBusiness' | 'externalItem',
     };
