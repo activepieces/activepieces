@@ -65,8 +65,13 @@ export async function createAIModel({
             return provider(modelId)
         }
         case AIProviderName.AZURE: {
-            const { resourceName } = config as AzureProviderConfig
-            const provider = createAzure({ resourceName, apiKey: auth.apiKey })
+            const { resourceName, apiVersion } = config as AzureProviderConfig
+            const provider = createAzure({ 
+                resourceName, 
+                apiKey: auth.apiKey,
+                apiVersion: apiVersion ?? '2024-10-21',
+                useDeploymentBasedUrls: true,
+            })
             if (isImage) {
                 return provider.imageModel(modelId)
             }

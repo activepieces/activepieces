@@ -96,26 +96,48 @@ export const UpsertProviderConfigForm = ({
       />
 
       {provider === AIProviderName.AZURE && (
-        <FormField
-          control={form.control}
-          name="config.resourceName"
-          render={({ field }) => (
-            <FormItem className="grid space-y-3">
-              <FormLabel htmlFor="resourceName">{t('Resource Name')}</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  required
-                  id="resourceName"
-                  placeholder={'your-resource-name'}
-                  className="rounded-sm"
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <>
+          <FormField
+            control={form.control}
+            name="config.resourceName"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="resourceName">{t('Resource Name')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    required
+                    id="resourceName"
+                    placeholder={'your-resource-name'}
+                    className="rounded-sm"
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="config.apiVersion"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="apiVersion">{t('API Version')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    id="apiVersion"
+                    placeholder={'2024-10-21'}
+                    className="rounded-sm"
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
       )}
 
       {provider === AIProviderName.CLOUDFLARE_GATEWAY && (
@@ -212,7 +234,7 @@ export const UpsertProviderConfigForm = ({
         </>
       )}
 
-      {[AIProviderName.CUSTOM, AIProviderName.CLOUDFLARE_GATEWAY].includes(
+      {[AIProviderName.CUSTOM, AIProviderName.CLOUDFLARE_GATEWAY, AIProviderName.AZURE].includes(
         provider,
       ) && (
         <div className="space-y-4">

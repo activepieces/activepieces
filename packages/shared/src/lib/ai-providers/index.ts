@@ -160,6 +160,8 @@ export type CloudflareGatewayProviderConfig = Static<typeof CloudflareGatewayPro
 
 export const AzureProviderConfig = Type.Object({
     resourceName: Type.String(),
+    apiVersion: Type.Optional(Type.String()),
+    models: Type.Optional(Type.Array(ProviderModelConfig)),
 })
 export type AzureProviderConfig = Static<typeof AzureProviderConfig>
 
