@@ -11,8 +11,6 @@ export enum ActivepiecesClientEventName {
   CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
   CLIENT_CONNECTION_PIECE_NOT_FOUND = 'CLIENT_CONNECTION_PIECE_NOT_FOUND',
   CLIENT_BUILDER_HOME_BUTTON_CLICKED = 'CLIENT_BUILDER_HOME_BUTTON_CLICKED',
-  CLIENT_STEP_SETTINGS_DIALOG_CLOSED = 'CLIENT_STEP_SETTINGS_DIALOG_CLOSED',
-  CLIENT_SHOW_STEP_SETTINGS_IFRAME = 'CLIENT_SHOW_STEP_SETTINGS_IFRAME',
 }
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
@@ -64,14 +62,6 @@ export interface ActivepiecesBuilderHomeButtonClicked {
   data: {
     route: string;
   };
-}
-export interface ActivepiecesClientShowStepSettingsIframe {
-  type: ActivepiecesClientEventName.CLIENT_SHOW_STEP_SETTINGS_IFRAME;
-  data: Record<string, never>;
-}
-export interface ActivepiecesStepSettingsDialogClosed {
-  type: ActivepiecesClientEventName.CLIENT_STEP_SETTINGS_DIALOG_CLOSED;
-  data: Record<string, never>;
 }
 
 type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
@@ -411,59 +401,6 @@ class ActivepiecesEmbedded {
   }
 
 
-  private _addStepSettingsIframe({stepName, flowVersionId, flowId}:{stepName:string, flowVersionId:string, flowId:string}) {
-    const stepSettingsIframe = this.connectToEmbed({
-      iframeContainer: document.body,
-      initialRoute: `/embed/step-settings?${STEP_SETTINGS_QUERY_PARAMS.stepName}=${stepName}&${STEP_SETTINGS_QUERY_PARAMS.flowVersionId}=${flowVersionId}&${STEP_SETTINGS_QUERY_PARAMS.flowId}=${flowId}`
-    });
-    stepSettingsIframe.style.cssText = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-    return stepSettingsIframe;
-  }
-
-  private _openNewWindowForStepSettings({stepName, flowVersionId, flowId, newWindow}:{stepName:string, flowVersionId:string, flowId:string, newWindow:newWindowFeatures}) {
-    const popup = window.open(`${this._instanceUrl}/embed`, '_blank', this._getNewWindowFeatures(newWindow));
-    if (!popup) {
-      this._errorCreator('Failed to open popup window');
-    }
-    this._setupInitialMessageHandler(popup, `/embed/step-settings?${STEP_SETTINGS_QUERY_PARAMS.stepName}=${stepName}&${STEP_SETTINGS_QUERY_PARAMS.flowVersionId}=${flowVersionId}&${STEP_SETTINGS_QUERY_PARAMS.flowId}=${flowId}`);
-    return popup;
-  }
-
-  async openStepSettings({ stepName, flowVersionId, flowId, newWindow }: { 
-    stepName: string, 
-    flowVersionId: string,
-    flowId: string,
-    newWindow?:newWindowFeatures
-  }) {
-    this._cleanStepSettingsIframe();
-    return this._addGracePeriodBeforeMethod({
-      condition: () => {
-        return !!document.body;
-      },
-      method: async () => {
-        const target = newWindow? this._openNewWindowForStepSettings({stepName, flowVersionId, flowId, newWindow}) : this._addStepSettingsIframe({stepName, flowVersionId, flowId});
-        //don't check for window because (instanceof Window) is false for popups
-        if(!(target instanceof HTMLIFrameElement)) {
-          const checkClosed = setInterval(() => {
-            if (target.closed) {
-              clearInterval(checkClosed);
-              if(this._resolveStepSettingsDialogClosed) {
-                this._resolveStepSettingsDialogClosed()
-              }
-            }
-          }, 500);
-        }
-        return new Promise<void>((resolve, reject) => {
-          this._resolveStepSettingsDialogClosed = resolve;
-          this._rejectStepSettingsDialogClosed = reject;
-          this._setStepSettingsIframeEventsListener(target);
-        });
-      },
-      errorMessage: 'unable to add step settings embedding'
-    });
-  }
-
-
   navigate({ route }: { route: string }) {
     if (!this._dashboardAndBuilderIframeWindow) {
       this._logger().error('dashboard iframe not found');
@@ -524,8 +461,6 @@ class ActivepiecesEmbedded {
   }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private _cleanConnectionIframe = () => { };
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private _cleanStepSettingsIframe = () => { };
   private _setConnectionIframeEventsListener(target: Window | HTMLIFrameElement ) {
     const connectionRelatedMessageHandler = (event: MessageEvent<ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid | ActivepiecesClientShowConnectionIframe | ActivepiecesClientConnectionPieceNotFound>) => {
       if (event.data.type) {
@@ -570,40 +505,6 @@ class ActivepiecesEmbedded {
       this._removeEmbedding(target);
     }
   }
-
-  private _setStepSettingsIframeEventsListener(target: Window | HTMLIFrameElement ) {
-    const stepSettingsRelatedMessageHandler = (event: MessageEvent<ActivepiecesStepSettingsDialogClosed | ActivepiecesClientShowStepSettingsIframe>) => {
-      if (event.data.type) {
-        switch (event.data.type) {
-          case ActivepiecesClientEventName.CLIENT_STEP_SETTINGS_DIALOG_CLOSED: {
-            if (this._resolveStepSettingsDialogClosed) {
-              this._resolveStepSettingsDialogClosed();
-            }
-            this._removeEmbedding(target);
-            window.removeEventListener('message', stepSettingsRelatedMessageHandler);
-            break;
-          }
-          case ActivepiecesClientEventName.CLIENT_SHOW_STEP_SETTINGS_IFRAME: {
-            if (target instanceof HTMLIFrameElement) {
-              target.style.display = 'block';
-            }
-            break;
-          }
-        }
-      }
-    }
-    window.addEventListener(
-      'message',
-      stepSettingsRelatedMessageHandler
-    );
-    this._cleanStepSettingsIframe = () => {
-      window.removeEventListener('message', stepSettingsRelatedMessageHandler);
-      this._resolveStepSettingsDialogClosed = undefined;
-      this._rejectStepSettingsDialogClosed = undefined;
-      this._removeEmbedding(target);
-    }
-  }
-
   private _removeTrailingSlashes(str: string) {
     return str.endsWith('/') ? str.slice(0, -1) : str;
   }

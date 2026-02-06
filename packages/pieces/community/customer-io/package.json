@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-customer-io",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "dependencies": {
     "buffer": "6.0.3"
   }
