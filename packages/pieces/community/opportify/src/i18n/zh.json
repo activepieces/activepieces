@@ -1,11 +1,11 @@
 {
   "You can obtain your API key from [API Key List](https://app.opportify.ai/api-keys/list).": "You can obtain your API key from [API Key List](https://app.opportify.ai/api-keys/list).",
-  "Analyze Email": "分析电子邮件",
-  "Analyze IP Address": "分析IP地址",
-  "Validates an email address and returns its deliverability status.": "验证电子邮件地址并返回其交付状态。",
-  "Provides comprehensive insights into a specified IP address.": "提供对指定的 IP 地址的全面深入了解。",
+  "Analyze Email": "Analyze Email",
+  "Analyze IP Address": "Analyze IP Address",
+  "Validates an email address and returns its deliverability status.": "Validates an email address and returns its deliverability status.",
+  "Provides comprehensive insights into a specified IP address.": "Provides comprehensive insights into a specified IP address.",
   "Email": "电子邮件地址",
-  "Enable Auto Correction?": "启用自动校正？",
-  "Enable AI?": "启用 AI？",
-  "Ip Address": "Ip 地址"
+  "Enable Auto Correction?": "Enable Auto Correction?",
+  "Enable AI?": "Enable AI?",
+  "Ip Address": "Ip Address"
 }
