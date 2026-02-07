@@ -163,8 +163,8 @@ export function displayNameToCamelCase(input: string): string {
     return camelCaseWords.join('');
   }
 
-export const assertPieceExists = async (pieceName: string | null) => {
-    if (!pieceName) {
+export const assertPieceExists = (pieceFolder: string | null, pieceName: string) => {
+    if (!pieceFolder) {
       console.error(chalk.red(`🚨 Piece ${pieceName} not found`));
       process.exit(1);
     }
