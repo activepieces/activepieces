@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -15,8 +16,11 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
+import { api } from '@/lib/api';
 import {
+  ApErrorParams,
   ConnectSecretManagerRequest,
+  ErrorCode,
   SecretManagerProviderMetaData,
 } from '@activepieces/shared';
 
@@ -34,6 +38,7 @@ const ConnectSecretManagerDialog = ({
   const { mutate, isPending } = secretManagersHooks.useConnectSecretManager();
 
   const connect = () => {
+    form.clearErrors('root.serverError');
     mutate(
       {
         providerId: manager.id,
@@ -43,6 +48,34 @@ const ConnectSecretManagerDialog = ({
         onSuccess: () => {
           form.reset();
           setOpen(false);
+        },
+        onError: (error) => {
+          if (api.isError(error)) {
+            const apError = error.response?.data as ApErrorParams;
+
+            if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
+              form.setError('root.serverError', {
+                type: 'manual',
+                message: t(
+                  'Failed to connect to secret manager with error: "{msg}"',
+                  {
+                    msg: apError.params?.message,
+                  },
+                ),
+              });
+              return;
+            }
+          }
+          const err = error as AxiosError<{
+            message?: string;
+            params?: { message: string };
+          }>;
+          const data = err.response?.data;
+          form.setError('root.serverError', {
+            type: 'manual',
+            message:
+              data?.message ?? data?.params?.message ?? JSON.stringify(error),
+          });
         },
       },
     );
@@ -66,7 +99,10 @@ const ConnectSecretManagerDialog = ({
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="grid space-y-4"
+            onSubmit={form.handleSubmit(connect)}
+          >
             {Object.entries(manager.fields).map(([fieldId, field]) => (
               <FormField
                 key={fieldId}
@@ -89,6 +125,11 @@ const ConnectSecretManagerDialog = ({
                 )}
               />
             ))}
+            {form.formState.errors.root?.serverError && (
+              <FormMessage>
+                {form.formState.errors.root.serverError.message}
+              </FormMessage>
+            )}
           </form>
         </Form>
         <DialogFooter>
@@ -105,11 +146,7 @@ const ConnectSecretManagerDialog = ({
           <Button
             disabled={!form.formState.isValid}
             loading={isPending}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              connect();
-            }}
+            type="submit"
           >
             {t('Save')}
           </Button>

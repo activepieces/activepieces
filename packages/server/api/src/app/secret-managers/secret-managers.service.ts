@@ -18,7 +18,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             const provider = secretManagerProvider(log, metadata.id)
             const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
             const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
-            const isConnected = !isNil(decryptedConfig) && await provider.checkConnection(decryptedConfig).catch(()=> false)
+            const isConnected = !isNil(decryptedConfig) && await provider.checkConnection(decryptedConfig).catch(() => false)
 
             return {
                 ...metadata,
@@ -68,8 +68,8 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
 
     async resolve({ key, platformId }: { key: string, platformId: string }) {
 
-        key = checkKeyIsSecret(key)
-        const splits = key.split(':')
+        const trimmedKey = trimKeyBraces(key)
+        const splits = trimmedKey.split(':')
 
         if (!Object.values(SecretManagerProviderId).includes(splits[0] as SecretManagerProviderId)) {
             throw new ActivepiecesError({
@@ -83,7 +83,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
 
         return secretManagersService(log).getSecret({
             providerId,
-            request: await secretManagerProvider(log, providerId).resolve(key),
+            request: await secretManagerProvider(log, providerId).resolve(trimmedKey),
             platformId,
         } as GetSecretManagerSecretRequest & { platformId: string })
     },
@@ -98,9 +98,9 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const checkKeyIsSecret = (key: string) => {
-    key = key.trim()
-    if (!(key.startsWith('{{') && key.endsWith('}}'))) {
+const trimKeyBraces = (key: string) => {
+    const trimmedKey = key.trim()
+    if (!(trimmedKey.startsWith('{{') && trimmedKey.endsWith('}}'))) {
         throw new ActivepiecesError({
             code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
             params: {
@@ -108,5 +108,5 @@ const checkKeyIsSecret = (key: string) => {
             },
         })
     }
-    return key.substring(2, key.length - 2)
+    return trimmedKey.substring(2, trimmedKey.length - 2)
 }

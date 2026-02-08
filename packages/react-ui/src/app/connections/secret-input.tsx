@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';
 import { useState, useCallback, useMemo } from 'react';
@@ -24,6 +25,42 @@ type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
   onChange?: (value: string) => void;
 };
+
+type SecretManagerToggleButtonProps = {
+  isActive: boolean;
+  onClick: () => void;
+};
+
+const SecretManagerToggleButton = React.memo(
+  ({ isActive, onClick }: SecretManagerToggleButtonProps) => {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={onClick}
+            className={cn('shrink-0', {
+              'bg-primary/10': isActive,
+            })}
+          >
+            <KeyRound
+              className={cn('size-4', {
+                'text-primary': isActive,
+              })}
+            />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {isActive ? t('Disable Secret Manager') : t('Use Secret Manager')}
+        </TooltipContent>
+      </Tooltip>
+    );
+  },
+);
+
+SecretManagerToggleButton.displayName = 'SecretManagerToggleButton';
 
 const SECRET_VALUE_REGEX = /^\{\{\s*(\w+):(.*)\s*\}\}$/;
 
@@ -156,20 +193,10 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       return (
         <div className={cn('flex flex-col gap-2', className)}>
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={toggleSecretManager}
-                  className="shrink-0 bg-primary/10"
-                >
-                  <KeyRound className="size-4 text-primary" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Use Secret Manager</TooltipContent>
-            </Tooltip>
+            <SecretManagerToggleButton
+              isActive={true}
+              onClick={toggleSecretManager}
+            />
             <Select
               value={selectedProvider}
               onValueChange={(val) =>
@@ -204,22 +231,11 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        {
-          secretManagers && secretManagers?.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={toggleSecretManager}
-                className="shrink-0"
-              >
-                <KeyRound className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Use Secret Manager</TooltipContent>
-          </Tooltip>
+        {secretManagers && secretManagers?.length > 0 && (
+          <SecretManagerToggleButton
+            isActive={false}
+            onClick={toggleSecretManager}
+          />
         )}
         <Input
           ref={ref}

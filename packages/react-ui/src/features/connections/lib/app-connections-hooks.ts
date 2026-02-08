@@ -146,7 +146,7 @@ export const appConnectionsMutations = {
             }
             case ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED: {
               setErrorMessage(
-                t('Failed to resolve secret with error: "{msg}"', {
+                t('Secret was not found: "{msg}"', {
                   msg: apError.params.message,
                 }),
               );

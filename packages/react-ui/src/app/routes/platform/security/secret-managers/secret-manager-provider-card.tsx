@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { Pencil, Trash } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -32,15 +33,18 @@ const SecretManagerProviderCard = ({
       </div>
       <div className="flex gap-2">
         <ConnectSecretManagerDialog manager={provider}>
-          <Button>{provider.connected ? t('Re-connect') : t('Connect')}</Button>
+          <Button variant={'ghost'} size={'sm'}>
+            {provider.connected ? <Pencil className="size-4" /> : t('Connect')}
+          </Button>
         </ConnectSecretManagerDialog>
         {provider.connected && (
           <Button
             variant={'ghost'}
+            size={'sm'}
             loading={isPending}
             onClick={() => disconnect({ providerId: provider.id })}
           >
-            {t('Remove')}
+            <Trash className="size-4 text-destructive" />
           </Button>
         )}
       </div>

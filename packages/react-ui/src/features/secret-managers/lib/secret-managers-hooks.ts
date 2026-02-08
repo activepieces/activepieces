@@ -2,13 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
-import { internalErrorToast } from '@/components/ui/sonner';
-import { api } from '@/lib/api';
 import {
-  ApErrorParams,
   ConnectSecretManagerRequest,
   DisconnectSecretManagerRequest,
-  ErrorCode,
   SecretManagerProviderMetaData,
 } from '@activepieces/shared';
 
@@ -36,22 +32,6 @@ export const secretManagersHooks = {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
         toast.success(t('Connected successfully'));
-      },
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          switch (apError.code) {
-            case ErrorCode.SECRET_MANAGER_CONNECTION_FAILED: {
-              toast.error(
-                t('Failed to connect to secret manager with error: "{msg}"', {
-                  msg: apError.params.message,
-                }),
-              );
-              return;
-            }
-          }
-        }
-        internalErrorToast();
       },
     });
   },

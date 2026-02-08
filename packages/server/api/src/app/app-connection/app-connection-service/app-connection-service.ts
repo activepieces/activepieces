@@ -379,7 +379,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return [...platformAdmins, ...projectMembersDetails]
     },
     async resolveSecrets<T extends Record<string, unknown>>(value: T, platformId: string): Promise<T> {
-        const newValue = { ...value }
+        const newValue = JSON.parse(JSON.stringify(value)) as T
         await Promise.all(
             Object.keys(value).map(async (field: keyof T) => {
                 if (isObject(value[field])) {
