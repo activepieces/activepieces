@@ -49,7 +49,6 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
 
   return (
     <div className="flex items-center justify-between gap-1">
-      <PreviousOrNextButton isNext={false} />
       <div className="flex grow items-center justify-between gap-3 min-h-[36px] min-w-0">
         <div className="flex items-center gap-2 min-w-0 ">
           <PieceIcon
@@ -105,6 +104,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
           </div>
         )}
       </div>
+      <PreviousOrNextButton isNext={false} />
       <PreviousOrNextButton isNext={true} />
     </div>
   );
