@@ -10,7 +10,7 @@ import { linearNewIssue } from './lib/triggers/new-issue';
 import { linearUpdatedIssue } from './lib/triggers/updated-issue';
 import { linearRemovedIssue } from './lib/triggers/removed-issue';
 
-const markdown = `
+const apiKeyMarkdown = `
 To obtain your API key, follow these steps:
 
 1. Go to settings by clicking your profile-pic (top-left)
@@ -20,7 +20,7 @@ To obtain your API key, follow these steps:
 export const linearAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description: markdown,
+  description: apiKeyMarkdown,
   validate: async ({ auth }) => {
     if (auth.startsWith('lin_api_')) {
       return {
@@ -33,11 +33,19 @@ export const linearAuth = PieceAuth.SecretText({
     };
   },
 });
+
+export const linearOAuth2Auth = PieceAuth.OAuth2({
+  displayName: 'OAuth2',
+  required: true,
+  authUrl: 'https://linear.app/oauth/authorize',
+  tokenUrl: 'https://api.linear.app/oauth/token',
+  scope: ['read', 'write', 'issues:create', 'comments:create'],
+});
+
 export const linear = createPiece({
   displayName: 'Linear',
   description: 'Issue tracking for modern software teams',
-
-  auth: linearAuth,
+  auth: [linearOAuth2Auth, linearAuth],
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
   authors: ['lldiegon', 'kishanprmr', 'abuaboud'],

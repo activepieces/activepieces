@@ -1,11 +1,15 @@
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { LinearClient, LinearDocument } from '@linear/sdk';
-import { linearAuth } from '../..';
 
 export class LinearClientWrapper {
   private client: LinearClient;
-  constructor(apiKey: string) {
-    this.client = new LinearClient({ apiKey: apiKey });
+  constructor(config: { apiKey?: string; accessToken?: string }) {
+    if (config.accessToken) {
+      this.client = new LinearClient({ accessToken: config.accessToken });
+    } else if (config.apiKey) {
+      this.client = new LinearClient({ apiKey: config.apiKey });
+    } else {
+      throw new Error('Either apiKey or accessToken must be provided');
+    }
   }
   async createIssue(input: LinearDocument.IssueCreateInput) {
     return this.client.createIssue(input);
@@ -69,6 +73,11 @@ export class LinearClientWrapper {
   }
 }
 
-export function makeClient(auth: AppConnectionValueForAuthProperty<typeof linearAuth>): LinearClientWrapper {
-  return new LinearClientWrapper(auth.secret_text);
+export function makeClient(
+  auth: { access_token: string } | { secret_text: string }
+): LinearClientWrapper {
+  if ('access_token' in auth) {
+    return new LinearClientWrapper({ accessToken: auth.access_token });
+  }
+  return new LinearClientWrapper({ apiKey: auth.secret_text });
 }
