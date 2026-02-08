@@ -18,10 +18,11 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             const provider = secretManagerProvider(log, metadata.id)
             const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
             const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
+            const isConnected = !isNil(decryptedConfig) && await provider.checkConnection(decryptedConfig).catch(()=> false)
 
             return {
                 ...metadata,
-                connected: !isNil(decryptedConfig) && await provider.checkConnection(decryptedConfig),
+                connected: isConnected,
             }
         }))
     },
@@ -85,6 +86,15 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             request: await secretManagerProvider(log, providerId).resolve(key),
             platformId,
         } as GetSecretManagerSecretRequest & { platformId: string })
+    },
+
+    disconnect: async ({ platformId, providerId }: { platformId: string, providerId: SecretManagerProviderId }) => {
+        const provider = secretManagerProvider(log, providerId)
+        await provider.disconnect()
+        await secretManagerRepository().delete({
+            platformId,
+            providerId,
+        })
     },
 })
 

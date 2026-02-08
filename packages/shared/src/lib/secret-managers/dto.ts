@@ -52,6 +52,11 @@ export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId'
 
 export type ConnectSecretManagerRequest = Static<typeof ConnectSecretManagerRequestSchema>
 
+export const DisconnectSecretManagerRequestSchema = Type.Object({
+    providerId: Type.Enum(SecretManagerProviderId),
+})
+export type DisconnectSecretManagerRequest = Static<typeof DisconnectSecretManagerRequestSchema>
+
 
 export const GetSecretManagerSecretRequestSchema = DiscriminatedUnion('providerId', [
     Type.Object({

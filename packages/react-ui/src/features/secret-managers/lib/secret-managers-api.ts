@@ -1,6 +1,7 @@
 import { api } from '@/lib/api';
 import {
   ConnectSecretManagerRequest,
+  DisconnectSecretManagerRequest,
   SecretManagerProviderMetaData,
 } from '@activepieces/shared';
 
@@ -10,5 +11,8 @@ export const secretManagersApi = {
   },
   connect(config: ConnectSecretManagerRequest) {
     return api.post<void>('/v1/secret-managers/connect', config);
+  },
+  disconnect(request: DisconnectSecretManagerRequest) {
+    return api.delete<void>('/v1/secret-managers/disconnect', request);
   },
 };

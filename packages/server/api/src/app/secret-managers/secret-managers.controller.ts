@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ConnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
+import { ConnectSecretManagerRequestSchema, DisconnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { secretManagersService } from './secret-managers.service'
 
@@ -12,6 +12,10 @@ export const secretManagersController: FastifyPluginAsyncTypebox = async (app) =
 
     app.post('/connect', ConnectSecretManager, async (request) => {
         return service.connect({ ...request.body, platformId: request.principal.platform.id })
+    })
+
+    app.delete('/disconnect', DisconnectSecretManager, async (request) => {
+        return service.disconnect({ providerId: request.query.providerId, platformId: request.principal.platform.id })
     })
 
 }
@@ -28,5 +32,14 @@ const ConnectSecretManager = {
     },
     schema: {
         body: ConnectSecretManagerRequestSchema,
+    },
+}
+
+const DisconnectSecretManager = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        querystring: DisconnectSecretManagerRequestSchema,
     },
 }

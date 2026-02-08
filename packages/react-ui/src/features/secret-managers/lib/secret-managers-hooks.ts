@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import {
   ApErrorParams,
   ConnectSecretManagerRequest,
+  DisconnectSecretManagerRequest,
   ErrorCode,
   SecretManagerProviderMetaData,
 } from '@activepieces/shared';
@@ -51,6 +52,16 @@ export const secretManagersHooks = {
           }
         }
         internalErrorToast();
+      },
+    });
+  },
+  useDisconnectSecretManager: () => {
+    const queryClient = useQueryClient();
+    return useMutation<void, Error, DisconnectSecretManagerRequest>({
+      mutationFn: secretManagersApi.disconnect,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
+        toast.success(t('Disconnected successfully'));
       },
     });
   },

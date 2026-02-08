@@ -2,6 +2,7 @@ import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { SecretManagerProviderMetaData } from '@activepieces/shared';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
@@ -13,6 +14,9 @@ type SecretManagerProviderCardProps = {
 const SecretManagerProviderCard = ({
   provider,
 }: SecretManagerProviderCardProps) => {
+  const { mutate: disconnect, isPending } =
+    secretManagersHooks.useDisconnectSecretManager();
+
   return (
     <Card className="w-full flex justify-between items-center px-4 py-4">
       <div className="flex gap-8 items-center">
@@ -30,7 +34,15 @@ const SecretManagerProviderCard = ({
         <ConnectSecretManagerDialog manager={provider}>
           <Button>{provider.connected ? t('Re-connect') : t('Connect')}</Button>
         </ConnectSecretManagerDialog>
-        {provider.connected && <Button variant={'ghost'}>{t('Remove')}</Button>}
+        {provider.connected && (
+          <Button
+            variant={'ghost'}
+            loading={isPending}
+            onClick={() => disconnect({ providerId: provider.id })}
+          >
+            {t('Remove')}
+          </Button>
+        )}
       </div>
     </Card>
   );
