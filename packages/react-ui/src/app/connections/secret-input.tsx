@@ -204,20 +204,23 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={toggleSecretManager}
-              className="shrink-0"
-            >
-              <KeyRound className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Use Secret Manager</TooltipContent>
-        </Tooltip>
+        {
+          secretManagers && secretManagers?.length > 0 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={toggleSecretManager}
+                className="shrink-0"
+              >
+                <KeyRound className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Use Secret Manager</TooltipContent>
+          </Tooltip>
+        )}
         <Input
           ref={ref}
           name={name}
