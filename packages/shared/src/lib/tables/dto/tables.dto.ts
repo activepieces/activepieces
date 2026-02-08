@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { FieldState } from '../../project-release/project-state'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
+import { Nullable } from '../../common'
 
 export const CreateTableRequest = Type.Object({
     projectId: Type.String(),
@@ -35,7 +36,7 @@ export const UpdateTableRequest = Type.Object({
     name: Type.Optional(Type.String()),
     trigger: Type.Optional(Type.Enum(TableAutomationTrigger)),
     status: Type.Optional(Type.Enum(TableAutomationStatus)),
-    folderId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    folderId: Nullable(Type.String()),
 })
 
 export type UpdateTableRequest = Static<typeof UpdateTableRequest>

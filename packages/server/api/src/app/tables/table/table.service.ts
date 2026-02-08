@@ -300,14 +300,15 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
+
         const updateData: Record<string, unknown> = {
             ...spreadIfDefined('name', request.name),
             ...spreadIfDefined('trigger', request.trigger),
             ...spreadIfDefined('status', request.status),
         }
-        if (request.folderId !== undefined) {
-            updateData.folderId = request.folderId
-        }
+
+        updateData.folderId = request.folderId
+
         await tableRepo().update({ id, projectId }, updateData)
         return this.getOneOrThrow({ projectId, id })
     },
