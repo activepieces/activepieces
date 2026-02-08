@@ -1,6 +1,8 @@
 import os from 'os'
 import path from 'path'
 import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { FastifyBaseLogger } from 'fastify'
+import { Level } from 'pino'
 import {
     ActivepiecesError,
     ApEdition,
@@ -10,8 +12,6 @@ import {
     isNil,
     PieceSyncMode,
 } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
-import { Level } from 'pino'
 
 
 
@@ -29,7 +29,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [WorkerSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
-    [AppSystemProp.PIECES_CACHE_MAX_SIZE]: '1000',
+    [AppSystemProp.PIECES_CACHE_MAX_ENTRIES]: '1000',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,

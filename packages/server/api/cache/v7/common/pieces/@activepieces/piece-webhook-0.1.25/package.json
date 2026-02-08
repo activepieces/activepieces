@@ -1,7 +1,0 @@
-{
-  "name": "@activepieces/piece-webhook-0.1.25",
-  "version": "0.1.25",
-  "dependencies": {
-    "@activepieces/piece-webhook": "0.1.25"
-  }
-}

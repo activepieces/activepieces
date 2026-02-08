@@ -25,7 +25,7 @@ const CACHE_KEY = {
 
 export const lruPieceCache = (log: FastifyBaseLogger): LocalPieceCache => ({
     async setup(): Promise<void> {
-        const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_SIZE)
+        const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
         cache = lru(cacheMaxSize, CACHE_TTL_MS)
 
         await pubsub.subscribe(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, () => {

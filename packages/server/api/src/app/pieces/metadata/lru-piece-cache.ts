@@ -33,7 +33,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
                 return
             }
             
-            const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_SIZE)
+            const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
             cache = lru(cacheMaxSize)
             
             await warmCache(log)
@@ -171,7 +171,7 @@ async function warmCache(log: FastifyBaseLogger): Promise<void> {
     try {
         log.info('[lruPieceCache] Warming cache with English list and registry')
         
-        const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_SIZE)
+        const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
         const newCache = lru(cacheMaxSize)
         
         const englishPieces = await fetchPiecesFromDB()
