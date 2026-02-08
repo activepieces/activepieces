@@ -1,9 +1,5 @@
 import { t } from 'i18next';
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  Info,
-} from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, Info } from 'lucide-react';
 import React from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
