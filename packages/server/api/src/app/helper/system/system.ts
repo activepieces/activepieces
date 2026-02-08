@@ -1,8 +1,6 @@
 import os from 'os'
 import path from 'path'
 import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { FastifyBaseLogger } from 'fastify'
-import { Level } from 'pino'
 import {
     ActivepiecesError,
     ApEdition,
@@ -12,6 +10,8 @@ import {
     isNil,
     PieceSyncMode,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { Level } from 'pino'
 
 
 
