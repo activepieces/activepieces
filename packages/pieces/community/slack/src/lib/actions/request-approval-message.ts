@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { slackSendMessage } from '../common/utils';
+import { buildFlowOriginContextBlock, slackSendMessage } from '../common/utils';
 import { slackAuth } from '../..';
 import {
   assertNotNullOrUndefined,
@@ -12,6 +12,7 @@ import {
   slackChannel,
   text,
   username,
+  mentionOriginFlow,
 } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
 
@@ -27,11 +28,12 @@ export const requestSendApprovalMessageAction = createAction({
     text,
     username,
     profilePicture,
+    mentionOriginFlow,
   },
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       const token = context.auth.access_token;
-      const { channel, username, profilePicture } = context.propsValue;
+      const { channel, username, profilePicture, mentionOriginFlow } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');
       assertNotNullOrUndefined(text, 'text');
@@ -90,6 +92,7 @@ export const requestSendApprovalMessageAction = createAction({
               },
             ],
           },
+          ...(mentionOriginFlow ? [buildFlowOriginContextBlock(context)] : []),
         ],
       });
 
