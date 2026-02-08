@@ -1,4 +1,4 @@
-import { processMessageTimestamp, slackSendMessage } from './utils';
+import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage } from './utils';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
@@ -84,6 +84,7 @@ export const requestAction = async (conversationId: string, context: any) => {
           block_id: 'actions',
           elements: actionElements,
         },
+        ...(context.propsValue.mentionOriginFlow ? [buildFlowOriginContextBlock(context)] : []),
       ],
       conversationId: conversationId,
     });
