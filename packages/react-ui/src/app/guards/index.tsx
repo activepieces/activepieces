@@ -120,7 +120,7 @@ const routes = [
     path: routesThatRequireProjectId.automations,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+        <RoutePermissionGuard permission={[Permission.READ_FLOW, Permission.READ_TABLE]}>
           <PageTitle title="Automations">
             <AutomationsPage />
           </PageTitle>

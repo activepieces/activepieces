@@ -9,10 +9,12 @@ export const RoutePermissionGuard = ({
   children,
 }: {
   children: ReactNode;
-  permission: Permission;
+  permission: Permission | Permission[];
 }) => {
   const { checkAccess } = useAuthorization();
-  if (!checkAccess(permission)) {
+  const permissions = Array.isArray(permission) ? permission : [permission];
+  const hasAccess = permissions.some((p) => checkAccess(p));
+  if (!hasAccess) {
     return <Navigate replace={true} to="/404"></Navigate>;
   }
   return children;
