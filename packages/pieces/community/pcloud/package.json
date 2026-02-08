@@ -1,0 +1,9 @@
+{
+  "name": "@activepieces/piece-pcloud",
+  "version": "0.0.1",
+  "license": "MIT",
+  "dependencies": {
+    "@activepieces/pieces-common": "^0.14.8",
+    "@activepieces/pieces-framework": "^0.14.8"
+  }
+}
