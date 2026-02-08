@@ -1,10 +1,9 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, LocalesEnum, PieceType } from '@activepieces/shared'
+import { ApEnvironment, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
-import { diskLocalPieceCache } from './disk-local-piece-cache'
-import { memoryLocalPieceCache } from './memory-local-piece-cache'
+import { lruPieceCache } from './lru-piece-cache'
 import { testLocalPieceCache } from './test-local-piece-cache'
 
 export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
@@ -16,13 +15,7 @@ export const localPieceCache = (log: FastifyBaseLogger): LocalPieceCache => {
         return testLocalPieceCache(log)
     }
     
-    const edition = system.getEdition()
-    
-    if (edition === ApEdition.CLOUD) {
-        return memoryLocalPieceCache(log)
-    }
-    
-    return diskLocalPieceCache(log)
+    return lruPieceCache(log)
 }
 
 export type LocalPieceCache = {
@@ -63,6 +56,3 @@ export type GetRegistryParams = {
     platformId?: string
 }
 
-export * from './disk-local-piece-cache'
-export * from './memory-local-piece-cache'
-export * from './test-local-piece-cache'

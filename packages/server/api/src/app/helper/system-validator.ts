@@ -1,12 +1,12 @@
 import { inspect } from 'util'
 import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { packageManager, registryPieceManager } from 'server-worker'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { system } from './system/system'
+import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -89,6 +89,7 @@ const systemPropValidators: {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
+    [AppSystemProp.PIECES_CACHE_MAX_SIZE]: numberValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
     [AppSystemProp.POSTGRES_HOST]: stringValidator,

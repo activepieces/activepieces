@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -38,7 +37,6 @@
         "@fastify/type-provider-typebox": "5.1.0",
         "@hookform/resolvers": "3.9.0",
         "@hyperdx/node-opentelemetry": "0.8.2",
-        "@keyv/sqlite": "^3.0.0",
         "@modelcontextprotocol/sdk": "1.25.2",
         "@nx/devkit": "22.0.1",
         "@octokit/rest": "21.1.1",
@@ -194,7 +192,6 @@
         "jszip": "3.10.1",
         "jwks-rsa": "3.1.0",
         "jwt-decode": "4.0.0",
-        "keyv": "^4.5.4",
         "lottie-web": "5.12.2",
         "lucide-react": "0.407.0",
         "mime": "4.0.1",
@@ -256,6 +253,7 @@
         "stripe": "18.2.1",
         "tailwind-merge": "2.4.0",
         "tailwind-scrollbar": "4.0.2",
+        "tiny-lru": "11.4.7",
         "tinycolor2": "1.6.0",
         "tiptap-markdown": "0.8.10",
         "tree-kill": "1.2.2",
@@ -1157,8 +1155,6 @@
     "@jsonjoy.com/json-pointer": ["@jsonjoy.com/json-pointer@1.0.2", "", { "dependencies": { "@jsonjoy.com/codegen": "^1.0.0", "@jsonjoy.com/util": "^1.9.0" }, "peerDependencies": { "tslib": "2" } }, "sha512-Fsn6wM2zlDzY1U+v4Nc8bo3bVqgfNTGcn6dMgs6FjrEnt4ZCe60o6ByKRjOGlI2gow0aE/Q41QOigdTqkyK5fg=="],
 
     "@jsonjoy.com/util": ["@jsonjoy.com/util@1.9.0", "", { "dependencies": { "@jsonjoy.com/buffers": "^1.0.0", "@jsonjoy.com/codegen": "^1.0.0" }, "peerDependencies": { "tslib": "2" } }, "sha512-pLuQo+VPRnN8hfPqUTLTHk126wuYdXVxE6aDmjSeV4NCAgyxWbiOIeNJVtID3h1Vzpoi9m4jXezf73I6LgabgQ=="],
-
-    "@keyv/sqlite": ["@keyv/sqlite@3.6.7", "", { "dependencies": { "sqlite3": "^5.1.7" } }, "sha512-r9MrIApqa5i1tJPijsxbXLplm0y+E2GTuCHw0N1oSz/0a16txUdzRmOGX0ggLVbz2MDlDojYRG7GCdq5y0xQBQ=="],
 
     "@kwsites/file-exists": ["@kwsites/file-exists@1.1.1", "", { "dependencies": { "debug": "^4.1.1" } }, "sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw=="],
 
@@ -5871,6 +5867,8 @@
     "tiny-emitter": ["tiny-emitter@2.1.0", "", {}, "sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q=="],
 
     "tiny-invariant": ["tiny-invariant@1.3.3", "", {}, "sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg=="],
+
+    "tiny-lru": ["tiny-lru@11.4.7", "", {}, "sha512-w/Te7uMUVeH0CR8vZIjr+XiN41V+30lkDdK+NRIDCUYKKuL9VcmaUEmaPISuwGhLlrTGh5yu18lENtR9axSxYw=="],
 
     "tinybench": ["tinybench@2.9.0", "", {}, "sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg=="],
 
