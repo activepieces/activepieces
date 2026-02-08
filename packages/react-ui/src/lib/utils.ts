@@ -300,7 +300,7 @@ export const determineDefaultRoute = (
   checkAccess: (permission: Permission) => boolean,
 ) => {
   if (checkAccess(Permission.READ_FLOW)) {
-    return authenticationSession.appendProjectRoutePrefix('/flows');
+    return authenticationSession.appendProjectRoutePrefix('/automations');
   }
   if (checkAccess(Permission.READ_RUN)) {
     return authenticationSession.appendProjectRoutePrefix('/runs');
@@ -393,6 +393,7 @@ export const routesThatRequireProjectId = {
   singleRun: '/runs/:runId',
   flows: '/flows',
   singleFlow: '/flows/:flowId',
+  automations: '/automations',
   connections: '/connections',
   singleConnection: '/connections/:connectionId',
   tables: '/tables',

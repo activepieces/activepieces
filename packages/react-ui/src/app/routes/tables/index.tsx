@@ -36,7 +36,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { Permission, Table } from '@activepieces/shared';
+import { Permission, Table, UncategorizedFolderId } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
@@ -52,7 +52,7 @@ const ApTablesPage = () => {
   );
   const { data, isLoading, refetch } = tableHooks.useTables();
   const { mutate: createTable, isPending: isCreatingTable } =
-    tableHooks.useCreateTable();
+    tableHooks.useCreateTable(UncategorizedFolderId);
   const navigate = useNavigate();
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
     {

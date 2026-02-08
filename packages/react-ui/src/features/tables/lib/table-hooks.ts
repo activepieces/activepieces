@@ -36,14 +36,18 @@ export const tableHooks = {
         }),
     });
   },
-  useCreateTable: () => {
+  useCreateTable: (folderId: string) => {
     const projectId = authenticationSession.getProjectId() ?? '';
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
     return useMutation({
       mutationFn: async (data: { name: string }) => {
-        const table = await tablesApi.create({ projectId, name: data.name });
+        const table = await tablesApi.create({
+          projectId,
+          name: data.name,
+          folderId: folderId,
+        });
         const field = await fieldsApi.create({
           name: 'Name',
           type: FieldType.TEXT,

@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import {
+  CountTablesRequest,
   CreateTableRequest,
   ExportTableResponse,
   ListTablesRequest,
@@ -40,5 +41,9 @@ export const tablesApi = {
 
   clear(id: string): Promise<void> {
     return api.post<void>(`/v1/tables/${id}/clear`);
+  },
+
+  count(request: CountTablesRequest): Promise<number> {
+    return api.get<number>('/v1/tables/count', request);
   },
 };

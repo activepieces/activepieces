@@ -31,6 +31,7 @@ import { PlatformLayout } from '../components/platform-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
+import { AutomationsPage } from '../routes/automations';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
@@ -112,6 +113,18 @@ const routes = [
         <RoutePermissionGuard permission={Permission.READ_FLOW}>
           <PageTitle title="Flows">
             <FlowsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.automations,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Automations">
+            <AutomationsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
