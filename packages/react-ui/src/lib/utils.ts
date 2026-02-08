@@ -391,12 +391,14 @@ export const scrollToElementAndClickIt = (elementId: string) => {
 export const routesThatRequireProjectId = {
   runs: '/runs',
   singleRun: '/runs/:runId',
+  // deprecated
   flows: '/flows',
+  // deprecated
+  tables: '/tables',
   singleFlow: '/flows/:flowId',
   automations: '/automations',
   connections: '/connections',
   singleConnection: '/connections/:connectionId',
-  tables: '/tables',
   singleTable: '/tables/:tableId',
   todos: '/todos',
   singleTodo: '/todos/:todoId',

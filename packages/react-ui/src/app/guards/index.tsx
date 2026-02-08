@@ -106,17 +106,15 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   },
+  // deprecated - redirect to automations
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_FLOW}>
-          <PageTitle title="Flows">
-            <FlowsPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
+    element: <Navigate to="/automations" replace />,
+  }),
+  // deprecated - redirect to automations
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.tables,
+    element: <Navigate to="/automations" replace />,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.automations,
@@ -200,18 +198,7 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.tables,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_TABLE}>
-          <PageTitle title="Tables">
-            <ApTablesPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
+  
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
     element: (
