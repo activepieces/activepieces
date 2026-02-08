@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 import {
   ChevronLeftIcon,
-  ChevronRight,
   ChevronRightIcon,
   Info,
 } from 'lucide-react';
@@ -54,34 +53,16 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
           <PieceIcon
             logoUrl={stepMetadata?.logoUrl}
             displayName={stepMetadata?.displayName}
-            showTooltip={false}
+            showTooltip={true}
             size="md"
           />
           <div className="flex items-center gap-0.5 min-w-0 text-sm">
-            {!isNil(stepMetadata?.displayName) ? (
-              <>
-                <span
-                  className={`shrink-0 ${
-                    !actionOrTriggerDisplayName
-                      ? 'text-foreground font-medium'
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  {stepMetadata.displayName}
+            {!isNil(actionOrTriggerDisplayName) ? (
+              <TextWithTooltip tooltipMessage={actionOrTriggerDisplayName}>
+                <span className="font-medium text-foreground min-w-0">
+                  {actionOrTriggerDisplayName}
                 </span>
-                {actionOrTriggerDisplayName && (
-                  <>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                    <TextWithTooltip
-                      tooltipMessage={actionOrTriggerDisplayName}
-                    >
-                      <span className="font-medium text-foreground min-w-0">
-                        {actionOrTriggerDisplayName}
-                      </span>
-                    </TextWithTooltip>
-                  </>
-                )}
-              </>
+              </TextWithTooltip>
             ) : (
               <Skeleton className="h-4 w-32 rounded" />
             )}

@@ -195,17 +195,17 @@ const StepSettingsContainer = () => {
             ></EditableStepName>
           </SidebarHeader>
           <Separator className="w-full h-px" />
-
-          <div className="w-full my-2 px-3">
-            {stepMetadata && <StepInfo step={selectedStep} />}
-          </div>
         </div>
+     
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
+              <div className="w-full my-2 px-3">
+            {stepMetadata && <StepInfo step={selectedStep} />}
+          </div>
                 <div
                   className={cn(
                     'flex flex-col px-4 pb-6',
