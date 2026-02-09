@@ -1,5 +1,6 @@
 import { pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { lru, LRU } from 'tiny-lru'
@@ -9,7 +10,6 @@ import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { fetchPiecesFromDB, filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
-import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 
 export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
 
@@ -79,13 +79,12 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
             
-            // Filter FIRST by platformId, then de-duplicate - this ensures each platform
-            // sees both official pieces and their own custom pieces correctly
-            const filteredPieces = [...allTranslatedPieces, ...translatedDevPieces].filter((piece) => 
-                filterPieceBasedOnType(platformId, piece),
-            )
-            
-            return lastVersionOfEachPiece(filteredPieces)
+            // BUGGY: De-duplicate FIRST, then filter - this breaks visibility for some platforms
+            // When a custom piece exists with the same name as an official piece, de-duplicating
+            // first will keep only the highest version. If that's a custom piece from another
+            // platform, filtering will remove it, making the official piece invisible too.
+            const deduplicated = lastVersionOfEachPiece([...allTranslatedPieces, ...translatedDevPieces])
+            return deduplicated.filter((piece) => filterPieceBasedOnType(platformId, piece))
         },
         
         async getPieceVersion(params: GetPieceVersionParams): Promise<PieceMetadataSchema | null> {
