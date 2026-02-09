@@ -21,7 +21,7 @@ import { OperationResponse } from 'server-worker'
 import { fileService } from '../file/file.service'
 import { pubsub } from '../helper/pubsub'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/cache'
+import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/lru-piece-cache'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 export const pieceInstallService = (log: FastifyBaseLogger) => ({

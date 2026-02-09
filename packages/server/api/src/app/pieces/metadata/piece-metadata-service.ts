@@ -25,7 +25,7 @@ import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { localPieceCache } from './cache'
+import { localPieceCache } from './lru-piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
 

@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { system } from '../../../helper/system/system'
-import { PieceRegistryEntry } from '../cache'
+import { PieceRegistryEntry } from '../lru-piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 
 const repo = repoFactory(PieceMetadataEntity)
