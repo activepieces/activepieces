@@ -12,7 +12,10 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadata, StepMetadata, StepMetadataWithActionOrTriggerOrAgentDisplayName } from '@/lib/types';
+import {
+  PieceStepMetadata,
+  StepMetadataWithActionOrTriggerOrAgentDisplayName,
+} from '@/lib/types';
 import {
   FlowAction,
   FlowActionType,
@@ -39,7 +42,6 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
-
 
   return (
     <div className="flex items-center justify-between gap-1">
@@ -123,19 +125,28 @@ const PreviousOrNextButton = ({ isNext }: { isNext: boolean }) => {
   );
 };
 
+const StepDisplayedText = ({
+  stepMetadata,
+}: {
+  stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName;
+}) => {
+  const actionOrTriggerDisplayName =
+    stepMetadata?.type === FlowActionType.PIECE ||
+    stepMetadata?.type === FlowTriggerType.PIECE
+      ? stepMetadata?.actionOrTriggerOrAgentDisplayName
+      : stepMetadata?.displayName;
 
-const StepDisplayedText = ({ stepMetadata }: { stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName  }) => {
-  const actionOrTriggerDisplayName = stepMetadata?.type === FlowActionType.PIECE || stepMetadata?.type === FlowTriggerType.PIECE ? stepMetadata?.actionOrTriggerOrAgentDisplayName : stepMetadata?.displayName;
-
-   return (  <div className="flex items-center gap-0.5 min-w-0 text-sm">
-    {!isNil(actionOrTriggerDisplayName) ? (
-      <TextWithTooltip tooltipMessage={actionOrTriggerDisplayName}>
-        <span className="font-medium text-foreground min-w-0">
-          {actionOrTriggerDisplayName}
-        </span>
-      </TextWithTooltip>
-    ) : (
-      <Skeleton className="h-4 w-32 rounded" />
-    )}
-  </div>)
-}
+  return (
+    <div className="flex items-center gap-0.5 min-w-0 text-sm">
+      {!isNil(actionOrTriggerDisplayName) ? (
+        <TextWithTooltip tooltipMessage={actionOrTriggerDisplayName}>
+          <span className="font-medium text-foreground min-w-0">
+            {actionOrTriggerDisplayName}
+          </span>
+        </TextWithTooltip>
+      ) : (
+        <Skeleton className="h-4 w-32 rounded" />
+      )}
+    </div>
+  );
+};
