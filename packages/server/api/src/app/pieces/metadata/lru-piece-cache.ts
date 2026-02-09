@@ -78,13 +78,12 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
             const translatedDevPieces = devPieces.map((piece) => 
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
+
+            const filteredPieces = [...allTranslatedPieces, ...translatedDevPieces].filter((piece) => 
+                filterPieceBasedOnType(platformId, piece),
+            )
             
-            // BUGGY: De-duplicate FIRST, then filter - this breaks visibility for some platforms
-            // When a custom piece exists with the same name as an official piece, de-duplicating
-            // first will keep only the highest version. If that's a custom piece from another
-            // platform, filtering will remove it, making the official piece invisible too.
-            const deduplicated = lastVersionOfEachPiece([...allTranslatedPieces, ...translatedDevPieces])
-            return deduplicated.filter((piece) => filterPieceBasedOnType(platformId, piece))
+            return lastVersionOfEachPiece(filteredPieces)
         },
         
         async getPieceVersion(params: GetPieceVersionParams): Promise<PieceMetadataSchema | null> {
