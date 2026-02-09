@@ -12,10 +12,6 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             displayName: 'URL',
             placeholder: 'http://localhost:8200',
         },
-        appRoleName: {
-            displayName: 'App Role Name',
-            placeholder: 'app-role',
-        },
         namespace: {
             displayName: 'Namespace',
             placeholder: 'namespace',

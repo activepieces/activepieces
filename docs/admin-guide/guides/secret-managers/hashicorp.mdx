@@ -1,0 +1,53 @@
+---
+title: "HashiCorp Vault"
+description: "Connect HashiCorp Vault to Activepieces for enterprise-grade secret management"
+---
+
+HashiCorp Vault is an enterprise-grade secrets management system that provides secure storage and access to secrets, API keys, passwords, and other sensitive data.
+
+## Prerequisites
+
+Before connecting HashiCorp Vault to Activepieces, ensure you have:
+
+- **HashiCorp Vault Key-value (KV) secrets engine** version 2
+- **AppRole auth method** [enabled](https://developer.hashicorp.com/vault/docs/auth/approle)
+- **One or more AppRoles** [configured](https://developer.hashicorp.com/vault/docs/auth/approle) with appropriate policies
+
+## Policies
+
+Enable The created AppRole to access your secrets engine(s) by adding the following to your policy
+
+```
+path "<secret_engine_name>/data/<secret_name>" {
+  capabilities = [ "read" ]
+}
+```
+or 
+```
+path "<secret_engine_name>/data/*" {
+  capabilities = [ "read" ]
+}
+```
+
+## Connecting to Activepieces
+
+1. Go to **Platform Admin → Security → Secret Managers**
+2. Select **HashiCorp Vault** from the provider list
+3. Enter the required connection details:
+   - **URL**: Your Vault server URL (e.g., `http://localhost:8200`)
+   - **Role ID**: The Role ID from your AppRole configuration
+   - **Secret ID**: The Secret ID from your AppRole configuration
+   - **Namespace** (optional): Vault namespace if using Vault Enterprise namespaces
+4. Click **Connect** to test and save the connection
+
+## Using HashiCorp Vault Secrets
+
+When configuring a connection that requires credentials:
+
+1. Click the **key icon** (🔑) next to the input field
+2. Select **HashiCorp Vault** from the dropdown
+3. Enter the secret path in the format: `mount/data/path/key`
+   - if key is added via cli command `vault kv put -mount=secret app api_key='abc'`
+   - the input value should be secret/data/app/api_key
+
+The connection will automatically retrieve the secret from Vault when the flow runs.

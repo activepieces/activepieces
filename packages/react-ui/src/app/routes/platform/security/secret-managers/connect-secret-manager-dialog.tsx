@@ -94,8 +94,15 @@ const ConnectSecretManagerDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {t('Connect secret manager')} ({manager.name})
+          <DialogTitle className="flex items-center gap-2">
+            {t('Connect secret manager')} - 
+            <a
+              href={`https://activepieces.com/docs/admin-guide/guides/secret-managers/${manager.id}`}
+              target="_blank"
+              className="text-primary"
+            >
+              {manager.name}
+            </a>
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>

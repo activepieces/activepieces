@@ -1,0 +1,72 @@
+---
+title: "Overview"
+description: "Connect external secret management systems to securely store and retrieve credentials"
+---
+
+Secret Managers allow you to integrate external secret management systems with Activepieces, enabling centralized credential management and enhanced security for your connections.
+
+## Benefits
+
+- **Centralized Management**: Store all credentials in one secure location
+- **Enhanced Security**: Credentials are managed by dedicated secret management systems
+- **Audit & Compliance**: Track access and changes to secrets
+- **Rotation Support**: Easily rotate credentials without updating flows
+- **Access Control**: Use your existing secret manager access policies
+
+## Supported Providers
+
+- **[HashiCorp Vault](./hashicorp-vault)** - Enterprise-grade secrets management
+
+## How to Connect
+
+1. Go to **Platform Admin → Security → Secret Managers**
+2. Select the secret manager provider you want to connect
+3. Follow the provider-specific setup instructions in the provider documentation
+4. Enter the required connection details
+5. Click **Connect** to test and save the connection
+
+The connection will be encrypted and stored securely. You can disconnect at any time by clicking the **Remove** button.
+
+## Using Secret Managers in Connections
+
+Once connected, you can use secret managers when creating or editing connections:
+
+1. When configuring a connection that requires credentials (like API keys or passwords)
+2. Click the **key icon** (🔑) next to the input field
+3. Select your secret manager provider from the dropdown
+4. Enter the secret path/identifier required by your provider (see provider-specific documentation)
+5. The connection will automatically retrieve the secret from your secret manager when needed
+
+## How It Works
+
+When you use a secret manager in a connection:
+
+- The connection stores a reference to the secret (not the actual credential)
+- When the flow runs, Activepieces authenticates with your secret manager and retrieves the secret
+- Secrets are fetched on-demand and never stored in Activepieces
+- If the secret is updated in your secret manager, flows will automatically use the new value
+
+## Security Considerations
+
+- **Encryption**: Connection credentials to secret managers are encrypted at rest
+- **Access Control**: Use your secret manager's access policies to control who can access secrets
+- **Network Security**: Ensure your secret manager is accessible from your Activepieces instance
+- **Credential Management**: Regularly rotate authentication credentials for secret managers
+
+## Troubleshooting
+
+**Connection Failed:**
+- Verify the connection details are correct and accessible
+- Check that authentication credentials are valid
+- Ensure network connectivity between Activepieces and your secret manager
+- Review provider-specific troubleshooting guides
+
+**Secret Not Found:**
+- Verify the secret path/name is correct
+- Check that the secret exists in your secret manager
+- Ensure the authentication credentials have permissions to read the secret
+
+**Permission Denied:**
+- Verify the authentication credentials have the necessary permissions
+- Check your secret manager's access control policies
+- Review audit logs in your secret manager for detailed error information
