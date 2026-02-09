@@ -20,7 +20,7 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
       className="max-w-md w-full"
     >
       <TabsList
-        className={`h-full w-full flex gap-3 px-2 bg-background justify-start rounded-none`}
+        className={`h-14 w-full grid p-0 bg-background justify-start rounded-none`}
         style={{
           gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
         }}
@@ -29,8 +29,7 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className={`flex flex-col  bg-background grow  h-full rounded-md  w-[85px] max-w-[85px] shrink-0
-              hover:bg-gray-300/30 dark:hover:bg-gray-300/10
+            className={`flex flex-col rounded-none bg-background h-full px-1
                data-[state=active]:text-primary data-[state=active]:shadow-none
                border-transparent data-[state=active]:border-primary data-[state=active]:active
                text-accent-foreground [&>svg]:size-5 [&>svg]:shrink-0`}

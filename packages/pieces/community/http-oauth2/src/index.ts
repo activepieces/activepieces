@@ -31,7 +31,7 @@ export const httpOauth2ClientCredentials = createPiece({
   displayName: "HTTP (OAuth2)",
   auth: httpOauth2Auth,
   minimumSupportedRelease: '0.56.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/new-core/http.svg",
+  logoUrl: "https://cdn.activepieces.com/pieces/http.png",
   authors: [
     'mhshiba'
   ],

@@ -1,11 +1,10 @@
-import { ApplicationEvent, ApplicationEventName, FlowUpdatedEvent } from '@activepieces/ee-shared'
+import { ApplicationEventName, FlowUpdatedEvent } from '@activepieces/ee-shared'
 import { BADGES, FlowOperationType, FlowStatus, isNil } from '@activepieces/shared'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
 export const flowsBadgesCheck: BadgeCheck = {
-    eval: async (event: ApplicationEvent): Promise<BadgeCheckResult> => {
-        const userId = event.userId
+    eval: async ({ event, userId }): Promise<BadgeCheckResult> => {
         if (event.action !== ApplicationEventName.FLOW_UPDATED) {
             return { userId: null, badges: [] }
         }

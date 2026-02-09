@@ -1,4 +1,3 @@
-import { ProjectMember } from '@activepieces/ee-shared'
 import { PlatformId, ProjectRole } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../../../database/database-common'
@@ -7,7 +6,6 @@ export type ProjectRoleSchema = ProjectRole & {
     name: string
     permissions: string[]
     platformId: PlatformId
-    projectMembers: ProjectMember[]
 }
 
 export const ProjectRoleEntity = new EntitySchema<ProjectRoleSchema>({

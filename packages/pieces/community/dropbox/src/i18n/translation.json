@@ -56,7 +56,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The search string. Must be at least 3 characters.": "The search string. Must be at least 3 characters.",
   "The path to search in. If not specified, the search is performed from the root.": "The path to search in. If not specified, the search is performed from the root.",
   "The maximum number of search results to return (up to 1000). Default is 100 if not specified.": "The maximum number of search results to return (up to 1000). Default is 100 if not specified.",

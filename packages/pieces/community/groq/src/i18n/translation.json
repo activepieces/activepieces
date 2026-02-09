@@ -30,7 +30,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The model which will generate the completion.": "The model which will generate the completion.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.",
   "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.": "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.",

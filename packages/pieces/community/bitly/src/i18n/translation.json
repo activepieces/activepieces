@@ -63,7 +63,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The group where the item will be managed.": "The group where the item will be managed.",
   "Select the Bitlink to modify.": "Select the Bitlink to modify.",
   "The URL to shorten (must include http:// or https://).": "The URL to shorten (must include http:// or https://).",

@@ -20,16 +20,14 @@
   "Method": "方法",
   "Headers": "信头",
   "Query Parameters": "查询参数",
-  "Body Type": "Body Type",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
-  "Follow redirects": "Follow redirects",
   "The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings": "The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings",
   "The name of the event. This is how you'll reference the event in campaigns or segments": "The name of the event. This is how you'll reference the event in campaigns or segments",
   "Event information to be sent to Customer.io": "Event information to be sent to Customer.io",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
-  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "Key Value": "Key Value",
   "JSON": "JSON",
   "GET": "获取",
@@ -37,8 +35,5 @@
   "PATCH": "PATCH",
   "PUT": "弹出",
   "DELETE": "删除",
-  "HEAD": "黑色",
-  "None": "无",
-  "Form Data": "表单数据",
-  "Raw": "原始文件"
+  "HEAD": "黑色"
 }

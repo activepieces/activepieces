@@ -2,9 +2,9 @@ import { t } from 'i18next';
 import { Info, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
@@ -45,6 +45,7 @@ export const FlowStepInputOutput = () => {
           selectedStep.name,
           loopsIndexes,
           run.steps,
+          flowVersion.trigger,
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
@@ -68,12 +69,8 @@ export const FlowStepInputOutput = () => {
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
 
-  if (
-    !isRunDone &&
-    run.status !== FlowRunStatus.PAUSED &&
-    isNil(selectedStepOutput)
-  ) {
-    return <StepOutputSkeleton className="p-4" />;
+  if (!isRunDone && run.status !== FlowRunStatus.PAUSED) {
+    return <OutputSkeleton />;
   }
 
   const message = handleRunFailureOrEmptyLog(run, rententionDays);
@@ -137,7 +134,7 @@ export const FlowStepInputOutput = () => {
           )}
           <TabsContent value="output">
             {isStepRunning ? (
-              <StepOutputSkeleton className="p-4" />
+              <OutputSkeleton />
             ) : (
               <JsonViewer json={parsedOutput} title={t('Output')} />
             )}
@@ -148,17 +145,26 @@ export const FlowStepInputOutput = () => {
   );
 };
 
+const OutputSkeleton = () => {
+  return (
+    <div className="flex  w-full  h-full  p-4">
+      <div className="space-y-2 grow">
+        <div className="flex items-center gap-2">
+          <Skeleton className="w-40 h-4" />
+        </div>
+        <Skeleton className="w-full h-40" />
+      </div>
+    </div>
+  );
+};
+
 function handleRunFailureOrEmptyLog(
   run: FlowRun | null,
   retentionDays: number | null,
 ) {
-  if (
-    isNil(run) ||
-    !isFlowRunStateTerminal({ status: run.status, ignoreInternalError: true })
-  ) {
+  if (isNil(run)) {
     return null;
   }
-
   if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
     return t(
       'There are no logs captured for this run, because of an internal error, please contact support.',

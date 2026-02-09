@@ -19,7 +19,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The thread you want to send the message to.": "The thread you want to send the message to.",
   "The message you want to send.": "The message you want to send.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

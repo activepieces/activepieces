@@ -34,12 +34,10 @@
   "Method": "Méthode",
   "Headers": "Headers",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "Select your preferred language for the translated output.": "Sélectionnez votre langue préférée pour la sortie traduite.",
   "Filter by style (optional)": "Filtrer par style (optionnel)",
   "List of texts to translate": "Liste des textes à traduire",
@@ -66,7 +64,7 @@
   "If true, response word timings map to original text. (English only).": "Si vrai, les timings des mots de réponse correspondent au texte original. (anglais seulement).",
   "Custom word pronunciations.": "pronunciations de mots personnalisés.",
   "Authorization headers are injected automatically from your connection.": "Les Headers d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "MP3": "Mp3",
   "WAV": "WAV",
   "FLAC": "FLAC",
@@ -83,9 +81,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "HEAD"
 }

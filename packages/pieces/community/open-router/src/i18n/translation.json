@@ -18,7 +18,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.",
   "The prompt to send to the model.": "The prompt to send to the model.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.",

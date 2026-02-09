@@ -45,7 +45,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Pass `true` to only return active clients and `false` to return inactive clients.": "Pass `true` to only return active clients and `false` to return inactive clients.",
   "Only return clients that have been updated since the given date and time.": "Only return clients that have been updated since the given date and time.",
   "DEPRECATED: The page number to use in pagination.": "DEPRECATED: The page number to use in pagination.",

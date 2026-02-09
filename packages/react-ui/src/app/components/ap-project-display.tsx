@@ -1,14 +1,12 @@
 import { User } from 'lucide-react';
 
 import { Avatar } from '@/components/ui/avatar';
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import {
   isNil,
   PROJECT_COLOR_PALETTE,
@@ -23,7 +21,6 @@ type ApProjectDisplayProps = {
   titleClassName?: string;
   maxLengthToNotShowTooltip?: number;
   projectType: ProjectType;
-  inSidebar?: boolean;
 };
 
 export const ApProjectDisplay = ({
@@ -33,9 +30,7 @@ export const ApProjectDisplay = ({
   titleClassName = '',
   maxLengthToNotShowTooltip = 30,
   projectType,
-  inSidebar = false,
 }: ApProjectDisplayProps) => {
-  const { state } = useSidebar();
   const projectAvatar = isNil(icon) ? null : projectType ===
     ProjectType.TEAM ? (
     <Avatar
@@ -59,9 +54,7 @@ export const ApProjectDisplay = ({
   const content = (
     <div className={`flex items-center gap-2 ${containerClassName}`}>
       {projectAvatar}
-      {((inSidebar && state === 'expanded') || !inSidebar) && (
-        <span className={cn(titleClassName, 'truncate')}>{displayText}</span>
-      )}
+      <span className={titleClassName}>{displayText}</span>
     </div>
   );
 

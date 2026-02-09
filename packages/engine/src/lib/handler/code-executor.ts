@@ -40,7 +40,6 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         await progressService.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
-            stepNameToUpdate: action.name,
         })
     
         if (isNil(constants.runEnvironment)) {

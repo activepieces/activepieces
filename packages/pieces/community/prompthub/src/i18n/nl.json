@@ -25,12 +25,10 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
-  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
-  "Follow redirects": "Volg omleidingen",
   "The ID of the team. Can be found in your browser's URL bar when viewing Team Settings, or use current_team_id from /me endpoint.": "De ID van het team. Kan worden gevonden in de URL-balk van uw browser tijdens het bekijken van teaminstellingen, of gebruik current_team_id van /me eindpunt.",
   "Filter projects from a specific group. Must be URL-encoded if the group name contains spaces.": "Projecten filteren vanuit een specifieke groep. Moet een URL-gecodeerd zijn als de groepsnaam spaties bevat.",
   "Filter projects where the head uses a specific model (e.g., gpt-4, claude-2, etc.).": "Filter projecten waar de kop een specifiek model gebruikt (bijv. gpt-4, claude-2, etc.).",
@@ -48,7 +46,7 @@
   "Additional metadata to include with the run.": "Aanvullende metadata om op te nemen met de run.",
   "Request timeout in seconds (max 600).": "Verzoek time-out in seconden (max 600).",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "OpenAI": "OpenAI",
   "Anthropic": "Anthropische",
   "Azure": "Azure",
@@ -59,9 +57,5 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD",
-  "None": "geen",
-  "JSON": "JSON",
-  "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "HEAD": "HOOFD"
 }

@@ -205,28 +205,6 @@ describe('Property Validation', () => {
             expect(nullErrors).toEqual({
                 json: ['Expected JSON, received: null'],
             })
-
-            const { errors: emptyStringErrors } = await propsProcessor.applyProcessorsAndValidators(
-                { json: '' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-            expect(emptyStringErrors).toEqual({
-                json: ['Expected JSON, received: '],
-            })
-
-            const { errors: invalidTextErrors } = await propsProcessor.applyProcessorsAndValidators(
-                { json: 'asd' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-            expect(invalidTextErrors).toEqual({
-                json: ['Expected JSON, received: asd'],
-            })
         })
 
         it('should validate optional json property with invalid value', async () => {
@@ -255,15 +233,6 @@ describe('Property Validation', () => {
             )
             expect(validUndefinedErrors).toEqual({})
 
-            const { errors: emptyStringErrors } = await propsProcessor.applyProcessorsAndValidators(
-                { json: '' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-            expect(emptyStringErrors).toEqual({})
-
             const { errors: invalidJsonErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { json: 'not a json object' },
                 props,
@@ -273,17 +242,6 @@ describe('Property Validation', () => {
             )
             expect(invalidJsonErrors).toEqual({
                 json: ['Expected JSON, received: not a json object'],
-            })
-
-            const { errors: invalidTextErrors } = await propsProcessor.applyProcessorsAndValidators(
-                { json: 'asd' },
-                props,
-                PieceAuth.None(),
-                false,
-                {},
-            )
-            expect(invalidTextErrors).toEqual({
-                json: ['Expected JSON, received: asd'],
             })
         })
         it('should validate required object property', async () => {

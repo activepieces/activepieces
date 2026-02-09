@@ -50,7 +50,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Select a table from your database": "Select a table from your database",
   "Enter the data for each column": "Enter the data for each column",
   "Whether to return the created row": "Whether to return the created row",

@@ -19,12 +19,10 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
-  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
-  "Follow redirects": "Volg omleidingen",
   "The search query to find keywords for": "De zoekopdracht om trefwoorden te vinden voor",
   "Search engine to use for keyword analysis": "Zoekmachine te gebruiken voor zoekwoordanalyse",
   "List of keywords to exclude from the search": "Lijst met trefwoorden uit te sluiten van de zoekopdracht",
@@ -40,7 +38,7 @@
   "Page number in response.": "Paginanummer in antwoord",
   "Number of results per page in response.": "Aantal resultaten per pagina in respons.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "United States": "Verenigde Staten",
   "Singapore": "Singapura",
   "Indonesia": "Indonesië",
@@ -59,9 +57,5 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD",
-  "None": "geen",
-  "JSON": "JSON",
-  "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "HEAD": "HOOFD"
 }

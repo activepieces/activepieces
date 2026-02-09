@@ -23,7 +23,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The ID of the template to use for the contract": "The ID of the template to use for the contract",
   "Unique title for the contract (defaults to template title if not specified)": "Unique title for the contract (defaults to template title if not specified)",
   "Language setting for the signer page and emails": "Language setting for the signer page and emails",

@@ -31,7 +31,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The fields to add to the record.": "The fields to add to the record.",
   "The ID of the record to update.": "The ID of the record to update.",
   "The IDs of the records to find.": "The IDs of the records to find.",

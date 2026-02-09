@@ -32,7 +32,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The goal or task description for Skyvern to accomplish.": "The goal or task description for Skyvern to accomplish.",
   "The starting URL for the task.": "The starting URL for the task.",
   "URL to send task status updates to after a run is finished.": "URL to send task status updates to after a run is finished.",

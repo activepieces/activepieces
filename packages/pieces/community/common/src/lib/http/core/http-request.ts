@@ -14,5 +14,4 @@ export type HttpRequest<RequestBody extends HttpRequestBody = any> = {
   timeout?: number;
   retries?: number;
   responseType?: 'arraybuffer' | 'json' | 'blob' | 'text';
-  followRedirects?: boolean;
 };

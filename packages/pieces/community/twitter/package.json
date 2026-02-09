@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-twitter",
-  "version": "0.3.2",
+  "version": "0.3.0",
   "dependencies": {
     "twitter-api-v2": "1.15.1"
   }

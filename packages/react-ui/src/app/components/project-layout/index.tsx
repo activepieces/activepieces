@@ -80,7 +80,7 @@ export function ProjectDashboardLayout({
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <SidebarProvider hoverMode={true}>
+      <SidebarProvider>
         {!isEmbedded && <ProjectDashboardSidebar />}
         <SidebarInset className={`relative overflow-auto gap-4`}>
           <div className="flex flex-col">

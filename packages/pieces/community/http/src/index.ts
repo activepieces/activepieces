@@ -5,7 +5,7 @@ import { httpSendRequestAction } from './lib/actions/send-http-request-action';
 export const http = createPiece({
   displayName: 'HTTP',
   description: 'Sends HTTP requests and return responses',
-  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/http.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/http.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.3',

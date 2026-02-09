@@ -44,7 +44,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Array of URLs to crawl": "Array of URLs to crawl",
   "If true, returns full page text. If false, disables text return.": "If true, returns full page text. If false, disables text return.",
   "Options for livecrawling pages.": "Options for livecrawling pages.",

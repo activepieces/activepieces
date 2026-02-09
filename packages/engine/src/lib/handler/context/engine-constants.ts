@@ -75,10 +75,6 @@ export class EngineConstants {
         return EngineConstants.TEST_MODE
     }
 
-    public get isTestFlow(): boolean {
-        return this.progressUpdateType === ProgressUpdateType.TEST_FLOW
-    }
-
     public get baseCodeDirectory(): string {
         return EngineConstants.BASE_CODE_DIRECTORY
     }

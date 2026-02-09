@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
+import { ChevronDown, Info, Trash2, User, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -9,6 +9,12 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
@@ -17,19 +23,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { RoleDropdown } from '@/features/members/component/role-selector';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils } from '@/lib/utils';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import {
-  Permission,
-  UserInvitation,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
+import { Permission, UserInvitation } from '@activepieces/shared';
 
 export type MemberRowData =
   | {
@@ -41,11 +41,6 @@ export type MemberRowData =
       id: string;
       type: 'invitation';
       data: UserInvitation;
-    }
-  | {
-      id: string;
-      type: 'platform-admin-operator';
-      data: UserWithMetaInformation;
     };
 
 type MembersTableColumnsProps = {
@@ -75,9 +70,6 @@ const RoleCell = ({
     row.original.type === 'member' &&
     project.ownerId === row.original.data.userId;
 
-  const isPlatformAdminOrOperator =
-    row.original.type === 'platform-admin-operator';
-
   const { mutate } = useMutation({
     mutationFn: (newRole: string) => {
       if (row.original.type === 'member') {
@@ -103,11 +95,9 @@ const RoleCell = ({
   const roleName =
     row.original.type === 'member'
       ? row.original.data.projectRole.name
-      : row.original.type === 'platform-admin-operator'
-      ? formatUtils.convertEnumToHumanReadable(row.original.data.platformRole)
       : row.original.data.projectRole?.name ?? '';
 
-  if (isOwner || isPlatformAdminOrOperator) {
+  if (isOwner) {
     return <span className="text-sm">{roleName}</span>;
   }
 
@@ -138,12 +128,31 @@ const RoleCell = ({
 
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateRole}>
-      <RoleDropdown
-        value={roleName}
-        onValueChange={handleValueChange}
-        disabled={!userHasPermissionToUpdateRole}
-        roles={roles}
-      />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-[150px] justify-between"
+            disabled={!userHasPermissionToUpdateRole}
+          >
+            <span>{roleName}</span>
+            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-[150px]">
+          {roles.map((role) => (
+            <DropdownMenuItem
+              key={role.name}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleValueChange(role.name);
+              }}
+            >
+              {role.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </PermissionNeededTooltip>
   );
 };
@@ -167,9 +176,6 @@ const ActionsCell = ({
     row.original.type === 'member' &&
     project.ownerId === row.original.data.userId;
 
-  const isPlatformAdminOrOperator =
-    row.original.type === 'platform-admin-operator';
-
   const deleteMember = async () => {
     if (row.original.type === 'member') {
       await projectMembersApi.delete(row.original.data.id);
@@ -179,28 +185,31 @@ const ActionsCell = ({
     refetch();
   };
 
-  if (isOwner || isPlatformAdminOrOperator) {
+  if (isOwner) {
     return null;
   }
-
-  const displayName =
-    row.original.type === 'member'
-      ? `${row.original.data.user.firstName} ${row.original.data.user.lastName}`
-      : row.original.data.email;
-
-  const removeLabel = `${t('Remove')} ${displayName}`;
 
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
       <ConfirmationDeleteDialog
-        title={removeLabel}
+        title={
+          row.original.type === 'invitation'
+            ? t('Remove {email}', { email: row.original.data.email })
+            : `${t('Remove')} ${row.original.data.user.firstName} ${
+                row.original.data.user.lastName
+              }`
+        }
         message={
           row.original.type === 'invitation'
             ? t('Are you sure you want to remove this invitation?')
             : t('Are you sure you want to remove this member?')
         }
         mutationFn={() => deleteMember()}
-        entityName={displayName}
+        entityName={
+          row.original.type === 'invitation'
+            ? row.original.data.email
+            : `${row.original.data.user.firstName} ${row.original.data.user.lastName}`
+        }
       >
         <Button
           variant="ghost"
@@ -243,27 +252,6 @@ export const membersTableColumns = ({
             />
             <div className="flex flex-col gap-1">
               <p className="text-sm text-orange-700">{email}</p>
-            </div>
-          </div>
-        );
-      }
-
-      if (row.original.type === 'platform-admin-operator') {
-        const email = row.original.data.email;
-        const name = `${row.original.data.firstName} ${row.original.data.lastName}`;
-
-        return (
-          <div className="flex items-center space-x-4">
-            <UserAvatar
-              name={name}
-              email={email}
-              size={32}
-              disableTooltip={true}
-              imageUrl={row.original.data.imageUrl}
-            />
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium leading-none">{name}</p>
-              <p className="text-sm text-muted-foreground">{email}</p>
             </div>
           </div>
         );

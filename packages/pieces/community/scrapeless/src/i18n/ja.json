@@ -29,12 +29,10 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
-  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
-  "Follow redirects": "リダイレクトをフォローする",
   "Parameter defines the query you want to search. You can use anything that you would use in a regular Google search. e.g. inurl:, site:, intitle:. We also support advanced search query parameters such as as_dt and as_eq.": "Parameterは検索したいクエリを定義します。通常のGoogle検索で使用するものは何でも使用できます。 例: inurl:, site:, intitle:// . as_dt, as_eqなどの高度な検索クエリパラメータもサポートしています。",
   "Parameter defines the language to use for the Google search. It's a two-letter language code. (e.g., en for English, es for Spanish, or fr for French).": "ParameterはGoogle検索に使用する言語を定義します。 これは2文字の言語コードです(例えば、英語はen、スペイン語はe、フランス語はfr)。",
   "Parameter defines the country to use for the Google search. It's a two-letter country code. (e.g., us for the United States, uk for United Kingdom, or fr for France).": "パラメータはGoogle検索に使用する国を定義します。これは2文字の国コードです。 (例えば、米国、イギリス、フランスの場合はfrの場合)。",
@@ -47,7 +45,7 @@
   "Parameter defines the language to use for the Google Trends search. It's a two-letter language code. (e.g., `en` for English, `es` for Spanish, or `fr` for French).": "パラメータは、Googleトレンド検索に使用する言語を定義します。 2文字の言語コードです。例えば、英語の場合は`en`、スペイン語の場合は`es`、フランス語の場合は`fr`)。",
   "time zone offset. default is `420`.": "タイムゾーンオフセット。デフォルトは `420` です。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "Auto complete": "Auto complete",
   "Interest over time": "時間の経過に関心を持ってください",
   "Compared breakdown by region": "地域別の比較",
@@ -219,9 +217,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭",
-  "None": "なし",
-  "JSON": "JSON",
-  "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "HEAD": "頭"
 }

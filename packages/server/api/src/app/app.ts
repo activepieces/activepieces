@@ -42,7 +42,6 @@ import { adminPlatformModule } from './ee/platform/admin/admin-platform.controll
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 import { platformAiCreditsService } from './ee/platform/platform-plan/platform-ai-credits.service'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
-import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -288,7 +287,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
@@ -314,7 +312,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)

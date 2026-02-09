@@ -37,7 +37,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The document number (DocNumber) of the invoice to search for.": "The document number (DocNumber) of the invoice to search for.",
   "The display name of the customer to search for.": "The display name of the customer to search for.",
   "The ID of the customer to find payments for.": "The ID of the customer to find payments for.",

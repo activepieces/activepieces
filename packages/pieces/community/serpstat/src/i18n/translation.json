@@ -24,7 +24,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The search query to find keywords for": "The search query to find keywords for",
   "Search engine to use for keyword analysis": "Search engine to use for keyword analysis",
   "List of keywords to exclude from the search": "List of keywords to exclude from the search",

@@ -1,13 +1,20 @@
 import { LockKeyhole } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
+import { buttonVariants } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export type SidebarItemType = {
@@ -27,33 +34,73 @@ export type SidebarItemType = {
 
 export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { state } = useSidebar();
   const isLinkActive =
     location.pathname.startsWith(item.to) || item.isActive?.(location.pathname);
   const isCollapsed = state === 'collapsed';
 
+  const linkProps = {
+    to: item.to,
+    target: item.newWindow ? '_blank' : '',
+    rel: item.newWindow ? 'noopener noreferrer' : undefined,
+    ...(item.onClick && { onClick: item.onClick }),
+  };
+
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        className={cn(
-          { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
-          '',
-        )}
-        onClick={() => navigate(item.to)}
-      >
-        {item.icon && <item.icon className="size-4" />}
-        {!isCollapsed && <span className="text-sm">{item.label}</span>}
-        {!isCollapsed && item.locked && (
-          <LockKeyhole className="size-3.5! ml-auto" />
-        )}
-        {item.notification && !item.locked && (
-          <Dot
-            variant="destructive"
-            className="absolute right-1 top-2 transform -translate-y-1/2 size-2 rounded-full"
-          />
-        )}
-      </SidebarMenuButton>
+    <SidebarMenuItem className={cn(isCollapsed && 'flex justify-center')}>
+      {isCollapsed ? (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                {...linkProps}
+                className={cn(
+                  buttonVariants({ variant: 'ghost', size: 'icon' }),
+                  isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
+                  'relative',
+                )}
+              >
+                {item.icon && <item.icon className="size-5" />}
+                {item.notification && !item.locked && (
+                  <Dot
+                    variant="destructive"
+                    className="absolute right-1 top-1 size-2 rounded-full"
+                  />
+                )}
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center">
+              {item.label}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <SidebarMenuButton
+          asChild
+          className={cn(
+            'px-2 py-5',
+            isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
+          )}
+        >
+          <Link {...linkProps}>
+            <div className="w-full flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 w-full">
+                <div className="flex items-center gap-2">
+                  {item.icon && <item.icon className="size-5" />}
+                  <span className="text-sm">{item.label}</span>
+                </div>
+              </div>
+              {item.locked && <LockKeyhole className="size-3.5" />}
+            </div>
+            {item.notification && !item.locked && (
+              <Dot
+                variant="destructive"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full"
+              />
+            )}
+          </Link>
+        </SidebarMenuButton>
+      )}
     </SidebarMenuItem>
   );
 };

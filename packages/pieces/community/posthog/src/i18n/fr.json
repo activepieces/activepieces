@@ -21,12 +21,10 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "The event name": "Le nom de l'événement",
   "User's Distinct Id": "Id distinctif de l'utilisateur",
   "The event properties": "Propriétés de l'événement",
@@ -38,7 +36,7 @@
   "Whether to anonymize incoming IP addresses.": "Si l'on doit anonymiser les adresses IP entrantes.",
   "If this is a demo project": "Si c'est un projet de démo",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Alias": "Alias",
   "Capture": "Capturer",
   "Identify": "Identifier",
@@ -49,9 +47,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "TÊTE"
 }

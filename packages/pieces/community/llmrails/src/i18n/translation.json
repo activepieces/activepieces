@@ -17,7 +17,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Search query": "Search query",
   "Hybrid search is combining dense and sparse embeddings.": "Hybrid search is combining dense and sparse embeddings.",
   "Summarizes the datastore search results": "Summarizes the datastore search results",

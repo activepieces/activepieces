@@ -57,7 +57,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Enter the beginning of your text and AI will complete it (e.g., \"The benefits of renewable energy are\")": "Enter the beginning of your text and AI will complete it (e.g., \"The benefits of renewable energy are\")",
   "The language model to use": "The language model to use",
   "The formality of the generated text": "The formality of the generated text",

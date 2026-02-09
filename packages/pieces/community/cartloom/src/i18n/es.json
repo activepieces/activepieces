@@ -45,12 +45,10 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
-  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
-  "Follow redirects": "Seguir redirecciones",
   "The invoice ID for the order you want to retrieve": "ID de factura para el pedido que desea recuperar",
   "Enter the title of the discount": "Introduzca el título del descuento",
   "Is this discount enabled?": "¿Está activado este descuento?",
@@ -74,7 +72,7 @@
   "Select a date to end the search. Defaults to today.": "Seleccione una fecha para finalizar la búsqueda. Por defecto es hoy.",
   "Email address to search for.": "Dirección de correo a buscar.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "Fixed Amount": "Cantidad fija",
   "Percentage": "Porcentaje",
   "Selected Products": "Productos seleccionados",
@@ -85,9 +83,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO",
-  "None": "Ninguna",
-  "JSON": "JSON",
-  "Form Data": "Datos de Formulario",
-  "Raw": "Rápido"
+  "HEAD": "LIMPIO"
 }

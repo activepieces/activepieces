@@ -58,7 +58,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The word or phrase you are searching for": "The word or phrase you are searching for",
   "Spotify URI of the context to play (album, artist, playlist)": "Spotify URI of the context to play (album, artist, playlist)",
   "List of spotify track uris to play": "List of spotify track uris to play",

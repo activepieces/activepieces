@@ -30,7 +30,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The model to use ": "The model to use ",
   "Message to send": "Message to send",
   "Input text to embed. Can be a single string or multiple texts separated by newlines": "Input text to embed. Can be a single string or multiple texts separated by newlines",

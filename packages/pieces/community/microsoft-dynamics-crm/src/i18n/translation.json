@@ -28,7 +28,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Select or map the entity for which you want to create the record.": "Select or map the entity for which you want to create the record.",
   "Select or map the entity name whose records you want to delete.": "Select or map the entity name whose records you want to delete.",
   "Select or map the entity name whose records you want to retrieve.": "Select or map the entity name whose records you want to retrieve.",

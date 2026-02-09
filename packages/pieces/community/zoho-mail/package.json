@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-zoho-mail",
-  "version": "0.1.2",
+  "version": "0.1.0",
   "dependencies": {
     "mailparser": "3.7.5"
   }

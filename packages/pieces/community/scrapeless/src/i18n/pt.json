@@ -29,12 +29,10 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
-  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
-  "Follow redirects": "Seguir redirecionamentos",
   "Parameter defines the query you want to search. You can use anything that you would use in a regular Google search. e.g. inurl:, site:, intitle:. We also support advanced search query parameters such as as_dt and as_eq.": "Parâmetro define a consulta que você deseja pesquisar. Você pode usar qualquer coisa que você usaria em uma pesquisa regular do Google. p.ex. inurl:, site:, intitle:. Também suportamos parâmetros avançados de consulta de como_dt e como_eq.",
   "Parameter defines the language to use for the Google search. It's a two-letter language code. (e.g., en for English, es for Spanish, or fr for French).": "Parâmetro define o idioma a ser usado para pesquisa do Google. É um código de idioma de duas letras (por exemplo, en para inglês, en para espanhol, ou fr para francês).",
   "Parameter defines the country to use for the Google search. It's a two-letter country code. (e.g., us for the United States, uk for United Kingdom, or fr for France).": "Parâmetro define o país a ser usado para pesquisa do Google. É um código de país de duas letras. (por exemplo, nós para os Estados Unidos, uk para o Reino Unido, ou fr para a França).",
@@ -47,7 +45,7 @@
   "Parameter defines the language to use for the Google Trends search. It's a two-letter language code. (e.g., `en` for English, `es` for Spanish, or `fr` for French).": "Parâmetro define o idioma a ser usado para a pesquisa do Google Trends. É um código de idioma de duas letras (por exemplo, 'en' para inglês, 'es' para espanhol, ou 'fr' para francês).",
   "time zone offset. default is `420`.": "offset de fuso horário. O padrão é `420`.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "Auto complete": "Auto complete",
   "Interest over time": "Juros ao longo do tempo",
   "Compared breakdown by region": "Comparado com o detalhamento por região",
@@ -219,9 +217,5 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA",
-  "None": "Nenhuma",
-  "JSON": "JSON",
-  "Form Data": "Dados de Formulário",
-  "Raw": "RAW"
+  "HEAD": "CABEÇA"
 }

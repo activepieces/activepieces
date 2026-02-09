@@ -30,11 +30,13 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
         assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
         await pieceInstallService(req.log).installPiece(
             platformId,
+            undefined,
             req.body,
         )
         await reply.status(StatusCodes.CREATED).send({})
     },
     )
+
     done()
 }
 

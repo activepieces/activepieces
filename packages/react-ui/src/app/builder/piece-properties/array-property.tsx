@@ -8,7 +8,6 @@ import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import {
   ArrayProperty,
   ArraySubProps,
@@ -126,15 +125,10 @@ const ArrayPieceProperty = React.memo(
       <>
         {arrayProperty.properties && (
           <>
-            <div
-              className={cn('flex w-full flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}
-            >
+            <div className="flex w-full flex-col gap-4">
               {fields.map((field, index) => (
                 <div
-                  className={cn(
-                    'p-4 border rounded-md flex flex-col',
-                    GAP_SIZE_FOR_STEP_SETTINGS,
-                  )}
+                  className="p-4 border rounded-md flex flex-col gap-4"
                   key={'array-item-' + field.id}
                 >
                   <div className="flex justify-between">

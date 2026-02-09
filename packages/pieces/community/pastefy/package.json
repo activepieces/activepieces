@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-pastefy",
-  "version": "0.2.3",
+  "version": "0.2.0",
   "dependencies": {
     "crypto-js": "4.2.0"
   }

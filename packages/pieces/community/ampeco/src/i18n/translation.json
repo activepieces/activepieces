@@ -781,7 +781,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Charge Point": "Charge Point",
   "Evse Network Id": "Evse Network Id",
   "Type": "Type",

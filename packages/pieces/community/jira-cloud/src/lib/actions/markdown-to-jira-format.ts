@@ -25,7 +25,7 @@ export const markdownToJiraFormat = createAction({
   },
   async run({ propsValue }) {
     const jsonTransformer = new JSONTransformer();
-    const markdownTransformer = new MarkdownTransformer(defaultSchema as any);
+    const markdownTransformer = new MarkdownTransformer(defaultSchema);
 
     const adfDocument = jsonTransformer.encode(
       markdownTransformer.parse(propsValue.markdown)

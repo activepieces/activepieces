@@ -1,11 +1,9 @@
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import {
   isNil,
   isObject,
   FlowAction,
   FlowActionType,
   FlowTrigger,
-  FlowTriggerType,
 } from '@activepieces/shared';
 
 import {
@@ -316,13 +314,7 @@ function traverseStep(
   zipArraysOfProperties: boolean,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-  const stepNeedsTesting =
-    isNil(step.settings.sampleData?.lastTestDate) &&
-    (step.type !== FlowTriggerType.PIECE ||
-      !pieceSelectorUtils.isManualTrigger({
-        pieceName: step.settings.pieceName,
-        triggerName: step.settings.triggerName ?? '',
-      }));
+  const stepNeedsTesting = isNil(step.settings.sampleData?.lastTestDate);
   if (stepNeedsTesting) {
     return buildTestStepNode(displayName, step.name);
   }

@@ -74,12 +74,10 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
-  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
-  "Follow redirects": "Seguir redirecionamentos",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "O modelo que irá gerar a conclusão. Alguns modelos são adequados para tarefas de linguagem natural, outros são especializados no código.",
   "The prompt text for which completions are requested": "O texto do prompt para quais complementos são requisitados",
   "URLs of files to be processed by the model (maximum 4 URLs), previously uploaded via the File Upload endpoint": "URLs de arquivos a serem processados pelo modelo (máximo 4 URLs), previamente carregado através do ponto de carregamento de arquivo",
@@ -136,7 +134,7 @@
   "The search type to use for RAG model": "O tipo de pesquisa a ser usado pelo modelo RAG",
   "Diversity of results returned by MMR (0 for minimum, 1 for maximum)": "Diversidade dos resultados retornados por MMR (0 para o mínimo, 1 para o máximo)",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "square": "quadrado",
   "landscape": "paisagem",
   "portrait": "retrato",
@@ -156,9 +154,5 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA",
-  "None": "Nenhuma",
-  "JSON": "JSON",
-  "Form Data": "Dados de Formulário",
-  "Raw": "RAW"
+  "HEAD": "CABEÇA"
 }

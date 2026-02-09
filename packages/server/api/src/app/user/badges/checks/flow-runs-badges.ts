@@ -1,9 +1,9 @@
-import { ApplicationEvent, ApplicationEventName, FlowRunEvent } from '@activepieces/ee-shared'
+import { ApplicationEventName, FlowRunEvent } from '@activepieces/ee-shared'
 import { BADGES, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
 export const flowRunsBadgesCheck: BadgeCheck = {
-    eval: async (event: ApplicationEvent): Promise<BadgeCheckResult> => {
+    eval: async ({ event }): Promise<BadgeCheckResult> => {
         const badges: (keyof typeof BADGES)[] = []
 
         if (event.action !== ApplicationEventName.FLOW_RUN_FINISHED) {

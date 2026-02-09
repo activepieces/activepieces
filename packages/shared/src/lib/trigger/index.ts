@@ -5,7 +5,6 @@ export enum TriggerStrategy {
     POLLING = 'POLLING',
     WEBHOOK = 'WEBHOOK',
     APP_WEBHOOK = 'APP_WEBHOOK',
-    MANUAL = 'MANUAL',
 }
 
 export enum WebhookHandshakeStrategy {

@@ -11,10 +11,10 @@ import {
   generateText,
   GenerateTextResult,
   ImagePart,
-  LanguageModel,
   ToolSet,
 } from 'ai';
 import { experimental_generateImage as generateImage } from 'ai';
+import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import { isNil } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
@@ -203,7 +203,7 @@ const getGeneratedImage = async ({
     case AIProviderName.OPENROUTER:
     case AIProviderName.CLOUDFLARE_GATEWAY:
       return generateImageUsingGenerateText({
-        model: model as unknown as LanguageModel,
+        model: model as unknown as LanguageModelV2,
         prompt,
         advancedOptions,
       });
@@ -225,7 +225,7 @@ const generateImageUsingGenerateText = async ({
   prompt,
   advancedOptions,
 }: {
-  model: LanguageModel;
+  model: LanguageModelV2;
   prompt: string;
   advancedOptions?: DynamicPropsValue;
 }): Promise<GeneratedFile> => {

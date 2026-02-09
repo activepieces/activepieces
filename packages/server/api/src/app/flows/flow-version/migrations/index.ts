@@ -51,12 +51,12 @@ export const flowMigrations = {
     },
 }
 
-export const migrateFlowVersionTemplate = async ({ trigger, schemaVersion, notes, valid, displayName }: Pick<FlowVersionTemplate, 'trigger' | 'schemaVersion' | 'notes' | 'valid' | 'displayName'>): Promise<FlowVersionTemplate> => {
+export const migrateFlowVersionTemplate = async ({ trigger, schemaVersion, notes, valid }: Pick<FlowVersionTemplate, 'trigger' | 'schemaVersion' | 'notes' | 'valid'>): Promise<FlowVersionTemplate> => {
     return flowMigrations.apply({
         agentIds: [],
         connectionIds: [],
         created: new Date().toISOString(),
-        displayName,
+        displayName: '',
         flowId: '',
         id: '',
         updated: new Date().toISOString(),

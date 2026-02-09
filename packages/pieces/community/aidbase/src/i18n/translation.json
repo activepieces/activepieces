@@ -35,7 +35,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The URL of the YouTube video to add as a knowledge source.": "The URL of the YouTube video to add as a knowledge source.",
   "The URL of the website to add as a knowledge source (e.g., https://www.example.com).": "The URL of the website to add as a knowledge source (e.g., https://www.example.com).",
   "Select the FAQ to which the item will be added.": "Select the FAQ to which the item will be added.",

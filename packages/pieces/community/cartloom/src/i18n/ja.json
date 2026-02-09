@@ -45,12 +45,10 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
-  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
-  "Follow redirects": "リダイレクトをフォローする",
   "The invoice ID for the order you want to retrieve": "取得したい注文の請求書ID",
   "Enter the title of the discount": "ディスカウントのタイトルを入力してください",
   "Is this discount enabled?": "この割引は有効ですか？",
@@ -74,7 +72,7 @@
   "Select a date to end the search. Defaults to today.": "検索を終了する日付を選択します。デフォルトは今日です。",
   "Email address to search for.": "検索するメールアドレス。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "Fixed Amount": "固定額",
   "Percentage": "割合",
   "Selected Products": "選択された製品",
@@ -85,9 +83,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭",
-  "None": "なし",
-  "JSON": "JSON",
-  "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "HEAD": "頭"
 }

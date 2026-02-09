@@ -11,11 +11,8 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import {
   FlowAction,
   FlowActionType,
@@ -75,10 +72,6 @@ const StepSettingsContainer = () => {
     disabled: readonly,
     reValidateMode: 'onChange',
     defaultValues: selectedStep,
-    resetOptions: {
-      keepDefaultValues: false,
-      keepDirtyValues: true,
-    },
     resolver: async (values, context, options) => {
       const result = await typeboxResolver(formSchema)(
         values,
@@ -127,14 +120,8 @@ const StepSettingsContainer = () => {
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
-  const isManualTrigger =
-    modifiedStep.type === FlowTriggerType.PIECE &&
-    pieceSelectorUtils.isManualTrigger({
-      pieceName: modifiedStep.settings.pieceName,
-      triggerName: modifiedStep.settings.triggerName ?? '',
-    });
-  const showGenerateSampleData = !readonly && !isManualTrigger;
-  const showStepInputOutFromRun = !isNil(run) && !isManualTrigger;
+  const showGenerateSampleData = !readonly;
+  const showStepInputOutFromRun = !isNil(run);
 
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
@@ -194,24 +181,16 @@ const StepSettingsContainer = () => {
               setIsEditingStepOrBranchName={setIsEditingStepOrBranchName}
             ></EditableStepName>
           </SidebarHeader>
-          <Separator className="w-full h-px" />
         </div>
-
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
-                <div className="w-full my-2 px-3">
-                  {stepMetadata && <StepInfo step={selectedStep} />}
-                </div>
-                <div
-                  className={cn(
-                    'flex flex-col px-4 pb-6',
-                    GAP_SIZE_FOR_STEP_SETTINGS,
-                  )}
-                >
+                <div className="flex flex-col gap-2 px-4 pb-6">
+                  <StepInfo step={modifiedStep}></StepInfo>
+
                   {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}

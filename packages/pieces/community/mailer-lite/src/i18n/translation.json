@@ -30,7 +30,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Email of the new contact": "Email of the new contact",
   "If empty, status Active is used by default.": "If empty, status Active is used by default.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

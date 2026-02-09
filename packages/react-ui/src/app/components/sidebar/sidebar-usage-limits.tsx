@@ -107,7 +107,7 @@ const UsageRow = ({
     <div className="flex items-center justify-between gap-2 w-full text-xs">
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">{icon}</span>
-        <span className="truncate">{name}</span>
+        <span>{name}</span>
         {tooltip && (
           <Tooltip>
             <TooltipTrigger asChild>

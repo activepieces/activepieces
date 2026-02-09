@@ -52,12 +52,10 @@
   "Method": "Méthode",
   "Headers": "Headers",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "Enter the beginning of your text and AI will complete it (e.g., \"The benefits of renewable energy are\")": "Entrez le début de votre texte et l'IA le complétera (par exemple, \"Les avantages de l'énergie renouvelable\")",
   "The language model to use": "Le modèle de langue à utiliser",
   "The formality of the generated text": "La formalité du texte généré",
@@ -111,7 +109,7 @@
   "Maximum length of summary (1-4096 tokens)": "Longueur maximale du résumé (1-4096 jetons)",
   "How many summaries to generate (1-5)": "Combien de résumés générer (1-5)",
   "Authorization headers are injected automatically from your connection.": "Les headers d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "GPT-4o": "GPT-4o",
   "GPT-4-1": "GPT-4-1",
   "GPT-5": "GPT-5",
@@ -201,9 +199,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "HEAD"
 }

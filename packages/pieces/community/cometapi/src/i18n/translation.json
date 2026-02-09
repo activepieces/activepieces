@@ -19,7 +19,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The prompt to send to the AI model.": "The prompt to send to the AI model.",
   "Optional system message to set the behavior of the AI.": "Optional system message to set the behavior of the AI.",
   "Controls randomness (0-2). Lower values make output more focused.": "Controls randomness (0-2). Lower values make output more focused.",

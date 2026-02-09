@@ -32,7 +32,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Define the data for the new row based on table columns.": "Define the data for the new row based on table columns.",
   "Maximum number of results to return.": "Maximum number of results to return.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

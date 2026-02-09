@@ -81,7 +81,7 @@ async function handleMemoryIssueError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await sandboxSockerHandler(log).uploadRunLogs({
+    await sandboxSockerHandler(log).updateRunProgress({
         finishTime: dayjs().toISOString(),
         status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
         httpRequestId: jobData.httpRequestId,
@@ -96,7 +96,7 @@ async function handleTimeoutError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await sandboxSockerHandler(log).uploadRunLogs({
+    await sandboxSockerHandler(log).updateRunProgress({
         finishTime: dayjs().toISOString(),
         status: FlowRunStatus.TIMEOUT,
         httpRequestId: jobData.httpRequestId,
@@ -111,7 +111,7 @@ async function handleInternalError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await sandboxSockerHandler(log).uploadRunLogs({
+    await sandboxSockerHandler(log).updateRunProgress({
         finishTime: dayjs().toISOString(),
         status: FlowRunStatus.INTERNAL_ERROR,
         httpRequestId: jobData.httpRequestId,

@@ -14,7 +14,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "You can find the review name from new review trigger": "You can find the review name from new review trigger",
   "Comment to be added to the review": "Comment to be added to the review",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

@@ -109,7 +109,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The subject of the ticket (optional - will use first comment text if not provided)": "The subject of the ticket (optional - will use first comment text if not provided)",
   "The comment body (text). Use this for plain text comments.": "The comment body (text). Use this for plain text comments.",
   "The comment body (HTML). Use this for HTML formatted comments. If provided, this takes precedence over Comment Body.": "The comment body (HTML). Use this for HTML formatted comments. If provided, this takes precedence over Comment Body.",

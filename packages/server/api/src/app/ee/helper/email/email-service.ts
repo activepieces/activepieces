@@ -1,7 +1,6 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -27,7 +26,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
+        const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
         await emailSender(log).send({
             emails: [email],
             platformId,
@@ -35,39 +34,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 name: 'invitation-email',
                 vars: {
                     setupLink: invitationLink,
-                    projectName,
+                    projectOrPlatformName,
                     role,
-                },
-            },
-        })
-    },
-
-    async sendProjectMemberAdded({ userInvitation }: SendProjectMemberAddedArgs): Promise<void> {
-        log.info({
-            message: '[emailService#sendProjectMemberAdded] sending project member added email',
-            email: userInvitation.email,
-            platformId: userInvitation.platformId,
-            projectId: userInvitation.projectId,
-            type: userInvitation.type,
-            projectRole: userInvitation.projectRole,
-            platformRole: userInvitation.platformRole,
-        })
-        const { email, platformId, projectId } = userInvitation
-        const { name: projectName, role } = await getEntityNameForInvitation(userInvitation)
-        const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
-        const loginLink = await domainHelper.getPublicUrl({
-            platformId,
-            path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
-        })
-        await emailSender(log).send({
-            emails: [email],
-            platformId,
-            templateData: {
-                name: 'project-member-added',
-                vars: {
-                    projectName,
-                    role,
-                    loginLink,
                 },
             },
         })
@@ -165,8 +133,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
     async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
         const user = await userService.getMetaInformation({ id: userId })
 
-        if (isNil(user) || !isValidEmail(user.email)) {
-            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
+        if (isNil(user)) {
             return
         }
         const badge = BADGES[badgeName as keyof typeof BADGES]
@@ -215,17 +182,9 @@ function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-function isValidEmail(email: string): boolean {
-    return z.email().safeParse(email).success
-}
-
 type SendInvitationArgs = {
     userInvitation: UserInvitation
     invitationLink: string
-}
-
-type SendProjectMemberAddedArgs = {
-    userInvitation: UserInvitation
 }
 
 type SendOtpArgs = {

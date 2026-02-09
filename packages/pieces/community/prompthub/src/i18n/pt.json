@@ -25,12 +25,10 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
-  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
-  "Follow redirects": "Seguir redirecionamentos",
   "The ID of the team. Can be found in your browser's URL bar when viewing Team Settings, or use current_team_id from /me endpoint.": "A ID da equipe. Pode ser encontrada na barra de URL do seu navegador quando estiver visualizando as Configurações da Equipe, ou use o current_team_id do terminal /me.",
   "Filter projects from a specific group. Must be URL-encoded if the group name contains spaces.": "Filtrar projetos de um grupo específico. Deve ser codificado em URL se o nome do grupo conter espaços.",
   "Filter projects where the head uses a specific model (e.g., gpt-4, claude-2, etc.).": "Filtrar projetos onde a cabeça usa um modelo específico (por exemplo, gpt-4, claude-2, etc.).",
@@ -48,7 +46,7 @@
   "Additional metadata to include with the run.": "Metadados adicionais para incluir na execução.",
   "Request timeout in seconds (max 600).": "Tempo limite do pedido em segundos (máx. 600).",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "OpenAI": "OpenAI",
   "Anthropic": "Antrópica",
   "Azure": "Azure",
@@ -59,9 +57,5 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA",
-  "None": "Nenhuma",
-  "JSON": "JSON",
-  "Form Data": "Dados de Formulário",
-  "Raw": "RAW"
+  "HEAD": "CABEÇA"
 }

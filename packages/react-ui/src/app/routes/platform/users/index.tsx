@@ -1,93 +1,41 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { User, UserPlus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+  CircleMinus,
+  Pencil,
+  RotateCcw,
+  Trash,
+  User,
+  Mail,
+  Tag,
+  Hash,
+  Shield,
+  Clock,
+  Activity,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
-import { userInvitationApi } from '@/features/members/lib/user-invitation';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
+import { FormattedDate } from '@/components/ui/formatted-date';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
-import {
-  InvitationType,
-  UserInvitation,
-  UserStatus,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
+import { PlatformRole, UserStatus } from '@activepieces/shared';
 
-import { DeleteUserAction } from './actions/delete-user-action';
-import { EditUserAction } from './actions/edit-user-action';
-import { ToggleUserStatusAction } from './actions/toggle-user-status-action';
-import { createUsersTableColumns } from './columns';
-
-export type UserRowData =
-  | {
-      id: string;
-      type: 'user';
-      data: UserWithMetaInformation;
-    }
-  | {
-      id: string;
-      type: 'invitation';
-      data: UserInvitation;
-    };
+import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
-  const [inviteOpen, setInviteOpen] = useState(false);
-
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    refetch: refetchUsers,
-  } = platformUserHooks.useUsers();
-
-  const {
-    data: invitationsData,
-    isLoading: invitationsLoading,
-    refetch: refetchInvitations,
-  } = useQuery<UserInvitation[]>({
-    queryFn: () => {
-      return userInvitationApi
-        .list({
-          type: InvitationType.PLATFORM,
-          cursor: undefined,
-          limit: 100,
-          projectId: null,
-        })
-        .then((res) => res.data);
-    },
-    queryKey: ['platform-invitations'],
-    staleTime: 0,
-  });
-
-  const refetch = () => {
-    refetchUsers();
-    refetchInvitations();
-  };
-
-  const combinedData: UserRowData[] = useMemo(() => {
-    const users: UserRowData[] =
-      usersData?.data?.map((user) => ({
-        id: user.id,
-        type: 'user' as const,
-        data: user,
-      })) ?? [];
-
-    const pendingInvitations: UserRowData[] =
-      invitationsData?.map((invitation) => ({
-        id: invitation.id,
-        type: 'invitation' as const,
-        data: invitation,
-      })) ?? [];
-
-    return [...users, ...pendingInvitations];
-  }, [usersData, invitationsData]);
-
-  const isLoading = usersLoading || invitationsLoading;
+  const { data, isLoading, refetch } = platformUserHooks.useUsers();
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],
@@ -101,20 +49,6 @@ export default function UsersPage() {
       });
     },
   });
-
-  const { mutate: deleteInvitation, isPending: isDeletingInvitation } =
-    useMutation({
-      mutationKey: ['delete-invitation'],
-      mutationFn: async (invitationId: string) => {
-        await userInvitationApi.delete(invitationId);
-      },
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Invitation deleted successfully'), {
-          duration: 3000,
-        });
-      },
-    });
 
   const { mutate: updateUserStatus, isPending: isUpdatingStatus } = useMutation(
     {
@@ -141,26 +75,6 @@ export default function UsersPage() {
     },
   );
 
-  const handleDelete = (id: string, isInvitation: boolean) => {
-    if (isInvitation) {
-      deleteInvitation(id);
-    } else {
-      deleteUser(id);
-    }
-  };
-
-  const handleToggleStatus = (userId: string, currentStatus: UserStatus) => {
-    updateUserStatus({
-      userId,
-      status:
-        currentStatus === UserStatus.ACTIVE
-          ? UserStatus.INACTIVE
-          : UserStatus.ACTIVE,
-    });
-  };
-
-  const columns = createUsersTableColumns();
-
   return (
     <LockedFeatureGuard
       featureKey="USERS"
@@ -174,52 +88,245 @@ export default function UsersPage() {
           description={t(
             'Manage, delete, activate and deactivate users on platform',
           )}
-        >
-          <Button
-            className="gap-2"
-            size="sm"
-            onClick={() => setInviteOpen(true)}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('Invite')}</span>
-          </Button>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}
           emptyStateIcon={<User className="size-14" />}
-          columns={columns}
-          page={{
-            data: combinedData,
-            next: usersData?.next || null,
-            previous: usersData?.previous || null,
-          }}
+          columns={[
+            {
+              accessorKey: 'email',
+              size: 200,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Email')}
+                  icon={Mail}
+                />
+              ),
+              cell: ({ row }) => {
+                return <TruncatedColumnTextValue value={row.original.email} />;
+              },
+            },
+            {
+              accessorKey: 'name',
+              size: 150,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Name')}
+                  icon={Tag}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <TruncatedColumnTextValue
+                    value={row.original.firstName + ' ' + row.original.lastName}
+                  />
+                );
+              },
+            },
+            {
+              accessorKey: 'externalId',
+              size: 120,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('External Id')}
+                  icon={Hash}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <div className="text-left">{row.original.externalId}</div>
+                );
+              },
+            },
+            {
+              accessorKey: 'role',
+              size: 100,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Role')}
+                  icon={Shield}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <div className="text-left">
+                    {row.original.platformRole === PlatformRole.ADMIN
+                      ? t('Admin')
+                      : row.original.platformRole === PlatformRole.OPERATOR
+                      ? t('Operator')
+                      : t('Member')}
+                  </div>
+                );
+              },
+            },
+            {
+              accessorKey: 'createdAt',
+              size: 150,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Created')}
+                  icon={Clock}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <div className="text-left">
+                    <FormattedDate date={new Date(row.original.created)} />
+                  </div>
+                );
+              },
+            },
+            {
+              accessorKey: 'lastActiveDate',
+              size: 150,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Last Active')}
+                  icon={Clock}
+                />
+              ),
+              cell: ({ row }) => {
+                return row.original.lastActiveDate ? (
+                  <div className="text-left">
+                    <FormattedDate
+                      date={new Date(row.original.lastActiveDate)}
+                    />
+                  </div>
+                ) : (
+                  '-'
+                );
+              },
+            },
+            {
+              accessorKey: 'status',
+              size: 100,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Status')}
+                  icon={Activity}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <div className="text-left">
+                    {row.original.status === UserStatus.ACTIVE
+                      ? t('Activated')
+                      : t('Deactivated')}
+                  </div>
+                );
+              },
+            },
+          ]}
+          page={data}
           hidePagination={true}
           isLoading={isLoading}
           actions={[
-            (row) => <EditUserAction row={row} onUpdate={refetch} />,
-            (row) => (
-              <ToggleUserStatusAction
-                row={row}
-                isUpdatingStatus={isUpdatingStatus}
-                onToggleStatus={handleToggleStatus}
-              />
-            ),
-            (row) => (
-              <DeleteUserAction
-                row={row}
-                isDeleting={isDeleting || isDeletingInvitation}
-                onDelete={handleDelete}
-              />
-            ),
+            (row) => {
+              return (
+                <div className="flex items-end justify-end">
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <UpdateUserDialog
+                        userId={row.id}
+                        role={row.platformRole}
+                        externalId={row.externalId ?? undefined}
+                        onUpdate={() => refetch()}
+                      >
+                        <Button variant="ghost" className="size-8 p-0">
+                          <Pencil className="size-4" />
+                        </Button>
+                      </UpdateUserDialog>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {t('Edit user')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              );
+            },
+            (row) => {
+              return (
+                <div className="flex items-end justify-end">
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Button
+                        disabled={
+                          isUpdatingStatus ||
+                          row.platformRole === PlatformRole.ADMIN
+                        }
+                        variant="ghost"
+                        className="size-8 p-0"
+                        loading={isUpdatingStatus}
+                        onClick={() => {
+                          updateUserStatus({
+                            userId: row.id,
+                            status:
+                              row.status === UserStatus.ACTIVE
+                                ? UserStatus.INACTIVE
+                                : UserStatus.ACTIVE,
+                          });
+                        }}
+                      >
+                        {row.status === UserStatus.ACTIVE ? (
+                          <CircleMinus className="size-4" />
+                        ) : (
+                          <RotateCcw className="size-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {row.platformRole === PlatformRole.ADMIN
+                        ? t('Admin cannot be deactivated')
+                        : row.status === UserStatus.ACTIVE
+                        ? t('Deactivate user')
+                        : t('Activate user')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              );
+            },
+            (row) => {
+              return (
+                <div className="flex items-end justify-end">
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <ConfirmationDeleteDialog
+                        title={t('Delete User')}
+                        message={t(
+                          'Are you sure you want to delete this user?',
+                        )}
+                        entityName={`${t('User')} ${row.email}`}
+                        mutationFn={async () => {
+                          deleteUser(row.id);
+                        }}
+                      >
+                        <Button
+                          loading={isDeleting}
+                          variant="ghost"
+                          className="size-8 p-0"
+                        >
+                          <Trash className="size-4 text-destructive" />
+                        </Button>
+                      </ConfirmationDeleteDialog>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {t('Delete user')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              );
+            },
           ]}
         />
       </div>
-      <InviteUserDialog
-        open={inviteOpen}
-        setOpen={setInviteOpen}
-        onInviteSuccess={refetch}
-      />
     </LockedFeatureGuard>
   );
 }

@@ -65,7 +65,12 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
     if (step.settings.sampleData) {
         step.settings = {
             ...step.settings,
-            sampleData: {},
+            sampleData: {
+                ...step.settings.sampleData,
+                sampleDataFileId: undefined,
+                sampleDataInputFileId: undefined,
+                lastTestDate: undefined,
+            },
         }
     }
     return step

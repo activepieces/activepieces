@@ -98,7 +98,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Stripe Customer ID": "Stripe Customer ID",
   "Currency for the invoice (e.g., USD)": "Currency for the invoice (e.g., USD)",
   "Description for the invoice": "Description for the invoice",

@@ -24,6 +24,7 @@ function useOwnerColumn<T extends HasOwner | HasOwnerId>(
   const {
     embedState: { isEmbedded },
   } = useEmbedding();
+  console.log('isEmbedded', isEmbedded);
   if (isEmbedded) {
     return columns;
   }

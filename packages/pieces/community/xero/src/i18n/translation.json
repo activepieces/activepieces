@@ -149,7 +149,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "ID of the contact to create invoice for.": "ID of the contact to create invoice for.",
   "Contact name, in full.": "Contact name, in full.",
   "Email address of the contact.": "Email address of the contact.",

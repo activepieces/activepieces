@@ -10,7 +10,7 @@ export const flows = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.67.1',
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
-  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/subflows.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/flows.svg',
   authors: ['hazemadelkhalel'],
   actions: [callFlow, response],
   triggers: [callableFlow],

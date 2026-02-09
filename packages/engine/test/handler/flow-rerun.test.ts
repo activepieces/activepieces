@@ -33,9 +33,8 @@ const successHttpAction =  buildPieceAction({
 
 
 describe('flow retry', () => {
+    const context = FlowExecutorContext.empty()
     it('should retry entire flow', async () => {
-        const context = FlowExecutorContext.empty()
-
         const failedResult = await flowExecutor.execute({
             action: failedHttpAction, executionState: context, constants: generateMockEngineConstants(),
         })
@@ -47,8 +46,6 @@ describe('flow retry', () => {
     }, 10000)
 
     it('should retry flow from failed step', async () => {
-        const context = FlowExecutorContext.empty()
-
         const failedResult = await flowExecutor.execute({
             action: failedHttpAction, executionState: context, constants: generateMockEngineConstants(),
         })

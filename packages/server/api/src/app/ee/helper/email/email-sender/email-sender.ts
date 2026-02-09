@@ -26,15 +26,9 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectName: string
+    projectOrPlatformName: string
     role: string
     setupLink: string
-}>
-
-type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
-    projectName: string
-    role: string
-    loginLink: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
@@ -66,7 +60,6 @@ type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
 
 export type EmailTemplateData =
   | InvitationEmailTemplateData
-  | ProjectMemberAddedEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData

@@ -48,6 +48,7 @@ describe('AppConnection API', () => {
             })
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -141,6 +142,7 @@ describe('AppConnection API', () => {
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -205,6 +207,7 @@ describe('AppConnection API', () => {
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])

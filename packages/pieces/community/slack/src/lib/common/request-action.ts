@@ -1,4 +1,4 @@
-import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from './utils';
+import { processMessageTimestamp, slackSendMessage } from './utils';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
@@ -72,13 +72,18 @@ export const requestAction = async (conversationId: string, context: any) => {
         ? processMessageTimestamp(context.propsValue.threadTs)
         : undefined,
       blocks: [
-        ...textToSectionBlocks(`${context.propsValue.text}`),
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `${context.propsValue.text}`,
+          },
+        },
         {
           type: 'actions',
           block_id: 'actions',
           elements: actionElements,
         },
-        ...(context.propsValue.mentionOriginFlow ? [buildFlowOriginContextBlock(context)] : []),
       ],
       conversationId: conversationId,
     });

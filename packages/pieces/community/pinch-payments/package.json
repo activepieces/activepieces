@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-pinch-payments",
-  "version": "0.0.6",
+  "version": "0.0.3",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

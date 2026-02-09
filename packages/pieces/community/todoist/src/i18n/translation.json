@@ -27,7 +27,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Task project ID. If not set, task is put to user's Inbox.": "Task project ID. If not set, task is put to user's Inbox.",
   "The task's content. It may contain some markdown-formatted text and hyperlinks": "The task's content. It may contain some markdown-formatted text and hyperlinks",
   "A description for the task. This value may contain some markdown-formatted text and hyperlinks.": "A description for the task. This value may contain some markdown-formatted text and hyperlinks.",

@@ -1,8 +1,7 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { AgentMcpTool, ApId, buildAuthHeaders, createTransportConfig, isNil, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { mcpServerService } from './mcp-service'
 
@@ -82,40 +81,6 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
     const [type, token] = authHeader?.split(' ') ?? []
     return type === 'Bearer' && token === mcp.token
-}
-
-function createTransportConfig(
-    protocol: McpProtocol,
-    serverUrl: string,
-    headers: Record<string, string> = {},
-) {
-    const url = new URL(serverUrl)
-
-    switch (protocol) {
-        case McpProtocol.SIMPLE_HTTP: {
-            return {
-                type: 'http',
-                url: serverUrl,
-                headers,
-            }
-        }
-        case McpProtocol.STREAMABLE_HTTP: {
-            return new StreamableHTTPClientTransport(url, {
-                requestInit: {
-                    headers,
-                },
-            })
-        }
-        case McpProtocol.SSE: {
-            return {
-                type: 'sse',
-                url: serverUrl,
-                headers,
-            }
-        }
-        default:
-            throw new Error(`Unsupported MCP protocol type: ${protocol}`)
-    }
 }
 
 const StreamableHttpRequestRequest = {

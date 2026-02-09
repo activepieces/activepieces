@@ -51,12 +51,10 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
-  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
-  "Follow redirects": "Volg omleidingen",
   "A min-max size range. Examples: \"11-50\"\". For now, only single range is supported.": "Een min-max afmetingsbereik. Voorbeelden: \"11-50\"\". Op dit moment wordt alleen één bereik ondersteund.",
   "Page number of shown items": "Pagina aantal weergegeven items",
   "Limit the number of shown items per page. Max 1000.": "Beperk het aantal getoonde items per pagina. Max 1000.",
@@ -78,7 +76,7 @@
   "The ID of the news event to find.": "Het ID van het nieuws evenement om te vinden.",
   "The domain to find.": "Het te vinden domein.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "Administration": "Administratie",
   "Consulting": "Consultatie",
   "Data Analysis": "Data Analyse",
@@ -140,9 +138,5 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD",
-  "None": "geen",
-  "JSON": "JSON",
-  "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "HEAD": "HOOFD"
 }

@@ -74,12 +74,10 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
-  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
-  "Follow redirects": "Volg omleidingen",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "Het model dat de voltooiing zal genereren. Sommige modellen zijn geschikt voor natuurlijke taaltaken, andere zijn gespecialiseerd in code.",
   "The prompt text for which completions are requested": "De prompte tekst waarvoor aanvullingen worden aangevraagd",
   "URLs of files to be processed by the model (maximum 4 URLs), previously uploaded via the File Upload endpoint": "URL's van bestanden die worden verwerkt door het model (maximaal 4 URL's), eerder geüpload via het eindpunt van de bestandsupload",
@@ -136,7 +134,7 @@
   "The search type to use for RAG model": "Het te gebruiken zoektype voor RAG model",
   "Diversity of results returned by MMR (0 for minimum, 1 for maximum)": "Diversiteit van de resultaten geretourneerd door MMR (0 voor minimum 1, maximaal 1",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "square": "Vierkant",
   "landscape": "liggend",
   "portrait": "portret",
@@ -156,9 +154,5 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD",
-  "None": "geen",
-  "JSON": "JSON",
-  "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "HEAD": "HOOFD"
 }

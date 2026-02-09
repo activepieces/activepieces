@@ -3,7 +3,6 @@ import { Calendar, Download, RefreshCcwIcon } from 'lucide-react';
 import { useContext, useMemo, useState } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -12,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -141,8 +139,6 @@ export default function LeaderboardPage() {
         <DashboardPageHeader
           title={
             <div className="flex items-center gap-3">
-              <ApSidebarToggle />
-              <Separator orientation="vertical" className="h-5 mr-2" />
               <span>{t('Leaderboard')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>

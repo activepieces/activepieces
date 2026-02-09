@@ -26,9 +26,9 @@ import { routesThatRequireProjectId } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
-import { BuilderLayout } from '../components/builder-layout';
 import { PlatformLayout } from '../components/platform-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
+import { BuilderNavigationSidebar } from '../components/sidebar/builder';
 import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
@@ -40,7 +40,6 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import LeaderboardPage from '../routes/leaderboard';
 import SettingsBilling from '../routes/platform/billing';
-import EventDestinationsPage from '../routes/platform/infra/event-destinations';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -122,9 +121,9 @@ const routes = [
     element: (
       <RoutePermissionGuard permission={Permission.READ_FLOW}>
         <PageTitle title="Builder">
-          <BuilderLayout>
+          <BuilderNavigationSidebar>
             <FlowBuilderPage />
-          </BuilderLayout>
+          </BuilderNavigationSidebar>
         </PageTitle>
       </RoutePermissionGuard>
     ),
@@ -154,9 +153,9 @@ const routes = [
     element: (
       <RoutePermissionGuard permission={Permission.READ_RUN}>
         <PageTitle title="Flow Run">
-          <BuilderLayout>
+          <BuilderNavigationSidebar>
             <FlowRunPage />
-          </BuilderLayout>
+          </BuilderNavigationSidebar>
         </PageTitle>
       </RoutePermissionGuard>
     ),
@@ -204,11 +203,11 @@ const routes = [
     element: (
       <RoutePermissionGuard permission={Permission.READ_TABLE}>
         <PageTitle title="Table">
-          <BuilderLayout>
+          <BuilderNavigationSidebar>
             <ApTableStateProvider>
               <ApTableEditorPage />
             </ApTableStateProvider>
-          </BuilderLayout>
+          </BuilderNavigationSidebar>
         </PageTitle>
       </RoutePermissionGuard>
     ),
@@ -464,16 +463,6 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="Trigger Health">
           <TriggerHealthPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/event-destinations',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Event Streaming">
-          <EventDestinationsPage />
         </PageTitle>
       </PlatformLayout>
     ),

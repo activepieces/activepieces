@@ -33,7 +33,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
 
   const dropdownContent = (
     <DropdownMenuContent
-      className="w-56 rounded-lg z-60"
+      className="w-56 rounded-lg"
       align="start"
       side="right"
       sideOffset={4}
@@ -65,7 +65,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="w-full">{children}</DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       {dropdownContent}
     </DropdownMenu>
   );

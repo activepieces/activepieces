@@ -19,7 +19,7 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (
             const response = await managedAuthnService(req.log).externalToken({
                 externalAccessToken,
             })
-            applicationEvents(req.log).sendUserEvent(req, {
+            applicationEvents.sendUserEvent(req, {
                 action: ApplicationEventName.USER_SIGNED_UP,
                 data: {
                     source: 'managed',

@@ -34,7 +34,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "A clear, descriptive explanation of the desired audio effect. Concise prompts yield more accurate results.": "A clear, descriptive explanation of the desired audio effect. Concise prompts yield more accurate results.",
   "The desired length of the audio in seconds (max 10). Defaults to 8 if not set.": "The desired length of the audio in seconds (max 10). Defaults to 8 if not set.",
   "A memorable name for your project to help organize tasks in your Camb.ai workspace.": "A memorable name for your project to help organize tasks in your Camb.ai workspace.",

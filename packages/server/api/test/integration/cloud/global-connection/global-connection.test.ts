@@ -48,6 +48,7 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -104,6 +105,7 @@ describe('GlobalConnection API', () => {
                 },
             })
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
@@ -150,9 +152,10 @@ describe('GlobalConnection API', () => {
 
         it('Fails if project ids are invalid', async () => {
             // arrange
-            const { mockPlatform, mockOwner } = await setupWithGlobalConnections()
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -262,6 +265,7 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -321,6 +325,7 @@ describe('GlobalConnection API', () => {
                 },
             })
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -390,6 +395,7 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -461,6 +467,7 @@ describe('GlobalConnection API', () => {
             })
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
@@ -534,6 +541,7 @@ describe('GlobalConnection API', () => {
             const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
+                projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })

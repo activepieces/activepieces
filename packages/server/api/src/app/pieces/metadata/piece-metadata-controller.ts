@@ -1,14 +1,14 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { apVersionUtil, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
-    ErrorCode,
+    ApEdition,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
-    isNil,
     ListPiecesRequestQuery,
+    ListVersionRequestQuery,
+    ListVersionsResponse,
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
@@ -34,6 +34,16 @@ export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
+    app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
+        return pieceMetadataService(req.log).getVersions({
+            name: req.query.name,
+            projectId: req.query.projectId,
+            release: req.query.release,
+            edition: req.query.edition ?? ApEdition.COMMUNITY,
+            platformId: getPlatformId(req.principal),
+        })
+    })
+
     app.get(
         '/categories',
         ListCategoriesRequest,
@@ -43,25 +53,19 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
+        const latestRelease = await apVersionUtil.getCurrentRelease()
         const query = req.query
-
-        const oldSyncCall = !isNil(query.release)
-        if (oldSyncCall) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PIECE_SYNC_NOT_SUPPORTED,
-                params: {
-                    message: 'This endpoint is deprecated. Please use it without release parameter.',
-                    release: query.release ?? '',
-                },
-            })
-        }
         const includeTags = query.includeTags ?? false
+        const release = query.release ?? latestRelease
+        const edition = query.edition ?? ApEdition.COMMUNITY
         const platformId = getPlatformId(req.principal)
         const projectId = req.query.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
+            release,
             includeHidden: query.includeHidden ?? false,
             projectId,
             platformId,
+            edition,
             includeTags,
             categories: query.categories,
             searchQuery: query.searchQuery,
@@ -117,6 +121,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
+            edition: req.query.edition,
+            platformId: getPlatformId(req.principal),
         })
         return pieces
     })
@@ -213,6 +219,16 @@ const OptionsPieceRequest = {
         security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
+    },
+}
+
+
+const ListVersionsRequest = {
+    config: {
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
+    },
+    schema: {
+        querystring: ListVersionRequestQuery,
     },
 }
 

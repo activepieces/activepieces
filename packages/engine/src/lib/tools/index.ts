@@ -1,7 +1,7 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
-import { z } from 'zod'
+import { generateObject, LanguageModel, Tool } from 'ai'
+import { z } from 'zod/v4'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
@@ -92,7 +92,9 @@ async function resolveProperties(
                 operation,
                 result,
             )
-            propertyToFill[property] = propertySchema
+            propertyToFill[property] = propertyFromAction.required
+                ? propertySchema
+                : propertySchema.nullish()
 
             const propertyDetail = await buildPropertyDetail(
                 property,
@@ -107,7 +109,7 @@ async function resolveProperties(
 
         if (Object.keys(propertyToFill).length === 0) continue
 
-        const schemaObject = zodSchema(z.object(propertyToFill).strict())
+        const schemaObject = z.object(propertyToFill) as z.ZodTypeAny
         const extractionPrompt = constructExtractionPrompt(
             instruction,
             propertyToFill,
@@ -115,28 +117,17 @@ async function resolveProperties(
             result,
         )
 
-        const { output } = await generateText({
+        const { object } = await generateObject({
             model,
+            schema: schemaObject,
             prompt: extractionPrompt,
-            output: Output.object({
-                schema: schemaObject,
-
-            }),
-            
-        }).catch(error => {
-            if (NoObjectGeneratedError.isInstance(error) && JSONParseError.isInstance(error.cause) && error.text?.startsWith('```json') && error.text?.endsWith('```')) {
-                return {
-                    output: JSON.parse(error.text.replace('```json', '').replace('```', '')),
-                }
-            }
-            throw error
+            mode: 'json',
+            output: 'object',
         })
-
         result = {
             ...result,
-            ...(output as Record<string, unknown>),
+            ...(object as Record<string, unknown>),
         }
-
     }
     return result
 }
@@ -235,7 +226,6 @@ type ExecuteToolOperationWithModel = ExecuteToolOperation & {
 
 async function propertyToSchema(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
     let schema: z.ZodTypeAny
-
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
@@ -247,24 +237,24 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
             break
         case PropertyType.DROPDOWN:
         case PropertyType.STATIC_DROPDOWN: {
-            schema = z.union([z.string(), z.number(), z.object({}).loose()])
+            schema = z.union([z.string(), z.number(), z.record(z.string(), z.unknown())])
             break
         }
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN: {
-            schema = z.union([z.array(z.string()), z.array(z.object({}).loose())])
+            schema = z.union([z.array(z.string()), z.array(z.record(z.string(), z.unknown()))])
             break
         }
         case PropertyType.NUMBER:
             schema = z.number()
             break
         case PropertyType.ARRAY:
-            return z.array(z.string())
+            return z.array(z.unknown())
         case PropertyType.OBJECT:
-            schema = z.object({}).loose()
+            schema = z.record(z.string(), z.unknown())
             break
         case PropertyType.JSON:
-            schema = z.object({}).loose()
+            schema = z.record(z.string(), z.unknown())
             break
         case PropertyType.DYNAMIC: {
             schema = await buildDynamicSchema(propertyName, operation, resolvedInput)
@@ -282,10 +272,13 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
         case PropertyType.SECRET_TEXT:
             throw new Error(`Unsupported property type: ${property.type}`)
     }
+    if (property.defaultValue) {
+        schema = schema.default(property.defaultValue)
+    }
     if (property.description) {
         schema = schema.describe(property.description)
     }
-    return property.required ? schema : schema.nullable()
+    return property.required ? schema : schema.nullish()
 }
 
 async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
@@ -310,7 +303,6 @@ type PropertyDetail = {
     type: PropertyType
     description?: string
     options?: DropdownOption<unknown>[]
-    defaultValue?: unknown
 }
 
 async function buildPropertyDetail(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<PropertyDetail | null> {
@@ -318,7 +310,6 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
         name: propertyName,
         type: property.type,
         description: property.description,
-        defaultValue: property.defaultValue,
     }
 
     if (

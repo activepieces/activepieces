@@ -94,7 +94,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.BODY,
@@ -114,7 +114,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),
@@ -132,7 +132,7 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),
@@ -154,7 +154,7 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.BODY,
@@ -177,7 +177,7 @@ const DeleteRecordRequest = {
 
 const ListRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.QUERY,

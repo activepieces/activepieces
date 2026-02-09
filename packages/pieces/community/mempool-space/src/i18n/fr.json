@@ -87,12 +87,10 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "Select the currency for historical price": "Sélectionnez la devise pour le prix historique",
   "Provide YYYY-MM-DD format.": "Fournir le format AAAA-MM-JJ.",
   "The Bitcoin address to look up": "L'adresse Bitcoin à rechercher",
@@ -124,7 +122,7 @@
   "The transaction ID to get timing information for": "L'ID de la transaction pour obtenir les informations de timing pour",
   "The raw transaction in hex format to broadcast": "La transaction brute au format hexadécimal à diffuser",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "US Dollar": "Dollar US",
   "Euro": "Euros",
   "British Pound": "Livre sterling",
@@ -137,9 +135,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "TÊTE"
 }

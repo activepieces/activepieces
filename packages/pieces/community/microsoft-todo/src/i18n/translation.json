@@ -46,7 +46,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The task list to create the task in.": "The task list to create the task in.",
   "The title of the task.": "The title of the task.",
   "The body or notes for the task.": "The body or notes for the task.",

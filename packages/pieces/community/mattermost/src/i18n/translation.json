@@ -19,7 +19,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The channel to send the message to, get that ID by clicking on info near start call butto": "The channel to send the message to, get that ID by clicking on info near start call butto",
   "The text of the message to send": "The text of the message to send",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

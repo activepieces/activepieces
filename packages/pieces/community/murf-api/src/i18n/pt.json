@@ -34,12 +34,10 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
-  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
-  "Follow redirects": "Seguir redirecionamentos",
   "Select your preferred language for the translated output.": "Selecione seu idioma preferido para a saída traduzida.",
   "Filter by style (optional)": "Filtrar por estilo (opcional)",
   "List of texts to translate": "Lista de textos a traduzir",
@@ -66,7 +64,7 @@
   "If true, response word timings map to original text. (English only).": "Se verdadeiro, as palavras de resposta são mapeadas para o texto original. (apenas em inglês).",
   "Custom word pronunciations.": "pronúncias de palavra personalizada.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "MP3": "MP3",
   "WAV": "WAV",
   "FLAC": "BANDEIRA",
@@ -83,9 +81,5 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA",
-  "None": "Nenhuma",
-  "JSON": "JSON",
-  "Form Data": "Dados de Formulário",
-  "Raw": "RAW"
+  "HEAD": "CABEÇA"
 }

@@ -46,12 +46,10 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
-  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
-  "Follow redirects": "Volg omleidingen",
   "The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.": "Het model dat de voltooiing zal genereren. Sommige modellen zijn geschikt voor natuurlijke taaltaken, andere zijn gespecialiseerd in code.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Bestuurt willekeurigheid: Het verlagen van de temperatuur resulteert in minder willekeurige aanvullingen. Zodra de temperatuur nul nadert, zal het model deterministisch en herhalend worden.",
   "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion depending on the model. Don't set the value to maximum and leave some tokens for the input. (One token is roughly 4 characters for normal English text)": "Het maximale aantal te genereren tokens kan gebruikt worden tot 2.048 of 4.096 tokens gedeeld tussen de prompt en de voltooiing, afhankelijk van het model. Stel de waarde niet in op een maximum en laat sommige tokens voor de invoer. (Eén token is ongeveer 4 tekens voor normale Engelse tekst)",
@@ -79,7 +77,7 @@
   "Language of the audio file the default is en (English).": "Taal van het audiobestand waar de standaard in staat (Engels)",
   "Audio file to translate": "Audio-bestand om te vertalen",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "tts-1": "tikken-1",
   "tts-1-hd": "t-1-uur",
   "alloy": "alloy",
@@ -154,9 +152,5 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD",
-  "None": "geen",
-  "JSON": "JSON",
-  "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "HEAD": "HOOFD"
 }

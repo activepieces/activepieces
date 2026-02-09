@@ -7,7 +7,7 @@ interface ReadMoreProps {
 
 export const ReadMoreDescription = ({
   text,
-  amountOfCharacters = 70,
+  amountOfCharacters = 80,
 }: ReadMoreProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const itCanOverflow = text.length > amountOfCharacters;

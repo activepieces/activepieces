@@ -161,7 +161,6 @@ const sortByPieceNameOrder = (
 const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
   '@activepieces/piece-webhook',
   '@activepieces/piece-schedule',
-  '@activepieces/piece-manual-trigger',
   '@activepieces/piece-forms',
   '@activepieces/piece-tables',
 ];

@@ -48,7 +48,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The ID of the email message to retrieve.": "The ID of the email message to retrieve.",
   "The ID of the email message to mark as read.": "The ID of the email message to mark as read.",
   "The ID of the email message to mark as unread.": "The ID of the email message to mark as unread.",

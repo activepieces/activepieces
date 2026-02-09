@@ -94,8 +94,6 @@ export type ApErrorParams =
     | MachineNotAvailableParams
     | MachineNotConnectedParams
     | DoesNotMeetBusinessRequirementsParams
-    | PieceSyncNotSupportedErrorParams
-
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -349,11 +347,6 @@ ErrorCode.INVALID_CUSTOM_DOMAIN,
 }
 >
 
-export type PieceSyncNotSupportedErrorParams = BaseErrorParams<ErrorCode.PIECE_SYNC_NOT_SUPPORTED, {
-    release: string
-    message: string
-}>
-
 export type ValidationErrorParams = BaseErrorParams<
 ErrorCode.VALIDATION,
 {
@@ -580,6 +573,5 @@ export enum ErrorCode {
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
-    PIECE_SYNC_NOT_SUPPORTED = 'PIECE_SYNC_NOT_SUPPORTED',
 }
 

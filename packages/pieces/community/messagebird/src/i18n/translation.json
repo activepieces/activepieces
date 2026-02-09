@@ -28,7 +28,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The phone number to send the message to (with country code)": "The phone number to send the message to (with country code)",
   "The body of the SMS message": "The body of the SMS message",
   "Your own identifier for the message (optional)": "Your own identifier for the message (optional)",

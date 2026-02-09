@@ -25,12 +25,10 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
-  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
-  "Follow redirects": "リダイレクトをフォローする",
   "The ID of the team. Can be found in your browser's URL bar when viewing Team Settings, or use current_team_id from /me endpoint.": "チームのID。チーム設定を表示するときにブラウザのURLバーに表示されるか、/me エンドポイントから current_team_id を使用してください。",
   "Filter projects from a specific group. Must be URL-encoded if the group name contains spaces.": "特定のグループからプロジェクトをフィルタリングします。グループ名にスペースが含まれている場合はURLエンコードされる必要があります。",
   "Filter projects where the head uses a specific model (e.g., gpt-4, claude-2, etc.).": "ヘッドが特定のモデル (gpt-4、claude-2など) を使用するプロジェクトをフィルタリングします。",
@@ -48,7 +46,7 @@
   "Additional metadata to include with the run.": "実行に含める追加のメタデータ。",
   "Request timeout in seconds (max 600).": "リクエストタイムアウト秒（最大600）",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "OpenAI": "OpenAI",
   "Anthropic": "Anthropic",
   "Azure": "Azure",
@@ -59,9 +57,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭",
-  "None": "なし",
-  "JSON": "JSON",
-  "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "HEAD": "頭"
 }

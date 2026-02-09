@@ -26,7 +26,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The topic/channel to send the notification to, e.g. test1": "The topic/channel to send the notification to, e.g. test1",
   "The title of the notification": "The title of the notification",
   "The message to send": "The message to send",

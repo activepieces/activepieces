@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -14,7 +14,9 @@ const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+                security: securityAccess.project([PrincipalType.USER], undefined, {
+                    type: ProjectResourceType.BODY,
+                }),
             },
             schema: {
                 body: AddPieceRequestBody,
@@ -22,8 +24,10 @@ const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
         async (req, res): Promise<PieceMetadataModel> => {
             const platformId = req.principal.platform.id
+            const projectId = req.projectId
             const pieceMetadata = await pieceInstallService(req.log).installPiece(
                 platformId,
+                projectId,
                 req.body,
             )
             return res.code(StatusCodes.CREATED).send(pieceMetadata)

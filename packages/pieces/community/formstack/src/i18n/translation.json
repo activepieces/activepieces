@@ -35,7 +35,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Browser user agent to record": "Browser user agent to record",
   "IP address to record": "IP address to record",
   "Payment integration status": "Payment integration status",

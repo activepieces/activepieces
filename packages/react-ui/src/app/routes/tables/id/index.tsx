@@ -111,7 +111,7 @@ const ApTableEditorPage = () => {
               selectedRows={selectedRecords}
               onSelectedRowsChange={setSelectedRecords}
               className={cn(
-                'scroll-smooth w-full !h-full bg-muted/30 !border-0',
+                'scroll-smooth w-full !h-full bg-muted/30',
                 theme === 'dark' ? 'rdg-dark' : 'rdg-light',
               )}
               bottomSummaryRows={

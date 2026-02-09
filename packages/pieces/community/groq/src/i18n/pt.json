@@ -25,12 +25,10 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
-  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
-  "Follow redirects": "Seguir redirecionamentos",
   "The model which will generate the completion.": "O modelo que irá gerar a conclusão.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Controla aleatoriedade: Diminuir resulta em menos complementos aleatórios. À medida que a temperatura se aproxima de zero, o modelo se tornará determinístico e repetitivo.",
   "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.": "O número máximo de tokens a gerar. O comprimento total de tokens de entrada e tokens gerados é limitado pelo comprimento do contexto do modelo.",
@@ -50,7 +48,7 @@
   "An optional text in English to guide the model's style or continue a previous audio segment.": "Um texto opcional em Inglês para guiar o estilo do modelo ou continuar um segmento de áudio anterior.",
   "The format of the translation output.": "O formato da saída de tradução.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "JSON": "JSON",
   "Text": "texto",
   "Verbose JSON": "Verbose JSON",
@@ -59,8 +57,5 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA",
-  "None": "Nenhuma",
-  "Form Data": "Dados de Formulário",
-  "Raw": "RAW"
+  "HEAD": "CABEÇA"
 }

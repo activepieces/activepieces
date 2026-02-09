@@ -29,12 +29,10 @@
   "Method": "Méthode",
   "Headers": "Headers",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "A clear, descriptive explanation of the desired audio effect. Concise prompts yield more accurate results.": "Une explication claire et descriptive de l'effet audio désiré. Concise invite à produire des résultats plus précis.",
   "The desired length of the audio in seconds (max 10). Defaults to 8 if not set.": "La longueur souhaitée de l'audio en secondes (max 10). Par défaut 8 si non défini.",
   "A memorable name for your project to help organize tasks in your Camb.ai workspace.": "Un nom mémorable pour votre projet afin de vous aider à organiser des tâches dans votre espace de travail Camb.ai.",
@@ -52,7 +50,7 @@
   "Helps adjust vocabulary and expressions to be age-appropriate.": "Aide à ajuster le vocabulaire et les expressions en fonction de l'âge.",
   "Choose whether to upload a file or provide a URL.": "Choisissez si vous souhaitez télécharger un fichier ou fournir une URL.",
   "Authorization headers are injected automatically from your connection.": "Les Headers d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Male": "Homme",
   "Female": "Femme",
   "Neutral": "Neutre",
@@ -66,9 +64,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "HEAD"
 }

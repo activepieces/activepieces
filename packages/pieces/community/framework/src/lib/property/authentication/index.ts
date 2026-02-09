@@ -78,8 +78,7 @@ export function getAuthPropertyForValue({ authValueType, pieceAuth }: GetAuthPro
   if (!Array.isArray(pieceAuth) || isNil(pieceAuth)) {
     return pieceAuth;
   }
-
-  return pieceAuth.find(auth => authConnectionTypeToPropertyType[authValueType] === auth.type) ?? pieceAuth.at(0);
+  return pieceAuth.find(auth => authConnectionTypeToPropertyType[authValueType] === auth.type);
 }
 
 type GetAuthPropertyForValue = {

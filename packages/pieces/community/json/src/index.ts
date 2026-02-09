@@ -14,7 +14,7 @@ export const json = createPiece({
   description: "Convert JSON to text and vice versa",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/new-core/json-helper.svg",
+  logoUrl: "https://cdn.activepieces.com/pieces/json.svg",
   authors: ["leenmashni","abuaboud"],
   actions: [convertJsonToText, convertTextToJson],
   triggers: [],

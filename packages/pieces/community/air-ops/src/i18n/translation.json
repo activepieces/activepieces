@@ -22,7 +22,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Select the workflow to execute.": "Select the workflow to execute.",
   "Input values for the workflow.": "Input values for the workflow.",
   "Schema defining the workflow inputs (advanced).": "Schema defining the workflow inputs (advanced).",

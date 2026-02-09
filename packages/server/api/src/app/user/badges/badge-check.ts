@@ -1,5 +1,5 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
 import { BADGES } from '@activepieces/shared'
+import { AuditEventParam } from '../../helper/application-events'
 
 export type BadgeCheckResult = {
     userId: string | null
@@ -7,5 +7,8 @@ export type BadgeCheckResult = {
 }
 
 export type BadgeCheck = {
-    eval: (applicationEvent: ApplicationEvent) => Promise<BadgeCheckResult>
+    eval: (params: {
+        userId?: string
+        event: AuditEventParam
+    }) => Promise<BadgeCheckResult>
 }

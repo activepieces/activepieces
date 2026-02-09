@@ -33,12 +33,10 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
-  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
-  "Follow redirects": "Seguir redirecionamentos",
   "Select a Placid template for image generation": "Selecione um modelo de planície para a geração de imagens",
   "Optional webhook URL to receive notification when generation is complete.": "URL opcional do webhook para receber notificação quando a geração estiver concluída.",
   "Whether to create the image immediately (synchronous) or queue it (asynchronous).": "Se para criar a imagem imediatamente (sincronizar) ou enfileirá-la (assíncrona).",
@@ -50,7 +48,7 @@
   "The ID of the PDF to retrieve": "A ID do PDF para recuperar",
   "The ID of the video to retrieve.": "A identificação do vídeo a recuperar.",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
+  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
   "72 DPI": "72 DPI",
   "150 DPI": "150 DPI",
   "300 DPI": "300 DPI",
@@ -60,9 +58,5 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA",
-  "None": "Nenhuma",
-  "JSON": "JSON",
-  "Form Data": "Dados de Formulário",
-  "Raw": "RAW"
+  "HEAD": "CABEÇA"
 }

@@ -39,7 +39,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Additional information about the contact.": "Additional information about the contact.",
   "Array of email addresses (optional, max 20)": "Array of email addresses (optional, max 20)",
   "Filter by call direction": "Filter by call direction",

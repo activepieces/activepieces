@@ -32,7 +32,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The task prompt or instruction for the Manus agent": "The task prompt or instruction for the Manus agent",
   "The AI model profile to use for the task": "The AI model profile to use for the task",
   "The interaction mode for the task": "The interaction mode for the task",

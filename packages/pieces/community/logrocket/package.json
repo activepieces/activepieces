@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-logrocket",
-  "version": "0.1.3",
+  "version": "0.1.0",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",

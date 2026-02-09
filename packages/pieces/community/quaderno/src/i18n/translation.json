@@ -65,7 +65,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The contact's first name (required for person contacts)": "The contact's first name (required for person contacts)",
   "The contact's last name (optional)": "The contact's last name (optional)",
   "The contact's email address": "The contact's email address",

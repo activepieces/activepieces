@@ -87,12 +87,10 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
-  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
-  "Follow redirects": "リダイレクトをフォローする",
   "Select the currency for historical price": "履歴価格の通貨を選択してください",
   "Provide YYYY-MM-DD format.": "YYYY-MM-DD フォーマットを提供します。",
   "The Bitcoin address to look up": "検索するBitcoinアドレス",
@@ -124,7 +122,7 @@
   "The transaction ID to get timing information for": "タイミング情報を取得するためのトランザクションID",
   "The raw transaction in hex format to broadcast": "生のトランザクションを16進形式でブロードキャストします",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "US Dollar": "米ドル",
   "Euro": "ユーロ",
   "British Pound": "British Pound",
@@ -137,9 +135,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭",
-  "None": "なし",
-  "JSON": "JSON",
-  "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "HEAD": "頭"
 }

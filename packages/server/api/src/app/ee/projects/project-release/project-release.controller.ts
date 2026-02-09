@@ -36,7 +36,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
             log: req.log,
         })
 
-        applicationEvents(req.log).sendUserEvent(req, {
+        applicationEvents.sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_RELEASE_CREATED,
             data: {
                 release,

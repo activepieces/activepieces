@@ -78,12 +78,10 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
-  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
-  "Follow redirects": "リダイレクトをフォローする",
   "Select scope": "スコープを選択",
   "Opt-in status true/false": "オプトインのステータスがtrue/false",
   "Unsubscribe status true/false": "Unsubscribe status true/false",
@@ -96,7 +94,7 @@
   "Example : friend@example.com": "例 : friend@example.com",
   "Example : invite": "例 : 招待",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "General information": "一般情報",
   "Referrals as advocate": "提唱者として紹介する",
   "Referrals as friend": "友達として紹介する",
@@ -112,9 +110,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭",
-  "None": "なし",
-  "JSON": "JSON",
-  "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "HEAD": "頭"
 }

@@ -32,7 +32,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The name or title of the new document.": "The name or title of the new document.",
   "The text or HTML content to be added to the document. Max 768 KB.": "The text or HTML content to be added to the document. Max 768 KB.",
   "The file to upload (e.g., txt, md, rtf, pdf, ppt, docx).": "The file to upload (e.g., txt, md, rtf, pdf, ppt, docx).",

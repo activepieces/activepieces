@@ -24,7 +24,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The text to transform in image.": "The text to transform in image.",
   "How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt) (MIN:0; MAX:35)": "How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt) (MIN:0; MAX:35)",
   "Height of the image in pixels. Must be in increments of 64 and >= 128": "Height of the image in pixels. Must be in increments of 64 and >= 128",

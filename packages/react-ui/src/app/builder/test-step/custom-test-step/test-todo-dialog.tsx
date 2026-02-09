@@ -11,26 +11,28 @@ import {
   CreateAndWaitTodoResult,
 } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 type TodoTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  todo: PopulatedTodo;
   currentStep: FlowAction;
   type: TodoType;
-  id: string;
+  setErrorMessage: (errorMessage: string | undefined) => void;
 };
 
 function TodoTestingDialog({
   open,
   onOpenChange,
+  todo,
   currentStep,
   type,
-  id,
+  setErrorMessage,
 }: TodoTestingDialogProps) {
-  const { updateSampleData } = useBuilderStateContext((state) => ({
-    updateSampleData: state.updateSampleData,
-  }));
+  const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
+    currentStep.name,
+  );
 
   const formatTodoResult = (
     response: PopulatedTodo,
@@ -53,16 +55,16 @@ function TodoTestingDialog({
 
   const { mutate: resolveTodo } = useMutation({
     mutationFn: async (status: PopulatedTodo['status']) => {
-      return await todosApi.update(id, {
+      return await todosApi.update(todo.id, {
         status: status,
         isTest: true,
       });
     },
     onSuccess: (response) => {
+      setErrorMessage(undefined);
       const output = formatTodoResult(response);
       updateSampleData({
-        stepName: currentStep.name,
-        output,
+        response: { testType: 'todo', output, success: true },
       });
       onOpenChange(false);
     },
@@ -75,7 +77,7 @@ function TodoTestingDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-3xl  p-3 overflow-hidden">
-        <TodoDetails todoId={id} onStatusChange={handleStatusChange} />
+        <TodoDetails todoId={todo.id} onStatusChange={handleStatusChange} />
       </DialogContent>
     </Dialog>
   );

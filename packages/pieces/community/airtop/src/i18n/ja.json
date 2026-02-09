@@ -84,12 +84,10 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
-  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
-  "Follow redirects": "リダイレクトをフォローする",
   "Name of a profile to load into the session.": "セッションにロードするプロファイルの名前。",
   "List of Chrome extension IDs from Google Web Store.": "Google Web StoreからのChrome拡張IDの一覧。",
   "Enable Airtop-provided proxy. If disabled, configure a custom proxy.": "Airtop-providedプロキシを有効にします。無効にすると、カスタムプロキシを設定します。",
@@ -157,7 +155,7 @@
   "Describe the element to hover, e.g. \"the search box input in the top right corner\".": "ホバーする要素を記述します。例えば、「右上にある検索ボックスの入力」です。",
   "Wait for page navigation to complete after hovering (default: false).": "ホバリング後にページナビゲーションが完了するのを待ちます (デフォルト: false)。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
+  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
   "1280x720 (Default)": "1280x720 (Default)",
   "1920x1080": "1920x1080",
   "1366x768": "1366x768",
@@ -205,9 +203,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭",
-  "None": "なし",
-  "JSON": "JSON",
-  "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "HEAD": "頭"
 }

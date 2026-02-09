@@ -17,6 +17,7 @@ export const SaveSampleDataRequest = Type.Object({
     stepName: Type.String(),
     payload: Type.Unknown(),
     type: Type.Enum(SampleDataFileType),
+    dataType: Type.Enum(SampleDataDataType),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
@@ -51,8 +52,8 @@ export const StepRunResponse = Type.Object({
 export type StepRunResponse = Static<typeof StepRunResponse>
 
 export const StepExecutionPath = Type.Array(Type.Tuple([Type.String(), Type.Number()]))
-export type StepExecutionPath =  Static<typeof StepExecutionPath>
-export const SampleDataSetting = Type.Object(   
+export type StepExecutionPath = Static<typeof StepExecutionPath>
+export const SampleDataSetting = Type.Object(
     {
         sampleDataFileId: Type.Optional(Type.String()),
         sampleDataInputFileId: Type.Optional(Type.String()),

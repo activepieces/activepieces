@@ -42,7 +42,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Select the template to generate the video.": "Select the template to generate the video.",
   "Title of the generated video.": "Title of the generated video.",
   "Select the folder to store the video.": "Select the folder to store the video.",

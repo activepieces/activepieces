@@ -139,7 +139,7 @@ const DynamicPropertiesImplementation = React.memo(
             const defaultValue = formUtils.getDefaultValueForProperties({
               props: response.options,
               existingInput: currentValue ?? {},
-              propertySettings: props.propertySettings ?? {},
+              propertySettings: undefined,
             });
             setPropertyMap(response.options);
             const schemaWithoutDropdownOptions =
@@ -159,6 +159,7 @@ const DynamicPropertiesImplementation = React.memo(
                 form,
               );
             }
+
             form.setValue(
               prependPrefixToPropertyName({
                 propertyName: props.propertyName,

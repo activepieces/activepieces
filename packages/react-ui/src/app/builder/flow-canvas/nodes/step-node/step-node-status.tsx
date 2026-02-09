@@ -1,7 +1,5 @@
-import { t } from 'i18next';
 import { useMemo } from 'react';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { cn } from '@/lib/utils';
@@ -10,14 +8,11 @@ import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
-  const [run, loopIndexes, flowVersion, isBeingTested] = useBuilderStateContext(
-    (state) => [
-      state.run,
-      state.loopsIndexes,
-      state.flowVersion,
-      state.isStepBeingTested(stepName),
-    ],
-  );
+  const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [
+    state.run,
+    state.loopsIndexes,
+    state.flowVersion,
+  ]);
   const stepStatusInRun = useMemo(() => {
     return flowCanvasUtils.getStepStatus(
       stepName,
@@ -26,12 +21,10 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
       flowVersion,
     );
   }, [stepName, run, loopIndexes, flowVersion]);
-  if (!stepStatusInRun && !isBeingTested) {
+  if (!stepStatusInRun) {
     return null;
   }
-  const { variant, text } = stepStatusInRun
-    ? flowRunUtils.getStatusIconForStep(stepStatusInRun)
-    : ({ variant: 'default', text: t('Testing...') } as const);
+  const { variant, text } = flowRunUtils.getStatusIconForStep(stepStatusInRun);
   return (
     <div className="absolute right-[1px]  h-[20px] -top-[28px]">
       <div
@@ -40,16 +33,11 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
           flowRunUtils.getStatusContainerClassName(variant),
         )}
       >
-        {isBeingTested && (
-          <LoadingSpinner className="w-3 h-3 "></LoadingSpinner>
-        )}
-        {!isBeingTested && stepStatusInRun && (
-          <StepStatusIcon
-            status={stepStatusInRun}
-            size="3"
-            hideTooltip={true}
-          ></StepStatusIcon>
-        )}
+        <StepStatusIcon
+          status={stepStatusInRun}
+          size="3"
+          hideTooltip={true}
+        ></StepStatusIcon>
         <div>{text}</div>
       </div>
     </div>

@@ -1,6 +1,0 @@
-{
-  "Manual Trigger": "Déclencheur manuel",
-  "Manually start your own flow without any extra configurations": "Démarrez manuellement votre propre flux sans configuration supplémentaire",
-  "Markdown": "Markdown",
-  "Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow.": "Les déclencheurs manuels sont utilisés pour démarrer un flux à la demande, publier votre flux et cliquer sur (Run Flow) au début du flux."
-}

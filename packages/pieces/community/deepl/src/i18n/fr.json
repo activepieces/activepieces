@@ -26,12 +26,10 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "Text to be translated. Only UTF-8-encoded plain text is supported.": "Texte à traduire. Seul le texte brut encodé en UTF-8 est pris en charge.",
   "The language into which the text should be translated.": "La langue dans laquelle le texte doit être traduit.",
   "Language of the text to be translated": "Langue du texte à traduire",
@@ -43,7 +41,7 @@
   "The automatic detection of the XML structure won't yield best results in all XML files.": "La détection automatique de la structure XML ne produira pas les meilleurs résultats dans tous les fichiers XML.",
   "Comma-separated list of XML or HTML tags.": "Liste séparée par des virgules de balises XML ou HTML.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Bulgarian": "Bulgare",
   "Czech": "Tchèque",
   "Danish": "Danois",
@@ -94,9 +92,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "TÊTE"
 }

@@ -24,7 +24,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings": "The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings",
   "The name of the event. This is how you'll reference the event in campaigns or segments": "The name of the event. This is how you'll reference the event in campaigns or segments",
   "Event information to be sent to Customer.io": "Event information to be sent to Customer.io",

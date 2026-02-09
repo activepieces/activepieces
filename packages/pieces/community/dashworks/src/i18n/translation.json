@@ -15,7 +15,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "You can find this by going to Dashworks > Bots, clicking on an existing Bot, and using the 'Copy Bot ID' button on the top right.": "You can find this by going to Dashworks > Bots, clicking on an existing Bot, and using the 'Copy Bot ID' button on the top right.",
   "The message (e.g., a question or prompt) that you want a response to.": "The message (e.g., a question or prompt) that you want a response to.",
   "When true (default), sources will be cited inline in markdown formatting within the answer text.When false, the answer will not contain inline citations.": "When true (default), sources will be cited inline in markdown formatting within the answer text.When false, the answer will not contain inline citations.",

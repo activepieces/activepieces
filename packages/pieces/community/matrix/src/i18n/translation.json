@@ -17,7 +17,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Copy it from room settings -> advanced -> room addresses -> main address": "Copy it from room settings -> advanced -> room addresses -> main address",
   "The message to send (markdown)": "The message to send (markdown)",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

@@ -28,7 +28,6 @@ import {
   DEFAULT_SAMPLE_DATA_SETTINGS,
   FlowVersion,
   FlowOperationType,
-  isManualPieceTrigger,
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';
@@ -357,7 +356,6 @@ const isChatTrigger = (pieceName: string, triggerName: string) => {
     triggerName === 'chat_submission'
   );
 };
-
 const getStepNameFromOperationType = (
   operation: PieceSelectorOperation,
   flowVersion: FlowVersion,
@@ -378,5 +376,4 @@ export const pieceSelectorUtils = {
   isChatTrigger,
   removeHiddenActions,
   getStepNameFromOperationType,
-  isManualTrigger: isManualPieceTrigger,
 };

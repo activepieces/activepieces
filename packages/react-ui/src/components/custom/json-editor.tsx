@@ -74,12 +74,7 @@ const JsonEditor = React.memo(
           lang="json"
           onChange={(value) => {
             setValue(value);
-            // Wrap in event-like object to prevent RHF from breaking when
-            // the dictionary has a "target" key. RHF's getEventValue extracts
-            // target.value from event-like objects, so this ensures the actual
-            // dictionary value is preserved.
-            // See: https://github.com/react-hook-form/react-hook-form/issues/13078
-            field.onChange({ target: { value: tryParseJson(value) } });
+            field.onChange(tryParseJson(value));
           }}
           theme={editorTheme}
           readOnly={readonly}

@@ -15,7 +15,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "To get it: Login to your dashboard and click on the bot configuration page. At the top in the URL bar, copy the value starting after \"tenant/\" to the end.": "To get it: Login to your dashboard and click on the bot configuration page. At the top in the URL bar, copy the value starting after \"tenant/\" to the end.",
   "The message to send to the chatbot": "The message to send to the chatbot",
   "Unique identifier for this message": "Unique identifier for this message",

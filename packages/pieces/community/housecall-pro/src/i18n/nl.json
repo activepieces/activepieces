@@ -185,12 +185,10 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
-  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
-  "Follow redirects": "Volg omleidingen",
   "At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.": "Ten minste één van: Voornaam, achternaam, E-mail, Mobiel Nummer, Thuisnummer, Werknummer is vereist.",
   "Will the customer receive notifications": "Zal de klant meldingen ontvangen",
   "Array of tags to assign to the customer": "Reeks van tags om toe te wijzen aan de klant",
@@ -313,7 +311,7 @@
   "Filter leads by a list of tags": "leads filteren door een lijst met tags",
   "The type to convert the lead to. Must be either 'estimate' or 'job'": "Het type om de lead naar om te zetten. Moet zijn ofwel 'ingeschreven' of 'job'",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
+  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
   "Attachments": "Bijlagen",
   "Do Not Service": "Niet service doen",
   "Created At": "Aangemaakt op",
@@ -346,9 +344,5 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD",
-  "None": "geen",
-  "JSON": "JSON",
-  "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "HEAD": "HOOFD"
 }

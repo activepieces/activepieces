@@ -24,7 +24,6 @@ import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
-import { EventDestinationEntity } from '../event-destinations/event-destinations.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -109,7 +108,6 @@ function getEntities(): EntitySchema<unknown>[] {
         ConnectionKeyEntity,
         AppCredentialEntity,
         PlatformPlanEntity,
-        EventDestinationEntity,
 
     ]
 }

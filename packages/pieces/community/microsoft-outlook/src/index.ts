@@ -15,7 +15,6 @@ import { microsoftOutlookAuth } from './lib/common/auth';
 import { newAttachmentTrigger } from './lib/triggers/new-attachment';
 import { newEmailInFolderTrigger } from './lib/triggers/new-email-in-folder';
 import { newEmailTrigger } from './lib/triggers/new-email';
-import { requestApprovalInMail } from './lib/actions/request-approval-send-email';
 
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
@@ -31,7 +30,6 @@ export const microsoftOutlook = createPiece({
 		createDraftEmailAction,
 		addLabelToEmailAction,
 		removeLabelFromEmailAction,
-		requestApprovalInMail,
 		moveEmailToFolderAction,
 		sendDraftEmailAction,
 		forwardEmailAction,

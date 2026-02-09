@@ -114,7 +114,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Optional ID of the user whose mandates you want to list.": "Optional ID of the user whose mandates you want to list.",
   "Optional cursor for pagination.": "Optional cursor for pagination.",
   "Optional limit on the number of mandates to return.": "Optional limit on the number of mandates to return.",

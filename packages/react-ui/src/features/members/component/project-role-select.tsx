@@ -22,6 +22,7 @@ type ProjectRoleSelectProps = {
 const RolesDisplayNames: { [k: string]: string } = {
   [DefaultProjectRole.ADMIN]: t('Admin'),
   [DefaultProjectRole.EDITOR]: t('Editor'),
+  [DefaultProjectRole.OPERATOR]: t('Operator'),
   [DefaultProjectRole.VIEWER]: t('Viewer'),
 };
 

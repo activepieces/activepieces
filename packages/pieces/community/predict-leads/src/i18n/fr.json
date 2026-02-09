@@ -51,12 +51,10 @@
   "Method": "Méthode",
   "Headers": "Headers",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'expiration (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "A min-max size range. Examples: \"11-50\"\". For now, only single range is supported.": "Une plage de taille minimale maximale. Exemples: \"11-50\"\". Pour l'instant, seule une seule plage est prise en charge.",
   "Page number of shown items": "Nombre de pages des éléments affichés",
   "Limit the number of shown items per page. Max 1000.": "Limite le nombre d'éléments affichés par page. Maximum 1000.",
@@ -78,7 +76,7 @@
   "The ID of the news event to find.": "L'ID de l'événement d'actualités à trouver.",
   "The domain to find.": "Le domaine à trouver.",
   "Authorization headers are injected automatically from your connection.": "Les headers d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Administration": "Administration",
   "Consulting": "Consultation",
   "Data Analysis": "Analyse des données",
@@ -140,9 +138,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "HEAD"
 }

@@ -22,7 +22,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Prompt to crawl data": "Prompt to crawl data",
   "The depth of the crawl 1 depth mean only the first level of links will be scraped": "The depth of the crawl 1 depth mean only the first level of links will be scraped",
   "The maximum number of pages to scrape": "The maximum number of pages to scrape",

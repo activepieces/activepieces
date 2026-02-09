@@ -37,12 +37,10 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "The webpage URL to scrape.": "L'URL de la page Web à explorer.",
   "Maximum time to wait for the page to load (in milliseconds).": "Temps d'attente maximum pour le chargement de la page (en millisecondes).",
   "Enable to perform a sequence of actions on the page before scraping (like clicking buttons, filling forms, etc.). See [Firecrawl Actions Documentation](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) for details on available actions and their parameters.": "Activer pour effectuer une séquence d'actions sur la page avant de gratter (comme cliquer sur des boutons, remplir des formulaires, etc.). Voir [Documentation des actions de Firecrawl](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) pour plus de détails sur les actions disponibles et leurs paramètres.",
@@ -65,7 +63,7 @@
   "Include and crawl pages from subdomains of the target website (e.g., blog.example.com, shop.example.com) in addition to the main domain.": "Inclure et explorer les pages des sous-domaines du site web cible (par exemple, blog.example.com, shop.example.com) en plus du domaine principal.",
   "Maximum number of links to return (max: 100,000)": "Nombre maximum de liens à retourner (max: 100,000)",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Simple": "Simple",
   "Advanced": "Avancé",
   "GET": "OBTENIR",
@@ -73,9 +71,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "TÊTE"
 }

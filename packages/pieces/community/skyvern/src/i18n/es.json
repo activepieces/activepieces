@@ -27,12 +27,10 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
-  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
-  "Follow redirects": "Seguir redirecciones",
   "The goal or task description for Skyvern to accomplish.": "La meta o descripción de la tarea para que Skyvern cumpla.",
   "The starting URL for the task.": "La URL inicial para la tarea.",
   "URL to send task status updates to after a run is finished.": "URL a la que enviar actualizaciones de estado de tareas una vez finalizada la ejecución.",
@@ -40,7 +38,7 @@
   "The schema for data to be extracted from the webpage.": "El esquema de datos que se extraerán de la página web.",
   "The title for this workflow run.": "El título para este flujo de trabajo se ejecuta.",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
   "Skyvern 1.0": "Skyvern 1.0",
   "Skyvern 2.0": "Skyvern 2.0",
   "OpenAI CUA": "OpenAI CUA",
@@ -68,9 +66,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO",
-  "None": "Ninguna",
-  "JSON": "JSON",
-  "Form Data": "Datos de Formulario",
-  "Raw": "Rápido"
+  "HEAD": "LIMPIO"
 }

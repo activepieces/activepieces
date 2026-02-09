@@ -30,7 +30,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.projectId,
             request: request.body,
         })
-        applicationEvents(request.log).sendUserEvent(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.FOLDER_CREATED,
             data: {
                 folder: createdFolder,
@@ -50,7 +50,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 request: request.body,
             })
 
-            applicationEvents(request.log).sendUserEvent(request, {
+            applicationEvents.sendUserEvent(request, {
                 action: ApplicationEventName.FOLDER_UPDATED,
                 data: {
                     folder: updatedFlow,
@@ -94,7 +94,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.projectId,
                 folderId: request.params.id,
             })
-            applicationEvents(request.log).sendUserEvent(request, {
+            applicationEvents.sendUserEvent(request, {
                 action: ApplicationEventName.FOLDER_DELETED,
                 data: {
                     folder,

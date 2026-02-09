@@ -145,7 +145,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Unique client key to filter results.": "Unique client key to filter results.",
   "Array of client objects to create.": "Array of client objects to create.",
   "List of client IDs to delete.": "List of client IDs to delete.",

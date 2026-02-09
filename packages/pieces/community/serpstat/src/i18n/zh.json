@@ -19,12 +19,10 @@
   "Method": "方法",
   "Headers": "信头",
   "Query Parameters": "查询参数",
-  "Body Type": "Body Type",
   "Body": "正文内容",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
-  "Follow redirects": "Follow redirects",
   "The search query to find keywords for": "The search query to find keywords for",
   "Search engine to use for keyword analysis": "Search engine to use for keyword analysis",
   "List of keywords to exclude from the search": "List of keywords to exclude from the search",
@@ -40,7 +38,7 @@
   "Page number in response.": "Page number in response.",
   "Number of results per page in response.": "Number of results per page in response.",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
-  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
+  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
   "United States": "United States",
   "Singapore": "Singapore",
   "Indonesia": "Indonesia",
@@ -59,9 +57,5 @@
   "PATCH": "PATCH",
   "PUT": "弹出",
   "DELETE": "删除",
-  "HEAD": "黑色",
-  "None": "无",
-  "JSON": "JSON",
-  "Form Data": "表单数据",
-  "Raw": "原始文件"
+  "HEAD": "黑色"
 }

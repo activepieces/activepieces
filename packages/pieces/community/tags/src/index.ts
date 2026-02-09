@@ -7,7 +7,7 @@ export const tags = createPiece({
   description: 'Add custom tags to your run for filtration',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/tags.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/tags.svg',
   categories: [PieceCategory.CORE],
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [addTag],

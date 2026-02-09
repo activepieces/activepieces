@@ -27,14 +27,15 @@ import { pieceMetadataService } from './metadata/piece-metadata-service'
 export const pieceInstallService = (log: FastifyBaseLogger) => ({
     async installPiece(
         platformId: string,
+        projectId: string | undefined,
         params: AddPieceRequestBody,
     ): Promise<PieceMetadataModel> {
         try {
-            const piecePackage = await savePiecePackage(platformId, params, log)
+            const piecePackage = await savePiecePackage(platformId, projectId, params, log)
             const pieceInformation = await extractPieceInformation({
                 ...piecePackage,
                 platformId,
-            }, log)
+            }, projectId, log)
             const archiveId = piecePackage.packageType === PackageType.ARCHIVE ? piecePackage.archiveId : undefined
             const savedPiece = await pieceMetadataService(log).create({
                 pieceMetadata: {
@@ -72,7 +73,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function savePiecePackage(platformId: string | undefined, params: AddPieceRequestBody, log: FastifyBaseLogger): Promise<PiecePackage> {
+async function savePiecePackage(platformId: string | undefined, projectId: string | undefined, params: AddPieceRequestBody, log: FastifyBaseLogger): Promise<PiecePackage> {
 
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
@@ -100,12 +101,12 @@ async function savePiecePackage(platformId: string | undefined, params: AddPiece
     }
 }
 
-const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, log: FastifyBaseLogger): Promise<PieceMetadata> => {
+const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, projectId: string | undefined, log: FastifyBaseLogger): Promise<PieceMetadata> => {
     const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<PieceMetadata>>({
         jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
         platformId: request.platformId,
         piece: request,
-        projectId: undefined,
+        projectId,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {

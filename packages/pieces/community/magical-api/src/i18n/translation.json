@@ -28,7 +28,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Provide the direct link to a publicly accessible resume file (PDF, DOC, or DOCX)": "Provide the direct link to a publicly accessible resume file (PDF, DOC, or DOCX)",
   "If a previous run timed out, paste the Request ID here to get the result.": "If a previous run timed out, paste the Request ID here to get the result.",
   "Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).": "Provide a direct URL to a publicly accessible resume file (PDF, DOC, or DOCX).",

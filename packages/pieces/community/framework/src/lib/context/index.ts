@@ -12,7 +12,7 @@ import {
   TriggerPayload,
   TriggerStrategy,
 } from '@activepieces/shared';
-import { LanguageModel, Tool } from 'ai'
+import { Tool } from 'ai'
 
 import {
   BasicAuthProperty,
@@ -234,7 +234,7 @@ export type ActionContext<
 
 export type ConstructToolParams = {
   tools: AgentPieceTool[]
-  model: LanguageModel,
+  model: unknown,
 }
 
 export interface AgentContext {

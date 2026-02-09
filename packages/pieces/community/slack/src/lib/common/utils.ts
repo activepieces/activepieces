@@ -1,52 +1,5 @@
 import { ApFile } from '@activepieces/pieces-framework';
-import { Block, KnownBlock, WebClient } from '@slack/web-api';
-
-const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
-
-export function textToSectionBlocks(text: string): (KnownBlock | Block)[] {
-  if (text.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
-    return [{ type: 'section', text: { type: 'mrkdwn', text } }];
-  }
-
-  const blocks: (KnownBlock | Block)[] = [];
-  let remaining = text;
-
-  while (remaining.length > 0) {
-    if (remaining.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
-      blocks.push({ type: 'section', text: { type: 'mrkdwn', text: remaining } });
-      break;
-    }
-
-    let splitIndex = remaining.lastIndexOf('\n', SLACK_SECTION_TEXT_MAX_LENGTH);
-    if (splitIndex <= 0) {
-      splitIndex = remaining.lastIndexOf(' ', SLACK_SECTION_TEXT_MAX_LENGTH);
-    }
-    if (splitIndex <= 0) {
-      splitIndex = SLACK_SECTION_TEXT_MAX_LENGTH;
-    }
-
-    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: remaining.substring(0, splitIndex) } });
-    remaining = remaining.substring(splitIndex).trimStart();
-  }
-
-  return blocks;
-}
-
-export function buildFlowOriginContextBlock(context: {
-  server: { publicUrl: string };
-  project: { id: string };
-  flows: { current: { id: string } };
-}): KnownBlock {
-  return {
-    type: 'context',
-    elements: [
-      {
-        type: 'mrkdwn',
-        text: `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
-      }
-    ]
-  };
-}
+import { Block, WebClient } from '@slack/web-api';
 
 export const slackSendMessage = async ({
   text,

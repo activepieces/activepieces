@@ -54,9 +54,7 @@ export const PlatformPlan = Type.Object({
     platformId: Type.String(),
     includedAiCredits: Type.Number(),
     lastFreeAiCreditsRenewalDate: Type.Optional(Type.String()),
-    
-    tablesEnabled: Type.Boolean(),
-    eventStreamingEnabled: Type.Boolean(),
+
     aiCreditsAutoTopUpState: Type.Enum(AiCreditsAutoTopUpState),
     aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
     aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
@@ -65,6 +63,10 @@ export const PlatformPlan = Type.Object({
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    agentsEnabled: Type.Boolean(),
+    mcpsEnabled: Type.Boolean(),
+    tablesEnabled: Type.Boolean(),
+    todosEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),

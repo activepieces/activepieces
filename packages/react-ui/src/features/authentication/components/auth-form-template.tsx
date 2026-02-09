@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import {
@@ -90,14 +90,8 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
-    useEffect(() => {
-      if (token) {
-        redirectAfterLogin();
-      }
-    }, [token, redirectAfterLogin]);
-
     if (token) {
-      return null;
+      redirectAfterLogin();
     }
 
     return (

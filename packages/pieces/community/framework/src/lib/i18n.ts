@@ -4,8 +4,7 @@ import path from 'path';
 import fs from 'fs/promises';
 
 export const pieceTranslation = {
-  translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>(params: TranslatePieceParams<T>): T => {
-    const { piece, locale, mutate = false } = params
+  translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale?: LocalesEnum): T => {
     if (!locale) {
       return piece
     }
@@ -14,7 +13,7 @@ export const pieceTranslation = {
       if (!target) {
         return piece
       }
-      const translatedPiece: T = mutate ? piece : structuredClone(piece)
+      const translatedPiece: T = structuredClone(piece)
       pieceTranslation.pathsToValuesToTranslate.forEach(key => {
         translateProperty(translatedPiece, key, target)
       })
@@ -122,10 +121,4 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
     console.error(`Error reading i18n file for ${locale} in piece ${pieceOutputPath}:`, error);
     return null;
   }
-}
-
-type TranslatePieceParams<T extends PieceMetadataModelSummary | PieceMetadataModel> = {
-  piece: T
-  locale?: LocalesEnum
-  mutate?: boolean
 }

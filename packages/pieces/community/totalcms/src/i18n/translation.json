@@ -76,7 +76,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The type of data to return": "The type of data to return",
   "The CMS ID of the content to retrieve": "The CMS ID of the content to retrieve",
   "The permalink of the post to retrieve": "The permalink of the post to retrieve",

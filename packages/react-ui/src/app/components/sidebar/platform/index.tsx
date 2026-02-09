@@ -16,7 +16,6 @@ import {
   Settings2,
   FileHeart,
   MousePointerClick,
-  Webhook,
 } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -171,12 +170,6 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/triggers',
           label: t('Triggers'),
           icon: MousePointerClick,
-        },
-        {
-          to: '/platform/infrastructure/event-destinations',
-          label: t('Event Streaming'),
-          icon: Webhook,
-          locked: !platform.plan.eventStreamingEnabled,
         },
       ],
     },

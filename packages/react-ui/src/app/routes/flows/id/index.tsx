@@ -34,6 +34,7 @@ const FlowBuilderPage = () => {
 
   const { data: sampleDataInput, isLoading: isSampleDataInputLoading } =
     sampleDataHooks.useSampleDataInputForFlow(flow?.version, flow?.projectId);
+
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (
       <div className="bg-background flex h-full w-full items-center justify-center ">

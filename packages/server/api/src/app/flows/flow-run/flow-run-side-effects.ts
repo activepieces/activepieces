@@ -16,7 +16,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             return
         }
         await flowRunHooks(log).onFinish(flowRun)
-        applicationEvents(log).sendWorkerEvent(flowRun.projectId, {
+        applicationEvents.sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {
                 flowRun,
@@ -24,7 +24,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         })
     },
     async onResume(flowRun: FlowRun): Promise<void> {
-        applicationEvents(log).sendWorkerEvent(flowRun.projectId, {
+        applicationEvents.sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_RESUMED,
             data: {
                 flowRun,
@@ -33,7 +33,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     },
     async onStart(flowRun: FlowRun): Promise<void> {
        
-        applicationEvents(log).sendWorkerEvent(flowRun.projectId, {
+        applicationEvents.sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_STARTED,
             data: {
                 flowRun,

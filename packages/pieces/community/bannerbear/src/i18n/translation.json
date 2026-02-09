@@ -19,7 +19,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The template to use in image creation.": "The template to use in image creation.",
   "Create image based on a specific version of the template.": "Create image based on a specific version of the template.",
   "A list of modifications you want to make on the template.": "A list of modifications you want to make on the template.",

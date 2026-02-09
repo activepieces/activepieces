@@ -7,7 +7,7 @@
       displayName: 'QR Code',
       auth: PieceAuth.None(),
       minimumSupportedRelease: '0.30.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/new-core/qrcode.svg",
+      logoUrl: "https://cdn.activepieces.com/pieces/qrcode.png",
       categories: [PieceCategory.CORE],
       authors: ['Meng-Yuan Huang'],
       actions: [

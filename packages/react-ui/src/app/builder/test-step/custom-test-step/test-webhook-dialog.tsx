@@ -21,10 +21,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
+import { FlowAction, ApFlagId, apId, FlowTrigger } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 enum BodyType {
   JSON = 'json',
@@ -132,9 +133,15 @@ const TestWaitForNextWebhookDialog = ({
   onOpenChange,
   open,
 }: TestWaitForNextWebhookDialogProps) => {
-  const [updateSampleData] = useBuilderStateContext((state) => [
-    state.updateSampleData,
-  ]);
+  const { mutate: onSubmit, isPending: isLoading } =
+    testStepHooks.useTestAction({
+      currentStep,
+      setErrorMessage: undefined,
+      setConsoleLogs: undefined,
+      onSuccess: () => {
+        onOpenChange(false);
+      },
+    });
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -143,17 +150,25 @@ const TestWaitForNextWebhookDialog = ({
         </DialogHeader>
         <TestWebhookFunctionalityForm
           showMethodDropdown={false}
-          isLoading={false}
           onSubmit={(data) => {
-            updateSampleData({
-              stepName: currentStep.name,
-              output: {
-                body: data.body,
-                headers: data.headers,
-                queryParams: data.queryParams,
+            onSubmit({
+              type: 'webhookAction',
+              preExistingSampleData: {
+                runId: apId(),
+                success: true,
+                output: {
+                  body: data.body,
+                  headers: data.headers,
+                  queryParams: data.queryParams,
+                },
+                standardError: '',
+                standardOutput: '',
+                input: {},
               },
+              onProgress: undefined,
             });
           }}
+          isLoading={isLoading}
         />
       </DialogContent>
     </Dialog>

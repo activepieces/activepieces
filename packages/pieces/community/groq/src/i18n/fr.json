@@ -25,12 +25,10 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
-  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
   "Timeout (in seconds)": "Délai d'attente (en secondes)",
-  "Follow redirects": "Suivre les redirections",
   "The model which will generate the completion.": "Le modèle qui va générer la complétion.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Contrôle aléatoirement : La baisse des résultats est moins aléatoire, alors que la température approche de zéro, le modèle devient déterministe et répétitif.",
   "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.": "Le nombre maximum de jetons à générer. La longueur totale des jetons d'entrée et des jetons générés est limitée par la longueur de contexte du modèle.",
@@ -50,7 +48,7 @@
   "An optional text in English to guide the model's style or continue a previous audio segment.": "Un texte optionnel en anglais pour guider le style du modèle ou continuer un segment audio précédent.",
   "The format of the translation output.": "Le format de la sortie de traduction.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "JSON": "JSON",
   "Text": "Texte du texte",
   "Verbose JSON": "Verbose JSON",
@@ -59,8 +57,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
-  "None": "Aucun",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "HEAD": "TÊTE"
 }

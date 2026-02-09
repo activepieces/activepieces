@@ -133,7 +133,7 @@ const InstallPieceDialog = ({
           });
         }
         if (!data.pieceName || !data.pieceVersion) {
-          throw new Error('Validation failed');
+          return;
         }
       }
 

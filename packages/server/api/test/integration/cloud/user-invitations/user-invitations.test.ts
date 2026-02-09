@@ -218,6 +218,7 @@ describe('User Invitation API', () => {
         it.each([
             DefaultProjectRole.EDITOR,
             DefaultProjectRole.VIEWER,
+            DefaultProjectRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
             const { mockMember, mockProject } = await createBasicEnvironment({})
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
@@ -389,6 +390,7 @@ describe('User Invitation API', () => {
             DefaultProjectRole.EDITOR,
             DefaultProjectRole.VIEWER,
             DefaultProjectRole.ADMIN,
+            DefaultProjectRole.OPERATOR,
         ])('Succeed if user role is %s', async (testRole) => {
             const { mockMember, mockProject } = await createBasicEnvironment({})
 

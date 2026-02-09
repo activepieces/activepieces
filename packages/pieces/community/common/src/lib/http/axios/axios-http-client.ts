@@ -23,14 +23,13 @@ export class AxiosHttpClient extends BaseHttpClient {
     axiosClient?: AxiosInstance
   ): Promise<HttpResponse<ResponseBody>> {
     try {
-      const axiosInstance = axiosClient || axios.create();
+      const axiosInstance = axiosClient || axios;
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-      const { urlWithoutQueryParams, queryParams: urlQueryParams } =
-        this.getUrl(request);
+      const { urlWithoutQueryParams, queryParams: urlQueryParams } = this.getUrl(request);
       const headers = this.getHeaders(request);
       const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
       const timeout = request.timeout ? request.timeout : 0;
-      const queryParams = request.queryParams || {};
+      const queryParams = request.queryParams || {}
       const responseType = request.responseType || 'json';
 
       for (const [key, value] of Object.entries(queryParams)) {
@@ -45,14 +44,6 @@ export class AxiosHttpClient extends BaseHttpClient {
         data: request.body,
         timeout,
         responseType,
-        maxRedirects: request.followRedirects ?? false ? undefined : 0,
-        validateStatus: (status) => {
-          if (status >= 400) return false;
-          if (request.followRedirects ?? false) {
-            return status >= 200 && status < 300;
-          }
-          return status >= 200 && status < 400;
-        },
       };
 
       if (request.retries && request.retries > 0) {
@@ -60,11 +51,7 @@ export class AxiosHttpClient extends BaseHttpClient {
           retries: request.retries,
           retryDelay: axiosRetry.exponentialDelay,
           retryCondition: (error) => {
-            return (
-              axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-              (error.response && error.response.status >= 500) ||
-              false
-            );
+            return axiosRetry.isNetworkOrIdempotentRequestError(error) || (error.response && error.response.status >= 500) || false;
           },
         });
       }
@@ -78,7 +65,7 @@ export class AxiosHttpClient extends BaseHttpClient {
       };
     } catch (e) {
       if (axios.isAxiosError(e)) {
-        const httpError = new HttpError(request.body, e);
+        const httpError =  new HttpError(request.body, e);
         console.error(
           '[HttpClient#(sanitized error message)] Request failed:',
           httpError
@@ -88,6 +75,7 @@ export class AxiosHttpClient extends BaseHttpClient {
       throw e;
     }
   }
+
 
   private getAxiosRequestMethod(httpMethod: HttpMethod): string {
     return httpMethod.toString();

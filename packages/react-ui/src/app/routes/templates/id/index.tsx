@@ -10,7 +10,8 @@ import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar-shadcn';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
@@ -136,6 +137,8 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
       {template.type !== TemplateType.SHARED && (
         <div className="border-b py-4 px-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 min-w-0">
+            <SidebarTrigger />
+            <Separator orientation="vertical" className="h-5" />
             <Button
               variant="ghost"
               size="sm"

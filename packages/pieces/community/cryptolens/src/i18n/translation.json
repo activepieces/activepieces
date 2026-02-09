@@ -41,7 +41,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "The name of the customer (max 100 characters)": "The name of the customer (max 100 characters)",
   "The email of the customer (max 100 characters)": "The email of the customer (max 100 characters)",
   "The company name the customer belongs to (max 100 characters)": "The company name the customer belongs to (max 100 characters)",

@@ -24,25 +24,6 @@ const APPROVAL_PIECES_CONFIG = [
     pieceName: '@activepieces/piece-discord',
     approvalActionNames: ['request_approval_message'],
   },
-  {
-    pieceName: '@activepieces/piece-microsoft-teams',
-    approvalActionNames: [
-      'request_approval_direct_message',
-      'request_approval_in_channel',
-    ],
-  },
-  {
-    pieceName: '@activepieces/piece-microsoft-outlook',
-    approvalActionNames: ['request_approval_in_mail'],
-  },
-  {
-    pieceName: '@activepieces/piece-gmail',
-    approvalActionNames: ['request_approval_in_mail'],
-  },
-  {
-    pieceName: '@activepieces/piece-telegram-bot',
-    approvalActionNames: ['request_approval_message'],
-  },
 ];
 
 const ApprovalsTabContent = ({

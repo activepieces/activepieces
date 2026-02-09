@@ -185,12 +185,10 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
-  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
   "Timeout (in seconds)": "Timeout (in Sekunden)",
-  "Follow redirects": "Weiterleitungen folgen",
   "At least one of: First Name, Last Name, Email, Mobile Number, Home Number, Work Number is required.": "Mindestens einer von: Vorname, Nachname, E-Mail, Handynummer, Hausnummer, Arbeitsnummer ist erforderlich.",
   "Will the customer receive notifications": "Erhält der Kunde Benachrichtigungen",
   "Array of tags to assign to the customer": "Anordnung der Markierungen zum Kunden",
@@ -313,7 +311,7 @@
   "Filter leads by a list of tags": "Leads nach einer Liste von Tags filtern",
   "The type to convert the lead to. Must be either 'estimate' or 'job'": "Der Typ, in den das Lead umgewandelt werden soll. Muss entweder \"schätzen\" oder \"Job\" sein",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
+  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
   "Attachments": "Anhänge",
   "Do Not Service": "Nicht Service",
   "Created At": "Erstellt am",
@@ -346,9 +344,5 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD",
-  "None": "Keine",
-  "JSON": "JSON",
-  "Form Data": "Formulardaten",
-  "Raw": "Rohe"
+  "HEAD": "HEAD"
 }

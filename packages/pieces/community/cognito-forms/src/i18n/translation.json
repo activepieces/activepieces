@@ -21,7 +21,6 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
-  "Follow redirects": "Follow redirects",
   "Enter the ID of the entry you want to update.": "Enter the ID of the entry you want to update.",
   "Enter the ID of the entry to delete.": "Enter the ID of the entry to delete.",
   "Enter the ID of the entry to retrieve.": "Enter the ID of the entry to retrieve.",

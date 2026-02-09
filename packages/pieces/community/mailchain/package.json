@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mailchain",
-  "version": "0.1.2",
+  "version": "0.1.0",
   "dependencies": {
     "@mailchain/sdk": "^0.31.0"
   }
