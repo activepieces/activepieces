@@ -60,19 +60,21 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
         async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
             const { platformId, locale = LocalesEnum.ENGLISH } = params
             const cacheKey = CACHE_KEY.list(locale)
-            let allTranslatedPieces = cache.get(cacheKey) as PieceMetadataSchema[] | undefined
             
-            if (isNil(allTranslatedPieces)) {
+            const allTranslatedPieces = await getCachedOrFetch(cacheKey, async () => {
                 const englishCacheKey = CACHE_KEY.list(LocalesEnum.ENGLISH)
                 const allPieces = await getCachedOrFetch(englishCacheKey, () => fetchPiecesFromDB())
 
-                allTranslatedPieces = allPieces.map((piece) => {
+                if (locale === LocalesEnum.ENGLISH) {
+                    return allPieces
+                }
+
+                return allPieces.map((piece) => {
                     const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
                     const { i18n: _i18n, ...translatedWithoutI18n } = translated
                     return translatedWithoutI18n
                 })
-                cache.set(cacheKey, allTranslatedPieces)
-            }
+            })
             
             const devPieces = await loadDevPiecesIfEnabled(log)
             const translatedDevPieces = devPieces.map((piece) => 
