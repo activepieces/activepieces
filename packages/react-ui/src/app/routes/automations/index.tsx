@@ -4,7 +4,6 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { LoadingScreen } from '@/components/ui/loading-screen';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
 import {
@@ -343,9 +342,13 @@ export const AutomationsPage = () => {
     setSearchParams(newParams);
   };
 
-  if (isCreateFlowPending || isCreatingTable) {
-    return <LoadingScreen mode="container" />;
-  }
+  const clearAllFilters = useCallback(() => {
+    setSearchTerm('');
+    setTypeFilter([]);
+    setStatusFilter([]);
+    setConnectionFilter([]);
+    setOwnerFilter([]);
+  }, []);
 
   const displayItems = treeItems;
 
@@ -360,14 +363,6 @@ export const AutomationsPage = () => {
   const isEmptyState = !hasAnyItems && !isLoading;
   const isNoResultsState =
     hasAnyItems && displayItems.length === 0 && hasFiltersActive && !isLoading;
-
-  const clearAllFilters = useCallback(() => {
-    setSearchTerm('');
-    setTypeFilter([]);
-    setStatusFilter([]);
-    setConnectionFilter([]);
-    setOwnerFilter([]);
-  }, []);
 
   if (isEmptyState) {
     return <AutomationsEmptyState onRefresh={() => {}} />;
@@ -398,6 +393,8 @@ export const AutomationsPage = () => {
         onCreateFolder={() => setIsFolderDialogOpen(true)}
         onImportFlow={() => setIsImportFlowDialogOpen(true)}
         onImportTable={() => setIsImportTableDialogOpen(true)}
+        isCreatingFlow={isCreateFlowPending}
+        isCreatingTable={isCreatingTable}
       />
 
       {isNoResultsState ? (

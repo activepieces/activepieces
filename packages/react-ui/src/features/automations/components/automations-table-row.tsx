@@ -28,7 +28,6 @@ import { FormattedDate } from '@/components/ui/formatted-date';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { cn } from '@/lib/utils';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { PopulatedFlow } from '@activepieces/shared';
 
@@ -145,23 +144,23 @@ export const AutomationsTableRow = ({
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
       </TableCell>
       <TableCell>
-        <div
-          className={cn(
-            'flex items-center gap-2',
-          )}
-          style={{ paddingLeft: item.depth * 24 }}
-        >
-          {item.type === 'folder' && (
-            <>
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
+        <div className="flex items-center">
+          <div className="w-5 flex-shrink-0 flex items-center justify-center">
+            {item.type === 'folder' && (
+              isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </>
-          )}
-          {getItemIcon()}
-          <span className="truncate">{item.name}</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )
+            )}
+          </div>
+          <div
+            className="flex items-center gap-2"
+            style={{ paddingLeft: item.depth * 24 }}
+          >
+            {getItemIcon()}
+            <span className="truncate">{item.name}</span>
+          </div>
         </div>
       </TableCell>
       {!embedState.isEmbedded && <TableCell>{getItemDetails()}</TableCell>}

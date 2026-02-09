@@ -4,6 +4,7 @@ import {
   FolderPlus,
   Import,
   Link2,
+  Loader2,
   Plus,
   Table2,
   ToggleLeft,
@@ -62,6 +63,8 @@ type AutomationsFiltersProps = {
   onCreateFolder: () => void;
   onImportFlow: () => void;
   onImportTable: () => void;
+  isCreatingFlow?: boolean;
+  isCreatingTable?: boolean;
 };
 
 type MultiSelectFilterProps = {
@@ -187,6 +190,8 @@ export const AutomationsFilters = ({
   onCreateFolder,
   onImportFlow,
   onImportTable,
+  isCreatingFlow = false,
+  isCreatingTable = false,
 }: AutomationsFiltersProps) => {
   const typeOptions = [
     { value: 'flow', label: t('Flows') },
@@ -320,7 +325,7 @@ export const AutomationsFilters = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu>
+          <DropdownMenu open={isCreatingFlow || isCreatingTable || undefined}>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="h-9 flex items-center gap-2">
                 <Plus className="h-4 w-4" />
@@ -332,24 +337,38 @@ export const AutomationsFilters = ({
                 hasPermission={userHasPermissionToWriteFlow}
               >
                 <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteFlow}
-                  onClick={onCreateFlow}
+                  disabled={!userHasPermissionToWriteFlow || isCreatingFlow || isCreatingTable}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onCreateFlow();
+                  }}
                   className="cursor-pointer"
                 >
-                  <Workflow className="h-4 w-4 mr-2" />
-                  {t('New Flow')}
+                  {isCreatingFlow ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Workflow className="h-4 w-4 mr-2" />
+                  )}
+                  {isCreatingFlow ? t('Creating...') : t('New Flow')}
                 </DropdownMenuItem>
               </PermissionNeededTooltip>
               <PermissionNeededTooltip
                 hasPermission={userHasPermissionToWriteTable}
               >
                 <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteTable}
-                  onClick={onCreateTable}
+                  disabled={!userHasPermissionToWriteTable || isCreatingFlow || isCreatingTable}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onCreateTable();
+                  }}
                   className="cursor-pointer"
                 >
-                  <Table2 className="h-4 w-4 mr-2" />
-                  {t('New Table')}
+                  {isCreatingTable ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Table2 className="h-4 w-4 mr-2" />
+                  )}
+                  {isCreatingTable ? t('Creating...') : t('New Table')}
                 </DropdownMenuItem>
               </PermissionNeededTooltip>
               <DropdownMenuSeparator />
@@ -357,7 +376,7 @@ export const AutomationsFilters = ({
                 hasPermission={userHasPermissionToWriteFolder}
               >
                 <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteFolder}
+                  disabled={!userHasPermissionToWriteFolder || isCreatingFlow || isCreatingTable}
                   onClick={onCreateFolder}
                   className="cursor-pointer"
                 >
