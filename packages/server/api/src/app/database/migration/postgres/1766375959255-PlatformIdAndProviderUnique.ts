@@ -11,7 +11,7 @@ export class PlatformIdAndProviderUnique1766375959255 implements MigrationInterf
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_provider_platform_id_provider"
+            DROP INDEX "idx_ai_provider_platform_id_provider"
         `)
     }
 

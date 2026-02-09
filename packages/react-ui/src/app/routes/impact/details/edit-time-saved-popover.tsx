@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useContext, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { FlowOperationType } from '@activepieces/shared';
 
@@ -35,10 +36,12 @@ export function EditTimeSavedPopover({
   const { setTimeSavedPerRunOverride } = useContext(RefreshAnalyticsContext);
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState<string>(getInitialValue(currentValue));
+  const previousValueRef = useRef<number | null | undefined>(currentValue);
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
       setValue(getInitialValue(currentValue));
+      previousValueRef.current = currentValue;
     }
     setIsOpen(open);
   };
@@ -51,13 +54,14 @@ export function EditTimeSavedPopover({
           timeSavedPerRun,
         },
       });
+      await analyticsApi.markAsOutdated();
     },
-    onSuccess: () => {
-      const newValue = value === '' ? null : parseInt(value, 10);
-      setTimeSavedPerRunOverride(flowId, newValue);
+    onMutate: async (timeSavedPerRun: number | null) => {
+      setTimeSavedPerRunOverride(flowId, timeSavedPerRun);
       setIsOpen(false);
     },
     onError: () => {
+      setTimeSavedPerRunOverride(flowId, previousValueRef.current ?? null);
       toast.error(t('Failed to update time saved'));
     },
   });

@@ -1,7 +1,7 @@
 import { ConsumeJobResponse, ConsumeJobResponseStatus, isNil, RenewWebhookJobData, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
-import { engineRunner } from '../../compute'
+import { operationHandler } from '../../compute/operation-handler'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
@@ -21,7 +21,7 @@ export const renewWebhookExecutor = (log: FastifyBaseLogger) => ({
 
         log.info({ flowVersionId: data.flowVersionId }, '[FlowQueueConsumer#consumeRenewWebhookJob]')
         const simulate = false
-        await engineRunner(log).executeTrigger(engineToken, {
+        await operationHandler(log).executeTrigger(engineToken, {
             platformId: data.platformId,
             hookType: TriggerHookType.RENEW,
             flowVersion,

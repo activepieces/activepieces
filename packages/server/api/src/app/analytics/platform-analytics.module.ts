@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, PrincipalType, UpdatePlatformReportRequest, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, AnalyticsReportRequest, ErrorCode, LeaderboardRequest, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -19,19 +19,34 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', PlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
-    })
-
-    app.post('/', UpdatePlatformReportRequestSchema, async (request) => {
-        const { platform, id } = request.principal
-        await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).update(platform.id, request.body)
+        const { timePeriod } = request.query
+        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id, timePeriod)
     })
 
     app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
         return platformAnalyticsReportService(request.log).refreshReport(platform.id)
+    })
+
+    app.get('/project-leaderboard', ProjectLeaderboardRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        const { timePeriod } = request.query
+        return platformAnalyticsReportService(request.log).getProjectLeaderboard(platform.id, timePeriod)
+    })
+
+    app.get('/user-leaderboard', UserLeaderboardRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        const { timePeriod } = request.query
+        return platformAnalyticsReportService(request.log).getUserLeaderboard(platform.id, timePeriod)
+    })
+
+    app.post('/mark-outdated', MarkAsOutdatedRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        await platformAnalyticsReportService(request.log).markAsOutdated(platform.id)
     })
 
 }
@@ -47,16 +62,6 @@ async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): 
     }
 }
 
-
-const UpdatePlatformReportRequestSchema = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        body: UpdatePlatformReportRequest,
-    },
-}
-
 const RefreshPlatformAnalyticsRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
@@ -64,6 +69,33 @@ const RefreshPlatformAnalyticsRequest = {
 }
 
 const PlatformAnalyticsRequest = {
+    schema: {
+        querystring: AnalyticsReportRequest,
+    },
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const ProjectLeaderboardRequest = {
+    schema: {
+        querystring: LeaderboardRequest,
+    },
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const UserLeaderboardRequest = {
+    schema: {
+        querystring: LeaderboardRequest,
+    },
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const MarkAsOutdatedRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },

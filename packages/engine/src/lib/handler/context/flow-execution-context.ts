@@ -1,4 +1,4 @@
-import { assertEqual, EngineGenericError, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -71,13 +71,9 @@ export class FlowExecutorContext {
         return this
     }
 
-    public trimmedSteps(): Promise<Record<string, StepOutput>> {
-        return loggingUtils.trimExecution(this.steps)
-    }
-
-
     public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        const stateAtPath = executionJournal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
+
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return undefined
@@ -88,7 +84,7 @@ export class FlowExecutorContext {
     }
 
     public isCompleted({ stepName }: { stepName: string }): boolean {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        const stateAtPath = executionJournal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -97,7 +93,7 @@ export class FlowExecutorContext {
     }
 
     public isPaused({ stepName }: { stepName: string }): boolean {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        const stateAtPath = executionJournal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -123,24 +119,17 @@ export class FlowExecutorContext {
     }
 
     public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
-        const steps = {
-            ...this.steps,
-        }
-        const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
-        targetMap[stepName] = stepOutput
-
+        const steps = executionJournal.upsertStep({ stepName, stepOutput, path: this.currentPath.path, steps: this.steps })
+        const trimmedSteps = this.currentPath.path.length === 0 ? loggingUtils.trimExecutionInput(steps) : steps
         return new FlowExecutorContext({
             ...this,
-            steps,
+            steps: trimmedSteps,
         })
     }
 
-    public getStepOutput(stepName: string): StepOutput | undefined {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
-        return stateAtPath[stepName]
+    public getStepOutput(stepName: string, path?: StepExecutionPath['path']): StepOutput | undefined {
+        return executionJournal.getStep({ stepName, path: path ?? this.currentPath.path, steps: this.steps })
     }
-
-
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
         return new FlowExecutorContext({
@@ -169,11 +158,18 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-
    
-    public currentState(): Record<string, unknown> {
-        let flattenedSteps: Record<string, unknown> = extractOutput(this.steps)
+    public currentState(referencedStepNames?: string[]): Record<string, unknown> {
+        const referencedSteps = referencedStepNames 
+            ?  referencedStepNames.reduce((acc, stepName) => {
+                if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
+                return acc
+            }, {} as Record<string, StepOutput>)
+            : this.steps
+
+        let flattenedSteps: Record<string, unknown> = extractOutput(referencedSteps)
         let targetMap = this.steps
+
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
@@ -187,8 +183,6 @@ export class FlowExecutorContext {
         })
         return flattenedSteps
     }
-
-
 }
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
@@ -197,17 +191,3 @@ function extractOutput(steps: Record<string, StepOutput>): Record<string, unknow
         return acc
     }, {} as Record<string, unknown>)
 }
-
-function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {
-    let targetMap = steps
-    currentPath.path.forEach(([stepName, iteration]) => {
-        const stepOutput = targetMap[stepName]
-        if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-            throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', `[ExecutionState#getTargetMap] Not instance of Loop On Items step output: ${stepOutput.type}`)
-        }
-        targetMap = stepOutput.output.iterations[iteration]
-    })
-    return targetMap
-}
-
-

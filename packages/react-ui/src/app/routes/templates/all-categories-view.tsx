@@ -1,21 +1,48 @@
-import { Template, TemplateCategory } from '@activepieces/shared';
+import { Template } from '@activepieces/shared';
 
 import { CategorySection } from './category-section';
+import { CategorySectionSkeleton } from './skeletons/category-section-skeleton';
+
+type AllCategoriesViewSkeletonProps = {
+  hideHeader?: boolean;
+};
+
+const AllCategoriesViewSkeleton = ({
+  hideHeader = false,
+}: AllCategoriesViewSkeletonProps) => {
+  return (
+    <div className="space-y-6">
+      {[...Array(4)].map((_, index) => (
+        <CategorySectionSkeleton key={index} hideHeader={hideHeader} />
+      ))}
+    </div>
+  );
+};
 
 type AllCategoriesViewProps = {
-  templatesByCategory: Record<TemplateCategory, Template[]>;
-  onCategorySelect: (category: TemplateCategory) => void;
+  templatesByCategory: Record<string, Template[]>;
+  categories: string[];
+  onCategorySelect: (category: string) => void;
   onTemplateSelect: (template: Template) => void;
+  isLoading?: boolean;
+  hideHeader?: boolean;
 };
 
 export const AllCategoriesView = ({
   templatesByCategory,
+  categories,
   onCategorySelect,
   onTemplateSelect,
+  isLoading = false,
+  hideHeader = false,
 }: AllCategoriesViewProps) => {
+  if (isLoading) {
+    return <AllCategoriesViewSkeleton hideHeader={hideHeader} />;
+  }
+
   return (
     <div className="space-y-6">
-      {Object.values(TemplateCategory).map((category) => {
+      {categories.map((category) => {
         const categoryTemplates = templatesByCategory[category];
 
         return (

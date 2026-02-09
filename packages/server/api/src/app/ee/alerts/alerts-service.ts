@@ -119,7 +119,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
     const { platformId, flowRunId, projectId } = params
 
-    const issueUrl = await domainHelper.getPublicUrl({
+    const issueUrl = await domainHelper.getInternalUrl({
         platformId,
         path: `projects/${projectId}/runs/${flowRunId}`,
     })

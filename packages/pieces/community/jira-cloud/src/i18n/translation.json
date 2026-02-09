@@ -73,6 +73,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "https://developer.atlassian.com/cloud/jira/platform/apis/document/structure": "https://developer.atlassian.com/cloud/jira/platform/apis/document/structure",
   "The JQL query to use in the search": "The JQL query to use in the search",
   "Maximum number of results": "Maximum number of results",

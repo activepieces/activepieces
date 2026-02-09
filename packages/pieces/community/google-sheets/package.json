@@ -1,9 +1,9 @@
 {
   "name": "@activepieces/piece-google-sheets",
-  "version": "0.14.0",
+  "version": "0.14.4",
   "dependencies": {
     "csv-parse": "5.6.0",
     "googleapis": "129.0.0",
-    "lodash": "4.17.21"
+    "lodash": "4.17.23"
   }
 }

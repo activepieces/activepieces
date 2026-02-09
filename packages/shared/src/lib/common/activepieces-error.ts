@@ -30,7 +30,6 @@ export type ApErrorParams =
     | EmailIsNotVerifiedErrorParams
     | EngineOperationFailureParams
     | EntityNotFoundErrorParams
-    | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
     | FlowFormNotFoundError
@@ -83,7 +82,9 @@ export type ApErrorParams =
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
     | ProjectExternalIdAlreadyExistsParams
-    | MemoryIssueParams
+    | SandboxMemoryIssueParams
+    | SandboxExecutionTimeoutParams
+    | SandboxInternalErrorParams
     | InvalidCustomDomainErrorParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
@@ -93,6 +94,8 @@ export type ApErrorParams =
     | MachineNotAvailableParams
     | MachineNotConnectedParams
     | DoesNotMeetBusinessRequirementsParams
+    | PieceSyncNotSupportedErrorParams
+
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -105,9 +108,20 @@ export type BaseErrorParams<T, V> = {
     params: V
 }
 
-export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
+export type SandboxMemoryIssueParams = BaseErrorParams<ErrorCode.SANDBOX_MEMORY_ISSUE, {
     standardOutput: string
     standardError: string
+}>
+
+export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EXECUTION_TIMEOUT, {
+    standardOutput: string
+    standardError: string
+}>
+
+export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
+    standardOutput: string
+    standardError: string
+    reason: string
 }>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
@@ -335,13 +349,10 @@ ErrorCode.INVALID_CUSTOM_DOMAIN,
 }
 >
 
-export type ExecutionTimeoutErrorParams = BaseErrorParams<
-ErrorCode.EXECUTION_TIMEOUT,
-{
-    standardOutput: string
-    standardError: string
-}
->
+export type PieceSyncNotSupportedErrorParams = BaseErrorParams<ErrorCode.PIECE_SYNC_NOT_SUPPORTED, {
+    release: string
+    message: string
+}>
 
 export type ValidationErrorParams = BaseErrorParams<
 ErrorCode.VALIDATION,
@@ -515,8 +526,9 @@ export enum ErrorCode {
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
-    EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
-    MEMORY_ISSUE = 'MEMORY_ISSUE',
+    SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
+    SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
+    SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
@@ -568,5 +580,6 @@ export enum ErrorCode {
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
+    PIECE_SYNC_NOT_SUPPORTED = 'PIECE_SYNC_NOT_SUPPORTED',
 }
 

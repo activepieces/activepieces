@@ -2,10 +2,9 @@ import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
-import { ImageModel } from 'ai'
+import { ImageModel, LanguageModel } from 'ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig } from '@activepieces/shared'
 
@@ -21,7 +20,7 @@ type CreateAIModelParams<IsImage extends boolean = false> = {
     isImage?: IsImage;
 }
 
-export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModelV2>;
+export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModel>;
 export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
 export async function createAIModel({
     provider,
@@ -33,7 +32,7 @@ export async function createAIModel({
     apiUrl,
     openaiResponsesModel = false,
     isImage,
-}: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModelV2> {
+}: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
     const { body: {
         config,
         auth,
@@ -108,7 +107,7 @@ export async function createAIModel({
         case AIProviderName.ACTIVEPIECES: 
         case AIProviderName.OPENROUTER: {
             const provider = createOpenRouter({ apiKey: auth.apiKey })
-            return provider.chat(modelId)
+            return provider.chat(modelId) as LanguageModel
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)

@@ -3,15 +3,17 @@ import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -27,6 +29,7 @@ import {
   Permission,
   PlatformRole,
   ProjectType,
+  UserStatus,
 } from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
@@ -48,6 +51,9 @@ export const ProjectDashboardPageHeader = ({
   >('general');
   const location = useLocation();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const activeProjectMembers = projectMembers?.filter(
+    (member) => member.user.status === UserStatus.ACTIVE,
+  );
   const { checkAccess } = useAuthorization();
   const { data: user } = userHooks.useCurrentUser();
   const userHasPermissionToReadProjectMembers = checkAccess(
@@ -65,7 +71,7 @@ export const ProjectDashboardPageHeader = ({
   const showProjectMembersIcons =
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    !isNil(projectMembers) &&
+    !isNil(activeProjectMembers) &&
     project.type === ProjectType.TEAM;
 
   const showInviteUserButton =
@@ -96,6 +102,8 @@ export const ProjectDashboardPageHeader = ({
 
   const titleContent = (
     <div className="flex items-center gap-2">
+      <ApSidebarToggle />
+      <Separator orientation="vertical" className="h-5 mr-2" />
       <ApProjectDisplay
         title={getProjectName(project)}
         maxLengthToNotShowTooltip={30}
@@ -127,8 +135,8 @@ export const ProjectDashboardPageHeader = ({
         <Button
           variant="ghost"
           className="gap-2"
-          aria-label={`View ${projectMembers?.length} team member${
-            projectMembers?.length !== 1 ? 's' : ''
+          aria-label={`View ${activeProjectMembers?.length} team member${
+            activeProjectMembers?.length !== 1 ? 's' : ''
           }`}
           onClick={() => {
             setSettingsInitialTab('members');
@@ -136,7 +144,9 @@ export const ProjectDashboardPageHeader = ({
           }}
         >
           <UsersRound className="w-4 h-4" />
-          <span className="text-sm font-medium">{projectMembers?.length}</span>
+          <span className="text-sm font-medium">
+            {activeProjectMembers?.length}
+          </span>
         </Button>
       )}
       {showInviteUserButton && (
@@ -147,7 +157,7 @@ export const ProjectDashboardPageHeader = ({
           onClick={() => setInviteOpen(true)}
         >
           <UserPlus className="w-4 h-4" />
-          <span className="text-sm font-medium">Invite</span>
+          <span className="text-sm font-medium">{t('Add Members')}</span>
         </Button>
       )}
       <Button

@@ -4,6 +4,7 @@ import { Metadata } from '../../common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
+import { Note } from '../note'
 import { SaveSampleDataRequest } from '../sample-data'
 import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
@@ -17,11 +18,11 @@ import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
 import { _moveAction } from './move-action'
 import { _moveBranch } from './move-branch'
+import { notesOperations } from './notes-operations'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-
 
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
@@ -45,12 +46,23 @@ export enum FlowOperationType {
     MOVE_BRANCH = 'MOVE_BRANCH',
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
     UPDATE_MINUTES_SAVED = 'UPDATE_MINUTES_SAVED',
+    UPDATE_OWNER = 'UPDATE_OWNER',
+    UPDATE_NOTE = 'UPDATE_NOTE',
+    DELETE_NOTE = 'DELETE_NOTE',
+    ADD_NOTE = 'ADD_NOTE',
 }
 
 export const DeleteBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
 })
+
+export const UpdateNoteRequest = Type.Omit(Note, [ 'createdAt', 'updatedAt'])
+export const DeleteNoteRequest = Type.Object({
+    id: Type.String(),
+})
+export const AddNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt', 'ownerId'])
+
 export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
@@ -78,6 +90,9 @@ export const DuplicateBranchRequest = Type.Object({
 export type DeleteBranchRequest = Static<typeof DeleteBranchRequest>
 export type AddBranchRequest = Static<typeof AddBranchRequest>
 export type DuplicateBranchRequest = Static<typeof DuplicateBranchRequest>
+export type UpdateNoteRequest = Static<typeof UpdateNoteRequest>
+export type DeleteNoteRequest = Static<typeof DeleteNoteRequest>
+export type AddNoteRequest = Static<typeof AddNoteRequest>
 
 export enum StepLocationRelativeToParent {
     AFTER = 'AFTER',
@@ -98,6 +113,7 @@ export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
     trigger: FlowTrigger,
     schemaVersion: Nullable(Type.String()),
+    notes: Nullable(Type.Array(Note)),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>
@@ -181,6 +197,10 @@ export const UpdateMinutesSavedRequest = Type.Object({
 })
 export type UpdateMinutesSavedRequest = Static<typeof UpdateMinutesSavedRequest>
 
+export const UpdateOwnerRequest = Type.Object({
+    ownerId: Type.String(),
+})
+export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
 export const FlowOperationRequest = Type.Union([
     Type.Object(
         {
@@ -365,7 +385,46 @@ export const FlowOperationRequest = Type.Union([
             title: 'Update Minutes Saved',
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_OWNER),
+            request: UpdateOwnerRequest,
+        },
+        {
+            title: 'Update Owner',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_NOTE),
+            request: UpdateNoteRequest,
+        },
+        {
+            title: 'Update Note',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.DELETE_NOTE),
+            request: DeleteNoteRequest,
+        },
+        {
+            title: 'Delete Note',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.ADD_NOTE),
+            request: AddNoteRequest,
+        },
+        {
+            title: 'Add Note',
+        },
+    ),
+ 
 ])
+
+
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
 
@@ -442,7 +501,6 @@ export const flowOperations = {
             }
             case FlowOperationType.SET_SKIP_ACTION: {
                 clonedVersion = _skipAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             case FlowOperationType.MOVE_BRANCH: {
@@ -450,6 +508,19 @@ export const flowOperations = {
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
+            case FlowOperationType.UPDATE_NOTE: {
+                clonedVersion = notesOperations.updateNote(clonedVersion, operation.request)
+                break
+            }
+            case FlowOperationType.DELETE_NOTE: {
+                clonedVersion = notesOperations.deleteNote(clonedVersion, operation.request)
+                break
+            }
+            case FlowOperationType.ADD_NOTE: {
+                clonedVersion = notesOperations.addNote(clonedVersion, operation.request)
+                break
+            }
+      
             default:
                 break
         }

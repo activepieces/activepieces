@@ -63,7 +63,7 @@ describe('flow with pause', () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
             executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
-            constants: generateMockEngineConstants(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
         })
         expect(pauseResult.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
@@ -89,6 +89,7 @@ describe('flow with pause', () => {
                 status: FlowRunStatus.RUNNING,
             }),
             constants: generateMockEngineConstants({
+                stepNames: ['loop'],
                 resumePayload: {
                     queryParams: {
                         action: 'approve',

@@ -255,6 +255,9 @@ export function DataTable<
   }, [table.getSelectedRowModel().rows]);
 
   useEffect(() => {
+    if (hidePagination) {
+      return;
+    }
     setSearchParams(
       (prev) => {
         const newParams = new URLSearchParams(prev);
@@ -272,7 +275,7 @@ export function DataTable<
       },
       { replace: true },
     );
-  }, [currentCursor, table.getState().pagination.pageSize]);
+  }, [currentCursor, table.getState().pagination.pageSize, hidePagination]);
 
   useEffect(() => {
     setTableData(

@@ -11,7 +11,7 @@ const CONNECTIONS = 'connections'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -21,7 +21,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: unresolvedInput,
                 }
             }
-            const currentState = executionState.currentState()
+            const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
+            const currentState = executionState.currentState(Array.from(referencedStepNames))
             const resolveOptions = {
                 engineToken,
                 projectId,
@@ -80,6 +81,18 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 }
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
+
+function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
+    const stringifiedInput = JSON.stringify(input)
+    const referencedSteps = new Set<string>()
+    for (const stepName of stepNames) {
+        if (stringifiedInput.includes(stepName)) {
+            referencedSteps.add(stepName)
+        }
+    }
+    return referencedSteps
+}
+
 /** 
  * input: `Hello {{firstName}} {{lastName}}`
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
@@ -251,4 +264,5 @@ type PropsResolverParams = {
     projectId: string
     apiUrl: string
     contextVersion: ContextVersion | undefined
+    stepNames: string[]
 }

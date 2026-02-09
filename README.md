@@ -453,6 +453,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://dania.es"><img src="https://avatars.githubusercontent.com/u/11240307?v=4?s=100" width="100px;" alt="Dania Es"/><br /><sub><b>Dania Es</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Dania02525" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/meloncafe"><img src="https://avatars.githubusercontent.com/u/6157093?v=4?s=100" width="100px;" alt="M.Cafe"/><br /><sub><b>M.Cafe</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=meloncafe" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/vishakha1411"><img src="https://avatars.githubusercontent.com/u/119448495?v=4?s=100" width="100px;" alt="vishakha1411"/><br /><sub><b>vishakha1411</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=vishakha1411" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 

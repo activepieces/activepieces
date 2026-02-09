@@ -38,9 +38,9 @@ export const enum EngineSocketEvent {
     ENGINE_RESPONSE = 'engine-response',
     ENGINE_STDOUT = 'engine-stdout',
     ENGINE_STDERR = 'engine-stderr',
-    ENGINE_READY = 'engine-ready',
     ENGINE_OPERATION = 'engine-operation',
     UPDATE_RUN_PROGRESS = 'update-run-progress',
+    UPLOAD_RUN_LOG = 'upload-run-log',
     SEND_FLOW_RESPONSE = 'send-flow-response',
     UPDATE_STEP_PROGRESS = 'update-step-progress',
 }
@@ -81,7 +81,7 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
     pieceVersion: string
-    predefinedInput: PredefinedInputsStructure
+    predefinedInput?: PredefinedInputsStructure
     instruction: string
 }
 

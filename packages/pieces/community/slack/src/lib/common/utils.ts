@@ -1,11 +1,28 @@
 import { ApFile } from '@activepieces/pieces-framework';
-import { Block, WebClient } from '@slack/web-api';
+import { Block, KnownBlock, WebClient } from '@slack/web-api';
+
+export function buildFlowOriginContextBlock(context: {
+  server: { publicUrl: string };
+  project: { id: string };
+  flows: { current: { id: string } };
+}): KnownBlock {
+  return {
+    type: 'context',
+    elements: [
+      {
+        type: 'mrkdwn',
+        text: `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
+      }
+    ]
+  };
+}
 
 export const slackSendMessage = async ({
   text,
   conversationId,
   username,
   profilePicture,
+  iconEmoji,
   blocks,
   threadTs,
   token,
@@ -33,6 +50,7 @@ export const slackSendMessage = async ({
       channel: conversationId,
       username,
       icon_url: profilePicture,
+      icon_emoji: iconEmoji,
       blocks: blocks as Block[],
       thread_ts: threadTs,
     };
@@ -54,6 +72,7 @@ type SlackSendMessageParams = {
   conversationId: string;
   username?: string;
   profilePicture?: string;
+  iconEmoji?: string;
   blocks?: unknown[] | Record<string, any>;
   text?: string;
   file?: ApFile;

@@ -1,6 +1,8 @@
 import { Omit, Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../common'
+import { Note } from '../flows'
 import { FlowVersion } from '../flows/flow-version'
+import { TableState } from '../project-release/project-state'
 
 export const TemplateTag = Type.Object({
     title: Type.String(),
@@ -16,41 +18,13 @@ export enum TemplateType {
     CUSTOM = 'CUSTOM',
 }
 
-export enum TemplateCategory {
-    ANALYTICS = 'ANALYTICS',
-    COMMUNICATION = 'COMMUNICATION',
-    CONTENT = 'CONTENT',
-    CUSTOMER_SUPPORT = 'CUSTOMER_SUPPORT',
-    DEVELOPMENT = 'DEVELOPMENT',
-    E_COMMERCE = 'E_COMMERCE',
-    FINANCE = 'FINANCE',
-    HR = 'HR',
-    IT_OPERATIONS = 'IT_OPERATIONS',
-    MARKETING = 'MARKETING',
-    PRODUCTIVITY = 'PRODUCTIVITY',
-    SALES = 'SALES',
-}
-
-export const CATEGORY_DISPLAY_NAMES: Record<TemplateCategory, string> = {
-    [TemplateCategory.ANALYTICS]: 'Analytics',
-    [TemplateCategory.COMMUNICATION]: 'Communication',
-    [TemplateCategory.CONTENT]: 'Content',
-    [TemplateCategory.CUSTOMER_SUPPORT]: 'Customer Support',
-    [TemplateCategory.DEVELOPMENT]: 'Development',
-    [TemplateCategory.E_COMMERCE]: 'E-Commerce',
-    [TemplateCategory.FINANCE]: 'Finance',
-    [TemplateCategory.HR]: 'HR',
-    [TemplateCategory.IT_OPERATIONS]: 'IT Operations',
-    [TemplateCategory.MARKETING]: 'Marketing',
-    [TemplateCategory.PRODUCTIVITY]: 'Productivity',
-    [TemplateCategory.SALES]: 'Sales',
-}
-
 export const FlowVersionTemplate = Type.Composite([Type.Omit(
     FlowVersion,
-    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
+    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles', 'notes'],
 ), Type.Object({
     description: Type.Optional(Type.String()),
+    //notes were optional for old json templates
+    notes: Type.Optional(Type.Array(Note)),
 })])
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 
@@ -58,6 +32,24 @@ export enum TemplateStatus {
     PUBLISHED = 'PUBLISHED',
     ARCHIVED = 'ARCHIVED',
 }
+
+export enum TableImportDataType {
+    CSV = 'CSV',
+}
+
+export const TableDataState = Type.Object({
+    type: Type.Enum(TableImportDataType),
+    rows: Type.Array(Type.Array(Type.Object({
+        fieldId: Type.String(),
+        value: Type.String(),
+    }))),
+})
+export type TableDataState = Static<typeof TableDataState>
+
+export const TableTemplate = Type.Composite([Type.Omit(TableState, ['id', 'created', 'updated']), Type.Object({
+    data: Nullable(TableDataState),
+})])
+export type TableTemplate = Static<typeof TableTemplate>
 
 export const Template = Type.Object({
     ...BaseModelSchema,
@@ -68,15 +60,15 @@ export const Template = Type.Object({
     tags: Type.Array(TemplateTag),
     blogUrl: Nullable(Type.String()),
     metadata: Nullable(Metadata),
-    usageCount: Type.Number(),
     author: Type.String(),
-    categories: Type.Array(Type.Enum(TemplateCategory)),
+    categories: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
     platformId: Nullable(Type.String()),
     flows: Type.Optional(Type.Array(FlowVersionTemplate)),
+    tables: Type.Optional(Type.Array(TableTemplate)),
     status: Type.Enum(TemplateStatus),
 })
 export type Template = Static<typeof Template>
 
-export const SharedTemplate = Omit(Template, ['platformId', 'id', 'created', 'updated', 'usageCount'])
+export const SharedTemplate = Omit(Template, ['platformId', 'id', 'created', 'updated'])
 export type SharedTemplate = Static<typeof SharedTemplate>

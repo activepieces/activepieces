@@ -53,7 +53,10 @@ const ProjectReleasesPage = () => {
   );
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
-    queryFn: () => projectReleaseApi.list(),
+    queryFn: () =>
+      projectReleaseApi.list({
+        projectId: authenticationSession.getProjectId()!,
+      }),
   });
   const { data: projects } = projectCollectionUtils.useAll();
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [

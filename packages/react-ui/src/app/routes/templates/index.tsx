@@ -3,16 +3,17 @@ import { Plus, Search } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
+import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   Template,
+  TemplateTelemetryEventType,
   TemplateType,
-  TemplateCategory,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 
@@ -20,20 +21,17 @@ import { AllCategoriesView } from './all-categories-view';
 import { CategoryFilterCarousel } from './category-filter-carousel';
 import { EmptyTemplatesView } from './empty-templates-view';
 import { SelectedCategoryView } from './selected-category-view';
-import {
-  AllCategoriesViewSkeleton,
-  SelectedCategoryViewSkeleton,
-} from './skeletons';
 
 const TemplatesPage = () => {
   const navigate = useNavigate();
+  const { data: templateCategories } = templatesHooks.useTemplateCategories();
   const { platform } = platformHooks.useCurrentPlatform();
   const isShowingOfficialTemplates = !platform.plan.manageTemplatesEnabled;
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(
       isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM,
     );
-  const selectedCategory = category as TemplateCategory | 'All';
+  const selectedCategory = category as string;
   const { data: allOfficialTemplates, isLoading: isAllTemplatesLoading } =
     templatesHooks.useAllOfficialTemplates();
   const { mutate: createFlow, isPending: isCreateFlowPending } =
@@ -45,25 +43,28 @@ const TemplatesPage = () => {
 
   const handleTemplateSelect = (template: Template) => {
     navigate(`/templates/${template.id}`);
+    if (template.type === TemplateType.OFFICIAL) {
+      templatesTelemetryApi.sendEvent({
+        eventType: TemplateTelemetryEventType.VIEW,
+        templateId: template.id,
+      });
+    }
   };
 
   const templatesByCategory = useMemo(() => {
-    const grouped: Record<TemplateCategory, Template[]> = {} as Record<
-      TemplateCategory,
+    const grouped: Record<string, Template[]> = {} as Record<
+      string,
       Template[]
     >;
-
-    Object.values(TemplateCategory).forEach((category) => {
-      grouped[category] = [];
-    });
 
     if (isShowingOfficialTemplates) {
       allOfficialTemplates?.forEach((template: Template) => {
         if (template.categories?.length) {
-          template.categories?.forEach((category: TemplateCategory) => {
-            if (grouped[category]) {
-              grouped[category].push(template);
+          template.categories?.forEach((category: string) => {
+            if (!grouped[category]) {
+              grouped[category] = [];
             }
+            grouped[category].push(template);
           });
         }
       });
@@ -72,12 +73,9 @@ const TemplatesPage = () => {
     return grouped;
   }, [allOfficialTemplates, isShowingOfficialTemplates]);
 
-  const categories: (TemplateCategory | 'All')[] = useMemo(() => {
-    const categoriesWithTemplates = Object.values(TemplateCategory).filter(
-      (category) => templatesByCategory[category]?.length > 0,
-    );
-    return ['All', ...categoriesWithTemplates];
-  }, [templatesByCategory]);
+  const categories = useMemo(() => {
+    return ['All', ...(templateCategories || [])];
+  }, [templateCategories]);
 
   const selectedCategoryTemplates = useMemo(() => {
     if (selectedCategory === 'All') {
@@ -86,12 +84,20 @@ const TemplatesPage = () => {
     return templatesByCategory[selectedCategory] || [];
   }, [selectedCategory, templates, templatesByCategory]);
 
+  const showLoading =
+    isLoading || (isShowingOfficialTemplates && isAllTemplatesLoading);
+  const showAllCategories =
+    isShowingOfficialTemplates && selectedCategory === 'All';
+  const hasTemplates = templates && templates.length > 0;
+  const showCategoryTitleForOfficialTemplates =
+    isShowingOfficialTemplates && selectedCategory !== 'All';
+
   return (
     <div>
       <div>
         <div className="sticky top-0 z-10 bg-background mb-6 pt-4">
           <div className="flex flex-row w-full justify-between gap-2">
-            <SidebarTrigger />
+            <ApSidebarToggle />
             <InputWithIcon
               icon={<Search className="text-gray-500 w-4 h-4" />}
               type="text"
@@ -112,7 +118,7 @@ const TemplatesPage = () => {
               </Button>
             </div>
           </div>
-          {isShowingOfficialTemplates && !isAllTemplatesLoading && (
+          {isShowingOfficialTemplates && categories && (
             <CategoryFilterCarousel
               categories={categories}
               selectedCategory={selectedCategory}
@@ -121,44 +127,25 @@ const TemplatesPage = () => {
           )}
         </div>
 
-        {isLoading || (isShowingOfficialTemplates && isAllTemplatesLoading) ? (
-          <>
-            {isShowingOfficialTemplates && selectedCategory === 'All' ? (
-              <AllCategoriesViewSkeleton
-                hideTitle={!isShowingOfficialTemplates}
-              />
-            ) : (
-              <SelectedCategoryViewSkeleton
-                hideTitle={!isShowingOfficialTemplates}
-              />
-            )}
-          </>
+        {!hasTemplates && !showLoading ? (
+          <EmptyTemplatesView />
+        ) : showAllCategories ? (
+          <AllCategoriesView
+            templatesByCategory={templatesByCategory}
+            categories={categories}
+            onCategorySelect={setCategory}
+            onTemplateSelect={handleTemplateSelect}
+            isLoading={showLoading}
+            hideHeader={!isShowingOfficialTemplates}
+          />
         ) : (
-          <>
-            {templates?.length === 0 && <EmptyTemplatesView />}
-
-            {templates && templates.length > 0 && (
-              <>
-                {isShowingOfficialTemplates && selectedCategory === 'All' ? (
-                  <AllCategoriesView
-                    templatesByCategory={templatesByCategory}
-                    onCategorySelect={setCategory}
-                    onTemplateSelect={handleTemplateSelect}
-                  />
-                ) : (
-                  <SelectedCategoryView
-                    category={
-                      isShowingOfficialTemplates && selectedCategory !== 'All'
-                        ? selectedCategory
-                        : undefined
-                    }
-                    templates={selectedCategoryTemplates}
-                    onTemplateSelect={handleTemplateSelect}
-                  />
-                )}
-              </>
-            )}
-          </>
+          <SelectedCategoryView
+            category={selectedCategory}
+            templates={selectedCategoryTemplates}
+            onTemplateSelect={handleTemplateSelect}
+            isLoading={showLoading}
+            showCategoryTitle={showCategoryTitleForOfficialTemplates}
+          />
         )}
       </div>
     </div>

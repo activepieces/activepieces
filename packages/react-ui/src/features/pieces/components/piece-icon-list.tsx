@@ -18,18 +18,21 @@ import { stepsHooks } from '../lib/steps-hooks';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center p-2 rounded-full border border-solid text-xs select-none',
+  'flex items-center justify-center  bg-background border border-solid text-xs select-none',
   {
     variants: {
       size: {
         xxl: 'size-[64px]',
         xl: 'size-[48px]',
         lg: 'size-[40px]',
-        md: 'size-[36px]',
+        md: 'size-[38px]',
         sm: 'size-[25px]',
       },
+      circle: {
+        true: 'rounded-full',
+        false: 'rounded-md',
+      },
     },
-    defaultVariants: {},
   },
 );
 
@@ -40,7 +43,6 @@ export function PieceIconList({
   className,
   circle = true,
   background,
-  shadow,
   excludeCore = false,
 }: {
   trigger: FlowTrigger;
@@ -49,7 +51,6 @@ export function PieceIconList({
   className?: string;
   circle?: boolean;
   background?: string;
-  shadow?: boolean;
   excludeCore?: boolean;
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
@@ -95,7 +96,7 @@ export function PieceIconList({
       {extraPieces > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={extraIconVariants({ size: size ?? 'md' })}>
+            <div className={extraIconVariants({ size: size ?? 'md', circle })}>
               +{extraPieces}
             </div>
           </TooltipTrigger>

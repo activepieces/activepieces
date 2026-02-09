@@ -1,5 +1,4 @@
-import React, { useRef } from 'react';
-import { useEffectOnce } from 'react-use';
+import React, { useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 
@@ -20,7 +19,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const projectId = authenticationSession.getProjectId();
   const toastIdRef = useRef<string | null>(null);
 
-  useEffectOnce(() => {
+  useEffect(() => {
     if (token) {
       socket.auth = { token, projectId };
       if (!socket.connected) {
@@ -51,7 +50,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       socket.disconnect();
     }
-  });
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.disconnect();
+    };
+  }, [token, projectId]);
 
   return (
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>

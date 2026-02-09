@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackSendMessage } from '../common/utils';
+import { buildFlowOriginContextBlock, slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
@@ -9,6 +9,7 @@ import {
   username,
   blocks,
   mentionOriginFlow,
+  iconEmoji,
 } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 
@@ -23,6 +24,7 @@ export const slackSendDirectMessageAction = createAction({
     text,
     username,
     profilePicture,
+    iconEmoji,
     mentionOriginFlow,
     blocks,
     unfurlLinks: Property.Checkbox({
@@ -42,17 +44,12 @@ export const slackSendDirectMessageAction = createAction({
 
     const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
 
-    if(blocks && Array.isArray(blocks)) { 
+    if(blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
     }
 
     if(mentionOriginFlow) {
-      (blockList as KnownBlock[])?.push({ type: 'context', elements: [
-        {
-          "type": "mrkdwn",
-          "text": `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
-        }
-      ] })
+      blockList.push(buildFlowOriginContextBlock(context));
     }
 
     return slackSendMessage({
@@ -60,6 +57,7 @@ export const slackSendDirectMessageAction = createAction({
       text,
       username: context.propsValue.username,
       profilePicture: context.propsValue.profilePicture,
+      iconEmoji: context.propsValue.iconEmoji,
       conversationId: userId,
       blocks:blockList,
       unfurlLinks,

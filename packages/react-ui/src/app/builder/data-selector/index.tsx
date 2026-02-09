@@ -3,7 +3,7 @@ import { SearchXIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { cn } from '@/lib/utils';
 import { flowStructureUtil, isNil } from '@activepieces/shared';
 
@@ -136,12 +136,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         }}
         className="transition-all overflow-hidden"
       >
-        <div className="flex items-center gap-2 px-5 py-2">
-          <Input
-            placeholder={t('Search')}
+        <div className="flex items-center gap-2 px-5 mb-2 mt-0.5">
+          <SearchInput
+            onChange={(e) => setSearchTerm(e)}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          ></Input>
+          ></SearchInput>
         </div>
 
         <ScrollArea className="transition-all h-[calc(100%-56px)] w-full ">

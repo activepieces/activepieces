@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-http-oauth2",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "dependencies": {
     "https-proxy-agent": "7.0.4"
   }

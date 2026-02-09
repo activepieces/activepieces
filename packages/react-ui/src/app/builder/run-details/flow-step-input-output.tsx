@@ -2,19 +2,24 @@ import { t } from 'i18next';
 import { Info, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
   StepOutputStatus,
   flowStructureUtil,
   AgentResult,
   isFlowRunStateTerminal,
+  FlowRun,
+  FlowRunStatus,
+  isNil,
+  ApFlagId,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -40,14 +45,11 @@ export const FlowStepInputOutput = () => {
           selectedStep.name,
           loopsIndexes,
           run.steps,
-          flowVersion.trigger,
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isAgent = isRunAgent(selectedStep);
-  const isStepRunning =
-    selectedStepOutput?.status === StepOutputStatus.RUNNING ||
-    selectedStepOutput?.status === StepOutputStatus.PAUSED;
+  const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
   const parsedOutput =
     selectedStepOutput?.errorMessage ??
     selectedStepOutput?.output ??
@@ -62,10 +64,31 @@ export const FlowStepInputOutput = () => {
     status: run.status,
     ignoreInternalError: true,
   });
+  const { data: rententionDays } = flagsHooks.useFlag<number>(
+    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+  );
+
+  if (
+    !isRunDone &&
+    run.status !== FlowRunStatus.PAUSED &&
+    isNil(selectedStepOutput)
+  ) {
+    return <StepOutputSkeleton className="p-4" />;
+  }
+
+  const message = handleRunFailureOrEmptyLog(run, rententionDays);
+  if (message) {
+    return (
+      <div className="flex flex-col justify-center items-center gap-4 w-full pt-8  px-5">
+        <Info size={36} className="text-muted-foreground" />
+        <h4 className="px-6 text-sm text-center text-muted-foreground ">
+          {message}
+        </h4>
+      </div>
+    );
+  }
+
   if (!selectedStepOutput || !selectedStep) {
-    if (!isRunDone) {
-      return <OutputSkeleton />;
-    }
     return (
       <div className="px-4 bg-muted rounded-md m-4 py-2 flex items-center gap-1.5">
         <Info className="w-4 h-4" />
@@ -114,7 +137,7 @@ export const FlowStepInputOutput = () => {
           )}
           <TabsContent value="output">
             {isStepRunning ? (
-              <OutputSkeleton />
+              <StepOutputSkeleton className="p-4" />
             ) : (
               <JsonViewer json={parsedOutput} title={t('Output')} />
             )}
@@ -125,15 +148,28 @@ export const FlowStepInputOutput = () => {
   );
 };
 
-const OutputSkeleton = () => {
-  return (
-    <div className="flex  w-full  h-full  p-4">
-      <div className="space-y-2 grow">
-        <div className="flex items-center gap-2">
-          <Skeleton className="w-40 h-4" />
-        </div>
-        <Skeleton className="w-full h-40" />
-      </div>
-    </div>
-  );
-};
+function handleRunFailureOrEmptyLog(
+  run: FlowRun | null,
+  retentionDays: number | null,
+) {
+  if (
+    isNil(run) ||
+    !isFlowRunStateTerminal({ status: run.status, ignoreInternalError: true })
+  ) {
+    return null;
+  }
+
+  if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
+    return t(
+      'There are no logs captured for this run, because of an internal error, please contact support.',
+    );
+  }
+
+  if (isNil(run.logsFileId)) {
+    return t(
+      'Logs are kept for {days} days after execution and then deleted.',
+      { days: retentionDays },
+    );
+  }
+  return null;
+}

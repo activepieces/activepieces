@@ -88,10 +88,6 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 pieceType: pieceMetadata.pieceType,
             })
         }))
-        if (done % 500 === 0) {
-            await localPieceCache(log).refresh()
-        }
-
     }
     return newPiecesToFetch.length
 }

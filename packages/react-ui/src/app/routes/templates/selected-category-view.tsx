@@ -8,32 +8,65 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import {
-  Template,
-  TemplateCategory,
-  CATEGORY_DISPLAY_NAMES,
-} from '@activepieces/shared';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Template } from '@activepieces/shared';
 
+import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
 import { ExploreTemplateCard } from './template-card';
 
+type SelectedCategoryViewSkeletonProps = {
+  showCategoryTitle?: boolean;
+};
+
+const SelectedCategoryViewSkeleton = ({
+  showCategoryTitle = false,
+}: SelectedCategoryViewSkeletonProps) => {
+  return (
+    <div className="space-y-4">
+      {showCategoryTitle && (
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-48" />
+        </div>
+      )}
+
+      <div className="flex flex-row flex-wrap gap-6 pb-4">
+        {[...Array(6)].map((_, index) => (
+          <TemplateCardSkeleton
+            key={index}
+            showCategoryCarouselButton={showCategoryTitle}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 type SelectedCategoryViewProps = {
-  category?: TemplateCategory;
+  category?: string;
   templates: Template[];
   onTemplateSelect: (template: Template) => void;
+  isLoading?: boolean;
+  showCategoryTitle?: boolean;
 };
 
 export const SelectedCategoryView = ({
   category,
   templates,
   onTemplateSelect,
+  isLoading = false,
+  showCategoryTitle,
 }: SelectedCategoryViewProps) => {
-  const categoryName = category ? CATEGORY_DISPLAY_NAMES[category] : undefined;
+  if (isLoading) {
+    return (
+      <SelectedCategoryViewSkeleton showCategoryTitle={showCategoryTitle} />
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {categoryName && (
+      {showCategoryTitle && (
         <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-semibold">{categoryName}</h2>
+          <h2 className="text-2xl font-semibold">{category}</h2>
         </div>
       )}
 

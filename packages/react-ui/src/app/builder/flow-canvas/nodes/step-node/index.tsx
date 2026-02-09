@@ -24,7 +24,7 @@ import { StepNodeChevron } from './step-node-chevron';
 import { StepNodeDisplayName } from './step-node-display-name';
 import { StepNodeLogo } from './step-node-logo';
 import { StepNodeName } from './step-node-name';
-import { ApStepNodeStatus } from './step-node-status';
+import { ApStepNodeStatusInRun } from './step-node-status-in-run';
 import { TriggerWidget } from './trigger-widget';
 
 const ApStepCanvasNode = React.memo(
@@ -49,7 +49,7 @@ const ApStepCanvasNode = React.memo(
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
-      flowStructureUtil.getStep(step.name, state.flowVersion.trigger)?.valid,
+      !!flowStructureUtil.getStep(step.name, state.flowVersion.trigger)?.valid,
       state.rightSidebar !== RightSideBarType.NONE,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -118,6 +118,7 @@ const ApStepCanvasNode = React.memo(
 
     const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
     const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
+
     return (
       <div
         {...{
@@ -148,12 +149,9 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
-        <StepInvalidOrSkippedIcon
-          isValid={!!isStepValid}
-          isSkipped={isSkipped}
-        />
+        <StepInvalidOrSkippedIcon isValid={isStepValid} isSkipped={isSkipped} />
         <LoopIterationInput stepName={step.name} />
-        <ApStepNodeStatus stepName={step.name} />
+        <ApStepNodeStatusInRun stepName={step.name} />
         <StepNodeName stepName={step.name} />
         <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (

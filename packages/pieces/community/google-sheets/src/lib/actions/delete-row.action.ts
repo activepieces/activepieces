@@ -6,13 +6,13 @@ import { commonProps } from '../common/props';
 export const deleteRowAction = createAction({
   auth: googleSheetsAuth,
   name: 'delete_row',
-  description: 'Delete a row on an existing sheet you have access to',
+  description: 'Delete a specific row from the selected sheet.',
   displayName: 'Delete Row',
   props: {
     ...commonProps,
     rowId: Property.Number({
       displayName: 'Row Number',
-      description: 'The row number to remove',
+      description: 'The number of the row you want to delete.',
       required: true,
     }),
   },

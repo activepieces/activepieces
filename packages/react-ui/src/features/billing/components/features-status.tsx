@@ -65,6 +65,10 @@ const LICENSE_PROPS_MAP = {
     label: 'Custom Roles',
     description: 'Create and manage custom roles for your team',
   },
+  eventStreamingEnabled: {
+    label: 'Event Streaming',
+    description: 'Stream platform events to external destinations',
+  },
 };
 
 export const FeatureStatus = ({

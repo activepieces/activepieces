@@ -27,10 +27,9 @@ export const flowOperation = {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await progressService.sendUpdate({
+        await progressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,
-            updateImmediate: true,
         })
         return {
             status: EngineResponseStatus.OK,
@@ -51,6 +50,7 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
             projectId: input.projectId,
             engineToken: input.engineToken,
             sampleData: input.sampleData,
+            engineConstants: constants,
         })
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
@@ -78,6 +78,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
             break
         }
         case ExecutionType.RESUME: {
+            flowContext = flowContext.addTags(input.executionState.tags)
             break
         }
     }

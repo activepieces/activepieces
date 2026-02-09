@@ -81,6 +81,7 @@ export const WorkerSettingsResponse = Type.Object({
     LOG_PRETTY: Type.String(),
     ENVIRONMENT: Type.String(),
     APP_WEBHOOK_SECRETS: Type.String(),
+    MAX_FLOW_RUN_LOG_SIZE_MB: Type.Number(),
     MAX_FILE_SIZE_MB: Type.Number(),
     SANDBOX_MEMORY_LIMIT: Type.String(),
     SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
@@ -111,6 +112,7 @@ export const WorkerSettingsResponse = Type.Object({
     PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
     MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
     JWT_SECRET: Type.String(),
+    EVENT_DESTINATION_TIMEOUT_SECONDS: Type.Number(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: Type.Optional(Type.String()),
     EDITION: Type.String(),
 })

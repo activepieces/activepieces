@@ -2,7 +2,7 @@
   "Website URL": "URL do site",
   "Username": "Usuário:",
   "Password": "Senha",
-  "URL of your Drupal site": "URL do seu site rupal",
+  "URL of your Drupal site without a trailing \"/\" character": "URL do seu site Drupal sem um caractere \"/\" no final",
   "\n**Using Drupal's JSON:API**\n\nYour Drupal site comes with JSON:API built-in. Authentication to access relevant parts requires the HTTP Basic Authentication module, which is also part of your Drupal site. Just ensure both are enabled and configure user authentication:\n\n1. Enable the JSON:API and the HTTP Basic Authentication modules\n2. Create a user account and give it the permissions you want Activepieces to have\n3. Use that account's credentials for authentication\n\nProvide the website URL in the format htt": "\n**Usando o JSON do Drupal: API**\n\nSeu site Drupal vem com JSON: API embutida. Autenticação para acessar partes relevantes requer o módulo de Autenticação Básica HTTP, que também faz parte do seu site Drupal. Apenas certifique-se de que ambos estão habilitados e configure a autenticação de usuário:\n\n1. Habilite o JSON:API e os módulos de autenticação básica HTTP\n2. Crie uma conta de usuário e conceda as permissões que você deseja que peças tenham\n3. Use credenciais dessa conta para autenticação\n\nfornecer a URL do site no formato https://www. xample.com.\n\nPara funcionalidades extras, você pode usar o módulo [Orquestração Drupal](https://www.drupal.org/project/orchestration) .\n",
   "Call Service": "Serviço de chamada",
   "Create Entity": "Criar entidade",

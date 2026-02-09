@@ -1,7 +1,7 @@
 import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -14,43 +14,26 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   AgentMcpTool,
   AgentTool,
   AgentToolType,
-  McpAuthConfig,
   McpAuthType,
   McpProtocol,
+  ValidateAgentMcpToolResponse,
 } from '@activepieces/shared';
 
-import { useAgentToolsStore } from '../store';
+import { useMcpToolDialogStore } from '../stores/mcp-tools';
+
+import { AddMcpToolForm } from './add-mcp-tool-form';
 
 const McpToolFormSchema = Type.Object({
   toolName: Type.String({ minLength: 1 }),
   serverUrl: Type.String({ format: 'uri' }),
   protocol: Type.Enum(McpProtocol),
   authType: Type.Enum(McpAuthType),
-
   accessToken: Type.Optional(Type.String()),
-
   apiKeyHeader: Type.Optional(Type.String()),
   apiKey: Type.Optional(Type.String()),
-
   headers: Type.Optional(
     Type.Array(
       Type.Object({
@@ -60,26 +43,26 @@ const McpToolFormSchema = Type.Object({
     ),
   ),
 });
-type McpToolFormData = Static<typeof McpToolFormSchema>;
+
+export type McpToolFormData = Static<typeof McpToolFormSchema>;
 
 type AgentToolsDialogProps = {
   tools: AgentTool[];
   onToolsUpdate: (tools: AgentTool[]) => void;
 };
 
+export type ValidationStep = 'form' | 'validating' | 'validated';
+
 export function AgentMcpDialog({
   tools,
   onToolsUpdate,
 }: AgentToolsDialogProps) {
-  const { showAddMcpDialog, setShowAddMcpDialog, editingMcpTool } =
-    useAgentToolsStore();
-
-  const isToolNameUnique = (value: string) => {
-    return !tools.some(
-      (tool) =>
-        tool.toolName === value && tool.toolName !== editingMcpTool?.toolName,
-    );
-  };
+  const { showAddMcpDialog, editingMcpTool, closeMcpDialog } =
+    useMcpToolDialogStore();
+  const [step, setStep] = useState<ValidationStep>('form');
+  const [validationResult, setValidationResult] =
+    useState<ValidateAgentMcpToolResponse | null>(null);
+  const [pendingTool, setPendingTool] = useState<AgentMcpTool | null>(null);
 
   const form = useForm<McpToolFormData>({
     defaultValues: {
@@ -94,9 +77,6 @@ export function AgentMcpDialog({
     },
     mode: 'onChange',
   });
-
-  const authType = form.watch('authType');
-  const headers = form.watch('headers');
 
   useEffect(() => {
     if (editingMcpTool) {
@@ -124,322 +104,138 @@ export function AgentMcpDialog({
     }
   }, [editingMcpTool, form]);
 
-  const onSubmit = (data: McpToolFormData) => {
-    let auth;
-    switch (data.authType) {
-      case McpAuthType.NONE: {
-        auth = { type: McpAuthType.NONE };
-        break;
-      }
-      case McpAuthType.ACCESS_TOKEN: {
-        auth = {
-          type: McpAuthType.ACCESS_TOKEN,
-          accessToken: data.accessToken,
-        };
-        break;
-      }
-      case McpAuthType.API_KEY: {
-        auth = {
-          type: McpAuthType.API_KEY,
-          apiKey: data.apiKey,
-          apiKeyHeader: data.apiKeyHeader,
-        };
-        break;
-      }
-      case McpAuthType.HEADERS: {
-        const headersObj: Record<string, string> = {};
-        data.headers?.forEach(({ key, value }) => {
-          if (key && value) {
-            headersObj[key] = value;
-          }
-        });
-        auth = {
-          type: McpAuthType.HEADERS,
-          headers: headersObj,
-        };
-        break;
-      }
-      default: {
-        auth = { type: McpAuthType.NONE };
-      }
-    }
-
-    const mcpTool: AgentMcpTool = {
-      type: AgentToolType.MCP,
-      toolName: `${data.toolName}`,
-      serverUrl: data.serverUrl,
-      protocol: data.protocol,
-      auth: auth as McpAuthConfig,
-    };
+  const handleAddTool = () => {
+    if (!pendingTool) return;
 
     if (editingMcpTool) {
       const updatedTools = tools.map((tool) =>
         tool.type === AgentToolType.MCP &&
         tool.toolName === editingMcpTool.toolName
-          ? mcpTool
+          ? pendingTool
           : tool,
       );
       onToolsUpdate(updatedTools);
+      toast(t('MCP server updated successfully'));
     } else {
-      onToolsUpdate([...tools, mcpTool]);
+      onToolsUpdate([...tools, pendingTool]);
+      toast(t('MCP server added successfully'));
     }
 
-    form.reset();
-    setShowAddMcpDialog(false);
-    toast(t('MCP server added successfully'));
+    handleClose();
   };
 
-  const addHeaderField = () => {
-    form.setValue('headers', [...(headers || []), { key: '', value: '' }]);
-  };
-
-  const removeHeaderField = (index: number) => {
-    const newHeaders = headers?.filter((_, i) => i !== index) || [];
-    form.setValue(
-      'headers',
-      newHeaders.length > 0 ? newHeaders : [{ key: '', value: '' }],
-    );
+  const handleBackToForm = () => {
+    setStep('form');
+    setValidationResult(null);
   };
 
   const handleClose = () => {
     form.reset();
-    setShowAddMcpDialog(false);
+    setStep('form');
+    setValidationResult(null);
+    setPendingTool(null);
+    closeMcpDialog();
   };
 
   return (
     <Dialog open={showAddMcpDialog} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {editingMcpTool ? t('Edit MCP Server') : t('Add MCP Server')}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+        {step === 'form' && (
+          <DialogHeader>
+            <DialogTitle>
+              {editingMcpTool ? t('Edit MCP Server') : t('Add MCP Server')}
+            </DialogTitle>
+          </DialogHeader>
+        )}
 
-        <Form {...form}>
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="toolName"
-              rules={{
-                required: 'Tool name is required',
-                minLength: { value: 1, message: 'Tool name is required' },
-                validate: (value) =>
-                  isToolNameUnique(value) ||
-                  t('An MCP server with this name already exists'),
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('MCP Name')} *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., my-mcp-server" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {step === 'form' && (
+          <AddMcpToolForm
+            tools={tools}
+            form={form}
+            handleClose={handleClose}
+            setPendingTool={setPendingTool}
+            setStep={setStep}
+            setValidationResult={setValidationResult}
+          />
+        )}
 
-            <FormField
-              control={form.control}
-              name="serverUrl"
-              rules={{
-                required: 'Server URL is required',
-                pattern: {
-                  value: /^https?:\/\/.+/,
-                  message: 'Must be a valid URL',
-                },
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Server URL')} *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/mcp" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {step === 'validating' && (
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-semibold">
+                {t('Connecting to MCP Server')}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t('Validating server configuration...')}
+              </p>
+            </div>
+          </div>
+        )}
 
-            <FormField
-              control={form.control}
-              name="protocol"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Protocol')} *</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={McpProtocol.SSE}>
-                        {t('SSE')}
-                      </SelectItem>
-                      <SelectItem value={McpProtocol.SIMPLE_HTTP}>
-                        {t('Simple HTTP')}
-                      </SelectItem>
-                      <SelectItem value={McpProtocol.STREAMABLE_HTTP}>
-                        {t('Streamable HTTP')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="authType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Authentication Type')} *</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={McpAuthType.NONE}>
-                        {t('None')}
-                      </SelectItem>
-                      <SelectItem value={McpAuthType.HEADERS}>
-                        {t('Headers')}
-                      </SelectItem>
-                      <SelectItem value={McpAuthType.ACCESS_TOKEN}>
-                        {t('Access Token')}
-                      </SelectItem>
-                      <SelectItem value={McpAuthType.API_KEY}>
-                        {t('Api Key')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {authType === McpAuthType.ACCESS_TOKEN && (
-              <div className="space-y-4 p-4 border rounded-lg">
-                <FormField
-                  control={form.control}
-                  name="accessToken"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Access Token')} *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter access token" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        {step === 'validated' && validationResult && (
+          <div className="space-y-6">
+            {validationResult.error ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="rounded-full bg-destructive/10 p-3">
+                  <AlertCircle className="w-8 h-8 text-destructive" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold">
+                    {t('Connection Failed')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    {validationResult.error}
+                  </p>
+                </div>
               </div>
-            )}
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <div className="rounded-full bg-success-100 p-3">
+                  <CheckCircle2 className="w-8 h-8 text-success" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold">
+                    {t('Connection Successful')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t('Available tools from MCP server:')}
+                  </p>
+                </div>
 
-            {authType === McpAuthType.API_KEY && (
-              <div className="space-y-4 p-4 border rounded-lg">
-                <FormField
-                  control={form.control}
-                  name="apiKeyHeader"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('API Key Header')} *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="X-API-KEY" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="apiKey"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Api Key')} *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter API Key" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {authType === McpAuthType.HEADERS && (
-              <div className="space-y-4 p-4 border rounded-lg">
-                {headers?.map((header, index) => (
-                  <div key={index} className="space-y-3">
-                    <div className="flex gap-2 items-end">
-                      <FormField
-                        control={form.control}
-                        name={`headers.${index}.key`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input placeholder="Authorization" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name={`headers.${index}.value`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input placeholder="Bearer token..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {headers.length > 1 && (
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => removeHeaderField(index)}
+                {validationResult.toolNames &&
+                  validationResult.toolNames.length > 0 && (
+                    <div className="w-full max-w-md border rounded-lg p-4 space-y-2">
+                      {validationResult.toolNames.map((tool, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 rounded bg-muted/50"
                         >
-                          <X className="size-4" />
-                        </Button>
-                      )}
+                          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                          <span className="text-sm font-medium">{tool}</span>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                  onClick={addHeaderField}
-                >
-                  {t('+ Add Header')}
-                </Button>
+                  )}
               </div>
             )}
 
-            <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                {t('Cancel')}
-              </Button>
+            <DialogFooter>
               <Button
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={!form.formState.isValid}
+                type="button"
+                variant="outline"
+                onClick={handleBackToForm}
               >
-                {editingMcpTool ? t('Update Server') : t('Add Server')}
+                {t('Back')}
               </Button>
+              {!validationResult.error && (
+                <Button onClick={handleAddTool}>
+                  {editingMcpTool ? t('Update Server') : t('Add Server')}
+                </Button>
+              )}
             </DialogFooter>
           </div>
-        </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

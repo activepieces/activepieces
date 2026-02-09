@@ -3,26 +3,25 @@ import { Download } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { downloadFile } from '@/lib/utils';
-import { AnalyticsFlowReportItem } from '@activepieces/shared';
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type FlowDetailsHeaderProps = {
-  flowsDetails?: AnalyticsFlowReportItem[];
+  report?: PlatformAnalyticsReport;
 };
 
-export function FlowDetailsHeader({ flowsDetails }: FlowDetailsHeaderProps) {
+export function FlowDetailsHeader({ report }: FlowDetailsHeaderProps) {
   const handleDownload = () => {
-    if (!flowsDetails || flowsDetails.length === 0) return;
+    if (!report || report.flows.length === 0) return;
 
     const csvHeader =
       'Flow Name,Project Name,Runs,Time Saved Per Run (min),Total Time Saved (min)\n';
-    const csvContent = flowsDetails
+    const csvContent = report.flows
       .map((flow) => {
-        const timeSavedPerRun =
-          flow.runs > 0
-            ? flow.timeSavedPerRun.value ??
-              Math.round(flow.minutesSaved / flow.runs)
-            : flow.timeSavedPerRun.value ?? 0;
-        return `"${flow.flowName}","${flow.projectName}",${flow.runs},${timeSavedPerRun},${flow.minutesSaved}`;
+        const runs =
+          report.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0;
+        const timeSavedPerRun = flow.timeSavedPerRun ?? 0;
+        const minutesSaved = runs * timeSavedPerRun;
+        return `"${flow.flowName}","${flow.projectId}",${runs},${timeSavedPerRun},${minutesSaved}`;
       })
       .join('\n');
 
@@ -40,7 +39,7 @@ export function FlowDetailsHeader({ flowsDetails }: FlowDetailsHeaderProps) {
         variant="outline"
         size="sm"
         onClick={handleDownload}
-        disabled={!flowsDetails || flowsDetails.length === 0}
+        disabled={!report?.flows || report.flows.length === 0}
       >
         <Download className="h-4 w-4 mr-2" />
         {t('Download')}

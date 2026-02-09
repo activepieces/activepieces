@@ -9,19 +9,15 @@ import {
   WebsocketServerEvent,
   WebsocketClientEvent,
   CreateStepRunRequestBody,
-  StepRunResponse,
   SeekPage,
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
   BulkCancelFlowRequestBody,
+  UpdateRunProgressRequest,
 } from '@activepieces/shared';
 
 type TestStepParams = {
-  socket: Socket;
   request: CreateStepRunRequestBody;
-  // optional callback for steps like agent and todo
-  onProgress?: (progress: StepRunResponse) => void;
-  onFinsih?: () => void;
 };
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
@@ -42,69 +38,76 @@ export const flowRunsApi = {
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
   },
-  async testFlow(
+  async subscribeToTestFlowOrManualRun(
     socket: Socket,
     request: TestFlowRunRequestBody,
-    onUpdate: (response: FlowRun) => void,
+    onUpdate: (response: UpdateRunProgressRequest) => void,
+    isForManualTrigger: boolean,
   ): Promise<void> {
-    socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const initialRun = await getInitialRun(socket, request.flowVersionId);
-    onUpdate(initialRun);
+    socket.emit(
+      isForManualTrigger
+        ? WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED
+        : WebsocketServerEvent.TEST_FLOW_RUN,
+      request,
+    );
+    const initialRun = await getInitialRun(
+      socket,
+      request.flowVersionId,
+      isForManualTrigger,
+    );
+    onUpdate({
+      flowRun: initialRun,
+    });
+    const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
+      if (response.flowRun.id === initialRun.id) {
+        onUpdate(response);
+        if (response.flowRun.finishTime) {
+          socket.off(
+            WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+            handleUpdateRunProgress,
+          );
+        }
+      }
+    };
+    socket.on(
+      WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+      handleUpdateRunProgress,
+    );
   },
-  async testStep(params: TestStepParams): Promise<StepRunResponse> {
-    const { socket, request, onProgress, onFinsih } = params;
+  async testStep(params: TestStepParams): Promise<{ runId: string }> {
+    const { request } = params;
     const stepRun = await api.post<FlowRun>(
       '/v1/sample-data/test-step',
       request,
     );
-
-    return new Promise<StepRunResponse>((resolve, reject) => {
-      const handleStepFinished = (response: StepRunResponse) => {
-        if (response.runId === stepRun.id) {
-          onFinsih?.();
-          socket.off(
-            WebsocketClientEvent.TEST_STEP_FINISHED,
-            handleStepFinished,
-          );
-          socket.off('error', handleError);
-          resolve(response);
-        }
-      };
-
-      const handleError = (error: any) => {
-        onFinsih?.();
-        socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        socket.off('error', handleError);
-        reject(error);
-      };
-
-      socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      socket.on('error', handleError);
-
-      if (onProgress) {
-        const handleOnProgress = (response: StepRunResponse) => {
-          if (response.runId === stepRun.id) {
-            onProgress(response);
-          }
-        };
-        socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
-      }
-    });
+    return { runId: stepRun.id };
   },
 };
 function getInitialRun(
   socket: Socket,
   flowVersionId: string,
+  forManualTrigger: boolean,
 ): Promise<FlowRun> {
   return new Promise<FlowRun>((resolve) => {
     const onRunStarted = (run: FlowRun) => {
       if (run.flowVersionId !== flowVersionId) {
         return;
       }
-      socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      if (forManualTrigger) {
+        socket.off(
+          WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED,
+          onRunStarted,
+        );
+      } else {
+        socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      }
       resolve(run);
     };
 
-    socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    if (forManualTrigger) {
+      socket.on(WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED, onRunStarted);
+    } else {
+      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    }
   });
 }

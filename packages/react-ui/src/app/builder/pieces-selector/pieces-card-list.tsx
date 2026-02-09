@@ -75,9 +75,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
     searchQuery.length === 0 && !isMobile && !noResultsFound && !isLoading;
   const showPiecesList = !noResultsFound && !isLoading;
   if (
-    [PieceSelectorTabType.EXPLORE, PieceSelectorTabType.AI_AND_AGENTS].includes(
-      selectedTab,
-    )
+    [
+      PieceSelectorTabType.EXPLORE,
+      PieceSelectorTabType.AI_AND_AGENTS,
+      PieceSelectorTabType.APPROVALS,
+    ].includes(selectedTab)
   ) {
     return null;
   }

@@ -1,12 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { useFormContext } from 'react-hook-form';
 
-import { useSocket } from '@/components/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -19,99 +17,14 @@ import {
   StepRunResponse,
   FlowTrigger,
   TriggerEventWithPayload,
-  isNil,
-  FlowOperationType,
-  flowStructureUtil,
-  SampleDataFileType,
   TriggerTestStrategy,
-  SampleDataDataType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
 import { testStepUtils } from './test-step-utils';
 
-const stringifyNullOrUndefined = (data: undefined | null) => {
-  if (data === undefined) {
-    return 'undefined';
-  }
-  return 'null';
-};
-
 export const testStepHooks = {
-  useUpdateSampleData: (stepName: string) => {
-    const queryClient = useQueryClient();
-    const { flowVersionId, applyOperation, step, setSampleData } =
-      useBuilderStateContext((state) => {
-        return {
-          flowVersionId: state.flowVersion.id,
-          step: flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
-          applyOperation: state.applyOperation,
-          setSampleData: state.setSampleData,
-        };
-      });
-
-    return useMutation({
-      mutationFn: async ({
-        response,
-      }: {
-        response:
-          | {
-              testType: 'trigger' | 'mockData' | 'todo';
-              output?: unknown;
-              success: boolean;
-            }
-          | ({ testType: 'action'; success: boolean } & StepRunResponse);
-      }) => {
-        if (isNil(step)) {
-          console.error(`Step ${stepName} not found`);
-          internalErrorToast();
-          return;
-        }
-        if (response.success) {
-          //if the output is undefined it will fail to save sample data unless we stringify it
-          const output = isNil(response.output)
-            ? stringifyNullOrUndefined(response.output)
-            : response.output;
-          setSampleData({ stepName: step.name, type: 'output', value: output });
-          applyOperation({
-            type: FlowOperationType.SAVE_SAMPLE_DATA,
-            request: {
-              stepName: step.name,
-              payload: output,
-              type: SampleDataFileType.OUTPUT,
-              dataType:
-                typeof output === 'string'
-                  ? SampleDataDataType.STRING
-                  : SampleDataDataType.JSON,
-            },
-          });
-          if (response.testType === 'action') {
-            const input = isNil(response.input)
-              ? stringifyNullOrUndefined(response.input)
-              : response.input;
-            setSampleData({ stepName: step.name, type: 'input', value: input });
-            applyOperation({
-              type: FlowOperationType.SAVE_SAMPLE_DATA,
-              request: {
-                stepName: step.name,
-                payload: input,
-                type: SampleDataFileType.INPUT,
-                dataType:
-                  typeof input === 'string'
-                    ? SampleDataDataType.STRING
-                    : SampleDataDataType.JSON,
-              },
-            });
-          }
-        }
-      },
-      onSuccess: () => {
-        //we do this so next time the user enters the builder, the sample data is refetched
-        sampleDataHooks.invalidateSampleData(flowVersionId, queryClient);
-      },
-    });
-  },
   useSimulateTrigger: ({
     setErrorMessage,
     onSuccess,
@@ -122,9 +35,7 @@ export const testStepHooks = {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     const flowVersionId = builderState.flowVersionId;
-    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-      form.getValues().name,
-    );
+    const stepName = form.getValues().name;
 
     return useMutation<TriggerEventWithPayload[], Error, AbortSignal>({
       mutationFn: async (abortSignal: AbortSignal) => {
@@ -157,12 +68,9 @@ export const testStepHooks = {
           const newIds = newData.data.map((triggerEvent) => triggerEvent.id);
           if (!deepEqual(ids, newIds)) {
             if (newData.data.length > 0) {
-              await updateSampleData({
-                response: {
-                  testType: 'trigger',
-                  success: true,
-                  output: newData.data[0].payload,
-                },
+              builderState.updateSampleData({
+                stepName,
+                output: newData.data[0].payload,
               });
             }
             return newData.data;
@@ -190,9 +98,7 @@ export const testStepHooks = {
   useSaveMockData: ({ onSuccess }: { onSuccess: () => void }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
-    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-      form.getValues().name,
-    );
+    const stepName = form.getValues().name;
 
     return useMutation({
       mutationFn: async (mockData: unknown) => {
@@ -201,12 +107,9 @@ export const testStepHooks = {
           flowId,
           mockData,
         });
-        await updateSampleData({
-          response: {
-            testType: 'mockData',
-            success: true,
-            output: data.payload,
-          },
+        builderState.updateSampleData({
+          stepName,
+          output: data.payload,
         });
         return data;
       },
@@ -223,9 +126,7 @@ export const testStepHooks = {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     const flowVersionId = builderState.flowVersionId;
-    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-      form.getValues().name,
-    );
+    const stepName = form.getValues().name;
 
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
@@ -237,12 +138,9 @@ export const testStepHooks = {
           testStrategy: TriggerTestStrategy.TEST_FUNCTION,
         });
         if (data.length > 0) {
-          await updateSampleData({
-            response: {
-              testType: 'trigger',
-              success: true,
-              output: data[0].payload,
-            },
+          builderState.updateSampleData({
+            stepName,
+            output: data[0].payload,
           });
         }
         return data;
@@ -280,72 +178,27 @@ export const testStepHooks = {
     });
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
-  useTestAction: ({
-    currentStep,
-    setErrorMessage,
-    setConsoleLogs,
-    onSuccess,
-    mutationKey,
-  }: {
-    currentStep: FlowAction;
-    setErrorMessage: ((msg: string | undefined) => void) | undefined;
-    setConsoleLogs: ((logs: string | null) => void) | undefined;
-    onSuccess: (() => void) | undefined;
-    mutationKey?: string[];
-  }) => {
-    const socket = useSocket();
-    const { flowVersionId } = useRequiredStateToTestSteps().builderState;
-    const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
-      currentStep.name,
-    );
-
-    return useMutation<StepRunResponse, Error, TestActionMutationParams>({
-      mutationKey,
-      mutationFn: async (params: TestActionMutationParams) => {
-        if (
-          params?.type === 'webhookAction' &&
-          !isNil(params?.preExistingSampleData)
-        ) {
-          return params.preExistingSampleData;
-        }
+  useTestAction: ({ currentStep }: { currentStep: FlowAction }) => {
+    const { flowVersionId, addActionTestListener } =
+      useRequiredStateToTestSteps().builderState;
+    return useMutation<{ runId: string }, Error, TestActionMutationParams>({
+      mutationFn: async () => {
         const response = await flowRunsApi.testStep({
-          socket,
           request: {
             projectId: authenticationSession.getProjectId()!,
             flowVersionId,
             stepName: currentStep.name,
           },
-          onProgress: params?.onProgress,
-          onFinsih:
-            params?.type === 'agentAction' ? params.onFinish : undefined,
         });
         return response;
       },
-      onSuccess: (testStepResponse: StepRunResponse) => {
-        const { success, standardOutput, standardError } = testStepResponse;
-        const errorMessage = success ? standardOutput : standardError;
-        setErrorMessage?.(undefined);
-        setConsoleLogs?.(errorMessage ?? null);
-        if (success) {
-          updateSampleData({
-            response: { testType: 'action', ...testStepResponse },
-          });
-          onSuccess?.();
-        } else {
-          setErrorMessage?.(
-            testStepUtils.formatErrorMessage(
-              errorMessage ??
-                t(
-                  'Failed to run test step, please ensure settings are correct.',
-                ),
-            ),
-          );
-        }
+      onSuccess: (testStepResponse: { runId: string }) => {
+        addActionTestListener({
+          runId: testStepResponse.runId,
+          stepName: currentStep.name,
+        });
       },
-      onError: (error) => {
-        if (error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {
-          return;
-        }
+      onError: () => {
         internalErrorToast();
       },
     });
@@ -358,6 +211,8 @@ const useRequiredStateToTestSteps = () => {
     flow: state.flow,
     flowVersion: state.flowVersion,
     flowVersionId: state.flowVersion.id,
+    addActionTestListener: state.addActionTestListener,
+    updateSampleData: state.updateSampleData,
   }));
   return { form, builderState };
 };
@@ -369,10 +224,8 @@ type TestActionMutationParams =
       onProgress: undefined;
     }
   | {
-      type: 'todoAction' | 'agentAction';
+      type: 'agentAction';
       onProgress: (progress: StepRunResponse) => void;
       onFinish?: () => void;
     }
   | undefined;
-
-const CANCEL_TEST_STEP_ERROR_MESSAGE = 'Test step aborted';

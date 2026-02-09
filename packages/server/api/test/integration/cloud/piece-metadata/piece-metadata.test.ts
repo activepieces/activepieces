@@ -40,54 +40,6 @@ afterAll(async () => {
 })
 
 describe('Piece Metadata API', () => {
-    describe('List Piece Versions endpoint', () => {
-        it('Should return versions in sorted order for a piece', async () => {
-            // arrange
-            const mockPieceMetadata1 = createMockPieceMetadata({
-                name: '@ap/a',
-                version: '0.0.1',
-                pieceType: PieceType.OFFICIAL,
-            })
-            await databaseConnection()
-                .getRepository('piece_metadata')
-                .save(mockPieceMetadata1)
-
-            const mockPieceMetadata2 = createMockPieceMetadata({
-                name: '@ap/a',
-                version: '0.0.2',
-                pieceType: PieceType.OFFICIAL,
-            })
-            await databaseConnection()
-                .getRepository('piece_metadata')
-                .save(mockPieceMetadata2)
-
-            await localPieceCache(mockLog).setup()
-
-            const testToken = await generateMockToken({
-                type: PrincipalType.UNKNOWN,
-                id: apId(),
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/pieces/versions?release=1.1.1&name=@ap/a',
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const keys = Object.keys(responseBody)
-            expect(keys).toHaveLength(2)
-            expect(keys[0]).toBe('0.0.1')
-            expect(keys[1]).toBe('0.0.2')
-        })
-    })
-
     describe('Get Piece metadata', () => {
         it('Should return metadata when authenticated', async () => {
             // arrange
@@ -182,7 +134,6 @@ describe('Piece Metadata API', () => {
             expect(responseBody.packageType).toBe(mockPieceMetadata.packageType)
             expect(responseBody.pieceType).toBe(mockPieceMetadata.pieceType)
             expect(responseBody.platformId).toBe(mockPieceMetadata.platformId)
-            expect(responseBody.projectId).toBe(mockPieceMetadata.projectId)
             expect(responseBody.version).toBe(mockPieceMetadata.version)
         })
     })
@@ -201,11 +152,11 @@ describe('Piece Metadata API', () => {
                     platformRole: PlatformRole.MEMBER,
                 },
             })
+
             const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
                 ownerId: mockOwner.id,
             })
-
 
 
             // arrange
@@ -255,7 +206,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
+                url: `/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -377,7 +328,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: '/v1/pieces',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -418,7 +369,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: '/v1/pieces',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -484,7 +435,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
+                url: `/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -547,7 +498,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
+                url: `/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -610,7 +561,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
+                url: `/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

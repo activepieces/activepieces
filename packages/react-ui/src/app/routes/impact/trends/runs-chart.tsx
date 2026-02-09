@@ -2,7 +2,6 @@
 
 import { t } from 'i18next';
 import { TrendingUp } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
 import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,15 +16,14 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type RunsChartProps = {
   report?: PlatformAnalyticsReport;
-  selectedDateRange?: DateRange;
 };
 
-export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
+export function RunsChart({ report }: RunsChartProps) {
   const chartData =
-    report?.runsUsage
+    report?.runs
       .map((data) => ({
         date: data.day,
-        runs: data.totalRuns,
+        runs: data.runs,
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
@@ -37,14 +35,6 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
       color: 'hsl(var(--chart-1))',
     },
   } satisfies ChartConfig;
-
-  const filteredData = chartData.filter((data) => {
-    if (!selectedDateRange?.from || !selectedDateRange?.to) {
-      return true;
-    }
-    const date = new Date(data.date);
-    return date >= selectedDateRange.from && date <= selectedDateRange.to;
-  });
 
   return (
     <Card className="col-span-full">
@@ -61,7 +51,7 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
       <CardContent className="pt-4">
         {!report ? (
           <Skeleton className="h-[300px] w-full" />
-        ) : filteredData.length === 0 ? (
+        ) : chartData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
             <TrendingUp className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
@@ -77,7 +67,7 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
           >
             <LineChart
               accessibilityLayer
-              data={filteredData}
+              data={chartData}
               margin={{
                 left: 12,
                 right: 12,
@@ -119,7 +109,7 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
                 stroke="var(--color-runs)"
                 strokeWidth={2}
                 dot={
-                  filteredData.length === 1
+                  chartData.length === 1
                     ? { r: 6, fill: 'var(--color-runs)' }
                     : false
                 }

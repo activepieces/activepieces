@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-azure-communication-services",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "dependencies": {
     "@azure/communication-email": "1.0.0"
   }

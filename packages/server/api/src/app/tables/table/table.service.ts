@@ -6,15 +6,25 @@ import {
     ErrorCode,
     ExportTableResponse,
     isNil,
+    PopulatedTable,
     SeekPage,
+    SharedTemplate,
     spreadIfDefined,
     Table,
+    TableDataState,
+    TableImportDataType,
+    TableTemplate,
     TableWebhook,
     TableWebhookEventType,
+    TemplateStatus,
+    TemplateType,
     UpdateTableRequest,
+    UserWithMetaInformation,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { projectStateService } from '../../ee/projects/project-release/project-state/project-state.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { fieldService } from '../field/field.service'
@@ -23,8 +33,9 @@ import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
 
 export const tableRepo = repoFactory(TableEntity)
-const recordRepo = repoFactory(RecordEntity)
+export const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
+const tablePieceName = '@activepieces/piece-tables'
 
 export const tableService = {
     async create({
@@ -37,6 +48,11 @@ export const tableService = {
             name: request.name,
             projectId,
         })
+        if (request.fields) {
+            await Promise.all(request.fields.map(async (field) => {
+                await fieldService.createFromState({ projectId, field, tableId: table.id })
+            }))
+        }
         return table
     },
     async list({ projectId, cursor, limit, name, externalIds }: ListParams): Promise<SeekPage<Table>> {
@@ -99,6 +115,70 @@ export const tableService = {
             })
         }
         return table
+    },
+
+    async getTemplate({
+        tableId,
+        userMetadata,
+        projectId,
+        log,
+    }: GetTemplateParams): Promise<SharedTemplate> {
+        const table = await this.getOneOrThrow({
+            id: tableId,
+            projectId,
+        })
+
+        const fields = await fieldService.getAll({ projectId, tableId })
+
+        const populatedTable: PopulatedTable = {
+            ...table,
+            fields,
+        }
+
+        const tableState = projectStateService(log).getTableState(populatedTable)
+
+        const records = await recordRepo().find({
+            where: { tableId: table.id, projectId },
+            relations: ['cells'],
+        })
+
+        const rows: TableDataState['rows'] = records.map((record) => {
+            const row: { fieldId: string, value: string }[] = []
+            for (const field of fields) {
+                const cell = record.cells.find((c) => c.fieldId === field.id)
+                row.push({
+                    fieldId: field.externalId,
+                    value: cell?.value?.toString() ?? '',
+                })
+            }
+            return row
+        })
+
+        const tableTemplate: TableTemplate = {
+            ...tableState,
+            data: {
+                type: TableImportDataType.CSV,
+                rows,
+            },
+        }
+
+        const template: SharedTemplate = {
+            name: table.name,
+            summary: '',
+            description: '',
+            pieces: [tablePieceName],
+            tables: [tableTemplate],
+            tags: [],
+            blogUrl: '',
+            metadata: {
+                externalId: table.externalId,
+            },
+            author: userMetadata ? `${userMetadata.firstName} ${userMetadata.lastName}` : '',
+            categories: [],
+            type: TemplateType.SHARED,
+            status: TemplateStatus.PUBLISHED,
+        }
+        return template
     },
 
     async delete({
@@ -256,5 +336,12 @@ type UpdateParams = {
 }
 
 type CountParams = {
+    projectId: string
+}
+
+type GetTemplateParams = {
+    tableId: string
+    log: FastifyBaseLogger
+    userMetadata: UserWithMetaInformation | null
     projectId: string
 }

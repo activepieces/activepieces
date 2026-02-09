@@ -2,7 +2,6 @@
 
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
 import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,18 +17,16 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type TimeSavedChartProps = {
   report?: PlatformAnalyticsReport;
-  selectedDateRange?: DateRange;
 };
 
-export function TimeSavedChart({
-  report,
-  selectedDateRange,
-}: TimeSavedChartProps) {
+export function TimeSavedChart({ report }: TimeSavedChartProps) {
   const chartData =
-    report?.runsUsage
+    report?.runs
       .map((data) => ({
         date: data.day,
-        minutesSaved: data.minutesSaved,
+        minutesSaved:
+          (report?.flows.find((flow) => flow.flowId === data.flowId)
+            ?.timeSavedPerRun ?? 0) * data.runs,
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
@@ -41,14 +38,6 @@ export function TimeSavedChart({
       color: 'hsl(var(--chart-2))',
     },
   } satisfies ChartConfig;
-
-  const filteredData = chartData.filter((data) => {
-    if (!selectedDateRange?.from || !selectedDateRange?.to) {
-      return true;
-    }
-    const date = new Date(data.date);
-    return date >= selectedDateRange.from && date <= selectedDateRange.to;
-  });
 
   return (
     <Card className="col-span-full">
@@ -65,7 +54,7 @@ export function TimeSavedChart({
       <CardContent className="pt-4">
         {!report ? (
           <Skeleton className="h-[300px] w-full" />
-        ) : filteredData.length === 0 ? (
+        ) : chartData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
             <Clock className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
@@ -81,7 +70,7 @@ export function TimeSavedChart({
           >
             <LineChart
               accessibilityLayer
-              data={filteredData}
+              data={chartData}
               margin={{
                 left: 12,
                 right: 12,
@@ -126,7 +115,7 @@ export function TimeSavedChart({
                 stroke="var(--color-minutesSaved)"
                 strokeWidth={2}
                 dot={
-                  filteredData.length === 1
+                  chartData.length === 1
                     ? { r: 6, fill: 'var(--color-minutesSaved)' }
                     : false
                 }

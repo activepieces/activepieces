@@ -141,7 +141,14 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
                 error: `Expected object, received: ${originalValue}`,
             })
             break
-        case PropertyType.JSON:
+        case PropertyType.JSON: {
+            if (!property.required && originalValue === '') {
+                return []
+            }
+            const originalValueProvidedAndFailed = !isNil(originalValue) && isNil(value)
+            if (originalValueProvidedAndFailed) {
+                return [`Expected JSON, received: ${originalValue}`]
+            }
             schema = z.any().refine(
                 (val) => isObject(val) || Array.isArray(val),
                 {
@@ -149,6 +156,7 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
                 },
             )
             break
+        }
         case PropertyType.FILE: {
             schema = z.any().refine(
                 (val) => isObject(val),
@@ -181,7 +189,7 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
     }
 }
 
-function getAuthPropsToProcess(authValue: AppConnectionValue, auth: PieceAuthProperty | PieceAuthProperty[] | undefined):  | null {
+function getAuthPropsToProcess(authValue: AppConnectionValue, auth: PieceAuthProperty | PieceAuthProperty[] | undefined): | null {
     if (isNil(auth)) {
         return null
     }

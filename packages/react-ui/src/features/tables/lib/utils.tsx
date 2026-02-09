@@ -102,3 +102,50 @@ export const FieldHeaderContext = createContext<{
 
 // Map<CsvColumnIndex, FieldId>
 export type FieldsMapping = (string | null)[];
+
+export type SupportedFileType = 'csv' | 'json';
+
+export const FILE_TYPES = {
+  csv: { extension: '.csv', mimeType: 'text/csv' },
+  json: { extension: '.json', mimeType: 'application/json' },
+} as const;
+
+export const fileUtils = {
+  getExtension: (filename: string): string | null => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    return extension || null;
+  },
+
+  isValidType: (extension: string | null): extension is SupportedFileType => {
+    return extension === 'csv' || extension === 'json';
+  },
+
+  getAcceptedTypes: (): string => {
+    return Object.values(FILE_TYPES)
+      .map((type) => type.extension)
+      .join(',');
+  },
+
+  validateFile: (
+    file: File,
+    maxSizeInMB?: number,
+  ): { valid: boolean; error?: string } => {
+    const extension = fileUtils.getExtension(file.name);
+
+    if (!fileUtils.isValidType(extension)) {
+      return {
+        valid: false,
+        error: 'Only CSV and JSON files are supported',
+      };
+    }
+
+    if (maxSizeInMB && file.size > maxSizeInMB * 1024 * 1024) {
+      return {
+        valid: false,
+        error: `Max file size is ${maxSizeInMB}MB`,
+      };
+    }
+
+    return { valid: true };
+  },
+};

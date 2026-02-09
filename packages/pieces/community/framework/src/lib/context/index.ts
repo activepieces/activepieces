@@ -12,6 +12,7 @@ import {
   TriggerPayload,
   TriggerStrategy,
 } from '@activepieces/shared';
+import { LanguageModel, Tool } from 'ai'
 
 import {
   BasicAuthProperty,
@@ -233,11 +234,11 @@ export type ActionContext<
 
 export type ConstructToolParams = {
   tools: AgentPieceTool[]
-  model: unknown,
+  model: LanguageModel,
 }
 
 export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Record<string, unknown>>;
+  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
 }
 
 export interface FilesService {

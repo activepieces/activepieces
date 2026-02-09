@@ -14,7 +14,7 @@ export const PieceCard = ({ pieceName }: PieceCardProps) => {
 
   return (
     <Card>
-      <CardContent className="p-3 w-[180px] flex items-center gap-3">
+      <CardContent className="p-2 w-[165px] flex items-center gap-3">
         <PieceIconWithPieceName pieceName={pieceName} size="md" />
         <span className="text-sm font-medium">
           {pieceModel?.displayName ||

@@ -15,6 +15,7 @@ import {
   StepLocationRelativeToParent,
   FlowTrigger,
   FlowTriggerType,
+  Note,
 } from '@activepieces/shared';
 
 import { flowCanvasConsts } from './consts';
@@ -124,9 +125,9 @@ const createStepGraph: (
   };
 };
 
-const buildGraph: (step: FlowAction | FlowTrigger | undefined) => ApGraph = (
-  step,
-) => {
+const buildFlowGraph: (
+  step: FlowAction | FlowTrigger | undefined,
+) => ApGraph = (step) => {
   if (isNil(step)) {
     return {
       nodes: [],
@@ -147,7 +148,7 @@ const buildGraph: (step: FlowAction | FlowTrigger | undefined) => ApGraph = (
       : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
-  const nextStepGraph = buildGraph(step.nextAction);
+  const nextStepGraph = buildFlowGraph(step.nextAction);
   return mergeGraph(
     graphWithChild,
     offsetGraph(nextStepGraph, {
@@ -168,8 +169,12 @@ function offsetGraph(
         x: node.position.x + offset.x,
         y: node.position.y + offset.y,
       },
+      zIndex: 50,
     })),
-    edges: graph.edges,
+    edges: graph.edges.map((edge) => ({
+      ...edge,
+      zIndex: 50,
+    })),
   };
 }
 
@@ -219,7 +224,7 @@ const calculateGraphBoundingBox = (graph: ApGraph) => {
 
 const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
   const childGraph = step.firstLoopAction
-    ? buildGraph(step.firstLoopAction)
+    ? buildFlowGraph(step.firstLoopAction)
     : createBigAddButtonGraph(step, {
         parentStepName: step.name,
         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
@@ -312,7 +317,7 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
 const buildRouterChildGraph = (step: RouterAction) => {
   const childGraphs = step.children.map((branch, index) => {
     return branch
-      ? buildGraph(branch)
+      ? buildFlowGraph(branch)
       : createBigAddButtonGraph(step, {
           parentStepName: step.name,
           stepLocationRelativeToParent:
@@ -487,10 +492,26 @@ const getStepStatus = (
     stepName,
     loopIndexes,
     run.steps,
-    flowVersion.trigger,
   );
   return stepOutput?.status;
 };
+function buildNotesGraph(notes: Note[]): ApGraph {
+  return {
+    nodes: notes.map((note) => ({
+      id: note.id,
+      type: ApNodeType.NOTE,
+      draggable: true,
+      position: note.position,
+      data: {
+        content: note.content,
+        creatorId: note.ownerId,
+        color: note.color,
+        size: note.size,
+      },
+    })),
+    edges: [],
+  };
+}
 
 function determineInitiallySelectedStep(
   failedStepNameInRun: string | null,
@@ -516,9 +537,10 @@ const doesSelectionRectangleExist = () => {
   );
 };
 export const flowCanvasUtils = {
-  convertFlowVersionToGraph(version: FlowVersion): ApGraph {
-    const graph = buildGraph(version.trigger);
-    const graphEndWidget = graph.nodes.findLast(
+  createFlowGraph(version: FlowVersion, notes: Note[]): ApGraph {
+    const stepsGraph = buildFlowGraph(version.trigger);
+    const notesGraph = buildNotesGraph(notes);
+    const graphEndWidget = stepsGraph.nodes.findLast(
       (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
     ) as ApGraphEndNode;
     if (graphEndWidget) {
@@ -526,7 +548,7 @@ export const flowCanvasUtils = {
     } else {
       console.warn('Flow end widget not found');
     }
-    return graph;
+    return mergeGraph(stepsGraph, notesGraph);
   },
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,

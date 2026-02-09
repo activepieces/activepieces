@@ -17,10 +17,10 @@ import { downloadFile, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
-  FlowRun,
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
+  FlowVersionTemplate,
   ListFlowsRequest,
   PopulatedFlow,
   FlowTrigger,
@@ -30,7 +30,9 @@ import {
   isNil,
   ErrorCode,
   SeekPage,
+  Template,
   UncategorizedFolderId,
+  UpdateRunProgressRequest,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -270,25 +272,29 @@ export const flowHooks = {
       staleTime: 0,
     });
   },
-  useTestFlow: ({
+  useTestFlowOrStartManualTrigger: ({
     flowVersionId,
     onUpdateRun,
+    isForManualTrigger,
   }: {
     flowVersionId: string;
-    onUpdateRun: (run: FlowRun) => void;
+    onUpdateRun: (stepResponse: UpdateRunProgressRequest) => void;
+    isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
     return useMutation<void>({
       mutationFn: () =>
-        flowRunsApi.testFlow(
+        flowRunsApi.subscribeToTestFlowOrManualRun(
           socket,
           {
             flowVersionId,
           },
           onUpdateRun,
+          isForManualTrigger,
         ),
     });
   },
+
   useListFlowVersions: (flowId: string) => {
     return useQuery<SeekPage<FlowVersionMetadata>, Error>({
       queryKey: ['flow-versions', flowId],
@@ -332,6 +338,114 @@ export const flowHooks = {
         navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
       },
     });
+  },
+  importFlowIntoExisting: async ({
+    template,
+    existingFlowId,
+  }: {
+    template: Template;
+    existingFlowId: string;
+  }): Promise<PopulatedFlow> => {
+    const flows = template.flows || [];
+    if (flows.length === 0) {
+      throw new Error('Template has no flows');
+    }
+
+    const templateFlow = flows[0];
+    const flow = await flowsApi.get(existingFlowId);
+
+    const oldExternalId = !isNil(template.metadata?.externalId)
+      ? (template.metadata['externalId'] as string)
+      : flow.externalId;
+
+    const triggerString = JSON.stringify(templateFlow.trigger).replaceAll(
+      oldExternalId,
+      flow.externalId,
+    );
+    const updatedTrigger = JSON.parse(triggerString);
+
+    return await flowsApi.update(flow.id, {
+      type: FlowOperationType.IMPORT_FLOW,
+      request: {
+        displayName: templateFlow.displayName,
+        trigger: updatedTrigger,
+        schemaVersion: templateFlow.schemaVersion,
+      },
+    });
+  },
+  importFlowsFromTemplates: async ({
+    templates,
+    projectId,
+    folderName,
+  }: {
+    templates: Template[];
+    projectId: string;
+    folderName?: string;
+  }): Promise<PopulatedFlow[]> => {
+    if (templates.length === 0) {
+      return [];
+    }
+
+    const allFlowsToImport: Array<{
+      flow: PopulatedFlow;
+      templateFlow: FlowVersionTemplate;
+      oldExternalId: string;
+    }> = [];
+
+    for (const template of templates) {
+      const flows = template.flows || [];
+      if (flows.length === 0) {
+        continue;
+      }
+
+      for (const templateFlow of flows) {
+        const flow = await flowsApi.create({
+          displayName: templateFlow.displayName,
+          templateId: template.id,
+          projectId,
+          folderName,
+        });
+
+        const oldExternalId = !isNil(template.metadata?.externalId)
+          ? (template.metadata['externalId'] as string)
+          : flow.externalId;
+
+        allFlowsToImport.push({
+          flow,
+          templateFlow,
+          oldExternalId,
+        });
+      }
+    }
+
+    const externalIdMap = new Map<string, string>();
+    for (const { oldExternalId, flow } of allFlowsToImport) {
+      externalIdMap.set(oldExternalId, flow.externalId);
+    }
+
+    const importPromises = allFlowsToImport.map(
+      async ({ flow, templateFlow }) => {
+        let triggerString = JSON.stringify(templateFlow.trigger);
+
+        for (const [oldId, newId] of externalIdMap.entries()) {
+          triggerString = triggerString.replaceAll(oldId, newId);
+        }
+
+        const updatedTrigger = JSON.parse(triggerString);
+
+        return await flowsApi.update(flow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: templateFlow.displayName,
+            trigger: updatedTrigger,
+            schemaVersion: templateFlow.schemaVersion,
+            notes: templateFlow.notes,
+          },
+        });
+      },
+    );
+
+    return await Promise.all(importPromises);
   },
 };
 

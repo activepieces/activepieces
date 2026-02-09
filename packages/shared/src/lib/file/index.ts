@@ -19,7 +19,14 @@ export enum FileType {
     PROJECT_RELEASE = 'PROJECT_RELEASE',
     FLOW_VERSION_BACKUP = 'FLOW_VERSION_BACKUP',
 
+    /**
+     * Platform public assets, like logos, should be stored in the database.
+     */
     PLATFORM_ASSET = 'PLATFORM_ASSET',
+    /**
+     * User profile pictures, should be stored in the database.
+     */
+    USER_PROFILE_PICTURE = 'USER_PROFILE_PICTURE',
 }
 export enum FileCompression {
     NONE = 'NONE',

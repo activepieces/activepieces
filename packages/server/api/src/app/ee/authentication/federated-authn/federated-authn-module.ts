@@ -35,7 +35,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: platformId ?? undefined,
             code: req.body.code,
         })
-        applicationEvents.sendUserEvent({
+        applicationEvents(req.log).sendUserEvent({
             platformId: response.platformId!,
             userId: response.id,
             projectId: response.projectId,

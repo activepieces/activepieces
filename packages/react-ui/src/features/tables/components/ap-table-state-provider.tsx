@@ -156,3 +156,8 @@ export function useTableState<T>(selector: (state: TableState) => T) {
   }
   return useStore(tableStore, selector);
 }
+
+export function useOptionalTableStore() {
+  const tableStore = useContext(TableContext);
+  return tableStore ?? null;
+}

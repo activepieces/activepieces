@@ -1,10 +1,9 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, Info, LayoutGrid, Pencil, User, Workflow } from 'lucide-react';
+import { Clock, LayoutGrid, Pencil, User, Workflow } from 'lucide-react';
 import { useContext, useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
-import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
@@ -13,24 +12,24 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
-import { userHooks } from '@/hooks/user-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
+import { formatUtils } from '@/lib/utils';
 import {
-  AnalyticsFlowReportItem,
-  DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
-  isNil,
-  PlatformRole,
+  PlatformAnalyticsReport,
+  ProjectWithLimits,
 } from '@activepieces/shared';
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
 
 type FlowsDetailsProps = {
-  flowsDetails?: AnalyticsFlowReportItem[];
+  report?: PlatformAnalyticsReport;
   isLoading: boolean;
-  estimatedTimeSavedPerStep?: number | null;
 };
 
-type FlowDetailsWithId = AnalyticsFlowReportItem & { id: string };
+type FlowDetailsWithId = PlatformAnalyticsReport['flows'][number] & {
+  id: string;
+};
 
 const formatMinutes = (minutes: number) => {
   if (minutes < 60) {
@@ -45,8 +44,9 @@ const formatMinutes = (minutes: number) => {
 };
 
 const createColumns = (
-  estimatedTimeSavedPerStep: number,
-  isPlatformAdmin: boolean,
+  report?: PlatformAnalyticsReport,
+  projects?: ProjectWithLimits[],
+  timeSavedPerRunOverrides?: Record<string, { value: number | null }>,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -89,89 +89,77 @@ const createColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Project')} />
     ),
-    cell: ({ row }) => (
-      <div
-        className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
-        onClick={() =>
-          window.open(`/projects/${row.original.projectId}`, '_blank')
-        }
-      >
-        <LayoutGrid className="h-3.5 w-3.5" />
-        {row.original.projectName}
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'timeSavedPerRun',
-    header: ({ column }) => (
-      <div className="flex items-center gap-1.5">
-        <DataTableColumnHeader
-          column={column}
-          title={t('Time Saved Per Run')}
-        />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-xs">
-            {t(
-              'Each completed step saves {minutes} minutes of manual work. You can customize the estimated time saved per step or set a custom value for individual flows.',
-              { minutes: Math.round(estimatedTimeSavedPerStep) },
-            )}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    ),
     cell: ({ row }) => {
-      const timeSavedPerRun = row.original.timeSavedPerRun;
-      const displayValue = timeSavedPerRun?.value;
-      const isEstimated = timeSavedPerRun?.isEstimated;
+      const project = projects?.find(
+        (project) => project.id === row.original.projectId,
+      );
+      const userHasAccess = !!project;
+      const projectName = project?.displayName ?? row.original.projectName;
 
-      if (!isPlatformAdmin) {
+      if (userHasAccess) {
         return (
-          <div className="flex items-center gap-1 text-foreground">
-            {displayValue == null ? (
-              <span>{t('N/A')}</span>
-            ) : (
-              <span>
-                {formatMinutes(Math.round(displayValue ?? 0))}
-                {isEstimated && '~'}
-              </span>
-            )}
+          <div
+            className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
+            onClick={() =>
+              window.open(`/projects/${row.original.projectId}`, '_blank')
+            }
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            {projectName}
           </div>
         );
       }
 
       return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div>
-              <EditTimeSavedPopover
-                flowId={row.original.flowId}
-                currentValue={timeSavedPerRun?.value}
-              >
-                <Button
-                  variant="ghost"
-                  className="h-auto p-1 gap-1.5 text-foreground hover:bg-accent"
-                >
-                  <Pencil className="h-3 w-3 text-muted-foreground" />
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <LayoutGrid className="h-3.5 w-3.5" />
+          {projectName}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'timeSavedPerRun',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Time Saved Per Run')} />
+    ),
+    cell: ({ row }) => {
+      const override = timeSavedPerRunOverrides?.[row.original.flowId];
+      const timeSavedPerRun = override?.value ?? row.original.timeSavedPerRun;
+      const displayValue = timeSavedPerRun
+        ? formatUtils.formatToHoursAndMinutes(timeSavedPerRun)
+        : t('Not set');
 
-                  {displayValue == null ? (
-                    <span>{t('N/A')}</span>
-                  ) : (
-                    <span>
-                      {formatMinutes(Math.round(displayValue ?? 0))}
-                      {isEstimated && '~'}
-                    </span>
-                  )}
-                </Button>
-              </EditTimeSavedPopover>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            {t('Click to override the estimation')}
-          </TooltipContent>
-        </Tooltip>
+      const userHasAccessToProject = projects?.some(
+        (project) => project.id === row.original.projectId,
+      );
+
+      if (!userHasAccessToProject) {
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5 text-muted-foreground cursor-not-allowed">
+                <Pencil className="h-3.5 w-3.5" />
+                <span>{displayValue}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {t("You don't have permission to edit this flow")}
+            </TooltipContent>
+          </Tooltip>
+        );
+      }
+
+      return (
+        <EditTimeSavedPopover
+          flowId={row.original.flowId}
+          currentValue={timeSavedPerRun}
+        >
+          <div className="flex items-center gap-1.5 cursor-pointer hover:text-primary">
+            <Pencil className="h-3.5 w-3.5" />
+            <span>{displayValue}</span>
+          </div>
+        </EditTimeSavedPopover>
       );
     },
   },
@@ -182,21 +170,12 @@ const createColumns = (
     ),
     cell: ({ row }) => {
       const timeSavedPerRun = row.original.timeSavedPerRun;
-      const runs = row.original.runs;
-      const minutesSaved = row.original.minutesSaved;
-      const isEstimated = timeSavedPerRun.isEstimated;
-      const perRunValue = isEstimated
-        ? runs > 0
-          ? Math.round(minutesSaved / runs)
-          : 0
-        : timeSavedPerRun.value ?? 0;
-      const tooltipText = t(
-        'This flow ran {runs} time(s), saving {perRun} minutes per run',
-        {
-          runs: runs.toLocaleString(),
-          perRun: `${isEstimated ? '~' : ''}${perRunValue}`,
-        },
-      );
+      const totalRuns = report?.runs
+        .filter((run) => run.flowId === row.original.flowId)
+        .reduce((sum, run) => sum + (run.runs ?? 0), 0);
+
+      const runs = (totalRuns ?? 0) * (row.original.timeSavedPerRun ?? 0);
+      const minutesSaved = runs;
       return (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -206,7 +185,15 @@ const createColumns = (
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs">
-            {tooltipText}
+            {t(
+              'This flow ran {runs} time(s), saving {minutesSaved} minutes per run',
+              {
+                runs: runs.toLocaleString(),
+                minutesSaved: formatUtils.formatToHoursAndMinutes(
+                  timeSavedPerRun ?? 0,
+                ),
+              },
+            )}
           </TooltipContent>
         </Tooltip>
       );
@@ -214,36 +201,25 @@ const createColumns = (
   },
 ];
 
-export function FlowsDetails({
-  flowsDetails,
-  isLoading,
-  estimatedTimeSavedPerStep,
-}: FlowsDetailsProps) {
+export function FlowsDetails({ report, isLoading }: FlowsDetailsProps) {
   const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
-  const { data: user } = userHooks.useCurrentUser();
-  const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const flowsDetailsWithOverrides = useMemo(() => {
-    if (!flowsDetails) return undefined;
+    if (!report) return undefined;
 
-    return flowsDetails.map((flow) => {
+    return report.flows.map((flow) => {
       const override = timeSavedPerRunOverrides[flow.flowId];
-      if (override === undefined) {
-        return flow;
-      }
-
-      const newValue = override.value;
+      const timeSavedPerRun = override?.value ?? flow.timeSavedPerRun;
+      const runs =
+        report.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0;
       return {
         ...flow,
-        timeSavedPerRun: {
-          value: newValue,
-          isEstimated: isNil(newValue),
-        },
-        minutesSaved:
-          newValue !== null ? newValue * flow.runs : flow.minutesSaved,
+        timeSavedPerRun,
+        runs,
+        minutesSaved: (timeSavedPerRun ?? 0) * runs,
       };
     });
-  }, [flowsDetails, timeSavedPerRunOverrides]);
+  }, [report, timeSavedPerRunOverrides]);
 
   if (!flowsDetailsWithOverrides && !isLoading) {
     return null;
@@ -257,18 +233,16 @@ export function FlowsDetails({
       }))
       .sort((a, b) => b.minutesSaved - a.minutesSaved) ?? [];
 
-  const resolvedEstimatedTimeSavedPerStep = isNil(estimatedTimeSavedPerStep)
-    ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
-    : estimatedTimeSavedPerStep;
-
+  const projects = projectCollectionUtils.useAll();
   const columns = createColumns(
-    resolvedEstimatedTimeSavedPerStep,
-    isPlatformAdmin,
+    report,
+    projects.data,
+    timeSavedPerRunOverrides,
   );
 
   return (
     <div className="flex flex-col gap-4 mb-8">
-      <FlowDetailsHeader flowsDetails={flowsDetailsWithOverrides} />
+      <FlowDetailsHeader report={report} />
       <DataTable
         columns={columns}
         page={{

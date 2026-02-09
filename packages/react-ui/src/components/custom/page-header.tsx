@@ -1,8 +1,6 @@
 import { ReactNode } from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 
 interface PageHeaderProps {
   title: ReactNode;
@@ -11,7 +9,6 @@ interface PageHeaderProps {
   rightContent?: ReactNode;
   showBorder?: boolean;
   className?: string;
-  hideSidebarTrigger?: boolean;
 }
 
 export const PageHeader = ({
@@ -21,15 +18,12 @@ export const PageHeader = ({
   rightContent,
   showBorder = false,
   className = '',
-  hideSidebarTrigger = false,
 }: PageHeaderProps) => {
   const { embedState } = useEmbedding();
 
   if (embedState.hidePageHeader) {
     return null;
   }
-
-  const showSidebarTrigger = !hideSidebarTrigger && !embedState.isEmbedded;
 
   return (
     <div
@@ -39,11 +33,6 @@ export const PageHeader = ({
     >
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-          {showSidebarTrigger && <SidebarTrigger />}
-          {showSidebarTrigger && (
-            <Separator orientation="vertical" className="h-5 mr-2" />
-          )}
-
           <div>
             <div className="flex items-center gap-2">
               {typeof title === 'string' ? (

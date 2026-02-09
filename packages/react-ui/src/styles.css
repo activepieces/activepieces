@@ -453,6 +453,10 @@
     --xy-selection-background-color-default: hsl(
       var(--primary-100) / 0.25
     ) !important;
+    --xy-resize-background-color:transparent !important;
+    .react-flow__resize-control.handle{
+      border: 0 !important;
+    }
   }
 
   .react-flow__pane.selection,
@@ -488,4 +492,92 @@
   html {
     @apply font-sans;
     }
+}
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+
+
+.note-node,.note-drag-overlay {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 100px;
+    border: 1px;
+   }
+
+}
+
+.note-node:focus-within:hover  {
+  ::-webkit-scrollbar-thumb {
+    background: hsla(0, 1%, 66%, 0.328);
+    border-radius: 100px;
+    border: 1px;
+   }
+}
+
+.tiptap {
+  overflow-wrap: break-word;
+}
+
+.tiptap > :first-child {
+  margin-top: 0;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+  list-style-position: outside;
+  padding-left: 1.5rem;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  padding-left: 1.5rem;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+}
+
+.tiptap li p {
+  margin: 0.25em 0;
+}
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3,
+.tiptap h4,
+.tiptap h5,
+.tiptap h6 {
+  line-height: 1;
+  margin-top: 1rem;
+  text-wrap: pretty;
+}
+
+.tiptap h1 {
+  font-size: 1.4rem;
+}
+
+.tiptap h2 {
+  font-size: 1.2rem;
+}
+
+.tiptap h3 {
+  font-size: 1.1rem;
+}
+
+.tiptap h4,
+.tiptap h5,
+.tiptap h6 {
+  font-size: 1rem;
 }
