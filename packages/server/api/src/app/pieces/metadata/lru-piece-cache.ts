@@ -71,8 +71,8 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
 
                 return allPieces.map((piece) => {
                     const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
-                    const { i18n: _i18n, ...translatedWithoutI18n } = translated
-                    return translatedWithoutI18n
+                    translated.i18n = undefined
+                    return translated
                 })
             })
             
