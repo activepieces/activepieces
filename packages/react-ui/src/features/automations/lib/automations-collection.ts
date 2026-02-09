@@ -1,7 +1,8 @@
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { createCollection, useLiveQuery } from '@tanstack/react-db';
 import { QueryClient, useMutation } from '@tanstack/react-query';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { foldersApi } from '@/features/folders/lib/folders-api';
@@ -19,7 +20,7 @@ import { TreeItemType } from './types';
 import { FOLDER_PAGE_SIZE, ROOT_PAGE_SIZE } from './utils';
 
 const FETCH_LIMIT = 100000;
-const collectionQueryClient = new QueryClient();
+export const collectionQueryClient = new QueryClient();
 
 export const flowsCollection = createCollection<PopulatedFlow, string>(
   queryCollectionOptions({
@@ -132,11 +133,11 @@ export const foldersCollection = createCollection<FolderDto, string>(
 );
 
 export const automationsCollectionUtils = {
-  useAllFlows: () => {
+  useAllFlows: (projectId: string) => {
     return useLiveQuery(
       (q) =>
         q.from({ flow: flowsCollection }).select(({ flow }) => ({ ...flow })),
-      [],
+      [projectId],
     );
   },
 
@@ -162,13 +163,13 @@ export const automationsCollectionUtils = {
     flowsCollection.delete(flowIds);
   },
 
-  useAllTables: () => {
+  useAllTables: (projectId: string) => {
     return useLiveQuery(
       (q) =>
         q
           .from({ table: tablesCollection })
           .select(({ table }) => ({ ...table })),
-      [],
+      [projectId],
     );
   },
 
@@ -194,13 +195,13 @@ export const automationsCollectionUtils = {
     tablesCollection.delete(tableIds);
   },
 
-  useAllFolders: () => {
+  useAllFolders: (projectId: string) => {
     return useLiveQuery(
       (q) =>
         q
           .from({ folder: foldersCollection })
           .select(({ folder }) => ({ ...folder })),
-      [],
+      [projectId],
     );
   },
 
@@ -254,12 +255,32 @@ export type AutomationsFilters = {
 };
 
 export const useAutomationsTree = (filters: AutomationsFilters) => {
+  const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
+  const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
+
+  const prevProjectIdRef = useRef<string>(projectId);
+
+  useEffect(() => {
+    if (prevProjectIdRef.current !== projectId) {
+      prevProjectIdRef.current = projectId;
+      collectionQueryClient.invalidateQueries({
+        queryKey: ['flows-collection'],
+      });
+      collectionQueryClient.invalidateQueries({
+        queryKey: ['tables-collection'],
+      });
+      collectionQueryClient.invalidateQueries({
+        queryKey: ['folders-collection'],
+      });
+    }
+  }, [projectId]);
+
   const { data: flows, isLoading: isLoadingFlows } =
-    automationsCollectionUtils.useAllFlows();
+    automationsCollectionUtils.useAllFlows(projectId);
   const { data: tables, isLoading: isLoadingTables } =
-    automationsCollectionUtils.useAllTables();
+    automationsCollectionUtils.useAllTables(projectId);
   const { data: folders, isLoading: isLoadingFolders } =
-    automationsCollectionUtils.useAllFolders();
+    automationsCollectionUtils.useAllFolders(projectId);
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
