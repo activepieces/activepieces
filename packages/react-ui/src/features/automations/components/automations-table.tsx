@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -47,6 +48,7 @@ export const AutomationsTable = ({
   onLoadMoreRoot,
   isItemSelected,
 }: AutomationsTableProps) => {
+  const { embedState } = useEmbedding();
   const selectableItems = items.filter(
     (item) =>
       item.type !== 'load-more-folder' && item.type !== 'load-more-root',
@@ -66,7 +68,9 @@ export const AutomationsTable = ({
               />
             </TableHead>
             <TableHead className="w-[350px]">{t('Name')}</TableHead>
-            <TableHead className="w-[200px]">{t('Details')}</TableHead>
+            {!embedState.isEmbedded && (
+              <TableHead className="w-[200px]">{t('Details')}</TableHead>
+            )}
             <TableHead className="w-[200px]">{t('Last modified')}</TableHead>
             <TableHead className="w-[150px]">{t('Owner')}</TableHead>
             <TableHead className="w-[100px]">{t('Status')}</TableHead>

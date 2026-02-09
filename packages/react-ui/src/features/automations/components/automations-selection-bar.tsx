@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Download, FolderInput, Trash2, X } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 
@@ -28,6 +29,7 @@ export const AutomationsSelectionBar = ({
   onExportClick,
   onClearSelection,
 }: AutomationsSelectionBarProps) => {
+  const { embedState } = useEmbedding();
   if (selectedCount === 0) {
     return null;
   }
@@ -35,28 +37,32 @@ export const AutomationsSelectionBar = ({
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
       <div className="flex items-center gap-3 bg-background border rounded-lg shadow-lg p-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onMoveClick}
-          disabled={isMoving || !hasMovableOrExportableItems}
-        >
-          <FolderInput className="h-4 w-4 mr-1" />
-          {t('Move to')}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onExportClick}
-          disabled={isExporting || !hasMovableOrExportableItems}
-        >
-          {isExporting ? (
-            <LoadingSpinner className="size-4 mr-2" />
-          ) : (
-            <Download className="size-4 mr-2" />
-          )}
-          {isExporting ? t('Exporting') : t('Export')}
-        </Button>
+        {!embedState.hideFolders && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMoveClick}
+            disabled={isMoving || !hasMovableOrExportableItems}
+          >
+            <FolderInput className="h-4 w-4 mr-1" />
+            {t('Move to')}
+          </Button>
+        )}
+        {!embedState.hideExportAndImportFlow && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onExportClick}
+            disabled={isExporting || !hasMovableOrExportableItems}
+          >
+            {isExporting ? (
+              <LoadingSpinner className="size-4 mr-2" />
+            ) : (
+              <Download className="size-4 mr-2" />
+            )}
+            {isExporting ? t('Exporting') : t('Export')}
+          </Button>
+        )}
         <ConfirmationDeleteDialog
           title={t('Delete Selected Items')}
           message={t(

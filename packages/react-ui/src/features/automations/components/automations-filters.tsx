@@ -14,6 +14,7 @@ import {
 import { useState } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { useEmbedding } from '@/components/embed-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -193,6 +194,7 @@ export const AutomationsFilters = ({
   isCreatingFlow = false,
   isCreatingTable = false,
 }: AutomationsFiltersProps) => {
+  const { embedState } = useEmbedding();
   const typeOptions = [
     { value: 'flow', label: t('Flows') },
     { value: 'table', label: t('Tables') },
@@ -286,44 +288,46 @@ export const AutomationsFilters = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 flex items-center gap-2"
-              >
-                <Import className="h-4 w-4" />
-                {t('Import')}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteFlow}
-              >
-                <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteFlow}
-                  onClick={onImportFlow}
-                  className="cursor-pointer"
+          {!embedState.hideExportAndImportFlow && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 flex items-center gap-2"
                 >
-                  <Workflow className="h-4 w-4 mr-2" />
-                  {t('Import Flow')}
-                </DropdownMenuItem>
-              </PermissionNeededTooltip>
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteTable}
-              >
-                <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteTable}
-                  onClick={onImportTable}
-                  className="cursor-pointer"
+                  <Import className="h-4 w-4" />
+                  {t('Import')}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToWriteFlow}
                 >
-                  <Table2 className="h-4 w-4 mr-2" />
-                  {t('Import Table')}
-                </DropdownMenuItem>
-              </PermissionNeededTooltip>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <DropdownMenuItem
+                    disabled={!userHasPermissionToWriteFlow}
+                    onClick={onImportFlow}
+                    className="cursor-pointer"
+                  >
+                    <Workflow className="h-4 w-4 mr-2" />
+                    {t('Import Flow')}
+                  </DropdownMenuItem>
+                </PermissionNeededTooltip>
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToWriteTable}
+                >
+                  <DropdownMenuItem
+                    disabled={!userHasPermissionToWriteTable}
+                    onClick={onImportTable}
+                    className="cursor-pointer"
+                  >
+                    <Table2 className="h-4 w-4 mr-2" />
+                    {t('Import Table')}
+                  </DropdownMenuItem>
+                </PermissionNeededTooltip>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <DropdownMenu open={isCreatingFlow || isCreatingTable || undefined}>
             <DropdownMenuTrigger asChild>
@@ -371,19 +375,23 @@ export const AutomationsFilters = ({
                   {isCreatingTable ? t('Creating...') : t('New Table')}
                 </DropdownMenuItem>
               </PermissionNeededTooltip>
-              <DropdownMenuSeparator />
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteFolder}
-              >
-                <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteFolder || isCreatingFlow || isCreatingTable}
-                  onClick={onCreateFolder}
-                  className="cursor-pointer"
-                >
-                  <FolderPlus className="h-4 w-4 mr-2" />
-                  {t('New Folder')}
-                </DropdownMenuItem>
-              </PermissionNeededTooltip>
+              {!embedState.hideFolders && (
+                <>
+                  <DropdownMenuSeparator />
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToWriteFolder}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToWriteFolder || isCreatingFlow || isCreatingTable}
+                      onClick={onCreateFolder}
+                      className="cursor-pointer"
+                    >
+                      <FolderPlus className="h-4 w-4 mr-2" />
+                      {t('New Folder')}
+                    </DropdownMenuItem>
+                  </PermissionNeededTooltip>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
