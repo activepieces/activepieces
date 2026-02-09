@@ -68,9 +68,7 @@ export const ImportFlowButton = ({
             </Button>
           </TooltipTrigger>
         </ImportFlowDialog>
-        <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
-          {t('Import flow')}
-        </TooltipContent>
+        <TooltipContent>{t('Import flow')}</TooltipContent>
       </Tooltip>
     </PermissionNeededTooltip>
   );

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-localai",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "dependencies": {
     "openai": "4.67.1"
   }

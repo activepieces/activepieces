@@ -5,8 +5,8 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.23.0",
-    "@activepieces/shared": "0.32.0",
+    "@activepieces/pieces-framework": "0.25.1",
+    "@activepieces/shared": "0.34.0",
     "tslib": "2.6.2",
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
@@ -18,7 +18,6 @@
     "@sinclair/typebox": "0.34.11",
     "pino-loki": "2.1.3",
     "async-mutex": "0.4.0",
-    "@activepieces/import-fresh-webpack": "3.3.0",
     "clear-module": "4.1.2",
     "ioredis": "5.4.1",
     "redlock": "5.0.0-beta.2",

@@ -238,6 +238,11 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
+    followRedirects: Property.Checkbox({
+      displayName: 'Follow redirects',
+      required: false,
+      defaultValue: false,
+    }),
     failureMode: Property.StaticDropdown({
       displayName: 'On Failure',
       required: false,
@@ -273,6 +278,7 @@ export const httpSendRequestAction = createAction({
       use_proxy,
       authType,
       authFields,
+      followRedirects,
     } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -284,6 +290,7 @@ export const httpSendRequestAction = createAction({
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,
+      followRedirects,
     };
 
     switch (authType) {

@@ -1,10 +1,5 @@
 import { t } from 'i18next';
-import {
-  ChevronLeftIcon,
-  ChevronRight,
-  ChevronRightIcon,
-  Info,
-} from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, Info } from 'lucide-react';
 import React from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -49,40 +44,21 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
 
   return (
     <div className="flex items-center justify-between gap-1">
-      <PreviousOrNextButton isNext={false} />
-      <div className="flex grow items-center justify-between gap-3 min-h-[36px]">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex grow items-center justify-between gap-3 min-h-[36px] min-w-0">
+        <div className="flex items-center gap-2 min-w-0 ">
           <PieceIcon
             logoUrl={stepMetadata?.logoUrl}
             displayName={stepMetadata?.displayName}
-            showTooltip={false}
+            showTooltip={true}
             size="md"
           />
           <div className="flex items-center gap-0.5 min-w-0 text-sm">
-            {!isNil(stepMetadata?.displayName) ? (
-              <>
-                <span
-                  className={
-                    !actionOrTriggerDisplayName
-                      ? 'text-foreground font-medium'
-                      : 'text-muted-foreground'
-                  }
-                >
-                  {stepMetadata.displayName}
+            {!isNil(actionOrTriggerDisplayName) ? (
+              <TextWithTooltip tooltipMessage={actionOrTriggerDisplayName}>
+                <span className="font-medium text-foreground min-w-0">
+                  {actionOrTriggerDisplayName}
                 </span>
-                {actionOrTriggerDisplayName && (
-                  <>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                    <TextWithTooltip
-                      tooltipMessage={actionOrTriggerDisplayName}
-                    >
-                      <span className="font-medium text-foreground">
-                        {actionOrTriggerDisplayName}
-                      </span>
-                    </TextWithTooltip>
-                  </>
-                )}
-              </>
+              </TextWithTooltip>
             ) : (
               <Skeleton className="h-4 w-32 rounded" />
             )}
@@ -105,6 +81,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
           </div>
         )}
       </div>
+      <PreviousOrNextButton isNext={false} />
       <PreviousOrNextButton isNext={true} />
     </div>
   );

@@ -1,5 +1,15 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import AdmZip from 'adm-zip';
+import {
+  Property,
+  createAction,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
+import {
+  ZipReader,
+  BlobReader,
+  BlobWriter,
+  getMimeType,
+  EntryGetDataOptions,
+} from '@zip.js/zip.js';
 
 interface Result {
   file: string;
@@ -27,31 +37,81 @@ export const unzipFile = createAction({
       defaultValue: 0,
       required: false,
     }),
+    usePassword: Property.Checkbox({
+      displayName: 'Use password',
+      description: 'Enable if the zip file is password protected',
+      required: false,
+      defaultValue: false,
+    }),
+    passwordOptions: Property.DynamicProperties({
+      displayName: 'Password options',
+      auth: PieceAuth.None(),
+      required: false,
+      refreshers: ['usePassword'],
+      props: async ({ usePassword }) => {
+        if (!usePassword) {
+          return {};
+        }
+
+        const fields = {
+          password: Property.ShortText({
+            displayName: 'Password',
+            required: true,
+          }),
+        };
+
+        return fields;
+      },
+    }),
   },
   async run(context) {
-    const zipFile = new AdmZip(context.propsValue.file.data);
+    const blob = new Blob([new Uint8Array(context.propsValue.file.data)]);
+    const zipReader = new ZipReader(new BlobReader(blob));
+    const entries = await zipReader.getEntries();
 
     const maxResults = context.propsValue.maxResults || 0;
 
-    if (maxResults !== 0 && zipFile.getEntryCount() > maxResults) {
-      throw `Zip file contains more entries than allowed: ${zipFile.getEntryCount()}`;
+    if (maxResults !== 0 && entries.length > maxResults) {
+      await zipReader.close();
+      throw `Zip file contains more entries than allowed: ${entries.length}`;
+    }
+
+    // Prepare options for getData, including password if provided
+    const getDataOptions: EntryGetDataOptions = {};
+    if (context.propsValue.usePassword) {
+      const password = context.propsValue.passwordOptions?.[
+        'password'
+      ] as string;
+      getDataOptions.password = password;
     }
 
     const results: Result[] = [];
-    for (const zipEntry of zipFile.getEntries()) {
-      if (!zipEntry.isDirectory) {
+
+    for (const entry of entries) {
+      if (!entry.directory) {
+        const mimeType = getMimeType(entry.filename);
+
+        const blob = await entry.getData(
+          new BlobWriter(mimeType),
+          getDataOptions
+        );
+        const arrayBuffer = await blob.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const fileBaseName = entry.filename.split('/').pop() || entry.filename;
         const fileReference = await context.files.write({
-          data: zipEntry.getData(),
-          fileName: zipEntry.name,
+          data: buffer,
+          fileName: fileBaseName,
         });
 
         results.push({
           file: fileReference,
-          filePath: zipEntry.entryName,
+          filePath: entry.filename,
         });
       }
     }
 
+    await zipReader.close();
     return results;
   },
 });

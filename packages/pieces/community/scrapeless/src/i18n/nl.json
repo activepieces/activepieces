@@ -29,10 +29,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Parameter defines the query you want to search. You can use anything that you would use in a regular Google search. e.g. inurl:, site:, intitle:. We also support advanced search query parameters such as as_dt and as_eq.": "Parameter definieert de query die u wilt zoeken. U kunt alles gebruiken dat u wilt gebruiken in een reguliere Google-zoekopdracht. bijv. inurl:, site:, intitle:. We ondersteunen ook de geavanceerde zoekopdrachten zoals as_dt en as_eq.",
   "Parameter defines the language to use for the Google search. It's a two-letter language code. (e.g., en for English, es for Spanish, or fr for French).": "Parameter definieert de te gebruiken taal voor Google zoeken. Het is een twee-letterige taalcode. (bijv. nl voor Engels, es voor Spaans of fr voor Frans).",
   "Parameter defines the country to use for the Google search. It's a two-letter country code. (e.g., us for the United States, uk for United Kingdom, or fr for France).": "Parameter definieert het land dat moet worden gebruikt voor de Google zoekopdracht. Het is een twee-letterige landcode. (b.v. wij voor de Verenigde Staten, uk voor Verenigd Koninkrijk, of fr voor Frankrijk).",
@@ -45,7 +47,7 @@
   "Parameter defines the language to use for the Google Trends search. It's a two-letter language code. (e.g., `en` for English, `es` for Spanish, or `fr` for French).": "Parameter definieert de te gebruiken taal voor het zoeken van Google Trends. Het is een twee-letterige taalcode. (bijv. `en` voor Engels, `es` voor Spaans, of `fr` voor Frans).",
   "time zone offset. default is `420`.": "tijdzone offset. Standaard is `420`.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "Auto complete": "Auto complete",
   "Interest over time": "Rente na verloop van tijd",
   "Compared breakdown by region": "Vergeleken met de verdeling per regio",
@@ -217,5 +219,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }

@@ -18,6 +18,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The Figma file key (copy from Figma file URL)": "The Figma file key (copy from Figma file URL)",
   "Your comment": "Your comment",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

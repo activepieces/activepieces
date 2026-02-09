@@ -143,6 +143,9 @@ function CreateOrEditConnectionSection({
             {' '}
             <ApMarkdown
               markdown={selectedAuth.authProperty.description}
+              variables={{
+                redirectUrl: redirectUrl ?? '',
+              }}
             ></ApMarkdown>
             {selectedAuth.authProperty.description && (
               <Separator className="my-4" />

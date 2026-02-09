@@ -1,5 +1,5 @@
 import { apDayjsDuration, AppSystemProp, getPlatformQueueName, memoryLock, QueueName } from '@activepieces/server-shared'
-import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY } from '@activepieces/shared'
+import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, WorkerJobType } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -82,6 +82,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: !isNil(dependOnJobId) ? apDayjsDuration(1, 'year').asMilliseconds() : params.delay,
                     jobId: params.id,
+                    removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
                 })
                 break
             }

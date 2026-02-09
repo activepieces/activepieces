@@ -73,6 +73,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Check this box if the contact is an organization.": "Check this box if the contact is an organization.",
   "The name of the organization. Required if \"Is Organization\" is checked.": "The name of the organization. Required if \"Is Organization\" is checked.",
   "The last name of the individual. Required if \"Is Organization\" is not checked.": "The last name of the individual. Required if \"Is Organization\" is not checked.",

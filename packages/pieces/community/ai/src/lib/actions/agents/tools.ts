@@ -2,9 +2,44 @@ import { dynamicTool, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, createTransportConfig, isNil, McpServerTools, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
+
+function createTransportConfig(
+    protocol: McpProtocol,
+    serverUrl: string,
+    headers: Record<string, string> = {},
+) {
+    const url = new URL(serverUrl)
+
+    switch (protocol) {
+        case McpProtocol.SIMPLE_HTTP: {
+            return {
+                type: 'http',
+                url: serverUrl,
+                headers,
+            }
+        }
+        case McpProtocol.STREAMABLE_HTTP: {
+            return new StreamableHTTPClientTransport(url, {
+                requestInit: {
+                    headers,
+                },
+            })
+        }
+        case McpProtocol.SSE: {
+            return {
+                type: 'sse',
+                url: serverUrl,
+                headers,
+            }
+        }
+        default:
+            throw new Error(`Unsupported MCP protocol type: ${protocol}`)
+    }
+}
 
 type FlattenedMcpResult = {
   mcpClients: MCPClient[];
@@ -146,3 +181,9 @@ type ConstructAgentToolParams = {
   context: ActionContext
   model: LanguageModel
 };
+
+export type McpServerTools = {
+    mcpName: string
+    mcpClient: MCPClient
+    tools: Record<string, Tool>
+}

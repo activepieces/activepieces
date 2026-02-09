@@ -5,9 +5,9 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.23.0",
+    "@activepieces/pieces-framework": "0.25.1",
     "@activepieces/server-shared": "0.0.2",
-    "@activepieces/shared": "0.32.0",
+    "@activepieces/shared": "0.34.0",
     "write-file-atomic": "5.0.1",
     "tslib": "2.6.2",
     "@opentelemetry/api": "1.9.0",

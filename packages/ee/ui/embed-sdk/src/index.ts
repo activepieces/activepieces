@@ -72,6 +72,12 @@ export const NEW_CONNECTION_QUERY_PARAMS = {
   randomId: 'randomId'
 };
 
+export const STEP_SETTINGS_QUERY_PARAMS = {
+  stepName: 'stepName',
+  flowVersionId: 'flowVersionId',
+  flowId: 'flowId',
+};
+
 export type ActivepiecesClientEvent =
   | ActivepiecesClientInit
   | ActivepiecesClientRouteChanged;
@@ -165,6 +171,8 @@ class ActivepiecesEmbedded {
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _dashboardAndBuilderIframeWindow?: Window;
   _rejectNewConnectionDialogClosed?: (error: unknown) => void;
+  _resolveStepSettingsDialogClosed?: () => void;
+  _rejectStepSettingsDialogClosed?: (error: unknown) => void;
   _handleVendorNavigation?: (data: { route: string }) => void;
   _handleClientNavigation?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
@@ -362,12 +370,7 @@ class ActivepiecesEmbedded {
   async connect({ pieceName, connectionName, newWindow }: { 
     pieceName: string, 
     connectionName?: string, 
-    newWindow?:{
-      height?: number,
-      width?: number,
-      top?: number,
-      left?: number,
-    }
+    newWindow?:newWindowFeatures
   }) {
     this._cleanConnectionIframe();
     return this._addGracePeriodBeforeMethod({
@@ -502,7 +505,6 @@ class ActivepiecesEmbedded {
       this._removeEmbedding(target);
     }
   }
-
   private _removeTrailingSlashes(str: string) {
     return str.endsWith('/') ? str.slice(0, -1) : str;
   }

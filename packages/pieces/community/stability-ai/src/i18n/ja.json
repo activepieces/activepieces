@@ -19,10 +19,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The text to transform in image.": "画像に変換するテキスト。",
   "How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt) (MIN:0; MAX:35)": "拡散プロセスがどのように厳密にプロンプトテキストに付着するか(高値で画像をプロンプトに近づけます) (MIN:0; MAX:35)",
   "Height of the image in pixels. Must be in increments of 64 and >= 128": "画像の高さをピクセルで指定します。64以上、128以下で入力してください。",
@@ -31,7 +33,7 @@
   "Number of diffusion steps to run (MIN:10; MAX:150)": "実行する拡散ステップの数 (MIN:10; MAX:150)",
   "Pass in a style preset to guide the image model towards a particular style.": "画像モデルを特定のスタイルに向かって導くために、スタイルプリセットを渡します。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "NONE": "なし",
   "FAST_BLUE": "高速ブルー",
   "FAST_GREEN": "FAST_GREEN",
@@ -68,5 +70,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }

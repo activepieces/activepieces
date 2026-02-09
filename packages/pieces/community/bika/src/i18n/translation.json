@@ -30,6 +30,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The fields to add to the record.": "The fields to add to the record.",
   "How many records are returned in total.": "How many records are returned in total.",
   "How many records are returned per page (max 1000).": "How many records are returned per page (max 1000).",

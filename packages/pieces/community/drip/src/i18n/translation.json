@@ -30,6 +30,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Email of the subscriber": "Email of the subscriber",
   "Tag to apply": "Tag to apply",
   "Tags to apply to subscriber": "Tags to apply to subscriber",

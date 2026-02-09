@@ -13,7 +13,9 @@
       "cache": true,
       "inputs": [
         "{projectRoot}/package.json",
-        { "runtime": "if [ \"$AP_ENVIRONMENT\" = \"dev\" ]; then echo dev; else echo $(date +%s%N); fi" }
+        {
+          "runtime": "if [ \"$AP_ENVIRONMENT\" = \"dev\" ]; then echo dev; else echo $(date +%s%N); fi"
+        }
       ]
     },
     "lint": {

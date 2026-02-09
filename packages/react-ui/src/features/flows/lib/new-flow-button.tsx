@@ -59,9 +59,7 @@ export const NewFlowButton = ({
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
-          {t('New flow')}
-        </TooltipContent>
+        <TooltipContent>{t('New flow')}</TooltipContent>
       </Tooltip>
     </PermissionNeededTooltip>
   );

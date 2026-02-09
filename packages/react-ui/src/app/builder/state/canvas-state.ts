@@ -57,7 +57,6 @@ export const createCanvasState = (
   const isEmptyTriggerInitiallySelected =
     initiallySelectedStep === 'trigger' &&
     initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
-
   return {
     showMinimap: false,
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
@@ -98,7 +97,6 @@ export const createCanvasState = (
     selectStepByName: (selectedStep: string) => {
       set((state) => {
         const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
-
         const rightSidebar =
           selectedStep === 'trigger' &&
           state.flowVersion.trigger.type === FlowTriggerType.EMPTY

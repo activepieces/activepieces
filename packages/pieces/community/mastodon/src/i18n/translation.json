@@ -19,6 +19,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The text of your status": "The text of your status",
   "The media attachment for your status": "The media attachment for your status",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

@@ -142,6 +142,9 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
             })
             break
         case PropertyType.JSON: {
+            if (!property.required && originalValue === '') {
+                return []
+            }
             const originalValueProvidedAndFailed = !isNil(originalValue) && isNil(value)
             if (originalValueProvidedAndFailed) {
                 return [`Expected JSON, received: ${originalValue}`]

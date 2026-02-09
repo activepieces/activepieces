@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-amazon-s3",
-  "version": "0.5.0",
+  "version": "0.5.3",
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "openpgp": "^6.3.0"

@@ -29,10 +29,7 @@ export const LicenseKeyEntity = Type.Object({
     analyticsEnabled: Type.Boolean(),
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
-    agentsEnabled: Type.Boolean(),
-    tablesEnabled: Type.Boolean(),
-    todosEnabled: Type.Boolean(),
-    mcpsEnabled: Type.Boolean(),
+    eventStreamingEnabled: Type.Boolean(),
 })
 
 

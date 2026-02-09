@@ -50,6 +50,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The topic or keyword to generate blog ideas for": "The topic or keyword to generate blog ideas for",
   "A keyword to include in the blog introduction": "A keyword to include in the blog introduction",
   "Select the engine quality level": "Select the engine quality level",
