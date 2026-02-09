@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mongodb",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "dependencies": {
     "mongodb": "6.15.0"
   }

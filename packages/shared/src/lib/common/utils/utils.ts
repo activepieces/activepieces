@@ -8,6 +8,13 @@ export function isNil<T>(value: T | null | undefined): value is null | undefined
     return value === null || value === undefined
 }
 
+export function stringifyNullOrUndefined(data: undefined | null): string {
+    if (data === undefined) {
+        return 'undefined'
+    }
+    return 'null'
+}
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setAtPath<T, K extends keyof any>(obj: T, path: K | K[], value: any): void {

@@ -100,9 +100,7 @@ function createTransportConfig(
             }
         }
         case McpProtocol.STREAMABLE_HTTP: {
-            const sessionId = crypto.randomUUID()
             return new StreamableHTTPClientTransport(url, {
-                sessionId,
                 requestInit: {
                     headers,
                 },

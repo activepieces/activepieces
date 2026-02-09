@@ -10,7 +10,6 @@ import {
 } from 'react-router-dom';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -24,7 +23,6 @@ import {
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
-import { Separator } from '@/components/ui/separator';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -103,8 +101,6 @@ export const BuilderHeader = () => {
 
   const titleContent = (
     <div className="flex items-center gap-2">
-      <ApSidebarToggle />
-      <Separator orientation="vertical" className="h-5 mr-2" />
       <Breadcrumb>
         <BreadcrumbList>
           {!embedState.disableNavigationInBuilder && (

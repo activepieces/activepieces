@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-jira-cloud",
-  "version": "0.2.1",
+  "version": "0.2.4",
   "dependencies": {
     "@atlaskit/adf-schema": "50.4.0",
     "@atlaskit/editor-json-transformer": "8.27.2",

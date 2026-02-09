@@ -17,7 +17,6 @@ export const SaveSampleDataRequest = Type.Object({
     stepName: Type.String(),
     payload: Type.Unknown(),
     type: Type.Enum(SampleDataFileType),
-    dataType: Type.Enum(SampleDataDataType),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 

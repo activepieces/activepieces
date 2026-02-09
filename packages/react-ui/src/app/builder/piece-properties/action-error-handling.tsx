@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/form';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 type ActionErrorHandlingFormProps = {
@@ -27,16 +28,16 @@ const ActionErrorHandlingForm = React.memo(
     const form = useFormContext<FlowAction | FlowTrigger>();
 
     return (
-      <div className="grid gap-4">
+      <div className={cn('grid', GAP_SIZE_FOR_STEP_SETTINGS)}>
         {hideContinueOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.continueOnFailure.value"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col items-start justify-between">
+              <FormItem>
                 <FormLabel
                   htmlFor="continueOnFailure"
-                  className="flex items-center justify-center"
+                  className="flex items-center gap-1 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -46,7 +47,7 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-3 grow">{t('Continue on Failure')}</span>
+                  <span className="ml-2">{t('Continue on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(
@@ -62,10 +63,10 @@ const ActionErrorHandlingForm = React.memo(
             name="settings.errorHandlingOptions.retryOnFailure.value"
             control={form.control}
             render={({ field }) => (
-              <FormItem className="flex flex-col items-start justify-between">
+              <FormItem>
                 <FormLabel
                   htmlFor="retryOnFailure"
-                  className="flex items-center justify-center"
+                  className="flex items-center gap-1 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -75,7 +76,7 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-3 grow">{t('Retry on Failure')}</span>
+                  <span className="ml-2">{t('Retry on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(

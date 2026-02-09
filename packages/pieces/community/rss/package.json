@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-rss",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "dependencies": {
     "feedparser": "2.2.10"
   }
