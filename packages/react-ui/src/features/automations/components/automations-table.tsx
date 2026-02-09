@@ -52,8 +52,8 @@ export const AutomationsTable = ({
       item.type !== 'load-more-folder' && item.type !== 'load-more-root',
   );
   return (
-    <div className="rounded-md border">
-      <Table>
+    <div className="rounded-md border overflow-x-auto">
+      <Table className="min-w-[1000px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[40px]">

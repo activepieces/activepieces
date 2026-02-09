@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
+import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
 import {
   useAutomationsTree,
   useAutomationsSelection,
@@ -348,6 +349,30 @@ export const AutomationsPage = () => {
 
   const displayItems = treeItems;
 
+  const hasFiltersActive =
+    searchTerm.length > 0 ||
+    typeFilter.length > 0 ||
+    statusFilter.length > 0 ||
+    connectionFilter.length > 0 ||
+    ownerFilter.length > 0;
+
+  const hasAnyItems = flows.length > 0 || tables.length > 0;
+  const isEmptyState = !hasAnyItems && !isLoading;
+  const isNoResultsState =
+    hasAnyItems && displayItems.length === 0 && hasFiltersActive && !isLoading;
+
+  const clearAllFilters = useCallback(() => {
+    setSearchTerm('');
+    setTypeFilter([]);
+    setStatusFilter([]);
+    setConnectionFilter([]);
+    setOwnerFilter([]);
+  }, []);
+
+  if (isEmptyState) {
+    return <AutomationsEmptyState onRefresh={() => {}} />;
+  }
+
   return (
     <div className="flex flex-col w-full">
       <AutomationsFiltersComponent
@@ -375,8 +400,8 @@ export const AutomationsPage = () => {
         onImportTable={() => setIsImportTableDialogOpen(true)}
       />
 
-      {displayItems.length === 0 && !isLoading ? (
-        <AutomationsEmptyState onRefresh={() => {}} />
+      {isNoResultsState ? (
+        <AutomationsNoResultsState onClearFilters={clearAllFilters} />
       ) : (
         <AutomationsTable
           items={displayItems}

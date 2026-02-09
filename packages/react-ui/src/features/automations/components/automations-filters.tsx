@@ -237,138 +237,137 @@ export const AutomationsFilters = ({
   })();
 
   return (
-    <div className="flex items-center justify-between gap-4 mb-4 overflow-x-auto scrollbar-hide">
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <Input
-          placeholder={t('Search flows and tables...')}
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="min-w-[200px] max-w-xs"
-        />
+    <div className="overflow-x-auto mb-4">
+      <div className="flex items-center justify-between gap-4 min-w-max">
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder={t('Search flows and tables...')}
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="min-w-[200px] max-w-xs"
+          />
 
-        <MultiSelectFilter
-          label={t('Type')}
-          icon={<Filter className="h-4 w-4" />}
-          options={typeOptions}
-          selectedValues={typeFilter}
-          onChange={onTypeFilterChange}
-        />
+          <MultiSelectFilter
+            label={t('Type')}
+            icon={<Filter className="h-4 w-4" />}
+            options={typeOptions}
+            selectedValues={typeFilter}
+            onChange={onTypeFilterChange}
+          />
 
-        <MultiSelectFilter
-          label={t('Status')}
-          icon={<ToggleLeft className="h-4 w-4" />}
-          options={statusOptions}
-          selectedValues={statusFilter}
-          onChange={onStatusFilterChange}
-        />
+          <MultiSelectFilter
+            label={t('Status')}
+            icon={<ToggleLeft className="h-4 w-4" />}
+            options={statusOptions}
+            selectedValues={statusFilter}
+            onChange={onStatusFilterChange}
+          />
 
-        <MultiSelectFilter
-          label={t('Connections')}
-          icon={<Link2 className="h-4 w-4" />}
-          options={connectionOptions}
-          selectedValues={connectionFilter}
-          onChange={onConnectionFilterChange}
-        />
+          <MultiSelectFilter
+            label={t('Connections')}
+            icon={<Link2 className="h-4 w-4" />}
+            options={connectionOptions}
+            selectedValues={connectionFilter}
+            onChange={onConnectionFilterChange}
+          />
 
-        <MultiSelectFilter
-          label={t('Owner')}
-          icon={<User className="h-4 w-4" />}
-          options={ownerOptions}
-          selectedValues={ownerFilter}
-          onChange={onOwnerFilterChange}
-        />
-      </div>
+          <MultiSelectFilter
+            label={t('Owner')}
+            icon={<User className="h-4 w-4" />}
+            options={ownerOptions}
+            selectedValues={ownerFilter}
+            onChange={onOwnerFilterChange}
+          />
+        </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 flex items-center gap-2 flex-shrink-0"
-            >
-              <Import className="h-4 w-4" />
-              {t('Import')}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteFlow}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToWriteFlow}
-                onClick={onImportFlow}
-                className="cursor-pointer"
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 flex items-center gap-2"
               >
-                <Workflow className="h-4 w-4 mr-2" />
-                {t('Import Flow')}
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteTable}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToWriteTable}
-                onClick={onImportTable}
-                className="cursor-pointer"
+                <Import className="h-4 w-4" />
+                {t('Import')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteFlow}
               >
-                <Table2 className="h-4 w-4 mr-2" />
-                {t('Import Table')}
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToWriteFlow}
+                  onClick={onImportFlow}
+                  className="cursor-pointer"
+                >
+                  <Workflow className="h-4 w-4 mr-2" />
+                  {t('Import Flow')}
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteTable}
+              >
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToWriteTable}
+                  onClick={onImportTable}
+                  className="cursor-pointer"
+                >
+                  <Table2 className="h-4 w-4 mr-2" />
+                  {t('Import Table')}
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              className="h-9 flex items-center gap-2 flex-shrink-0"
-            >
-              <Plus className="h-4 w-4" />
-              {t('Create New')}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteFlow}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToWriteFlow}
-                onClick={onCreateFlow}
-                className="cursor-pointer"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="h-9 flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                {t('Create New')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteFlow}
               >
-                <Workflow className="h-4 w-4 mr-2" />
-                {t('New Flow')}
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteTable}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToWriteTable}
-                onClick={onCreateTable}
-                className="cursor-pointer"
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToWriteFlow}
+                  onClick={onCreateFlow}
+                  className="cursor-pointer"
+                >
+                  <Workflow className="h-4 w-4 mr-2" />
+                  {t('New Flow')}
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteTable}
               >
-                <Table2 className="h-4 w-4 mr-2" />
-                {t('New Table')}
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
-            <DropdownMenuSeparator />
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteFolder}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToWriteFolder}
-                onClick={onCreateFolder}
-                className="cursor-pointer"
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToWriteTable}
+                  onClick={onCreateTable}
+                  className="cursor-pointer"
+                >
+                  <Table2 className="h-4 w-4 mr-2" />
+                  {t('New Table')}
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+              <DropdownMenuSeparator />
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteFolder}
               >
-                <FolderPlus className="h-4 w-4 mr-2" />
-                {t('New Folder')}
-              </DropdownMenuItem>
-            </PermissionNeededTooltip>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToWriteFolder}
+                  onClick={onCreateFolder}
+                  className="cursor-pointer"
+                >
+                  <FolderPlus className="h-4 w-4 mr-2" />
+                  {t('New Folder')}
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

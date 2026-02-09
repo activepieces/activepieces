@@ -34,9 +34,9 @@ export const AutomationsSelectionBar = ({
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-      <div className="flex items-center gap-3 bg-background border rounded-lg shadow-lg px-4 py-3">
+      <div className="flex items-center gap-3 bg-background border rounded-lg shadow-lg p-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={onMoveClick}
           disabled={isMoving || !hasMovableOrExportableItems}
@@ -45,7 +45,7 @@ export const AutomationsSelectionBar = ({
           {t('Move to')}
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={onExportClick}
           disabled={isExporting || !hasMovableOrExportableItems}
@@ -67,7 +67,7 @@ export const AutomationsSelectionBar = ({
           entityName={t('items')}
         >
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             className="text-destructive hover:text-destructive"
             disabled={isDeleting}
