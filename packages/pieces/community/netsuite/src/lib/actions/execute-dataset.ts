@@ -1,9 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { netsuiteAuth } from '../..';
-import { createOAuthHeader } from '../oauth';
-
-const PAGE_SIZE = 1000;
+import { NetSuiteClient } from '../common/client';
 
 export const executeDataset = createAction({
   name: 'executeDataset',
@@ -28,94 +26,39 @@ export const executeDataset = createAction({
         const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
           auth.props;
 
-        const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/query/v1/dataset`;
-        const httpMethod = HttpMethod.GET;
-        const queryParams = {
-          limit: String(PAGE_SIZE),
-        };
-
-        const authHeader = createOAuthHeader(
+        const client = new NetSuiteClient({
           accountId,
           consumerKey,
           consumerSecret,
           tokenId,
           tokenSecret,
-          requestUrl,
-          httpMethod,
-          queryParams
-        );
+        });
 
-        const response = await httpClient.sendRequest({
-          method: httpMethod,
-          url: requestUrl,
-          headers: {
-            Authorization: authHeader,
-            prefer: 'transient',
-            Cookie: 'NS_ROUTING_VERSION=LAGGING',
+        const response = await client.makeRequest<{ items: { id: string; name: string }[] }>({
+          method: HttpMethod.GET,
+          url: `${client.baseUrl}/services/rest/query/v1/dataset`,
+          queryParams: {
+            limit: '1000',
           },
-          queryParams: queryParams,
         });
 
         return {
           disabled: false,
-          options: response.body.items.map((item: any) => {
-            return {
-              label: item.name,
-              value: item.id,
-            };
-          }),
+          options: response.items.map((item) => ({
+            label: item.name,
+            value: item.id,
+          })),
         };
       },
     }),
   },
   async run(context) {
-    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
-      context.auth.props;
-
+    const client = new NetSuiteClient(context.auth.props);
     const { datasetId } = context.propsValue;
 
-    const results = [];
-    let pageOffset = 0;
-    let hasMore = true;
-
-    const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/query/v1/dataset/${datasetId}/result`;
-    const httpMethod = HttpMethod.GET;
-
-    // paginate results: https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156414087576.html
-    while (hasMore) {
-      const queryParams = {
-        limit: String(PAGE_SIZE),
-        offset: String(pageOffset),
-      };
-
-      const authHeader = createOAuthHeader(
-        accountId,
-        consumerKey,
-        consumerSecret,
-        tokenId,
-        tokenSecret,
-        requestUrl,
-        httpMethod,
-        queryParams
-      );
-
-      const response = await httpClient.sendRequest({
-        method: httpMethod,
-        url: requestUrl,
-        headers: {
-          Authorization: authHeader,
-          prefer: 'transient',
-          Cookie: 'NS_ROUTING_VERSION=LAGGING',
-        },
-        queryParams: queryParams,
-      });
-
-      results.push(...(response.body?.items || []));
-
-      hasMore = response.body?.hasMore || false;
-      pageOffset += PAGE_SIZE;
-    }
-
-    return results;
+    return client.makePaginatedRequest({
+      method: HttpMethod.GET,
+      url: `${client.baseUrl}/services/rest/query/v1/dataset/${datasetId}/result`,
+    });
   },
 });
