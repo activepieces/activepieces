@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadata } from '@/lib/types';
+import { PieceStepMetadata, StepMetadata, StepMetadataWithActionOrTriggerOrAgentDisplayName } from '@/lib/types';
 import {
   FlowAction,
   FlowActionType,
@@ -39,8 +39,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
-  const actionOrTriggerDisplayName =
-    stepMetadata?.actionOrTriggerOrAgentDisplayName;
+
 
   return (
     <div className="flex items-center justify-between gap-1">
@@ -52,17 +51,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
             showTooltip={true}
             size="md"
           />
-          <div className="flex items-center gap-0.5 min-w-0 text-sm">
-            {!isNil(actionOrTriggerDisplayName) ? (
-              <TextWithTooltip tooltipMessage={actionOrTriggerDisplayName}>
-                <span className="font-medium text-foreground min-w-0">
-                  {actionOrTriggerDisplayName}
-                </span>
-              </TextWithTooltip>
-            ) : (
-              <Skeleton className="h-4 w-32 rounded" />
-            )}
-          </div>
+          <StepDisplayedText stepMetadata={stepMetadata}></StepDisplayedText>
           {!isNil(stepMetadata?.actionOrTriggerOrAgentDescription) &&
             stepMetadata.actionOrTriggerOrAgentDescription.length > 0 && (
               <Tooltip>
@@ -133,3 +122,20 @@ const PreviousOrNextButton = ({ isNext }: { isNext: boolean }) => {
     </Tooltip>
   );
 };
+
+
+const StepDisplayedText = ({ stepMetadata }: { stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName  }) => {
+  const actionOrTriggerDisplayName = stepMetadata?.type === FlowActionType.PIECE || stepMetadata?.type === FlowTriggerType.PIECE ? stepMetadata?.actionOrTriggerOrAgentDisplayName : stepMetadata?.displayName;
+
+   return (  <div className="flex items-center gap-0.5 min-w-0 text-sm">
+    {!isNil(actionOrTriggerDisplayName) ? (
+      <TextWithTooltip tooltipMessage={actionOrTriggerDisplayName}>
+        <span className="font-medium text-foreground min-w-0">
+          {actionOrTriggerDisplayName}
+        </span>
+      </TextWithTooltip>
+    ) : (
+      <Skeleton className="h-4 w-32 rounded" />
+    )}
+  </div>)
+}

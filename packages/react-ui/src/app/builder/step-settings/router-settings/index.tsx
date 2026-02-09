@@ -171,7 +171,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       )}
 
       {isNil(selectedBranchIndex) && (
-        <div className="mt-4">
+        <div >
           <div className="flex gap-2 mb-2 items-center">
             <Split className="w-4 h-4 rotate-180"></Split>
             <Label>{t('Branches')}</Label>
