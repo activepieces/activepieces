@@ -23,28 +23,16 @@ export const executeDataset = createAction({
           };
         }
 
-        const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
-          auth.props;
+        const client = new NetSuiteClient(auth.props);
 
-        const client = new NetSuiteClient({
-          accountId,
-          consumerKey,
-          consumerSecret,
-          tokenId,
-          tokenSecret,
-        });
-
-        const response = await client.makeRequest<{ items: { id: string; name: string }[] }>({
+        const items = await client.makePaginatedRequest<{ id: string; name: string }>({
           method: HttpMethod.GET,
           url: `${client.baseUrl}/services/rest/query/v1/dataset`,
-          queryParams: {
-            limit: '1000',
-          },
         });
 
         return {
           disabled: false,
-          options: response.items.map((item) => ({
+          options: items.map((item) => ({
             label: item.name,
             value: item.id,
           })),
