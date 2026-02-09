@@ -9,7 +9,7 @@ import {
   mentionOriginFlow,
   iconEmoji,
 } from '../common/props';
-import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage } from '../common/utils';
+import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../../';
 import { Block,KnownBlock } from '@slack/web-api';
 
@@ -68,8 +68,8 @@ export const slackSendMessageAction = createAction({
     const blockList: (KnownBlock | Block)[] = [];
 
 
-    if (text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
-      blockList.push({ type: 'section', text: { type: 'mrkdwn', text } });
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
     }
 
     if(blocks && Array.isArray(blocks) && blocks.length > 0) {
