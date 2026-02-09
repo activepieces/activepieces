@@ -31,6 +31,7 @@ import { PlatformLayout } from '../components/platform-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
+import { AutomationsPage } from '../routes/automations';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
@@ -105,13 +106,23 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   },
+  // deprecated - redirect to automations
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
+    element: <Navigate to="/automations" replace />,
+  }),
+  // deprecated - redirect to automations
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.tables,
+    element: <Navigate to="/automations" replace />,
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.automations,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_FLOW}>
-          <PageTitle title="Flows">
-            <FlowsPage />
+        <RoutePermissionGuard permission={[Permission.READ_FLOW, Permission.READ_TABLE]}>
+          <PageTitle title="Automations">
+            <AutomationsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
@@ -187,18 +198,7 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.tables,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_TABLE}>
-          <PageTitle title="Tables">
-            <ApTablesPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
+  
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
     element: (

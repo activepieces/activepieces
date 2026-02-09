@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -110,19 +111,41 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     refetch: refetchFolders,
   } = foldersHooks.useFolders();
 
+  const isAutomationsPage = location.pathname.includes('/automations');
+
   const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
     queryFn: () =>
       flowsApi.count({ projectId: authenticationSession.getProjectId()! }),
   });
 
+  const { data: allTablesCount, refetch: refetchAllTablesCount } = useQuery({
+    enabled: isAutomationsPage,
+    queryKey: ['tablesCount', authenticationSession.getProjectId()],
+    queryFn: () =>
+      tablesApi.count({ projectId: authenticationSession.getProjectId()! }),
+  });
+
+  const automationsCount = (allFlowsCount ?? 0) + (allTablesCount ?? 0);
+
   useEffect(() => {
     refetchFolders();
     refetchAllFlowsCount();
+    refetchAllTablesCount();
   }, [refresh]);
 
   const isInUncategorized = selectedFolderId === UncategorizedFolderId;
-  const isInAllFlows = isNil(selectedFolderId);
+  const isInAllItems = isNil(selectedFolderId);
+
+  const allItemsCount = isAutomationsPage
+    ? automationsCount ?? 0
+    : allFlowsCount ?? 0;
+
+  const uncategorizedCount = isAutomationsPage
+    ? foldersUtils.extractUncategorizedFlows(automationsCount, folders)
+    : foldersUtils.extractUncategorizedFlows(allFlowsCount, folders);
+
+  const allItemsLabel = isAutomationsPage ? t('All items') : t('All flows');
 
   return (
     <div className="mt-4">
@@ -144,7 +167,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         <Button
           variant="accent"
           className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
-            'bg-muted': isInAllFlows,
+            'bg-muted': isInAllItems,
           })}
           onClick={() => updateSearchParams(undefined)}
         >
@@ -152,14 +175,14 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             icon={<TableProperties className="w-4 h-4"></TableProperties>}
             text={
               <div className="grow whitespace-break-spaces break-all text-start truncate">
-                {t('All flows')}
+                {allItemsLabel}
               </div>
             }
           />
           <div className="grow"></div>
           <div className="flex flex-row -space-x-4">
             <span className="size-9 flex items-center justify-center text-muted-foreground">
-              {allFlowsCount}
+              {allItemsCount}
             </span>
           </div>
         </Button>
@@ -181,7 +204,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           <div className="grow"></div>
           <div className="flex flex-row -space-x-4">
             <span className="size-9 flex items-center justify-center text-muted-foreground">
-              {foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)}
+              {uncategorizedCount}
             </span>
           </div>
         </Button>
