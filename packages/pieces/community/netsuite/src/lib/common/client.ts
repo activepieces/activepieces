@@ -1,4 +1,8 @@
-import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  QueryParams,
+} from '@activepieces/pieces-common';
 import { createOAuthHeader } from './oauth';
 
 const PAGE_SIZE = 1000;
@@ -34,7 +38,12 @@ export class NetSuiteClient {
     return `https://${this.auth.accountId}.suitetalk.api.netsuite.com`;
   }
 
-  async makeRequest<T>({ method, url, queryParams, body }: MakeRequestParams): Promise<T> {
+  async makeRequest<T>({
+    method,
+    url,
+    queryParams,
+    body,
+  }: MakeRequestParams): Promise<T> {
     const authHeader = createOAuthHeader(
       this.auth.accountId,
       this.auth.consumerKey,
@@ -43,7 +52,7 @@ export class NetSuiteClient {
       this.auth.tokenSecret,
       url,
       method,
-      queryParams,
+      queryParams
     );
 
     const response = await httpClient.sendRequest({

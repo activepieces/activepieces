@@ -25,7 +25,10 @@ export const executeDataset = createAction({
 
         const client = new NetSuiteClient(auth.props);
 
-        const items = await client.makePaginatedRequest<{ id: string; name: string }>({
+        const items = await client.makePaginatedRequest<{
+          id: string;
+          name: string;
+        }>({
           method: HttpMethod.GET,
           url: `${client.baseUrl}/services/rest/query/v1/dataset`,
         });
