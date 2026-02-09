@@ -18,7 +18,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             const provider = secretManagerProvider(log, metadata.id)
             const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
             const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
-            const isConnected = !isNil(decryptedConfig) && await provider.checkConnection(decryptedConfig).catch(() => false)
+            const isConnected = !isNil(decryptedConfig) && Boolean(await provider.checkConnection(decryptedConfig).catch(() => false))
 
             return {
                 ...metadata,

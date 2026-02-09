@@ -24,6 +24,7 @@ export type SecretManager = Static<typeof SecretManagerEntitySchema>
 export const SecretManagerFieldSchema =  Type.Object({
     displayName: Type.String(),
     placeholder: Type.String(),
+    optional: Type.Optional(Type.Boolean()),
 })
 
 

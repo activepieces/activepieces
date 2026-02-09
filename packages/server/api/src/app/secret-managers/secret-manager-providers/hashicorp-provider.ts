@@ -12,9 +12,22 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             displayName: 'URL',
             placeholder: 'http://localhost:8200',
         },
-        token: {
-            displayName: 'Token',
-            placeholder: 'token',
+        appRoleName: {
+            displayName: 'App Role Name',
+            placeholder: 'app-role',
+        },
+        namespace: {
+            displayName: 'Namespace',
+            placeholder: 'namespace',
+            optional: true,
+        },
+        roleId: {
+            displayName: 'Role ID',
+            placeholder: 'role-id',
+        },
+        secretId: {
+            displayName: 'Secret ID',
+            placeholder: 'secret-id',
         },
     },
     getSecretParams: {
@@ -27,10 +40,14 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
 
 export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
     checkConnection: async (config) => {
-        await vaultApi({
-            url: `${config.url}/v1/sys/mounts`,
-            token: config.token,
-            method: 'GET',
+        const response = await vaultApi({
+            url: `${config.url}/v1/auth/approle/login`,
+            method: 'POST',
+            body: {
+                role_id: config.roleId,
+                secret_id: config.secretId,
+            },
+            namespace: config.namespace,
         }).catch((error) => {
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
@@ -40,7 +57,30 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
                 },
             })
         })
-        return true
+        const token = response.data?.auth?.client_token
+        if (!token) {
+            throw new ActivepiecesError({
+                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
+                params: {
+                    message: 'No token received',
+                    provider: SecretManagerProviderId.HASHICORP,
+                },
+            })
+        }
+        await vaultApi({
+            url: `${config.url}/v1/sys/mounts`,
+            token,
+            method: 'GET',
+        }).catch((error) => {
+            throw new ActivepiecesError({
+                code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
+                params: {
+                    message: 'Permission denied. make sure the app role policies has the necessary permissions ' + error.message,
+                    provider: SecretManagerProviderId.HASHICORP,
+                },
+            })
+        })
+        return token
     },
     connect: async (config) => {
         await hashicorpProvider(log).checkConnection(config)
@@ -49,14 +89,14 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         return Promise.resolve()
     },
     getSecret: async (request: HashicorpGetSecretRequest, config: HashicorpProviderConfig) => {
-
         const pathParts = request.path.split('/')
         const mountPath = pathParts.slice(0, -1).join('/')
         const secretKey = pathParts.slice(-1)[0]
+        const token = await hashicorpProvider(log).checkConnection(config) as string
 
         const response = await vaultApi({
             url: `${config.url}/v1/${mountPath}`,
-            token: config.token,
+            token,
             method: 'GET',
         }).catch((error) => {
             log.error({
@@ -126,9 +166,11 @@ const vaultApi = async ({
     token,
     method,
     body,
+    namespace,
 }: {
     url: string
-    token: string
+    token?: string
+    namespace?: string
     method: string
     body?: Record<string, unknown>
 }) => {
@@ -136,8 +178,8 @@ const vaultApi = async ({
         url,
         method,
         headers: {
-            'X-Vault-Token': token,
-            'X-Vault-Request': 'true',
+            ...(token && { 'X-Vault-Token': token, 'X-Vault-Request': 'true' }),
+            ...(namespace && { 'X-Vault-Namespace': namespace }),
         },
         data: body,
     })

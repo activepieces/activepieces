@@ -12,7 +12,10 @@ export enum SecretManagerProviderId {
 
 export const HashicorpProviderConfigSchema = Type.Object({
     url: Type.String(),
-    token: Type.String(),
+    appRoleName: Type.String(),
+    namespace: Type.Optional(Type.String()),
+    roleId: Type.String(),
+    secretId: Type.String(),
 })
 export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchema>
 

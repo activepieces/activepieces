@@ -110,11 +110,16 @@ const ConnectSecretManagerDialog = ({
                 name={fieldId}
                 render={({ field: formField }) => (
                   <FormItem className="grid space-y-3">
-                    <Label htmlFor="fieldName">{field.displayName}</Label>
+                    <Label htmlFor="fieldName">
+                      {field.displayName}
+                      {!field.optional && (
+                        <span className="text-red-500 ml-1">*</span>
+                      )}
+                    </Label>
                     <div className="flex gap-2 items-center justify-center">
                       <Input
                         {...formField}
-                        required
+                        required={!field.optional}
                         id={fieldId}
                         placeholder={field.placeholder}
                         className="rounded-sm"

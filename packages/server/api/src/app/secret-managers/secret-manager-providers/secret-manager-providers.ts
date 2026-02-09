@@ -4,7 +4,7 @@ import { awsProvider } from './aws-provider'
 import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from './hashicorp-provider'
 
 export type SecretManagerProvider<K extends SecretManagerProviderId> = {
-    checkConnection: (config: SecretManagerConfigFor<K>) => Promise<boolean>
+    checkConnection: (config: SecretManagerConfigFor<K>) => Promise<unknown>
     connect: (config: SecretManagerConfigFor<K>) => Promise<void>
     disconnect: () => Promise<void>
     getSecret: (params: GetSecretManagerSecretRequestFor<K>, config: SecretManagerConfigFor<K>) => Promise<string>
