@@ -17,8 +17,7 @@ export const HashicorpProviderConfigSchema = Type.Object({
 export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchema>
 
 export const HashicorpGetSecretRequestSchema = Type.Object({
-    mountPath: Type.String(),
-    secretKey: Type.String(),
+    path: Type.String(),
 })
 export type HashicorpGetSecretRequest = Static<typeof HashicorpGetSecretRequestSchema>
 

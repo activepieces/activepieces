@@ -160,6 +160,14 @@ export const appConnectionsMutations = {
               );
               break;
             }
+            case ErrorCode.VALIDATION: {
+              setErrorMessage(
+                t('Validation error: {msg}', {
+                  msg: apError.params.message,
+                }),
+              );
+              break;
+            }
 
             default: {
               setErrorMessage('Unexpected error, please contact support');

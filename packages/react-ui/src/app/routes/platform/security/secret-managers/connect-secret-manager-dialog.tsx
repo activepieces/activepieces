@@ -130,27 +130,27 @@ const ConnectSecretManagerDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
+            <DialogFooter>
+              <Button
+                variant={'outline'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setOpen(false);
+                }}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                disabled={!form.formState.isValid}
+                loading={isPending}
+                type="submit"
+              >
+                {t('Save')}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-        <DialogFooter>
-          <Button
-            variant={'outline'}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setOpen(false);
-            }}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            disabled={!form.formState.isValid}
-            loading={isPending}
-            type="submit"
-          >
-            {t('Save')}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -30,7 +30,7 @@ const SecretTextConnectionSettings = React.memo(
         name="request.value.secret_text"
         control={form.control}
         render={({ field }) => (
-          <FormItem className="flex flex-col">
+          <FormItem className="flex flex-col gap-2">
             <FormLabel>{authProperty.displayName}</FormLabel>
             <FormControl>
               <SecretInput {...field} type="password" />
