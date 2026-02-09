@@ -94,7 +94,7 @@ export class NetSuiteClient {
       });
 
       results.push(...(response.items || []));
-      hasMore = response.hasMore || false;
+      hasMore = response.hasMore ?? false;
       pageOffset += PAGE_SIZE;
     }
 
