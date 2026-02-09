@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { createOAuthHeader } from '../oauth';
+import { createOAuthHeader } from './oauth';
 
 const PAGE_SIZE = 1000;
 

@@ -10,7 +10,7 @@ import { runSuiteQL } from './lib/actions/run-suiteql';
 import { executeDataset } from './lib/actions/execute-dataset';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createOAuthHeader } from './lib/oauth';
+import { createOAuthHeader } from './lib/common/oauth';
 
 export const netsuiteAuth = PieceAuth.CustomAuth({
   required: true,
