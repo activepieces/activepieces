@@ -16,6 +16,8 @@ export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
 const repo = repoFactory(PieceMetadataEntity)
 
 let cache: LRU<unknown>
+const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+const isTestingEnvironment = environment === ApEnvironment.TESTING
 
 const CACHE_KEY = {
     list: (locale: LocalesEnum): string => `list:${locale}`,
@@ -24,17 +26,14 @@ const CACHE_KEY = {
 }
 
 export const localPieceCache = (log: FastifyBaseLogger) => {
-    const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-    const isTestingEnvironment = environment === ApEnvironment.TESTING
-    
     return {
         async setup(): Promise<void> {
+            const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
+            cache = lru(cacheMaxSize)
+            
             if (isTestingEnvironment) {
                 return
             }
-            
-            const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
-            cache = lru(cacheMaxSize)
             
             await warmCache(log)
             
@@ -60,16 +59,6 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
         
         async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
             const { platformId, locale = LocalesEnum.ENGLISH } = params
-            
-            if (isTestingEnvironment) {
-                const pieces = await fetchPiecesFromDB()
-                const devPieces = await loadDevPiecesIfEnabled(log)
-                const translatedDevPieces = devPieces.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }))
-                
-                return [...lastVersionOfEachPiece(pieces), ...translatedDevPieces]
-                    .filter((piece) => filterPieceBasedOnType(platformId, piece))
-            }
-            
             const cacheKey = CACHE_KEY.list(locale)
             let allTranslatedPieces = cache.get(cacheKey) as PieceMetadataSchema[] | undefined
             
@@ -108,11 +97,6 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
                 return devPiece
             }
             
-            if (isTestingEnvironment) {
-                const pieces = await fetchPiecesFromDB()
-                return pieces.find(p => p.name === pieceName && p.version === version) ?? null
-            }
-            
             const cacheKey = CACHE_KEY.piece(pieceName, version, platformId)
             
             return getCachedOrFetch(cacheKey, async () => {
@@ -129,18 +113,6 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
         
         async getRegistry(params: GetRegistryParams): Promise<PieceRegistryEntry[]> {
             const { release, platformId } = params
-            
-            if (isTestingEnvironment) {
-                const pieces = await fetchPiecesFromDB()
-                const devPieces = await loadDevPiecesIfEnabled(log)
-                
-                const registry = pieces.map(toRegistryEntry)
-                
-                const devRegistry = devPieces.map(toRegistryEntry)
-                
-                return [...registry, ...devRegistry]
-            }
-            
             const cacheKey = CACHE_KEY.registry()
             const allRegistry = await getCachedOrFetch(cacheKey, async () => {
                 const allPieces = await fetchPiecesFromDB()
@@ -195,6 +167,10 @@ async function getCachedOrFetch<T>(
     cacheKey: string,
     fetchFn: () => Promise<T>,
 ): Promise<T> {
+    if (isTestingEnvironment) {
+        return fetchFn()
+    }
+
     const cached = cache.get(cacheKey) as T | undefined
     if (!isNil(cached)) {
         return cached
