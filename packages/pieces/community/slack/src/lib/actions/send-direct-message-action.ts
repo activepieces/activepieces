@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { buildFlowOriginContextBlock, slackSendMessage } from '../common/utils';
+import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../../';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
@@ -42,7 +42,7 @@ export const slackSendDirectMessageAction = createAction({
     assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
 
-    const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
+    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(text)]
 
     if(blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))

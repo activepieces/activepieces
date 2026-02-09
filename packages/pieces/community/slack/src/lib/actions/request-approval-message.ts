@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { buildFlowOriginContextBlock, slackSendMessage } from '../common/utils';
+import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../..';
 import {
   assertNotNullOrUndefined,
@@ -61,13 +61,7 @@ export const requestSendApprovalMessageAction = createAction({
         ts: messageTs,
         text: context.propsValue.text,
         blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `${context.propsValue.text}`,
-            },
-          },
+          ...textToSectionBlocks(`${context.propsValue.text}`),
           {
             type: 'actions',
             block_id: 'actions',
