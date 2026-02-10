@@ -85,7 +85,7 @@ const BuilderPage = () => {
     useState(false);
 
   return (
-    <div className="flex h-full w-full flex-col relative">
+    <div className="flex h-full w-full flex-col relative max-h-[100vh]">
       <div className="z-40">
         <BuilderHeader />
       </div>
@@ -148,7 +148,7 @@ const BuilderPage = () => {
             }ms`,
           }}
         >
-          <div ref={rightSidePanelRef} className="h-full w-full">
+          <div ref={rightSidePanelRef} className="h-full w-full overflow-auto">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               selectedStep && (
                 <ResizableVerticalPanelsProvider>
