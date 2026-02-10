@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-todo",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "dependencies": {
     "@microsoft/microsoft-graph-client": "3.0.7",
     "@microsoft/microsoft-graph-types": "2.40.0"

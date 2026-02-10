@@ -1,7 +1,6 @@
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -30,6 +29,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
@@ -39,7 +39,6 @@ import {
   isNil,
   PlatformRole,
   ProjectType,
-  ProjectWithLimits,
   TeamProjectsLimit,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
@@ -60,7 +59,6 @@ export function ProjectDashboardSidebar() {
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
-  const projectsScrollRef = useRef<HTMLDivElement>(null);
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
 
@@ -115,45 +113,13 @@ export function ProjectDashboardSidebar() {
     [navigate],
   );
 
-  // Virtual scrolling setup
   const ITEM_HEIGHT = state === 'collapsed' ? 40 : 44;
-
-  const rowVirtualizer = useVirtualizer({
-    count: displayProjects.length,
-    getScrollElement: () => projectsScrollRef.current,
-    estimateSize: useCallback(() => ITEM_HEIGHT, [ITEM_HEIGHT]),
-    overscan: 10,
-    getItemKey: useCallback(
-      (index: number) => displayProjects[index]?.id ?? index,
-      [displayProjects],
-    ),
-  });
-
-  const virtualItems = rowVirtualizer.getVirtualItems();
-
-  const renderProjectItem = useCallback(
-    (project: ProjectWithLimits) => {
-      return (
-        <ProjectSideBarItem
-          key={project.id}
-          project={project}
-          isCurrentProject={location.pathname.includes(
-            `/projects/${project.id}`,
-          )}
-          handleProjectSelect={handleProjectSelect}
-        />
-      );
-    },
-    [location.pathname, handleProjectSelect],
-  );
-
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
     }
     return true;
   };
-
   const handleExploreClick = useCallback(() => {
     templatesTelemetryApi.sendEvent({
       eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
@@ -198,7 +164,7 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar collapsible="icon">
+      <Sidebar collapsible="icon" className="max-h-[100vh]">
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">
@@ -212,7 +178,7 @@ export function ProjectDashboardSidebar() {
 
           <SidebarSeparator />
 
-          <SidebarGroup className="flex-1">
+          <SidebarGroup className="flex-1 overflow-hidden">
             <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
               <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
               <div className="flex items-center justify-center gap-2">
@@ -298,45 +264,45 @@ export function ProjectDashboardSidebar() {
               </div>
             </div>
             <div
-              ref={projectsScrollRef}
-              className={cn(
-                'flex-1 overflow-y-auto',
-                state === 'collapsed'
-                  ? 'flex flex-col items-center scrollbar-none'
-                  : 'scrollbar-hover',
-              )}
+              className="flex-1 grow min-h-0 flex flex-col overflow-hidden"
               onClick={(e) => {
                 e.stopPropagation();
               }}
             >
-              {displayProjects.length > 0 ? (
-                <SidebarMenu
-                  className={cn('flex flex-col items-start w-full')}
-                  style={{
-                    height: `${rowVirtualizer.getTotalSize()}px`,
-                    position: 'relative',
-                  }}
-                >
-                  {virtualItems.map((virtualItem) => {
-                    const project = displayProjects[virtualItem.index];
-                    return (
-                      <SidebarMenuItem
-                        key={virtualItem.key}
-                        data-virtual-index={virtualItem.index}
-                        className="w-full"
-                      >
-                        {renderProjectItem(project)}
+              <div className="flex grow max-h-[100%]">
+                {displayProjects.length > 0 ? (
+                  <VirtualizedScrollArea
+                    className={cn(
+                      'flex-1',
+                      state === 'collapsed'
+                        ? 'flex flex-col items-center scrollbar-none'
+                        : 'scrollbar-hover',
+                    )}
+                    items={displayProjects}
+                    estimateSize={() => ITEM_HEIGHT}
+                    getItemKey={(index) => displayProjects[index]?.id ?? index}
+                    overscan={10}
+                    renderItem={(project) => (
+                      <SidebarMenuItem className="w-full">
+                        <ProjectSideBarItem
+                          key={project.id}
+                          project={project}
+                          isCurrentProject={location.pathname.includes(
+                            `/projects/${project.id}`,
+                          )}
+                          handleProjectSelect={handleProjectSelect}
+                        />
                       </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              ) : (
-                isSearchMode && (
-                  <div className="px-2 py-2 text-sm text-muted-foreground">
-                    {state === 'expanded' && t('No projects found.')}
-                  </div>
-                )
-              )}
+                    )}
+                  />
+                ) : (
+                  isSearchMode && (
+                    <div className="px-2 py-2 text-sm text-muted-foreground">
+                      {state === 'expanded' && t('No projects found.')}
+                    </div>
+                  )
+                )}
+              </div>
             </div>
           </SidebarGroup>
         </SidebarContent>
