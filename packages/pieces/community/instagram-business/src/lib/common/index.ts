@@ -17,24 +17,33 @@ To Obtain the following credentials:
 4. Copy App Id and App Secret from Basic Settings.
 `;
 
-const instagramBusinessAuth =  PieceAuth.OAuth2({
+const instagramBusinessAuth = PieceAuth.OAuth2({
   description: markdown,
   authUrl: 'https://graph.facebook.com/oauth/authorize',
   tokenUrl: 'https://graph.facebook.com/oauth/access_token',
   required: true,
-  scope: ['instagram_basic', 'instagram_content_publish', 'business_management', 'pages_show_list'],
-})
+  scope: [
+    'instagram_basic',
+    'instagram_content_publish',
+    'business_management',
+    'pages_show_list',
+  ],
+});
 export const instagramCommon = {
   baseUrl: 'https://graph.facebook.com/v17.0',
 
   authentication: instagramBusinessAuth,
 
-  page: Property.Dropdown<FacebookPageDropdown,true,typeof instagramBusinessAuth>({
+  page: Property.Dropdown<
+    FacebookPageDropdown,
+    true,
+    typeof instagramBusinessAuth
+  >({
     auth: instagramBusinessAuth,
     displayName: 'Page',
     required: true,
     refreshers: [],
-    options: async ({ auth }) => {
+    options: async ({ auth, propsValue }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -42,11 +51,15 @@ export const instagramCommon = {
           placeholder: 'Connect your account',
         };
       }
+      const accessToken: string = getAccessTokenOrThrow(auth);
+      const freshPages: any[] = await instagramCommon.getPages(accessToken);
 
-      const accessToken: string = getAccessTokenOrThrow(
-        auth
-      );
-      const pages: any[] = (await instagramCommon.getPages(accessToken))
+      const selectedPage = (propsValue as any)?.page as
+        | FacebookPageDropdown
+        | undefined;
+      const selectedPageId = selectedPage?.id;
+
+      const pages: any[] = freshPages
         .map((page: FacebookPage) => {
           if (!page.instagram_business_account) {
             return null;
@@ -60,6 +73,18 @@ export const instagramCommon = {
           };
         })
         .filter((f: unknown) => f !== null);
+
+      if (selectedPageId && selectedPage) {
+        const existsInOptions = pages.some(
+          (p) => p.value.id === selectedPageId
+        );
+        if (!existsInOptions) {
+          pages.push({
+            label: `Selected Page (${selectedPageId.substring(0, 8)}...)`,
+            value: selectedPage, // Preserve exact value
+          });
+        }
+      }
 
       return {
         options: pages,
@@ -112,16 +137,24 @@ export const instagramCommon = {
       },
     });
 
-    const publishContainerRequest = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${instagramCommon.baseUrl}/${page.id}/media_publish`,
-      body: {
-        access_token: page.accessToken,
-        creation_id: createContainerRequest.body.id,
-      },
-    });
-
-    return publishContainerRequest.body;
+    const isUploaded = await isUploadSuccessful(
+      createContainerRequest.body.id,
+      page.accessToken,
+      0
+    );
+    if (isUploaded) {
+      const publishContainerRequest = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: `${instagramCommon.baseUrl}/${page.id}/media_publish`,
+        body: {
+          access_token: page.accessToken,
+          creation_id: createContainerRequest.body.id,
+        },
+      });
+      return publishContainerRequest.body;
+    } else {
+      return false;
+    }
   },
 
   createVideoPost: async (
