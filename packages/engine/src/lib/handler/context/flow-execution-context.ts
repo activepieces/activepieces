@@ -15,8 +15,10 @@ export type FlowVerdict = {
     status: FlowRunStatus.FAILED
     failedStep: FailedStep
 } | {
+    status: FlowRunStatus.TIMEOUT
+} | {
     status: FlowRunStatus.RUNNING
-} 
+}
 
 export class FlowExecutorContext {
     tags: readonly string[]

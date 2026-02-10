@@ -54,24 +54,33 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         const output = await codeSandbox.runCodeModule({
             codeModule,
             inputs: resolvedInput,
+            timeoutMs: 30000,
         })
     
         return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
     }))
 
     if (executionStateError) {
+        const isTimeout = executionStateError.message?.includes('timed out')
+
         const failedStepOutput = stepOutput
             .setStatus(StepOutputStatus.FAILED)
-            .setErrorMessage(utils.formatError(executionStateError))
+            .setErrorMessage(isTimeout
+                ? 'Code execution timed out'
+                : utils.formatError(executionStateError))
             .setDuration(performance.now() - stepStartTime)
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: utils.formatError(executionStateError),
-            } })
+            .setVerdict(isTimeout
+                ? { status: FlowRunStatus.TIMEOUT }
+                : {
+                    status: FlowRunStatus.FAILED, failedStep: {
+                        name: action.name,
+                        displayName: action.displayName,
+                        message: utils.formatError(executionStateError),
+                    },
+                })
     }
 
     return executionStateResult
