@@ -42,6 +42,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '25',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
+    [AppSystemProp.CODE_TIMEOUT_SECONDS]: '30',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '10',

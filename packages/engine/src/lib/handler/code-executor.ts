@@ -8,6 +8,7 @@ import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/e
 import { progressService } from '../services/progress.service'
 import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
+import { EngineConstants } from './context/engine-constants'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -54,7 +55,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         const output = await codeSandbox.runCodeModule({
             codeModule,
             inputs: resolvedInput,
-            timeoutMs: 30000,
+            timeoutMs: EngineConstants.CODE_TIMEOUT_MS,
         })
     
         return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
