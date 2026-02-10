@@ -123,17 +123,10 @@ export const sendMessage = createAction({
       description: 'The message to be posted (optional if images are provided)',
       required: false,
     }),
-    images: Property.Array({
-      displayName: 'Image URLs',
-      description: 'Optional array of image URLs to attach to the message',
+    images: Property.LongText({
+      displayName: 'Images',
+      description: 'Image URLs separated by commas (e.g., https://example.com/image1.png, https://example.com/image2.png)',
       required: false,
-      properties: {
-        url: Property.ShortText({
-          displayName: 'Image URL',
-          description: 'Public URL of the image to send (e.g., https://example.com/image.png)',
-          required: true,
-        }),
-      },
     }),
   },
   async run({ propsValue, auth }) {
@@ -141,9 +134,17 @@ export const sendMessage = createAction({
     const channelData = JSON.parse(propsValue.channel as string);
     const dynamicFields = propsValue.dynamicFields as DynamicPropsValue;
 
+    // Parse comma-separated image URLs
+    const imageUrls = propsValue.images
+      ? propsValue.images
+          .split(',')
+          .map((url) => url.trim())
+          .filter((url) => url.length > 0)
+      : [];
+
     // Validate that at least message or images is provided
     const hasMessage = propsValue.message && propsValue.message.trim().length > 0;
-    const hasImages = propsValue.images && propsValue.images.length > 0;
+    const hasImages = imageUrls.length > 0;
 
     if (!hasMessage && !hasImages) {
       throw new Error('Either message or images must be provided');
@@ -162,8 +163,8 @@ export const sendMessage = createAction({
         ...(channelData.type === 'forum' && {
           forumTopicId: dynamicFields['topicId'],
         }),
-        ...(propsValue.images && propsValue.images.length > 0 && {
-          images: (propsValue.images as Array<{ url: string }>).map((item) => item.url),
+        ...(hasImages && {
+          images: imageUrls,
         }),
       },
     });
