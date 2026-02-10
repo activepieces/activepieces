@@ -58,6 +58,11 @@ export const DisconnectSecretManagerRequestSchema = Type.Object({
 })
 export type DisconnectSecretManagerRequest = Static<typeof DisconnectSecretManagerRequestSchema>
 
+export const ResolveSecretRequestSchema = Type.Object({
+    key: Type.String(),
+})
+export type ResolveSecretRequest = Static<typeof ResolveSecretRequestSchema>
+
 
 export const GetSecretManagerSecretRequestSchema = DiscriminatedUnion('providerId', [
     Type.Object({

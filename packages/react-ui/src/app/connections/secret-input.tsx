@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useImperativeHandle } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input, InputProps } from '@/components/ui/input';
@@ -21,9 +21,14 @@ import { secretManagersHooks } from '@/features/secret-managers/lib/secret-manag
 import { cn } from '@/lib/utils';
 import { SecretManagerProviderId } from '@activepieces/shared';
 
+export type SecretInputHandle = {
+  resolveSecret: () => Promise<string>;
+};
+
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
   onChange?: (value: string) => void;
+  secretRef?: React.RefObject<SecretInputHandle | null>;
 };
 
 type SecretManagerToggleButtonProps = {
@@ -65,13 +70,40 @@ SecretManagerToggleButton.displayName = 'SecretManagerToggleButton';
 const SECRET_VALUE_REGEX = /^\{\{\s*(\w+):(.*)\s*\}\}$/;
 
 const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
-  ({ className, value, onChange, ...restProps }, ref) => {
-    // Extract only the props we want to pass to inner inputs (exclude potential conflicting ones)
+  ({ className, value, onChange, secretRef, ...restProps }, ref) => {
     const { onBlur, name, disabled, ...otherProps } = restProps;
 
     const { data: secretManagers } = secretManagersHooks.useSecretManagers({
       connectedOnly: true,
     });
+
+    const { mutate: resolveSecret } = secretManagersHooks.useResolveSecret();
+
+    useImperativeHandle(
+      secretRef,
+      () => ({
+        resolveSecret: async (): Promise<string> => {
+          const parsed = parseSecretValue(value);
+          if (parsed.isSecretManager) {
+            return new Promise<string>((resolve, reject) => {
+              resolveSecret(
+                { key: value! },
+                {
+                  onSuccess: (data) => {
+                    resolve(data);
+                  },
+                  onError: (error) => {
+                    reject(error);
+                  },
+                },
+              );
+            });
+          }
+          return value || '';
+        },
+      }),
+      [value, secretManagers],
+    );
 
     const providerGetSecretParams = (providerId: SecretManagerProviderId) =>
       Object.entries(
@@ -143,11 +175,9 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       setUseSecretManager(newUseSecretManager);
 
       if (newUseSecretManager) {
-        // Switching to secret manager mode - build initial value
         const newValue = buildSecretValue(selectedProvider, fieldValues);
         onChange?.(newValue);
       } else {
-        // Switching to normal mode - clear value
         onChange?.('');
       }
     }, [useSecretManager, selectedProvider, fieldValues, onChange]);
@@ -155,7 +185,6 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     const handleProviderChange = useCallback(
       (newProvider: SecretManagerProviderId) => {
         setSelectedProvider(newProvider);
-        // Reset field values when provider changes
         const newFieldValues: Record<string, string> = {};
         providerGetSecretParams(newProvider).forEach(([field]) => {
           newFieldValues[field] = '';

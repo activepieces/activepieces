@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ import {
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
 
-import { SecretInput } from './secret-input';
+import { SecretInput, SecretInputHandle } from './secret-input';
 
 function OAuth2ConnectionSettings({
   authProperty,
@@ -45,6 +46,9 @@ function OAuth2ConnectionSettings({
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
   }>();
+  const clientIdSecretRef = useRef<SecretInputHandle>(null);
+  const clientSecretSecretRef = useRef<SecretInputHandle>(null);
+
   const isClientIdValid = isNil(
     form.formState.errors.request?.value?.client_id,
   );
@@ -66,6 +70,22 @@ function OAuth2ConnectionSettings({
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
+
+  function resolveSecret(
+    secretRef: React.RefObject<SecretInputHandle | null>,
+    key: 'client_id' | 'client_secret',
+  ) {
+    return secretRef.current?.resolveSecret().catch((error) => {
+      form.setError(`request.value.${key}`, {
+        type: 'manual',
+        message: t('Failed to resolve {key} from secret manager: {error}', {
+          key,
+          error: error.message,
+        }),
+      });
+    });
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {showRedirectUrlInput && (
@@ -91,8 +111,10 @@ function OAuth2ConnectionSettings({
                     {...field}
                     type="text"
                     placeholder={t('Client ID')}
+                    secretRef={clientIdSecretRef}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -107,8 +129,10 @@ function OAuth2ConnectionSettings({
                     {...field}
                     type="password"
                     placeholder={t('Client Secret')}
+                    secretRef={clientSecretSecretRef}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -121,7 +145,6 @@ function OAuth2ConnectionSettings({
           useMentionTextInput={false}
           propertySettings={null}
           dynamicPropsInfo={null}
-          isConnectionProperty={true}
         />
       )}
 
@@ -140,9 +163,18 @@ function OAuth2ConnectionSettings({
             type="button"
             onClick={async () => {
               if (!hasCode) {
+                const clientId = await resolveSecret(
+                  clientIdSecretRef,
+                  'client_id',
+                );
+                const clientSecret = await resolveSecret(
+                  clientSecretSecretRef,
+                  'client_secret',
+                );
+                if (!clientId || !clientSecret) return;
                 openPopup(
                   redirectUrl,
-                  form.getValues().request.value.client_id,
+                  clientId,
                   form.getValues().request.value.props,
                   authProperty,
                   form,
@@ -182,6 +214,7 @@ async function openPopup(
 ) {
   const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
   const authUrl = resolveValueFromProps(props, authProperty.authUrl);
+
   const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
     authUrl,
     clientId,
