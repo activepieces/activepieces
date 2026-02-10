@@ -120,14 +120,34 @@ export const sendMessage = createAction({
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The message to be posted',
-      required: true,
+      description: 'The message to be posted (optional if images are provided)',
+      required: false,
+    }),
+    images: Property.Array({
+      displayName: 'Image URLs',
+      description: 'Optional array of image URLs to attach to the message',
+      required: false,
+      properties: {
+        url: Property.ShortText({
+          displayName: 'Image URL',
+          description: 'Public URL of the image to send (e.g., https://example.com/image.png)',
+          required: true,
+        }),
+      },
     }),
   },
   async run({ propsValue, auth }) {
     const authToken = auth.secret_text;
     const channelData = JSON.parse(propsValue.channel as string);
     const dynamicFields = propsValue.dynamicFields as DynamicPropsValue;
+
+    // Validate that at least message or images is provided
+    const hasMessage = propsValue.message && propsValue.message.trim().length > 0;
+    const hasImages = propsValue.images && propsValue.images.length > 0;
+
+    if (!hasMessage && !hasImages) {
+      throw new Error('Either message or images must be provided');
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -141,6 +161,9 @@ export const sendMessage = createAction({
         sender: propsValue.user,
         ...(channelData.type === 'forum' && {
           forumTopicId: dynamicFields['topicId'],
+        }),
+        ...(propsValue.images && propsValue.images.length > 0 && {
+          images: (propsValue.images as Array<{ url: string }>).map((item) => item.url),
         }),
       },
     });
