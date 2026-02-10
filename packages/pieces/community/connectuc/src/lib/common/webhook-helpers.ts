@@ -2,6 +2,9 @@ import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces
 import { TriggerHookContext } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
+export const CONNECTUC_BASE_URL = 'https://staging.connectuc.engineering/activepieces';
+export const CONNECTUC_WEBHOOK_TRIGGER_KEY = 'connectuc_webhook';
+
 interface WebhookResponse {
     id: string;
 }
@@ -14,8 +17,6 @@ interface RegisterWebhookParams {
     event?: string;  // Singular event type
     events?: string[];  // Array of event types (for future use)
     context: TriggerHookContext<any, any, any>;
-    triggerKey: string;
-    baseUrl: string;  // Base URL for the ConnectUC API
 }
 
 interface UnregisterWebhookParams {
@@ -24,8 +25,6 @@ interface UnregisterWebhookParams {
     };
     webhookUrl: string;
     context: TriggerHookContext<any, any, any>;
-    triggerKey: string;
-    baseUrl: string;  // Base URL for the ConnectUC API
 }
 
 /**
@@ -34,7 +33,7 @@ interface UnregisterWebhookParams {
  * @returns The webhook response containing the webhook ID
  */
 export async function registerConnectUCWebhook(params: RegisterWebhookParams): Promise<WebhookResponse> {
-    const { auth, webhookUrl, event, events, context, triggerKey, baseUrl } = params;
+    const { auth, webhookUrl, event, events, context } = params;
 
     try {
         // Get project external ID (optional, may be undefined)
@@ -68,7 +67,7 @@ export async function registerConnectUCWebhook(params: RegisterWebhookParams): P
         // Create webhook with ConnectUC API
         const response = await httpClient.sendRequest<WebhookResponse>({
             method: HttpMethod.POST,
-            url: `${baseUrl}/webhook`,
+            url: `${CONNECTUC_BASE_URL}/webhook`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: auth.access_token,
@@ -79,7 +78,7 @@ export async function registerConnectUCWebhook(params: RegisterWebhookParams): P
         console.log('Webhook created successfully:', response.body);
 
         // Store webhook ID for later deletion
-        await context.store.put(triggerKey, {
+        await context.store.put(CONNECTUC_WEBHOOK_TRIGGER_KEY, {
             webhookId: response.body.id,
         });
 
@@ -95,15 +94,15 @@ export async function registerConnectUCWebhook(params: RegisterWebhookParams): P
  * @param params - Unregistration parameters including auth, context, and trigger key
  */
 export async function unregisterConnectUCWebhook(params: UnregisterWebhookParams): Promise<void> {
-    const { auth, webhookUrl, context, triggerKey, baseUrl } = params;
-    const webhookData = await context.store.get<{ webhookId: string }>(triggerKey);
+    const { auth, webhookUrl, context } = params;
+    const webhookData = await context.store.get<{ webhookId: string }>(CONNECTUC_WEBHOOK_TRIGGER_KEY);
 
     if (!isNil(webhookData) && !isNil(webhookData.webhookId)) {
         try {
             // Delete webhook from ConnectUC API
             await httpClient.sendRequest({
                 method: HttpMethod.DELETE,
-                url: `${baseUrl}/webhook`,
+                url: `${CONNECTUC_BASE_URL}/webhook`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: auth.access_token,

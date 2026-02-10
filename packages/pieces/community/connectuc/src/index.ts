@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 import { newRecording } from "./lib/triggers/new-recording";
+import { newCdr } from "./lib/triggers/new-cdr";
 
 export const connectucAuth = PieceAuth.OAuth2({
   authUrl: "https://auth.uc-technologies.com/oauth2/authorize",
@@ -58,5 +59,5 @@ export const connectuc = createPiece({
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
   authors: [],
   actions: [],
-  triggers: [newRecording],
+  triggers: [newRecording, newCdr],
 });

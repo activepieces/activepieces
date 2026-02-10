@@ -2,11 +2,11 @@ import { createTrigger, TriggerStrategy, OAuth2PropertyValue, Property } from '@
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
 
-export const newRecording = createTrigger({
+export const newCdr = createTrigger({
     auth: connectucAuth,
-    name: 'newRecording',
-    displayName: 'New Recording',
-    description: 'Triggers when a new call recording is available',
+    name: 'newCdr',
+    displayName: 'New CDR',
+    description: 'Triggers when a new Call Detail Record (CDR) is created',
     props: {
         users: Property.LongText({
             displayName: 'Users',
@@ -15,16 +15,25 @@ export const newRecording = createTrigger({
         }),
     },
     sampleData: {
-        dateTime: '2025-11-06T14:07:59.000Z',
-        duration: '20',
-        unread: true,
-        mediaUrl: 'https://api.example.com/users/36090f86-ea3d-566e-b97d-6a68999d416a/recordings/eyJ0ZXJtQ2FsbGlkIjoiOGMwc3BudmJmcjhnbHRncWZzZW8iLCJvcmlnQ2FsbGlkIjoiOGMwc3BudmJmcjhnbHRncWZzZW8ifQ==/url',
-        origCallid: '8c0spnvbfr8gltgqfseo',
-        recordingId: 'eyJ0ZXJtQ2FsbGlkIjoiOGMwc3BudmJmcjhnbHRncWZzZW8iLCJvcmlnQ2FsbGlkIjoiOGMwc3BudmJmcjhnbHRncWZzZW8ifQ==',
-        recordingType: 'audio',
-        download_url: 'https://api.example.com/users/36090f86-ea3d-566e-b97d-6a68999d416a/recordings/eyJ0ZXJtQ2FsbGlkIjoiOGMwc3BudmJmcjhnbHRncWZzZW8iLCJvcmlnQ2FsbGlkIjoiOGMwc3BudmJmcjhnbHRncWZzZW8ifQ==/url',
-        domain: 'test.11111.service',
-        user: '101',
+        id: "17624380791dba1cd5a13fcb8b4c6b66094f564b0fa",
+        contactId: null,
+        dateTime: "2025-11-06T14:07:59.000Z",
+        duration: 8,
+        toLabel: "7862881234",
+        toNumber: "7862881235",
+        recordingId: null,
+        origCallid: "8c0spnvbfr8gltgqfseo",
+        termCallid: "20251106140759036333-7e6c15a2661d06d7d0281ecd502b4679",
+        missed: false,
+        direction: "outgoing",
+        fromLabel: "Example",
+        fromNumber: "17869811611",
+        voicemailId: null,
+        recordingType: null,
+        disposition: null,
+        reason: null,
+        onnet: 0,
+        uid: "3462@example.11111.service"
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context){
@@ -35,7 +44,7 @@ export const newRecording = createTrigger({
                 access_token: auth.access_token,
             },
             webhookUrl: context.webhookUrl,
-            event: 'RecordingCreated',
+            event: 'CdrCreated',
             context,
         });
     },
