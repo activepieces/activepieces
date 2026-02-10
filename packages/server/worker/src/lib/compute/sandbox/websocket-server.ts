@@ -30,7 +30,12 @@ export const sandboxWebsocketServer = {
             socket.on('command', (msg: { event: EngineSocketEvent, payload: unknown }, callback?: () => void) => {
                 const { event, payload } = msg
                 log.debug({ sandboxId, event, payload }, 'Received message from sandbox')
-                const promise = listeners[sandboxId](event, payload)
+                const listener = listeners[sandboxId]
+                if (isNil(listener)) {
+                    log.error({ sandboxId, event }, 'Received message from sandbox after listener was removed')
+                    return
+                }
+                const promise = listener(event, payload)
                 promise.then(() => {
                     callback?.()
                 }).catch((error) => {
@@ -87,4 +92,3 @@ export const sandboxWebsocketServer = {
         await io?.close()
     },
 }
-
