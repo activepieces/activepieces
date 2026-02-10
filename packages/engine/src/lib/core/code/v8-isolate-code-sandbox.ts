@@ -85,7 +85,7 @@ const executeIsolate = async ({ isolate, isolateContext, code, timeoutMs }: Exec
     const outRef = await isolateScript.run(isolateContext, {
         reference: true,
         promise: true,
-        timeout: timeoutMs ?? 90000,
+        ...(timeoutMs ? { timeout: timeoutMs } : {}),
     })
 
     return outRef.copy()

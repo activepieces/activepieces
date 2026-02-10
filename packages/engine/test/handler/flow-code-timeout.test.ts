@@ -49,6 +49,42 @@ describe('code execution timeout', () => {
         expect(result.steps.echo_step.output).toEqual({ key: 'value' })
     })
 
+    it('should not apply timeout when CODE_TIMEOUT_MS is 0', async () => {
+        Object.defineProperty(EngineConstants, 'CODE_TIMEOUT_MS', { value: 0, writable: true })
+
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({
+                name: 'slow_code',
+                input: { key: 'completed' },
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
+        expect(result.steps.slow_code.status).toBe(StepOutputStatus.SUCCEEDED)
+        expect(result.steps.slow_code.output).toEqual({ key: 'completed' })
+    }, 10000)
+
+    it('should timeout slow code when CODE_TIMEOUT_MS is shorter than execution', async () => {
+        Object.defineProperty(EngineConstants, 'CODE_TIMEOUT_MS', { value: 500, writable: true })
+
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({
+                name: 'slow_code',
+                input: {},
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict).toStrictEqual({
+            status: FlowRunStatus.TIMEOUT,
+        })
+        expect(result.steps.slow_code.status).toBe(StepOutputStatus.FAILED)
+        expect(result.steps.slow_code.errorMessage).toBe('Code execution timed out')
+    }, 10000)
+
     it('should still report regular errors as FAILED, not TIMEOUT', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({
