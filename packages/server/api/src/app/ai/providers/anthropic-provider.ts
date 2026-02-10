@@ -4,6 +4,9 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const anthropicProvider: AIProviderStrategy<AnthropicProviderAuthConfig, AnthropicProviderConfig> = {
     name: 'Anthropic',
+    async validateConnection(authConfig: AnthropicProviderAuthConfig, config: AnthropicProviderConfig): Promise<void> {
+        await anthropicProvider.listModels(authConfig, config)
+    },
     async listModels(authConfig: AnthropicProviderAuthConfig, _config: AnthropicProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: AnthropicModel[] }>({
             url: 'https://api.anthropic.com/v1/models',

@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
+    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
     CreateAIProviderRequest,
     ErrorCode,
@@ -84,6 +84,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+        await this.validateProviderCredentials(request.provider, request.auth, request.config)
         await aiProviderRepo().save({
             id: apId(),
             auth: await encryptUtils.encryptObject(request.auth),
@@ -105,6 +106,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
 
+        if (!isNil(request.auth)) {
+            const config = request.config ?? aiProvider.config
+            await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
+        }
+
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
         await aiProviderRepo().update(providerId, {
             ...spreadIfDefined('auth', encryptedAuth),
@@ -118,6 +124,23 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             platformId,
             id: providerId,
         })
+    },
+    async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
+        const providerStrategy = aiProviders[provider]
+        try {
+            await providerStrategy.validateConnection(auth, config)
+        }
+        catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            log.warn({ provider, error: errorMessage }, 'AI provider credential validation failed')
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
+                params: {
+                    provider,
+                    message: `Failed to validate credentials for ${providerStrategy.name}: ${errorMessage}`,
+                },
+            })
+        }
     },
     async getConfigOrThrow({ platformId, provider }: GetOrCreateActivepiecesConfigResponse): Promise<GetProviderConfigResponse> {
         const aiProvider = await aiProviderRepo().findOneBy({

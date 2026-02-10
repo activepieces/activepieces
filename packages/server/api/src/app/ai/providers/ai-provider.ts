@@ -3,4 +3,5 @@ import { AIProviderAuthConfig, AIProviderConfig, AIProviderModel } from '@active
 export type AIProviderStrategy<T extends AIProviderAuthConfig, C extends AIProviderConfig> = {
     name: string
     listModels(authConfig: T, config: C): Promise<AIProviderModel[]>
+    validateConnection(authConfig: T, config: C): Promise<void>
 }

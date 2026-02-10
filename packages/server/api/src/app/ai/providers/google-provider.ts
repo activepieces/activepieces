@@ -4,6 +4,9 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const googleProvider: AIProviderStrategy<GoogleProviderAuthConfig, GoogleProviderConfig> = {
     name: 'Google',
+    async validateConnection(authConfig: GoogleProviderAuthConfig, config: GoogleProviderConfig): Promise<void> {
+        await googleProvider.listModels(authConfig, config)
+    },
     async listModels(authConfig: GoogleProviderAuthConfig, _config: GoogleProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ models: GoogleModel[] }>({
             url: 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',

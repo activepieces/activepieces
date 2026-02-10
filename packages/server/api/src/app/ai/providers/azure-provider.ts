@@ -4,6 +4,9 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const azureProvider: AIProviderStrategy<AzureProviderAuthConfig, AzureProviderConfig> = {
     name: 'Azure OpenAI',
+    async validateConnection(authConfig: AzureProviderAuthConfig, config: AzureProviderConfig): Promise<void> {
+        await azureProvider.listModels(authConfig, config)
+    },
     async listModels(authConfig: AzureProviderAuthConfig, config: AzureProviderConfig): Promise<AIProviderModel[]> {
         const endpoint = `https://${config.resourceName}.openai.azure.com`
         const apiKey = authConfig.apiKey
