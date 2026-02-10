@@ -23,7 +23,7 @@ export class AxiosHttpClient extends BaseHttpClient {
     axiosClient?: AxiosInstance
   ): Promise<HttpResponse<ResponseBody>> {
     try {
-      const axiosInstance = axiosClient || axios;
+      const axiosInstance = axiosClient || axios.create();
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
       const { urlWithoutQueryParams, queryParams: urlQueryParams } =
         this.getUrl(request);
@@ -45,10 +45,14 @@ export class AxiosHttpClient extends BaseHttpClient {
         data: request.body,
         timeout,
         responseType,
-        maxRedirects: (request.followRedirects ?? false) ? undefined : 0,
-        validateStatus: !(request.followRedirects ?? false)
-          ? (status) => status >= 200 && status < 400
-          : undefined,
+        maxRedirects: request.followRedirects ?? false ? undefined : 0,
+        validateStatus: (status) => {
+          if (status >= 400) return false;
+          if (request.followRedirects ?? false) {
+            return status >= 200 && status < 300;
+          }
+          return status >= 200 && status < 400;
+        },
       };
 
       if (request.retries && request.retries > 0) {

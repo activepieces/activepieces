@@ -8,7 +8,7 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';

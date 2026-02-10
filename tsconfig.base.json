@@ -1780,6 +1780,18 @@
       ],
       "@activepieces/piece-google-search": [
         "packages/pieces/community/google-search/src/index.ts"
+      ],
+      "@activepieces/piece-asknews": [
+        "packages/pieces/community/asknews/src/index.ts"
+      ],
+      "@activepieces/piece-valyu": [
+        "packages/pieces/community/valyu/src/index.ts"
+      ],
+      "@activepieces/piece-alai": [
+        "packages/pieces/community/alai/src/index.ts"
+      ],
+      "@activepieces/piece-kapso": [
+        "packages/pieces/community/kapso/src/index.ts"
       ]
     },
     "resolveJsonModule": true

@@ -107,7 +107,6 @@ export const AddPieceRequestBody = Type.Union([
         title: 'Private Piece',
     }),
     Type.Object({
-        projectId: Type.String(),
         packageType: Type.Literal(PackageType.REGISTRY),
         scope: Type.Literal(PieceScope.PLATFORM),
         pieceName: Type.String({

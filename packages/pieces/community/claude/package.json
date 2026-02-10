@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-claude",
-  "version": "0.4.1",
+  "version": "0.4.3",
   "dependencies": {
     "@anthropic-ai/sdk": "0.39.0",
     "ajv": "8.12.0"

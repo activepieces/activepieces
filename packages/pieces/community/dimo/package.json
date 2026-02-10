@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-dimo",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "dependencies": {
     "ethers": "6.15.0"
   }

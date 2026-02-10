@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-sharepoint",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "dependencies": {
     "@microsoft/microsoft-graph-client": "3.0.7",
     "@microsoft/microsoft-graph-types": "2.40.0"

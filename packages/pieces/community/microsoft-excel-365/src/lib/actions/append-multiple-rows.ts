@@ -150,13 +150,22 @@ export const appendMultipleRowsAction = createAction({
 			options: {
 				disabled: false,
 				options: [
-					{ label: '(Text) Exactly matches', value: FilterOperator.TEXT_EXACTLY_MATCHES },
+					{
+						label: '(Text) Exactly matches',
+						value: FilterOperator.TEXT_EXACTLY_MATCHES,
+					},
 					{
 						label: '(Text) Does not exactly match',
 						value: FilterOperator.TEXT_DOES_NOT_EXACTLY_MATCH,
 					},
-					{ label: '(Text) Matches any of', value: FilterOperator.TEXT_MATCHES_ANY_OF },
-					{ label: '(Text) Matches none of', value: FilterOperator.TEXT_MATCHES_NONE_OF },
+					{
+						label: '(Text) Matches any of',
+						value: FilterOperator.TEXT_MATCHES_ANY_OF,
+					},
+					{
+						label: '(Text) Matches none of',
+						value: FilterOperator.TEXT_MATCHES_NONE_OF,
+					},
 				],
 			},
 		}),
@@ -221,7 +230,7 @@ export const appendMultipleRowsAction = createAction({
 			}
 
 			const filterValues: string[] = Array.isArray(rawFilterValue)
-				? rawFilterValue.map((v) => String(v).trim())
+				? rawFilterValue.map((v) => String(v).trim().toLowerCase())
 				: rawFilterValue != null
 				? [String(rawFilterValue).trim()]
 				: [];
@@ -239,10 +248,10 @@ export const appendMultipleRowsAction = createAction({
 						return value !== filterValues[0];
 
 					case FilterOperator.TEXT_MATCHES_ANY_OF:
-						return filterValues.includes(value);
+						return filterValues.includes(value.toLowerCase());
 
 					case FilterOperator.TEXT_MATCHES_NONE_OF:
-						return !filterValues.includes(value);
+						return !filterValues.includes(value.toLowerCase());
 
 					default:
 						return true;
@@ -253,6 +262,10 @@ export const appendMultipleRowsAction = createAction({
 		const formattedValues = filteredRowValues.map((v) =>
 			Array.from({ length: columnCount }, (_, i) => v[i] ?? null),
 		);
+
+		if (formattedValues.length === 0) {
+			throw new Error('No rows to insert. The provided/filtered rows did not contain any values.');
+		}
 
 		const lastUsedRow = await excelCommon.getLastUsedRow(
 			workbookId,

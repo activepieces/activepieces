@@ -206,7 +206,7 @@ async function executeSingleTask<Result extends OperationResult>(log: FastifyBas
     }, async (span) => {
         let sandbox: Sandbox | undefined
         try {
-            sandbox = sandboxPool.allocate(log)
+            sandbox = await sandboxPool.allocate(log)
             await sandbox.start({ flowVersionId: getFlowVersionId(operation, operationType), platformId: operation.platformId })
 
             const { engine, stdError, stdOut } = await sandbox.execute(operationType, operation, { timeoutInSeconds })

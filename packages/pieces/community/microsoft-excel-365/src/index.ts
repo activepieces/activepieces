@@ -43,6 +43,8 @@ import { updatedRowTrigger } from './lib/trigger/updated-row';
 import { appendMultipleRowsAction } from './lib/actions/append-multiple-rows';
 import { excelCommon } from './lib/common/common';
 import { getWorksheetColumnsAction } from './lib/actions/get-wroksheet-columns';
+import { findWorkbookAction } from './lib/actions/find-workbooks';
+import { findWorksheetAction } from './lib/actions/find-worksheets';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -113,6 +115,8 @@ export const microsoftExcel = createPiece({
     clearRowAction,
     createWorksheetAction,
     findRowAction,
+    findWorkbookAction,
+    findWorksheetAction,
     getRangeAction,
     getRowAction,
     getWorksheetAction,

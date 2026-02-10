@@ -15,10 +15,15 @@ const fetchWithRetry = fetchRetry(global.fetch)
 
 const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
+let backupIntervalId: NodeJS.Timeout | null = null
 
 export const progressService = {
     init: (): void => {
-        setInterval(async () => {
+        if (backupIntervalId) {
+            clearInterval(backupIntervalId)
+        }
+
+        backupIntervalId = setInterval(async () => {
             if (isNil(latestUpdateParams)) {
                 return
             }
@@ -131,6 +136,10 @@ export const progressService = {
         })
     },
     shutdown: () => {
+        if (backupIntervalId) {
+            clearInterval(backupIntervalId)
+            backupIntervalId = null
+        }
         latestUpdateParams = null
     },
 }
