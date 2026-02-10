@@ -62,10 +62,12 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
             const cacheKey = CACHE_KEY.list(locale)
             
             const allTranslatedPieces = await getCachedOrFetch(cacheKey, async () => {
-                const englishCacheKey = CACHE_KEY.list(LocalesEnum.ENGLISH)
-                const allPieces = await getCachedOrFetch(englishCacheKey, () => fetchPiecesFromDB())
+                const allPieces = await fetchPiecesFromDB()
 
                 if (locale === LocalesEnum.ENGLISH) {
+                    allPieces.forEach((piece) => {
+                        piece.i18n = undefined
+                    })
                     return allPieces
                 }
 
@@ -141,20 +143,34 @@ function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {
 
 async function warmCache(log: FastifyBaseLogger): Promise<void> {
     try {
-        log.info('[lruPieceCache] Warming cache with English list and registry')
+        log.info('[lruPieceCache] Warming cache with all locales and registry')
         
         const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
         const newCache = lru(cacheMaxSize)
         
-        const englishPieces = await fetchPiecesFromDB()
-        newCache.set(CACHE_KEY.list(LocalesEnum.ENGLISH), englishPieces)
+        const allPieces = await fetchPiecesFromDB()
+        
+        for (const locale of Object.values(LocalesEnum)) {
+            const pieces = locale === LocalesEnum.ENGLISH
+                ? allPieces.map((piece) => {
+                    const cleanedPiece = { ...piece }
+                    cleanedPiece.i18n = undefined
+                    return cleanedPiece
+                })
+                : allPieces.map((piece) => {
+                    const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
+                    translated.i18n = undefined
+                    return translated
+                })
+            newCache.set(CACHE_KEY.list(locale), pieces)
+        }
 
-        const registry = englishPieces.map(toRegistryEntry)
+        const registry = allPieces.map(toRegistryEntry)
         newCache.set(CACHE_KEY.registry(), registry)
         
         cache = newCache
         
-        log.info('[lruPieceCache] Cache warming completed')
+        log.info('[lruPieceCache] Cache warming completed for all locales')
     }
     catch (error) {
         log.error({ error }, '[lruPieceCache] Error warming cache')
