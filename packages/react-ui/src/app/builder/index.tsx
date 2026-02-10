@@ -148,7 +148,7 @@ const BuilderPage = () => {
             }ms`,
           }}
         >
-          <div ref={rightSidePanelRef} className="h-full w-full overflow-auto">
+          <div ref={rightSidePanelRef} className="h-full w-full">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               selectedStep && (
                 <ResizableVerticalPanelsProvider>
