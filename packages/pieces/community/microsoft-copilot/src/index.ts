@@ -17,7 +17,7 @@ export const microsoft365Copilot = createPiece({
   actions: [
     chatWithCopilot,
     searchCopilot,
-    retrieveGroundingData,
+    // retrieveGroundingData,
     createCustomApiCallAction({
       baseUrl: () => 'https://graph.microsoft.com/',
       authMapping: async (auth) => ({

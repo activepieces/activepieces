@@ -117,6 +117,6 @@ export const chatWithCopilot = createAction({
       },
       body: JSON.stringify(body),
     });
-    return response.body;
+    return response.body.messages[1];
   },
 });
