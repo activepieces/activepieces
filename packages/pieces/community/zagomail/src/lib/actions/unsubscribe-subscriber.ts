@@ -21,7 +21,7 @@ export const unsubscribeSubscriber = createAction({
     const subsriberUid = propsValue.subscriberUid;
 
     return await zagoMailApiService.unsubscribeSubscriber(
-      auth,
+      auth.secret_text,
       listUId,
       subsriberUid
     );

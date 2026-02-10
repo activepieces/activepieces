@@ -8,6 +8,7 @@ import {
 import {
   createAction,
   DynamicPropsValue,
+  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
@@ -49,6 +50,7 @@ export const query = createAction({
     }),
     proxy_settings: Property.DynamicProperties({
       displayName: 'Proxy Settings',
+      auth: PieceAuth.None(),
       refreshers: ['use_proxy'],
       required: false,
       props: async ({ use_proxy }) => {

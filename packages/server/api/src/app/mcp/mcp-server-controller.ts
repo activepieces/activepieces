@@ -1,181 +1,216 @@
-import { apId, ApId, CreateMcpRequestBody, ListMcpsRequest, McpWithTools, Nullable, Permission, PlatformUsageMetric, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpRequestBody } from '@activepieces/shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
-import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
-import { mcpService } from './mcp-service'
-
-const DEFAULT_PAGE_SIZE = 10
-
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import { mcpServerService } from './mcp-service'
 
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
-    app.post('/', CreateMcpRequest, async (req) => {
-        await PlatformPlanHelper.checkQuotaOrThrow({
-            platformId: req.principal.platform.id,
-            projectId: req.principal.projectId,
-            metric: PlatformUsageMetric.MCPS,
-        })
-        const projectId = req.body.projectId
-        return mcpService(req.log).create({
-            projectId,
-            name: req.body.name,
-        })
-    })
-    
-    app.get('/', GetMcpsRequest, async (req) => {
-        const projectId = req.query.projectId
-        
-        const result = await mcpService(req.log).list({
-            projectId,
-            cursorRequest: req.query.cursor ?? null,
-            limit: req.query.limit ?? DEFAULT_PAGE_SIZE,
-            name: req.query.name ?? undefined,
-        })
-        
-        return result
+    app.get('/', GetMcpRequest, async (req) => {
+        return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
     })
 
-    app.get('/:id', GetMcpRequest, async (req) => {
-        const mcpId = req.params.id
-        return mcpService(req.log).getOrThrow({
-            mcpId,
-            projectId: req.principal.projectId,
+    app.post('/', UpdateMcpRequest, async (req) => {
+        const { status } = req.body
+        return mcpServerService(req.log).update({
+            projectId: req.projectId,
+            status,
         })
     })
 
-    app.post('/:id', UpdateMcpRequest, async (req) => {
-        const mcpId = req.params.id
-        const { name, tools } = req.body
-        await PlatformPlanHelper.checkResourceLocked({ platformId: req.principal.platform.id, resource: PlatformUsageMetric.MCPS })
-        return mcpService(req.log).update({
-            mcpId,
-            name,
-            tools,
+    app.post('/rotate', RotateTokenRequest, async (req) => {
+        return mcpServerService(req.log).rotateToken({
+            projectId: req.projectId,
         })
     })
 
-    app.post('/:id/rotate', RotateTokenRequest, async (req) => {
-        const mcpId = req.params.id
-        return mcpService(req.log).update({
-            mcpId,
-            token: apId(),
+    app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
+        const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
+        const authHeader = req.headers['authorization']
+        if (!validateAuthorizationHeader(authHeader, mcp)) {
+            return reply.status(401).send({
+                error: 'Unauthorized',
+            })
+        }
+        const { server } = await mcpServerService(req.log).buildServer({
+            mcp,
         })
+
+        const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined,
+        })
+
+        reply.raw.on('close', async () => {
+            await transport.close()
+            await server.close()
+        })
+
+        await server.connect(transport)
+        await transport.handleRequest(req.raw, reply.raw, req.body)
     })
 
-    app.delete('/:id', DeleteMcpRequest, async (req, reply) => {
-        const mcpId = req.params.id
-        await mcpService(req.log).delete({
-            mcpId,
-            projectId: req.principal.projectId,
-        })
-        return reply.status(StatusCodes.NO_CONTENT).send()
+    app.post('/validate-agent-mcp-tool', AddMcpServerToolRequest, async (req) => {
+        const tool = req.body
+        let mcpClient: MCPClient | null = null
+
+        try {
+            mcpClient = await createMCPClient({
+                transport: createTransportConfig(
+                    tool.protocol,
+                    tool.serverUrl,
+                    buildAuthHeaders(tool.auth),
+                ) as MCPTransport,
+            })
+            const mcpTools = await mcpClient.tools()
+
+            return { toolNames: Object.keys(mcpTools).map(toolName => toolName), error: null }
+        }
+        catch (error) {
+            return { toolNames: null, error: `Error connecting to mcp server ${tool.toolName}, Error: ${error}` }
+        }
+        finally {
+            if (!isNil(mcpClient)) {
+                await mcpClient.close()
+            }
+        }
     })
 }
 
-const CreateMcpRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.WRITE_MCP],
-    },
-    schema: {
-        tags: ['mcp'],
-        description: 'Create a new MCP server',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: CreateMcpRequestBody,
-        response: {
-            [StatusCodes.OK]: Nullable(McpWithTools),
-        },
-    },
+function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
+    const [type, token] = authHeader?.split(' ') ?? []
+    return type === 'Bearer' && token === mcp.token
 }
 
-const GetMcpsRequest = {
+function createTransportConfig(
+    protocol: McpProtocol,
+    serverUrl: string,
+    headers: Record<string, string> = {},
+) {
+    const url = new URL(serverUrl)
+
+    switch (protocol) {
+        case McpProtocol.SIMPLE_HTTP: {
+            return {
+                type: 'http',
+                url: serverUrl,
+                headers,
+            }
+        }
+        case McpProtocol.STREAMABLE_HTTP: {
+            return new StreamableHTTPClientTransport(url, {
+                requestInit: {
+                    headers,
+                },
+            })
+        }
+        case McpProtocol.SSE: {
+            return {
+                type: 'sse',
+                url: serverUrl,
+                headers,
+            }
+        }
+        default:
+            throw new Error(`Unsupported MCP protocol type: ${protocol}`)
+    }
+}
+
+const StreamableHttpRequestRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.READ_MCP],
+        security: securityAccess.public(),
+        skipAuth: true,
     },
     schema: {
-        tags: ['mcp'],
-        description: 'List MCP servers',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        querystring: ListMcpsRequest,
-        response: {
-            [StatusCodes.OK]: SeekPage(McpWithTools),
-        },
+        params: Type.Object({
+            projectId: ApId,
+        }),
     },
 }
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.WRITE_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
         description: 'Update the project MCP server configuration',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
-            id: ApId,
+            projectId: ApId,
         }),
-        body: UpdateMcpRequestBody,
-        response: {
-            [StatusCodes.OK]: McpWithTools,
-        },
+        body: UpdateMcpServerRequest,
     },
 }
 
-const RotateTokenRequest = {
+export const AddMcpServerToolRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.WRITE_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_FLOW,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
-        tags: ['mcp'],
-        description: 'Rotate the MCP token',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        tags: ['agent'],
+        description: 'Validate agent MCP tool',
         params: Type.Object({
-            id: ApId,
+            projectId: ApId,
         }),
-        response: {
-            [StatusCodes.OK]: McpWithTools,
-        },
+        body: Type.Composite([
+            Type.Omit(AgentMcpTool, ['auth']), 
+            Type.Object({
+                auth: Type.Any(),
+            }),
+        ]),
     },
 }
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
-        permissions: [Permission.READ_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.READ_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
         description: 'Get an MCP server by ID',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
-            id: ApId,
+            projectId: ApId,
         }),
-        response: {
-            [StatusCodes.OK]: McpWithTools,
-        },
     },
 }
 
-const DeleteMcpRequest = {
+const RotateTokenRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permissions: [Permission.WRITE_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
-        description: 'Delete an MCP server by ID',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: ApId,
-        }),
-        response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
-        },
+        description: 'Rotate the MCP server token',
     },
+    params: Type.Object({
+        projectId: ApId,
+    }),
 }

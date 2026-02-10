@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import pako from 'pako';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -33,10 +34,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   AddPieceRequestBody,
   ApFlagId,
@@ -132,7 +133,7 @@ const InstallPieceDialog = ({
           });
         }
         if (!data.pieceName || !data.pieceVersion) {
-          return;
+          throw new Error('Validation failed');
         }
       }
 
@@ -142,9 +143,7 @@ const InstallPieceDialog = ({
       setIsOpen(false);
       form.reset();
       onInstallPiece();
-      toast({
-        title: t('Success'),
-        description: t('Piece installed'),
+      toast.success(t('Piece installed'), {
         duration: 3000,
       });
     },
@@ -191,7 +190,10 @@ const InstallPieceDialog = ({
           <form
             className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((data) =>
-              mutate(data as AddPieceRequestBody),
+              mutate({
+                projectId: authenticationSession.getProjectId()!,
+                ...data,
+              } as AddPieceRequestBody),
             )}
           >
             <FormField

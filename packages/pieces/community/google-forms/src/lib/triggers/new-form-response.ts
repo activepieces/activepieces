@@ -6,6 +6,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   OAuth2PropertyValue,
   TriggerStrategy,
@@ -84,7 +85,7 @@ export const newResponse = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, { form_id: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof googleFormsAuth>, { form_id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const items = await getResponse(
@@ -92,10 +93,17 @@ const polling: Polling<OAuth2PropertyValue, { form_id: string }> = {
       propsValue.form_id,
       lastFetchEpochMS === 0 ? null : dayjs(lastFetchEpochMS).toISOString()
     );
-    return items.map((item) => ({
-      epochMilliSeconds: dayjs(item.lastSubmittedTime).valueOf(),
-      data: item,
-    }));
+
+    return items
+      .sort(
+        (a, b) =>
+          new Date(b.lastSubmittedTime).getTime() -
+          new Date(a.lastSubmittedTime).getTime()
+      )
+      .map((item) => ({
+        epochMilliSeconds: dayjs(item.lastSubmittedTime).valueOf(),
+        data: item,
+      }));
   },
 };
 

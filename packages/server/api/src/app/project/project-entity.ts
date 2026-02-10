@@ -1,8 +1,8 @@
 import {
-    AIUsage,
     AppConnection,
     Cell,
     Field,
+    File,
     Flow,
     Folder,
     Platform,
@@ -17,8 +17,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
-    TIMESTAMP_COLUMN_TYPE,
 } from '../database/database-common'
 
 type ProjectSchema = Project & {
@@ -34,7 +32,6 @@ type ProjectSchema = Project & {
     records: Record[]
     cells: Cell[]
     tableWebhooks: TableWebhook[]
-    aiUsage: AIUsage[]
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -42,16 +39,17 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         deleted: {
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
             deleteDate: true,
             nullable: true,
-        }, 
+        },
         ownerId: ApIdSchema,
         displayName: {
             type: String,
         },
-        notifyStatus: {
+        type: {
             type: String,
+            nullable: false,
         },
         platformId: {
             ...ApIdSchema,
@@ -60,13 +58,21 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: String,
             nullable: true,
         },
+        maxConcurrentJobs: {
+            type: Number,
+            nullable: true,
+        },
+        icon: {
+            type: 'jsonb',
+            nullable: false,
+        },
         releasesEnabled: {
             type: Boolean,
             nullable: false,
             default: false,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
     },
@@ -151,11 +157,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         tableWebhooks: {
             type: 'one-to-many',
             target: 'table_webhook',
-            inverseSide: 'project',
-        },
-        aiUsage: {
-            type: 'one-to-many',
-            target: 'ai_usage',
             inverseSide: 'project',
         },
     },

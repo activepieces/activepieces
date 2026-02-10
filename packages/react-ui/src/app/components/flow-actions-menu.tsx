@@ -4,13 +4,16 @@ import {
   Copy,
   CornerUpLeft,
   Download,
+  GalleryVerticalEnd,
   Import,
   Pencil,
   Share2,
   Trash2,
   UploadCloud,
+  User,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -22,15 +25,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import {
-  ImportFlowDialog,
-  ImportFlowDialogProps,
-} from '@/features/flows/components/import-flow-dialog';
+import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -46,9 +49,8 @@ import {
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowsApi } from '../../features/flows/lib/flows-api';
 
-interface FlowActionMenuProps {
+type FlowActionMenuProps = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   children?: React.ReactNode;
@@ -57,8 +59,11 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  insideBuilder: boolean;
-}
+  onOwnerChange?: () => void;
+} & (
+  | { insideBuilder: true; onVersionsListClick: () => void }
+  | { insideBuilder: false; onVersionsListClick: null }
+);
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flow,
@@ -69,8 +74,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onMoveTo,
   onDuplicate,
   onDelete,
+  onOwnerChange,
+  onVersionsListClick,
   insideBuilder,
 }) => {
+  const isRunsPage = useLocation().pathname.includes('/runs');
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
@@ -83,10 +91,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const userHasPermissionToPushToGit = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
-  const importFlowProps: ImportFlowDialogProps = {
-    insideBuilder: true,
-    flowId: flow.id,
-  };
+
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
@@ -94,6 +99,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const allowPush =
     flow.publishedVersionId !== null &&
     flow.version.state === FlowVersionState.LOCKED;
+  const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const hasProjectMembers = projectMembers && projectMembers.length > 0;
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
@@ -112,6 +119,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           displayName: modifiedFlowVersion.displayName,
           trigger: modifiedFlowVersion.trigger,
           schemaVersion: modifiedFlowVersion.schemaVersion,
+          notes: modifiedFlowVersion.notes,
         },
       });
       return updatedFlow;
@@ -123,7 +131,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   });
 
   const { mutate: exportFlow, isPending: isExportPending } =
-    flowsHooks.useExportFlows();
+    flowHooks.useExportFlows();
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
@@ -162,6 +170,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               >
                 <DropdownMenuItem
                   onSelect={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
                   disabled={!userHasPermissionToUpdateFlow}
                 >
                   <div className="flex cursor-pointer flex-row gap-2 items-center">
@@ -173,12 +182,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             )}
           </>
         )}
+
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
           <PublishedNeededTooltip allowPush={allowPush}>
             <PushToGitDialog type="flow" flows={[flow]}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToPushToGit || !allowPush}
                 onSelect={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex cursor-pointer  flex-row gap-2 items-center">
                   <UploadCloud className="h-4 w-4" />
@@ -202,6 +213,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   !userHasPermissionToWriteFolder
                 }
                 onSelect={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex cursor-pointer  flex-row gap-2 items-center">
                   <CornerUpLeft className="h-4 w-4" />
@@ -209,6 +221,27 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 </div>
               </DropdownMenuItem>
             </MoveFlowDialog>
+          </PermissionNeededTooltip>
+        )}
+        {!readonly && hasProjectMembers && !embedState.isEmbedded && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <ChangeOwnerDialog
+              flow={flow}
+              onOwnerChange={onOwnerChange || (() => {})}
+            >
+              <DropdownMenuItem
+                disabled={!userHasPermissionToUpdateFlow}
+                onSelect={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                  <User className="h-4 w-4" />
+                  <span>{t('Change Owner')}</span>
+                </div>
+              </DropdownMenuItem>
+            </ChangeOwnerDialog>
           </PermissionNeededTooltip>
         )}
         {!embedState.hideDuplicateFlow && (
@@ -233,11 +266,19 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </PermissionNeededTooltip>
         )}
 
+        {insideBuilder && !isRunsPage && (
+          <DropdownMenuItem onClick={onVersionsListClick}>
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
+              <GalleryVerticalEnd className="h-4 w-4" />
+              <span>{t('Versions')}</span>
+            </div>
+          </DropdownMenuItem>
+        )}
         {!readonly && insideBuilder && !embedState.hideExportAndImportFlow && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
-            <ImportFlowDialog {...importFlowProps}>
+            <ImportFlowDialog insideBuilder={true} flowId={flow.id}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
                 onSelect={(e) => e.preventDefault()}
@@ -307,6 +348,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 <DropdownMenuItem
                   disabled={!userHasPermissionToUpdateFlow}
                   onSelect={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex cursor-pointer  flex-row gap-2 items-center">
                     <Trash2 className="h-4 w-4 text-destructive" />

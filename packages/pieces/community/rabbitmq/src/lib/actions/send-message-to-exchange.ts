@@ -37,7 +37,7 @@ export const sendMessageToExchange = createAction({
       const exchange = context.propsValue.exchange;
       const routingKey = context.propsValue.routingKey || '';
 
-      connection = await rabbitmqConnect(context.auth);
+      connection = await rabbitmqConnect(context.auth.props);
       channel = await connection.createChannel();
 
       await channel.checkExchange(exchange);

@@ -42,7 +42,7 @@ export const convertCurrentAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/current/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

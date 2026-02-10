@@ -2,12 +2,13 @@ import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV1ApiCall,
+	pipedrivePaginatedV2ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { GetField } from '../common/types';
+import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
+import { GetField } from '../common/types';
 
 export const findProductsAction = createAction({
 	auth: pipedriveAuth,
@@ -39,45 +40,47 @@ export const findProductsAction = createAction({
 		}),
 	},
 	async run(context) {
-		const products = [];
+		const qs: QueryParams = {
+			term: context.propsValue.fieldValue,
+			fields: context.propsValue.field,
+			exact_match: 'true',
+			limit: '100',
+		};
+
+		let cursor: string | undefined = undefined;
+
 		let hasMoreItems = true;
+		const products = [];
 
 		do {
-			const qs = {
-				term: context.propsValue.fieldValue,
-				fields: context.propsValue.field,
-				limit: 500,
-				start: 0,
-				exact_match: 'true',
-			};
+			if (cursor) {
+				qs.cursor = cursor;
+			}
 			const response = await pipedriveApiCall<{
 				success: boolean;
 				data: { items: Array<{ item: { id: number } }> };
 				additional_data: {
-					pagination: {
-						start: number;
-						limit: number;
-						more_items_in_collection: boolean;
-						next_start: number;
-					};
+					next_cursor?: string;
 				};
 			}>({
 				accessToken: context.auth.access_token,
 				apiDomain: context.auth.data['api_domain'],
 				method: HttpMethod.GET,
-				resourceUri: '/products/search',
-				query: qs,
+				resourceUri: '/v2/products/search',
+				query: {
+					term: context.propsValue.fieldValue,
+					fields: context.propsValue.field,
+					exact_match: 'true',
+				},
 			});
 
 			if (isNil(response.data.items)) break;
 
-			for(const product of response.data.items)
-			{
+			for (const product of response.data.items) {
 				products.push(product.item);
 			}
-            
-			hasMoreItems = response.additional_data.pagination.more_items_in_collection;
-			qs.start = response.additional_data.pagination.next_start;
+			hasMoreItems = response.additional_data?.next_cursor != null;
+			cursor = response.additional_data?.next_cursor;
 		} while (hasMoreItems);
 
 		return {

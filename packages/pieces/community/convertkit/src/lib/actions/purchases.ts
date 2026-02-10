@@ -40,7 +40,7 @@ export const listPurchases = createAction({
   },
   run(context) {
     const page = context.propsValue.page || 1;
-    return fetchPurchases(context.auth, page);
+    return fetchPurchases(context.auth.secret_text, page);
   },
 });
 

@@ -26,7 +26,7 @@ export const deleteRecord = createAction({
 		const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/records/${recordId}`;
 
 		try {
-			await makeRequest(auth as string, HttpMethod.DELETE, path);
+			await makeRequest(auth.secret_text, HttpMethod.DELETE, path);
 
 			return { success: true, message: 'Record deleted successfully' };
 		} catch (error) {

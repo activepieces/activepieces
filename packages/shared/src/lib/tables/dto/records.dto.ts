@@ -17,6 +17,7 @@ export const UpdateRecordRequest = Type.Object({
         value: Type.String(),
     }))),
     tableId: Type.String(),
+    agentUpdate: Type.Optional(Type.Boolean()),
 })
 
 export type UpdateRecordRequest = Static<typeof UpdateRecordRequest>
@@ -50,6 +51,7 @@ export const ListRecordsRequest = Type.Object({
 export type ListRecordsRequest = Omit<Static<typeof ListRecordsRequest>, 'cursor'> & { cursor: Cursor | undefined }
 
 export const DeleteRecordsRequest = Type.Object({
+    tableId: Type.String(),
     ids: Type.Array(Type.String()),
 })
 

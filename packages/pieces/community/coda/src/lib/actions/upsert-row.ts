@@ -21,7 +21,7 @@ export const upsertRowAction = createAction({
 	},
 	async run(context) {
 		const { docId, tableId, rowData, keyColumns } = context.propsValue;
-		const client = codaClient(context.auth as string);
+		const client = codaClient(context.auth);
 
 		const cells = Object.entries(rowData as Record<string, any>)
 			.filter(([, value]) => value !== undefined && value !== null && value !== '')

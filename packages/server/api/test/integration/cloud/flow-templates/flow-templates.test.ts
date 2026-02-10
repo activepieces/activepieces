@@ -1,5 +1,6 @@
 import {
     apId,
+    CreateTemplateRequestBody,
     PlatformPlan,
     PlatformRole,
     PrincipalType,
@@ -30,8 +31,8 @@ afterAll(async () => {
     await app?.close()
 })
 
-describe('Flow Templates', () => {
-    describe('List Flow Templates', () => {
+describe('Templates', () => {
+    describe('List Templates', () => {
         it('should list platform templates only', async () => {
             // arrange
             const { mockPlatform, mockUser, mockPlatformTemplate } =
@@ -45,9 +46,12 @@ describe('Flow Templates', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/flow-templates',
+                url: '/v1/templates',
                 headers: {
                     authorization: `Bearer ${testToken}`,
+                },
+                query: {
+                    type: TemplateType.CUSTOM,
                 },
             })
 
@@ -60,31 +64,22 @@ describe('Flow Templates', () => {
         })
 
         it('should list cloud platform template for anonymous users', async () => {
-            // arrange
-            const { mockPlatformTemplate } = await createMockPlatformTemplate({
-                platformId: CLOUD_PLATFORM_ID,
-            })
-            await createMockPlatformTemplate({
-                platformId: apId(),
-            })
-
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/flow-templates',
+                url: '/v1/templates',
+                query: {
+                    type: TemplateType.OFFICIAL,
+                },
             })
 
-            // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-            expect(responseBody.data).toHaveLength(1)
-            expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
         })
     })
 
-    describe('Create Flow Template', () => {
+    describe('Create Template', () => {
         it('should create a flow template', async () => {
             // arrange
-            const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+            const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
                 },
                 plan: {
@@ -100,15 +95,18 @@ describe('Flow Templates', () => {
 
             const mockTemplate = createMockTemplate({
                 platformId: mockPlatform.id,
-                projectId: mockProject.id,
-                type: TemplateType.PLATFORM,
+                type: TemplateType.CUSTOM,
             })
 
-            const createTemplateRequest = {
+            const createTemplateRequest: CreateTemplateRequestBody = {
+                name: mockTemplate.name,
                 description: mockTemplate.description,
-                template: mockTemplate.template,
-                blogUrl: mockTemplate.blogUrl,
-                type: TemplateType.PLATFORM,
+                summary: mockTemplate.summary,
+                flows: mockTemplate.flows,
+                blogUrl: mockTemplate.blogUrl ?? undefined,
+                type: TemplateType.CUSTOM,
+                author: mockTemplate.author,
+                categories: mockTemplate.categories,
                 tags: mockTemplate.tags,
                 metadata: {
                     foo: 'bar',
@@ -118,7 +116,7 @@ describe('Flow Templates', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/flow-templates',
+                url: '/v1/templates',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -132,7 +130,7 @@ describe('Flow Templates', () => {
         })
     })
 
-    describe('Delete Flow Template', () => {
+    describe('Delete Template', () => {
         it('should not be able delete platform template as member', async () => {
             // arrange
             const { mockUser, mockPlatform, mockPlatformTemplate } =
@@ -145,7 +143,7 @@ describe('Flow Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/flow-templates/${mockPlatformTemplate.id}`,
+                url: `/v1/templates/${mockPlatformTemplate.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -168,7 +166,7 @@ describe('Flow Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/flow-templates/${mockPlatformTemplate.id}`,
+                url: `/v1/templates/${mockPlatformTemplate.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -186,7 +184,7 @@ describe('Flow Templates', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/flow-templates/${mockPlatformTemplate.id}`,
+                url: `/v1/templates/${mockPlatformTemplate.id}`,
             })
 
             // assert
@@ -195,7 +193,7 @@ describe('Flow Templates', () => {
     })
 })
 
-async function createMockPlatformTemplate({ platformId, plan }: { platformId: string, plan?: Partial<PlatformPlan> }) {
+async function createMockPlatformTemplate({ platformId, plan, type }: { platformId: string, plan?: Partial<PlatformPlan>, type?: TemplateType }) {
     const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
         platform: {
             id: platformId,
@@ -208,11 +206,10 @@ async function createMockPlatformTemplate({ platformId, plan }: { platformId: st
 
     const mockPlatformTemplate = createMockTemplate({
         platformId: mockPlatform.id,
-        projectId: mockProject.id,
-        type: TemplateType.PLATFORM,
+        type: type ?? TemplateType.CUSTOM,
     })
     await databaseConnection()
-        .getRepository('flow_template')
+        .getRepository('template')
         .save(mockPlatformTemplate)
 
     const { mockUser } = await mockBasicUser({

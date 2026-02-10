@@ -1,8 +1,10 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { PlacidClient } from './client';
+import { placidAuth } from '../..';
 
 const createTemplateDropdown = (outputType?: 'image' | 'pdf' | 'video') =>
 	Property.Dropdown({
+		auth: placidAuth,
 		displayName: 'Template',
 		description: `Select a Placid template${outputType ? ` for ${outputType} generation` : ''}`,
 		required: true,
@@ -17,7 +19,7 @@ const createTemplateDropdown = (outputType?: 'image' | 'pdf' | 'video') =>
 			}
 
 			try {
-				const client = new PlacidClient(auth as string);
+				const client = new PlacidClient(auth);
 				const templates = await client.listTemplates();
 
 				if (!templates || templates.length === 0) {
@@ -109,6 +111,7 @@ export const passthroughProperty = Property.ShortText({
 
 export const templateLayersProperty = (type: string) =>
 	Property.DynamicProperties({
+		auth: placidAuth,
 		displayName: 'Layers',
 		refreshers: ['template'],
 		required: false,
@@ -117,7 +120,7 @@ export const templateLayersProperty = (type: string) =>
 
 			const props: DynamicPropsValue = {};
 
-			const client = new PlacidClient(auth as unknown as string);
+			const client = new PlacidClient(auth);
 			const response = await client.getTemplate(template as unknown as string);
 
 			for (const layer of response.layers) {

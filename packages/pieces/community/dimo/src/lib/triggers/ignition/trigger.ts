@@ -2,9 +2,8 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { DimoClient } from '../../common/helpers';
+import { DimoClient, getBooleanExpression } from '../../common/helpers';
 import {
-	BooleanOperator,
 	CreateWebhookParams,
 	WebhookInfo,
 	WebhookPayload,
@@ -39,17 +38,11 @@ export const ignitionTrigger = createTrigger({
 				],
 			},
 		}),
-		triggerFrequency: Property.StaticDropdown({
-			displayName: 'Trigger Frequency',
-			description: 'How often the webhook should fire when condition is met',
+		coolDownPeriod: Property.Number({
+			displayName: 'Cool Down Period (seconds)',
+			description: 'Minimum number of seconds between successive webhook firings',
 			required: true,
-			defaultValue: 'Realtime',
-			options: {
-				options: [
-					{ label: 'Real-time (continuous)', value: 'Realtime' },
-					{ label: 'Hourly', value: 'Hourly' },
-				],
-			},
+			defaultValue: 30,
 		}),
 		verificationToken: verificationTokenInput,
 	},
@@ -68,9 +61,9 @@ export const ignitionTrigger = createTrigger({
 	},
 
 	async onEnable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
-		const { vehicleTokenIds, ignitionState, triggerFrequency, verificationToken } =
+		const { vehicleTokenIds, ignitionState, coolDownPeriod, verificationToken } =
 			context.propsValue;
 
 		const dimo = new DimoClient({
@@ -85,18 +78,14 @@ export const ignitionTrigger = createTrigger({
 				: [];
 
 		const webhookPayload: CreateWebhookParams = {
-			service: 'Telemetry',
-			data: TriggerField.IsIgnitionOn,
-			trigger: {
-				field: TriggerField.IsIgnitionOn,
-				operator: BooleanOperator.Is,
-				value: ignitionState.toLowerCase() === 'on' ? 'ON' : 'OFF',
-			},
-			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			service: 'telemetry.signals',
+			metricName: TriggerField.IsIgnitionOn,
+			condition: getBooleanExpression(ignitionState.toLowerCase() === 'on'),
+			coolDownPeriod,
 			description: `Ignition trigger: ${ignitionState.toUpperCase()}`,
-			target_uri: context.webhookUrl,
-			status: 'Active',
-			verification_token: verificationToken,
+			targetURL: context.webhookUrl,
+			status: 'enabled',
+			verificationToken: verificationToken,
 		};
 
 		try {
@@ -108,18 +97,12 @@ export const ignitionTrigger = createTrigger({
 
 			const webhookId = createWebhookResponse.id;
 
-			if (ids.length === 0) {
-				await dimo.subscribeAllVehicles({
-					developerJwt,
-					webhookId,
-				});
-			} else {
-				await Promise.all(
-					ids.map(async (tokenId) => {
-						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
-					}),
-				);
-			}
+			await dimo.subscribeVehiclesToWebhook({
+				developerJwt,
+				webhookId,
+				vehicleTokenIds: ids,
+			});
+
 			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
 				webhookId,
 				verificationToken,
@@ -130,7 +113,7 @@ export const ignitionTrigger = createTrigger({
 		}
 	},
 	async onDisable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const dimo = new DimoClient({
 			clientId,
 			apiKey,

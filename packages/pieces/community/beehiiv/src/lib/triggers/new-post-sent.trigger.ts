@@ -19,7 +19,7 @@ export const newPostSentTrigger = createTrigger({
 	async onEnable(context) {
 		const { publicationId } = context.propsValue;
 		const response = await beehiivApiCall<{ data: { id: string } }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/publications/${publicationId}/webhooks`,
 			body: {
@@ -36,7 +36,7 @@ export const newPostSentTrigger = createTrigger({
 		const webhookId = await context.store.get<string>(TRIGGER_KEY);
 		if (!isNil(webhookId)) {
 			await beehiivApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/publications/${publicationId}/webhooks/${webhookId}`,
 			});

@@ -27,24 +27,25 @@ export const embedQuestion = createAction({
       required: true,
       defaultValue: true,
     }),
-    parameterSettings: Property.DynamicProperties({
+    parameterSettings: Property.DynamicProperties<false, typeof metabaseAuth>({
       displayName: 'Parameter settings',
+      auth: metabaseAuth,
       description:
         'Configure how each parameter should be handled in the embed',
       required: false,
       refreshers: ['questionId', 'enableEmbedding'],
       props: async ({ auth, questionId, enableEmbedding }) => {
-        if (!questionId || !enableEmbedding) {
+        if (!questionId || !enableEmbedding || !auth) {
           return {};
         }
 
         try {
           const card = await queryMetabaseApi(
             {
-              endpoint: `card/${questionId.split('-')[0]}`,
+              endpoint: `card/${(questionId as string).split('-')[0]}`,
               method: HttpMethod.GET,
             },
-            { baseUrl: auth.baseUrl, apiKey: auth.apiKey }
+            auth
           );
 
           const parameters = (card['parameters'] as MetabaseParam[]) || [];

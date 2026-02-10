@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
 import { platformApi } from '@/lib/platforms-api';
 import {
   PlatformWithoutSensitiveData,
@@ -67,9 +67,7 @@ export const AllowedDomainDialog = ({
       await refetch();
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Allowed domains updated'),
+      toast.success(t('Allowed domains updated'), {
         duration: 3000,
       });
       setOpen(false);

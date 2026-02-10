@@ -1,6 +1,6 @@
 import { ProjectId, TodoActivityChanged, TodoActivityCreated, TodoChanged, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
+import { Server } from 'socket.io'
 
 
 export const todoSideEfffects = (_log: FastifyBaseLogger) => ({
@@ -27,19 +27,19 @@ export const todoSideEfffects = (_log: FastifyBaseLogger) => ({
 })
 
 type NotifyActivityCreatedParams = {
-    socket: Socket
+    socket: Server
     projectId: ProjectId
     todoId: string
 }
 
 type NotifyParams = {
-    socket: Socket
+    socket: Server
     todoId: string
     projectId: ProjectId
 }
 
 type NotifyActivityParams = {
-    socket: Socket
+    socket: Server
     projectId: ProjectId
     activityId: string
     todoId: string

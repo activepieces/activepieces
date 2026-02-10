@@ -1,5 +1,4 @@
 {
-  "Dropbox": "Dropbox",
   "Cloud storage and file synchronization": "Cloud storage and file synchronization",
   "Search": "Search",
   "Create New Text File": "Create New Text File",
@@ -52,9 +51,12 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
+  "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The search string. Must be at least 3 characters.": "The search string. Must be at least 3 characters.",
   "The path to search in. If not specified, the search is performed from the root.": "The path to search in. If not specified, the search is performed from the root.",
   "The maximum number of search results to return (up to 1000). Default is 100 if not specified.": "The maximum number of search results to return (up to 1000). Default is 100 if not specified.",
@@ -91,6 +93,7 @@
   "If set to true, the list folder operation will be applied recursively to all subfolders and the response will contain contents of all subfolders.": "If set to true, the list folder operation will be applied recursively to all subfolders and the response will contain contents of all subfolders.",
   "The maximum number of results to return (between 1 and 2000). Default is 2000 if not specified.": "The maximum number of results to return (between 1 and 2000). Default is 2000 if not specified.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "Relevance": "Relevance",
   "Modified Time": "Modified Time",
   "Active": "Active",
@@ -100,5 +103,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw"
 }

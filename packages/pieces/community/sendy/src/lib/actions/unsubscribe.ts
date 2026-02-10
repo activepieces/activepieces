@@ -15,6 +15,7 @@ export const unsubscribeAction = createAction({
   description: 'Unsubscribe a subscriber from a list',
   props: {
     list: Property.Dropdown({
+      auth: sendyAuth,
       displayName: 'List',
       description: 'Select the list to unsubscribe from',
       required: true,

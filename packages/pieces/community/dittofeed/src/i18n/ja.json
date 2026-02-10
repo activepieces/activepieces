@@ -1,0 +1,19 @@
+{
+  "Customer data platform for user analytics and tracking": "ユーザー分析と追跡のための顧客データプラットフォーム",
+  "API Key": "API キー",
+  "Base URL": "ベースURL",
+  "Your API key of Dittofeed.": "ディットフィードの API キー。",
+  "The base URL of your Dittofeed instance.": "DittofeedインスタンスのベースURL。",
+  "Identify User": "ユーザーを識別する",
+  "Track Event": "イベントを追跡",
+  "Screen Event": "スクリーンイベント",
+  "Identify a user in Dittofeed.": "Dittofeedでユーザーを識別します。",
+  "Track an event for a user.": "ユーザーのイベントを追跡します。",
+  "Track a screen view event.": "画面表示イベントを追跡します。",
+  "User ID": "ユーザー ID",
+  "User Traits": "ユーザーの特性",
+  "Event Name": "イベント名",
+  "Event Properties": "イベントのプロパティ",
+  "Screen Name": "画面名",
+  "Screen Properties": "画面のプロパティ"
+}

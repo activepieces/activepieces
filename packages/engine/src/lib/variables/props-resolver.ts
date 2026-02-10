@@ -1,20 +1,17 @@
+import { ContextVersion } from '@activepieces/pieces-framework'
 import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from '../services/connections.service'
+import { utils } from '../utils'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 
-type PropsResolverParams = {
-    engineToken: string
-    projectId: string
-    apiUrl: string
-}
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -24,7 +21,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
                     censoredInput: unresolvedInput,
                 }
             }
-            const currentState = executionState.currentState()
+            const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
+            const currentState = executionState.currentState(Array.from(referencedStepNames))
             const resolveOptions = {
                 engineToken,
                 projectId,
@@ -37,6 +35,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
                     ...resolveOptions,
                     input: token,
                     censoredInput: false,
+                    contextVersion,
                 }))
             const censoredInput = await applyFunctionToValues<T>(
                 unresolvedInput,
@@ -44,6 +43,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
                     ...resolveOptions,
                     input: token,
                     censoredInput: true,
+                    contextVersion,
                 }))
             return {
                 resolvedInput,
@@ -54,7 +54,9 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>) => {
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>,
+    contextVersion: ContextVersion | undefined,
+) => {
     const resolvedValues: Record<string, unknown> = {}
     let longestResultLength = 0
     for (const tokenPart of partsThatNeedResolving) {
@@ -62,6 +64,7 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
         resolvedValues[tokenPart] = await resolveSingleToken({
             ...resolveOptions,
             variableName,
+            contextVersion,
         })
         if (Array.isArray(resolvedValues[tokenPart])) {
             longestResultLength = Math.max(longestResultLength, resolvedValues[tokenPart].length)
@@ -78,6 +81,18 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 }
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
+
+function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
+    const stringifiedInput = JSON.stringify(input)
+    const referencedSteps = new Set<string>()
+    for (const stepName of stepNames) {
+        if (stringifiedInput.includes(stepName)) {
+            referencedSteps.add(stepName)
+        }
+    }
+    return referencedSteps
+}
+
 /** 
  * input: `Hello {{firstName}} {{lastName}}`
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
@@ -100,17 +115,19 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         return resolveSingleToken({
             ...resolveOptions,
             variableName,
+            contextVersion: params.contextVersion,
         })
     }
     const inputIncludesFlattenNestedKeysTokens = input.match(FLATTEN_NESTED_KEYS_PATTERN)
     if (!isNil(inputIncludesFlattenNestedKeysTokens) && !isNil(tokensThatNeedResolving)) {
-        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions)
+        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions, params.contextVersion)
     }
 
     return replaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
         const result = await resolveSingleToken({
             ...resolveOptions,
             variableName,
+            contextVersion: params.contextVersion,
         })
         return isString(result) ? result : JSON.stringify(result)
     })
@@ -134,7 +151,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (censoredInput) {
         return '**REDACTED**'
     }
-    const connection = await createConnectionService({ engineToken, projectId, apiUrl }).obtain(connectionName)
+    const connection = await createConnectionService({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
@@ -177,7 +194,7 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
-    try {
+    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError((async () => {
         const codeSandbox = await initCodeSandbox()
 
         const result = await codeSandbox.runScript({
@@ -186,11 +203,13 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>, 
             functions,
         })
         return result ?? ''
-    }
-    catch (exception) {
-        console.warn('[evalInScope] Error evaluating variable', exception)
+    }))
+
+    if (resultError) {
+        console.warn('[evalInScope] Error evaluating variable', resultError)
         return ''
     }
+    return result ?? ''
 }
 
 function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
@@ -217,6 +236,7 @@ type ResolveSingleTokenParams = {
     projectId: string
     apiUrl: string
     censoredInput: boolean
+    contextVersion: ContextVersion | undefined
 }
 
 type ResolveInputInternalParams = {
@@ -226,6 +246,7 @@ type ResolveInputInternalParams = {
     apiUrl: string
     censoredInput: boolean
     currentState: Record<string, unknown>
+    contextVersion: ContextVersion | undefined
 }
 
 type ResolveInputParams = {
@@ -236,4 +257,12 @@ type ResolveInputParams = {
 type ResolveResult<T = unknown> = {
     resolvedInput: T
     censoredInput: unknown
+}
+
+type PropsResolverParams = {
+    engineToken: string
+    projectId: string
+    apiUrl: string
+    contextVersion: ContextVersion | undefined
+    stepNames: string[]
 }

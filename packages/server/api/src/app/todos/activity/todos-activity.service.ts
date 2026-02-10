@@ -1,6 +1,6 @@
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, TodoActivity, TodoActivityWithUser, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
+import { Server } from 'socket.io'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -114,12 +114,12 @@ type CreateParams = {
     projectId: ProjectId
     userId: UserId | null
     todoId: ApId
-    socket: Socket
+    socket: Server
 }
 
 type UpdateParams = {
     id: string
     content: string
-    socket: Socket
+    socket: Server
     projectId: ProjectId
 }

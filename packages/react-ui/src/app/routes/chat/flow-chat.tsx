@@ -3,16 +3,16 @@ import { AxiosError } from 'axios';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 
-import { ChatDrawerSource } from '@/app/builder/builder-hooks';
-import { ChatInput, ChatMessage } from '@/components/ui/chat/chat-input';
-import { ImageDialog } from '@/components/ui/chat/chat-message/image-dialog';
+import { LoadingScreen } from '@/components/ui/loading-screen';
+import { ChatInput, ChatMessage } from '@/features/chat/chat-input';
+import { ChatIntro } from '@/features/chat/chat-intro';
+import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
 import {
   ChatMessageList,
   Messages,
-} from '@/components/ui/chat/chat-message-list';
-import { LoadingScreen } from '@/components/ui/loading-screen';
-import { ChatIntro } from '@/features/chat/chat-intro';
+} from '@/features/chat/chat-message-list/index';
 import { humanInputApi } from '@/features/forms/lib/human-input-api';
+import { ChatDrawerSource } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   ApErrorParams,
@@ -142,7 +142,6 @@ export function FlowChat({
     },
 
     onSuccess: (result) => {
-      console.log(result);
       if (mode === ChatDrawerSource.TEST_STEP) {
         closeChat?.();
       }
@@ -212,7 +211,6 @@ export function FlowChat({
 
   const handleSendMessage = (message: ChatMessage) => {
     onSendingMessage?.(message);
-
     sendMessage({ isRetrying: false, message });
   };
 

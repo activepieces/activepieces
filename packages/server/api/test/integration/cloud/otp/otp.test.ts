@@ -23,11 +23,9 @@ beforeEach(() => {
         sendIssueCreatedNotification: jest.fn(),
         sendQuotaAlert: jest.fn(),
         sendReminderJobHandler: jest.fn(),
-        sendTrialReminder: jest.fn(),
-        sendOneDayLeftOnTrial: jest.fn(),
-        sendWellcomeToTrialEmail: jest.fn(),
-        sendSevenDaysInTrialEmail: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
+        sendBadgeAwardedEmail: jest.fn(),
+        sendProjectMemberAdded: jest.fn(),
     }))
 
 })

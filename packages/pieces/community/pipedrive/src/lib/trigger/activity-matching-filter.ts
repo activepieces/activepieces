@@ -2,7 +2,7 @@ import { pipedriveAuth } from '../../index';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { filterIdProp } from '../common/props';
-import { pipedriveApiCall, pipedrivePaginatedApiCall } from '../common';
+import { pipedriveApiCall, pipedrivePaginatedV2ApiCall } from '../common';
 import { LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
 
@@ -18,12 +18,12 @@ export const activityMatchingFilterTrigger = createTrigger({
 	async onEnable(context) {
 		const ids: number[] = [];
 
-		const response = await pipedrivePaginatedApiCall<{ id: number }>({
+		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/activities:(id)',
-			query: { sort: 'update_time DESC', filter_id: context.propsValue.filterId, user_id: 0 },
+			resourceUri: '/v2/activities',
+			query: { filter_id: context.propsValue.filterId },
 		});
 
 		if (!isNil(response)) {
@@ -44,12 +44,13 @@ export const activityMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/activities',
+			resourceUri: '/v2/activities',
 			query: {
 				limit: 10,
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
-				user_id: 0,
+				sort_by:'update_time',
+				sort_direction:'desc',
+				include_fields:'attendees'
 			},
 		});
 
@@ -67,12 +68,12 @@ export const activityMatchingFilterTrigger = createTrigger({
 		const existingIds = (await context.store.get<string>('activities')) ?? '[]';
 		const parsedExistingIds = JSON.parse(existingIds) as number[];
 
-		const response = await pipedrivePaginatedApiCall<{ id: number }>({
+		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/activities',
-			query: { sort: 'update_time DESC', filter_id: context.propsValue.filterId, user_id: 0 },
+			resourceUri: '/v2/activities',
+			query: {  filter_id: context.propsValue.filterId,include_fields:'attendees'},
 		});
 
 		if (isNil(response) || response.length === 0) {

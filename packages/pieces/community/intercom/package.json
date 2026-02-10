@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-intercom",
-  "version": "0.5.3"
+  "version": "0.6.3",
+  "dependencies": {
+    "intercom-client": "6.2.0",
+    "string-strip-html": "8.5.0"
+  }
 }

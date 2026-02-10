@@ -25,7 +25,6 @@ describe('List flow runs endpoint', () => {
         const testToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockOwner.id,
-            projectId: mockProject.id,
             platform: {
                 id: mockPlatform.id,
             },

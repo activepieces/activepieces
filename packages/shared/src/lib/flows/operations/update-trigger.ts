@@ -1,33 +1,33 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { isNil } from '../../common'
-import { Action } from '../actions/action'
+import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
-import { Trigger, TriggerType } from '../triggers/trigger'
+import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateTriggerRequest } from '.'
 
-const triggerSchemaValidation = TypeCompiler.Compile(Trigger)
+const triggerSchemaValidation = TypeCompiler.Compile(FlowTrigger)
 
-function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: Action | undefined): Trigger {
+function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined): FlowTrigger {
     const baseProperties = {
         displayName: request.displayName,
         name,
         valid: false,
         nextAction,
     }
-    let trigger: Trigger
+    let trigger: FlowTrigger
     switch (request.type) {
-        case TriggerType.EMPTY:
+        case FlowTriggerType.EMPTY:
             trigger = {
                 ...baseProperties,
-                type: TriggerType.EMPTY,
+                type: FlowTriggerType.EMPTY,
                 settings: request.settings,
             }
             break
-        case TriggerType.PIECE:
+        case FlowTriggerType.PIECE:
             trigger = {
                 ...baseProperties,
-                type: TriggerType.PIECE,
+                type: FlowTriggerType.PIECE,
                 settings: request.settings,
             }
             break

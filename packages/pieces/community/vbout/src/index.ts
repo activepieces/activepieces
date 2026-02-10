@@ -25,7 +25,7 @@ export const vboutAuth = PieceAuth.SecretText({
   required: true,
   description: markdown,
   async validate({ auth }) {
-    const client = makeClient(auth as string);
+    const client = makeClient(auth);
     try {
       await client.validateAuth();
       return {

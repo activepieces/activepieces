@@ -32,7 +32,7 @@ export const translateAction = createAction({
     form.append('model', 'whisper-1');
 
     const headers = {
-      Authorization: `Bearer ${context.auth}`,
+      Authorization: `Bearer ${context.auth.secret_text}`,
     };
 
     const request: HttpRequest = {

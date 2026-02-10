@@ -11,9 +11,11 @@ export const getContainer = createAction({
   props: {
     containerType: Property.Dropdown<
       'organizations' | 'workers' | 'teams',
-      true
+      true,
+      typeof onfleetAuth
     >({
-      displayName: 'Container Type',
+      displayName: 'Container Type',  
+      auth: onfleetAuth,
       required: true,
       refreshers: [],
       options: async () => {
@@ -41,7 +43,7 @@ export const getContainer = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.containers.get(
       context.propsValue.containerId,

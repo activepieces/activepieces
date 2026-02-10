@@ -22,7 +22,7 @@ export const listFilesFromRecord = createAction({
 
     try {
       const response = await makeRequest<any>(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         path
       );

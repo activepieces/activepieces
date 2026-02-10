@@ -11,7 +11,7 @@ export const Folder = Type.Object({
     displayOrder: Type.Number(),
 })
 
-export const UncategorizedFolderId = 'UNCATEGORIZED'
+export const UncategorizedFolderId = 'NULL'
 export type Folder = Static<typeof Folder>
 
 export type FolderDto = Folder & { numberOfFlows: number }

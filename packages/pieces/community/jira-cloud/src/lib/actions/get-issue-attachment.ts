@@ -31,8 +31,8 @@ export const getIssueAttachmentAction = createAction({
             method: HttpMethod.GET,
             authentication: {
                 type: AuthenticationType.BASIC,
-                username: context.auth.email,
-                password: context.auth.apiToken,
+                username: context.auth.props.email,
+                password: context.auth.props.apiToken,
             },
             responseType:'arraybuffer'
         })

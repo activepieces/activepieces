@@ -42,8 +42,17 @@
       "@activepieces/piece-agent": [
         "packages/pieces/community/agent/src/index.ts"
       ],
+      "@activepieces/piece-agentx": [
+        "packages/pieces/community/agentx/src/index.ts"
+      ],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
+      ],
+      "@activepieces/piece-aidbase": [
+        "packages/pieces/community/aidbase/src/index.ts"
+      ],
+      "@activepieces/piece-aircall": [
+        "packages/pieces/community/aircall/src/index.ts"
       ],
       "@activepieces/piece-airparser": [
         "packages/pieces/community/airparser/src/index.ts"
@@ -78,6 +87,9 @@
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
+      "@activepieces/piece-apitemplate-io": [
+        "packages/pieces/community/apitemplate-io/src/index.ts"
+      ],
       "@activepieces/piece-apollo": [
         "packages/pieces/community/apollo/src/index.ts"
       ],
@@ -90,11 +102,20 @@
       "@activepieces/piece-ashby": [
         "packages/pieces/community/ashby/src/index.ts"
       ],
+      "@activepieces/piece-assembled": [
+        "packages/pieces/community/assembled/src/index.ts"
+      ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
       "@activepieces/piece-attio": [
         "packages/pieces/community/attio/src/index.ts"
+      ],
+      "@activepieces/piece-autocalls": [
+        "packages/pieces/community/autocalls/src/index.ts"
+      ],
+      "@activepieces/piece-avoma": [
+        "packages/pieces/community/avoma/src/index.ts"
       ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
@@ -123,11 +144,23 @@
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
+      "@activepieces/piece-bigin-by-zoho": [
+        "packages/pieces/community/bigin-by-zoho/src/index.ts"
+      ],
+      "@activepieces/piece-bika": [
+        "packages/pieces/community/bika/src/index.ts"
+      ],
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
+      "@activepieces/piece-bitly": [
+        "packages/pieces/community/bitly/src/index.ts"
+      ],
       "@activepieces/piece-blockscout": [
         "packages/pieces/community/blockscout/src/index.ts"
+      ],
+      "@activepieces/piece-bluesky": [
+        "packages/pieces/community/bluesky/src/index.ts"
       ],
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
@@ -136,8 +169,17 @@
       "@activepieces/piece-brilliant-directories": [
         "packages/pieces/community/brilliant-directories/src/index.ts"
       ],
+      "@activepieces/piece-browse-ai": [
+        "packages/pieces/community/browse-ai/src/index.ts"
+      ],
+      "@activepieces/piece-browserless": [
+        "packages/pieces/community/browserless/src/index.ts"
+      ],
       "@activepieces/piece-bubble": [
         "packages/pieces/community/bubble/src/index.ts"
+      ],
+      "@activepieces/piece-bumpups": [
+        "packages/pieces/community/bumpups/src/index.ts"
       ],
       "@activepieces/piece-cal-com": [
         "packages/pieces/community/cal-com/src/index.ts"
@@ -148,8 +190,14 @@
       "@activepieces/piece-call-rounded": [
         "packages/pieces/community/call-rounded/src/index.ts"
       ],
+      "@activepieces/piece-camb-ai": [
+        "packages/pieces/community/camb-ai/src/index.ts"
+      ],
       "@activepieces/piece-campaign-monitor": [
         "packages/pieces/community/campaign-monitor/src/index.ts"
+      ],
+      "@activepieces/piece-capsule-crm": [
+        "packages/pieces/community/capsule-crm/src/index.ts"
       ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
@@ -165,6 +213,9 @@
       ],
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
+      ],
+      "@activepieces/piece-chat-data": [
+        "packages/pieces/community/chat-data/src/index.ts"
       ],
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
@@ -184,6 +235,9 @@
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
+      "@activepieces/piece-clickfunnels": [
+        "packages/pieces/community/clickfunnels/src/index.ts"
+      ],
       "@activepieces/piece-clicksend": [
         "packages/pieces/community/clicksend/src/index.ts"
       ],
@@ -199,6 +253,9 @@
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
       ],
+      "@activepieces/piece-cloudconvert": [
+        "packages/pieces/community/cloudconvert/src/index.ts"
+      ],
       "@activepieces/piece-cloudinary": [
         "packages/pieces/community/cloudinary/src/index.ts"
       ],
@@ -208,8 +265,14 @@
       "@activepieces/piece-coda": [
         "packages/pieces/community/coda/src/index.ts"
       ],
+      "@activepieces/piece-cody": [
+        "packages/pieces/community/cody/src/index.ts"
+      ],
       "@activepieces/piece-cognito-forms": [
         "packages/pieces/community/cognito-forms/src/index.ts"
+      ],
+      "@activepieces/piece-cometapi": [
+        "packages/pieces/community/cometapi/src/index.ts"
       ],
       "@activepieces/piece-comfyicu": [
         "packages/pieces/community/comfyicu/src/index.ts"
@@ -232,6 +295,9 @@
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
       ],
+      "@activepieces/piece-copper": [
+        "packages/pieces/community/copper/src/index.ts"
+      ],
       "@activepieces/piece-copy-ai": [
         "packages/pieces/community/copy-ai/src/index.ts"
       ],
@@ -250,6 +316,9 @@
       ],
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/community/data-summarizer/src/index.ts"
+      ],
+      "@activepieces/piece-datadog": [
+        "packages/pieces/community/datadog/src/index.ts"
       ],
       "@activepieces/piece-date-helper": [
         "packages/pieces/community/date-helper/src/index.ts"
@@ -281,6 +350,12 @@
       "@activepieces/piece-discourse": [
         "packages/pieces/community/discourse/src/index.ts"
       ],
+      "@activepieces/piece-dittofeed": [
+        "packages/pieces/community/dittofeed/src/index.ts"
+      ],
+      "@activepieces/piece-docsbot": [
+        "packages/pieces/community/docsbot/src/index.ts"
+      ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
       ],
@@ -290,6 +365,9 @@
       "@activepieces/piece-dropbox": [
         "packages/pieces/community/dropbox/src/index.ts"
       ],
+      "@activepieces/piece-drupal": [
+        "packages/pieces/community/drupal/src/index.ts"
+      ],
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
@@ -298,6 +376,9 @@
       ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
+      ],
+      "@activepieces/piece-emailoctopus": [
+        "packages/pieces/community/emailoctopus/src/index.ts"
       ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
@@ -339,6 +420,9 @@
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
       ],
+      "@activepieces/piece-foreplay-co": [
+        "packages/pieces/community/foreplay-co/src/index.ts"
+      ],
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
       ],
@@ -357,8 +441,14 @@
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
       ],
+      "@activepieces/piece-front": [
+        "packages/pieces/community/front/src/index.ts"
+      ],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
+      ],
+      "@activepieces/piece-gamma": [
+        "packages/pieces/community/gamma/src/index.ts"
       ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
@@ -411,6 +501,9 @@
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
       ],
+      "@activepieces/piece-googlechat": [
+        "packages/pieces/community/googlechat/src/index.ts"
+      ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
@@ -422,6 +515,9 @@
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
+      ],
+      "@activepieces/piece-grok-xai": [
+        "packages/pieces/community/grok-xai/src/index.ts"
       ],
       "@activepieces/piece-groq": [
         "packages/pieces/community/groq/src/index.ts"
@@ -435,6 +531,12 @@
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
+      "@activepieces/piece-hedy": [
+        "packages/pieces/community/hedy/src/index.ts"
+      ],
+      "@activepieces/piece-help-scout": [
+        "packages/pieces/community/help-scout/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],
@@ -447,6 +549,12 @@
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
       ],
+      "@activepieces/piece-hugging-face": [
+        "packages/pieces/community/hugging-face/src/index.ts"
+      ],
+      "@activepieces/piece-hunter": [
+        "packages/pieces/community/hunter/src/index.ts"
+      ],
       "@activepieces/piece-image-ai": [
         "packages/pieces/community/image-ai/src/index.ts"
       ],
@@ -455,6 +563,9 @@
       ],
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
+      ],
+      "@activepieces/piece-insighto-ai": [
+        "packages/pieces/community/insighto-ai/src/index.ts"
       ],
       "@activepieces/piece-instagram-business": [
         "packages/pieces/community/instagram-business/src/index.ts"
@@ -489,6 +600,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-knack": [
+        "packages/pieces/community/knack/src/index.ts"
+      ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
       ],
@@ -497,6 +611,9 @@
       ],
       "@activepieces/piece-lead-connector": [
         "packages/pieces/community/lead-connector/src/index.ts"
+      ],
+      "@activepieces/piece-lemlist": [
+        "packages/pieces/community/lemlist/src/index.ts"
       ],
       "@activepieces/piece-line": [
         "packages/pieces/community/line/src/index.ts"
@@ -518,6 +635,12 @@
       ],
       "@activepieces/piece-lusha": [
         "packages/pieces/community/lusha/src/index.ts"
+      ],
+      "@activepieces/piece-magical-api": [
+        "packages/pieces/community/magical-api/src/index.ts"
+      ],
+      "@activepieces/piece-magicslides": [
+        "packages/pieces/community/magicslides/src/index.ts"
       ],
       "@activepieces/piece-mailchain": [
         "packages/pieces/community/mailchain/src/index.ts"
@@ -563,11 +686,20 @@
       "@activepieces/piece-messagebird": [
         "packages/pieces/community/messagebird/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-365-people": [
+        "packages/pieces/community/microsoft-365-people/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-365-planner": [
+        "packages/pieces/community/microsoft-365-planner/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-onenote": [
+        "packages/pieces/community/microsoft-onenote/src/index.ts"
       ],
       "@activepieces/piece-microsoft-outlook": [
         "packages/pieces/community/microsoft-outlook/src/index.ts"
@@ -587,11 +719,17 @@
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
       ],
+      "@activepieces/piece-missive": [
+        "packages/pieces/community/missive/src/index.ts"
+      ],
       "@activepieces/piece-mistral-ai": [
         "packages/pieces/community/mistral-ai/src/index.ts"
       ],
       "@activepieces/piece-mixpanel": [
         "packages/pieces/community/mixpanel/src/index.ts"
+      ],
+      "@activepieces/piece-mollie": [
+        "packages/pieces/community/mollie/src/index.ts"
       ],
       "@activepieces/piece-monday": [
         "packages/pieces/community/monday/src/index.ts"
@@ -605,8 +743,14 @@
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
+      "@activepieces/piece-murf-api": [
+        "packages/pieces/community/murf-api/src/index.ts"
+      ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
+      ],
+      "@activepieces/piece-netlify": [
+        "packages/pieces/community/netlify/src/index.ts"
       ],
       "@activepieces/piece-netsuite": [
         "packages/pieces/community/netsuite/src/index.ts"
@@ -626,11 +770,20 @@
       "@activepieces/piece-ntfy": [
         "packages/pieces/community/ntfy/src/index.ts"
       ],
+      "@activepieces/piece-nuelink": [
+        "packages/pieces/community/nuelink/src/index.ts"
+      ],
       "@activepieces/piece-odoo": [
         "packages/pieces/community/odoo/src/index.ts"
       ],
+      "@activepieces/piece-okta": [
+        "packages/pieces/community/okta/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
+      ],
+      "@activepieces/piece-open-phone": [
+        "packages/pieces/community/open-phone/src/index.ts"
       ],
       "@activepieces/piece-open-router": [
         "packages/pieces/community/open-router/src/index.ts"
@@ -638,8 +791,17 @@
       "@activepieces/piece-openai": [
         "packages/pieces/community/openai/src/index.ts"
       ],
+      "@activepieces/piece-oracle-fusion-cloud-erp": [
+        "packages/pieces/community/oracle-fusion-cloud-erp/src/index.ts"
+      ],
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
+      ],
+      "@activepieces/piece-paperform": [
+        "packages/pieces/community/paperform/src/index.ts"
+      ],
+      "@activepieces/piece-parseur": [
+        "packages/pieces/community/parseur/src/index.ts"
       ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
@@ -651,6 +813,12 @@
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
+      "@activepieces/piece-pdfmonkey": [
+        "packages/pieces/community/pdfmonkey/src/index.ts"
+      ],
+      "@activepieces/piece-peekshot": [
+        "packages/pieces/community/peekshot/src/index.ts"
+      ],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
       ],
@@ -660,11 +828,20 @@
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
+      "@activepieces/piece-pinecone": [
+        "packages/pieces/community/pinecone/src/index.ts"
+      ],
+      "@activepieces/piece-pinterest": [
+        "packages/pieces/community/pinterest/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],
       "@activepieces/piece-placid": [
         "packages/pieces/community/placid/src/index.ts"
+      ],
+      "@activepieces/piece-podio": [
+        "packages/pieces/community/podio/src/index.ts"
       ],
       "@activepieces/piece-poper": [
         "packages/pieces/community/poper/src/index.ts"
@@ -674,6 +851,15 @@
       ],
       "@activepieces/piece-posthog": [
         "packages/pieces/community/posthog/src/index.ts"
+      ],
+      "@activepieces/piece-predict-leads": [
+        "packages/pieces/community/predict-leads/src/index.ts"
+      ],
+      "@activepieces/piece-productboard": [
+        "packages/pieces/community/productboard/src/index.ts"
+      ],
+      "@activepieces/piece-prompthub": [
+        "packages/pieces/community/prompthub/src/index.ts"
       ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
@@ -690,11 +876,11 @@
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
+      "@activepieces/piece-quickbooks": [
+        "packages/pieces/community/quickbooks/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
-      ],
-       "@activepieces/piece-quickbooks": [
-        "packages/pieces/community/quickbooks/src/index.ts"
       ],
       "@activepieces/piece-rabbitmq": [
         "packages/pieces/community/rabbitmq/src/index.ts"
@@ -720,8 +906,14 @@
       "@activepieces/piece-respaid": [
         "packages/pieces/community/respaid/src/index.ts"
       ],
+      "@activepieces/piece-respond-io": [
+        "packages/pieces/community/respond-io/src/index.ts"
+      ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
+      ],
+      "@activepieces/piece-retell-ai": [
+        "packages/pieces/community/retell-ai/src/index.ts"
       ],
       "@activepieces/piece-retune": [
         "packages/pieces/community/retune/src/index.ts"
@@ -733,6 +925,9 @@
         "packages/pieces/community/robolly/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
+      "@activepieces/piece-runway": [
+        "packages/pieces/community/runway/src/index.ts"
+      ],
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
@@ -757,6 +952,9 @@
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
+      "@activepieces/piece-sender": [
+        "packages/pieces/community/sender/src/index.ts"
+      ],
       "@activepieces/piece-sendfox": [
         "packages/pieces/community/sendfox/src/index.ts"
       ],
@@ -774,6 +972,9 @@
       ],
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
+      ],
+      "@activepieces/piece-serpstat": [
+        "packages/pieces/community/serpstat/src/index.ts"
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
@@ -793,11 +994,23 @@
       "@activepieces/piece-simplepdf": [
         "packages/pieces/community/simplepdf/src/index.ts"
       ],
+      "@activepieces/piece-simpliroute": [
+        "packages/pieces/community/simpliroute/src/index.ts"
+      ],
+      "@activepieces/piece-simplybookme": [
+        "packages/pieces/community/simplybookme/src/index.ts"
+      ],
+      "@activepieces/piece-sitespeakai": [
+        "packages/pieces/community/sitespeakai/src/index.ts"
+      ],
       "@activepieces/piece-skyvern": [
         "packages/pieces/community/skyvern/src/index.ts"
       ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
+      ],
+      "@activepieces/piece-slidespeak": [
+        "packages/pieces/community/slidespeak/src/index.ts"
       ],
       "@activepieces/piece-smaily": [
         "packages/pieces/community/smaily/src/index.ts"
@@ -808,11 +1021,20 @@
       "@activepieces/piece-smartsuite": [
         "packages/pieces/community/smartsuite/src/index.ts"
       ],
+      "@activepieces/piece-smoove": [
+        "packages/pieces/community/smoove/src/index.ts"
+      ],
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
       ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
+      ],
+      "@activepieces/piece-socialkit": [
+        "packages/pieces/community/socialkit/src/index.ts"
+      ],
+      "@activepieces/piece-softr": [
+        "packages/pieces/community/softr/src/index.ts"
       ],
       "@activepieces/piece-sperse": [
         "packages/pieces/community/sperse/src/index.ts"
@@ -853,6 +1075,9 @@
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
       ],
+      "@activepieces/piece-systeme-io": [
+        "packages/pieces/community/systeme-io/src/index.ts"
+      ],
       "@activepieces/piece-tables": [
         "packages/pieces/community/tables/src/index.ts"
       ],
@@ -874,6 +1099,12 @@
       "@activepieces/piece-tavily": [
         "packages/pieces/community/tavily/src/index.ts"
       ],
+      "@activepieces/piece-teamleader": [
+        "packages/pieces/community/teamleader/src/index.ts"
+      ],
+      "@activepieces/piece-teamwork": [
+        "packages/pieces/community/teamwork/src/index.ts"
+      ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
       ],
@@ -882,6 +1113,9 @@
       ],
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
+      ],
+      "@activepieces/piece-textcortex-ai": [
+        "packages/pieces/community/textcortex-ai/src/index.ts"
       ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
@@ -892,11 +1126,17 @@
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
       ],
+      "@activepieces/piece-timelines-ai": [
+        "packages/pieces/community/timelines-ai/src/index.ts"
+      ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
       ],
       "@activepieces/piece-todos": [
         "packages/pieces/community/todos/src/index.ts"
+      ],
+      "@activepieces/piece-toggl-track": [
+        "packages/pieces/community/toggl-track/src/index.ts"
       ],
       "@activepieces/piece-totalcms": [
         "packages/pieces/community/totalcms/src/index.ts"
@@ -925,17 +1165,32 @@
       "@activepieces/piece-utility-ai": [
         "packages/pieces/community/utility-ai/src/index.ts"
       ],
+      "@activepieces/piece-vadoo-ai": [
+        "packages/pieces/community/vadoo-ai/src/index.ts"
+      ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
       ],
+      "@activepieces/piece-video-ai": [
+        "packages/pieces/community/video-ai/src/index.ts"
+      ],
       "@activepieces/piece-village": [
         "packages/pieces/community/village/src/index.ts"
+      ],
+      "@activepieces/piece-vimeo": [
+        "packages/pieces/community/vimeo/src/index.ts"
+      ],
+      "@activepieces/piece-vlm-run": [
+        "packages/pieces/community/vlm-run/src/index.ts"
       ],
       "@activepieces/piece-vtex": [
         "packages/pieces/community/vtex/src/index.ts"
       ],
       "@activepieces/piece-vtiger": [
         "packages/pieces/community/vtiger/src/index.ts"
+      ],
+      "@activepieces/piece-wealthbox": [
+        "packages/pieces/community/wealthbox/src/index.ts"
       ],
       "@activepieces/piece-webflow": [
         "packages/pieces/community/webflow/src/index.ts"
@@ -946,14 +1201,23 @@
       "@activepieces/piece-webling": [
         "packages/pieces/community/webling/src/index.ts"
       ],
+      "@activepieces/piece-webscraping-ai": [
+        "packages/pieces/community/webscraping-ai/src/index.ts"
+      ],
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
+      ],
+      "@activepieces/piece-what-converts": [
+        "packages/pieces/community/what-converts/src/index.ts"
       ],
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
       ],
       "@activepieces/piece-whatsapp": [
         "packages/pieces/community/whatsapp/src/index.ts"
+      ],
+      "@activepieces/piece-wonderchat": [
+        "packages/pieces/community/wonderchat/src/index.ts"
       ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
@@ -963,6 +1227,12 @@
       ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
+      ],
+      "@activepieces/piece-workable": [
+        "packages/pieces/community/workable/src/index.ts"
+      ],
+      "@activepieces/piece-wrike": [
+        "packages/pieces/community/wrike/src/index.ts"
       ],
       "@activepieces/piece-wufoo": [
         "packages/pieces/community/wufoo/src/index.ts"
@@ -983,8 +1253,14 @@
       "@activepieces/piece-zerobounce": [
         "packages/pieces/community/zerobounce/src/index.ts"
       ],
+      "@activepieces/piece-zoho-bookings": [
+        "packages/pieces/community/zoho-bookings/src/index.ts"
+      ],
       "@activepieces/piece-zoho-books": [
         "packages/pieces/community/zoho-books/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-campaigns": [
+        "packages/pieces/community/zoho-campaigns/src/index.ts"
       ],
       "@activepieces/piece-zoho-crm": [
         "packages/pieces/community/zoho-crm/src/index.ts"
@@ -1008,6 +1284,9 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/community/framework/src/index.ts"
       ],
+      "@activepieces/piece-meistertask": [
+        "packages/pieces/community/meistertask/src/index.ts"
+      ],
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
@@ -1027,9 +1306,490 @@
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
+      "activepieces/piece-cashfree-payments": [
+        "packages/pieces/community/cashfree-payments/src/index.ts"
+      ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
+      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
+      "@activepieces/piece-kissflow": [
+        "packages/pieces/community/kissflow/src/index.ts"
+      ],
+      "@activepieces/piece-housecall-pro": [
+        "packages/pieces/community/housecall-pro/src/index.ts"
+      ],
+      "@activepieces/piece-chat-aid": [
+        "packages/pieces/community/chat-aid/src/index.ts"
+      ],
+      "@activepieces/piece-videoask": [
+        "packages/pieces/community/videoask/src/index.ts"
+      ],
+      "@activepieces/piece-presenton": [
+        "packages/pieces/community/presenton/src/index.ts"
+      ],
+      "@activepieces/piece-formspark": [
+        "packages/pieces/community/formspark/src/index.ts"
+      ],
+      "@activepieces/piece-tableau": [
+        "packages/pieces/community/tableau/src/index.ts"
+      ],
+      "@activepieces/piece-fragment": [
+        "packages/pieces/community/fragment/src/index.ts"
+      ],
+      "@activepieces/piece-fountain": [
+        "packages/pieces/community/fountain/src/index.ts"
+      ],
+      "@activepieces/piece-omni-co": [
+        "packages/pieces/community/omni-co/src/index.ts"
+      ],
+      "@activepieces/piece-instabase": [
+        "packages/pieces/community/instabase/src/index.ts"
+      ],
+      "@activepieces/piece-gladia": [
+        "packages/pieces/community/gladia/src/index.ts"
+      ],
+      "@activepieces/piece-manus": [
+        "packages/pieces/community/manus/src/index.ts"
+      ],
+      "@activepieces/piece-recall-ai": [
+        "packages/pieces/community/recall-ai/src/index.ts"
+      ],
+      "@activepieces/piece-contextual-ai": [
+        "packages/pieces/community/contextual-ai/src/index.ts"
+      ],
+      "@activepieces/piece-hume-ai": [
+        "packages/pieces/community/hume-ai/src/index.ts"
+      ],
+      "@activepieces/piece-chatsistant": [
+        "packages/pieces/community/chatsistant/src/index.ts"
+      ],
+      "@activepieces/piece-rapidtext-ai": [
+        "packages/pieces/community/rapidtext-ai/src/index.ts"
+      ],
+      "@activepieces/piece-opnform": [
+        "packages/pieces/community/opnform/src/index.ts"
+      ],
+      "@activepieces/piece-opportify": [
+        "packages/pieces/community/opportify/src/index.ts"
+      ],
+      "@activepieces/piece-promptmate": [
+        "packages/pieces/community/promptmate/src/index.ts"
+      ],
+      "@activepieces/piece-guidelite": [
+        "packages/pieces/community/guidelite/src/index.ts"
+      ],
+      "@activepieces/piece-bolna": [
+        "packages/pieces/community/bolna/src/index.ts"
+      ],
+      "@activepieces/piece-appfollow": [
+        "packages/pieces/community/appfollow/src/index.ts"
+      ],
+      "@activepieces/piece-griptape": [
+        "packages/pieces/community/griptape/src/index.ts"
+      ],
+      "@activepieces/piece-bexio": [
+        "packages/pieces/community/bexio/src/index.ts"
+      ],
+      "@activepieces/piece-pushbullet": [
+        "packages/pieces/community/pushbullet/src/index.ts"
+      ],
+      "@activepieces/piece-denser-ai": [
+        "packages/pieces/community/denser-ai/src/index.ts"
+      ],
+      "@activepieces/piece-ask-handle": [
+        "packages/pieces/community/ask-handle/src/index.ts"
+      ],
+      "@activepieces/piece-phantombuster": [
+        "packages/pieces/community/phantombuster/src/index.ts"
+      ],
+      "@activepieces/piece-openmic-ai": [
+        "packages/pieces/community/openmic-ai/src/index.ts"
+      ],
+      "@activepieces/piece-datafuel": [
+        "packages/pieces/community/datafuel/src/index.ts"
+      ],
+      "@activepieces/piece-doctly": [
+        "packages/pieces/community/doctly/src/index.ts"
+      ],
+      "@activepieces/piece-chatnode": [
+        "packages/pieces/community/chatnode/src/index.ts"
+      ],
+      "@activepieces/piece-greip": [
+        "packages/pieces/community/greip/src/index.ts"
+      ],
+      "@activepieces/piece-chaindesk": [
+        "packages/pieces/community/chaindesk/src/index.ts"
+      ],
+      "@activepieces/piece-orimon": [
+        "packages/pieces/community/orimon/src/index.ts"
+      ],
+      "@activepieces/piece-linkup": [
+        "packages/pieces/community/linkup/src/index.ts"
+      ],
+      "@activepieces/piece-youform": [
+        "packages/pieces/community/youform/src/index.ts"
+      ],
+      "@activepieces/piece-flow-parser": [
+        "packages/pieces/community/flow-parser/src/index.ts"
+      ],
+      "@activepieces/piece-writesonic-bulk": [
+        "packages/pieces/community/writesonic-bulk/src/index.ts"
+      ],
+      "@activepieces/piece-documentpro": [
+        "packages/pieces/community/documentpro/src/index.ts"
+      ],
+      "@activepieces/piece-image-router": [
+        "packages/pieces/community/image-router/src/index.ts"
+      ],
+      "@activepieces/piece-pollybot-ai": [
+        "packages/pieces/community/pollybot-ai/src/index.ts"
+      ],
+      "@activepieces/piece-documerge": [
+        "packages/pieces/community/documerge/src/index.ts"
+      ],
+      "@activepieces/piece-letta": [
+        "packages/pieces/community/letta/src/index.ts"
+      ],
+      "@activepieces/piece-logrocket": [
+        "packages/pieces/community/logrocket/src/index.ts"
+      ],
+      "@activepieces/piece-couchbase": [
+        "packages/pieces/community/couchbase/src/index.ts"
+      ],
+      "@activepieces/piece-cursor": [
+        "packages/pieces/community/cursor/src/index.ts"
+      ],
+      "@activepieces/piece-gptzero-detect-ai": [
+        "packages/pieces/community/gptzero-detect-ai/src/index.ts"
+      ],
+      "@activepieces/piece-bursty-ai": [
+        "packages/pieces/community/bursty-ai/src/index.ts"
+      ],
+      "@activepieces/piece-tl-dv": [
+        "packages/pieces/community/tl-dv/src/index.ts"
+      ],
+      "@activepieces/piece-parser-expert": [
+        "packages/pieces/community/parser-expert/src/index.ts"
+      ],
+      "@activepieces/piece-vidlab7": [
+        "packages/pieces/community/vidlab7/src/index.ts"
+      ],
+      "@activepieces/piece-bookedin": [
+        "packages/pieces/community/bookedin/src/index.ts"
+      ],
+      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
+      "@activepieces/piece-customgpt": [
+        "packages/pieces/community/customgpt/src/index.ts"
+      ],
+      "@activepieces/piece-synthesia": [
+        "packages/pieces/community/synthesia/src/index.ts"
+      ],
+      "@activepieces/piece-meetgeek-ai": [
+        "packages/pieces/community/meetgeek-ai/src/index.ts"
+      ],
+      "@activepieces/piece-fellow": [
+        "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-echowin": [
+        "packages/pieces/community/echowin/src/index.ts"
+      ],
+      "@activepieces/piece-feathery": [
+        "packages/pieces/community/feathery/src/index.ts"
+      ],
+      "@activepieces/piece-chatling": [
+        "packages/pieces/community/chatling/src/index.ts"
+      ],
+      "@activepieces/piece-air-ops": [
+        "packages/pieces/community/air-ops/src/index.ts"
+      ],
+      "@activepieces/piece-mind-studio": [
+        "packages/pieces/community/mind-studio/src/index.ts"
+      ],
+      "@activepieces/piece-easy-peasy-ai": [
+        "packages/pieces/community/easy-peasy-ai/src/index.ts"
+      ],
+      "@activepieces/piece-leexi": [
+        "packages/pieces/community/leexi/src/index.ts"
+      ],
+      "@activepieces/piece-tiny-talk-ai": [
+        "packages/pieces/community/tiny-talk-ai/src/index.ts"
+      ],
+      "@activepieces/piece-sap-ariba": [
+        "packages/pieces/community/sap-ariba/src/index.ts"
+      ],
+      "@activepieces/piece-hastewire": [
+        "packages/pieces/community/hastewire/src/index.ts"
+      ],
+      "@activepieces/piece-greenpt": [
+        "packages/pieces/community/greenpt/src/index.ts"
+      ],
+      "@activepieces/piece-oncehub": [
+        "packages/pieces/community/oncehub/src/index.ts"
+      ],
+      "@activepieces/piece-swarmnode": [
+        "packages/pieces/community/swarmnode/src/index.ts"
+      ],
+      "@activepieces/piece-alt-text-ai": [
+        "packages/pieces/community/alt-text-ai/src/index.ts"
+      ],
+      "@activepieces/piece-dashworks": [
+        "packages/pieces/community/dashworks/src/index.ts"
+      ],
+      "@activepieces/piece-raia-ai": [
+        "packages/pieces/community/raia-ai/src/index.ts"
+      ],
+      "@activepieces/piece-alttextify": [
+        "packages/pieces/community/alttextify/src/index.ts"
+      ],
+      "@activepieces/piece-motiontools": [
+        "packages/pieces/community/motiontools/src/index.ts"
+      ],
+      "@activepieces/piece-formsite": [
+        "packages/pieces/community/formsite/src/index.ts"
+      ],
+      "@activepieces/piece-lofty": [
+        "packages/pieces/community/lofty/src/index.ts"
+      ],
+      "@activepieces/piece-youcanbookme": [
+        "packages/pieces/community/youcanbookme/src/index.ts"
+      ],
+      "@activepieces/piece-esignatures": [
+        "packages/pieces/community/esignatures/src/index.ts"
+      ],
+      "@activepieces/piece-base44": [
+        "packages/pieces/community/base44/src/index.ts"
+      ],
+      "@activepieces/piece-luxury-presence": [
+        "packages/pieces/community/luxury-presence/src/index.ts"
+      ],
+      "@activepieces/piece-signrequest": [
+        "packages/pieces/community/signrequest/src/index.ts"
+      ],
+      "@activepieces/piece-hystruct": [
+        "packages/pieces/community/hystruct/src/index.ts"
+      ],
+      "@activepieces/piece-chatfly": [
+        "packages/pieces/community/chatfly/src/index.ts"
+      ],
+      "@activepieces/piece-azure-blob-storage": [
+        "packages/pieces/community/azure-blob-storage/src/index.ts"
+      ],
+      "@activepieces/piece-metatext": [
+        "packages/pieces/community/metatext/src/index.ts"
+      ],
+      "@activepieces/piece-kudosity": [
+        "packages/pieces/community/kudosity/src/index.ts"
+      ],
+      "@activepieces/piece-neverbounce": [
+        "packages/pieces/community/neverbounce/src/index.ts"
+      ],
+      "@activepieces/piece-mailercheck": [
+        "packages/pieces/community/mailercheck/src/index.ts"
+      ],
+      "@activepieces/piece-vero": [
+        "packages/pieces/community/vero/src/index.ts"
+      ],
+      "@activepieces/piece-digital-pilot": [
+        "packages/pieces/community/digital-pilot/src/index.ts"
+      ],
+      "@activepieces/piece-clearoutphone": [
+        "packages/pieces/community/clearoutphone/src/index.ts"
+      ],
+      "@activepieces/piece-omnihr": [
+        "packages/pieces/community/omnihr/src/index.ts"
+      ],
+      "@activepieces/piece-clicdata": [
+        "packages/pieces/community/clicdata/src/index.ts"
+      ],
+      "@activepieces/piece-katana": [
+        "packages/pieces/community/katana/src/index.ts"
+      ],
+      "@activepieces/piece-giftbit": [
+        "packages/pieces/community/giftbit/src/index.ts"
+      ],
+      "@activepieces/piece-free-agent": [
+        "packages/pieces/community/free-agent/src/index.ts"
+      ],
+      "@activepieces/piece-lemon-squeezy": [
+        "packages/pieces/community/lemon-squeezy/src/index.ts"
+      ],
+      "@activepieces/piece-qwilr": [
+        "packages/pieces/community/qwilr/src/index.ts"
+      ],
+      "@activepieces/piece-splitwise": [
+        "packages/pieces/community/splitwise/src/index.ts"
+      ],
+      "@activepieces/piece-voipstudio": [
+        "packages/pieces/community/voipstudio/src/index.ts"
+      ],
+      "@activepieces/piece-millionverifier": [
+        "packages/pieces/community/millionverifier/src/index.ts"
+      ],
+      "@activepieces/piece-octopush-sms": [
+        "packages/pieces/community/octopush-sms/src/index.ts"
+      ],
+      "@activepieces/piece-twitch": [
+        "packages/pieces/community/twitch/src/index.ts"
+      ],
+      "@activepieces/piece-moonclerk": [
+        "packages/pieces/community/moonclerk/src/index.ts"
+      ],
+      "@activepieces/piece-heymarket-sms": [
+        "packages/pieces/community/heymarket-sms/src/index.ts"
+      ],
+      "@activepieces/piece-flipando": [
+        "packages/pieces/community/flipando/src/index.ts"
+      ],
+      "@activepieces/piece-skyprep": [
+        "packages/pieces/community/skyprep/src/index.ts"
+      ],
+      "@activepieces/piece-influencers-club": [
+        "packages/pieces/community/influencers-club/src/index.ts"
+      ],
+      "@activepieces/piece-tenzo": [
+        "packages/pieces/community/tenzo/src/index.ts"
+      ],
+      "@activepieces/piece-seek-table": [
+        "packages/pieces/community/seek-table/src/index.ts"
+      ],
+      "@activepieces/piece-lucidya": [
+        "packages/pieces/community/lucidya/src/index.ts"
+      ],
+      "@activepieces/piece-phone-validator": [
+        "packages/pieces/community/phone-validator/src/index.ts"
+      ],
+      "@activepieces/piece-barcode-lookup": [
+        "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@activepieces/piece-tidely": [
+        "packages/pieces/community/tidely/src/index.ts"
+      ],
+      "@activepieces/piece-cryptolens": [
+        "packages/pieces/community/cryptolens/src/index.ts"
+      ],
+      "@activepieces/piece-ampeco": [
+        "packages/pieces/community/ampeco/src/index.ts"
+      ],
+      "@activepieces/piece-quaderno": [
+        "packages/pieces/community/quaderno/src/index.ts"
+      ],
+      "@activepieces/piece-livesession": [
+        "packages/pieces/community/livesession/src/index.ts"
+      ],
+      "@activepieces/piece-roe-ai": [
+        "packages/pieces/community/roe-ai/src/index.ts"
+      ],
+      "@activepieces/piece-duckdb": [
+        "packages/pieces/community/duckdb/src/index.ts"
+      ],
+      "@activepieces/piece-waitwhile": [
+        "packages/pieces/community/waitwhile/src/index.ts"
+      ],
+      "@activepieces/piece-baremetrics": [
+        "packages/pieces/community/baremetrics/src/index.ts"
+      ],
+      "@activepieces/piece-chartly": [
+        "packages/pieces/community/chartly/src/index.ts"
+      ],
+      "@activepieces/piece-insta-charts": [
+        "packages/pieces/community/insta-charts/src/index.ts"
+      ],
+      "@activepieces/piece-pinch-payments": [
+        "packages/pieces/community/pinch-payments/src/index.ts"
+      ],
+      "@activepieces/piece-just-invoice": [
+        "packages/pieces/community/just-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-billplz": [
+        "packages/pieces/community/billplz/src/index.ts"
+      ],
+      "@activepieces/piece-vouchery-io": [
+        "packages/pieces/community/vouchery-io/src/index.ts"
+      ],
+      "@activepieces/piece-lokalise": [
+        "packages/pieces/community/lokalise/src/index.ts"
+      ],
+      "@activepieces/piece-digital-ocean": [
+        "packages/pieces/community/digital-ocean/src/index.ts"
+      ],
+      "@activepieces/piece-hashi-corp-vault": [
+        "packages/pieces/community/hashi-corp-vault/src/index.ts"
+      ],
+      "@activepieces/piece-leap-ai": [
+        "packages/pieces/community/leap-ai/src/index.ts"
+      ],
+      "@activepieces/piece-time-ops": [
+        "packages/pieces/community/time-ops/src/index.ts"
+      ],
+      "@activepieces/piece-formitable": [
+        "packages/pieces/community/formitable/src/index.ts"
+      ],
+      "@activepieces/piece-gender-api": [
+        "packages/pieces/community/gender-api/src/index.ts"
+      ],
+      "@activepieces/piece-plausible": [
+        "packages/pieces/community/plausible/src/index.ts"
+      ],
+      "@activepieces/piece-woodpecker": [
+        "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-visible": [
+        "packages/pieces/community/visible/src/index.ts"
+      ],
+      "@activepieces/piece-paywhirl": [
+        "packages/pieces/community/paywhirl/src/index.ts"
+      ],
+      "@activepieces/piece-smsmode": [
+        "packages/pieces/community/smsmode/src/index.ts"
+      ],
+      "@activepieces/piece-mooninvoice": [
+        "packages/pieces/community/mooninvoice/src/index.ts"
+      ],
+      "@activepieces/piece-chain-aware": [
+        "packages/pieces/community/chain-aware/src/index.ts"
+      ],
+      "@activepieces/piece-detecting-ai": [
+        "packages/pieces/community/detecting-ai/src/index.ts"
+      ],
+      "@activepieces/piece-moveo-ai": [
+        "packages/pieces/community/moveo-ai/src/index.ts"
+      ],
+      "@activepieces/piece-oneclickimpact": [
+        "packages/pieces/community/oneclickimpact/src/index.ts"
+      ],
+      "@activepieces/piece-bokio": [
+        "packages/pieces/community/bokio/src/index.ts"
+      ],
+      "@activepieces/piece-vidnoz": [
+        "packages/pieces/community/vidnoz/src/index.ts"
+      ],
+      "@activepieces/piece-lets-calendar": [
+        "packages/pieces/community/lets-calendar/src/index.ts"
+      ],
+      "@activepieces/piece-predis-ai": [
+        "packages/pieces/community/predis-ai/src/index.ts"
+      ],
+      "@activepieces/piece-week-done": [
+        "packages/pieces/community/week-done/src/index.ts"
+      ],
+      "@activepieces/piece-manual-trigger": [
+        "packages/pieces/community/manual-trigger/src/index.ts"
+      ],
+      "@activepieces/piece-zeplin": [
+        "packages/pieces/community/zeplin/src/index.ts"
+      ],
+      "@activepieces/piece-google-search": [
+        "packages/pieces/community/google-search/src/index.ts"
+      ],
+      "@activepieces/piece-asknews": [
+        "packages/pieces/community/asknews/src/index.ts"
+      ],
+      "@activepieces/piece-valyu": [
+        "packages/pieces/community/valyu/src/index.ts"
+      ],
+      "@activepieces/piece-alai": [
+        "packages/pieces/community/alai/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },

@@ -3,29 +3,30 @@ import { t } from 'i18next';
 import {
   Fullscreen,
   Hand,
+  Map,
   Minus,
   MousePointer,
   Plus,
-  RotateCw,
+  StickyNote,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { isMac } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { NoteDragOverlayMode } from '../state/notes-state';
 
-import { flowUtilConsts } from './utils/consts';
+import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
 const verticalPaddingOnFitView = 100;
-const duration = 500;
-// Calculate the node's position in relation to the canvas
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
   node: Node,
@@ -34,10 +35,10 @@ const calculateNodePositionInCanvas = (
   x:
     node.position.x +
     canvasWidth / 2 -
-    (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoom) / 2,
+    (flowCanvasConsts.AP_NODE_SIZE.STEP.width * zoom) / 2,
   y:
     node.position.y +
-    flowUtilConsts.AP_NODE_SIZE.GRAPH_END_WIDGET.height +
+    flowCanvasConsts.AP_NODE_SIZE.GRAPH_END_WIDGET.height +
     verticalPaddingOnFitView * zoom,
 });
 
@@ -59,28 +60,17 @@ const calculateViewportDelta = (
       ? -1 *
         (nodePosition.x -
           canvas.width +
-          flowUtilConsts.AP_NODE_SIZE.STEP.width * 2)
+          flowCanvasConsts.AP_NODE_SIZE.STEP.width * 2)
       : nodePosition.x < 0
       ? -1 * nodePosition.x
       : 0,
   y:
     nodePosition.y > canvas.height
-      ? nodePosition.y - canvas.height + flowUtilConsts.AP_NODE_SIZE.STEP.height
+      ? nodePosition.y -
+        canvas.height +
+        flowCanvasConsts.AP_NODE_SIZE.STEP.height
       : 0,
 });
-
-const PanningModeIndicator = ({ toggled }: { toggled: boolean }) => {
-  return (
-    <div
-      className={cn(
-        'absolute transition-all bg-primary/15 w-full h-full top-0 left-0',
-        {
-          'opacity-0': !toggled,
-        },
-      )}
-    ></div>
-  );
-};
 
 const CanvasControls = ({
   canvasWidth,
@@ -93,30 +83,19 @@ const CanvasControls = ({
   hasCanvasBeenInitialised: boolean;
   selectedStep: string | null;
 }) => {
-  const {
-    zoomIn,
-    zoomOut,
-    zoomTo,
-    setViewport,
-    getNodes,
-    getNode,
-    getViewport,
-  } = useReactFlow();
+  const { zoomIn, zoomOut, setViewport, getNodes, getNode, getViewport } =
+    useReactFlow();
   const handleZoomIn = useCallback(() => {
     zoomIn({
-      duration,
+      duration: 0,
     });
   }, [zoomIn]);
 
   const handleZoomOut = useCallback(() => {
     zoomOut({
-      duration,
+      duration: 0,
     });
   }, [zoomOut]);
-
-  const handleZoomReset = useCallback(() => {
-    zoomTo(1, { duration });
-  }, [zoomTo]);
 
   const handleFitToView = useCallback(
     (isInitialRenderCall: boolean) => {
@@ -135,12 +114,15 @@ const CanvasControls = ({
         {
           x:
             canvasWidth / 2 -
-            (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
-          y: nodes[0].position.y + verticalPaddingOnFitView * zoomRatio,
+            (flowCanvasConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
+          y:
+            nodes[0].position.y +
+            verticalPaddingOnFitView * zoomRatio +
+            flowCanvasConsts.AP_NODE_SIZE.STEP.height,
           zoom: zoomRatio,
         },
         {
-          duration: isInitialRenderCall ? 0 : duration,
+          duration: isInitialRenderCall ? 0 : 500,
         },
       );
     },
@@ -183,105 +165,141 @@ const CanvasControls = ({
 
       setViewport({
         x: viewport.x + delta.x,
-        y: viewport.y - delta.y - flowUtilConsts.AP_NODE_SIZE.STEP.height,
+        y: viewport.y - delta.y - flowCanvasConsts.AP_NODE_SIZE.STEP.height,
         zoom: viewport.zoom,
       });
     }
   };
-
-  const [setPanningMode, panningMode] = useBuilderStateContext((state) => {
-    return [state.setPanningMode, state.panningMode];
-  });
+  const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext(
+    (state) => [state.noteDragOverlayMode, state.setDraggedNote],
+  );
+  const [setPanningMode, panningMode, showMinimap, setShowMinimap, readonly] =
+    useBuilderStateContext((state) => {
+      return [
+        state.setPanningMode,
+        state.panningMode,
+        state.showMinimap,
+        state.setShowMinimap,
+        state.readonly,
+      ];
+    });
   const spacePressed = useKeyPress('Space');
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
     (spacePressed || panningMode === 'grab') && !shiftPressed;
-
   return (
-    <>
-      <div className="bg-accent absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => {
-                if (!spacePressed) {
-                  setPanningMode('pan');
-                }
-              }}
-              className="relative focus:outline-0"
-            >
-              <PanningModeIndicator toggled={!isInGrabMode} />
-              <MousePointer className="w-5 h-5"></MousePointer>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => {
-                if (!spacePressed) {
-                  setPanningMode('grab');
-                }
-              }}
-              className="relative focus:outline-0"
-            >
-              <PanningModeIndicator toggled={isInGrabMode} />
-
-              <Hand className="w-5 h-5"></Hand>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('Move Mode')}</TooltipContent>
-        </Tooltip>
+    <div
+      id="canvas-controls"
+      className="z-50 absolute bottom-2 left-0 flex items-center  w-full pointer-events-none "
+    >
+      <div className="flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-background border border-sidebar-border">
+        <CanvasButtonWrapper
+          tooltip={t('Minimap' + (isMac() ? ' (⌘ + M)' : ' (Ctrl + M)'))}
+        >
+          <Button
+            variant={showMinimap ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setShowMinimap(!showMinimap);
+            }}
+          >
+            <Map className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
       </div>
-      <div className="bg-accent absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="accent" size="sm" onClick={handleZoomReset}>
-              <RotateCw className="w-5 h-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Reset Zoom')}</TooltipContent>
-        </Tooltip>
+      <div className="grow"></div>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="accent" size="sm" onClick={handleZoomIn}>
-              <Plus className="w-5 h-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Zoom In')}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="accent" size="sm" onClick={handleZoomOut}>
-              <Minus className="w-5 h-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Zoom Out')}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
+      <div className="bg-background gap-2 flex items-center shadow-2xl justify-center border border-sidebar-border p-1.5 rounded-lg pointer-events-auto">
+        <CanvasButtonWrapper tooltip={t('Zoom in')}>
+          <Button variant="ghost" size="icon" onClick={handleZoomIn}>
+            <Plus className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Zoom out')}>
+          <Button variant="ghost" size="icon" onClick={handleZoomOut}>
+            <Minus className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Fit to view')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleFitToView(false)}
+          >
+            <Fullscreen className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <div>
+          <Separator orientation="vertical" className="h-5"></Separator>
+        </div>
+        <CanvasButtonWrapper tooltip={t('Grab mode')}>
+          <Button
+            variant={isInGrabMode ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => setPanningMode('grab')}
+          >
+            <Hand className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Select mode')}>
+          <Button
+            variant={!isInGrabMode ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => setPanningMode('pan')}
+          >
+            <MousePointer className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        {!readonly && (
+          <CanvasButtonWrapper tooltip={t('Add note')}>
             <Button
-              variant="accent"
-              size="sm"
-              onClick={() => handleFitToView(false)}
+              variant={
+                noteDragOverlayMode === NoteDragOverlayMode.CREATE
+                  ? 'default'
+                  : 'ghost'
+              }
+              size="icon"
+              onClick={() => {
+                setDraggedNote(
+                  {
+                    id: '',
+                    content: '',
+                    createdAt: '',
+                    updatedAt: '',
+                    position: { x: 0, y: 0 },
+                    size: {
+                      width: flowCanvasConsts.NOTE_CREATION_OVERLAY_WIDTH,
+                      height: flowCanvasConsts.NOTE_CREATION_OVERLAY_HEIGHT,
+                    },
+                    color: flowCanvasConsts.DEFAULT_NOTE_COLOR,
+                  },
+                  NoteDragOverlayMode.CREATE,
+                );
+              }}
             >
-              <Fullscreen className="w-5 h-5" />
+              <StickyNote className="size-4" />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
-        </Tooltip>
+          </CanvasButtonWrapper>
+        )}
       </div>
-    </>
+      <div className="grow"></div>
+    </div>
   );
 };
 
 export { CanvasControls };
+
+const CanvasButtonWrapper = ({
+  children,
+  tooltip,
+}: {
+  children: React.ReactNode;
+  tooltip: string;
+}) => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+};

@@ -1,10 +1,20 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { FileText, Pencil, Plus, Trash } from 'lucide-react';
+import {
+  FileText,
+  Pencil,
+  Plus,
+  Trash,
+  Tag,
+  Clock,
+  Puzzle,
+} from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -15,37 +25,35 @@ import {
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
-import { FlowTemplate } from '@activepieces/shared';
+import { Template, TemplateType } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../../components/custom/table-title';
+import { CreateTemplateDialog } from './create-template-dialog';
+import { UpdateTemplateDialog } from './update-template-dialog';
 
-import { UpsertTemplateDialog } from './upsert-template-dialog';
-
-export default function TemplatesPage() {
+const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-
-  const { toast } = useToast();
 
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
-      return templatesApi.list({});
+      return templatesApi.list({
+        type: TemplateType.CUSTOM,
+      });
     },
   });
 
-  const [selectedRows, setSelectedRows] = useState<FlowTemplate[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Template[]>([]);
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -53,17 +61,19 @@ export default function TemplatesPage() {
     },
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Templates deleted successfully'),
+      toast.success(t('Templates deleted successfully'), {
         duration: 3000,
       });
     },
   });
 
-  const columnsWithCheckbox: ColumnDef<RowDataWithActions<FlowTemplate>>[] = [
+  const columnsWithCheckbox: ColumnDef<RowDataWithActions<Template>>[] = [
     {
       id: 'select',
+      accessorKey: 'select',
+      size: 40,
+      minSize: 40,
+      maxSize: 40,
       header: ({ table }) => (
         <Checkbox
           checked={
@@ -105,12 +115,12 @@ export default function TemplatesPage() {
           />
         );
       },
-      accessorKey: 'select',
     },
     {
       accessorKey: 'name',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.name}</div>;
@@ -118,34 +128,41 @@ export default function TemplatesPage() {
     },
     {
       accessorKey: 'createdAt',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },
     },
     {
       accessorKey: 'pieces',
+      size: 100,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Pieces')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Pieces')}
+          icon={Puzzle}
+        />
       ),
       cell: ({ row }) => {
-        return (
-          <PieceIconList
-            trigger={row.original.template.trigger}
-            maxNumberOfIconsToShow={2}
-          />
-        );
+        const trigger = row.original.flows?.[0]?.trigger;
+        if (!trigger) return null;
+        return <PieceIconList trigger={trigger} maxNumberOfIconsToShow={2} />;
       },
     },
   ];
 
-  const bulkActions: BulkAction<FlowTemplate>[] = useMemo(
+  const bulkActions: BulkAction<Template>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => (
@@ -174,19 +191,6 @@ export default function TemplatesPage() {
           </div>
         ),
       },
-      {
-        render: () => (
-          <UpsertTemplateDialog onDone={() => refetch()}>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
-              {t('New Template')}
-            </Button>
-          </UpsertTemplateDialog>
-        ),
-      },
     ],
     [selectedRows, bulkDeleteMutation],
   );
@@ -203,15 +207,22 @@ export default function TemplatesPage() {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
     >
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row">
-          <TableTitle
-            description={t(
-              'Convert the most common automations into reusable templates',
-            )}
-          >
-            {t('Templates')}
-          </TableTitle>
-        </div>
+        <DashboardPageHeader
+          description={t(
+            'Convert the most common automations into reusable templates',
+          )}
+          title={t('Templates')}
+        >
+          <CreateTemplateDialog onDone={() => refetch()}>
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              <Plus className="size-4" />
+              {t('New Template')}
+            </Button>
+          </CreateTemplateDialog>
+        </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No templates found')}
           emptyStateTextDescription={t(
@@ -229,14 +240,14 @@ export default function TemplatesPage() {
                 <div className="flex items-end justify-end">
                   <Tooltip>
                     <TooltipTrigger>
-                      <UpsertTemplateDialog
+                      <UpdateTemplateDialog
                         onDone={() => refetch()}
                         template={row}
                       >
                         <Button variant="ghost" className="size-8 p-0">
                           <Pencil className="size-4" />
                         </Button>
-                      </UpsertTemplateDialog>
+                      </UpdateTemplateDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {t('Edit template')}
@@ -250,4 +261,6 @@ export default function TemplatesPage() {
       </div>
     </LockedFeatureGuard>
   );
-}
+};
+
+export { PlatformTemplatesPage };

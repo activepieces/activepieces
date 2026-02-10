@@ -31,6 +31,7 @@ export const createSession = createAction({
       defaultValue: new Date().toISOString(),
     }),
     timezone: Property.Dropdown({
+      auth: sessionAuth,
       displayName: 'Timezone',
       description: 'The timezone which the session will take place.',
       required: true,
@@ -55,7 +56,7 @@ export const createSession = createAction({
       method: HttpMethod.POST,
       url: `${baseUrl}/sessions`,
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
       body: {
         name: propsValue['name'],

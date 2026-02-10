@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-monday",
-  "version": "0.2.12"
+  "version": "0.3.2",
+  "dependencies": {
+    "monday-sdk-js": "0.5.2"
+  }
 }

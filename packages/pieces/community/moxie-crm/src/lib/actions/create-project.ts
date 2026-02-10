@@ -17,6 +17,7 @@ export const moxieCreateProjectAction = createAction({
       required: true,
     }),
     clientName: Property.Dropdown({
+      auth: moxieCRMAuth,
       displayName: 'Client',
       required: true,
       refreshers: [],
@@ -30,7 +31,7 @@ export const moxieCreateProjectAction = createAction({
         }
 
         const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
+          auth
         );
         const clients = await client.listClients();
         return {

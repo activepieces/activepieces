@@ -26,13 +26,15 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectOrPlatformName: string
+    projectName: string
     role: string
     setupLink: string
 }>
 
-type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
-    resetDate: string
+type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
+    projectName: string
+    role: string
+    loginLink: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
@@ -50,50 +52,26 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
-type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
-    issuesUrl: string
-    issues: string
-    issuesCount: string
-    projectName: string
-}>
-
 type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
     flowName: string
     projectName: string
 }>
 
-type ThreeDaysLeftOnTrialTemplateData = BaseEmailTemplateData<'3-days-left-on-trial', {
-    year: string
-    firstName: string
-}>
-
-type OneDayLeftOnTrialTemplateData = BaseEmailTemplateData<'1-day-left-on-trial', {
-    year: string
-    firstName: string
-}>
-
-type WelcomeToTrialTemplateData = BaseEmailTemplateData<'welcome-to-trial', {
-    year: string
-    firstName: string
-}>
-
-type SevenDaysInTrialTemplateData = BaseEmailTemplateData<'7-days-in-trial', {
-    year: string
+type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
+    badgeTitle: string
+    badgeDescription: string
+    badgeImageUrl: string
     firstName: string
 }>
 
 export type EmailTemplateData =
   | InvitationEmailTemplateData
-  | QuotaEmailTemplateData
+  | ProjectMemberAddedEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | IssuesReminderTemplateData
   | TriggerFailureThresholdTemplateData
-  | ThreeDaysLeftOnTrialTemplateData
-  | OneDayLeftOnTrialTemplateData
-  | WelcomeToTrialTemplateData
-  | SevenDaysInTrialTemplateData
+  | BadgeAwardedTemplateData
 
 type SendArgs = {
     emails: string[]

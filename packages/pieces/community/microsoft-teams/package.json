@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-microsoft-teams",
-  "version": "0.1.0"
+  "version": "0.3.5",
+  "dependencies": {
+    "@microsoft/microsoft-graph-client": "3.0.7",
+    "@microsoft/microsoft-graph-types": "2.40.0"
+  }
 }

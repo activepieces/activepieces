@@ -2,8 +2,8 @@ import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const wedofCommon = {
-  baseUrl: 'https://staging.wedof.fr/api',
-  host: 'https://staging.wedof.fr/api',
+  baseUrl: 'https://www.wedof.fr/api',
+  host: 'https://www.wedof.fr/api',
 
   subscribeWebhook: async (
     events: string[],
@@ -62,7 +62,7 @@ export const wedofCommon = {
         const webhookId = await wedofCommon.subscribeWebhook(
           events,
           context.webhookUrl,
-          context.auth as string,
+          context.auth.secret_text,
           name
         );
         await context.store.put('_webhookId', webhookId);
@@ -672,10 +672,6 @@ export const wedofCommon = {
     defaultValue: null,
     options: {
       options: [
-        {
-          label: 'Aucune période',
-          value: null,
-        },
         {
           label: 'Personnalisée',
           value: 'custom',

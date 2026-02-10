@@ -34,7 +34,7 @@ export const PushFlowsGitRepoRequest = Type.Object({
     commitMessage: Type.String({
         minLength: 1,
     }),
-    flowIds: Type.Array(Type.String()),
+    externalFlowIds: Type.Array(Type.String()),
 })
 
 export type PushFlowsGitRepoRequest = Static<typeof PushFlowsGitRepoRequest>
@@ -44,7 +44,7 @@ export const PushTablesGitRepoRequest = Type.Object({
     commitMessage: Type.String({
         minLength: 1,
     }),
-    tableIds: Type.Array(Type.String()),
+    externalTableIds: Type.Array(Type.String()),
 })
 
 export type PushTablesGitRepoRequest = Static<typeof PushTablesGitRepoRequest>

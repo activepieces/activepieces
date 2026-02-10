@@ -4,11 +4,13 @@ import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-f
 import { filterIdProp } from '../common/props';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
+	pipedrivePaginatedV2ApiCall,
+	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField, LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';
+import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 export const dealMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
@@ -52,15 +54,14 @@ export const dealMatchingFilterTrigger = createTrigger({
 	async onEnable(context) {
 		const ids: number[] = [];
 
-		const response = await pipedrivePaginatedApiCall<{ id: number }>({
+		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/deals:(id)',
+			resourceUri: '/v2/deals',
 			query: {
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
-				status: context.propsValue.status,
+                status: context.propsValue.status,
 			},
 		});
 
@@ -82,12 +83,12 @@ export const dealMatchingFilterTrigger = createTrigger({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/deals',
+			resourceUri: '/v2/deals',
 			query: {
 				limit: 10,
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
 				status: context.propsValue.status,
+				include_fields: DEAL_OPTIONAL_FIELDS.join(','),
 			},
 		});
 
@@ -99,11 +100,11 @@ export const dealMatchingFilterTrigger = createTrigger({
 			deals.push(deal);
 		}
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
 		const result = [];
@@ -119,15 +120,15 @@ export const dealMatchingFilterTrigger = createTrigger({
 		const existingIds = (await context.store.get<string>('deals')) ?? '[]';
 		const parsedExistingIds = JSON.parse(existingIds) as number[];
 
-		const response = await pipedrivePaginatedApiCall<{ id: number }>({
+		const response = await pipedrivePaginatedV2ApiCall<{ id: number }>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/deals',
+			resourceUri: '/v2/deals',
 			query: {
-				sort: 'update_time DESC',
 				filter_id: context.propsValue.filterId,
 				status: context.propsValue.status,
+				include_fields: DEAL_OPTIONAL_FIELDS.join(','),
 			},
 		});
 
@@ -147,11 +148,11 @@ export const dealMatchingFilterTrigger = createTrigger({
 		// Store new IDs
 		await context.store.put('deals', JSON.stringify([...newIds, ...parsedExistingIds]));
 
-        const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+        const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
 		const result = [];
@@ -166,52 +167,9 @@ export const dealMatchingFilterTrigger = createTrigger({
 	},
 	sampleData: {
 		id: 1,
-		creator_user_id: {
-			id: 8877,
-			name: 'Creator',
-			email: 'john.doe@pipedrive.com',
-			has_pic: false,
-			pic_hash: null,
-			active_flag: true,
-			value: 8877,
-		},
-		user_id: {
-			id: 8877,
-			name: 'Creator',
-			email: 'john.doe@pipedrive.com',
-			has_pic: false,
-			pic_hash: null,
-			active_flag: true,
-			value: 8877,
-		},
-		person_id: {
-			active_flag: true,
-			name: 'Person',
-			email: [
-				{
-					label: 'work',
-					value: 'person@pipedrive.com',
-					primary: true,
-				},
-			],
-			phone: [
-				{
-					label: 'work',
-					value: '37244499911',
-					primary: true,
-				},
-			],
-			value: 1101,
-		},
-		org_id: {
-			name: 'Organization',
-			people_count: 2,
-			owner_id: 8877,
-			address: '',
-			active_flag: true,
-			cc_email: 'org@pipedrivemail.com',
-			value: 5,
-		},
+		creator_user_id:22701301,
+		person_id:  1101,
+		org_id: 5,
 		stage_id: 2,
 		title: 'Deal One',
 		value: 5000,

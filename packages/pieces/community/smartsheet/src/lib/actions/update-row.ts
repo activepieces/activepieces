@@ -50,7 +50,7 @@ export const updateRow = createAction({
 		}
 
 		try {
-			const result = await updateRowInSmartsheet(context.auth as string, sheet_id as string, [
+			const result = await updateRowInSmartsheet(context.auth.secret_text, sheet_id as string, [
 				[rowObj],
 			]);
 

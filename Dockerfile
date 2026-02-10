@@ -1,6 +1,13 @@
-FROM node:18.20.5-bullseye-slim AS base
+FROM node:20.19-bullseye-slim AS base
 
-# Use a cache mount for apt to speed up the process
+# Set environment variables early for better layer caching
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8 \
+    NX_DAEMON=false \
+    NX_NO_CLOUD=true
+
+# Install all system dependencies in a single layer with cache mounts
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
@@ -12,86 +19,98 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         git \
         poppler-utils \
         poppler-data \
-        procps && \
-    yarn config set python /usr/bin/python3 && \
-    npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.15.0
+        procps \
+        locales \
+        locales-all \
+        unzip \
+        curl \
+        ca-certificates \
+        libcap-dev && \
+    yarn config set python /usr/bin/python3
 
-# Set the locale
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-ENV NX_DAEMON=false
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+    fi
+    
+RUN unzip bun.zip \
+    && mv bun-*/bun /usr/local/bin/bun \
+    && chmod +x /usr/local/bin/bun \
+    && rm -rf bun.zip bun-*
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    locales \
-    locales-all \
-    libcap-dev \
- && rm -rf /var/lib/apt/lists/*
+RUN bun --version
 
-# install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && npm i isolated-vm@5.0.1
+# Install global npm packages in a single layer
+RUN --mount=type=cache,target=/root/.npm \
+    npm install -g --no-fund --no-audit \
+    node-gyp \
+    npm@9.9.3 \
+    pm2@6.0.10 \
+    typescript@4.9.4
 
-RUN pnpm store add @tsconfig/node18@1.0.0
-RUN pnpm store add @types/node@18.17.1
-
-RUN pnpm store add typescript@4.9.4
+# Install isolated-vm globally (needed for sandboxes)
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src && bun install isolated-vm@5.0.1
 
 ### STAGE 1: Build ###
 FROM base AS build
 
-# Set up backend
 WORKDIR /usr/src/app
 
-COPY .npmrc package.json package-lock.json ./
-RUN npm ci
+# Copy only dependency files first for better layer caching
+COPY .npmrc package.json bun.lock ./
 
+# Install all dependencies with frozen lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
+
+# Copy source code after dependency installation
 COPY . .
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui
+# Build both projects (already has NX_NO_CLOUD from base stage)
+RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production --parallel=2 --skip-nx-cache
 
-# Install backend production dependencies
-RUN cd dist/packages/server/api && npm install --production --force
+# Install production dependencies only for the backend API
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd dist/packages/server/api && \
+    bun install --production --frozen-lockfile
 
 ### STAGE 2: Run ###
 FROM base AS run
 
-# Set up backend
 WORKDIR /usr/src/app
 
-COPY packages/server/api/src/assets/default.cf /usr/local/etc/isolate
+# Install Nginx and gettext in a single layer with cache mount
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends nginx gettext
 
-# Install Nginx and gettext for envsubst
-RUN apt-get update && apt-get install -y nginx gettext
-
-# Copy Nginx configuration template
+# Copy static configuration files first (better layer caching)
 COPY nginx.react.conf /etc/nginx/nginx.conf
+COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
+COPY docker-entrypoint.sh .
 
+# Create all necessary directories in one layer
+RUN mkdir -p \
+    /usr/src/app/dist/packages/server \
+    /usr/src/app/dist/packages/engine \
+    /usr/src/app/dist/packages/shared && \
+    chmod +x docker-entrypoint.sh
+
+# Copy built artifacts from build stage
 COPY --from=build /usr/src/app/LICENSE .
+COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
+COPY --from=build /usr/src/app/dist/packages/server/ ./dist/packages/server/
+COPY --from=build /usr/src/app/dist/packages/shared/ ./dist/packages/shared/
+COPY --from=build /usr/src/app/packages ./packages
 
-RUN mkdir -p /usr/src/app/dist/packages/server/
-RUN mkdir -p /usr/src/app/dist/packages/engine/
-RUN mkdir -p /usr/src/app/dist/packages/shared/
-
-# Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/engine/
-COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
-COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
-
-RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --force
-
-# Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/packages packages
-# Copy frontend files to Nginx document root directory from build stage
+# Copy frontend files to Nginx document root
 COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
 
 LABEL service=activepieces
 
-# Set up entrypoint script
-COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
-
 EXPOSE 80

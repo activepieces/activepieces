@@ -30,7 +30,7 @@ export const smartScraper = createAction({
       url: 'https://api.scrapegraphai.com/v1/smartscraper',
       headers: {
         'Content-Type': 'application/json',
-        'SGAI-APIKEY': auth,
+        'SGAI-APIKEY': auth.secret_text,
       },
       body: {
         website_url: propsValue.website_url,

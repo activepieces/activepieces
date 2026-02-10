@@ -6,10 +6,10 @@ import {
   TriggerBase,
 } from '@activepieces/pieces-framework';
 import {
-  ActionType,
+  FlowActionType,
   PackageType,
   PieceType,
-  TriggerType,
+  FlowTriggerType,
   FlowOperationType,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
@@ -21,22 +21,22 @@ type BaseStepMetadata = {
 };
 
 export type PieceStepMetadata = BaseStepMetadata & {
-  type: ActionType.PIECE | TriggerType.PIECE;
+  type: FlowActionType.PIECE | FlowTriggerType.PIECE;
   pieceName: string;
   pieceVersion: string;
   categories: string[];
   packageType: PackageType;
   pieceType: PieceType;
-  auth: PieceAuthProperty | undefined;
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
 };
 
 export type PrimitiveStepMetadata = BaseStepMetadata & {
   type:
-    | ActionType.CODE
-    | ActionType.LOOP_ON_ITEMS
-    | ActionType.ROUTER
-    | TriggerType.EMPTY;
+    | FlowActionType.CODE
+    | FlowActionType.LOOP_ON_ITEMS
+    | FlowActionType.ROUTER
+    | FlowTriggerType.EMPTY;
 };
 
 export type PieceStepMetadataWithSuggestions = PieceStepMetadata &
@@ -55,6 +55,7 @@ export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
 export type StepMetadataWithActionOrTriggerOrAgentDisplayName = StepMetadata & {
   actionOrTriggerOrAgentDisplayName: string;
+  actionOrTriggerOrAgentDescription: string;
 };
 
 export type PieceSelectorOperation =
@@ -82,20 +83,15 @@ export type PieceSelectorOperation =
       stepName: string;
     };
 
-export type AskAiButtonOperations = Exclude<
-  PieceSelectorOperation,
-  { type: FlowOperationType.UPDATE_TRIGGER }
->;
-
 export type PieceSelectorPieceItem =
   | {
       actionOrTrigger: TriggerBase;
-      type: TriggerType.PIECE;
+      type: FlowTriggerType.PIECE;
       pieceMetadata: PieceStepMetadata;
     }
   | ({
       actionOrTrigger: ActionBase;
-      type: ActionType.PIECE;
+      type: FlowActionType.PIECE;
       pieceMetadata: PieceStepMetadata;
     } & {
       auth?: PieceAuthProperty;
@@ -104,3 +100,15 @@ export type PieceSelectorPieceItem =
 export type PieceSelectorItem = PieceSelectorPieceItem | PrimitiveStepMetadata;
 
 export type HandleSelectActionOrTrigger = (item: PieceSelectorItem) => void;
+
+export enum RightSideBarType {
+  NONE = 'none',
+  PIECE_SETTINGS = 'piece-settings',
+  VERSIONS = 'versions',
+  RUNS = 'runs',
+}
+
+export enum ChatDrawerSource {
+  TEST_FLOW = 'test-flow',
+  TEST_STEP = 'test-step',
+}

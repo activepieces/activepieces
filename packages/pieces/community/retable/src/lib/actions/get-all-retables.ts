@@ -20,7 +20,7 @@ export const retableGetAllRetablesAction = createAction({
         method: HttpMethod.GET,
         url: `${retableCommon.baseUrl}/project/${project_id}/retable`,
         headers: {
-          ApiKey: context.auth as string,
+          ApiKey: context.auth.secret_text,
         },
       })
     ).body;

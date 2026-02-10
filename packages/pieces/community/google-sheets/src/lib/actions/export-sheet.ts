@@ -4,20 +4,20 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
-import { areSheetIdsValid } from '../common/common';
+import { areSheetIdsValid, getAccessToken } from '../common/common';
 
 export const exportSheetAction = createAction({
   name: 'export_sheet',
-  displayName: 'Export Sheet',
-  description: 'Export a Google Sheets tab to CSV or TSV format.',
+  displayName: 'Export Worksheet',
+  description: 'Download a worksheet as a CSV or TSV file.',
   auth: googleSheetsAuth,
   props: {
     ...commonProps,
     format: Property.StaticDropdown({
       displayName: 'Export Format',
-      description: 'The format to export the sheet to.',
+      description: 'Select the file type to export the sheet as.',
       required: true,
       defaultValue: 'csv',
       options: {
@@ -53,7 +53,7 @@ export const exportSheetAction = createAction({
         url: exportUrl,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
         responseType: 'arraybuffer',
       });

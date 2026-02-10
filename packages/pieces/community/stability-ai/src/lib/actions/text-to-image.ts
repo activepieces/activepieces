@@ -219,7 +219,7 @@ export const textToImage = createAction({
     const engineId = engine_id || 'stable-diffusion-v1-5';
     const apiHost = 'https://api.stability.ai';
 
-    const apiKey = context.auth.api_key;
+    const apiKey = context.auth.props.api_key;
 
     const requestBody = {
       text_prompts: [

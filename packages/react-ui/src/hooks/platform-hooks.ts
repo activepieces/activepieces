@@ -4,25 +4,28 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  METRIC_TO_LIMIT_MAPPING,
-  METRIC_TO_USAGE_MAPPING,
-} from '@activepieces/ee-shared';
-import {
-  isNil,
-  PlatformUsageMetric,
-  PlatformWithoutSensitiveData,
-} from '@activepieces/shared';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
 
+import { flagsHooks } from './flags-hooks';
+
 export const platformHooks = {
-  isCopilotEnabled: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    return Object.keys(platform?.copilotSettings?.providers ?? {}).length > 0;
+  useDeleteAccount: () => {
+    const navigate = useNavigate();
+    return useMutation({
+      mutationFn: async () => {
+        await platformApi.deleteAccount();
+      },
+      onSuccess: () => {
+        toast.success(t('Account deleted successfully'));
+        navigate('/sign-in');
+      },
+    });
   },
   useCurrentPlatform: () => {
     const currentPlatformId = authenticationSession.getPlatformId();
@@ -56,44 +59,14 @@ export const platformHooks = {
         queryClient.invalidateQueries({
           queryKey: ['platform', currentPlatformId],
         });
-        toast({
-          title: t('Success'),
-          description: t('License activated successfully!'),
+        queryClient.invalidateQueries({
+          queryKey: flagsHooks.queryKey,
         });
+        toast.success(t('License activated successfully!'));
       },
-      onError: (error: any) => {
-        toast({
-          title: t('Error'),
-          description: t('Activation failed, invalid lisence key'),
-          variant: 'destructive',
-        });
+      onError: () => {
+        toast.error(t('Activation failed, invalid license key'));
       },
     });
-  },
-  useCheckResourceIsLocked: (
-    resource: Exclude<
-      PlatformUsageMetric,
-      PlatformUsageMetric.AI_CREDITS | PlatformUsageMetric.TASKS
-    >,
-  ): boolean => {
-    const { platform } = platformHooks.useCurrentPlatform();
-
-    const plan = platform.plan;
-    const usage = platform.usage;
-    if (isNil(usage)) {
-      return false;
-    }
-
-    const limitKey = METRIC_TO_LIMIT_MAPPING[resource];
-    const usageKey = METRIC_TO_USAGE_MAPPING[resource];
-
-    const limit = plan[limitKey];
-    const currentUsage = usage[usageKey];
-
-    if (!isNil(limit) && currentUsage > limit) {
-      return true;
-    }
-
-    return false;
   },
 };

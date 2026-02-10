@@ -1,10 +1,9 @@
-version: '3.0'
 services:
   activepieces:
-    image: ghcr.io/activepieces/activepieces:0.66.3
+    image: ghcr.io/activepieces/activepieces:0.78.0
     container_name: activepieces
     restart: unless-stopped
-    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
+    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOX_PROCESS or old activepieces, checking the breaking change documentation for more info.
     ## privileged: true
     ports:
       - '8080:80'

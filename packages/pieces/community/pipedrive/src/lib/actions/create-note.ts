@@ -52,11 +52,13 @@ export const createNoteAction = createAction({
 			pinnedToLead,
 		} = context.propsValue;
 
-        if(!dealId && !personId && !organizationId && !leadId){
-            throw new Error("Note must be associated with at least one organization, person, deal, lead or project.");
-        }
+		if (!dealId && !personId && !organizationId && !leadId) {
+			throw new Error(
+				'Note must be associated with at least one organization, person, deal, lead or project.',
+			);
+		}
 
-		const noteDefaultFields: Record<string, any> = {
+		const notePayload: Record<string, any> = {
 			content,
 			pinned_to_deal_flag: pinnedToDeal ? 1 : 0,
 			pinned_to_person_flag: pinnedToPerson ? 1 : 0,
@@ -72,8 +74,8 @@ export const createNoteAction = createAction({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
-			resourceUri: '/notes',
-			body: noteDefaultFields,
+			resourceUri: '/v1/notes',
+			body: notePayload,
 		});
 
 		return response;

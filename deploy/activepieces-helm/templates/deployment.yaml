@@ -82,17 +82,9 @@ spec:
             - name: AP_PIECES_SYNC_MODE
               value: {{ .Values.activepieces.piecesSyncMode | quote }}
             {{- end }}
-            {{- if .Values.activepieces.triggerFailuresThreshold }}
-            - name: AP_TRIGGER_FAILURES_THRESHOLD
-              value: {{ .Values.activepieces.triggerFailuresThreshold | quote }}
-            {{- end }}
             {{- if .Values.activepieces.featurebaseApiKey }}
             - name: AP_FEATUREBASE_API_KEY
               value: {{ .Values.activepieces.featurebaseApiKey | quote }}
-            {{- end }}
-            {{- if .Values.activepieces.showChangelog }}
-            - name: AP_SHOW_CHANGELOG
-              value: {{ .Values.activepieces.showChangelog | quote }}
             {{- end }}
             {{- if .Values.activepieces.enableFlowOnPublish }}
             - name: AP_ENABLE_FLOW_ON_PUBLISH
@@ -164,6 +156,10 @@ spec:
             - name: AP_ENVIRONMENT
               value: {{ .Values.activepieces.environment | quote }}
             {{- end }}
+            {{- if .Values.activepieces.edition }}
+            - name: AP_EDITION
+              value: {{ .Values.activepieces.edition | quote }}
+            {{- end }}
             {{- if .Values.activepieces.executionMode }}
             - name: AP_EXECUTION_MODE
               value: {{ .Values.activepieces.executionMode | quote }}
@@ -204,17 +200,20 @@ spec:
             - name: AP_EXECUTION_DATA_RETENTION_DAYS
               value: {{ .Values.activepieces.executionDataRetentionDays | quote }}
             {{- end }}
-            {{- if .Values.postgresql.enabled }}
-            # PostgreSQL configuration
+            {{- if or .Values.postgresql.enabled (or .Values.postgresql.host .Values.postgresql.url) }}
+            # PostgreSQL configuration (subchart or external)
             - name: AP_DB_TYPE
               value: "POSTGRES"
             {{- if .Values.postgresql.auth.database }}
             - name: AP_POSTGRES_DATABASE
               value: {{ .Values.postgresql.auth.database | quote }}
             {{- end }}
-            {{- if .Values.postgresql.host | default (printf "%s-postgresql" (include "activepieces.fullname" .)) }}
+            {{- if .Values.postgresql.host }}
             - name: AP_POSTGRES_HOST
-              value: {{ .Values.postgresql.host | default (printf "%s-postgresql" (include "activepieces.fullname" .)) | quote }}
+              value: {{ .Values.postgresql.host | quote }}
+            {{- else if .Values.postgresql.enabled }}
+            - name: AP_POSTGRES_HOST
+              value: {{ printf "%s-postgresql" (include "activepieces.fullname" .) | quote }}
             {{- end }}
             {{- if .Values.postgresql.port }}
             - name: AP_POSTGRES_PORT
@@ -224,11 +223,22 @@ spec:
             - name: AP_POSTGRES_USERNAME
               value: {{ .Values.postgresql.auth.username | quote }}
             {{- end }}
+            {{- if .Values.postgresql.auth.externalSecret }}
+            - name: AP_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.externalSecret.name | quote }}
+                  key: {{ .Values.postgresql.auth.externalSecret.key | quote }}
+            {{- else if .Values.postgresql.auth.password }}
+            - name: AP_POSTGRES_PASSWORD
+              value: {{ .Values.postgresql.auth.password | quote }}
+            {{- else if .Values.postgresql.enabled }}
             - name: AP_POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "activepieces.fullname" . }}-postgresql
                   key: postgres-password
+            {{- end }}
             {{- if .Values.postgresql.useSSL }}
             - name: AP_POSTGRES_USE_SSL
               value: {{ .Values.postgresql.useSSL | quote }}
@@ -246,13 +256,14 @@ spec:
             - name: AP_DB_TYPE
               value: "SQLITE3"
             {{- end }}
-            {{- if .Values.redis.enabled }}
-            # Redis configuration
-            - name: AP_QUEUE_MODE
-              value: "REDIS"
-            {{- if .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) }}
+            {{- if or .Values.redis.enabled (or .Values.redis.host .Values.redis.url) }}
+            # Redis configuration (subchart or external)
+            {{- if .Values.redis.host }}
             - name: AP_REDIS_HOST
-              value: {{ .Values.redis.host | default (printf "%s-redis-master" (include "activepieces.fullname" .)) | quote }}
+              value: {{ .Values.redis.host | quote }}
+            {{- else if .Values.redis.enabled }}
+            - name: AP_REDIS_HOST
+              value: {{ printf "%s-redis-master" (include "activepieces.fullname" .) | quote }}
             {{- end }}
             {{- if .Values.redis.port }}
             - name: AP_REDIS_PORT
@@ -278,12 +289,13 @@ spec:
             - name: AP_REDIS_URL
               value: {{ .Values.redis.url | quote }}
             {{- end }}
-            {{- if eq .Values.redis.type "standalone" }}
-            - name: AP_REDIS_TYPE
-              value: "DEFAULT"
-            {{- else if eq .Values.redis.type "sentinel" }}
+            {{- if eq .Values.redis.type "sentinel" }}
             - name: AP_REDIS_TYPE
               value: "SENTINEL"
+            {{- else }}
+            # Default to DEFAULT for standalone Redis
+            - name: AP_REDIS_TYPE
+              value: "DEFAULT"
             {{- end }}
             {{- if .Values.redis.sentinel.role }}
             - name: AP_REDIS_SENTINEL_ROLE
@@ -305,7 +317,16 @@ spec:
             - name: AP_REDIS_FAILED_JOB_RETENTION_MAX_COUNT
               value: {{ .Values.redis.failedJob.retentionMaxCount | quote }}
             {{- end }}
-            {{- if .Values.redis.auth.enabled }}
+            {{- if .Values.redis.auth.externalSecret }}
+            - name: AP_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.auth.externalSecret.name | quote }}
+                  key: {{ .Values.redis.auth.externalSecret.key | quote }}
+            {{- else if .Values.redis.auth.password }}
+            - name: AP_REDIS_PASSWORD
+              value: {{ .Values.redis.auth.password | quote }}
+            {{- else if and .Values.redis.enabled .Values.redis.auth.enabled }}
             - name: AP_REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -314,7 +335,7 @@ spec:
             {{- end }}
             {{- else }}
             # Memory queue (fallback)
-            - name: AP_QUEUE_MODE
+            - name: AP_REDIS_TYPE
               value: "MEMORY"
             {{- end }}
             {{- if .Values.smtp.enabled }}
@@ -391,6 +412,19 @@ spec:
             {{- if .Values.activepieces.engineExecutablePath }}
             - name: AP_ENGINE_EXECUTABLE_PATH
               value: {{ .Values.activepieces.engineExecutablePath | quote }}
+            {{- end }}
+            # OpenTelemetry configuration
+            {{- if .Values.activepieces.otel.enabled }}
+            - name: AP_OTEL_ENABLED
+              value: {{ .Values.activepieces.otel.enabled | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpEndpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.activepieces.otel.exporterOtlpEndpoint | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.otel.exporterOtlpHeaders }}
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: {{ .Values.activepieces.otel.exporterOtlpHeaders | quote }}
             {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:

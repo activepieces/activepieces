@@ -8,6 +8,8 @@ import {
   username,
   actions,
   singleSelectChannelInfo,
+  threadTs,
+  mentionOriginFlow,
 } from '../common/props';
 import { requestAction } from '../common/request-action';
 
@@ -22,8 +24,10 @@ export const requestActionMessageAction = createAction({
     channel: slackChannel(true),
     text,
     actions,
+    threadTs,
     username,
     profilePicture,
+    mentionOriginFlow,
   },
   async run(context) {
     const { channel } = context.propsValue;

@@ -18,17 +18,26 @@ if (requiredVersions.some(version=>nodeVersion.startsWith(version))) {
   process.exit(1);
 }
 
-// Proceed with your commands
-if (os === 'win32') {
-  if (fs.existsSync('node_modules')) {
-    execSync('rmdir node_modules /s /q');
+
+
+try {
+  // Try to get bun version to check if installed
+  execSync("bun --version", { stdio: "ignore" });
+  console.log("✅ Bun is already installed.");
+} catch {
+  console.log("⚙️ Bun not found. Installing globally...");
+  try {
+    execSync("npm install -g bun", { stdio: "inherit" });
+    console.log("✅ Bun installed successfully.");
+  } catch (err) {
+    console.error("❌ Failed to install Bun:", err.message);
+    process.exit(1);
   }
 }
-else {
-  execSync('rm -rf node_modules');
-}
-execSync('npm ci');
+
+execSync('bun install', { stdio: 'inherit' });
+
 execSync('npx pnpm store add \
   @tsconfig/node18@1.0.0 \
   @types/node@18.17.1 \
-  typescript@4.8.4');
+  typescript@4.8.4', { stdio: 'inherit' });

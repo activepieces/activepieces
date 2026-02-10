@@ -5,7 +5,7 @@ import { memo, useEffect } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import {
-  ActionType,
+  FlowActionType,
   FlowOperationRequest,
   FlowOperationType,
   flowStructureUtil,
@@ -94,7 +94,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             operation.request.stepName,
             flowVersion.trigger,
           );
-          if (updatedStep.type !== ActionType.ROUTER) {
+          if (updatedStep.type !== FlowActionType.ROUTER) {
             console.error(
               `Trying to duplicate a branch on a none router step! ${operation.request.stepName}`,
             );
@@ -171,7 +171,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       )}
 
       {isNil(selectedBranchIndex) && (
-        <div className="mt-4">
+        <div>
           <div className="flex gap-2 mb-2 items-center">
             <Split className="w-4 h-4 rotate-180"></Split>
             <Label>{t('Branches')}</Label>

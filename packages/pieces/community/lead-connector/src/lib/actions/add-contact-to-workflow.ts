@@ -9,6 +9,7 @@ export const addContactToWorkflowAction = createAction({
   description: 'Add an existing contact to a workflow.',
   props: {
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: true,
@@ -32,6 +33,7 @@ export const addContactToWorkflowAction = createAction({
       },
     }),
     workflow: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Workflow',
       required: true,
       refreshers: [],

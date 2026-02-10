@@ -17,6 +17,7 @@ export const updateOpportunityStage = createAction({
       required: true,
     }),
     stage: Property.Dropdown({
+      auth: leverAuth,
       displayName: 'Stage',
       required: true,
       refreshers: ['auth'],
@@ -33,7 +34,7 @@ export const updateOpportunityStage = createAction({
           url: `${LEVER_BASE_URL}/stages`,
           authentication: {
             type: AuthenticationType.BASIC,
-            username: (auth as LeverAuth).apiKey,
+            username: auth.props.apiKey,
             password: '',
           },
         });
@@ -53,7 +54,7 @@ export const updateOpportunityStage = createAction({
       url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId}/stage`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.apiKey,
+        username: auth.props.apiKey,
         password: '',
       },
       body: { stage: propsValue.stage },

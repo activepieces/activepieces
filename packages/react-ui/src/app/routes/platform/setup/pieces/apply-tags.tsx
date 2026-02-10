@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 import { CreateTagDialog } from '@/app/routes/platform/setup/pieces/create-tag-dialog';
 import { Button } from '@/components/ui/button';
@@ -17,8 +18,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/use-toast';
 import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
@@ -54,20 +55,14 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
   const { mutate: applyTags } = useMutation({
     mutationFn: async (tags: string[]) => {
       setSelectedTags(new Set(tags));
-      toast({
-        title: t('Applying Tags...'),
-        variant: 'default',
-      });
+      toast(t('Applying Tags...'), {});
       await piecesTagsApi.tagPieces({
         piecesName: selectedPieces.map((piece) => piece.name),
         tags,
       });
     },
     onSuccess: () => {
-      toast({
-        title: t('Tags applied.'),
-        variant: 'default',
-      });
+      toast(t('Tags applied.'), {});
       onApplyTags();
     },
   });
@@ -98,50 +93,54 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
           size="sm"
           disabled={selectedPieces.length === 0}
         >
-          Apply Tags
+          {t('Apply Tags')}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
         <Command>
           <CommandList>
             {tagOptions.length === 0 ? (
-              <CommandEmpty>No tags created.</CommandEmpty>
+              <CommandEmpty>{t('No tags created.')}</CommandEmpty>
             ) : (
-              <CommandGroup className="max-h-[300px]">
-                {tagOptions.map((option) => {
-                  const isSelected = selectedTags.has(option.value);
-                  const isIndeterminate =
-                    selectedPieces.some((piece) =>
-                      piece.tags?.includes(option.value),
-                    ) &&
-                    !selectedPieces.every((piece) =>
-                      piece.tags?.includes(option.value),
-                    ) &&
-                    !tagsThatHaveBeenClickedRef.current.has(option.value);
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      onSelect={() => {
-                        tagsThatHaveBeenClickedRef.current.add(option.value);
-                        const newSelectedTags = new Set(selectedTags);
-                        if (isSelected && !isIndeterminate) {
-                          newSelectedTags.delete(option.value);
-                        } else {
-                          newSelectedTags.add(option.value);
-                        }
-                        setSelectedTags(newSelectedTags);
-                      }}
-                    >
-                      <Checkbox
-                        checked={isIndeterminate ? 'indeterminate' : isSelected}
-                        className="mr-2"
-                      ></Checkbox>
+              <ScrollArea viewPortClassName="max-h-[200px]">
+                <CommandGroup>
+                  {tagOptions.map((option) => {
+                    const isSelected = selectedTags.has(option.value);
+                    const isIndeterminate =
+                      selectedPieces.some((piece) =>
+                        piece.tags?.includes(option.value),
+                      ) &&
+                      !selectedPieces.every((piece) =>
+                        piece.tags?.includes(option.value),
+                      ) &&
+                      !tagsThatHaveBeenClickedRef.current.has(option.value);
+                    return (
+                      <CommandItem
+                        key={option.value}
+                        onSelect={() => {
+                          tagsThatHaveBeenClickedRef.current.add(option.value);
+                          const newSelectedTags = new Set(selectedTags);
+                          if (isSelected && !isIndeterminate) {
+                            newSelectedTags.delete(option.value);
+                          } else {
+                            newSelectedTags.add(option.value);
+                          }
+                          setSelectedTags(newSelectedTags);
+                        }}
+                      >
+                        <Checkbox
+                          checked={
+                            isIndeterminate ? 'indeterminate' : isSelected
+                          }
+                          className="mr-2"
+                        ></Checkbox>
 
-                      <span>{option.label}</span>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
+                        <span>{option.label}</span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </ScrollArea>
             )}
 
             <CreateTagDialog
@@ -163,7 +162,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
                   setCreateDialogOpen(true);
                 }}
               >
-                + Create Tag
+                + {t('New Tag')}
               </CommandItem>
             </CreateTagDialog>
             <Separator />
@@ -175,7 +174,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
                   setOpen(false);
                 }}
               >
-                Apply Tags
+                {t('Apply Tags')}
               </CommandItem>
             </CommandGroup>
           </CommandList>

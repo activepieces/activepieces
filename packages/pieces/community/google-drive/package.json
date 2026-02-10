@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-google-drive",
-  "version": "0.5.41"
+  "version": "0.6.3",
+  "dependencies": {
+    "googleapis": "129.0.0"
+  }
 }

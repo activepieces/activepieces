@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { PencilIcon, Plus } from 'lucide-react';
+import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import * as z from 'zod';
@@ -20,8 +20,8 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -69,7 +69,7 @@ const CreateReleaseDialogContent = ({
   refetch,
 }: CreateReleaseDialogContentProps) => {
   const isThereAnyChanges =
-    (plan?.operations && plan?.operations.length > 0) ||
+    (plan?.flows && plan?.flows.length > 0) ||
     (plan?.tables && plan?.tables.length > 0);
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
@@ -123,14 +123,14 @@ const CreateReleaseDialogContent = ({
     },
   });
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
-    new Set(plan?.operations.map((op) => op.flow.id) || []),
+    new Set(plan?.flows.map((op) => op.flow.id) || []),
   );
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSelectAll = (checked: boolean) => {
     if (!plan) return;
     setSelectedChanges(
-      new Set(checked ? plan.operations.map((op) => op.flow.id) : []),
+      new Set(checked ? plan.flows.map((op) => op.flow.id) : []),
     );
   };
 
@@ -179,22 +179,22 @@ const CreateReleaseDialogContent = ({
               </p>
             )}
           </div>
-          {plan?.operations && plan?.operations.length > 0 && (
+          {plan?.flows && plan?.flows.length > 0 && (
             <div className="space-y-2 ">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 py-2 border-b">
                   <Checkbox
-                    checked={selectedChanges.size === plan?.operations.length}
+                    checked={selectedChanges.size === plan?.flows.length}
                     onCheckedChange={handleSelectAll}
                   />
                   <Label className="text-sm font-medium">
                     {t('Flows Changes')} ({selectedChanges.size}/
-                    {plan?.operations.length || 0})
+                    {plan?.flows.length || 0})
                   </Label>
                 </div>
               </div>
               <ScrollArea viewPortClassName="max-h-[15vh]">
-                {plan?.operations.map((operation) => (
+                {plan?.flows.map((operation) => (
                   <OperationChange
                     key={operation.flow.id}
                     change={operation}
@@ -278,7 +278,7 @@ const CreateReleaseDialogContent = ({
                 <ScrollArea viewPortClassName="max-h-[10vh]">
                   {plan?.tables.map((table, index) => (
                     <div
-                      key={table.tableState.id}
+                      key={table.tableState.externalId}
                       className="flex items-center gap-2 text-sm py-1"
                     >
                       {table.type === TableOperationType.UPDATE_TABLE && (
@@ -293,6 +293,14 @@ const CreateReleaseDialogContent = ({
                         <div className="flex items-center gap-2">
                           <Plus className="w-4 h-4 shrink-0 text-success" />
                           <span className="text-success">
+                            {table.tableState.name}
+                          </span>
+                        </div>
+                      )}
+                      {table.type === TableOperationType.DELETE_TABLE && (
+                        <div className="flex items-center gap-2">
+                          <TrashIcon className="w-4 h-4 shrink-0 text-destructive" />
+                          <span className="text-destructive">
                             {table.tableState.name}
                           </span>
                         </div>
@@ -385,7 +393,7 @@ const CreateReleaseDialog = ({
       }}
     >
       <DialogContent className="min-h-[100px] max-h-[850px] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')

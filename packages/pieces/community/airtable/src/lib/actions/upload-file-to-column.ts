@@ -18,6 +18,7 @@ export const airtableUploadFileToColumnAction = createAction({
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
     attachment_column: Property.Dropdown({
+      auth: airtableAuth,
       displayName: 'Attachment Column',
       required: true,
       refreshers: ['base', 'tableId'],
@@ -87,7 +88,7 @@ export const airtableUploadFileToColumnAction = createAction({
       url: `https://content.airtable.com/v0/${baseId}/${recordId}/${fieldId}/uploadAttachment`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       body: {
         contentType: fileContentType,

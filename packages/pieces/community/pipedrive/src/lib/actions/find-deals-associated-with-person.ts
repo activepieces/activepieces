@@ -1,10 +1,15 @@
 import { pipedriveAuth } from '../../index';
 import { createAction } from '@activepieces/pieces-framework';
 import { personIdProp } from '../common/props';
-import { pipedrivePaginatedApiCall, pipedriveTransformCustomFields } from '../common';
+import {
+	pipedrivePaginatedV1ApiCall,
+	pipedrivePaginatedV2ApiCall,
+	pipedriveTransformCustomFields,
+} from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 import { GetField } from '../common/types';
+import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 export const findDealsAssociatedWithPersonAction = createAction({
 	auth: pipedriveAuth,
@@ -12,31 +17,36 @@ export const findDealsAssociatedWithPersonAction = createAction({
 	displayName: 'Find Deals Associated With Person',
 	description: 'Finds multiple deals related to a specific person.',
 	props: {
-		personId: personIdProp(true),
+		personId: personIdProp(true), 
 	},
 	async run(context) {
 		const { personId } = context.propsValue;
 
-		const deals = await pipedrivePaginatedApiCall<Record<string, any>>({
+		const deals = await pipedrivePaginatedV2ApiCall<Record<string, any>>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: `/persons/${personId}/deals`,
-			query: { sort: 'update_time DESC' },
+			resourceUri: `/v2/deals`,
+			query: {
+				person_id: personId,
+				sort_by: 'update_time',
+				sort_direction: 'desc',
+				include_fields: DEAL_OPTIONAL_FIELDS.join(','),
+			},
 		});
 
-		if (isNil(deals) || deals.length == 0) {
+		if (isNil(deals) || deals.length === 0) {
 			return {
 				found: false,
 				data: [],
 			};
 		}
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
 		const result = [];

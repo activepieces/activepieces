@@ -180,8 +180,8 @@ function createPropertyDefinition(property: HubspotProperty, propertyDisplayName
 		case HubspotFieldType.BooleanCheckBox:
 			return Property.StaticDropdown({
 				displayName: propertyDisplayName,
-				required: true,
-				defaultValue:'',
+				required: false,
+				defaultValue: null,
 				options:{
 					disabled:false,
 					options:[
@@ -357,6 +357,7 @@ async function retrieveObjectProperties(
 
 export const standardObjectDynamicProperties = (objectType: string, excludedProperties: string[]) =>
 	Property.DynamicProperties({
+		auth: hubspotAuth,
 		displayName: 'Object Properties',
 		refreshers: [],
 		required: false,
@@ -372,6 +373,7 @@ export const standardObjectDynamicProperties = (objectType: string, excludedProp
 	});
 
 export const customObjectDynamicProperties = Property.DynamicProperties({
+	auth: hubspotAuth,
 	displayName: 'Custom Object Properties',
 	refreshers: ['customObjectType'],
 	required: false,
@@ -391,6 +393,7 @@ export const standardObjectPropertiesDropdown = (
 ) => {
 	const dropdownFunction = isSingleSelect ? Property.Dropdown : Property.MultiSelectDropdown;
 	return dropdownFunction({
+		auth: hubspotAuth,
 		displayName: params.displayName,
 		refreshers: [],
 		required: params.required,
@@ -445,6 +448,7 @@ export const customObjectPropertiesDropdown = (
 	isSingleSelect = false,
 ) =>
 	Property.DynamicProperties({
+		auth: hubspotAuth,
 		displayName,
 		refreshers: ['customObjectType'],
 		required,
@@ -497,6 +501,7 @@ export const customObjectPropertiesDropdown = (
 	});
 
 export const workflowIdDropdown = Property.Dropdown({
+	auth: hubspotAuth,
 	displayName: 'Workflow',
 	refreshers: [],
 	// description: 'Workflow to add contact to',
@@ -539,6 +544,7 @@ export const workflowIdDropdown = Property.Dropdown({
 
 export const pipelineDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: hubspotAuth,
 		displayName: params.displayName,
 		refreshers: [],
 		required: params.required,
@@ -570,6 +576,7 @@ export const pipelineDropdown = (params: DropdownParams) =>
 
 export const pipelineStageDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: hubspotAuth,
 		displayName: params.displayName,
 		refreshers: ['pipelineId'],
 		required: params.required,
@@ -605,6 +612,7 @@ export const pipelineStageDropdown = (params: DropdownParams) =>
 
 export const productDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: hubspotAuth,
 		displayName: params.displayName,
 		refreshers: [],
 		required: params.required,
@@ -642,6 +650,7 @@ export const productDropdown = (params: DropdownParams) =>
 		},
 	});
 export const customObjectDropdown = Property.Dropdown({
+	auth: hubspotAuth,
 	displayName: 'Type of Custom Object',
 	refreshers: [],
 	required: true,
@@ -672,6 +681,7 @@ export const customObjectDropdown = Property.Dropdown({
 });
 
 export const staticListsDropdown = Property.Dropdown({
+	auth: hubspotAuth,
 	displayName: 'List ID',
 	refreshers: [],
 	required: true,
@@ -726,6 +736,7 @@ export const staticListsDropdown = Property.Dropdown({
 
 export const fromObjectTypeAssociationDropdown = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: hubspotAuth,
 		displayName: params.displayName,
 		refreshers: [],
 		required: params.required,
@@ -757,6 +768,7 @@ export const fromObjectTypeAssociationDropdown = (params: DropdownParams) =>
 	});
 
 export const associationTypeDropdown = Property.Dropdown({
+	auth: hubspotAuth,
 	displayName: 'Type of the association',
 	refreshers: ['fromObjectType', 'toObjectType'],
 	required: true,
@@ -790,6 +802,7 @@ export const associationTypeDropdown = Property.Dropdown({
 
 export const toObjectIdsDropdown = (params: DropdownParams) =>
 	Property.MultiSelectDropdown({
+		auth: hubspotAuth,
 		displayName: params.displayName,
 		description: params.description,
 		refreshers: ['toObjectType'],
@@ -848,6 +861,7 @@ export const toObjectIdsDropdown = (params: DropdownParams) =>
 	});
 
 export const formDropdown = Property.Dropdown({
+	auth: hubspotAuth,
 	displayName: 'Form',
 	refreshers: [],
 	required: true,
@@ -884,6 +898,7 @@ export const formDropdown = Property.Dropdown({
 });
 
 export const blogUrlDropdown = Property.Dropdown({
+	auth: hubspotAuth,
 	displayName: 'Blog URL',
 	refreshers: [],
 	required: true,
@@ -916,6 +931,7 @@ export const blogUrlDropdown = Property.Dropdown({
 });
 
 export const blogAuthorDropdown = Property.Dropdown({
+	auth: hubspotAuth,
 	displayName: 'Blog Author',
 	refreshers: [],
 	required: true,

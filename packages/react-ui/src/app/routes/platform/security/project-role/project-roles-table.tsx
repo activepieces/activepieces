@@ -1,22 +1,22 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Eye, Pencil, Trash, Users } from 'lucide-react';
+import { Eye, Pencil, Trash, Users, Tag, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -33,7 +33,6 @@ export const ProjectRolesTable = ({
   refetch,
 }: ProjectRolesTableProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { mutate: deleteProjectRole, isPending: isDeleting } = useMutation({
@@ -41,9 +40,7 @@ export const ProjectRolesTable = ({
     mutationFn: (name: string) => projectRoleApi.delete(name),
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Project Role entry deleted successfully'),
+      toast.success(t('Project Role entry deleted successfully'), {
         duration: 3000,
       });
     },
@@ -52,32 +49,39 @@ export const ProjectRolesTable = ({
   const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
     {
       accessorKey: 'name',
+      size: 200,
       accessorFn: (row) => row.name,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'updated',
+      size: 150,
       accessorFn: (row) => row.updated,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Updated')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Updated')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.updated))}
+          <FormattedDate date={new Date(row.original.updated)} />
         </div>
       ),
     },
     {
       accessorKey: 'userCount',
+      size: 100,
       accessorFn: (row) => row.userCount,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Users')}
-          className="text-center"
+          icon={Users}
         />
       ),
       cell: ({ row }) => (

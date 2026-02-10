@@ -3,31 +3,17 @@ import { t } from 'i18next';
 import { Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LoadingSpinner } from '@/components/ui/spinner';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
@@ -35,95 +21,33 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { formatUtils } from '@/lib/utils';
 import {
   FlowVersionMetadata,
   FlowVersionState,
   Permission,
 } from '@activepieces/shared';
 
-type UseAsDraftOptionProps = {
-  versionNumber: number;
-  onConfirm: () => void;
-};
-const UseAsDraftDropdownMenuOption = ({
-  versionNumber,
-  onConfirm,
-}: UseAsDraftOptionProps) => {
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+import { OverwriteDraftDialog } from './overwrite-draft-dialog';
 
-  return (
-    <Dialog>
-      <DialogTrigger
-        disabled={!userHasPermissionToWriteFlow}
-        className="w-full"
-      >
-        <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
-          <DropdownMenuItem
-            className="w-full"
-            onSelect={(e) => {
-              e.preventDefault();
-            }}
-            disabled={!userHasPermissionToWriteFlow}
-          >
-            <Pencil className="mr-2 h-4 w-4" />
-            <span>{t('Use as Draft')}</span>
-          </DropdownMenuItem>
-        </PermissionNeededTooltip>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Are you sure?')}</DialogTitle>
-          <DialogDescription>
-            {t('Your current draft version will be overwritten with')}{' '}
-            <span className="font-semibold">
-              {t('version #')}
-              {versionNumber}
-            </span>
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="justify-end">
-          <DialogClose asChild>
-            <Button variant={'outline'}>{t('Cancel')}</Button>
-          </DialogClose>
-          <DialogClose asChild>
-            <Button onClick={() => onConfirm()}>{t('Confirm')}</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-UseAsDraftDropdownMenuOption.displayName = 'UseAsDraftDropdownMenuOption';
-
-type FlowVersionDetailsCardProps = {
-  flowVersion: FlowVersionMetadata;
-  selected: boolean;
-  published: boolean;
-  flowVersionNumber: number;
-};
 const FlowVersionDetailsCard = React.memo(
   ({
     flowVersion,
-    flowVersionNumber,
     selected,
-    published,
+    publishedVersionId,
+    flowVersionNumber,
   }: FlowVersionDetailsCardProps) => {
     const { checkAccess } = useAuthorization();
     const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-    const [setBuilderVersion, setLeftSidebar, setReadonly] =
-      useBuilderStateContext((state) => [
-        state.setVersion,
-        state.setLeftSidebar,
-        state.setReadOnly,
-      ]);
+    const [setVersion, setReadonly] = useBuilderStateContext((state) => [
+      state.setVersion,
+      state.setReadOnly,
+    ]);
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
-    const { mutate: viewVersion, isPending } = flowsHooks.useFetchFlowVersion({
+    const { mutate: viewVersion, isPending } = flowHooks.useFetchFlowVersion({
       onSuccess: (populatedFlowVersion) => {
-        setBuilderVersion(populatedFlowVersion);
+        setVersion(populatedFlowVersion);
         setReadonly(
           populatedFlowVersion.state === FlowVersionState.LOCKED ||
             !userHasPermissionToWriteFlow,
@@ -131,23 +55,10 @@ const FlowVersionDetailsCard = React.memo(
       },
     });
 
-    const { mutate: overWriteDraftWithVersion, isPending: isDraftPending } =
-      flowsHooks.useOverWriteDraftWithVersion({
-        onSuccess: (populatedFlowVersion) => {
-          setBuilderVersion(populatedFlowVersion.version);
-          setLeftSidebar(LeftSideBarType.NONE);
-        },
-      });
-
-    const handleOverwriteDraftWtihVersion = () => {
-      overWriteDraftWithVersion(flowVersion);
-      setDropdownMenuOpen(false);
-    };
-
     const showAvatar = !useEmbedding().embedState.isEmbedded;
 
     return (
-      <CardListItem interactive={false}>
+      <CardListItem interactive={false} className="px-4">
         {showAvatar && flowVersion.updatedByUser && (
           <UserAvatar
             size={28}
@@ -160,14 +71,16 @@ const FlowVersionDetailsCard = React.memo(
           />
         )}
         <div className="grid gap-2">
-          <p className="text-sm font-medium leading-none select-none pointer-events-none">
-            {formatUtils.formatDate(new Date(flowVersion.created))}
-          </p>
+          <FormattedDate
+            date={new Date(flowVersion.created)}
+            includeTime={true}
+            className="text-sm font-medium leading-none select-none cursor-default"
+          ></FormattedDate>
           <p className="flex gap-1 text-xs text-muted-foreground">
-            {t('Version')} {flowVersionNumber}
+            {t('Version')} #{flowVersionNumber}
           </p>
         </div>
-        <div className="flex-grow"></div>
+        <div className="grow"></div>
         <div className="flex font-medium gap-2 justify-center items-center">
           {selected && (
             <Tooltip>
@@ -180,32 +93,19 @@ const FlowVersionDetailsCard = React.memo(
             </Tooltip>
           )}
 
-          {flowVersion.state === FlowVersionState.DRAFT && (
-            <FlowVersionStateDot
-              state={flowVersion.state}
-              versionId={flowVersion.id}
-            ></FlowVersionStateDot>
-          )}
-
-          {published && flowVersion.state === FlowVersionState.LOCKED && (
-            <FlowVersionStateDot
-              state={flowVersion.state}
-              versionId={flowVersion.id}
-            ></FlowVersionStateDot>
-          )}
+          <FlowVersionStateDot
+            state={flowVersion.state}
+            versionId={flowVersion.id}
+            publishedVersionId={publishedVersionId}
+          ></FlowVersionStateDot>
 
           <DropdownMenu
             onOpenChange={(open) => setDropdownMenuOpen(open)}
             open={dropdownMenuOpen}
           >
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                disabled={isPending || isDraftPending}
-                size={'icon'}
-              >
-                {(isPending || isDraftPending) && <LoadingSpinner />}
-                {!isPending && !isDraftPending && <DotsVerticalIcon />}
+              <Button variant="ghost" disabled={isPending} size={'icon'}>
+                <DotsVerticalIcon />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
@@ -217,10 +117,24 @@ const FlowVersionDetailsCard = React.memo(
                 <span>{t('View')}</span>
               </DropdownMenuItem>
               {flowVersion.state !== FlowVersionState.DRAFT && (
-                <UseAsDraftDropdownMenuOption
-                  versionNumber={flowVersionNumber}
-                  onConfirm={handleOverwriteDraftWtihVersion}
-                ></UseAsDraftDropdownMenuOption>
+                <OverwriteDraftDialog
+                  versionNumber={flowVersionNumber.toString()}
+                  versionId={flowVersion.id}
+                  onConfirm={() => {
+                    setDropdownMenuOpen(false);
+                  }}
+                >
+                  <DropdownMenuItem
+                    className="w-full"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                    }}
+                    disabled={!userHasPermissionToWriteFlow}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span>{t('Use as Draft')}</span>
+                  </DropdownMenuItem>
+                </OverwriteDraftDialog>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -232,3 +146,10 @@ const FlowVersionDetailsCard = React.memo(
 
 FlowVersionDetailsCard.displayName = 'FlowVersionDetailsCard';
 export { FlowVersionDetailsCard };
+
+type FlowVersionDetailsCardProps = {
+  flowVersion: FlowVersionMetadata;
+  selected: boolean;
+  publishedVersionId: string | undefined | null;
+  flowVersionNumber: number;
+};

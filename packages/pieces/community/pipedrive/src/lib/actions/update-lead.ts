@@ -3,11 +3,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { leadCommonProps, leadIdProp } from '../common/props';
 import {
 	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
-	pipedriveTransformCustomFields,
+	pipedrivePaginatedV1ApiCall,
+	pipedriveTransformV1CustomFields,
 } from '../common';
-import { GetField, OrganizationCreateResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { GetField, GetLeadResponse } from '../common/types';
 import dayjs from 'dayjs';
 
 export const updateLeadAction = createAction({
@@ -74,32 +74,32 @@ export const updateLeadAction = createAction({
 			leadCustomFields[key] = Array.isArray(value) && value.length > 0 ? value.join(',') : value;
 		});
 
-		const updatedLeadResponse = await pipedriveApiCall<OrganizationCreateResponse>({
+		const updatedLeadResponse = await pipedriveApiCall<GetLeadResponse>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.PATCH,
-			resourceUri: `/leads/${leadId}`,
+			resourceUri: `/v1/leads/${leadId}`,
 			body: {
 				...leadDefaultFields,
 				...leadCustomFields,
 			},
 		});
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+		const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
+			resourceUri: '/v1/dealFields',
 		});
 
-		const updatedLeadProperties = pipedriveTransformCustomFields(
+		const transformedLeadProperties = pipedriveTransformV1CustomFields(
 			customFieldsResponse,
 			updatedLeadResponse.data,
 		);
 
 		return {
 			...updatedLeadResponse,
-			data: updatedLeadProperties,
+			data: transformedLeadProperties,
 		};
 	},
 });

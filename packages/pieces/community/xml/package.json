@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-xml",
-  "version": "0.1.3"
+  "version": "0.1.12",
+  "dependencies": {
+    "json2xml": "0.1.3"
+  }
 }

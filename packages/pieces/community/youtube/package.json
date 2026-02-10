@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-youtube",
-  "version": "0.3.9"
+  "version": "0.4.3",
+  "dependencies": {
+    "cheerio": "1.0.0-rc.12",
+    "feedparser": "2.2.10"
+  }
 }

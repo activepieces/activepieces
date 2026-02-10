@@ -4,10 +4,12 @@ import {
   Field,
   PopulatedRecord,
   Table,
+  UpdateTableRequest,
 } from '@activepieces/shared';
 
 import { fieldsApi } from '../fields-api';
 import { recordsApi } from '../records-api';
+import { tablesApi } from '../tables-api';
 
 import { ClientRecordData } from './ap-tables-client-state';
 
@@ -48,7 +50,7 @@ export const createServerState = (
     },
     createField: (field: CreateFieldRequest) => {
       addPromiseToQueue(async () => {
-        const serverField = await fieldsApi.create(field);
+        const serverField = await fieldsApi.create({ ...field });
         clonedFields.push(serverField);
       });
     },
@@ -94,6 +96,7 @@ export const createServerState = (
           (index) => clonedRecords[parseInt(index)].id,
         );
         await recordsApi.delete({
+          tableId: clonedTable.id,
           ids: recordIds,
         });
 
@@ -114,6 +117,12 @@ export const createServerState = (
         await fieldsApi.update(clonedFields[fieldIndex].id, {
           name: newName,
         });
+      });
+    },
+    update: async (request: UpdateTableRequest) => {
+      addPromiseToQueue(async () => {
+        const updatedTable = await tablesApi.update(clonedTable.id, request);
+        clonedTable.status = updatedTable.status;
       });
     },
     setRecords: (records: PopulatedRecord[]) => {

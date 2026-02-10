@@ -39,10 +39,11 @@ export const sendEmail = createAction({
       description: undefined,
       required: true,
     }),
-    content_type: Property.Dropdown<'text' | 'html'>({
+    content_type: Property.Dropdown<'text' | 'html', true, typeof sendgridAuth>({
       displayName: 'Content Type',
       refreshers: [],
       required: true,
+      auth: sendgridAuth,
       options: async () => {
         return {
           disabled: false,
@@ -92,7 +93,7 @@ export const sendEmail = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       queryParams: {},
     };

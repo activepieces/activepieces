@@ -17,7 +17,7 @@ export const updateContact = createAction({
     fields: mauticCommon.contactFields,
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth;
+    const { base_url, username, password } = context.auth.props;
     const request: HttpRequest = {
       method: HttpMethod.PATCH,
       url: `${base_url.endsWith('/') ? base_url : base_url + '/'}api/contacts/${

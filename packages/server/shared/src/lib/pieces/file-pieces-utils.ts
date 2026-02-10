@@ -2,88 +2,67 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
-import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
-import { exceptionHandler } from '../exception-handler'
-import { ApLock, memoryLock } from '../memory-lock'
+import { AppSystemProp, environmentVariables } from '../system-props'
 
-const pieceCache: Record<string, PieceMetadata | null> = {}
+const DIST_PIECES_PATH = resolve(cwd(), 'dist', 'packages', 'pieces')
+const SOURCE_PIECES_PATH = resolve(cwd(), 'packages', 'pieces')
 
-export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
-    async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
-        const paths = []
-        const files = await readdir(folderPath)
+export const filePiecesUtils = (log: FastifyBaseLogger) => ({
 
-        for (const file of files) {
-            const filePath = join(folderPath, file)
-            const fileStats = await stat(filePath)
-            if (
-                fileStats.isDirectory() &&
-                file !== 'node_modules' &&
-                file !== 'dist' &&
-                file !== 'framework' &&
-                file !== 'common'
-            ) {
-                paths.push(...(await findAllPiecesFolder(filePath)))
-            }
-            else if (file === 'package.json') {
-                paths.push(folderPath)
-            }
-        }
-        return paths
-    }
-
-    async function getPackageNameFromFolderPath(folderPath: string): Promise<string> {
+    getPackageNameFromFolderPath: async (folderPath: string): Promise<string> => {
         const packageJson = await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
         return packageJson.name
-    }
+    },
 
-    async function getProjectJsonFromFolderPath(folderPath: string): Promise<string> {
+    getProjectJsonFromFolderPath: async (folderPath: string): Promise<string> => {
         return join(folderPath, 'project.json')
-    }
+    },
 
-    async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
-        const paths = await findAllPiecesFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
+    getPieceDependencies: async (folderPath: string): Promise<Record<string, string> | null> => {
+        try {
+            const packageJson =  await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
+            if (!packageJson.dependencies) {
+                return null
+            }
+            return packageJson.dependencies
+        }
+        catch (e) {
+            return null
+        }
+    },
+
+    findDistPiecePathByPackageName: async (packageName: string): Promise<string | null> => {
+        const paths = await findAllPiecesFolder(DIST_PIECES_PATH)
         for (const path of paths) {
             try {
-                const packageJsonName = await getPackageNameFromFolderPath(path)
+                const packageJsonName = await filePiecesUtils(log).getPackageNameFromFolderPath(path)
                 if (packageJsonName === packageName) {
                     return path
                 }
             }
             catch (e) {
                 log.error({
-                    name: 'findDirectoryByPackageName',
+                    name: 'findDistPiecePathByPackageName',
                     message: JSON.stringify(e),
-                }, 'Error finding directory by package name')
+                }, 'Error finding dist piece path by package name')
             }
         }
         return null
-    }
+    },
 
-    async function findAllPiecesDirectoryInSource(): Promise<string[]> {
-        const piecesPath = resolve(cwd(), 'packages', 'pieces')
-        const paths = await findAllPiecesFolder(piecesPath)
-        return paths
-    }
-
-    async function findPieceDirectoryByFolderName(pieceName: string): Promise<string | null> {
-        const piecesPath = await findAllPiecesDirectoryInSource()
+    findSourcePiecePathByPieceName: async (pieceName: string): Promise<string | null> => {
+        const piecesPath = await findAllPiecesFolder(SOURCE_PIECES_PATH)
         const piecePath = piecesPath.find((p) => p.endsWith(sep + pieceName))
         return piecePath ?? null
-    }
+    },
 
-    async function findAllPieces(): Promise<PieceMetadata[]> {
-        const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
-        return pieces
-    }
-
-    async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
+    loadDistPiecesMetadata: async (piecesNames: string[]): Promise<PieceMetadata[]> => {
         try {
-            const paths = (await findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.includes(packageName)))
+            const paths = (await findAllPiecesFolder(DIST_PIECES_PATH)).filter(path => piecesNames.some(name => path.endsWith(sep + name)))
             const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
             return pieces.filter((p): p is PieceMetadata => p !== null)
         }
@@ -92,77 +71,64 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
             log.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
             return []
         }
-    }
+    },
 
-    async function loadPieceFromFolder(
-        folderPath: string,
-    ): Promise<PieceMetadata | null> {
-        let lock: ApLock | undefined
-        try {
-            if (folderPath in pieceCache && pieceCache[folderPath]) {
-                return pieceCache[folderPath]
-            }
 
-            lock = await memoryLock.acquire(`piece_cache_${folderPath}`, 60000)
-            if (folderPath in pieceCache && pieceCache[folderPath]) {
-                return pieceCache[folderPath]
-            }
+    clearPieceModuleCache: (distFolderPath: string): void => {
+        const indexPath = join(distFolderPath, 'src', 'index')
+        const packageJsonPath = join(distFolderPath, 'package.json')
+        clearModule(indexPath)
+        clearModule(packageJsonPath)
+    },
+})
 
-            const indexPath = join(folderPath, 'src', 'index')
-            clearModule(indexPath)
-            const packageJson = importFresh<Record<string, string>>(
-                join(folderPath, 'package.json'),
-            )
-            const module = importFresh<Record<string, unknown>>(
-                indexPath,
-            )
+const findAllPiecesFolder = async (folderPath: string): Promise<string[]> => {
+    const paths = []
+    const files = await readdir(folderPath)
 
-            const { name: pieceName, version: pieceVersion } = packageJson
-            const piece = extractPieceFromModule<Piece>({
-                module,
-                pieceName,
-                pieceVersion,
-            })
-            const originalMetadata = piece.metadata()
-            const i18n = await pieceTranslation.initializeI18n(pieceName)
-            const metadata: PieceMetadata = {
-                ...originalMetadata,
-                name: pieceName,
-                version: pieceVersion,
-                authors: piece.authors,
-                directoryPath: folderPath,
-                i18n,
-            }
-
-            pieceCache[folderPath] = metadata
-
+    const ignoredFiles = ['node_modules', 'dist', 'framework', 'common']
+    for (const file of files) {
+        const filePath = join(folderPath, file)
+        const fileStats = await stat(filePath)
+        if (
+            fileStats.isDirectory() &&
+            !ignoredFiles.includes(file)
+        ) {
+            paths.push(...(await findAllPiecesFolder(filePath)))
         }
-        catch (ex) {
-            pieceCache[folderPath] = null
-            exceptionHandler.handle(ex, log)
-        }
-        finally {
-            if (lock) {
-                await lock.release()
-            }
-        }
-        return null
-    }
-
-    async function clearPieceCache(packageName: string): Promise<void> {
-        const directoryPath = await findDirectoryByPackageName(packageName)
-        if (directoryPath && directoryPath in pieceCache) {
-            pieceCache[directoryPath] = null
+        else if (file === 'package.json') {
+            paths.push(folderPath)
         }
     }
+    return paths
+}
 
-    return {
-        findAllPiecesFolder,
-        findDirectoryByPackageName,
-        findPieceDirectoryByFolderName,
-        findAllPieces,
-        clearPieceCache,
-        getPackageNameFromFolderPath,
-        getProjectJsonFromFolderPath,
+const loadPieceFromFolder = async (
+    folderPath: string,
+): Promise<PieceMetadata | null> => {
+    const indexPath = join(folderPath, 'src', 'index')
+    const packageJsonPath = join(folderPath, 'package.json')
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const packageJson = require(packageJsonPath)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const module = require(indexPath)
+    const { name: pieceName, version: pieceVersion } = packageJson
+    const piece = extractPieceFromModule<Piece>({
+        module,
+        pieceName,
+        pieceVersion,
+    })
+    const originalMetadata = piece.metadata()
+    const loadTranslations = environmentVariables.getBooleanEnvironment(AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES)
+    const i18n = loadTranslations ? await pieceTranslation.initializeI18n(folderPath) : undefined
+    const metadata: PieceMetadata = {
+        ...originalMetadata,
+        name: pieceName,
+        version: pieceVersion,
+        authors: piece.authors,
+        directoryPath: folderPath,
+        i18n,
     }
+
+    return metadata
 }

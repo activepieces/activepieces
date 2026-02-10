@@ -19,7 +19,7 @@ export const retrieveSharableVideoUrlAction = createAction({
     const { videoId } = propsValue;
 
     const response = await heygenApiCall({
-      apiKey: auth as string,
+			apiKey: auth.secret_text,
       method: HttpMethod.POST,
       resourceUri: '/video/share',
       body: { video_id: videoId },

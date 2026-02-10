@@ -17,8 +17,8 @@ export const xeroCreateInvoice = createAction({
   displayName: 'Create or Update Invoice',
   props: {
     tenant_id: props.tenant_id,
-    invoice_id: props.invoice_id,
-    contact_id: props.contact_id(false),
+    invoice_id: props.invoice_id(false),
+    contact_id: props.contact_dropdown(false),
     name: props.contact_name(true),
     email: props.contact_email(false),
     line_item: Property.Object({

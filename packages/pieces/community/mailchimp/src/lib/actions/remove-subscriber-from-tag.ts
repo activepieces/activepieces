@@ -1,64 +1,92 @@
-import { mailchimpCommon } from '../common';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import crypto from 'crypto';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { mailchimpCommon } from '../common';
 import { mailchimpAuth } from '../..';
 
 export const removeSubscriberFromTag = createAction({
   auth: mailchimpAuth,
-  name: 'remove_subscriber_to_tag',
-  displayName: 'Remove Subscriber from a tag',
-  description: 'Removes a subscriber from a tag',
+  name: 'remove_subscriber_from_tag',
+  displayName: 'Remove Subscriber from Tag',
+  description: 'Remove a subscriber from a specific tag in your Mailchimp audience.',
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({
-      displayName: 'Email',
-      description: 'Email of the subscriber',
+      displayName: 'Email Address',
+      description: 'The email address of the subscriber to remove from the tag',
       required: true,
     }),
-    tag_names: Property.Array({
+    tag_name: Property.ShortText({
       displayName: 'Tag Name',
-      description: 'Tag name to add to the subscriber',
+      description: 'The name of the tag to remove the subscriber from',
       required: true,
     }),
   },
   async run(context) {
-    const { list_id, email, tag_names } = context.propsValue;
-    const { access_token } = context.auth;
+    const { list_id, email, tag_name } = context.propsValue;
+    const accessToken = getAccessTokenOrThrow(context.auth);
 
-    const subscriberHash = crypto
-      .createHash('md5')
-      .update(email.toLowerCase())
-      .digest('hex');
-    const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(
-      access_token
-    );
-    const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/tags`;
+    try {
+      const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
+      const subscriberHash = mailchimpCommon.getMD5EmailHash(email);
 
-    const tags = tag_names.map((tag_name) => ({
-      name: tag_name,
-      status: 'inactive', // equal to removing a tag
-    }));
+      const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/tags`;
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: access_token,
-      },
-      body: { tags },
-    };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tags: [
+            {
+              name: tag_name,
+              status: 'inactive',
+            },
+          ],
+        }),
+      });
 
-    await httpClient.sendRequest(request);
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        try {
+          const errorText = await response.text();
+          if (errorText && errorText.trim()) {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.detail || errorData.title || errorData.message || errorText;
+          }
+        } catch (parseError) {
+          const errorText = await response.text();
+          if (errorText && errorText.trim()) {
+            errorMessage = errorText;
+          }
+        }
 
-    return {
-      success: true,
-    };
+        throw new Error(`Failed to remove subscriber from tag: ${errorMessage}`);
+      }
+
+      let result;
+      try {
+        const responseText = await response.text();
+        if (responseText && responseText.trim()) {
+          result = JSON.parse(responseText);
+        } else {
+          result = { success: true };
+        }
+      } catch (parseError) {
+        result = { success: true };
+      }
+
+      return {
+        success: true,
+        message: `Successfully removed subscriber ${email} from tag ${tag_name}`,
+        data: result,
+        _links: result._links || [],
+      };
+    } catch (error: any) {
+      console.error('Error removing subscriber from tag:', error);
+      throw new Error(`Failed to remove subscriber from tag: ${error.message}`);
+    }
   },
 });

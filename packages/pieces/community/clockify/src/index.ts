@@ -19,7 +19,7 @@ export const clockifyAuth = PieceAuth.SecretText({
 	validate: async ({ auth }) => {
 		try {
 			await clockifyApiCall({
-				apiKey: auth as string,
+				apiKey: auth,
 				method: HttpMethod.GET,
 				resourceUri: '/user',
 			});
@@ -55,7 +55,7 @@ export const clockify = createPiece({
 			baseUrl: () => BASE_URL,
 			authMapping: async (auth) => {
 				return {
-					'X-Api-Key': auth as string,
+					'X-Api-Key': auth.secret_text,
 				};
 			},
 		}),

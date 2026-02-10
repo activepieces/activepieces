@@ -3,8 +3,8 @@ import { JSONContent } from '@tiptap/react';
 
 import { StepMetadata } from '@/lib/types';
 import {
-  Action,
-  Trigger,
+  FlowAction,
+  FlowTrigger,
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
@@ -64,7 +64,7 @@ type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 
 function convertTextToTipTapJsonContent(
   userInputText: string,
-  steps: (Action | Trigger)[],
+  steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ): {
   type: TipTapNodeTypes.paragraph;
@@ -163,7 +163,7 @@ function parseStepAndNameFromMention(mention: string) {
 
 function parseLabelFromMention(
   mention: string,
-  steps: (Action | Trigger)[],
+  steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
@@ -187,7 +187,7 @@ function parseLabelFromMention(
 
 function createMentionNodeFromText(
   mention: string,
-  steps: (Action | Trigger)[],
+  steps: (FlowAction | FlowTrigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
   return {
@@ -233,7 +233,7 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     mentionAttrs.label || '{}',
   );
   mentionElement.className =
-    'inline-flex bg-muted/10 break-all my-1 mx-[1px] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
+    'inline-flex bg-muted/10 break-all my-1 mx-px border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
   assertNotNullOrUndefined(mentionAttrs.label, 'mentionAttrs.label');
   assertNotNullOrUndefined(mentionAttrs.id, 'mentionAttrs.id');
   assertNotNullOrUndefined(

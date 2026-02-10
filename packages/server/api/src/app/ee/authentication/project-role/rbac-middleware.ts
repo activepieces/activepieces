@@ -1,3 +1,4 @@
+import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -8,9 +9,11 @@ import {
     Permission,
     Principal,
     PrincipalType,
+    ProjectId,
     ProjectRole,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { convertToSecurityAccessRequest } from '../../../core/security/v2/authz/authorization-middleware'
 import { system } from '../../../helper/system/system'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
@@ -21,11 +24,17 @@ export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
         return
     }
-    await assertRoleHasPermission(req.principal, req.routeOptions.config?.permission, req.log)
+    const securityAccessRequest = await convertToSecurityAccessRequest(req)
+    const projectAuthConfig = extractProjectConfig(securityAccessRequest)
+    if (isNil(projectAuthConfig) || isNil(projectAuthConfig.permission) || isNil(projectAuthConfig.projectId)) {
+        return
+    }
+    await assertRoleHasPermission(req.principal, projectAuthConfig.projectId, projectAuthConfig.permission, req.log)
 }
 
 export async function assertUserHasPermissionToFlow(
     principal: Principal,
+    projectId: ProjectId,
     operationType: FlowOperationType,
     log: FastifyBaseLogger,
 ): Promise<void> {
@@ -37,9 +46,10 @@ export async function assertUserHasPermissionToFlow(
     switch (operationType) {
         case FlowOperationType.LOCK_AND_PUBLISH:
         case FlowOperationType.CHANGE_STATUS: {
-            await assertRoleHasPermission(principal, Permission.UPDATE_FLOW_STATUS, log)
+            await assertRoleHasPermission(principal, projectId, Permission.UPDATE_FLOW_STATUS, log)
             break
         }
+        case FlowOperationType.UPDATE_MINUTES_SAVED: 
         case FlowOperationType.SAVE_SAMPLE_DATA: 
         case FlowOperationType.ADD_ACTION:
         case FlowOperationType.UPDATE_ACTION:
@@ -51,55 +61,57 @@ export async function assertUserHasPermissionToFlow(
         case FlowOperationType.IMPORT_FLOW:
         case FlowOperationType.UPDATE_TRIGGER:
         case FlowOperationType.DUPLICATE_ACTION:
+        case FlowOperationType.UPDATE_OWNER:
         case FlowOperationType.USE_AS_DRAFT:
         case FlowOperationType.ADD_BRANCH:
         case FlowOperationType.DELETE_BRANCH:
         case FlowOperationType.DUPLICATE_BRANCH:
         case FlowOperationType.UPDATE_METADATA:
         case FlowOperationType.SET_SKIP_ACTION:
-        case FlowOperationType.MOVE_BRANCH: {
-            await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
+        case FlowOperationType.MOVE_BRANCH:
+        case FlowOperationType.ADD_NOTE:
+        case FlowOperationType.UPDATE_NOTE:
+        case FlowOperationType.DELETE_NOTE: {
+            await assertRoleHasPermission(principal, projectId, Permission.WRITE_FLOW, log)
             break
         }
       
     }
 }
 
-export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined, log: FastifyBaseLogger): Promise<void> => {
-    if (principal.type === PrincipalType.SERVICE || principal.type === PrincipalType.ENGINE) { 
+export const assertRoleHasPermission = async (principal: Principal, projectId: ProjectId, permission: Permission, log: FastifyBaseLogger): Promise<void> => {
+    if (principal.type !== PrincipalType.USER) { 
         return
     }
-    const principalRole = await getPrincipalRoleOrThrow(principal, log)
+    const principalRole = await getPrincipalRoleOrThrow(principal.id, projectId, log)
     const access = await grantAccess({
         principalRoleId: principalRole.id,
         routePermission: permission,
     })
     if (!access) {
-        throwPermissionDenied(principalRole, principal, permission)
+        throwPermissionDenied(principalRole, principal.id, projectId, permission)
     }
 }
-
 
 const ignoreRequest = (req: FastifyRequest): boolean => {
     if (EDITION_IS_COMMUNITY) {
         return true
     }
-
     const ignoredPrefixes = ['/redirect', '/ui']
     if (ignoredPrefixes.some(p => req.url.startsWith(p))) {
         return true
     }
-
-    if (req.principal.type === PrincipalType.SERVICE || req.principal.type === PrincipalType.ENGINE) {
-        return true
-    }
-
-    return req.routeOptions.config?.permission === undefined
+    return false
 }
 
-export const getPrincipalRoleOrThrow = async (principal: Principal, log: FastifyBaseLogger): Promise<ProjectRole> => {
-    const { id: userId, projectId } = principal
+const extractProjectConfig = (securityAccessRequest: AuthorizationRouteSecurity): ProjectAuthorizationConfig | undefined => {
+    if (securityAccessRequest.kind !== RouteKind.AUTHENTICATED || securityAccessRequest.authorization.type !== AuthorizationType.PROJECT) {
+        return undefined
+    }
+    return securityAccessRequest.authorization
+}
 
+export const getPrincipalRoleOrThrow = async (userId: ApId, projectId: ProjectId, log: FastifyBaseLogger): Promise<ProjectRole> => {
     const projectRole = await projectMemberService(log).getRole({
         projectId,
         userId,
@@ -136,12 +148,12 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     return principalRole.permissions?.includes(routePermission)
 }
 
-const throwPermissionDenied = (projectRole: ProjectRole, principal: Principal, permission: Permission | undefined): never => {
+const throwPermissionDenied = (projectRole: ProjectRole, userId: ApId, projectId: ProjectId, permission: Permission | undefined): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {
-            userId: principal.id,
-            projectId: principal.projectId,
+            userId,
+            projectId,
             projectRole,
             permission,
         },

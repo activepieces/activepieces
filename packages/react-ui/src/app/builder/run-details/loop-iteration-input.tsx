@@ -1,55 +1,58 @@
+import { CaretDownIcon, CaretUpIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { ActionType, isNil } from '@activepieces/shared';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { FlowActionType, flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
-  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes] =
+  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes, stepType] =
     useBuilderStateContext((state) => [
       state.setLoopIndex,
       state.loopsIndexes[stepName] ?? 0,
       state.run,
       state.flowVersion,
       state.loopsIndexes,
+      flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
     ]);
-
   const stepOutput = useMemo(() => {
     return run && run.steps
-      ? flowRunUtils.extractStepOutput(
-          stepName,
-          loopsIndexes,
-          run.steps,
-          flowVersion.trigger,
-        )
+      ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
       : null;
   }, [run, stepName, loopsIndexes, flowVersion.trigger]);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isFocused, setIsFocused] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevIndexRef = useRef(currentIndex);
+
+  useEffect(() => {
+    if (prevIndexRef.current !== currentIndex) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 600); // Animation duration
+      prevIndexRef.current = currentIndex;
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]);
+
   const totalIterations =
     stepOutput &&
     stepOutput.output &&
-    stepOutput.type === ActionType.LOOP_ON_ITEMS
+    stepOutput.type === FlowActionType.LOOP_ON_ITEMS
       ? stepOutput.output.iterations.length
       : 0;
 
-  useMemo(() => {
-    if (
-      totalIterations <= currentIndex ||
-      currentIndex === Number.MAX_SAFE_INTEGER
-    ) {
-      setLoopIndex(stepName, totalIterations - 1);
-    }
-  }, [totalIterations, currentIndex]);
-
-  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value ?? '1';
+  function onChange(value: string) {
     const parsedValue = Math.max(
       1,
       Math.min(parseInt(value) ?? 1, totalIterations),
@@ -57,96 +60,91 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     setLoopIndex(stepName, parsedValue - 1);
   }
 
-  function removeFocus() {
-    setIsFocused(false);
-    if (inputRef.current) {
-      inputRef.current.blur();
-    }
-    if (!isNil(inputRef.current) && inputRef.current.value.length === 0) {
-      setLoopIndex(stepName, 0);
-    }
+  if (isNil(run) || stepType !== FlowActionType.LOOP_ON_ITEMS) {
+    return <></>;
   }
 
   return (
-    <>
-      {!isFocused && (
-        <div className="text-sm duration-300 animate-fade">
-          {t('Iteration')}
-        </div>
-      )}
-      <div
-        dir="rtl"
-        className=" transition-all duration-300 ease-expand-out relative"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        style={{
-          width: isFocused
-            ? '100%'
-            : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
-          minWidth: isFocused ? '100px' : undefined,
-        }}
-      >
-        <div
-          className={cn(
-            'absolute right-3 opacity-0 hidden pointer-events-none  gap-2 justify-center items-center h-full text-sm text-muted-foreground transition-all duration-300',
-            {
-              flex: isFocused,
-              'opacity-100': isFocused,
-            },
-          )}
-          dir="ltr"
-        >
-          <div className="pointer-events-none">/{totalIterations}</div>
-          <Button
-            variant="transparent"
-            className="p-1 text-xs rounded-xs h-auto pointer-events-auto "
-            onClick={(e) => {
-              inputRef.current?.blur();
-              e.stopPropagation();
-              e.preventDefault();
-            }}
-          >
-            {t('Done')}
-          </Button>
-        </div>
-        <Input
-          dir="ltr"
-          ref={inputRef}
-          className="h-7 flex-grow-0  transition-all duration-300 ease-expand-out text-center focus:text-start rounded-sm  focus:w-full p-1"
-          style={{
-            width: isFocused
-              ? '100%'
-              : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
-          }}
-          value={currentIndex + 1}
-          type="number"
-          min={1}
-          max={totalIterations}
+    <div className="absolute -top-4 -left-[45px]">
+      <div className="flex items-center justify-center flex-col gap-0.5">
+        <LoopIterationInputButton
           onChange={onChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            setIsFocused(false);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              onChange(e as unknown as React.ChangeEvent<HTMLInputElement>);
-              removeFocus();
-            }
-            if (e.key === 'Escape') {
-              removeFocus();
-            }
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
+          isIncreasing={true}
+          currentIndex={currentIndex}
+        />
+        <Tooltip>
+          <TooltipTrigger>
+            <Input
+              ref={inputRef}
+              className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-background border-solid rounded-md text-center !text-xs transition-all duration-300 ease-in-out ${
+                isAnimating ? 'border-2 border-primary' : 'border border-border'
+              }`}
+              type="number"
+              value={currentIndex + 1}
+              min={1}
+              max={totalIterations}
+              onClick={(e) => {
+                if (e.button === 0) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }
+              }}
+              onChange={(e) => {
+                const value =
+                  isNil(e.target.value) ||
+                  e.target.value.length === 0 ||
+                  e.target.value === 'e'
+                    ? '1'
+                    : e.target.value;
+                onChange(value);
+              }}
+            />
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            {t(
+              'Show child steps output on round ({iteration}/{totalIterations})',
+              { iteration: currentIndex + 1, totalIterations },
+            )}
+          </TooltipContent>
+        </Tooltip>
+        <LoopIterationInputButton
+          onChange={onChange}
+          isIncreasing={false}
+          currentIndex={currentIndex}
         />
       </div>
-    </>
+    </div>
   );
 };
 
 LoopIterationInput.displayName = 'LoopIterationInput';
 export { LoopIterationInput };
+
+const LoopIterationInputButton = ({
+  onChange,
+  isIncreasing,
+  currentIndex,
+}: {
+  onChange: (val: string) => void;
+  isIncreasing: boolean;
+  currentIndex: number;
+}) => {
+  return (
+    <Button
+      variant="ghost"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onChange((currentIndex + (isIncreasing ? 2 : 0)).toString());
+      }}
+      className="hover:bg-builder-background size-6"
+      size="icon"
+    >
+      {isIncreasing ? (
+        <CaretUpIcon className="w-2 h-2"></CaretUpIcon>
+      ) : (
+        <CaretDownIcon className="w-2 h-2"></CaretDownIcon>
+      )}
+    </Button>
+  );
+};

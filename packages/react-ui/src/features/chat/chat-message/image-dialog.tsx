@@ -36,7 +36,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
           <img
             src={imageUrl || ''}
             alt="Full size image"
-            className="h-auto object-contain max-h-[90vh] sm:max-w-[90vw] shadow-sm rounded-md"
+            className="h-auto object-contain max-h-[90vh] sm:max-w-[90vw] shadow-xs rounded-md"
           />
         </div>
         <div className="flex gap-2 absolute top-2 right-2">

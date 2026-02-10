@@ -15,7 +15,7 @@ export const deleteBrand = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const { brandId } = context.propsValue;
 
     const brand = new Brand(hostUrl, appKey, appToken);

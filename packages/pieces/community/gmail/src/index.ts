@@ -8,6 +8,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
 import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply-action';
+import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
+import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply-action';
 import { gmailAddLabelToEmailAction } from './lib/actions/add-label-to-email-action';
 import { gmailRemoveLabelFromEmailAction } from './lib/actions/remove-label-from-email-action';
 import { gmailCreateLabelAction } from './lib/actions/create-label-action';
@@ -16,6 +18,11 @@ import { gmailDeleteEmailAction } from './lib/actions/delete-email-action';
 import { gmailRemoveLabelFromThreadAction } from './lib/actions/remove-label-from-thread-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
+import { requestApprovalInEmail } from './lib/actions/request-approval-in-email';
+import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
+import { gmailNewLabelTrigger } from './lib/triggers/new-label';
+import { gmailSearchMailAction } from './lib/actions/search-email-action';
+import { gmailGetEmailAction } from './lib/actions/get-mail-action';
 import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
 import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
@@ -45,6 +52,11 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
+    requestApprovalInEmail,
+    gmailReplyToEmailAction,
+    gmailCreateDraftReplyAction,
+    gmailGetEmailAction,
+    gmailSearchMailAction,
     gmailReplyToEmailAction,
     gmailCreateDraftReplyAction,
     gmailAddLabelToEmailAction,
@@ -77,6 +89,8 @@ export const gmail = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'sanket-a11y',
+    'onyedikachi-david',
     'onyedikachi-david',
   ],
   triggers: [

@@ -29,7 +29,7 @@ export const appendRowAction = createAction({
 		const worksheetId = propsValue['worksheet_id'];
 		const values = propsValue.first_row_headers
 			? objectToArray(propsValue['values'])
-			: Object.values(propsValue['values']);
+			: Object.values(propsValue['values'])[0];
 
 		const lastUsedRow = await excelCommon.getLastUsedRow(
 			workbookId,

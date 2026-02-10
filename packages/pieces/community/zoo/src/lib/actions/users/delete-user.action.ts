@@ -14,7 +14,7 @@ export const deleteUserAction = createAction({
       method: HttpMethod.DELETE,
       url: 'https://api.zoo.dev/user',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

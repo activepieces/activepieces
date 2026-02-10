@@ -44,7 +44,7 @@ export const uploadAssetAction = createAction({
 			method: HttpMethod.POST,
 			url: 'https://upload.heygen.com/v1/asset',
 			headers: {
-				'x-api-key': context.auth as string,
+				'x-api-key': context.auth.secret_text,
 				'Content-Type': contentType,
 			},
 			body: file.data,

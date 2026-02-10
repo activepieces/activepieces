@@ -1,9 +1,11 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { cognitoFormsAuth } from '../..';
 
 export const BASE_URL = 'https://www.cognitoforms.com/api';
 
 export async function makeRequest(
-  apiKey: string,
+  {secret_text}: AppConnectionValueForAuthProperty<typeof cognitoFormsAuth>,
   method: HttpMethod,
   path: string,
   body?: unknown
@@ -12,7 +14,7 @@ export async function makeRequest(
     method,
     url: `${BASE_URL}${path}`,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${secret_text}`,
       'Content-Type': 'application/json',
     },
     body,

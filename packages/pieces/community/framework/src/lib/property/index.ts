@@ -1,8 +1,9 @@
 import { InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
-import { Type } from '@sinclair/typebox';
+import { TSchema, Type } from '@sinclair/typebox';
 import { PropertyType } from './input/property-type';
 import { DropdownState } from './input/dropdown/common';
+import { AUTHENTICATION_PROPERTY_NAME, isEmpty, isNil } from '@activepieces/shared';
 
 // EXPORTED
 export { ApFile } from './input/file-property';
@@ -10,11 +11,12 @@ export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
 export { Property } from './input';
-export { PieceAuth } from './authentication';
+export { PieceAuth,getAuthPropertyForValue } from './authentication';
+export type { ExtractPieceAuthPropertyTypeForMethods } from './authentication';
 export { DynamicPropsValue } from './input/dynamic-prop';
 export { DropdownOption,DropdownState } from './input/dropdown/common';
 export { OAuth2PropertyValue } from './authentication/oauth2-prop';
-export { PieceAuthProperty } from './authentication';
+export { PieceAuthProperty, DEFAULT_CONNECTION_DISPLAY_NAME} from './authentication';
 export { ShortTextProperty } from './input/text-property';
 export { ArrayProperty, ArraySubProps } from './input/array-property';
 export { BasePropertySchema } from './input/common';
@@ -34,6 +36,7 @@ export { FileProperty } from './input/file-property';
 export { BasicAuthProperty } from './authentication/basic-auth-prop';
 export { SecretTextProperty } from './authentication/secret-text-property'
 export { CustomAuthProperty } from './authentication/custom-auth-prop';
+
 export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;
@@ -43,11 +46,12 @@ export const PiecePropertyMap = Type.Record(Type.String(), PieceProperty)
 export interface PiecePropertyMap {
   [name: string]: PieceProperty;
 }
-
+export type { InputProperty } from './input';
 export const InputPropertyMap = Type.Record(Type.String(), InputProperty)
 export interface InputPropertyMap {
   [name: string]: InputProperty;
 }
+export { piecePropertiesUtils } from './util';
 
 export type PiecePropValueSchema<T extends PieceProperty> =
   T extends undefined

@@ -1,4 +1,12 @@
 {
   "name": "@activepieces/piece-notion",
-  "version": "0.4.1"
+  "version": "0.5.3",
+  "dependencies": {
+    "@notionhq/client": "2.2.14",
+    "@tryfabric/martian": "1.2.4",
+    "notion-to-md": "3.1.1"
+  },
+  "overrides": {
+    "@notionhq/client": "2.2.14"
+  }
 }

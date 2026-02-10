@@ -8,17 +8,10 @@ import {
   timeFormatDescription,
   timeZoneOptions,
   getCorrectedFormat,
+  apDayjs,
 } from '../common';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(advancedFormat);
 
 export const nextDayofYear = createAction({
   name: 'next_day_of_year',
@@ -106,26 +99,29 @@ export const nextDayofYear = createAction({
     const day = context.propsValue.day as number;
     let time = context.propsValue.time as string;
 
-    let nextOccurrence = dayjs().tz(timeZone);
+    let nextOccurrence = apDayjs().tz(timeZone);
 
     if (currentTime === true) {
       time = `${nextOccurrence.hour()}:${nextOccurrence.minute()}`;
     }
     const [hours, minutes] = time.split(':').map(Number);
 
-    // Validate inputs
     if (month < 1 || month > 12 || day < 1 || day > 31) {
       throw new Error(`Invalid input \nmonth: ${month} \nday: ${day}`);
     }
 
     const currentYear = nextOccurrence.year();
 
-    // Create a date object for the next occurrence
-    nextOccurrence = dayjs.tz(`${currentYear}-${month}-${day} ${hours}:${minutes}`, 'YYYY-M-D H:m', timeZone);
+    nextOccurrence = apDayjs().tz(timeZone)
+      .year(currentYear)
+      .month(month - 1)
+      .date(day)
+      .hour(hours)
+      .minute(minutes)
+      .second(0)
+      .millisecond(0);
 
-    // Check if the next occurrence is already past in the current year
-    if (nextOccurrence.isBefore(dayjs().tz(timeZone))) {
-      // Move to the next year
+    if (nextOccurrence.isBefore(apDayjs().tz(timeZone))) {
       nextOccurrence = nextOccurrence.add(1, 'year');
     }
 

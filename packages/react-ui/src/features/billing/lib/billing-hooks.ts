@@ -1,28 +1,21 @@
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { api } from '@/lib/api';
+import { internalErrorToast } from '@/components/ui/sonner';
 import {
+  UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
-  ToggleAiCreditsOverageEnabledParams,
-  SetAiCreditsOverageLimitParams,
-  UpdateSubscriptionParams,
+  CreateAICreditCheckoutSessionParamsSchema,
+  UpdateAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/ee-shared';
-import {
-  ApErrorParams,
-  ErrorCode,
-  ListAICreditsUsageRequest,
-} from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
     ['platform-billing-subscription', platformId] as const,
-  aiCreditsUsage: (params: ListAICreditsUsageRequest) =>
-    ['platform-billing-ai-credits-usage', params] as const,
 };
 
 export const billingMutations = {
@@ -34,17 +27,16 @@ export const billingMutations = {
       },
     });
   },
-  useUpdateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
+  useUpdateActiveFlowsLimit: (setIsOpen?: (isOpen: boolean) => void) => {
     const navigate = useNavigate();
     return useMutation({
-      mutationFn: (params: UpdateSubscriptionParams) =>
-        platformBillingApi.updateSubscription(params),
+      mutationFn: (params: UpdateActiveFlowsAddonParams) =>
+        platformBillingApi.updateActiveFlowsLimits(params),
       onSuccess: (url) => {
-        setIsOpen(false);
+        setIsOpen?.(false);
         navigate(url);
-        toast({
-          title: t('Success'),
-          description: t('Plan updated successfully'),
+        toast.success(t('Plan updated successfully'), {
+          duration: 3000,
         });
       },
       onError: () => {
@@ -52,7 +44,7 @@ export const billingMutations = {
       },
     });
   },
-  useCreateSubscription: (setIsOpen: (isOpen: boolean) => void) => {
+  useCreateSubscription: (setIsOpen?: (isOpen: boolean) => void) => {
     return useMutation({
       mutationFn: async (params: CreateSubscriptionParams) => {
         const checkoutSessionURl = await platformBillingApi.createSubscription(
@@ -61,109 +53,53 @@ export const billingMutations = {
         window.open(checkoutSessionURl, '_blank');
       },
       onSuccess: () => {
-        setIsOpen(false);
-        toast({
-          title: t('Success'),
-          description: t('Plan created successfully'),
-        });
+        setIsOpen?.(false);
       },
       onError: (error) => {
-        toast({
-          title: t('Creating Subscription failed'),
+        toast.error(t('Starting Subscription failed'), {
           description: t(error.message),
-          variant: 'default',
-          duration: 5000,
+          duration: 3000,
         });
       },
     });
   },
-  useSetAiCreditOverageLimit: (queryClient: QueryClient) => {
+  useCreateAICreditCheckoutSession: (setIsOpen?: (isOpen: boolean) => void) => {
     return useMutation({
-      mutationFn: (params: SetAiCreditsOverageLimitParams) =>
-        platformBillingApi.setAiCreditsOverageLimit(params),
-      onSuccess: (data) => {
+      mutationFn: async (params: CreateAICreditCheckoutSessionParamsSchema) => {
+        const { stripeCheckoutUrl } =
+          await platformBillingApi.createAICreditCheckoutSession(params);
+        window.open(stripeCheckoutUrl, '_blank');
+      },
+      onSuccess: () => {
+        setIsOpen?.(false);
+      },
+      onError: (error) => {
+        toast.error(t('Starting Checkout Session failed'), {
+          description: t(error.message),
+          duration: 3000,
+        });
+      },
+    });
+  },
+  useUpdateAutoTopUp: (queryClient: QueryClient) => {
+    return useMutation({
+      mutationFn: async (params: UpdateAICreditsAutoTopUpParamsSchema) => {
+        const { stripeCheckoutUrl } = await platformBillingApi.updateAutoTopUp(
+          params,
+        );
+        if (stripeCheckoutUrl) {
+          window.open(stripeCheckoutUrl, '_blank');
+        }
+      },
+      onSuccess: (_, variables) => {
         queryClient.invalidateQueries({
-          queryKey: billingKeys.platformSubscription(data.platformId),
+          queryKey: ['platform-billing-subscription'],
         });
-        toast({
-          title: t('Success'),
-          description: t('AI credit usage limit set successfully'),
-        });
+        toast.success(t('Auto top-up config saved'));
       },
       onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.VALIDATION) {
-            toast({
-              title: t('Setting AI credit usage limit failed'),
-              description: t(apError.params.message),
-              variant: 'default',
-              duration: 5000,
-            });
-            return;
-          }
-        }
-        toast({
-          title: t('Setting AI credit usage limit failed'),
-          description: t(error.message),
-          variant: 'default',
-          duration: 5000,
-        });
-      },
-    });
-  },
-  useStartTrial: () => {
-    return useMutation({
-      mutationFn: () => platformBillingApi.startTrial(),
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.VALIDATION) {
-            toast({
-              title: t('Starting trial failed'),
-              description: t(apError.params.message),
-              variant: 'default',
-              duration: 5000,
-            });
-            return;
-          }
-        }
-        toast(INTERNAL_ERROR_TOAST);
-      },
-    });
-  },
-  useToggleAiCreditOverageEnabled: (queryClient: QueryClient) => {
-    return useMutation({
-      mutationFn: (params: ToggleAiCreditsOverageEnabledParams) =>
-        platformBillingApi.toggleAiCreditsOverageEnabled(params),
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: billingKeys.platformSubscription(data.platformId),
-        });
-        toast({
-          title: t('Success'),
-          description: t(`AI credits overage updated successfully`),
-        });
-      },
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.VALIDATION) {
-            toast({
-              title: t('Setting AI credit usage limit failed'),
-              description: t(apError.params.message),
-              variant: 'default',
-              duration: 5000,
-            });
-            return;
-          }
-        }
-        toast({
-          title: t('Setting AI credit usage limit failed'),
-          description: t(error.message),
-          variant: 'default',
-          duration: 5000,
-        });
+        toast.error(t('Auto top-up config change failed'));
+        internalErrorToast();
       },
     });
   },
@@ -174,12 +110,6 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
-    });
-  },
-  useAiCreditsUsage: (params: ListAICreditsUsageRequest) => {
-    return useQuery({
-      queryKey: billingKeys.aiCreditsUsage(params),
-      queryFn: () => platformBillingApi.listAiCreditsUsage(params),
     });
   },
 };

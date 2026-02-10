@@ -2,9 +2,8 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { DimoClient } from '../../common/helpers';
+import { DimoClient, getBooleanExpression } from '../../common/helpers';
 import {
-	BooleanOperator,
 	CreateWebhookParams,
 	WebhookInfo,
 	WebhookPayload,
@@ -39,17 +38,11 @@ export const batteryChargingTrigger = createTrigger({
 				],
 			},
 		}),
-		triggerFrequency: Property.StaticDropdown({
-			displayName: 'Trigger Frequency',
-			description: 'How often the webhook should fire when condition is met',
+		coolDownPeriod: Property.Number({
+			displayName: 'Cool Down Period (seconds)',
+			description: 'Minimum number of seconds between successive webhook firings',
 			required: true,
-			defaultValue: 'Realtime',
-			options: {
-				options: [
-					{ label: 'Real-time (continuous)', value: 'Realtime' },
-					{ label: 'Hourly', value: 'Hourly' },
-				],
-			},
+			defaultValue: 30,
 		}),
 		verificationToken: verificationTokenInput,
 	},
@@ -67,9 +60,9 @@ export const batteryChargingTrigger = createTrigger({
 		};
 	},
 	async onEnable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
-		const { vehicleTokenIds, chargingState, triggerFrequency, verificationToken } =
+		const { vehicleTokenIds, chargingState, coolDownPeriod, verificationToken } =
 			context.propsValue;
 		const dimo = new DimoClient({
 			clientId,
@@ -83,20 +76,16 @@ export const batteryChargingTrigger = createTrigger({
 				: [];
 
 		const webhookPayload: CreateWebhookParams = {
-			service: 'Telemetry',
-			data: TriggerField.PowertrainTractionBatteryChargingIsCharging,
-			trigger: {
-				field: TriggerField.PowertrainTractionBatteryChargingIsCharging,
-				operator: BooleanOperator.Is,
-				value: chargingState === 'true',
-			},
-			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			service: 'telemetry.signals',
+			metricName: TriggerField.PowertrainTractionBatteryChargingIsCharging,
+			condition: getBooleanExpression(chargingState === 'true'),
+			coolDownPeriod,
 			description: `Battery charging trigger: ${
 				chargingState === 'true' ? 'CHARGING' : 'NOT CHARGING'
 			}`,
-			target_uri: context.webhookUrl,
-			status: 'Active',
-			verification_token: verificationToken,
+			targetURL: context.webhookUrl,
+			status: 'enabled',
+			verificationToken: verificationToken,
 		};
 
 		try {
@@ -109,18 +98,12 @@ export const batteryChargingTrigger = createTrigger({
 
 			const webhookId = createWebhookResponse.id;
 
-			if (ids.length === 0) {
-				await dimo.subscribeAllVehicles({
-					developerJwt,
-					webhookId,
-				});
-			} else {
-				await Promise.all(
-					ids.map(async (tokenId) => {
-						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
-					}),
-				);
-			}
+			await dimo.subscribeVehiclesToWebhook({
+				developerJwt,
+				webhookId,
+				vehicleTokenIds: ids,
+			});
+
 			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
 				webhookId,
 				verificationToken,
@@ -131,7 +114,7 @@ export const batteryChargingTrigger = createTrigger({
 		}
 	},
 	async onDisable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const dimo = new DimoClient({
 			clientId,
 			apiKey,

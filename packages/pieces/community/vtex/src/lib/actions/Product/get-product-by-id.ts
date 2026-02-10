@@ -15,7 +15,7 @@ export const getProductById = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const { productId } = context.propsValue;
 
     const product = new Product(hostUrl, appKey, appToken);

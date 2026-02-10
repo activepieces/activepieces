@@ -5,12 +5,13 @@ import { useFormContext } from 'react-hook-form';
 
 import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { Trigger, isNil } from '@activepieces/shared';
+import { ChatDrawerSource } from '@/lib/types';
+import { FlowTrigger, isNil } from '@activepieces/shared';
 
-import { ChatDrawerSource, useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
-import { testStepHooks } from '../test-step-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 import { FirstTimeTestingSection } from './first-time-testing-section';
 import { ManualWebhookTestButton } from './manual-webhook-test-button';
@@ -27,11 +28,11 @@ type TestTriggerSectionProps = {
 
 const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
-    const form = useFormContext<Trigger>();
+    const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
     const abortControllerRef = useRef<AbortController>(new AbortController());
-    const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
+    const lastTestDate = formValues.settings.sampleData?.lastTestDate;
     const [isTestingDialogOpen, setIsTestingDialogOpen] = useState(false);
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
@@ -49,14 +50,14 @@ const TestTriggerSection = React.memo(
     const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
       useBuilderStateContext((state) => {
         return {
-          sampleData: state.sampleData[formValues.name],
-          sampleDataInput: state.sampleDataInput[formValues.name],
+          sampleData: state.outputSampleData[formValues.name],
+          sampleDataInput: state.inputSampleData[formValues.name],
           setChatDrawerOpenSource: state.setChatDrawerOpenSource,
         };
       });
 
     const onTestSuccess = async () => {
-      form.setValue(`settings.inputUiInfo.lastTestDate`, dayjs().toISOString());
+      form.setValue(`settings.sampleData.lastTestDate`, dayjs().toISOString());
       await refetch();
     };
 
@@ -90,7 +91,7 @@ const TestTriggerSection = React.memo(
     const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const isTestedBefore = !isNil(
-      form.getValues().settings.inputUiInfo?.lastTestDate,
+      form.getValues().settings.sampleData?.lastTestDate,
     );
     const showFirstTimeTestingSection = !isTestedBefore && !isSimulating;
 
@@ -142,7 +143,13 @@ const TestTriggerSection = React.memo(
               </p>
               <ManualWebhookTestButton
                 isWebhookTestingDialogOpen={isTestingDialogOpen}
-                setIsWebhookTestingDialogOpen={setIsTestingDialogOpen}
+                setIsWebhookTestingDialogOpen={(value) => {
+                  setIsTestingDialogOpen(value);
+                  if (!value) {
+                    abortControllerRef.current.abort();
+                    abortControllerRef.current = new AbortController();
+                  }
+                }}
               />
             </div>
           );
@@ -176,11 +183,13 @@ const TestTriggerSection = React.memo(
             {showSampleDataViewer && (
               <TestSampleDataViewer
                 onRetest={onTest}
+                hideCancel={true}
                 isValid={isValid}
+                consoleLogs={null}
                 isTesting={isPollingTesting}
                 sampleData={sampleData}
                 sampleDataInput={sampleDataInput ?? null}
-                errorMessage={errorMessage}
+                errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
               >

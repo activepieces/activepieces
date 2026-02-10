@@ -180,6 +180,42 @@ export const GmailRequests = {
 
     return response.body;
   },
+  getRecentMessages: async (
+    authentication: OAuth2PropertyValue,
+    maxResults = 20
+  ) => {
+    return await httpClient.sendRequest<GmailMessageList>({
+      method: HttpMethod.GET,
+      url: 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: authentication.access_token,
+      },
+      queryParams: {
+        maxResults: maxResults.toString(),
+        q: 'in:inbox OR in:sent', // Get recent messages from inbox and sent
+      },
+    });
+  },
+  getRecentThreads: async (
+    authentication: OAuth2PropertyValue,
+    maxResults = 15
+  ) => {
+    return await httpClient.sendRequest<{
+      threads: { id: string; snippet?: string }[];
+    }>({
+      method: HttpMethod.GET,
+      url: 'https://gmail.googleapis.com/gmail/v1/users/me/threads',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: authentication.access_token,
+      },
+      queryParams: {
+        maxResults: maxResults.toString(),
+        q: 'in:inbox OR in:sent', // Get recent threads from inbox and sent
+      },
+    });
+  },
   modifyMessage: async ({
     access_token,
     message_id,

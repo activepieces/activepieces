@@ -4,6 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { googleFormsAuth } from '../..';
 
 export const googleFormsCommon = {
   include_team_drives: Property.Checkbox({
@@ -16,6 +17,7 @@ export const googleFormsCommon = {
   form_id: Property.Dropdown({
     displayName: 'Form',
     required: true,
+    auth: googleFormsAuth,
     refreshers: ['include_team_drives'],
     options: async ({ auth, include_team_drives }) => {
       if (!auth) {

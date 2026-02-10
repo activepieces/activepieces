@@ -46,12 +46,11 @@ export const newFormEntryTrigger = createTrigger({
   
   async onEnable(context) {
     const { formIdentifier, handshakeKey, includeMetadata, responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
 
     try {
       await wufooApiCall({
         method: HttpMethod.GET,
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         resourceUri: `/forms/${formIdentifier}.json`,
       });
 
@@ -68,7 +67,7 @@ export const newFormEntryTrigger = createTrigger({
         WebHookPutResult: { Hash: string };
       }>({
         method: HttpMethod.PUT,
-        auth: { apiKey, subdomain },
+        auth: context.auth,
         resourceUri: `/forms/${formIdentifier}/webhooks.${responseFormat || 'json'}`,
         body: webhookBody,
       });
@@ -104,13 +103,12 @@ export const newFormEntryTrigger = createTrigger({
   async onDisable(context) {
     const webhookHash = await context.store.get<string>(TRIGGER_KEY);
     const { formIdentifier, responseFormat } = context.propsValue;
-    const { apiKey, subdomain } = context.auth;
 
     if (!isNil(webhookHash)) {
       try {
         await wufooApiCall({
           method: HttpMethod.DELETE,
-          auth: { apiKey, subdomain },
+          auth: context.auth,
           resourceUri: `/forms/${formIdentifier}/webhooks/${webhookHash}.${responseFormat || 'json'}`,
         });
         

@@ -1,151 +1,74 @@
-import fs from 'fs/promises'
-import fsPath from 'path'
-import { enrichErrorContext, execPromise, fileExists, memoryLock } from '@activepieces/server-shared'
-import { isEmpty } from '@activepieces/shared'
+
+import {
+    CommandOutput,
+    execPromise,
+    fileSystemUtils,
+    spawnWithKill,
+} from '@activepieces/server-shared'
+import { tryCatch } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 
-type PackageManagerOutput = {
-    stdout: string
-    stderr: string
-}
-
-type CoreCommand = 'add' | 'init' | 'link'
-type ExecCommand = 'tsc'
-type Command = CoreCommand | ExecCommand
-
-export type PackageInfo = {
-    /**
-   * name or alias
-   */
-    alias: string
-
-    /**
-   * where to get the package from, could be an npm tag, a local path, or a tarball.
-   */
-    spec: string
-}
-
-const runCommand = async (
-    path: string,
-    command: Command,
-    log: FastifyBaseLogger,
-    ...args: string[]
-): Promise<PackageManagerOutput> => {
-    try {
-        log.debug({ path, command, args }, '[PackageManager#execute]')
-
-        const commandLine = `pnpm ${command} ${args.join(' ')}`
-        return await execPromise(commandLine, { cwd: path })
-    }
-    catch (error) {
-        const contextKey = '[PackageManager#runCommand]'
-        const contextValue = { path, command, args }
-
-        const enrichedError = enrichErrorContext({
-            error,
-            key: contextKey,
-            value: contextValue,
-        })
-
-        throw enrichedError
-    }
-}
-
 export const packageManager = (log: FastifyBaseLogger) => ({
-    async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
-        if (isEmpty(dependencies)) {
-            return {
-                stdout: '',
-                stderr: '',
-            }
-        }
-
-        const config = [
-            '--prefer-offline',
+    async validate(): Promise<void> {
+        await execPromise('bun --version')
+        await execPromise('bun install')
+    },
+    async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
+        const args = [
             '--ignore-scripts',
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
+            '--linker isolated',
         ]
-
-        const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
-        return runCommand(path, 'add', log, ...dependencyArgs, ...config)
-    },
-
-    async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        const lock = await memoryLock.acquire(`pnpm-init-${path}`)
-        try {
-            const fExists = await fileExists(fsPath.join(path, 'package.json'))
-            if (fExists) {
-                return {
-                    stdout: 'N/A',
-                    stderr: 'N/A',
-                }
-            }
-            // It must be awaited so it only releases the lock after the command is done
-            const result = await runCommand(path, 'init', log)
-            return result
+        const filters: string[] = filtersPath
+            .map(sanitizeFilterPath)
+            .map((path) => `--filter ./${path}`)
+        await fileSystemUtils.threadSafeMkdir(path)
+        log.debug({ path, args, filters }, '[PackageManager#install]')
+        const { error, data } = await tryCatch(async () => spawnWithKill({
+            cmd: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            options: {
+                cwd: path,
+            },
+            printOutput: false,
+            timeoutMs: dayjs.duration(10, 'minutes').asMilliseconds(),
+        }))
+        if (error) {
+            log.error({ error }, '[PackageManager#install] Failed to install dependencies')
+            throw error
         }
-        finally {
-            await lock.release()
-        }
+        return data
     },
-
-    async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
-        return runCommand(path, command, log)
-    },
-
-    async link({
-        path,
-        linkPath,
-        packageName,
-    }: LinkParams): Promise<PackageManagerOutput> {
+    async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const config = [
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
+            `${entryFile}`,
+            '--target node',
+            '--production',
+            '--format cjs',
+            `--outfile ${outputFile}`,
         ]
-
-        const result = await runCommand(path, 'link', log, linkPath, ...config)
-
-        const nodeModules = fsPath.join(path, 'node_modules', packageName)
-        await replaceRelativeSystemLinkWithAbsolute(nodeModules, log)
-        return result
+        log.debug({ path, entryFile, outputFile, config }, '[PackageManager#build]')
+        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
     },
+
 })
 
-const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: FastifyBaseLogger) => {
-    try {
-        // Inside the isolate sandbox, the relative path is not valid
-
-        const stats = await fs.stat(filePath)
-
-        if (stats.isDirectory()) {
-            const realPath = await fs.realpath(filePath)
-            log.info({ realPath, filePath }, '[link]')
-            await fs.unlink(filePath)
-            await fs.symlink(realPath, filePath, 'junction')
-        }
+const sanitizeFilterPath = (filterPath: string): string => {
+    const allowed = /^(?![.])[a-zA-Z0-9\-_.@/]+$/
+    if (!allowed.test(filterPath)) {
+        throw new Error(`Invalid filter path ${filterPath}`)
     }
-    catch (error) {
-        log.error([error], '[link]')
-    }
+    return filterPath
 }
 
-type AddParams = {
+
+
+type InstallParams = {
     path: string
-    dependencies: PackageInfo[]
+    filtersPath: string[]
 }
 
-type InitParams = {
+type BuildParams = {
     path: string
-}
-
-type ExecParams = {
-    path: string
-    command: ExecCommand
-}
-
-type LinkParams = {
-    path: string
-    linkPath: string
-    packageName: string
+    entryFile: string
+    outputFile: string
 }

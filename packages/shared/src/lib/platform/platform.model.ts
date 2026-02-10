@@ -10,113 +10,72 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 
-export const SMTPInformation = Type.Object({
-    user: Type.String(),
-    senderEmail: Type.String(),
-    senderName: Type.String(),
-    password: Type.String(),
-    host: Type.String(),
-    port: Type.Number(),
-})
-
-export type SMTPInformation = Static<typeof SMTPInformation>
-
-export enum CopilotProviderType {
-    OPENAI = 'openai',
-    AZURE_OPENAI = 'azureOpenai',
-}
-  
-export const OpenAiProvider = Type.Object({
-    baseUrl: Type.String(),
-    apiKey: Type.String(),
-})
-
-export type OpenAiProvider = Static<typeof OpenAiProvider>
-
-export const AzureOpenAiProvider = Type.Object({
-    resourceName: Type.String(),
-    deploymentName: Type.String(),
-    apiKey: Type.String(),
-})
-
-export type AzureOpenAiProvider = Static<typeof AzureOpenAiProvider>
-
-export const CopilotSettings = Type.Object({
-    providers: Type.Object({
-        [CopilotProviderType.OPENAI]: Type.Optional(OpenAiProvider),
-        [CopilotProviderType.AZURE_OPENAI]: Type.Optional(AzureOpenAiProvider),
-    }),
-})
-
-export type CopilotSettings = Static<typeof CopilotSettings>
-
-export const CopilotSettingsWithoutSensitiveData = Type.Object({
-    providers: Type.Object({
-        [CopilotProviderType.OPENAI]: Type.Optional(Type.Object({})),
-        [CopilotProviderType.AZURE_OPENAI]: Type.Optional(Type.Object({})),
-    }),
-})
-export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
-
 export enum PlatformUsageMetric {
-    TASKS = 'tasks',
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
-    USER_SEATS = 'user-seats',
-    PROJECTS = 'projects',
-    AGENTS = 'agents',
-    TABLES = 'tables',
-    MCPS = 'mcps',
 }
 
-
 export const PlatformUsage = Type.Object({
-    tasks: Type.Number(),
-    aiCredits: Type.Number(),
+    totalAiCreditsUsed: Type.Number(),
+    totalAiCreditsUsedThisMonth: Type.Number(),
+    aiCreditsRemaining: Type.Number(),
+    aiCreditsLimit: Type.Number(),
     activeFlows: Type.Number(),
-    tables: Type.Number(),
-    mcps: Type.Number(),
-    seats: Type.Number(),
-    projects: Type.Number(),
-    agents: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
-export enum AiOverageState {
-    NOT_ALLOWED = 'not_allowed',
-    ALLOWED_BUT_OFF = 'allowed_but_off',
-    ALLOWED_AND_ON = 'allowed_an_on',
+export enum PlanName {
+    STANDARD = 'standard',
+    ENTERPRISE = 'enterprise',
+    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
+    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
+    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
+    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
+    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
+    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
+}
+
+export enum TeamProjectsLimit {
+    NONE = 'NONE',
+    ONE = 'ONE',
+    UNLIMITED = 'UNLIMITED',
+}
+
+export enum AiCreditsAutoTopUpState {
+    ENABLED = 'enabled',
+    DISABLED = 'disabled',
 }
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    // TODO: We have to use the enum when we finalize the plan names
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    tasksLimit: Type.Optional(Type.Number()),
     includedAiCredits: Type.Number(),
-    aiCreditsOverageLimit: Type.Optional(Type.Number()),
-    aiCreditsOverageState: Type.Optional(Type.String()),
+    lastFreeAiCreditsRenewalDate: Type.Optional(Type.String()),
+    
+    tablesEnabled: Type.Boolean(),
+    eventStreamingEnabled: Type.Boolean(),
+    aiCreditsAutoTopUpState: Type.Enum(AiCreditsAutoTopUpState),
+    aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
+    aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
+    maxAutoTopUpCreditsMonthly: Nullable(Type.Number()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
-    agentsEnabled: Type.Boolean(),
-    mcpsEnabled: Type.Boolean(),
-    tablesEnabled: Type.Boolean(),
-    todosEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     managePiecesEnabled: Type.Boolean(),
     manageTemplatesEnabled: Type.Boolean(),
     customAppearanceEnabled: Type.Boolean(),
-    manageProjectsEnabled: Type.Boolean(),
+    teamProjectsLimit: Type.Enum(TeamProjectsLimit),
     projectRolesEnabled: Type.Boolean(),
     customDomainsEnabled: Type.Boolean(),
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
-    eligibleForTrial: Type.Boolean(),
     ssoEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
     licenseExpiresAt: Type.Optional(Type.String()),
@@ -126,20 +85,19 @@ export const PlatformPlan = Type.Object({
     stripeSubscriptionStartDate: Type.Optional(Type.Number()),
     stripeSubscriptionEndDate: Type.Optional(Type.Number()),
     stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
-    stripePaymentMethod: Type.Optional(Type.String()),
 
-    userSeatsLimit: Nullable(Type.Number()),
     projectsLimit: Nullable(Type.Number()),
-    tablesLimit: Nullable(Type.Number()),
-    mcpLimit: Nullable(Type.Number()),
     activeFlowsLimit: Nullable(Type.Number()),
-    agentsLimit: Nullable(Type.Number()),
+
+    dedicatedWorkers: Nullable(Type.Object({
+        trustedEnvironment: Type.Boolean(),
+    })),
 })
-  
 export type PlatformPlan = Static<typeof PlatformPlan>
 
 export const PlatformPlanLimits = Type.Omit(PlatformPlan, ['id', 'platformId', 'created', 'updated'])
 export type PlatformPlanLimits = Static<typeof PlatformPlanLimits>
+export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
 
 export const Platform = Type.Object({
     ...BaseModelSchema,
@@ -157,22 +115,17 @@ export const Platform = Type.Object({
     * @deprecated Use projects filter instead.
     */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: Type.Boolean(),
     pinnedPieces: Type.Array(Type.String()),
-    copilotSettings: Type.Optional(CopilotSettings),
 })
-
 export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
-    copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
-    smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
     usage: Type.Optional(PlatformUsage),
 }), Type.Pick(Platform, [
@@ -194,7 +147,6 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     'emailAuthEnabled',
     'pinnedPieces',
 ])])
-
 export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>
 
 export const PlatformBillingInformation = Type.Object({
@@ -204,5 +156,5 @@ export const PlatformBillingInformation = Type.Object({
     nextBillingAmount: Type.Number(),
     cancelAt: Type.Optional(Type.Number()),
 })
-
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
+

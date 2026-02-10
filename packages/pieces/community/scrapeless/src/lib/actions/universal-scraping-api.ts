@@ -45,7 +45,7 @@ export const universalScrapingApi = createAction({
 
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth);
+      const client = createScrapelessClient(auth.secret_text);
 
       const input = {
         url: propsValue.url,

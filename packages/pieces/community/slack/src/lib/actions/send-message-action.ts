@@ -4,9 +4,12 @@ import {
   slackChannel,
   username,
   blocks,
+  threadTs,
   singleSelectChannelInfo,
+  mentionOriginFlow,
+  iconEmoji,
 } from '../common/props';
-import { processMessageTimestamp, slackSendMessage } from '../common/utils';
+import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../../';
 import { Block,KnownBlock } from '@slack/web-api';
 
@@ -21,39 +24,74 @@ export const slackSendMessageAction = createAction({
     channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The text of your message',
-      required: true,
+      description: 'The text of your message. When using Block Kit blocks, this is used as a fallback for notifications.',
+      required: false,
     }),
+    sendAsBot:Property.Checkbox({
+      displayName:'Send as a bot?',
+      required:true,
+      defaultValue:true
+    }),
+    threadTs,
     username,
     profilePicture,
+    iconEmoji,
     file: Property.File({
       displayName: 'Attachment',
       required: false,
     }),
-    threadTs: Property.ShortText({
-      displayName: 'Thread ts',
-      description:
-        'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
+    replyBroadcast: Property.Checkbox({
+      displayName: 'Broadcast reply to channel',
+      description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
       required: false,
+      defaultValue: false,
+    }),
+    mentionOriginFlow,
+    unfurlLinks: Property.Checkbox({
+      displayName: 'Unfurl Links',
+      description: 'Enable link unfurling for this message',
+      required: false,
+      defaultValue: true,
     }),
     blocks,
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file,blocks } =
+    const { text, channel,sendAsBot, username, profilePicture, iconEmoji, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
-    
-    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+
+    const token = sendAsBot ?context.auth.access_token :context.auth.data?.authed_user?.access_token ;
+
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
+
+    const blockList: (KnownBlock | Block)[] = [];
+
+
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
+    }
+
+    if(blocks && Array.isArray(blocks) && blocks.length > 0) {
+      blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
+    }
+
+    if(mentionOriginFlow) {
+      blockList.push(buildFlowOriginContextBlock(context));
+    }
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       username,
       profilePicture,
+      iconEmoji,
       conversationId: channel,
       threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
-      blocks: blockList,
+      blocks: blockList.length > 0 ? blockList : undefined,
+      replyBroadcast,
+      unfurlLinks,
     });
   },
 });

@@ -1,24 +1,24 @@
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
     ListRecordsRequest,
     Permission,
-    PlatformUsageMetric,
     PopulatedRecord,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
-import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
+import { TableEntity } from '../table/table.entity'
+import { recordSideEffects } from './record-side-effects'
+import { RecordEntity } from './record.entity'
 import { recordService } from './record.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -27,27 +27,25 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        await PlatformPlanHelper.checkResourceLocked({ resource: PlatformUsageMetric.TABLES, platformId: request.principal.platform.id })
         const records = await recordService.create({
             request: request.body,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             logger: request.log,
         })
         await reply.status(StatusCodes.CREATED).send(records)
-        await sendRecordsWebhooks({
+        await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: request.body.tableId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             records,
             logger: request.log,
             authorization: request.headers.authorization as string,
-            eventType: TableWebhookEventType.RECORD_CREATED,
-        })
+        }, 'created')
     })
 
     fastify.get('/:id', GetRecordByIdRequest, async (request) => {
         return recordService.getById({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     })
 
@@ -55,39 +53,38 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
         const record = await recordService.update({
             id: request.params.id,
             request: request.body,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         await reply.status(StatusCodes.OK).send(record)
-        await recordService.triggerWebhooks({
-            projectId: request.principal.projectId,
+        await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: request.body.tableId,
-            eventType: TableWebhookEventType.RECORD_UPDATED,
-            data: { record },
+            projectId: request.projectId,
+            records: [record],
             logger: request.log,
             authorization: request.headers.authorization as string,
-        })
+            agentUpdate: request.body.agentUpdate ?? false,
+        }, 'updated')
     })
 
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
         const deletedRecords = await recordService.delete({
             ids: request.body.ids,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
-        await sendRecordsWebhooks({
-            tableId: deletedRecords[0].tableId,
-            projectId: request.principal.projectId,
+        await recordSideEffects(fastify.log).handleRecordsEvent({
+            tableId: deletedRecords[0]?.tableId,
+            projectId: request.projectId,
             records: deletedRecords,
             logger: request.log,
             authorization: request.headers.authorization as string,
-            eventType: TableWebhookEventType.RECORD_DELETED,
-        })
+        }, 'deleted')
     })
 
     fastify.get('/', ListRequest, async (request) => {
         return recordService.list({
             tableId: request.query.tableId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             filters: request.query.filters ?? null,
@@ -97,7 +94,15 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
+        }),
     },
     schema: {
         body: CreateRecordsRequest,
@@ -109,7 +114,10 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: RecordEntity,
+        }),
     },
     schema: {
         params: Type.Object({
@@ -124,8 +132,10 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
-        permission: Permission.WRITE_TABLE,
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: RecordEntity,
+        }),
     },
     schema: {
         tags: ['records'],
@@ -144,8 +154,15 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
-        permission: Permission.WRITE_TABLE,
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
+        }),
     },
     schema: {
         tags: ['records'],
@@ -160,8 +177,15 @@ const DeleteRecordRequest = {
 
 const ListRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
-        permission: Permission.READ_TABLE,
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.QUERY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
+        }),
     },
     schema: {
         querystring: ListRecordsRequest,
@@ -174,16 +198,3 @@ const ListRequest = {
     },
 }
 
-const sendRecordsWebhooks = async ({ tableId, projectId, records, logger, authorization, eventType }: { tableId: string, projectId: string, records: PopulatedRecord[], logger: FastifyBaseLogger, authorization: string, eventType: TableWebhookEventType })=>{
-    const promises =  records.map((record)=>{
-        return recordService.triggerWebhooks({
-            projectId,
-            tableId,
-            eventType,
-            data: { record },
-            logger,
-            authorization,
-        })
-    })
-    await Promise.all(promises)
-}

@@ -1,75 +1,68 @@
 import { useEffect, useRef, useState } from 'react';
-import type { RenderEditCellProps } from 'react-data-grid';
 
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-import { Row } from '../lib/types';
+import { useCellContext } from './cell-context';
 
-const TextEditor = ({
-  row,
-  column,
-  onRowChange,
-  onClose,
-  value: initialValue,
-}: RenderEditCellProps<Row, { id: string }> & {
-  value: string;
-}) => {
-  const [value, setValue] = useState(initialValue);
+const TextEditor = () => {
+  const { value, handleCellChange, setIsEditing, isEditing } = useCellContext();
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [inputValue, setInputValue] = useState(value);
   useEffect(() => {
-    textAreaRef.current?.focus();
-  }, []);
-
-  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
-    setValue(newValue);
-    onRowChange({ ...row, [column.key]: newValue }, false);
-  };
-
-  const commitChanges = () => {
-    if (value !== row[column.key]) {
-      onRowChange({ ...row, [column.key]: value }, true);
+    if (isEditing) {
+      textAreaRef.current?.focus();
+      setInputValue(value);
+    } else {
+      setInputValue(value);
     }
-    onClose();
-  };
-
+  }, [isEditing]);
   return (
     <div className="h-full relative w-full relative">
       <div
-        className={cn(
-          'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50',
-          'border-2 border-primary  drop-shadow-md',
-          'bg-background',
-        )}
+        className={cn({
+          'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50 border-2 border-primary  drop-shadow-md':
+            isEditing,
+        })}
       >
-        <Textarea
-          ref={textAreaRef}
-          value={value ?? ''}
-          onChange={handleChange}
-          onBlur={commitChanges}
-          onKeyDown={(e) => {
-            e.stopPropagation();
-            e.stopPropagation();
-            if (e.key === 'Enter' && !e.shiftKey) {
-              commitChanges();
-              e.preventDefault();
-            }
-            if (e.key === 'Escape') {
-              onClose();
-              e.preventDefault();
-            }
-          }}
-          minRows={4}
-          maxRows={6}
-          className={cn(
-            'flex-1 h-full min-w-0 rounded-none',
-            'border-none text-sm px-2 resize-none ',
-            'focus:outline-none',
-            'placeholder:text-muted-foreground',
-          )}
-          autoComplete="off"
-        />
+        {isEditing && (
+          <Textarea
+            ref={textAreaRef}
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+            }}
+            onBlur={() => {
+              handleCellChange(inputValue);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              e.stopPropagation();
+              if (e.key === 'Enter' && !e.shiftKey) {
+                handleCellChange(inputValue);
+                e.preventDefault();
+              }
+              if (e.key === 'Escape') {
+                setIsEditing(false);
+                e.preventDefault();
+              }
+            }}
+            minRows={4}
+            maxRows={6}
+            className={cn(
+              'flex-1 h-full min-w-0 rounded-none',
+              'border-none text-sm px-2 resize-none ',
+              'focus:outline-hidden',
+              'placeholder:text-muted-foreground',
+            )}
+            autoComplete="off"
+          />
+        )}
+        {!isEditing && (
+          <div className="flex grow h-full w-full ">
+            {value?.replaceAll('\n', ' ')}
+          </div>
+        )}
       </div>
     </div>
   );

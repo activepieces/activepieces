@@ -5,7 +5,7 @@ export class AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 implements Mi
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_flow_version_flow_id"
+            DROP INDEX "idx_flow_version_flow_id"
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id_created_desc" ON "flow_version" ("flowId", "created" DESC)
@@ -14,7 +14,7 @@ export class AddCreatedToFlowVersionFlowIdIdxPostgres1752511716028 implements Mi
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_flow_version_flow_id_created_desc"
+            DROP INDEX "idx_flow_version_flow_id_created_desc"
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id" ON "flow_version" ("flowId")

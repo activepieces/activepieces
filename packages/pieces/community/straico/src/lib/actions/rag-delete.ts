@@ -34,7 +34,7 @@ export const deleteRag = createAction({
       method: HttpMethod.DELETE,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

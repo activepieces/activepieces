@@ -1,5 +1,4 @@
 {
-  "Webhook": "Webhook",
   "Receive HTTP requests and trigger flows using unique URLs.": "使用唯一的 URL 接收HTTP 请求和触发流。",
   "Return Response": "退货回复",
   "Respond and Wait for Next Webhook": "响应并等待下一个 Webhook",

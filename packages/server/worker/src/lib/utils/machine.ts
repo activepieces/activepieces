@@ -1,42 +1,37 @@
-import { exec } from 'child_process'
-import fs from 'fs'
-import os from 'os'
-import { promisify } from 'util'
-import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, networkUtils, systemUsage, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apId, assertNotNullOrUndefined, isNil, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { sandboxPool } from '../compute/sandbox/sandbox-pool'
 
-const execAsync = promisify(exec)
-
-let settings: WorkerMachineHealthcheckResponse | undefined
-
+let settings: WorkerSettingsResponse | undefined
+let workerToken: string | undefined
 const workerId = apId()
 
 export const workerMachine = {
-    async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
-        const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
-
-        const cpus = os.cpus()
-        const cpuUsage = cpus.reduce((acc, cpu) => {
-            const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
-            const idle = cpu.times.idle
-            return acc + (1 - idle / total)
-        }, 0) / cpus.length * 100
-
+    getWorkerId: () => workerId,
+    getWorkerToken: () => {
+        assertNotNullOrUndefined(workerToken, 'Worker token is not set')
+        return workerToken
+    },
+    async getSystemInfo(_log: FastifyBaseLogger): Promise<WorkerMachineHealthcheckRequest> {
+        const { totalRamInBytes, ramUsage } = await systemUsage.getContainerMemoryUsage()
+        const cpuUsage = systemUsage.getCpuUsage()
         const ip = (await networkUtils.getPublicIp()).ip
-        const diskInfo = await getDiskInfo()
+        const diskInfo = await systemUsage.getDiskInfo()
+        const cpuCores = await systemUsage.getCpuCores()
 
         return {
             diskInfo,
             cpuUsagePercentage: cpuUsage,
             ramUsagePercentage: ramUsage,
             totalAvailableRamInBytes: totalRamInBytes,
+            totalCpuCores: cpuCores,
             ip,
             workerProps: {
                 ...spreadIfDefined('SANDBOX_PROPAGATED_ENV_VARS', settings?.SANDBOX_PROPAGATED_ENV_VARS?.join(',')),
                 ...spreadIfDefined('EXECUTION_MODE', settings?.EXECUTION_MODE),
                 ...spreadIfDefined('FILE_STORAGE_LOCATION', settings?.FILE_STORAGE_LOCATION),
-                ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', settings?.FLOW_WORKER_CONCURRENCY?.toString()),
-                ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', settings?.SCHEDULED_WORKER_CONCURRENCY?.toString()),
+                ...spreadIfDefined('WORKER_CONCURRENCY', settings?.WORKER_CONCURRENCY?.toString()),
                 ...spreadIfDefined('TRIGGER_TIMEOUT_SECONDS', settings?.TRIGGER_TIMEOUT_SECONDS?.toString()),
                 ...spreadIfDefined('PAUSED_FLOW_TIMEOUT_DAYS', settings?.PAUSED_FLOW_TIMEOUT_DAYS?.toString()),
                 ...spreadIfDefined('FLOW_TIMEOUT_SECONDS', settings?.FLOW_TIMEOUT_SECONDS?.toString()),
@@ -45,20 +40,27 @@ export const workerMachine = {
                 ...spreadIfDefined('ENVIRONMENT', settings?.ENVIRONMENT),
                 ...spreadIfDefined('MAX_FILE_SIZE_MB', settings?.MAX_FILE_SIZE_MB?.toString()),
                 ...spreadIfDefined('SANDBOX_MEMORY_LIMIT', settings?.SANDBOX_MEMORY_LIMIT),
-                ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
+                ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', settings?.PLATFORM_ID_FOR_DEDICATED_WORKER),
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
+            totalSandboxes: sandboxPool.getTotalSandboxes(),
+            freeSandboxes: sandboxPool.getFreeSandboxes(),
         }
     },
-    init: async (_settings: WorkerMachineHealthcheckResponse) => {
+    isDedicatedWorker: () => {
+        return !isNil(settings?.PLATFORM_ID_FOR_DEDICATED_WORKER)
+    },
+    init: async (_settings: WorkerSettingsResponse, _workerToken: string, _log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
-            ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.FLOW_WORKER_CONCURRENCY)),
-            ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY)),
+            ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
+            ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)),
         }
+
+        workerToken = _workerToken
 
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)
@@ -70,6 +72,10 @@ export const workerMachine = {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
     },
+    getSettingOrThrow: (prop: keyof WorkerSettingsResponse) => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings[prop]
+    },
     getInternalApiUrl: (): string => {
         if (environmentVariables.hasAppModules()) {
             return 'http://127.0.0.1:3000/'
@@ -77,8 +83,28 @@ export const workerMachine = {
         const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
         return appendSlashAndApi(replaceLocalhost(url))
     },
+    getSocketUrlAndPath: (): { url: string, path: string } => {
+        if (environmentVariables.hasAppModules()) {
+            return {
+                url: 'http://127.0.0.1:3000/',
+                path: '/socket.io',
+            }
+        }
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return {
+            url: removeTrailingSlash(replaceLocalhost(url)),
+            path: '/api/socket.io',
+        }
+    },
     getPublicApiUrl: (): string => {
         return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
+    },
+    getPlatformIdForDedicatedWorker: (): string | undefined => {
+        return environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
+    },
+    preWarmCacheEnabled: () => {
+        const enabledVar = environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE)
+        return isNil(enabledVar) || environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE) === 'true'
     },
 }
 
@@ -98,74 +124,12 @@ function replaceLocalhost(urlString: string): string {
     return url.toString()
 }
 
+function removeTrailingSlash(url: string): string {
+    return url.replace(/\/$/, '')
+}
+
 function appendSlashAndApi(url: string): string {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
 }
 
-async function getContainerMemoryUsage() {
-    const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
-    const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
-
-    const memLimitExists = await fileExists(memLimitPath)
-    const memUsageExists = await fileExists(memUsagePath)
-
-    const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
-    const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.totalmem() - os.freemem()
-
-    return {
-        totalRamInBytes,
-        ramUsage: (usedRamInBytes / totalRamInBytes) * 100,
-    }
-}
-
-async function getDiskInfo(): Promise<MachineInformation['diskInfo']> {
-    const platform = os.platform()
-
-    try {
-        if (platform === 'win32') {
-            const { stdout } = await execAsync('wmic logicaldisk get size,freespace,caption')
-            const lines = stdout.trim().split('\n').slice(1)
-            let total = 0, free = 0
-
-            for (const line of lines) {
-                const [, freeSpace, size] = line.trim().split(/\s+/)
-                if (freeSpace && size) {
-                    total += parseInt(size)
-                    free += parseInt(freeSpace)
-                }
-            }
-
-            const used = total - free
-            return {
-                total,
-                free,
-                used,
-                percentage: (used / total) * 100,
-            }
-        }
-        else {
-            const { stdout } = await execAsync('df -k / | tail -1')
-            const [, blocks, used, available] = stdout.trim().split(/\s+/)
-
-            const totalBytes = parseInt(blocks) * 1024
-            const usedBytes = parseInt(used) * 1024
-            const freeBytes = parseInt(available) * 1024
-
-            return {
-                total: totalBytes,
-                free: freeBytes,
-                used: usedBytes,
-                percentage: (usedBytes / totalBytes) * 100,
-            }
-        }
-    }
-    catch (error) {
-        return {
-            total: 0,
-            free: 0,
-            used: 0,
-            percentage: 0,
-        }
-    }
-}

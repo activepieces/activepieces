@@ -1,15 +1,65 @@
 import { ApFile } from '@activepieces/pieces-framework';
-import { Block, WebClient } from '@slack/web-api';
+import { Block, KnownBlock, WebClient } from '@slack/web-api';
+
+const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
+
+export function textToSectionBlocks(text: string): (KnownBlock | Block)[] {
+  if (text.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
+    return [{ type: 'section', text: { type: 'mrkdwn', text } }];
+  }
+
+  const blocks: (KnownBlock | Block)[] = [];
+  let remaining = text;
+
+  while (remaining.length > 0) {
+    if (remaining.length <= SLACK_SECTION_TEXT_MAX_LENGTH) {
+      blocks.push({ type: 'section', text: { type: 'mrkdwn', text: remaining } });
+      break;
+    }
+
+    let splitIndex = remaining.lastIndexOf('\n', SLACK_SECTION_TEXT_MAX_LENGTH);
+    if (splitIndex <= 0) {
+      splitIndex = remaining.lastIndexOf(' ', SLACK_SECTION_TEXT_MAX_LENGTH);
+    }
+    if (splitIndex <= 0) {
+      splitIndex = SLACK_SECTION_TEXT_MAX_LENGTH;
+    }
+
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: remaining.substring(0, splitIndex) } });
+    remaining = remaining.substring(splitIndex).trimStart();
+  }
+
+  return blocks;
+}
+
+export function buildFlowOriginContextBlock(context: {
+  server: { publicUrl: string };
+  project: { id: string };
+  flows: { current: { id: string } };
+}): KnownBlock {
+  return {
+    type: 'context',
+    elements: [
+      {
+        type: 'mrkdwn',
+        text: `Message sent by <${new URL(context.server.publicUrl).origin}/projects/${context.project.id}/flows/${context.flows.current.id}|this flow>.`
+      }
+    ]
+  };
+}
 
 export const slackSendMessage = async ({
   text,
   conversationId,
   username,
   profilePicture,
+  iconEmoji,
   blocks,
   threadTs,
   token,
   file,
+  replyBroadcast,
+  unfurlLinks,
 }: SlackSendMessageParams) => {
   const client = new WebClient(token);
 
@@ -26,14 +76,25 @@ export const slackSendMessage = async ({
       ],
     });
   } else {
-    return await client.chat.postMessage({
+    const messageParams: any = {
       text,
       channel: conversationId,
       username,
       icon_url: profilePicture,
+      icon_emoji: iconEmoji,
       blocks: blocks as Block[],
       thread_ts: threadTs,
-    });
+    };
+
+    if (replyBroadcast) {
+      messageParams.reply_broadcast = replyBroadcast;
+    }
+
+    if (unfurlLinks === false) {
+      messageParams.unfurl_links = false;
+    }
+
+    return await client.chat.postMessage(messageParams);
   }
 };
 
@@ -42,10 +103,13 @@ type SlackSendMessageParams = {
   conversationId: string;
   username?: string;
   profilePicture?: string;
+  iconEmoji?: string;
   blocks?: unknown[] | Record<string, any>;
-  text: string;
+  text?: string;
   file?: ApFile;
   threadTs?: string;
+  replyBroadcast?: boolean;
+  unfurlLinks?: boolean;
 };
 
 export function processMessageTimestamp(input: string) {

@@ -17,7 +17,7 @@ export const getContactFromID = createAction({
   },
 
   async run(context) {
-    const FDapiToken = context.auth.access_token;
+    const FDapiToken = context.auth.props.access_token;
     const FDcontactID = context.propsValue.contactid;
 
     const headers = {
@@ -26,7 +26,7 @@ export const getContactFromID = createAction({
     };
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     // not needed for gettickets ?${queryParams.toString()}
     const url = `${baseUrl}/api/v2/contacts/${FDcontactID}`;
     const httprequestdata = {
