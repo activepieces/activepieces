@@ -95,11 +95,12 @@ const ConnectSecretManagerDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {t('Connect secret manager')} - 
+            {t('Connect secret manager')} -
             <a
               href={`https://activepieces.com/docs/admin-guide/guides/secret-managers/${manager.id}`}
               target="_blank"
               className="text-primary"
+              rel="noreferrer"
             >
               {manager.name}
             </a>
