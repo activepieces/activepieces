@@ -4,8 +4,6 @@ import { GmailLabel } from './models';
 import { gmailAuth } from '../..';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const GmailProps = {
   from: Property.ShortText({
@@ -74,10 +72,11 @@ export const GmailProps = {
       };
     },
   }),
-  labels: Property.MultiSelectDropdown<GmailLabel>({
+  labels: Property.MultiSelectDropdown<GmailLabel, true, typeof gmailAuth>({
     displayName: 'Labels',
     description: 'Select one or more labels',
     required: true,
+    auth: gmailAuth,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -108,10 +107,15 @@ export const GmailProps = {
       };
     },
   }),
-  labelsToRemove: Property.MultiSelectDropdown<GmailLabel>({
+  labelsToRemove: Property.MultiSelectDropdown<
+    GmailLabel,
+    true,
+    typeof gmailAuth
+  >({
     displayName: 'Labels to Remove',
     description: 'Select one or more labels to remove from the message.',
     required: true,
+    auth: gmailAuth,
     refreshers: ['message_id'],
     options: async ({ auth, message_id }) => {
       if (!auth) {

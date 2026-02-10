@@ -15,6 +15,7 @@ export const gmailRemoveLabelFromThreadAction = createAction({
     thread_id: GmailProps.thread,
     labels_to_remove: Property.MultiSelectDropdown({
       displayName: 'Labels to Remove',
+      auth: gmailAuth,
       description:
         'Select the labels to remove from all messages in the thread',
       required: true,
