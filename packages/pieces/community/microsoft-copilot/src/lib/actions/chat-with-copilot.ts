@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365CopilotAuth } from '../common/auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const chatWithCopilot = createAction({
   auth: microsoft365CopilotAuth,
@@ -54,18 +54,19 @@ export const chatWithCopilot = createAction({
       enableWebSearch,
     } = context.propsValue;
 
-    const client = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: () => Promise.resolve(context.auth.access_token),
-      },
-    });
-
     let activeConversationId = conversationId;
     if (!activeConversationId) {
-      const createResponse = await client
-        .api(`beta/copilot/conversations`)
-        .post({});
-      activeConversationId = createResponse.id;
+      const createResponse = await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://graph.microsoft.com/beta/copilot/conversations',
+        headers: {
+          Authorization: `Bearer ${context.auth.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: {}
+      });
+      
+      activeConversationId = createResponse.body.id;
     }
 
     const locationHint: any = {
@@ -104,14 +105,18 @@ export const chatWithCopilot = createAction({
     }
 
     if (Object.keys(contextualResources).length > 0) {
-      body.contextualResources =
-        contextualResources as any;
+      body.contextualResources = contextualResources as any;
     }
 
-    const response: any = await client
-      .api(`beta/copilot/conversations/${activeConversationId}/chat`)
-      .post(body);
-
-    return response;
+    const response: any = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://graph.microsoft.com/beta/copilot/conversations/${activeConversationId}/chat`,
+      headers: {
+        Authorization: `Bearer ${context.auth.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    return response.body;
   },
 });

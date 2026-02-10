@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365CopilotAuth } from '../common/auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const searchCopilot = createAction({
   auth: microsoft365CopilotAuth,
@@ -14,12 +14,6 @@ export const searchCopilot = createAction({
       description:
         'Natural language query to search for relevant files. Maximum 1,500 characters.',
       required: true,
-    }),
-    pageSize: Property.Number({
-      displayName: 'Page Size',
-      description: 'Number of results to return per page (1-100). Default: 25.',
-      required: false,
-      defaultValue: 25,
     }),
     filterExpression: Property.LongText({
       displayName: 'Filter Expression (Optional)',
@@ -35,22 +29,11 @@ export const searchCopilot = createAction({
     }),
   },
   async run(context) {
-    const { query, pageSize, filterExpression, resourceMetadata } =
-      context.propsValue;
-
-    const client = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: () => Promise.resolve(context.auth.access_token),
-      },
-    });
+    const { query, filterExpression, resourceMetadata } = context.propsValue;
 
     const requestBody: any = {
       query: query,
     };
-
-    if (pageSize && pageSize > 0 && pageSize <= 100) {
-      requestBody.pageSize = pageSize;
-    }
 
     if (filterExpression || resourceMetadata) {
       requestBody.dataSources = {
@@ -74,10 +57,16 @@ export const searchCopilot = createAction({
       }
     }
 
-    const response: any = await client
-      .api('beta/copilot/search')
-      .post(requestBody);
+    const response: any = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://graph.microsoft.com/beta/copilot/search',
+      headers: {
+        Authorization: `Bearer ${context.auth.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
 
-    return response;
+    return response.body;
   },
 });
