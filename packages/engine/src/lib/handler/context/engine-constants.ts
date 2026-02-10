@@ -43,6 +43,7 @@ const DEFAULT_EXECUTE_PROPERTY = 'execute-property'
 
 export class EngineConstants {
     public static readonly BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes'
+    public static readonly CODE_TIMEOUT_MS = parseInt(process.env.AP_CODE_TIMEOUT_SECONDS ?? '30', 10) * 1000
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
     public static readonly DEV_PIECES = process.env.AP_DEV_PIECES?.split(',') ?? []

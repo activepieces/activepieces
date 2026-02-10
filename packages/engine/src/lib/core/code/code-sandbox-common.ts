@@ -24,6 +24,11 @@ type RunCodeModuleParams = {
      * The inputs that are passed to the {@link CodeModule}.
      */
     inputs: Record<string, unknown>
+
+    /**
+     * The maximum time in milliseconds to allow the code to run before timing out.
+     */
+    timeoutMs?: number
 }
 
 type RunScriptParams = {
