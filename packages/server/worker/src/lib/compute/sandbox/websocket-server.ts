@@ -32,7 +32,7 @@ export const sandboxWebsocketServer = {
                 log.debug({ sandboxId, event, payload }, 'Received message from sandbox')
                 const listener = listeners[sandboxId]
                 if (isNil(listener)) {
-                    log.warn({ sandboxId, event }, 'Received message from sandbox after listener was removed, ignoring')
+                    log.error({ sandboxId, event }, 'Received message from sandbox after listener was removed')
                     return
                 }
                 const promise = listener(event, payload)
