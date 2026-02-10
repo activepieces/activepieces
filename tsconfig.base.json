@@ -1792,6 +1792,9 @@
       ],
       "@activepieces/piece-kapso": [
         "packages/pieces/community/kapso/src/index.ts"
+      ],
+      "@activepieces/piece-connectuc": [
+        "packages/pieces/community/connectuc/src/index.ts"
       ]
     },
     "resolveJsonModule": true
