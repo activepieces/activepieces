@@ -5,8 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { googleCalendarCommon } from '../common';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 
 export const createQuickCalendarEvent = createAction({
   auth: googleCalendarAuth,
@@ -58,7 +57,7 @@ export const createQuickCalendarEvent = createAction({
       body: {},
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.auth.access_token,
+        token: await getAccessToken(configValue.auth),
       },
       queryParams: qParams,
     };
