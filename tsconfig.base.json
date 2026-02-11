@@ -1795,7 +1795,7 @@
       ],
       "@activepieces/piece-pdfcrowd": [
         "packages/pieces/community/pdfcrowd/src/index.ts"
-      ],
+      ]
     },
     "resolveJsonModule": true
   },
