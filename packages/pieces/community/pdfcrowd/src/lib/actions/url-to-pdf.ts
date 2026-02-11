@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pdfcrowdAuth } from '../common/auth';
 import { CONVERT_URL, getAuthHeader } from '../common/client';
 import FormData from 'form-data';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const urlToPdfAction = createAction({
   auth: pdfcrowdAuth,
@@ -227,36 +228,21 @@ export const urlToPdfAction = createAction({
       body: formBuffer,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Conversion failed (${response.status}): ${errorText}`);
-    }
-
-    const pdfBuffer = await response.arrayBuffer();
     const filename = propsValue.outputFilename || 'document.pdf';
 
     const file = await context.files.write({
       fileName: filename,
-      data: Buffer.from(pdfBuffer),
+      data: Buffer.from(response.body),
     });
-
+    const headers = response.headers || {};
     return {
       file,
       filename,
-      jobId: response.headers.get('x-pdfcrowd-job-id') || '',
-      pageCount: parseInt(response.headers.get('x-pdfcrowd-pages') || '0', 10),
-      outputSize: parseInt(
-        response.headers.get('x-pdfcrowd-output-size') || '0',
-        10
-      ),
-      consumedCredits: parseInt(
-        response.headers.get('x-pdfcrowd-consumed-credits') || '0',
-        10
-      ),
-      remainingCredits: parseInt(
-        response.headers.get('x-pdfcrowd-remaining-credits') || '0',
-        10
-      ),
+      jobId: headers['x-pdfcrowd-job-id'] || '',
+      pageCount: headers['x-pdfcrowd-pages'] || '0',
+      outputSize: headers['x-pdfcrowd-output-size'] || '0',
+      consumedCredits: headers['x-pdfcrowd-consumed-credits'] || '0',
+      remainingCredits: headers['x-pdfcrowd-remaining-credits'] || '0',
     };
   },
 });

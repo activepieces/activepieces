@@ -15,21 +15,4 @@ export const pdfcrowdAuth = PieceAuth.BasicAuth({
         displayName: 'API Key',
         description: 'Your Pdfcrowd API key',
     },
-    validate: async ({ auth }) => {
-        try {
-            await makeRequest({
-                type: AppConnectionType.BASIC_AUTH,
-                username: auth.username,
-                password: auth.password,
-            }, HttpMethod.GET, '/info/');
-            return {
-                valid: true,
-            };
-        } catch {
-            return {
-                valid: false,
-                error: 'Invalid username or API key.',
-            };
-        }
-    },
 });

@@ -227,31 +227,24 @@ export const htmlToPdfAction = createAction({
       body: formBuffer,
     });
 
-    const pdfBuffer = await response.arrayBuffer();
     const filename = propsValue.outputFilename || 'document.pdf';
 
     const file = await context.files.write({
       fileName: filename,
-      data: Buffer.from(pdfBuffer),
+      data: Buffer.from(response.body),
     });
 
+    const headers = response.headers || {};
     return {
       file,
       filename,
-      jobId: response.headers.get('x-pdfcrowd-job-id') || '',
-      pageCount: parseInt(response.headers.get('x-pdfcrowd-pages') || '0', 10),
-      outputSize: parseInt(
-        response.headers.get('x-pdfcrowd-output-size') || '0',
-        10
-      ),
-      consumedCredits: parseInt(
-        response.headers.get('x-pdfcrowd-consumed-credits') || '0',
-        10
-      ),
-      remainingCredits: parseInt(
-        response.headers.get('x-pdfcrowd-remaining-credits') || '0',
-        10
-      ),
+      jobId: headers['x-pdfcrowd-job-id'] || null,
+      pageCount: headers['x-pdfcrowd-page-count']
+        ? headers['x-pdfcrowd-page-count']
+        : null,
+      outputSize: headers['x-pdfcrowd-output-size'],
+      consumedCredits: headers['x-pdfcrowd-consumed-credits'],
+      remainingCredits: headers['x-pdfcrowd-remaining-credits'],
     };
   },
 });

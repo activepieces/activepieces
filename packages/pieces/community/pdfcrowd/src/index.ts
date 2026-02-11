@@ -10,8 +10,7 @@ export const pdfcrowd = createPiece({
   displayName: 'Pdfcrowd',
   auth: pdfcrowdAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl:
-    'https://storage.googleapis.com/pdfcrowd-cdn/images/integration_icon.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/pdfcrows.png',
   authors: ['pdfcrowd', 'sanket-a11y'],
   categories: [PieceCategory.CONTENT_AND_FILES],
   description:
