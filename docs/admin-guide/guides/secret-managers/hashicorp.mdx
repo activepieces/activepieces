@@ -18,12 +18,20 @@ Before connecting HashiCorp Vault to Activepieces, ensure you have:
 Enable The created AppRole to access your secrets engine(s) by adding the following to your policy
 
 ```
+path "sys/mounts" {
+  capabilities = [ "read" ]
+}
+
 path "<secret_engine_name>/data/<secret_name>" {
   capabilities = [ "read" ]
 }
 ```
 or 
 ```
+path "sys/mounts" {
+  capabilities = [ "read" ]
+}
+
 path "<secret_engine_name>/data/*" {
   capabilities = [ "read" ]
 }

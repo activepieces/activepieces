@@ -6,7 +6,7 @@ import { SecretManagerProvider } from './secret-manager-providers'
 export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     id: SecretManagerProviderId.HASHICORP,
     name: 'Hashicorp Vault',
-    logo: 'https://icon.icepanel.io/Technology/svg/HashiCorp-Vault.svg',
+    logo: 'https://cdn.activepieces.com/pieces/hashi-corp-vault.png',
     fields: {
         url: {
             displayName: 'URL',
