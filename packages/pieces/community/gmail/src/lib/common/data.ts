@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { FilesService } from '@activepieces/pieces-framework';
 import {
   GmailLabel,
   GmailMessage,
@@ -12,7 +12,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { Attachment, ParsedMail, simpleParser } from 'mailparser';
-import { FilesService } from '@activepieces/pieces-framework';
+import { GmailAuthValue, getAccessToken } from '../auth';
 
 interface SearchMailProps {
   access_token: string;
@@ -106,13 +106,13 @@ export const GmailRequests = {
 
     return response.body;
   },
-  getLabels: async (authentication: OAuth2PropertyValue) => {
+  getLabels: async (authentication: GmailAuthValue) => {
     return await httpClient.sendRequest<{ labels: GmailLabel[] }>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (authentication as OAuth2PropertyValue).access_token,
+        token: await getAccessToken(authentication),
       },
     });
   },
@@ -181,7 +181,7 @@ export const GmailRequests = {
     return response.body;
   },
   getRecentMessages: async (
-    authentication: OAuth2PropertyValue,
+    authentication: GmailAuthValue,
     maxResults = 20
   ) => {
     return await httpClient.sendRequest<GmailMessageList>({
@@ -189,7 +189,7 @@ export const GmailRequests = {
       url: 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: authentication.access_token,
+        token: await getAccessToken(authentication),
       },
       queryParams: {
         maxResults: maxResults.toString(),
@@ -198,7 +198,7 @@ export const GmailRequests = {
     });
   },
   getRecentThreads: async (
-    authentication: OAuth2PropertyValue,
+    authentication: GmailAuthValue,
     maxResults = 15
   ) => {
     return await httpClient.sendRequest<{
@@ -208,7 +208,7 @@ export const GmailRequests = {
       url: 'https://gmail.googleapis.com/gmail/v1/users/me/threads',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: authentication.access_token,
+        token: await getAccessToken(authentication),
       },
       queryParams: {
         maxResults: maxResults.toString(),
