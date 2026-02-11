@@ -130,9 +130,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
         const providerStrategy = aiProviders[provider]
-        log.debug(`Validating credentials for ${providerStrategy.name}`)
         try {
-            log.debug(`Validating credentials for ${providerStrategy.name}`)
             await providerStrategy.validateConnection(auth, config, log)
         }
         catch (error: unknown) {
@@ -142,7 +140,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
                 params: {
                     provider,
-                    message: `Failed to validate credentials for ${providerStrategy.name} ${includeHttpErrorInMessage ? `, ${errorMessage}` : ''}`,
+                    message: includeHttpErrorInMessage
+                        ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
+                        : `Failed to validate credentials for ${providerStrategy.name}`,
                     httpErrorResponse: errorMessage,
                 },
             })

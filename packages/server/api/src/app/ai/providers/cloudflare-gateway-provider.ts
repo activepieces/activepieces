@@ -8,10 +8,9 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
     async validateConnection(authConfig: CloudflareGatewayProviderAuthConfig, config: CloudflareGatewayProviderConfig, _: FastifyBaseLogger): Promise<void> {
 
         const textModels = config.models.filter(m => m.modelType === AIProviderModelType.TEXT)
-        const invalidModels: string[] = []
-        for (const model of textModels) {
-            try {
-                await httpClient.sendRequest({
+        const results = await Promise.allSettled(
+            textModels.map(model =>
+                httpClient.sendRequest({
                     url: `https://gateway.ai.cloudflare.com/v1/${config.accountId}/${config.gatewayId}/compat/chat/completions`,
                     method: HttpMethod.POST,
                     headers: {
@@ -20,19 +19,18 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
                     },
                     body: {
                         model: model.modelId,
-                        messages: [{ role: 'user', content: 'Hi' }],
-                        max_tokens: 1,
+                        messages: [{ role: 'user', content: 'Hi, reply only with "ok"' }],
                     },
-                })
-            }
-            catch {
-                invalidModels.push(model.modelId)
-            }
-        }
-        
+                }),
+            ),
+        )
+        const invalidModels = textModels
+            .filter((_, index) => results[index].status === 'rejected')
+            .map(model => model.modelId)
+
         if (invalidModels.length > 0) {
             throw new Error(
-                `The following models failed validation through the gateway: ${invalidModels.join(', ')}`,
+                `The following models failed validation through the gateway: ${invalidModels.join(', ')}, make sure the model id is correct and in the{provider_name}/{model_name} format, also check that the other inputs are correct.`,
             )
         }
     },
