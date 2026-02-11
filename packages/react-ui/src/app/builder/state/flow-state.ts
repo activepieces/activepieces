@@ -32,8 +32,8 @@ import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 export type FlowState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
-  outputSampleData: Record<string, unknown>;
-  inputSampleData: Record<string, unknown>;
+  outputSampleData: Record<string, unknown | undefined>;
+  inputSampleData: Record<string, unknown | undefined>;
   saving: boolean;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;

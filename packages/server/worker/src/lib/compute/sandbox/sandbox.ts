@@ -144,10 +144,8 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
-                void sandboxWebsocketServer.removeListener(sandboxId)
                 process?.removeAllListeners('exit')
                 process?.removeAllListeners('error')
-                process?.removeAllListeners('command')
             }
         },
         shutdown: async () => {

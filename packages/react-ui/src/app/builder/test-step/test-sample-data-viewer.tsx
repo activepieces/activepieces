@@ -26,8 +26,8 @@ type TestSampleDataViewerProps = {
   currentStep?: FlowAction;
   isTesting: boolean;
   agentResult?: AgentResult;
-  sampleData: unknown;
-  sampleDataInput: unknown | null;
+  sampleData?: unknown;
+  sampleDataInput?: unknown | null;
   errorMessage: string | null;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
@@ -96,7 +96,8 @@ export const TestSampleDataViewer = React.memo(
     } = props;
     const isFailed =
       isRunAgent(currentStep) &&
-      (sampleData as AgentResult).status === AgentTaskStatus.FAILED;
+      (sampleData as AgentResult | undefined)?.status ===
+        AgentTaskStatus.FAILED;
 
     return (
       <>
