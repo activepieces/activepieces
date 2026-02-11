@@ -8,6 +8,7 @@ import { newVoicemail } from "./lib/triggers/new-voicemail";
 import { newSms } from "./lib/triggers/new-sms";
 import { createContactAction } from "./lib/actions/create-contact";
 import { doNotDisturbAction } from "./lib/actions/do-not-disturb";
+import { initiateCallAction } from "./lib/actions/initiate-call";
 
 export const connectucAuth = PieceAuth.OAuth2({
   authUrl: "https://auth.uc-technologies.com/oauth2/authorize",
@@ -64,6 +65,6 @@ export const connectuc = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
   authors: [],
-  actions: [createContactAction, doNotDisturbAction],
+  actions: [createContactAction, doNotDisturbAction, initiateCallAction],
   triggers: [newRecording, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],
 });
