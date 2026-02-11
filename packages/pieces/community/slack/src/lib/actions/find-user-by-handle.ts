@@ -1,6 +1,7 @@
 import { slackAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const findUserByHandleAction = createAction({
   auth: slackAuth,
@@ -16,7 +17,7 @@ export const findUserByHandleAction = createAction({
   },
   async run({ auth, propsValue }) {
     const handle = propsValue.handle.replace('@', '');
-    const client = new WebClient(auth.access_token);
+    const client = new WebClient(getBotToken(auth as SlackAuthValue));
     for await (const page of client.paginate('users.list', {
       limit: 1000, // Only limits page size, not total number of results
     })) {

@@ -2,6 +2,7 @@ import { slackAuth } from '../../index';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const getFileAction = createAction({
 	auth: slackAuth,
@@ -16,7 +17,7 @@ export const getFileAction = createAction({
 		}),
 	},
 	async run(context) {
-		const client = new WebClient(context.auth.access_token);
+		const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
 
 		const fileData = await client.files.info({ file: context.propsValue.fileId });
 
@@ -31,7 +32,7 @@ export const getFileAction = createAction({
 			url: fileDownloadUrl,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
+				token: getBotToken(context.auth as SlackAuthValue),
 			},
 			responseType: 'arraybuffer',
 		});

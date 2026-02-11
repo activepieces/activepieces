@@ -1,5 +1,6 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../../';
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 export const newSavedMessageTrigger = createTrigger({
 	auth: slackAuth,
@@ -10,8 +11,7 @@ export const newSavedMessageTrigger = createTrigger({
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: undefined,
 	onEnable: async (context) => {
-		// Older OAuth2 has team_id, newer has team.id
-		const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({
 			events: ['star_added'],
 			identifierValue: teamId,

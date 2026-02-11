@@ -1,6 +1,7 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
+import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 const sampleData = {
 	id: 'USLACKBOT',
@@ -59,8 +60,7 @@ export const newUserTrigger = createTrigger({
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData,
 	onEnable: async (context) => {
-		// Older OAuth2 has team_id, newer has team.id
-		const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({
 			events: ['team_join'],
 			identifierValue: teamId,
@@ -71,7 +71,7 @@ export const newUserTrigger = createTrigger({
 	},
 
 	test: async (context) => {
-		const client = new WebClient(context.auth.access_token);
+		const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
 
 		const response = await client.users.list({limit:10});
 

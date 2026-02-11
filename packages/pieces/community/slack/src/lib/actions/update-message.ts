@@ -3,6 +3,7 @@ import { slackAuth } from '../..';
 import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -33,7 +34,7 @@ export const updateMessage = createAction({
     if (!messageTimestamp) {
       throw new Error('Invalid Timestamp Value.');
     }
-    const client = new WebClient(auth.access_token);
+    const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
     const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
 

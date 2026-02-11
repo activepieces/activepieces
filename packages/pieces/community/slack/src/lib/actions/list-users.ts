@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 import { slackAuth } from '../..';
 import { Member } from '@slack/web-api/dist/types/response/UsersListResponse';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const listUsers = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -22,7 +23,7 @@ export const listUsers = createAction({
   },
   auth: slackAuth,
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.access_token);
+    const client = new WebClient(getBotToken(auth as SlackAuthValue));
     const results: Member[] = [];
     for await (const page of client.paginate('users.list', {
       limit: 1000, // Only limits page size, not total number of results

@@ -2,6 +2,7 @@ import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const getChannelHistory = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -40,7 +41,7 @@ export const getChannelHistory = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.access_token);
+    const client = new WebClient(getBotToken(auth as SlackAuthValue));
     const messages = [];
     await client.conversations.history({ channel: propsValue.channel });
     for await (const page of client.paginate('conversations.history', {
