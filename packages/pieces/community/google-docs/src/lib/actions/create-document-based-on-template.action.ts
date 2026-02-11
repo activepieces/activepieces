@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth, createGoogleClient } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const createDocumentBasedOnTemplate = createAction({
   auth: googleDocsAuth,
@@ -48,8 +47,7 @@ export const createDocumentBasedOnTemplate = createAction({
     const values = context.propsValue.values;
     const placeholder_format = context.propsValue.placeholder_format;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const docs = google.docs('v1');
 
     const requests = [];
