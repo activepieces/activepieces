@@ -27,7 +27,9 @@ export const progressService = {
             if (isNil(latestUpdateParams)) {
                 return
             }
+            console.log('[Progress] Backup interval fired, starting backup')
             await progressService.backup(latestUpdateParams)
+            console.log('[Progress] Backup interval completed')
         }, BACKUP_INTERVAL_MS)
     },
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
@@ -136,6 +138,7 @@ export const progressService = {
         })
     },
     shutdown: () => {
+        console.log('[Progress] Shutdown called, clearing backup interval and state')
         if (backupIntervalId) {
             clearInterval(backupIntervalId)
             backupIntervalId = null

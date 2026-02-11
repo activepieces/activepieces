@@ -65,9 +65,15 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 let stdError = ''
                 let stdOut = ''
 
+                log.info({ sandboxId, operationType }, '[Sandbox] Attaching listener for execution')
                 sandboxWebsocketServer.attachListener(sandboxId, async (event, payload) => {
                     switch (event) {
                         case EngineSocketEvent.ENGINE_RESPONSE:
+                            log.info({ 
+                                sandboxId, 
+                                operationType,
+                                status: (payload as EngineResponse<unknown>).status,
+                            }, '[Sandbox] ENGINE_RESPONSE received, resolving promise')
                             resolve({
                                 engine: (payload as EngineResponse<unknown>),
                                 stdOut,
@@ -141,6 +147,11 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 return await operationPromise
             }
             finally {
+                log.info({ 
+                    sandboxId, 
+                    operationType,
+                    killedByTimeout,
+                }, '[Sandbox] Execute completed (finally block), listener NOT removed')
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
