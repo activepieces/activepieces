@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth, Property, FilesService } from '@activepieces/pieces-framework';
 import {
   GmailLabel,
   GmailMessage,
@@ -12,7 +12,85 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { Attachment, ParsedMail, simpleParser } from 'mailparser';
-import { FilesService } from '@activepieces/pieces-framework';
+import { AppConnectionType } from '@activepieces/shared';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
+
+export const gmailScopes = [
+  'https://www.googleapis.com/auth/gmail.send',
+  'email',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+];
+
+export const gmailAuth = [PieceAuth.OAuth2({
+  description: '',
+  authUrl: 'https://accounts.google.com/o/oauth2/auth',
+  tokenUrl: 'https://oauth2.googleapis.com/token',
+  required: true,
+  scope: gmailScopes,
+}), PieceAuth.CustomAuth({
+  displayName: 'Service Account (Advanced)',
+  description: 'Authenticate via service account from https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key.  <br> <br> You can optionally use domain-wide delegation (https://support.google.com/a/answer/162106?hl=en#zippy=%2Cset-up-domain-wide-delegation-for-a-client) to access Gmail without adding the service account to each mailbox. <br> <br> **Note:** A user email with domain-wide delegation is required for Gmail service account access.',
+  required: true,
+  props: {
+    serviceAccount: Property.ShortText({
+      displayName: 'Service Account JSON Key',
+      required: true,
+    }),
+    userEmail: Property.ShortText({
+      displayName: 'User Email',
+      required: false,
+      description: 'Email address of the user to impersonate for domain-wide delegation.',
+    }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      await getAccessToken({
+        type: AppConnectionType.CUSTOM_AUTH,
+        props: { ...auth },
+      });
+    } catch (e) {
+      return {
+        valid: false,
+        error: (e as Error).message,
+      };
+    }
+    return {
+      valid: true,
+    };
+  },
+})];
+
+export type GmailAuthValue = AppConnectionValueForAuthProperty<typeof gmailAuth>;
+
+export async function createGoogleClient(auth: GmailAuthValue): Promise<OAuth2Client> {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    const serviceAccount = JSON.parse(auth.props.serviceAccount);
+    return new google.auth.JWT({
+      email: serviceAccount.client_email,
+      key: serviceAccount.private_key,
+      scopes: gmailScopes,
+      subject: auth.props.userEmail,
+    });
+  }
+  const authClient = new OAuth2Client();
+  authClient.setCredentials(auth);
+  return authClient;
+}
+
+export const getAccessToken = async (auth: GmailAuthValue): Promise<string> => {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    const googleClient = await createGoogleClient(auth);
+    const response = await googleClient.getAccessToken();
+    if (response.token) {
+      return response.token;
+    } else {
+      throw new Error('Could not retrieve access token from service account json');
+    }
+  }
+  return auth.access_token;
+};
 
 interface SearchMailProps {
   access_token: string;
@@ -106,13 +184,13 @@ export const GmailRequests = {
 
     return response.body;
   },
-  getLabels: async (authentication: OAuth2PropertyValue) => {
+  getLabels: async (authentication: GmailAuthValue) => {
     return await httpClient.sendRequest<{ labels: GmailLabel[] }>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (authentication as OAuth2PropertyValue).access_token,
+        token: await getAccessToken(authentication),
       },
     });
   },
@@ -181,7 +259,7 @@ export const GmailRequests = {
     return response.body;
   },
   getRecentMessages: async (
-    authentication: OAuth2PropertyValue,
+    authentication: GmailAuthValue,
     maxResults = 20
   ) => {
     return await httpClient.sendRequest<GmailMessageList>({
@@ -189,7 +267,7 @@ export const GmailRequests = {
       url: 'https://gmail.googleapis.com/gmail/v1/users/me/messages',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: authentication.access_token,
+        token: await getAccessToken(authentication),
       },
       queryParams: {
         maxResults: maxResults.toString(),
@@ -198,7 +276,7 @@ export const GmailRequests = {
     });
   },
   getRecentThreads: async (
-    authentication: OAuth2PropertyValue,
+    authentication: GmailAuthValue,
     maxResults = 15
   ) => {
     return await httpClient.sendRequest<{
@@ -208,7 +286,7 @@ export const GmailRequests = {
       url: 'https://gmail.googleapis.com/gmail/v1/users/me/threads',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: authentication.access_token,
+        token: await getAccessToken(authentication),
       },
       queryParams: {
         maxResults: maxResults.toString(),

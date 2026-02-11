@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth } from '../..';
+import { gmailAuth, createGoogleClient, getAccessToken } from '../common/data';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail from 'nodemailer/lib/mailer';
 import {
@@ -70,7 +69,7 @@ export const requestApprovalInEmail = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
       try {
-        const token = context.auth.access_token;
+        const token = await getAccessToken(context.auth);
 
         const { subject, body } = context.propsValue;
 
@@ -97,8 +96,7 @@ export const requestApprovalInEmail = createAction({
         </div>
       `;
 
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(context.auth);
+        const authClient = await createGoogleClient(context.auth);
 
         const gmail = google.gmail({ version: 'v1', auth: authClient });
 

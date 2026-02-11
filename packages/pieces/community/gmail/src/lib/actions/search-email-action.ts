@@ -1,8 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth } from '../../';
+import { gmailAuth, createGoogleClient, convertAttachment, parseStream } from '../common/data';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { convertAttachment, parseStream } from '../common/data';
 import { GmailProps } from '../common/props';
 import { GmailLabel } from '../common/models';
 
@@ -59,8 +57,7 @@ export const gmailSearchMailAction = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 

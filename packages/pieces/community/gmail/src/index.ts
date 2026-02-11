@@ -1,7 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -15,19 +13,9 @@ import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
 import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
 import { gmailGetEmailAction } from './lib/actions/get-mail-action';
+import { gmailAuth, getAccessToken } from './lib/common/data';
 
-export const gmailAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: [
-    'https://www.googleapis.com/auth/gmail.send',
-    'email',
-    'https://www.googleapis.com/auth/gmail.readonly',
-    'https://www.googleapis.com/auth/gmail.compose',
-  ],
-});
+export { gmailAuth, getAccessToken, GmailAuthValue, createGoogleClient } from './lib/common/data';
 
 export const gmail = createPiece({
   minimumSupportedRelease: '0.30.0',
@@ -47,7 +35,7 @@ export const gmail = createPiece({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${await getAccessToken(auth as any)}`,
       }),
     }),
   ],

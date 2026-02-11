@@ -2,9 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
-import { gmailAuth } from '../../';
+import { gmailAuth, createGoogleClient } from '../common/data';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { GmailProps } from '../common/props';
 
 export const gmailReplyToEmailAction = createAction({
@@ -74,8 +73,7 @@ export const gmailReplyToEmailAction = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
