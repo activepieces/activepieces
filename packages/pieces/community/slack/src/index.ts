@@ -166,6 +166,7 @@ export const slack = createPiece({
     'AbdulTheActivePiecer',
     'khaledmashaly',
     'abuaboud',
+    'sanket-a11y'
   ],
   actions: [
     addRectionToMessageAction,
