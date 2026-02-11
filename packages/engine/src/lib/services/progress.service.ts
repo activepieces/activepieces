@@ -15,22 +15,31 @@ const fetchWithRetry = fetchRetry(global.fetch)
 
 const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
-let backupIntervalId: NodeJS.Timeout | null = null
+let isBackupLoopRunning = false
+let backupLoopPromise: Promise<void> | null = null
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function backupLoop(): Promise<void> {
+    while (isBackupLoopRunning) {
+        try {
+            if (latestUpdateParams) {
+                console.log('[Progress] Backup interval fired, starting backup')
+                await progressService.backup(latestUpdateParams)
+                console.log('[Progress] Backup interval completed')
+            }
+        }
+        catch (err) {
+            console.error('[Progress] Backup failed', err)
+        }
+        await sleep(BACKUP_INTERVAL_MS)
+    }
+}
 
 export const progressService = {
     init: (): void => {
-        if (backupIntervalId) {
-            clearInterval(backupIntervalId)
-        }
-
-        backupIntervalId = setInterval(async () => {
-            if (isNil(latestUpdateParams)) {
-                return
-            }
-            console.log('[Progress] Backup interval fired, starting backup')
-            await progressService.backup(latestUpdateParams)
-            console.log('[Progress] Backup interval completed')
-        }, BACKUP_INTERVAL_MS)
+        isBackupLoopRunning = true
+        backupLoopPromise = backupLoop()
     },
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return updateLock.runExclusive(async () => {
@@ -91,8 +100,7 @@ export const progressService = {
             return
         }
         await lock.runExclusive(async () => {
-            const params = updateParams
-            const { flowExecutorContext, engineConstants } = params!
+            const { flowExecutorContext, engineConstants } = updateParams
             const executionState = await logSerializer.serialize({
                 executionState: {   
                     steps: flowExecutorContext.steps,
@@ -137,18 +145,23 @@ export const progressService = {
             await sendLogsUpdate(request)
         })
     },
-    shutdown: () => {
-        console.log('[Progress] Shutdown called, clearing backup interval and state')
-        if (backupIntervalId) {
-            clearInterval(backupIntervalId)
-            backupIntervalId = null
+    shutdown: async () => {
+        console.log('[Progress] Shutdown called, stopping backup loop')
+        isBackupLoopRunning = false
+        
+        if (backupLoopPromise) {
+            console.log('[Progress] Waiting for in-progress backup to complete')
+            await backupLoopPromise
+            backupLoopPromise = null
         }
+        
         latestUpdateParams = null
+        console.log('[Progress] Shutdown complete')
     },
 }
 
-process.on('SIGTERM', progressService.shutdown)
-process.on('SIGINT', progressService.shutdown)
+process.on('SIGTERM', () => void progressService.shutdown())
+process.on('SIGINT', () => void progressService.shutdown())
 
 type CreateOutputContextParams = {
     engineConstants: EngineConstants
