@@ -5,6 +5,7 @@ import { newCdr } from "./lib/triggers/new-cdr";
 import { newIncomingCall } from "./lib/triggers/new-incoming-call";
 import { newOutgoingCall } from "./lib/triggers/new-outgoing-call";
 import { newVoicemail } from "./lib/triggers/new-voicemail";
+import { newSms } from "./lib/triggers/new-sms";
 
 export const connectucAuth = PieceAuth.OAuth2({
   authUrl: "https://auth.uc-technologies.com/oauth2/authorize",
@@ -62,5 +63,5 @@ export const connectuc = createPiece({
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
   authors: [],
   actions: [],
-  triggers: [newRecording, newCdr, newIncomingCall, newOutgoingCall, newVoicemail],
+  triggers: [newRecording, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],
 });
