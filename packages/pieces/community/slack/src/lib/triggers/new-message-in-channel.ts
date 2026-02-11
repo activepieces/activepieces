@@ -1,9 +1,7 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { slackAuth } from '../../';
-import { WebClient } from '@slack/web-api';
-import { isNil } from '@activepieces/shared';
-import { getFirstFiveOrAll } from '../common/utils';
+import { getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 
 
@@ -24,8 +22,7 @@ export const newMessageInChannelTrigger = createTrigger({
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: undefined,
 	async onEnable(context) {
-		// Older OAuth2 has team_id, newer has team.id
-		const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({
 			events: ['message'],
 			identifierValue: teamId,

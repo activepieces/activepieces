@@ -5,6 +5,7 @@ import {
   PauseType,
 } from '@activepieces/shared';
 import { ChatPostMessageResponse } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from './auth-helpers';
 
 export const requestAction = async (conversationId: string, context: any) => {
   const { actions } = context.propsValue;
@@ -38,7 +39,7 @@ export const requestAction = async (conversationId: string, context: any) => {
       },
     });
 
-    const token = context.auth.access_token;
+    const token = getBotToken(context.auth as SlackAuthValue);
     const { text, username, profilePicture } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');

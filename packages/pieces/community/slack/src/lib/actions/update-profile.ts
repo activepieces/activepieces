@@ -1,6 +1,7 @@
 import { slackAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
+import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const updateProfileAction = createAction({
   auth: slackAuth,
@@ -29,7 +30,7 @@ export const updateProfileAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.data['authed_user']?.access_token);
+    const client = new WebClient(requireUserToken(auth as SlackAuthValue));
     return client.users.profile.set({
       profile: {
         first_name: propsValue.firstName,

@@ -1,11 +1,11 @@
 import {
-  OAuth2PropertyValue,
   Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../../';
+import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 export const newMention = createTrigger({
   auth: slackAuth,
@@ -30,8 +30,7 @@ export const newMention = createTrigger({
             options: [],
           };
         }
-        const authentication = auth as OAuth2PropertyValue;
-        const accessToken = authentication['access_token'];
+        const accessToken = getBotToken(auth as SlackAuthValue);
         const channels = await getChannels(accessToken);
         return {
           disabled: false,
@@ -49,9 +48,7 @@ export const newMention = createTrigger({
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
   onEnable: async (context) => {
-    // Older OAuth2 has team_id, newer has team.id
-    const teamId =
-      context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+    const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
       events: ['message'],
       identifierValue: teamId,

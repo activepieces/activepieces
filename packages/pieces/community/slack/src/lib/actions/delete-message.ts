@@ -3,6 +3,7 @@ import { slackAuth } from '../..';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { WebClient } from '@slack/web-api';
+import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const deleteMessageAction = createAction({
   name: 'delete-message',
@@ -25,8 +26,7 @@ export const deleteMessageAction = createAction({
       throw new Error('Invalid Timestamp Value.');
     }
 
-        const userAccessToken = auth.data?.authed_user?.access_token;
-
+    const userAccessToken = requireUserToken(auth as SlackAuthValue);
     const client = new WebClient(userAccessToken);
 
     const historyResponse = await client.conversations.history({
@@ -41,13 +41,6 @@ export const deleteMessageAction = createAction({
     if (!message) {
       throw new Error('No message found for the provided timestamp.');
     }
-
-
-    if (!userAccessToken) {
-      throw new Error('User access token is missing.');
-    }
-
-    // const userClient = new WebClient(userAccessToken);
 
     return client.chat.delete({
       channel: propsValue.channel,

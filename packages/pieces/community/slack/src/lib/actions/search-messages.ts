@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
 import { WebClient } from '@slack/web-api';
+import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const searchMessages = createAction({
   name: 'searchMessages',
@@ -14,14 +15,7 @@ export const searchMessages = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const userToken = auth.data['authed_user']?.access_token;
-    if (userToken === undefined) {
-      throw new Error(JSON.stringify(
-        {
-          message: 'Missing user token, please re-authenticate'
-        }
-      ));
-    }
+    const userToken = requireUserToken(auth as SlackAuthValue);
     const client = new WebClient(userToken);
     const matches = [];
 

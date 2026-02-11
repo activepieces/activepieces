@@ -3,6 +3,7 @@ import { slackAuth } from '../..';
 import { WebClient } from '@slack/web-api';
 import { slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const retrieveThreadMessages = createAction({
   name: 'retrieveThreadMessages',
@@ -19,7 +20,7 @@ export const retrieveThreadMessages = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.access_token);
+    const client = new WebClient(getBotToken(auth as SlackAuthValue));
       const messageTimestamp = processMessageTimestamp(propsValue.threadTs);
         if (!messageTimestamp) {
           throw new Error('Invalid Timestamp Value.');

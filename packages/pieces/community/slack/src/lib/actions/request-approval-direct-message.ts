@@ -8,6 +8,7 @@ import {
 } from '@activepieces/shared';
 import { profilePicture, text, userId, username, mentionOriginFlow } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const requestApprovalDirectMessageAction = createAction({
   auth: slackAuth,
@@ -24,7 +25,7 @@ export const requestApprovalDirectMessageAction = createAction({
   },
   async run(context) {
     if (context.executionType === ExecutionType.BEGIN) {
-      const token = context.auth.access_token;
+      const token = getBotToken(context.auth as SlackAuthValue);
       const { userId, username, profilePicture, mentionOriginFlow } = context.propsValue;
 
       assertNotNullOrUndefined(token, 'token');

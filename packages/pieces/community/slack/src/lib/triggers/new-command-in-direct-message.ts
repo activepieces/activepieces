@@ -4,11 +4,11 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { userId } from '../common/props';
-import { slackAuth } from '../../';
+import { slackOAuth2Auth } from '../../';
 import { parseCommand } from '../common/utils';
 
 export const newCommandInDirectMessageTrigger = createTrigger({
-  auth: slackAuth,
+  auth: slackOAuth2Auth,
   name: 'new-command-in-direct-message',
   displayName: 'New Command in Direct Message',
   description:

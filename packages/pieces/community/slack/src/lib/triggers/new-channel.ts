@@ -1,6 +1,7 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
+import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
 
 const sampleData = {
   type: 'channel_created',
@@ -21,9 +22,7 @@ export const channelCreated = createTrigger({
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: sampleData,
   onEnable: async (context) => {
-    // Older OAuth2 has team_id, newer has team.id
-    const teamId =
-      context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+    const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
       events: ['channel_created'],
       identifierValue: teamId,
@@ -33,7 +32,7 @@ export const channelCreated = createTrigger({
     // Ignored
   },
   test: async (context) => {
-    const client = new WebClient(context.auth.access_token);
+    const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
     const response = await client.conversations.list({
       exclude_archived: true,
       limit: 10,

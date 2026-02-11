@@ -2,6 +2,7 @@ import { slackAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const setChannelTopicAction = createAction({
 	auth: slackAuth,
@@ -18,7 +19,7 @@ export const setChannelTopicAction = createAction({
 	},
 	async run(context) {
 		const { channel, topic } = context.propsValue;
-		const client = new WebClient(context.auth.access_token);
+		const client = new WebClient(getBotToken(context.auth as SlackAuthValue));
 
 		return await client.conversations.setTopic({
 			channel,

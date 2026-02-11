@@ -5,7 +5,6 @@ import {
 } from '@activepieces/pieces-common';
 import {
   createPiece,
-  OAuth2PropertyValue,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
@@ -49,9 +48,12 @@ import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji'
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 import { listUsers } from './lib/actions/list-users';
 import { deleteMessageAction } from './lib/actions/delete-message';
+import { getBotToken, getUserToken } from './lib/common/auth-helpers';
+import type { SlackAuthValue } from './lib/common/auth-helpers';
 
-export const slackAuth = PieceAuth.OAuth2({
-  description: '',
+export const slackOAuth2Auth = PieceAuth.OAuth2({
+  description:
+    'Authenticate via a Slack OAuth flow.',
   authUrl:
     'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites,channels:history,groups:history,chat:write,users:read',
   tokenUrl: 'https://slack.com/api/oauth.v2.access',
@@ -87,10 +89,49 @@ export const slackAuth = PieceAuth.OAuth2({
   ],
 });
 
+const slackCustomAuth = PieceAuth.CustomAuth({
+  description: 'Authenticate using a Slack bot token (and optional user token).',
+  required: true,
+  props: {
+    botToken: PieceAuth.SecretText({
+      displayName: 'Bot Token',
+      description: 'The bot token for your Slack app (starts with xoxb-)',
+      required: true,
+    }),
+    userToken: PieceAuth.SecretText({
+      displayName: 'User Token',
+      description: 'Optional user token for actions that require user-level access (starts with xoxp-)',
+      required: false,
+    }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{ ok: boolean; error?: string }>({
+        method: HttpMethod.GET,
+        url: 'https://slack.com/api/auth.test',
+        headers: {
+          Authorization: `Bearer ${auth.botToken}`,
+        },
+      });
+      if (!response.body.ok) {
+        return {
+          valid: false,
+          error: `Slack auth.test failed: ${response.body.error}`,
+        };
+      }
+      return { valid: true };
+    } catch (e) {
+      return { valid: false, error: (e as Error).message };
+    }
+  },
+});
+
+export const slackAuth = [slackOAuth2Auth, slackCustomAuth];
+
 export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
-  minimumSupportedRelease: '0.66.7',
+  minimumSupportedRelease: '0.79.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
@@ -199,19 +240,18 @@ export const slack = createPiece({
       },
       auth: slackAuth,
       authMapping: async (auth, propsValue) => {
+        const typedAuth = auth as SlackAuthValue;
         if (propsValue.useUserToken) {
-          return {
-            Authorization: `Bearer ${
-              (auth as OAuth2PropertyValue).data['authed_user']?.access_token
-            }`,
-          };
-        } else {
-          return {
-            Authorization: `Bearer ${
-              (auth as OAuth2PropertyValue).access_token
-            }`,
-          };
+          const userToken = getUserToken(typedAuth);
+          if (userToken) {
+            return {
+              Authorization: `Bearer ${userToken}`,
+            };
+          }
         }
+        return {
+          Authorization: `Bearer ${getBotToken(typedAuth)}`,
+        };
       },
       extraProps: {
         useUserToken: Property.Checkbox({

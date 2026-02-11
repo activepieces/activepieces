@@ -3,6 +3,7 @@ import { slackAuth } from '../..';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { WebClient } from '@slack/web-api';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const getMessageAction = createAction({
 	name: 'get-message',
@@ -24,7 +25,7 @@ export const getMessageAction = createAction({
 		if (!messageTimestamp) {
 			throw new Error('Invalid Timestamp Value.');
 		}
-		const client = new WebClient(auth.access_token);
+		const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
 		return await client.conversations.history({
 			channel: propsValue.channel,
