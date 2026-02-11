@@ -1,10 +1,11 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderModel, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
 export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
     name: 'OpenAI Compatible',
-    async validateConnection(authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<void> {
+    async validateConnection(authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig, _log: FastifyBaseLogger): Promise<void> {
         const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
             url: `${config.baseUrl}/models`,
             method: HttpMethod.GET,

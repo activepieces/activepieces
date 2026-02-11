@@ -513,6 +513,7 @@ export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DO
 export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS, {
     provider: string
     message: string
+    httpErrorResponse: string
 }>
 
 export enum ErrorCode {

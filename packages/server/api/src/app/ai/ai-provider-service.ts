@@ -105,10 +105,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 params: { entityId: providerId, entityType: 'AIProvider' },
             })
         }
-
+        const config = request.config ?? aiProvider.config
         if (!isNil(request.auth)) {
-            const config = request.config ?? aiProvider.config
             await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
+        }
+        else {
+            const { auth } = await this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
+            await this.validateProviderCredentials(aiProvider.provider, auth, config)
         }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
@@ -127,17 +130,20 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
         const providerStrategy = aiProviders[provider]
+        log.debug(`Validating credentials for ${providerStrategy.name}`)
         try {
-            await providerStrategy.validateConnection(auth, config)
+            log.debug(`Validating credentials for ${providerStrategy.name}`)
+            await providerStrategy.validateConnection(auth, config, log)
         }
         catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-            log.warn({ provider, error: errorMessage }, 'AI provider credential validation failed')
+            const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
                 params: {
                     provider,
-                    message: `Failed to validate credentials for ${providerStrategy.name}: ${errorMessage}`,
+                    message: `Failed to validate credentials for ${providerStrategy.name} ${includeHttpErrorInMessage ? `, ${errorMessage}` : ''}`,
+                    httpErrorResponse: errorMessage,
                 },
             })
         }

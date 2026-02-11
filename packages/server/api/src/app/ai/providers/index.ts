@@ -19,7 +19,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
         name: 'Activepieces',
-        async validateConnection(): Promise<void> {
+        async validateConnection(_authConfig, _config, _log): Promise<void> {
             // Activepieces provider is managed internally, no external validation needed
         },
     },

@@ -1,10 +1,11 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderModel, AIProviderModelType, AnthropicProviderAuthConfig, AnthropicProviderConfig } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
 export const anthropicProvider: AIProviderStrategy<AnthropicProviderAuthConfig, AnthropicProviderConfig> = {
     name: 'Anthropic',
-    async validateConnection(authConfig: AnthropicProviderAuthConfig, config: AnthropicProviderConfig): Promise<void> {
+    async validateConnection(authConfig: AnthropicProviderAuthConfig, config: AnthropicProviderConfig, _log: FastifyBaseLogger): Promise<void> {
         await anthropicProvider.listModels(authConfig, config)
     },
     async listModels(authConfig: AnthropicProviderAuthConfig, _config: AnthropicProviderConfig): Promise<AIProviderModel[]> {

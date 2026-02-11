@@ -1,10 +1,11 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderModel, AIProviderModelType, OpenRouterProviderAuthConfig, OpenRouterProviderConfig } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
 export const openRouterProvider: AIProviderStrategy<OpenRouterProviderAuthConfig, OpenRouterProviderConfig> = {
     name: 'OpenRouter',
-    async validateConnection(authConfig: OpenRouterProviderAuthConfig, _config: OpenRouterProviderConfig): Promise<void> {
+    async validateConnection(authConfig: OpenRouterProviderAuthConfig, _config: OpenRouterProviderConfig, _log: FastifyBaseLogger): Promise<void> {
         await httpClient.sendRequest({
             url: 'https://openrouter.ai/api/v1/auth/key',
             method: HttpMethod.GET,
