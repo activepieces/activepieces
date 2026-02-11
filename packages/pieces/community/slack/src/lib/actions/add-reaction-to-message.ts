@@ -4,6 +4,7 @@ import { singleSelectChannelInfo, slackChannel } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
+import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const addRectionToMessageAction = createAction({
   auth: slackAuth,
@@ -30,7 +31,7 @@ export const addRectionToMessageAction = createAction({
   async run(context) {
     const { channel, ts, reaction } = context.propsValue;
 
-    const slack = new WebClient(context.auth.access_token);
+    const slack = new WebClient(getBotToken(context.auth as SlackAuthValue));
 
     const messageTimestamp = processMessageTimestamp(ts);
 
