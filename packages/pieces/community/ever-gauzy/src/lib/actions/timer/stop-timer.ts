@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth } from '../../../index';
-import { getAuthHeaders, getBaseUrl, TimeLogSourceEnum, TimeLogType } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, TimeLogSourceEnum, TimeLogType } from '../../common';
 
 export const stopTimer = createAction({
     auth: gauzyAuth,

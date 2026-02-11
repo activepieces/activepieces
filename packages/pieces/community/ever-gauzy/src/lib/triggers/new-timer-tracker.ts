@@ -1,6 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { gauzyAuth } from '../../index';
-import { gauzyWebhookCommon, GauzyWebhookInformation, TimeLogSourceEnum } from '../common';
+import { gauzyAuth, gauzyWebhookCommon, GauzyWebhookInformation, TimeLogSourceEnum } from '../common';
 
 const triggerNameInStore = 'gauzy_new_time_track_trigger';
 

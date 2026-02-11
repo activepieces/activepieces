@@ -1,12 +1,13 @@
-import { DynamicPropsValue, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { getAuthHeaders, getBaseUrl } from './auth';
+import { gauzyAuth, getAuthHeaders, getBaseUrl } from './auth';
 
 export const dynamicProps = {
   // Organizations dropdown
   organizations: Property.Dropdown({
     displayName: 'Organization',
     required: true,
+    auth: gauzyAuth,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -49,6 +50,7 @@ export const dynamicProps = {
   roles: Property.Dropdown({
     displayName: 'Role',
     required: false,
+    auth: gauzyAuth,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -91,6 +93,7 @@ export const dynamicProps = {
   projects: Property.Dropdown({
     displayName: 'Project',
     required: false,
+    auth: gauzyAuth,
     refreshers: ['organizationId'],
     options: async ({ auth, organizationId }) => {
       if (!auth) {
@@ -141,6 +144,7 @@ export const dynamicProps = {
   taskStatuses: Property.Dropdown({
     displayName: 'Task Status',
     required: false,
+    auth: gauzyAuth,
     refreshers: ['organizationId'],
     options: async ({ auth, organizationId }) => {
       if (!auth) {
@@ -191,6 +195,7 @@ export const dynamicProps = {
   taskPriorities: Property.Dropdown({
     displayName: 'Task Priority',
     required: false,
+    auth: gauzyAuth,
     refreshers: ['organizationId'],
     options: async ({ auth, organizationId }) => {
       if (!auth) {
@@ -241,6 +246,7 @@ export const dynamicProps = {
   taskSizes: Property.Dropdown({
     displayName: 'Task Size',
     required: false,
+    auth: gauzyAuth,
     refreshers: ['organizationId'],
     options: async ({ auth, organizationId }) => {
       if (!auth) {
@@ -291,6 +297,7 @@ export const dynamicProps = {
   employees: Property.Dropdown({
     displayName: 'Employee',
     required: false,
+    auth: gauzyAuth,
     refreshers: ['organizationId'],
     options: async ({ auth, organizationId }) => {
       if (!auth) {
@@ -341,6 +348,7 @@ export const dynamicProps = {
   teams: Property.Dropdown({
     displayName: 'Team',
     required: false,
+    auth: gauzyAuth,
     refreshers: ['organizationId'],
     options: async ({ auth, organizationId }) => {
       if (!auth) {

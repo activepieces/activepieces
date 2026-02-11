@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth } from '../../../index';
-import { getAuthHeaders, getBaseUrl } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl } from '../../common';
 
 export const getListOfTasks = createAction({
     auth: gauzyAuth,

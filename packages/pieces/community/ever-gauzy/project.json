@@ -28,7 +28,21 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/ever-gauzy",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     },
     "nx-release-publish": {
       "options": {

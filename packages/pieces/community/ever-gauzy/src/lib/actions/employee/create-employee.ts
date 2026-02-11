@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth } from '../../../index';
-import { getAuthHeaders, getBaseUrl, LanguagesEnum, dynamicProps } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, LanguagesEnum, dynamicProps } from '../../common';
 
 export const createEmployee = createAction({
   auth: gauzyAuth,

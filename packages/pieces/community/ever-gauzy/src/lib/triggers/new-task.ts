@@ -1,6 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { gauzyAuth } from '../../index';
-import { gauzyWebhookCommon, GauzyWebhookInformation } from '../common';
+import { gauzyAuth, gauzyWebhookCommon, GauzyWebhookInformation } from '../common';
 
 const triggerNameInStore = 'gauzy_new_task_trigger';
 
