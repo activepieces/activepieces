@@ -1,3 +1,4 @@
+import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
 import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
@@ -15,11 +16,11 @@ const fetchWithRetry = fetchRetry(global.fetch)
 
 const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
-let isBackupLoopRunning = false
+let backupController: AbortController | null = null
 let backupLoopPromise: Promise<void> | null = null
 
-async function backupLoop(): Promise<void> {
-    while (isBackupLoopRunning) {
+async function backupLoop(signal: AbortSignal): Promise<void> {
+    while (!signal.aborted) {
         try {
             if (latestUpdateParams) {
                 console.log('[Progress] Backup interval fired, starting backup')
@@ -30,14 +31,24 @@ async function backupLoop(): Promise<void> {
         catch (err) {
             console.error('[Progress] Backup failed', err)
         }
-        await utils.sleep(BACKUP_INTERVAL_MS)
+
+        // Sleep for interval or until aborted
+        try {
+            await setTimeout(BACKUP_INTERVAL_MS, undefined, { signal })
+        }
+        catch {
+            // sleep aborted → loop will exit naturally
+        }
     }
 }
 
 export const progressService = {
     init: (): void => {
-        isBackupLoopRunning = true
-        backupLoopPromise = backupLoop()
+        if (backupController) {
+            return
+        }
+        backupController = new AbortController()
+        backupLoopPromise = backupLoop(backupController.signal)
     },
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return updateLock.runExclusive(async () => {
@@ -144,15 +155,20 @@ export const progressService = {
         })
     },
     shutdown: async () => {
+        if (!backupController) {
+            return
+        }
+        
         console.log('[Progress] Shutdown called, stopping backup loop')
-        isBackupLoopRunning = false
+        backupController.abort()
         
         if (backupLoopPromise) {
             console.log('[Progress] Waiting for in-progress backup to complete')
             await backupLoopPromise
-            backupLoopPromise = null
         }
         
+        backupController = null
+        backupLoopPromise = null
         latestUpdateParams = null
         console.log('[Progress] Shutdown complete')
     },

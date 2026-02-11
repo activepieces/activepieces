@@ -110,7 +110,6 @@ export const utils = {
 
         return bytes
     },
-    sleep: (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms)),
 }
 
 function isEngineError(error: unknown): error is ExecutionError {
