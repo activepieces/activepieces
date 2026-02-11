@@ -1,10 +1,10 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
+import { getNotionToken } from '../common';
 
 export const findPage = createAction({
   auth: notionAuth,
@@ -43,7 +43,7 @@ export const findPage = createAction({
     const searchLimit = Math.min(Math.max(limit || 10, 1), 100);
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 
