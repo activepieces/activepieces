@@ -1,8 +1,7 @@
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, createGoogleClient } from '../common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const moveFileAction = createAction({
   auth: googleDriveAuth,
@@ -22,8 +21,7 @@ export const moveFileAction = createAction({
     const fileId = context.propsValue.fileId;
     const folderId = context.propsValue.folderId;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 

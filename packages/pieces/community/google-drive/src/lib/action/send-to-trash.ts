@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, createGoogleClient } from '../common';
 import { common } from '../common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const googleDriveTrashFile = createAction({
   auth: googleDriveAuth,
@@ -18,8 +17,7 @@ export const googleDriveTrashFile = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
     const body_value = {
