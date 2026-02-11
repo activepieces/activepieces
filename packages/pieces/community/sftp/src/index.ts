@@ -28,27 +28,31 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
   if (protocolBackwardCompatibility === 'sftp') {
     const sftp = new Client();
 
-    if (password) {
+    if (privateKey) {
+      // Private key authentication — use password as passphrase if provided
+      const connectOptions: Client.ConnectOptions = {
+        host,
+        port,
+        username,
+        privateKey: privateKey.replace(/\\n/g, '\n').trim(),
+        timeout: 10000,
+      };
+      if (password) {
+        connectOptions.passphrase = password;
+      }
+      if (algorithm && algorithm.length > 0) {
+        connectOptions.algorithms = {
+          serverHostKey: algorithm,
+        } as Client.ConnectOptions['algorithms'];
+      }
+      await sftp.connect(connectOptions);
+    }
+    else if (password) {
       await sftp.connect({
         host,
         port,
         username,
         password,
-        timeout: 10000,
-      });
-    }
-    else if (privateKey) {
-      if (!algorithm || algorithm.length === 0) {
-        throw new Error('At least one algorithm must be selected for SFTP Private Key authentication.');
-      }
-      await sftp.connect({
-        host,
-        port,
-        username,
-        privateKey: privateKey.replace(/\\n/g, '\n').trim(),
-        algorithms: {
-          serverHostKey: algorithm 
-        }  as Client.ConnectOptions['algorithms'],
         timeout: 10000,
       });
     }
@@ -125,7 +129,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'The password to authenticate with. Either this or private key is required',
+      description: 'The password to authenticate with. When used with a private key, this is used as the passphrase to decrypt the key',
       required: false,
     }),
     privateKey: PieceAuth.SecretText({
@@ -135,7 +139,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
     }),
     algorithm: Property.StaticMultiSelectDropdown({
       displayName: 'Host Key Algorithm',
-      description: 'The host key algorithm to use for SFTP Private Key authentication',
+      description: 'The host key algorithm to use for SFTP Private Key authentication. If not specified, the default algorithms will be used',
       required: false,
       options: {
         options: [
