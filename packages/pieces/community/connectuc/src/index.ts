@@ -3,6 +3,7 @@ import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces
 import { newRecording } from "./lib/triggers/new-recording";
 import { newCdr } from "./lib/triggers/new-cdr";
 import { newIncomingCall } from "./lib/triggers/new-incoming-call";
+import { newOutgoingCall } from "./lib/triggers/new-outgoing-call";
 
 export const connectucAuth = PieceAuth.OAuth2({
   authUrl: "https://auth.uc-technologies.com/oauth2/authorize",
@@ -60,5 +61,5 @@ export const connectuc = createPiece({
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
   authors: [],
   actions: [],
-  triggers: [newRecording, newCdr, newIncomingCall],
+  triggers: [newRecording, newCdr, newIncomingCall, newOutgoingCall],
 });
