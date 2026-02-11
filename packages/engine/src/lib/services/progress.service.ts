@@ -18,8 +18,6 @@ export let latestUpdateParams: UpdateStepProgressParams | null = null
 let isBackupLoopRunning = false
 let backupLoopPromise: Promise<void> | null = null
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
-
 async function backupLoop(): Promise<void> {
     while (isBackupLoopRunning) {
         try {
@@ -32,7 +30,7 @@ async function backupLoop(): Promise<void> {
         catch (err) {
             console.error('[Progress] Backup failed', err)
         }
-        await sleep(BACKUP_INTERVAL_MS)
+        await utils.sleep(BACKUP_INTERVAL_MS)
     }
 }
 
