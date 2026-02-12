@@ -4,6 +4,7 @@ import { awsBedrockAuth } from '../../index';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,
+  formatBedrockError,
 } from '../common';
 
 export const invokeModel = createAction({
@@ -27,7 +28,7 @@ export const invokeModel = createAction({
             options: [],
           };
         }
-        return getBedrockModelOptions(auth.props);
+        return getBedrockModelOptions(auth.props, { showAll: true });
       },
     }),
     body: Property.Json({
@@ -35,7 +36,16 @@ export const invokeModel = createAction({
       required: true,
       description:
         'The JSON request body to send to the model. Format varies by model — refer to the model documentation.',
-      defaultValue: {},
+      defaultValue: {
+        anthropic_version: 'bedrock-2023-05-31',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: 'Hello, how are you?',
+          },
+        ],
+      },
     }),
     contentType: Property.ShortText({
       displayName: 'Content Type',
@@ -54,17 +64,26 @@ export const invokeModel = createAction({
     const client = createBedrockRuntimeClient(auth.props);
     const { model, body, contentType, accept } = propsValue;
 
-    const response = await client.send(
-      new InvokeModelCommand({
-        modelId: model,
-        body: Buffer.from(JSON.stringify(body)),
-        contentType: contentType ?? 'application/json',
-        accept: accept ?? 'application/json',
-      })
-    );
+    try {
+      const response = await client.send(
+        new InvokeModelCommand({
+          modelId: model,
+          body: Buffer.from(JSON.stringify(body)),
+          contentType: contentType ?? 'application/json',
+          accept: accept ?? 'application/json',
+        })
+      );
 
-    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+      const raw = new TextDecoder().decode(response.body);
+      const acceptType = accept ?? 'application/json';
 
-    return responseBody;
+      if (acceptType.includes('json')) {
+        return JSON.parse(raw);
+      }
+
+      return { body: raw, contentType: response.contentType };
+    } catch (error) {
+      throw new Error(formatBedrockError(error));
+    }
   },
 });

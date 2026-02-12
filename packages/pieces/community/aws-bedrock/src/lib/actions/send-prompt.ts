@@ -1,12 +1,19 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  Property,
+  StoreScope,
+} from '@activepieces/pieces-framework';
 import {
   ConverseCommand,
   ConversationRole,
+  Message,
 } from '@aws-sdk/client-bedrock-runtime';
 import { awsBedrockAuth } from '../../index';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,
+  formatBedrockError,
+  extractConverseTextResponse,
 } from '../common';
 
 export const sendPrompt = createAction({
@@ -29,7 +36,7 @@ export const sendPrompt = createAction({
             options: [],
           };
         }
-        return getBedrockModelOptions(auth.props);
+        return getBedrockModelOptions(auth.props, { useInferenceProfiles: true });
       },
     }),
     prompt: Property.LongText({
@@ -61,42 +68,73 @@ export const sendPrompt = createAction({
         'Nucleus sampling: the model considers tokens with top_p probability mass.',
       defaultValue: 1,
     }),
+    stopSequences: Property.Array({
+      displayName: 'Stop Sequences',
+      required: false,
+      description:
+        'Sequences that will cause the model to stop generating. Up to 4 sequences.',
+    }),
+    memoryKey: Property.ShortText({
+      displayName: 'Memory Key',
+      required: false,
+      description:
+        'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave the model without memory of previous messages.',
+    }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, store }) {
     const client = createBedrockRuntimeClient(auth.props);
-    const { model, prompt, systemPrompt, temperature, maxTokens, topP } =
-      propsValue;
+    const {
+      model,
+      prompt,
+      systemPrompt,
+      temperature,
+      maxTokens,
+      topP,
+      stopSequences,
+      memoryKey,
+    } = propsValue;
 
-    const response = await client.send(
-      new ConverseCommand({
-        modelId: model,
-        messages: [
-          {
-            role: ConversationRole.USER,
-            content: [{ text: prompt }],
+    let messageHistory: Message[] = [];
+    if (memoryKey) {
+      messageHistory =
+        (await store.get<Message[]>(memoryKey, StoreScope.PROJECT)) ?? [];
+    }
+
+    messageHistory.push({
+      role: ConversationRole.USER,
+      content: [{ text: prompt }],
+    });
+
+    try {
+      const response = await client.send(
+        new ConverseCommand({
+          modelId: model,
+          messages: messageHistory,
+          ...(systemPrompt ? { system: [{ text: systemPrompt }] } : {}),
+          inferenceConfig: {
+            temperature: temperature ?? undefined,
+            maxTokens: maxTokens ?? undefined,
+            topP: topP ?? undefined,
+            stopSequences:
+              stopSequences && stopSequences.length > 0
+                ? (stopSequences as string[])
+                : undefined,
           },
-        ],
-        ...(systemPrompt
-          ? { system: [{ text: systemPrompt }] }
-          : {}),
-        inferenceConfig: {
-          temperature: temperature ?? undefined,
-          maxTokens: maxTokens ?? undefined,
-          topP: topP ?? undefined,
-        },
-      })
-    );
+        })
+      );
 
-    const outputMessage = response.output?.message;
-    const textContent = outputMessage?.content
-      ?.filter((block) => 'text' in block)
-      .map((block) => block.text)
-      .join('');
+      const outputMessage = response.output?.message;
+      if (outputMessage) {
+        messageHistory.push(outputMessage);
+      }
 
-    return {
-      text: textContent ?? '',
-      stopReason: response.stopReason,
-      usage: response.usage,
-    };
+      if (memoryKey) {
+        await store.put(memoryKey, messageHistory, StoreScope.PROJECT);
+      }
+
+      return extractConverseTextResponse(response);
+    } catch (error) {
+      throw new Error(formatBedrockError(error));
+    }
   },
 });

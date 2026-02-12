@@ -4,10 +4,13 @@ import {
   ConversationRole,
   ImageFormat,
 } from '@aws-sdk/client-bedrock-runtime';
+import { ModelModality } from '@aws-sdk/client-bedrock';
 import { awsBedrockAuth } from '../../index';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,
+  formatBedrockError,
+  extractConverseTextResponse,
 } from '../common';
 
 const EXTENSION_TO_FORMAT: Record<string, ImageFormat> = {
@@ -38,7 +41,10 @@ export const generateContentFromImage = createAction({
             options: [],
           };
         }
-        return getBedrockModelOptions(auth.props);
+        return getBedrockModelOptions(auth.props, {
+          useInferenceProfiles: true,
+          inputModality: ModelModality.IMAGE,
+        });
       },
     }),
     image: Property.File({
@@ -85,41 +91,35 @@ export const generateContentFromImage = createAction({
 
     const imageBytes = Buffer.from(image.base64, 'base64');
 
-    const response = await client.send(
-      new ConverseCommand({
-        modelId: model,
-        messages: [
-          {
-            role: ConversationRole.USER,
-            content: [
-              {
-                image: {
-                  format,
-                  source: { bytes: imageBytes },
+    try {
+      const response = await client.send(
+        new ConverseCommand({
+          modelId: model,
+          messages: [
+            {
+              role: ConversationRole.USER,
+              content: [
+                {
+                  image: {
+                    format,
+                    source: { bytes: imageBytes },
+                  },
                 },
-              },
-              { text: prompt },
-            ],
+                { text: prompt },
+              ],
+            },
+          ],
+          ...(systemPrompt ? { system: [{ text: systemPrompt }] } : {}),
+          inferenceConfig: {
+            temperature: temperature ?? undefined,
+            maxTokens: maxTokens ?? undefined,
           },
-        ],
-        ...(systemPrompt ? { system: [{ text: systemPrompt }] } : {}),
-        inferenceConfig: {
-          temperature: temperature ?? undefined,
-          maxTokens: maxTokens ?? undefined,
-        },
-      })
-    );
+        })
+      );
 
-    const outputMessage = response.output?.message;
-    const textContent = outputMessage?.content
-      ?.filter((block) => 'text' in block)
-      .map((block) => block.text)
-      .join('');
-
-    return {
-      text: textContent ?? '',
-      stopReason: response.stopReason,
-      usage: response.usage,
-    };
+      return extractConverseTextResponse(response);
+    } catch (error) {
+      throw new Error(formatBedrockError(error));
+    }
   },
 });

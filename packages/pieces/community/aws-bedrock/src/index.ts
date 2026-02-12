@@ -4,14 +4,14 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import {
-  BedrockClient,
-  ListFoundationModelsCommand,
-} from '@aws-sdk/client-bedrock';
+import { ListFoundationModelsCommand } from '@aws-sdk/client-bedrock';
 import { sendPrompt } from './lib/actions/send-prompt';
 import { generateContentFromImage } from './lib/actions/generate-content-from-image';
 import { generateContentFromFile } from './lib/actions/generate-content-from-file';
 import { invokeModel } from './lib/actions/invoke-model';
+import { generateImage } from './lib/actions/generate-image';
+import { generateEmbeddings } from './lib/actions/generate-embeddings';
+import { createBedrockClient } from './lib/common';
 
 export const awsBedrockAuth = PieceAuth.CustomAuth({
   description: 'AWS Bedrock authentication using Access Key and Secret Key.',
@@ -69,16 +69,8 @@ export const awsBedrockAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const client = new BedrockClient({
-        credentials: {
-          accessKeyId: auth.accessKeyId,
-          secretAccessKey: auth.secretAccessKey,
-        },
-        region: auth.region,
-      });
-      await client.send(
-        new ListFoundationModelsCommand({})
-      );
+      const client = createBedrockClient(auth);
+      await client.send(new ListFoundationModelsCommand({}));
       return { valid: true };
     } catch (e) {
       return {
@@ -98,6 +90,6 @@ export const awsBedrock = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/aws-bedrock.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["onyedikachi-david"],
-  actions: [sendPrompt, generateContentFromImage, generateContentFromFile, invokeModel],
+  actions: [sendPrompt, generateContentFromImage, generateContentFromFile, generateImage, generateEmbeddings, invokeModel],
   triggers: [],
 });
