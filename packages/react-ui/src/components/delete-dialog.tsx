@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -33,7 +34,7 @@ export const ConfirmationDeleteDialog = ({
   title,
   message,
   mutationFn,
-  showToast,
+  showToast = true,
   isDanger,
   entityName,
   buttonText,
@@ -76,6 +77,8 @@ export const ConfirmationDeleteDialog = ({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent onClick={(e) => e.stopPropagation()}>
+        <DialogClose />
+        
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="pt-2">{message}</DialogDescription>
@@ -84,7 +87,7 @@ export const ConfirmationDeleteDialog = ({
           <Button
             variant="outline"
             disabled={isPending}
-            onClick={() => handleClose()}
+            onClick={handleClose}
           >
             {t('Cancel')}
           </Button>
