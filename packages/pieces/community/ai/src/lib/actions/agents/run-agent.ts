@@ -75,7 +75,7 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
       displayName: 'Max steps',
-      description: 'The numbder of interations the agent can do',
+      description: 'The number of iterations the agent can do',
       required: true,
       defaultValue: 20,
     }),

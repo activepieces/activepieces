@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ export function ProjectSettingsDialog({
   const { checkAccess } = useAuthorization();
   const { project } = projectHooks.useCurrentProject();
   const previousOpenRef = useRef(open);
+  const queryClient = useQueryClient();
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
   const { data: showProjectMembers } = flagsHooks.useFlag(
@@ -86,13 +88,27 @@ export function ProjectSettingsDialog({
       icon: values.icon,
       externalId: values.externalId,
     }, {
-      onSuccess: () => {
-        // Close dialog first
+      onSuccess: (updatedProject) => {
+        // API returns stale icon data, so override with form values
+        const projectWithUpdates = {
+          ...updatedProject,
+          displayName: values.projectName,
+          icon: values.icon,
+          externalId: values.externalId,
+        };
+        
+        // Update React Query caches
+        queryClient.setQueryData(['project', project.id], projectWithUpdates);
+        queryClient.setQueryData(['current-project'], projectWithUpdates);
+        
+        // Update form
+        form.reset({
+          projectName: values.projectName,
+          icon: values.icon,
+          externalId: values.externalId,
+        });
+        
         onClose();
-        // Then refresh page after short delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 300);
       }
     });
   };
@@ -220,7 +236,6 @@ export function ProjectSettingsDialog({
     );
   };
 
-  // Get current icon color from form state for real-time preview
   const currentIconColor = form.watch('icon.color') || project.icon.color;
   const currentProjectName = form.watch('projectName') || project.displayName;
 
