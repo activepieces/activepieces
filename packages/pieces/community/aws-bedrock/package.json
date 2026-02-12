@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-aws-bedrock",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.987.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.987.0",
+    "tslib": "^2.3.0"
+  }
+}
