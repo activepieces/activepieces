@@ -85,6 +85,15 @@ export function ProjectSettingsDialog({
       displayName: values.projectName,
       icon: values.icon,
       externalId: values.externalId,
+    }, {
+      onSuccess: () => {
+        // Close dialog first
+        onClose();
+        // Then refresh page after short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+      }
     });
   };
 
@@ -158,7 +167,6 @@ export function ProjectSettingsDialog({
       case 'members':
         return <MembersSettings />;
       case 'alerts':
-        // return <AlertsSettings />;
         return null;
       case 'pieces':
         return <PiecesSettings />;
@@ -178,6 +186,7 @@ export function ProjectSettingsDialog({
       </span>
     );
   };
+  
   const renderDialogFooter = () => {
     if (activeTab !== 'general') return null;
 
@@ -211,6 +220,10 @@ export function ProjectSettingsDialog({
     );
   };
 
+  // Get current icon color from form state for real-time preview
+  const currentIconColor = form.watch('icon.color') || project.icon.color;
+  const currentProjectName = form.watch('projectName') || project.displayName;
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-sm flex flex-col p-0">
@@ -218,8 +231,8 @@ export function ProjectSettingsDialog({
           <div className="w-[238px]">
             <nav className="bg-sidebar space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
-                title={project.displayName}
-                icon={project.icon}
+                title={currentProjectName}
+                icon={form.watch('icon') || project.icon}
                 containerClassName="px-3 my-4"
                 titleClassName="text-md font-bold"
                 maxLengthToNotShowTooltip={18}
@@ -249,9 +262,9 @@ export function ProjectSettingsDialog({
               <ScrollArea className="h-full">
                 {activeTab === 'general' && (
                   <ProjectAvatar
-                    displayName={project.displayName}
+                    displayName={currentProjectName}
                     projectType={project.type}
-                    iconColor={project.icon.color}
+                    iconColor={currentIconColor}
                     size="md"
                     showBackground={true}
                   />
