@@ -1,8 +1,8 @@
 {
-  "Ethereum Name Service (ENS) is a decentralized naming system on the Ethereum blockchain.": "Ethereum Name Service (ENS) is a decentralized naming system on the Ethereum blockchain.",
-  "*Get your api Key: https://thegraph.com/studio/apikeys": "*Get your api Key: https://thegraph.com/studio/apikeys",
-  "List ENS Domains": "List ENS Domains",
-  "List the ENS domains for a given address.": "List the ENS domains for a given address.",
-  "Address": "Address",
-  "Address to list ENS domains for": "Address to list ENS domains for"
+  "Ethereum Name Service (ENS) is a decentralized naming system on the Ethereum blockchain.": "以太地名服务是以太坊区块链上的一个分散命名系统。",
+  "*Get your api Key: https://thegraph.com/studio/apikeys": "*获取您的 api 密钥： https://thegraph.com/studio/apikeys",
+  "List ENS Domains": "列出ENS 域",
+  "List the ENS domains for a given address.": "列出给定地址的 ENS 域名。",
+  "Address": "地址",
+  "Address to list ENS domains for": "列出ENS域名的地址"
 }
