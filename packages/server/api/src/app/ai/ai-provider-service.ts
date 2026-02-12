@@ -1,5 +1,5 @@
 import {
-    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
+    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
     CreateAIProviderRequest,
     ErrorCode,
@@ -84,6 +84,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+        await this.validateProviderCredentials(request.provider, request.auth, request.config)
         await aiProviderRepo().save({
             id: apId(),
             auth: await encryptUtils.encryptObject(request.auth),
@@ -104,6 +105,14 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 params: { entityId: providerId, entityType: 'AIProvider' },
             })
         }
+        const config = request.config ?? aiProvider.config
+        if (!isNil(request.auth)) {
+            await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
+        }
+        else {
+            const { auth } = await this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
+            await this.validateProviderCredentials(aiProvider.provider, auth, config)
+        }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
         await aiProviderRepo().update(providerId, {
@@ -118,6 +127,26 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             platformId,
             id: providerId,
         })
+    },
+    async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
+        const providerStrategy = aiProviders[provider]
+        try {
+            await providerStrategy.validateConnection(auth, config, log)
+        }
+        catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
+                params: {
+                    provider,
+                    message: includeHttpErrorInMessage
+                        ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
+                        : `Failed to validate credentials for ${providerStrategy.name}`,
+                    httpErrorResponse: errorMessage,
+                },
+            })
+        }
     },
     async getConfigOrThrow({ platformId, provider }: GetOrCreateActivepiecesConfigResponse): Promise<GetProviderConfigResponse> {
         const aiProvider = await aiProviderRepo().findOneBy({

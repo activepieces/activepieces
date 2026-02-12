@@ -169,7 +169,8 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                     sandboxId, 
                     operationType,
                     killedByTimeout,
-                }, '[Sandbox] Execute completed (finally block), listener NOT removed')
+                }, '[Sandbox] Execute completed (finally block), removing listener')
+                sandboxWebsocketServer.removeListener(sandboxId)
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
