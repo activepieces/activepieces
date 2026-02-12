@@ -114,7 +114,9 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 PlatformUsageMetric.ACTIVE_FLOWS,
             )
         }
-        await assertThatFlowIsNotBeingUsed(flow, userId)
+        if (request.body.type !== FlowOperationType.SAVE_SAMPLE_DATA) {
+            await assertThatFlowIsNotBeingUsed(flow, userId)
+        }
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
