@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
-import { blocks, singleSelectChannelInfo, slackChannel } from '../common/props';
-import { processMessageTimestamp } from '../common/utils';
+import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
+import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
 
 export const updateMessage = createAction({
@@ -24,17 +24,26 @@ export const updateMessage = createAction({
       description: 'The updated text of your message',
       required: true,
     }),
+    mentionOriginFlow,
     blocks,
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
+    const { auth, propsValue } = context;
     const messageTimestamp = processMessageTimestamp(propsValue.ts);
     if (!messageTimestamp) {
       throw new Error('Invalid Timestamp Value.');
     }
     const client = new WebClient(auth.access_token);
 
+    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
 
-    const blockList = propsValue.blocks ?[{ type: 'section', text: { type: 'mrkdwn', text:propsValue.text } }, ...(propsValue.blocks as unknown as (KnownBlock | Block)[])] :undefined
+    if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
+      blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
+    }
+
+    if (propsValue.mentionOriginFlow) {
+      blockList.push(buildFlowOriginContextBlock(context));
+    }
 
     return await client.chat.update({
       channel: propsValue.channel,
