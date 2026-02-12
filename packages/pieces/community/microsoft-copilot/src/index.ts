@@ -19,6 +19,7 @@ export const microsoft365Copilot = createPiece({
     searchCopilot,
     // retrieveGroundingData,
     createCustomApiCallAction({
+      auth: microsoft365CopilotAuth,
       baseUrl: () => 'https://graph.microsoft.com/',
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
