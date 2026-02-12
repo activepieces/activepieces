@@ -1,15 +1,13 @@
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth, createGoogleClient } from '../common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	AppConnectionValueForAuthProperty,
 	createTrigger,
-	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { folderIdProp } from '../common/props';
 import dayjs from 'dayjs';
 import { google, drive_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 type Props = {
 	folderId?: string;
@@ -18,7 +16,6 @@ type Props = {
 const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const authValue = auth;
 		const folderId = propsValue.folderId;
 
 		const q = ["mimeType='application/vnd.google-apps.document'", 'trashed = false'];
@@ -29,8 +26,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>,
 			q.push(`'${folderId}' in parents`);
 		}
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(authValue);
+		const authClient = await createGoogleClient(auth);
 
 		const drive = google.drive({ version: 'v3', auth: authClient });
 

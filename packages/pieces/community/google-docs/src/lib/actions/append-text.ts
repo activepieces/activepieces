@@ -1,5 +1,4 @@
-import { docsCommon } from '../common';
-import { googleDocsAuth } from '../..';
+import { docsCommon, googleDocsAuth, getAccessToken } from '../common';
 import { Property, createAction } from "@activepieces/pieces-framework";
 
 export const appendText = createAction({
@@ -23,7 +22,7 @@ export const appendText = createAction({
       return await docsCommon.writeToDocument(
         context.propsValue.documentId,
         context.propsValue.text,
-        context.auth.access_token
+        await getAccessToken(context.auth)
       );
     },
   });
