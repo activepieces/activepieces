@@ -80,6 +80,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
             query: {
                 limit,
                 order: 'ASC',
+                orderBy: 'displayName',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
