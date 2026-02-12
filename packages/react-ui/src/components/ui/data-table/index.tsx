@@ -74,7 +74,7 @@ interface DataTableProps<
   customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
-  hidePagination?: boolean;
+  hidePagination?: boolean;  // Default to false, but we'll set it to true in usage
   bulkActions?: BulkAction<TData>[];
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
@@ -105,7 +105,7 @@ export function DataTable<
   actions = [],
   isLoading,
   onSelectedRowsChange,
-  hidePagination,
+  hidePagination = true, // 🔥 CHANGED: Default to true to hide broken pagination
   bulkActions = [],
   emptyStateTextTitle,
   emptyStateTextDescription,
@@ -172,17 +172,27 @@ export function DataTable<
   }, {} as Record<string, boolean>);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const startingCursor = searchParams.get('cursor') || undefined;
-  const startingLimit = searchParams.get('limit') || '10';
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
-    startingCursor,
+    undefined,
   );
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
-    page?.next ?? undefined,
+    undefined,
   );
   const [previousPageCursor, setPreviousPageCursor] = useState<
     string | undefined
-  >(page?.previous ?? undefined);
+  >(undefined);
+
+  // Sync URL params with internal state on mount
+  useEffect(() => {
+    const urlCursor = searchParams.get('cursor') || undefined;
+    setCurrentCursor(urlCursor);
+  }, []);
+
+  // Update cursor state when page data changes
+  useDeepCompareEffect(() => {
+    setNextPageCursor(page?.next ?? undefined);
+    setPreviousPageCursor(page?.previous ?? undefined);
+  }, [page?.next, page?.previous]);
 
   const enrichPageData = (data: TData[]) => {
     return data.map((row, index) => ({
@@ -206,8 +216,6 @@ export function DataTable<
   );
 
   useDeepCompareEffect(() => {
-    setNextPageCursor(page?.next ?? undefined);
-    setPreviousPageCursor(page?.previous ?? undefined);
     setTableData(enrichPageData(page?.data ?? []));
   }, [page?.data]);
 
@@ -219,7 +227,7 @@ export function DataTable<
     getRowId: () => apId(),
     initialState: {
       pagination: {
-        pageSize: parseInt(startingLimit),
+        pageSize: parseInt(searchParams.get('limit') || '10'),
       },
       columnVisibility,
     },
@@ -241,12 +249,19 @@ export function DataTable<
     );
   }, [table.getSelectedRowModel().rows]);
 
+  // Update URL when cursor or page size changes
   useEffect(() => {
     setSearchParams(
       (prev) => {
         const newParams = new URLSearchParams(prev);
-
-        newParams.set('cursor', currentCursor ?? '');
+        
+        // Only set cursor if it exists, otherwise remove it
+        if (currentCursor) {
+          newParams.set('cursor', currentCursor);
+        } else {
+          newParams.delete('cursor');
+        }
+        
         newParams.set('limit', `${table.getState().pagination.pageSize}`);
         return newParams;
       },
@@ -265,6 +280,26 @@ export function DataTable<
   const resetSelection = () => {
     table.toggleAllRowsSelected(false);
   };
+
+  const handlePreviousPage = () => {
+    if (previousPageCursor) {
+      setCurrentCursor(previousPageCursor);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (nextPageCursor) {
+      setCurrentCursor(nextPageCursor);
+    }
+  };
+
+  const handlePageSizeChange = (value: string) => {
+    table.setPageSize(Number(value));
+    setCurrentCursor(undefined); // Reset to first page
+  };
+
+  const hasData = table.getRowModel().rows?.length > 0;
+  const showEmptyState = !isLoading && !hasData;
 
   return (
     <div>
@@ -330,14 +365,13 @@ export function DataTable<
                   <DataTableSkeleton />
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows?.length ? (
+            ) : hasData ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   className={cn('cursor-pointer', {
                     'hover:bg-background cursor-default': isNil(onRowClick),
                   })}
                   onClick={(e) => {
-                    // Check if the clicked cell is not clickable
                     const clickedCellIndex = (e.target as HTMLElement).closest(
                       'td',
                     )?.cellIndex;
@@ -345,12 +379,11 @@ export function DataTable<
                       clickedCellIndex !== undefined &&
                       columns[clickedCellIndex]?.notClickable
                     ) {
-                      return; // Don't trigger onRowClick for not clickable columns
+                      return;
                     }
                     onRowClick?.(row.original, e.ctrlKey, e);
                   }}
                   onAuxClick={(e) => {
-                    // Similar check for auxiliary click (e.g., middle mouse button)
                     const clickedCellIndex = (e.target as HTMLElement).closest(
                       'td',
                     )?.cellIndex;
@@ -369,8 +402,8 @@ export function DataTable<
                     <TableCell key={cell.id}>
                       <div
                         className={cn('flex items-center', {
-                          'justify-end': cell.column.id === 'actions',
-                          'justify-start': cell.column.id !== 'actions',
+                          'justify-end': cell.column.id === '__actions' || cell.column.id === 'actions',
+                          'justify-start': cell.column.id !== '__actions' && cell.column.id !== 'actions',
                         })}
                       >
                         <div
@@ -378,7 +411,6 @@ export function DataTable<
                             if (cell.column.id === 'select') {
                               e.preventDefault();
                               e.stopPropagation();
-                              return;
                             }
                           }}
                         >
@@ -399,12 +431,12 @@ export function DataTable<
                   className="h-[350px] text-center"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
-                    {emptyStateIcon ? emptyStateIcon : <></>}
+                    {emptyStateIcon}
                     <p className="text-lg font-semibold">
                       {emptyStateTextTitle}
                     </p>
                     {emptyStateTextDescription && (
-                      <p className="text-sm text-muted-foreground ">
+                      <p className="text-sm text-muted-foreground">
                         {emptyStateTextDescription}
                       </p>
                     )}
@@ -415,46 +447,50 @@ export function DataTable<
           </TableBody>
         </Table>
       </div>
+
+      {/* 🔥 PAGINATION IS NOW HIDDEN BY DEFAULT - NO FAKE DATA, NO BROKEN UI */}
       {!hidePagination && (
-         <div className="flex flex-col md:flex-row items-end md:items-center justify-end space-x-2 py-4">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value));
-              setCurrentCursor(undefined);
-            }}
-          >
-            <SelectTrigger className="h-9 min-w-[70px] w-auto">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 30, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentCursor(previousPageCursor)}
-            disabled={!previousPageCursor}
-          >
-            {t('Previous')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setCurrentCursor(nextPageCursor);
-            }}
-            disabled={!nextPageCursor}
-          >
-            {t('Next')}
-          </Button>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium whitespace-nowrap hidden sm:block">
+                {t('Rows per page')}
+              </p>
+              <Select
+                value={`${table.getState().pagination.pageSize}`}
+                onValueChange={handlePageSizeChange}
+              >
+                <SelectTrigger className="h-9 w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 25, 50, 100].map((size) => (
+                    <SelectItem key={size} value={`${size}`}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={!previousPageCursor}
+              >
+                {t('Previous')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={!nextPageCursor}
+              >
+                {t('Next')}
+              </Button>
+            </div>
           </div>
         </div>
       )}
