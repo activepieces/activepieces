@@ -1,8 +1,20 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
+    "module": "commonjs",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "importHelpers": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true
   },
-  "include": ["src/**/*"]
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ]
 }

@@ -1,21 +1,4 @@
 {
   "name": "@activepieces/piece-brave-search",
-  "version": "0.0.1",
-  "description": "Brave Search integration for Activepieces",
-  "main": "dist/index.js",
-  "keywords": [
-    "activepieces",
-    "brave",
-    "search",
-    "mcp"
-  ],
-  "license": "MIT",
-  "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
-  },
-  "devDependencies": {
-    "typescript": "^4.8.4"
-  }
+  "version": "0.0.1"
 }
