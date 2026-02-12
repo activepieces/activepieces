@@ -72,7 +72,6 @@ export const sandboxWebsocketServer = {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete sockets[sandboxId]
                 socket.removeAllListeners('command')
-                sandboxWebsocketServer.removeListener(sandboxId)
 
             })
         })
