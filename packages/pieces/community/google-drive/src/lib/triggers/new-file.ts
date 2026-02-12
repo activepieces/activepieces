@@ -12,7 +12,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../common';
 import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';
 
