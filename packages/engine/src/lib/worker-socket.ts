@@ -22,7 +22,7 @@ let socket: Socket | undefined
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
-    progressService.shutdown()
+    await progressService.shutdown()
     await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
 }
 

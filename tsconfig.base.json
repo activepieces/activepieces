@@ -1789,6 +1789,12 @@
       ],
       "@activepieces/piece-alai": [
         "packages/pieces/community/alai/src/index.ts"
+      ],
+      "@activepieces/piece-kapso": [
+        "packages/pieces/community/kapso/src/index.ts"
+      ],
+      "@activepieces/piece-pdfcrowd": [
+        "packages/pieces/community/pdfcrowd/src/index.ts"
       ]
     },
     "resolveJsonModule": true

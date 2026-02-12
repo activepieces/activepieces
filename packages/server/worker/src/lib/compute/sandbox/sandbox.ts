@@ -64,10 +64,26 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
 
                 let stdError = ''
                 let stdOut = ''
+                let responseReceived = false
 
+                log.info({ sandboxId, operationType }, '[Sandbox] Attaching listener for execution')
                 sandboxWebsocketServer.attachListener(sandboxId, async (event, payload) => {
+                    if (responseReceived && event !== EngineSocketEvent.ENGINE_RESPONSE) {
+                        log.warn({ 
+                            sandboxId, 
+                            operationType,
+                            event,
+                        }, '[Sandbox] Message received AFTER ENGINE_RESPONSE already resolved')
+                    }
+
                     switch (event) {
                         case EngineSocketEvent.ENGINE_RESPONSE:
+                            log.info({ 
+                                sandboxId, 
+                                operationType,
+                                status: (payload as EngineResponse<unknown>).status,
+                            }, '[Sandbox] ENGINE_RESPONSE received, resolving promise')
+                            responseReceived = true
                             resolve({
                                 engine: (payload as EngineResponse<unknown>),
                                 stdOut,
@@ -101,6 +117,14 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 })
 
                 process.on('exit', (code, signal) => {
+                    log.info({ 
+                        sandboxId, 
+                        operationType,
+                        code, 
+                        signal,
+                        responseReceived,
+                        killedByTimeout,
+                    }, '[Sandbox] Process exit event fired')
                     const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
                     if (killedByTimeout) {
                         reject(new ActivepiecesError({
@@ -141,13 +165,16 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 return await operationPromise
             }
             finally {
+                log.info({ 
+                    sandboxId, 
+                    operationType,
+                    killedByTimeout,
+                }, '[Sandbox] Execute completed (finally block), listener NOT removed')
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
-                void sandboxWebsocketServer.removeListener(sandboxId)
                 process?.removeAllListeners('exit')
                 process?.removeAllListeners('error')
-                process?.removeAllListeners('command')
             }
         },
         shutdown: async () => {
