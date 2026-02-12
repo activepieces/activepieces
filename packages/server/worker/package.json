@@ -13,7 +13,7 @@
     "@opentelemetry/api": "1.9.0",
     "axios": "1.13.1",
     "axios-retry": "4.4.1",
-    "fastify": "5.4.0",
+    "fastify": "5.7.3",
     "fetch-retry": "6.0.0",
     "p-limit": "2.3.0",
     "chokidar": "4.0.3",
