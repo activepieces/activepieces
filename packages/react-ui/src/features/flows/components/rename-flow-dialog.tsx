@@ -3,7 +3,7 @@ import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -21,7 +21,10 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 
 const RenameFlowSchema = Type.Object({
-  displayName: Type.String(),
+  displayName: Type.String({
+    minLength: 1,
+    errorMessage: t('Flow name cannot be empty'),
+  }),
 });
 
 type RenameFlowSchema = Static<typeof RenameFlowSchema>;
@@ -32,6 +35,7 @@ type RenameFlowDialogProps = {
   onRename: (newName: string) => void;
   flowName: string;
 };
+
 const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
   children,
   flowId,
@@ -41,7 +45,20 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameFlowForm = useForm<RenameFlowSchema>({
     resolver: typeboxResolver(RenameFlowSchema),
+    defaultValues: {
+      displayName: flowName,
+    },
   });
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isRenameDialogOpen) {
+      renameFlowForm.reset({
+        displayName: flowName,
+      });
+      renameFlowForm.clearErrors();
+    }
+  }, [isRenameDialogOpen, flowName, renameFlowForm]);
 
   const { mutate, isPending } = useMutation<
     PopulatedFlow,
@@ -51,24 +68,64 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
       displayName: string;
     }
   >({
-    mutationFn: () =>
+    mutationFn: ({ displayName }) =>
       flowsApi.update(flowId, {
         type: FlowOperationType.CHANGE_NAME,
-        request: renameFlowForm.getValues(),
+        request: { displayName },
       }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       setIsRenameDialogOpen(false);
-      onRename(renameFlowForm.getValues().displayName);
+      onRename(variables.displayName);
       toast.success(t('Flow has been renamed.'), {
         duration: 3000,
       });
+      renameFlowForm.reset({
+        displayName: variables.displayName,
+      });
+    },
+    onError: (error) => {
+      // Handle server validation errors
+      if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+        renameFlowForm.setError('displayName', {
+          type: 'manual',
+          message: t('A flow with this name already exists.'),
+        });
+      } else {
+        toast.error(t('Failed to rename flow. Please try again.'));
+      }
     },
   });
+
+  const onSubmit = (data: RenameFlowSchema) => {
+    const trimmedName = data.displayName.trim();
+    
+    // Check if name is the same as current name
+    if (trimmedName === flowName) {
+      renameFlowForm.setError('displayName', {
+        type: 'manual',
+        message: t('The new name must be different from the current name.'),
+      });
+      return;
+    }
+    
+    mutate({
+      flowId,
+      displayName: trimmedName,
+    });
+  };
 
   return (
     <Dialog
       open={isRenameDialogOpen}
-      onOpenChange={(open) => setIsRenameDialogOpen(open)}
+      onOpenChange={(open) => {
+        setIsRenameDialogOpen(open);
+        if (!open) {
+          renameFlowForm.reset({
+            displayName: flowName,
+          });
+          renameFlowForm.clearErrors();
+        }
+      }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
@@ -80,12 +137,7 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
         <Form {...renameFlowForm}>
           <form
             className="grid space-y-4"
-            onSubmit={renameFlowForm.handleSubmit((data) =>
-              mutate({
-                flowId,
-                displayName: data.displayName,
-              }),
-            )}
+            onSubmit={renameFlowForm.handleSubmit(onSubmit)}
           >
             <FormField
               control={renameFlowForm.control}
@@ -98,7 +150,6 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
                     id="displayName"
                     placeholder={t('New Flow Name')}
                     className="rounded-sm"
-                    defaultValue={flowName}
                   />
                   <FormMessage />
                 </FormItem>
@@ -109,7 +160,9 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
                 {renameFlowForm.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button loading={isPending}>{t('Confirm')}</Button>
+            <Button loading={isPending} type="submit">
+              {t('Confirm')}
+            </Button>
           </form>
         </Form>
       </DialogContent>

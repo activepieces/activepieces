@@ -2,7 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -46,7 +46,19 @@ const RenameFolderDialog = ({
   const [isOpen, setIsOpen] = useState(false);
   const form = useForm<RenameFolderSchema>({
     resolver: typeboxResolver(RenameFolderSchema),
+    defaultValues: {
+      displayName: '',
+    },
   });
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        displayName: '',
+      });
+    }
+  }, [isOpen, form]);
 
   const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
     mutationFn: async (data) => {
@@ -58,6 +70,10 @@ const RenameFolderDialog = ({
       setIsOpen(false);
       onRename();
       toast.success(t('Renamed flow successfully'));
+      // Reset form after successful rename
+      form.reset({
+        displayName: '',
+      });
     },
     onError: (err) => {
       if (validationUtils.isValidationError(err)) {
@@ -70,8 +86,24 @@ const RenameFolderDialog = ({
     },
   });
 
+  const handleCancel = () => {
+    setIsOpen(false);
+    // Reset form when cancelling
+    form.reset({
+      displayName: '',
+    });
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      if (!open) {
+        // Reset form when dialog closes
+        form.reset({
+          displayName: '',
+        });
+      }
+    }}>
       <DialogTrigger className="w-full" asChild>
         {children}
       </DialogTrigger>
@@ -113,10 +145,7 @@ const RenameFolderDialog = ({
               <Button
                 variant={'outline'}
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsOpen(false);
-                }}
+                onClick={handleCancel}
               >
                 {t('Cancel')}
               </Button>
