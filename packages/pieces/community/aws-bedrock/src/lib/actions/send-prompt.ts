@@ -22,12 +22,14 @@ export const sendPrompt = createAction({
       description: 'The foundation model to use for generation.',
       refreshers: [],
       options: async ({ auth }) => {
-        const bedrockAuth = auth as {
-          accessKeyId: string;
-          secretAccessKey: string;
-          region: string;
-        } | undefined;
-        return getBedrockModelOptions(bedrockAuth);
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your AWS account first',
+            options: [],
+          };
+        }
+        return getBedrockModelOptions(auth.props);
       },
     }),
     prompt: Property.LongText({

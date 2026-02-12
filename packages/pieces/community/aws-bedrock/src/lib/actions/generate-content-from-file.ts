@@ -38,14 +38,14 @@ export const generateContentFromFile = createAction({
       refreshers: [],
       auth: awsBedrockAuth,
       options: async ({ auth }) => {
-        const bedrockAuth = auth as
-          | {
-              accessKeyId: string;
-              secretAccessKey: string;
-              region: string;
-            }
-          | undefined;
-        return getBedrockModelOptions(bedrockAuth);
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your AWS account first',
+            options: [],
+          };
+        }
+        return getBedrockModelOptions(auth.props);
       },
     }),
     file: Property.File({
