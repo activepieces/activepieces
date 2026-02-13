@@ -6,11 +6,11 @@ import {
 import { awsSecretsManagerAuth } from '../common/auth';
 import { secretIdDropdown } from '../common/props';
 
-export const updateSecretValue = createAction({
+export const updateSecret = createAction({
   auth: awsSecretsManagerAuth,
-  name: 'updateSecretValue',
-  displayName: 'Update Secret Value',
-  description: 'Update a secret value in AWS Secrets Manager',
+  name: 'updateSecret',
+  displayName: 'Update Secret',
+  description: 'Update a secret',
   props: {
     secretId: secretIdDropdown,
     secretValue: Property.LongText({

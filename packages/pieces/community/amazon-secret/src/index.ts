@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { awsSecretsManagerAuth } from './lib/common/auth';
 import { getSecretValue } from './lib/actions/get-secret-value';
-import { updateSecretValue } from './lib/actions/update-secret-value';
+import { updateSecret } from './lib/actions/update-secret';
 import { createSecret } from './lib/actions/create-secret';
 import { deleteSecret } from './lib/actions/delete-secret';
 import { findSecret } from './lib/actions/find-secret';
@@ -18,7 +18,7 @@ export const amazonSecret = createPiece({
   actions: [
     createSecret,
     getSecretValue,
-    updateSecretValue,
+    updateSecret,
     deleteSecret,
     findSecret,
     getARandomPassword,
