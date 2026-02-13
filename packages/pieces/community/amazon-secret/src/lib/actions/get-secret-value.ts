@@ -4,6 +4,7 @@ import {
   GetSecretValueCommand,
 } from '@aws-sdk/client-secrets-manager';
 import { awsSecretsManagerAuth } from '../common/auth';
+import { secretIdDropdown } from '../common/props';
 
 export const getSecretValue = createAction({
   auth: awsSecretsManagerAuth,
@@ -11,11 +12,7 @@ export const getSecretValue = createAction({
   displayName: 'Get Secret Value',
   description: 'Retrieve a secret value from AWS Secrets Manager',
   props: {
-    secretId: Property.ShortText({
-      displayName: 'Secret ID or ARN',
-      description: 'The name or ARN of the secret',
-      required: true,
-    }),
+    secretId: secretIdDropdown,
     versionId: Property.ShortText({
       displayName: 'Version ID',
       description: 'The unique identifier of the version (optional)',

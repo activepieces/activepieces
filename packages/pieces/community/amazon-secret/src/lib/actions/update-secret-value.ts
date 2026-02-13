@@ -4,6 +4,7 @@ import {
   UpdateSecretCommand,
 } from '@aws-sdk/client-secrets-manager';
 import { awsSecretsManagerAuth } from '../common/auth';
+import { secretIdDropdown } from '../common/props';
 
 export const updateSecretValue = createAction({
   auth: awsSecretsManagerAuth,
@@ -11,11 +12,7 @@ export const updateSecretValue = createAction({
   displayName: 'Update Secret Value',
   description: 'Update a secret value in AWS Secrets Manager',
   props: {
-    secretId: Property.ShortText({
-      displayName: 'Secret ID or ARN',
-      description: 'The name or ARN of the secret to update',
-      required: true,
-    }),
+    secretId: secretIdDropdown,
     secretValue: Property.LongText({
       displayName: 'Secret Value',
       description: 'The new secret value (text)',
