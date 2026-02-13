@@ -1,8 +1,6 @@
-import { googleCalendarAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { google, calendar_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 
 export const addAttendeesToEventAction = createAction({
   auth: googleCalendarAuth,
@@ -25,8 +23,7 @@ export const addAttendeesToEventAction = createAction({
     const { calendar_id, eventId } = context.propsValue;
     const attendeesInput = context.propsValue.attendees as string[];
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 
     // Note that each patch request consumes three quota units;
