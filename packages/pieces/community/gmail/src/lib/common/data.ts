@@ -216,6 +216,78 @@ export const GmailRequests = {
       },
     });
   },
+  modifyMessage: async ({
+    access_token,
+    message_id,
+    addLabelIds = [],
+    removeLabelIds = [],
+  }: {
+    access_token: string;
+    message_id: string;
+    addLabelIds?: string[];
+    removeLabelIds?: string[];
+  }) => {
+    const response = await httpClient.sendRequest<GmailMessage>({
+      method: HttpMethod.POST,
+      url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message_id}/modify`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: access_token,
+      },
+      body: {
+        addLabelIds,
+        removeLabelIds,
+      },
+    });
+
+    return response.body;
+  },
+  createLabel: async ({
+    access_token,
+    name,
+    messageListVisibility = 'show',
+    labelListVisibility = 'labelShow',
+    color,
+  }: {
+    access_token: string;
+    name: string;
+    messageListVisibility?: 'show' | 'hide';
+    labelListVisibility?: 'labelShow' | 'labelShowIfUnread' | 'labelHide';
+    color?: {
+      textColor: string;
+      backgroundColor: string;
+    };
+  }) => {
+    const labelData: {
+      name: string;
+      messageListVisibility: string;
+      labelListVisibility: string;
+      color?: {
+        textColor: string;
+        backgroundColor: string;
+      };
+    } = {
+      name,
+      messageListVisibility,
+      labelListVisibility,
+    };
+
+    if (color) {
+      labelData.color = color;
+    }
+
+    const response = await httpClient.sendRequest<GmailLabel>({
+      method: HttpMethod.POST,
+      url: 'https://gmail.googleapis.com/gmail/v1/users/me/labels',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: access_token,
+      },
+      body: labelData,
+    });
+
+    return response.body;
+  },
 };
 
 function decodeBase64(data: any) {
