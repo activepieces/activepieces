@@ -1,7 +1,7 @@
 {
-  "name": "pieces-amazon-secret",
+  "name": "pieces-amazon-secrets-manager",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/amazon-secret/src",
+  "sourceRoot": "packages/pieces/community/amazon-secrets-manager/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/amazon-secret",
-        "tsConfig": "packages/pieces/community/amazon-secret/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/amazon-secret/package.json",
-        "main": "packages/pieces/community/amazon-secret/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/amazon-secrets-manager",
+        "tsConfig": "packages/pieces/community/amazon-secrets-manager/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/amazon-secrets-manager/package.json",
+        "main": "packages/pieces/community/amazon-secrets-manager/src/index.ts",
         "assets": [
-          "packages/pieces/community/amazon-secret/*.md",
+          "packages/pieces/community/amazon-secrets-manager/*.md",
           {
-            "input": "packages/pieces/community/amazon-secret/src/i18n",
+            "input": "packages/pieces/community/amazon-secrets-manager/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
@@ -52,7 +52,7 @@
       ],
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "packages/pieces/community/amazon-secret",
+        "cwd": "packages/pieces/community/amazon-secrets-manager",
         "command": "bun install --no-save --silent"
       }
     },

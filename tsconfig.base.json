@@ -1802,8 +1802,8 @@
       "@activepieces/piece-brave-search": [
         "packages/pieces/community/brave-search/src/index.ts"
       ],
-      "@activepieces/piece-amazon-secret": [
-        "packages/pieces/community/amazon-secret/src/index.ts"
+      "@activepieces/piece-amazon-secrets-manager": [
+        "packages/pieces/community/amazon-secrets-manager/src/index.ts"
       ]
     },
     "resolveJsonModule": true

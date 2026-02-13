@@ -8,11 +8,11 @@ import { findSecret } from './lib/actions/find-secret';
 import { getARandomPassword } from './lib/actions/get-a-random-password';
 import { PieceCategory } from '@activepieces/shared';
 
-export const amazonSecret = createPiece({
+export const amazonSecretsManager = createPiece({
   displayName: 'AWS Secrets Manager',
   auth: awsSecretsManagerAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/amazon-secret.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
   authors: ['sanket-a11y'],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   actions: [

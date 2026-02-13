@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-amazon-secret",
+  "name": "@activepieces/piece-amazon-secrets-manager",
   "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",
