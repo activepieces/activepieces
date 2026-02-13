@@ -10,7 +10,7 @@ export const deleteSecret = createAction({
   auth: awsSecretsManagerAuth,
   name: 'deleteSecret',
   displayName: 'Delete Secret',
-  description: 'Delete a secret from AWS Secrets Manager',
+  description: 'Deletes an existing secret.',
   props: {
     secretId: secretIdDropdown,
     recoveryWindowInDays: Property.Number({

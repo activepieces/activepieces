@@ -9,7 +9,7 @@ export const findSecret = createAction({
   auth: awsSecretsManagerAuth,
   name: 'findSecret',
   displayName: 'Find Secret',
-  description: 'Find a secret using filters in AWS Secrets Manager',
+  description: 'Finds an existing secret using filters.',
   props: {
     filterKey: Property.StaticDropdown({
       displayName: 'Filter Key',

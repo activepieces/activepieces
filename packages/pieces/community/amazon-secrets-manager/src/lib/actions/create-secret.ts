@@ -10,7 +10,7 @@ export const createSecret = createAction({
   auth: awsSecretsManagerAuth,
   name: 'createSecret',
   displayName: 'Create Secret',
-  description: 'Create a new secret in AWS Secrets Manager',
+  description: 'Creates a new secret.',
   props: {
     name: Property.ShortText({
       displayName: 'Secret Name',
@@ -55,7 +55,6 @@ export const createSecret = createAction({
     });
 
     try {
-      
       const command = new CreateSecretCommand({
         Name: propsValue.name,
         SecretString: propsValue.secretValue,

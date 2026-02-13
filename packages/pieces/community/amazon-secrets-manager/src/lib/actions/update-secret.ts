@@ -10,7 +10,7 @@ export const updateSecret = createAction({
   auth: awsSecretsManagerAuth,
   name: 'updateSecret',
   displayName: 'Update Secret',
-  description: 'Update a secret',
+  description: 'Updates an existing secret.',
   props: {
     secretId: secretIdDropdown,
     secretValue: Property.LongText({

@@ -10,7 +10,7 @@ export const getSecretValue = createAction({
   auth: awsSecretsManagerAuth,
   name: 'getSecretValue',
   displayName: 'Get Secret Value',
-  description: 'Retrieve a secret value from AWS Secrets Manager',
+  description: 'Retrieves a secret value.',
   props: {
     secretId: secretIdDropdown,
     versionId: Property.ShortText({

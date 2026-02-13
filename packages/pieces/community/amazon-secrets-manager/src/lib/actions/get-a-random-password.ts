@@ -8,8 +8,8 @@ import { awsSecretsManagerAuth } from '../common/auth';
 export const getARandomPassword = createAction({
   auth: awsSecretsManagerAuth,
   name: 'getARandomPassword',
-  displayName: 'Get a random password',
-  description: 'Generate a random password using AWS Secrets Manager',
+  displayName: 'Generate Random Password',
+  description: 'Generates a random password using AWS Secrets Manager.',
   props: {
     passwordLength: Property.Number({
       displayName: 'Password Length',
@@ -78,7 +78,9 @@ export const getARandomPassword = createAction({
       return response;
     } catch (error: any) {
       throw new Error(
-        `Failed to generate random password: ${error.message ?? 'Unknown error'}`
+        `Failed to generate random password: ${
+          error.message ?? 'Unknown error'
+        }`
       );
     }
   },
