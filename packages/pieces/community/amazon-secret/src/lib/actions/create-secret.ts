@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   SecretsManagerClient,
   CreateSecretCommand,
+  type Tag,
 } from '@aws-sdk/client-secrets-manager';
 import { awsSecretsManagerAuth } from '../common/auth';
 
@@ -26,10 +27,22 @@ export const createSecret = createAction({
       description: 'A description of the secret (optional)',
       required: false,
     }),
-    tags: Property.ShortText({
-      displayName: 'Tags (JSON)',
-      description: 'Tags as JSON object, e.g. {"key1":"value1","key2":"value2"} (optional)',
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Tags',
       required: false,
+      properties: {
+        key: Property.ShortText({
+          displayName: 'Tag Key',
+          description: 'The key of the tag',
+          required: true,
+        }),
+        value: Property.ShortText({
+          displayName: 'Tag Value',
+          description: 'The value of the tag',
+          required: true,
+        }),
+      },
     }),
   },
   async run({ auth, propsValue }) {
@@ -42,24 +55,15 @@ export const createSecret = createAction({
     });
 
     try {
-      let tags: { Key: string; Value: string }[] | undefined;
-      if (propsValue.tags) {
-        try {
-          const tagObj = JSON.parse(propsValue.tags);
-          tags = Object.entries(tagObj).map(([key, value]) => ({
-            Key: key,
-            Value: String(value),
-          }));
-        } catch (e) {
-          throw new Error('Invalid tags JSON format');
-        }
-      }
-
+      
       const command = new CreateSecretCommand({
         Name: propsValue.name,
         SecretString: propsValue.secretValue,
         Description: propsValue.description,
-        Tags: tags,
+        Tags: propsValue.tags?.map((tag: any) => ({
+          Key: tag.key,
+          Value: tag.value,
+        })),
       });
 
       const response = await client.send(command);
