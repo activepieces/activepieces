@@ -104,16 +104,23 @@ export async function createAIModel({
             }
             return provider.chatModel(modelId)
         }
-        case AIProviderName.ACTIVEPIECES: 
+        case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
-            const provider = createOpenRouter({ apiKey: auth.apiKey })
-            return provider.chat(modelId) as LanguageModel
+            const openRouterProvider = createOpenRouter({ apiKey: auth.apiKey })
+            return openRouterProvider.chat(modelId) as LanguageModel
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
     }
 }
 
-export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
-export const openaiSearchTool = openai.tools.webSearchPreview;
-export const googleSearchTool = google.tools.googleSearch;
+type ProviderSearchToolFactory = (options?: Record<string, unknown>) => unknown
+
+export const anthropicSearchTool: ProviderSearchToolFactory = (options) =>
+    anthropic.tools.webSearch_20250305(options as never)
+
+export const openaiSearchTool: ProviderSearchToolFactory = (options) =>
+    openai.tools.webSearchPreview(options as never)
+
+export const googleSearchTool: ProviderSearchToolFactory = (options) =>
+    google.tools.googleSearch(options as never)
