@@ -167,6 +167,67 @@ describe('validatedmails helpers', () => {
     expect(result.status).toBe('invalid');
   });
 
+  test('retries with trailing slash on redirect-like status', async () => {
+    const redirectError = Object.assign(new Error('redirect'), {
+      response: {
+        status: 308,
+      },
+    });
+
+    const sender = jest
+      .fn()
+      .mockRejectedValueOnce(redirectError)
+      .mockResolvedValueOnce({
+        body: {
+          is_valid: true,
+          score: 92,
+          email: 'user@example.com',
+          normalized: 'user@example.com',
+          state: 'Deliverable',
+          reason: 'ACCEPTED EMAIL',
+          domain: 'example.com',
+          free: false,
+          role: false,
+          disposable: false,
+          accept_all: false,
+          tag: false,
+          smtp_ok: true,
+          syntax_ok: true,
+          mx_ok: true,
+          a_ok: true,
+          response_ms: 250,
+          mx_hosts: ['mx.example.com'],
+          status: 'valid',
+          reasons: ['syntax_ok', 'mx_ok'],
+          trace_id: 'trace-redirect',
+        },
+      });
+
+    const result = await executeValidateEmailRequest(
+      {
+        email: 'user@example.com',
+        mode: 'POST',
+      },
+      'api-key',
+      sender
+    );
+
+    expect(sender).toHaveBeenCalledTimes(2);
+    expect(sender).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        url: 'https://api.validatedmails.com/validate',
+      })
+    );
+    expect(sender).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        url: 'https://api.validatedmails.com/validate/',
+      })
+    );
+    expect(result.status).toBe('valid');
+  });
+
   test('returns typed flat output', () => {
     const output = toValidationOutput({
       is_valid: true,
