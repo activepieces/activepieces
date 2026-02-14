@@ -12,6 +12,8 @@ const ERR_UNAUTHORIZED = 'Unauthorized: Invalid API key';
 const ERR_INSUFFICIENT_CREDITS = 'Insufficient credits';
 const ERR_RATE_LIMITED = 'Rate limited';
 const ERR_SERVICE_UNAVAILABLE = 'Service unavailable';
+const VALIDATE_URL = 'https://api.validatedmails.com/validate';
+const VALIDATE_URL_FALLBACK = 'https://api.validatedmails.com/validate/';
 
 export function sanitizeEmail(email: string): string {
   return email.trim();
@@ -64,6 +66,19 @@ export function isTransportOrServerError(error: unknown): boolean {
   }
 
   return !maybeResponse;
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+  if (!(error instanceof Error)) {
+    return undefined;
+  }
+
+  return (error as Error & { response?: { status?: number } }).response?.status;
+}
+
+function shouldRetryWithFallbackUrl(error: unknown): boolean {
+  const status = getErrorStatus(error);
+  return status === 307 || status === 308 || status === 404 || status === 405;
 }
 
 export function toValidationOutput(
@@ -124,11 +139,11 @@ export async function executeValidateEmailRequest(
     timeout: 10000,
   };
 
-  const send = async () => {
+  const send = async (url: string) => {
     if (propsValue.mode === 'GET') {
       return requestSender({
         method: HttpMethod.GET,
-        url: 'https://api.validatedmails.com/validate',
+        url,
         ...request,
         queryParams: {
           email: sanitizedEmail,
@@ -139,7 +154,7 @@ export async function executeValidateEmailRequest(
 
     return requestSender({
       method: HttpMethod.POST,
-      url: 'https://api.validatedmails.com/validate',
+      url,
       ...request,
       body: {
         email: sanitizedEmail,
@@ -148,33 +163,36 @@ export async function executeValidateEmailRequest(
     });
   };
 
+  const sendWithFallbackUrl = async () => {
+    try {
+      return await send(VALIDATE_URL);
+    } catch (error) {
+      if (shouldRetryWithFallbackUrl(error)) {
+        return send(VALIDATE_URL_FALLBACK);
+      }
+      throw error;
+    }
+  };
+
   try {
-    const response = await send();
+    const response = await sendWithFallbackUrl();
     return toValidationOutput(response.body as Record<string, unknown>);
   } catch (error) {
     if (isTransportOrServerError(error)) {
       try {
-        const retriedResponse = await send();
+        const retriedResponse = await sendWithFallbackUrl();
         return toValidationOutput(retriedResponse.body as Record<string, unknown>);
       } catch (retryError) {
-        if (
-          retryError instanceof Error &&
-          (retryError as Error & { response?: { status?: number } }).response?.status
-        ) {
-          const status = (retryError as Error & { response?: { status?: number } }).response
-            ?.status as number;
+        const status = getErrorStatus(retryError);
+        if (status) {
           throw mapHttpStatusToError(status);
         }
         throw new Error(ERR_SERVICE_UNAVAILABLE);
       }
     }
 
-    if (
-      error instanceof Error &&
-      (error as Error & { response?: { status?: number } }).response?.status
-    ) {
-      const status = (error as Error & { response?: { status?: number } }).response
-        ?.status as number;
+    const status = getErrorStatus(error);
+    if (status) {
       throw mapHttpStatusToError(status);
     }
 
