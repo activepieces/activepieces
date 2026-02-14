@@ -64,7 +64,7 @@
     "@fastify/type-provider-typebox": "5.1.0",
     "@hookform/resolvers": "3.9.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
-    "@modelcontextprotocol/sdk": "1.25.2",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "@nx/devkit": "22.0.1",
     "@octokit/rest": "21.1.1",
     "@openrouter/ai-sdk-provider": "2.1.1",
