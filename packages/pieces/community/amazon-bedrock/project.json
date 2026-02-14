@@ -1,7 +1,7 @@
 {
-  "name": "pieces-aws-bedrock",
+  "name": "pieces-amazon-bedrock",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/aws-bedrock/src",
+  "sourceRoot": "packages/pieces/community/amazon-bedrock/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/aws-bedrock",
-        "tsConfig": "packages/pieces/community/aws-bedrock/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/aws-bedrock/package.json",
-        "main": "packages/pieces/community/aws-bedrock/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/amazon-bedrock",
+        "tsConfig": "packages/pieces/community/amazon-bedrock/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/amazon-bedrock/package.json",
+        "main": "packages/pieces/community/amazon-bedrock/src/index.ts",
         "assets": [
-          "packages/pieces/community/aws-bedrock/*.md",
+          "packages/pieces/community/amazon-bedrock/*.md",
           {
-            "input": "packages/pieces/community/aws-bedrock/src/i18n",
+            "input": "packages/pieces/community/amazon-bedrock/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
@@ -52,7 +52,7 @@
       ],
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "packages/pieces/community/aws-bedrock",
+        "cwd": "packages/pieces/community/amazon-bedrock",
         "command": "bun install --no-save --silent"
       }
     },

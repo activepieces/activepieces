@@ -1796,8 +1796,8 @@
       "@activepieces/piece-pdfcrowd": [
         "packages/pieces/community/pdfcrowd/src/index.ts"
       ],
-      "@activepieces/piece-aws-bedrock": [
-        "packages/pieces/community/aws-bedrock/src/index.ts"
+      "@activepieces/piece-amazon-bedrock": [
+        "packages/pieces/community/amazon-bedrock/src/index.ts"
       ],
       "@activepieces/piece-brave-search": [
         "packages/pieces/community/brave-search/src/index.ts"
