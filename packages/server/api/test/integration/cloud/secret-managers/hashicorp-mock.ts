@@ -11,7 +11,7 @@ export const mockVaultConfig = {
 
 export const hashicorpMock = (axiosRequestSpy: jest.SpyInstance) => ({
     mockVaultLoginSuccess: () => {
-        axiosRequestSpy.mockImplementation(async (config: { url: string; method: string }) => {
+        axiosRequestSpy.mockImplementation(async (config: { url: string, method: string }) => {
             if (config.url.includes('/v1/auth/approle/login') && config.method === 'POST') {
                 return {
                     data: {
@@ -33,7 +33,7 @@ export const hashicorpMock = (axiosRequestSpy: jest.SpyInstance) => ({
     },
 
     mockVaultLoginFailure: () => {
-        axiosRequestSpy.mockImplementation(async (config: { url: string; method: string }) => {
+        axiosRequestSpy.mockImplementation(async (config: { url: string, method: string }) => {
             if (config.url.includes('/v1/auth/approle/login')) {
                 throw new Error('permission denied')
             }
@@ -42,7 +42,7 @@ export const hashicorpMock = (axiosRequestSpy: jest.SpyInstance) => ({
     },
 
     mockVaultGetSecretSuccess: (secretData: Record<string, string>) => {
-        axiosRequestSpy.mockImplementation(async (config: { url: string; method: string }) => {
+        axiosRequestSpy.mockImplementation(async (config: { url: string, method: string }) => {
             if (config.url.includes('/v1/auth/approle/login') && config.method === 'POST') {
                 return {
                     data: {
@@ -73,7 +73,7 @@ export const hashicorpMock = (axiosRequestSpy: jest.SpyInstance) => ({
     },
 
     mockVaultGetSecretNotFound: () => {
-        axiosRequestSpy.mockImplementation(async (config: { url: string; method: string }) => {
+        axiosRequestSpy.mockImplementation(async (config: { url: string, method: string }) => {
             if (config.url.includes('/v1/auth/approle/login') && config.method === 'POST') {
                 return {
                     data: {
