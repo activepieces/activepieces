@@ -98,6 +98,7 @@ export type ApErrorParams =
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
+    | InvalidAIProviderCredentialsParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -527,6 +528,12 @@ export type SecretManagerKeyNotSecretParams = BaseErrorParams<ErrorCode.SECRET_M
     message: string
 }>
 
+export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS, {
+    provider: string
+    message: string
+    httpErrorResponse: string
+}>
+
 export enum ErrorCode {
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
@@ -602,5 +609,6 @@ export enum ErrorCode {
     SECRET_MANAGER_CONNECTION_FAILED = 'SECRET_MANAGER_CONNECTION_FAILED',
     SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
+    INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
 }
 
