@@ -39,3 +39,5 @@ export type FilterPiecesParams = {
     pieces: PieceMetadataSchema[]
     suggestionType?: SuggestionType
 }
+
+export * from './local-piece-cache-utils'

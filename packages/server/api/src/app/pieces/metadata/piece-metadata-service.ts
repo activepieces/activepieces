@@ -25,7 +25,7 @@ import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { localPieceCache } from './local-piece-cache'
+import { localPieceCache } from './cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
 
@@ -93,7 +93,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 })
             }
             const resolvedLocale = locale ?? LocalesEnum.ENGLISH
-            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale: resolvedLocale, mutate: true })
+            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale: resolvedLocale, mutate: false })
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
