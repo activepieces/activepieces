@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { cn } from '@/lib/utils';
-import { SecretManagerProviderId } from '@activepieces/shared';
+import { SecretManagerProviderId } from '@activepieces/ee-shared';
 
 export type SecretInputHandle = {
   resolveSecret: () => Promise<string>;
