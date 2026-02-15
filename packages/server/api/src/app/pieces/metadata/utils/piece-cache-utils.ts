@@ -33,14 +33,9 @@ export function sortByNameAndVersionDesc(a: PieceMetadataSchema, b: PieceMetadat
 }
 
 export function lastVersionOfEachPiece(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
-    const seen = new Map<string, PieceMetadataSchema>()
-    for (const piece of pieces) {
-        if (!seen.has(piece.name)) {
-            seen.set(piece.name, piece)
-        }
-    }
-    return Array.from(seen.values())
+    return pieces.filter((piece, index, self) => index === self.findIndex((t) => t.name === piece.name))
 }
+
 export async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> {
     const devPiecesConfig = system.get(AppSystemProp.DEV_PIECES)
     if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
