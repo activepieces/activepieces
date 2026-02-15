@@ -1,6 +1,6 @@
 import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
-import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAI, openai } from '@ai-sdk/openai'
+import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
@@ -74,20 +74,70 @@ export async function createAIModel({
         }
         case AIProviderName.CLOUDFLARE_GATEWAY: {
             const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
+            const gatewayBaseUrl = `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}`
+            const cfMetadataHeaders = {
+                'cf-aig-metadata': JSON.stringify({
+                    projectId,
+                    flowId,
+                    runId,
+                }),
+            }
 
-            const provider = createOpenAICompatible({ 
-                name: 'cloudflare',
-                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
-                headers: {
-                    'cf-aig-authorization': `Bearer ${auth.apiKey}`,
-                    'cf-aig-metadata': JSON.stringify({
-                        projectId,
-                        flowId,
-                        runId,
+            const separatorIndex = modelId.indexOf('/')
+            const providerPrefix = separatorIndex !== -1 ? modelId.substring(0, separatorIndex) : modelId
+            const actualModelId = separatorIndex !== -1 ? modelId.substring(separatorIndex + 1) : modelId
+            const headers = {
+                'cf-aig-authorization': `Bearer ${auth.apiKey}`,
+                ...cfMetadataHeaders,
+            }
+            switch (providerPrefix) {
+                case 'anthropic': {
+                    const provider = createAnthropic({
+                        baseURL: `${gatewayBaseUrl}/anthropic`,
+                        headers,
                     })
+                    return provider(actualModelId)
                 }
-            })
-            return provider.chatModel(modelId)
+                case 'google-ai-studio': {
+                    const provider = createGoogleGenerativeAI({
+                        apiKey: auth.apiKey,
+                        baseURL: `${gatewayBaseUrl}/google-ai-studio/v1beta`,
+                        headers,
+                    })
+                    return provider(actualModelId)
+                }
+                case 'google-vertex-ai': {
+                    // CF Gateway requires the standard Vertex AI URL with project/location:
+                    // .../google-vertex-ai/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:generateContent
+                    //
+                    // Model IDs come in as "google-vertex-ai/google/gemini-2.5-pro".
+                    // After the first split, actualModelId = "google/gemini-2.5-pro".
+                    // Strip the publisher prefix ("google/") since it's already in the baseURL.
+                    // const vertexProject = (config as CloudflareGatewayProviderConfig).models.find(model => model.modelId === modelId)?.vertexProject
+                    // const vertexRegion = (config as CloudflareGatewayProviderConfig).models.find(model => model.modelId === modelId)?.vertexRegion
+                    const vertexModelId = actualModelId.includes('/')
+                        ? actualModelId.substring(actualModelId.lastIndexOf('/') + 1)
+                        : actualModelId
+                    const provider = createGoogleGenerativeAI({
+                        apiKey: auth.apiKey,
+                        baseURL: `${gatewayBaseUrl}/google-vertex-ai/v1/projects/`,
+                        headers,
+                    })
+                    return provider(vertexModelId)
+                }
+                default: {
+                    // Fallback to OpenAI-compatible endpoint
+                    const provider = createOpenAICompatible({
+                        name: 'cloudflare',
+                        baseURL: `${gatewayBaseUrl}/compat`,
+                        headers,
+                    })
+                    if (isImage) {
+                        return provider.imageModel(modelId)
+                    }
+                    return provider.chatModel(modelId)
+                }
+            }
         }
         case AIProviderName.CUSTOM: {
             const { apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig

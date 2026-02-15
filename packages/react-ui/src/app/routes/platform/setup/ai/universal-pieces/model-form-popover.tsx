@@ -90,6 +90,26 @@ const ModelFormPopover = ({
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="vertexProject">{t('Vertex Project')}</Label>
+              <Input
+                id="vertexProject"
+                value={model.vertexProject}
+                onChange={(e) =>
+                  setModel({ ...model, vertexProject: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vertexRegion">{t('Vertex Region')}</Label>
+              <Input
+                id="vertexRegion"
+                value={model.vertexRegion}
+                onChange={(e) =>
+                  setModel({ ...model, vertexRegion: e.target.value })
+                }
+              />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="modelType">{t('Model Type')}</Label>

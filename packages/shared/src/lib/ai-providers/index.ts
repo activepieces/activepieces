@@ -62,6 +62,8 @@ export const ProviderModelConfig = Type.Object({
     modelId: Type.String(),
     modelName: Type.String(),
     modelType: Type.Enum(AIProviderModelType),
+    vertexProject: Type.Optional(Type.String()),
+    vertexRegion: Type.Optional(Type.String()),
 })
 export type ProviderModelConfig = Static<typeof ProviderModelConfig>
 
