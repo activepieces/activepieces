@@ -13,6 +13,7 @@ import { UseFormReturn, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -167,17 +168,19 @@ export const UpsertProviderConfigForm = ({
             render={({ field }) => (
               <FormItem className="grid space-y-3">
                 <FormLabel htmlFor="vertexRegion">
-                  {t('Google Vertex Region')}
+                  {t('Google Vertex Project Region')}
                 </FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    required
                     id="vertexRegion"
                     placeholder={'global'}
                     disabled={isLoading}
                   />
                 </FormControl>
+                <FormDescription>
+                  {t('This is required for Google Vertex AI models')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -193,12 +196,14 @@ export const UpsertProviderConfigForm = ({
                 <FormControl>
                   <Input
                     {...field}
-                    required
                     id="vertexProjectId"
                     placeholder={'project-1234'}
                     disabled={isLoading}
                   />
                 </FormControl>
+                <FormDescription>
+                  {t('This is required for Google Vertex AI models')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

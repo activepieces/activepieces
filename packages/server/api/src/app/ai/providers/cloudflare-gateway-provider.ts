@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, isNil, splitCloudflareGatewayModelId } from '@activepieces/shared'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -14,6 +14,9 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
             try {
                 const { provider: providerPrefix, model: actualModelId, publisher } = splitCloudflareGatewayModelId(model.modelId)
                 if (providerPrefix === 'google-vertex-ai') {
+                    if (isNil(config.vertexProject) || isNil(config.vertexRegion)) {
+                        throw new Error('Google Vertex ai project and region are required for Google Vertex AI models')
+                    }
                     const providerConstructor = createGoogleGenerativeAI({
                         apiKey: authConfig.apiKey,
                         baseURL: `https://gateway.ai.cloudflare.com/v1/${config.accountId}/${config.gatewayId}/google-vertex-ai/v1/projects/${config.vertexProject}/locations/${config.vertexRegion}/publishers/${publisher}/`,
@@ -54,7 +57,7 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
 
         if (invalidModels.length > 0) {
             throw new Error(
-                `The following models failed validation through the gateway: ${invalidModels.join(', ')}, make sure the model id is correct and in the{provider_name}/{model_name} format, also check that the other inputs are correct.`,
+                `These models have issues: ${invalidModels.join(', ')}, make sure the model id is correct and in the{provider_name}/{model_name} format, also check that the other inputs are correct.`,
             )
         }
     },
