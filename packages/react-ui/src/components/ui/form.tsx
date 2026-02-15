@@ -176,7 +176,7 @@ const FormMessage = React.forwardRef<
   }
 
   return (
-    <FormError  formMessageId={formMessageId} {...props} ref={ref}>
+    <FormError formMessageId={formMessageId} {...props} ref={ref}>
       {body}
     </FormError>
   );

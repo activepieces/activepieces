@@ -161,12 +161,14 @@ export const UpsertProviderConfigForm = ({
               </FormItem>
             )}
           />
-             <FormField
+          <FormField
             control={form.control}
             name="config.vertexRegion"
             render={({ field }) => (
               <FormItem className="grid space-y-3">
-                <FormLabel htmlFor="vertexRegion">{t('Google Vertex Region')}</FormLabel>
+                <FormLabel htmlFor="vertexRegion">
+                  {t('Google Vertex Region')}
+                </FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -180,12 +182,14 @@ export const UpsertProviderConfigForm = ({
               </FormItem>
             )}
           />
-             <FormField
+          <FormField
             control={form.control}
             name="config.vertexProject"
             render={({ field }) => (
               <FormItem className="grid space-y-3">
-                <FormLabel htmlFor="vertexProjectId">{t('Google Vertex Project ID')}</FormLabel>
+                <FormLabel htmlFor="vertexProjectId">
+                  {t('Google Vertex Project ID')}
+                </FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -199,7 +203,6 @@ export const UpsertProviderConfigForm = ({
               </FormItem>
             )}
           />
-
         </>
       )}
 

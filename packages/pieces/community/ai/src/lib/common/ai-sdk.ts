@@ -6,8 +6,12 @@ import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { ImageModel, LanguageModel } from 'ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig } from '@activepieces/shared'
-
+import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/shared'
+import { createAiGateway } from 'ai-gateway-provider';
+// @ts-expect-error moduleResolution "node" doesn't support package.json exports
+import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
+// @ts-expect-error moduleResolution "node" doesn't support package.json exports
+import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;
     modelId: string;
@@ -74,7 +78,12 @@ export async function createAIModel({
         }
         case AIProviderName.CLOUDFLARE_GATEWAY: {
             const { accountId, gatewayId,vertexProject,vertexRegion } = config as CloudflareGatewayProviderConfig
-            const gatewayBaseUrl = `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}`
+            const aigateway = createAiGateway({
+                accountId: accountId,
+                gateway: gatewayId,
+                apiKey: auth.apiKey,
+              });
+            const { provider: providerPrefix, model: actualModelId, publisher } = splitCloudflareGatewayModelId(modelId)
             const cfMetadataHeaders = {
                 'cf-aig-metadata': JSON.stringify({
                     projectId,
@@ -82,56 +91,33 @@ export async function createAIModel({
                     runId,
                 }),
             }
-
-            const separatorIndex = modelId.indexOf('/')
-            const providerPrefix = separatorIndex !== -1 ? modelId.substring(0, separatorIndex) : modelId
-            const actualModelId = separatorIndex !== -1 ? modelId.substring(separatorIndex + 1) : modelId
+            
             const headers = {
                 'cf-aig-authorization': `Bearer ${auth.apiKey}`,
                 ...cfMetadataHeaders,
             }
             switch (providerPrefix) {
                 case 'anthropic': {
-                    const provider = createAnthropic({
-                        apiKey: 'cf-gateway-managed', // dummy, satisfies SDK validation
-                        baseURL: `${gatewayBaseUrl}/anthropic`,
-                        headers: {
-                            'cf-aig-authorization': `Bearer ${auth.apiKey}`,
-                            'x-api-key': '', // suppress SDK's x-api-key
-                            ...cfMetadataHeaders,
-                        },
-                    })
-                    return provider(actualModelId)
+                    const anthropicProvider = createAnthropicGateway();
+                    return aigateway(anthropicProvider(actualModelId));
                 }
                 case 'google-ai-studio': {
-                    const provider = createGoogleGenerativeAI({
-                        apiKey: auth.apiKey,
-                        baseURL: `${gatewayBaseUrl}/google-ai-studio/v1beta`,
-                        headers,
-                    })
-                    return provider(actualModelId)
+                    const googleProvider = createGoogleGateway();
+                    return aigateway(googleProvider(actualModelId));
                 }
                 case 'google-vertex-ai': {
-                    // CF Gateway requires the standard Vertex AI URL with project/location:
-                    // .../google-vertex-ai/v1/projects/{project}/locations/{location}/publishers/google/models/{model}:generateContent
-                    //
-                    // Model IDs come in as "google-vertex-ai/google/gemini-2.5-pro".
-                    // After the first split, actualModelId = "google/gemini-2.5-pro".
-                    // Strip the publisher prefix ("google/") since it's already in the baseURL.
-                    const publisher = actualModelId.split('/')[0]
-                    const modelId = actualModelId.split('/')[1]
                     const provider = createGoogleGenerativeAI({
                         apiKey: auth.apiKey,
-                        baseURL: `${gatewayBaseUrl}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
+                        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
                         headers,
                     })
-                    return provider(modelId)
+                    return provider(actualModelId);
                 }
                 default: {
                     // Fallback to OpenAI-compatible endpoint
                     const provider = createOpenAICompatible({
                         name: 'cloudflare',
-                        baseURL: `${gatewayBaseUrl}/compat`,
+                        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
                         headers,
                     })
                     if (isImage) {

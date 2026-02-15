@@ -192,7 +192,7 @@ export const UpsertAIProviderDialogContent = ({
               />
 
               {form.formState.errors.root?.serverError && (
-                <FormMessage className='mt-2'>
+                <FormMessage className="mt-2">
                   {form.formState.errors.root.serverError.message}
                 </FormMessage>
               )}
