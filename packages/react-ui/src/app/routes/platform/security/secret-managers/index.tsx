@@ -9,7 +9,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import SecretManagerProviderCard from './secret-manager-provider-card';
 
 const SecretMangersPage = () => {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { data: secretManagerProviders, isLoading } =
     secretManagersHooks.useSecretManagers();
 
