@@ -13,7 +13,6 @@ import { UseFormReturn, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -178,9 +177,7 @@ export const UpsertProviderConfigForm = ({
                     disabled={isLoading}
                   />
                 </FormControl>
-                <FormDescription>
-                  {t('This is required for Google Vertex AI models')}
-                </FormDescription>
+
                 <FormMessage />
               </FormItem>
             )}
@@ -201,9 +198,7 @@ export const UpsertProviderConfigForm = ({
                     disabled={isLoading}
                   />
                 </FormControl>
-                <FormDescription>
-                  {t('This is required for Google Vertex AI models')}
-                </FormDescription>
+
                 <FormMessage />
               </FormItem>
             )}
