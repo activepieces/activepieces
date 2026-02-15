@@ -11,6 +11,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
@@ -38,6 +39,7 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 import { RouterSettings } from './router-settings';
+import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -190,17 +192,20 @@ const StepSettingsContainer = () => {
               setSelectedBranchIndex={setSelectedBranchIndex}
               isEditingStepOrBranchName={isEditingStepOrBranchName}
               setIsEditingStepOrBranchName={setIsEditingStepOrBranchName}
-              stepMetadata={stepMetadata}
             ></EditableStepName>
           </SidebarHeader>
-          <div className="h-px bg-border w-full mb-4" />
+          <Separator className="w-full h-px" />
         </div>
+
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
+                <div className="w-full my-2 px-3">
+                  {stepMetadata && <StepInfo step={selectedStep} />}
+                </div>
                 <div
                   className={cn(
                     'flex flex-col px-4 pb-6',

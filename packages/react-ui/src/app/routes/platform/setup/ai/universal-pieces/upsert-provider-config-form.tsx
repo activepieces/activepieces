@@ -64,7 +64,11 @@ export const UpsertProviderConfigForm = ({
         render={({ field }) => (
           <FormItem className="grid space-y-3">
             <div className="flex items-center justify-between">
-              <FormLabel htmlFor="apiKey">{t('API Key')}</FormLabel>
+              <FormLabel htmlFor="apiKey">
+                {provider === AIProviderName.CLOUDFLARE_GATEWAY
+                  ? t('AI Gateway Token')
+                  : t('API Key')}
+              </FormLabel>
               {!showApiKeyInput && (
                 <Button
                   type="button"
