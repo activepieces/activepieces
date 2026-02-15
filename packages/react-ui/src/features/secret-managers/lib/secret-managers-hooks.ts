@@ -7,7 +7,7 @@ import {
   DisconnectSecretManagerRequest,
   ResolveSecretRequest,
   SecretManagerProviderMetaData,
-} from '@activepieces/shared';
+} from '@activepieces/ee-shared';
 
 import { secretManagersApi } from './secret-managers-api';
 

@@ -1,5 +1,6 @@
+import { ConnectSecretManagerRequestSchema, DisconnectSecretManagerRequestSchema, ResolveSecretRequestSchema } from '@activepieces/ee-shared'
 import { securityAccess } from '@activepieces/server-shared'
-import { ConnectSecretManagerRequestSchema, DisconnectSecretManagerRequestSchema, PrincipalType, ResolveSecretRequestSchema } from '@activepieces/shared'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { secretManagersService } from './secret-managers.service'
 

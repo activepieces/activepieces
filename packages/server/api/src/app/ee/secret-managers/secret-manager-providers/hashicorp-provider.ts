@@ -1,5 +1,6 @@
+import { HashicorpGetSecretRequest, HashicorpProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, HashicorpGetSecretRequest, HashicorpProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider } from './secret-manager-providers'
 

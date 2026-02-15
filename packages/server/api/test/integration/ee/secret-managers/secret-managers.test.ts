@@ -1,5 +1,6 @@
+import { SecretManagerProviderId } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
-import { ErrorCode, PrincipalType, SecretManagerProviderId } from '@activepieces/shared'
+import { ErrorCode, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
@@ -132,7 +133,7 @@ describe('Secret Managers API', () => {
 
             vaultMock.mockVaultGetSecretSuccess({ 'my-api-key': 'super-secret-value' })
 
-            const { secretManagersService } = await import('../../../../src/app/secret-managers/secret-managers.service')
+            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
             const result = await secretManagersService(mockLog).resolve({
                 key: '{{hashicorp:secret/data/keys/my-api-key}}',
@@ -145,7 +146,7 @@ describe('Secret Managers API', () => {
         it('should throw error for non-secret key format', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
-            const { secretManagersService } = await import('../../../../src/app/secret-managers/secret-managers.service')
+            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             await expect(
@@ -163,7 +164,7 @@ describe('Secret Managers API', () => {
         it('should throw error for invalid provider id', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
-            const { secretManagersService } = await import('../../../../src/app/secret-managers/secret-managers.service')
+            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             await expect(
@@ -202,7 +203,7 @@ describe('Secret Managers API', () => {
 
             vaultMock.mockVaultGetSecretNotFound()
 
-            const { secretManagersService } = await import('../../../../src/app/secret-managers/secret-managers.service')
+            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             await expect(
@@ -220,7 +221,7 @@ describe('Secret Managers API', () => {
 
     describe('HashiCorp Provider - Path Resolution', () => {
         it('should resolve valid path format', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/secret-managers/secret-manager-providers/hashicorp-provider')
+            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key')
@@ -228,7 +229,7 @@ describe('Secret Managers API', () => {
         })
 
         it('should remove trailing slash from path', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/secret-managers/secret-manager-providers/hashicorp-provider')
+            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key/')
@@ -236,7 +237,7 @@ describe('Secret Managers API', () => {
         })
 
         it('should throw error for path with less than 3 parts', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/secret-managers/secret-manager-providers/hashicorp-provider')
+            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             await expect(
@@ -249,7 +250,7 @@ describe('Secret Managers API', () => {
         })
 
         it('should throw error for key without colon separator', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/secret-managers/secret-manager-providers/hashicorp-provider')
+            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             await expect(

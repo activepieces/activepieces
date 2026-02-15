@@ -4,7 +4,7 @@ import { Pencil, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
-import { SecretManagerProviderMetaData } from '@activepieces/shared';
+import { SecretManagerProviderMetaData } from '@activepieces/ee-shared';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
 

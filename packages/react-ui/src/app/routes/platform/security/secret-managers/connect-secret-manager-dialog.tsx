@@ -18,11 +18,10 @@ import { Label } from '@/components/ui/label';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { api } from '@/lib/api';
 import {
-  ApErrorParams,
   ConnectSecretManagerRequest,
-  ErrorCode,
   SecretManagerProviderMetaData,
-} from '@activepieces/shared';
+} from '@activepieces/ee-shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 type ConnectSecretManagerDialogProps = {
   manager: SecretManagerProviderMetaData;

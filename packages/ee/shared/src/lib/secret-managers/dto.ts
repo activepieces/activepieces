@@ -1,5 +1,5 @@
+import { DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion } from '../common'
 
 export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',

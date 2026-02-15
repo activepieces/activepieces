@@ -1,6 +1,5 @@
+import { BaseModelSchema, DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion } from '../common'
-import { BaseModelSchema } from '../common/base-model'
 import { AWSGetSecretRequestSchema, AWSProviderConfigSchema, HashicorpGetSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
 
 export * from './dto'

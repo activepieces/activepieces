@@ -1,4 +1,4 @@
-import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { awsProvider } from './aws-provider'
 import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from './hashicorp-provider'

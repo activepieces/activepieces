@@ -4,7 +4,7 @@ import {
   DisconnectSecretManagerRequest,
   ResolveSecretRequest,
   SecretManagerProviderMetaData,
-} from '@activepieces/shared';
+} from '@activepieces/ee-shared';
 
 export const secretManagersApi = {
   list() {

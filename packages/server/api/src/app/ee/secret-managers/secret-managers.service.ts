@@ -1,7 +1,8 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, GetSecretManagerSecretRequest, isNil, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
+import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../core/db/repo-factory'
-import { encryptUtils } from '../helper/encryption'
+import { repoFactory } from '../../core/db/repo-factory'
+import { encryptUtils } from '../../helper/encryption'
 import { secretManagerProvider, secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { SecretManagerEntity } from './secret-manager.entity'
 
@@ -34,12 +35,13 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         })
         const encryptedConfig = await encryptUtils.encryptObject(request.config)
         if (existing) {
-            return secretManagerRepository().update(
+            await secretManagerRepository().update(
                 { platformId: request.platformId, providerId: request.providerId },
                 { auth: encryptedConfig },
             )
+            return
         }
-        return secretManagerRepository().save({
+        await secretManagerRepository().save({
             id: apId(),
             platformId: request.platformId,
             providerId: request.providerId,

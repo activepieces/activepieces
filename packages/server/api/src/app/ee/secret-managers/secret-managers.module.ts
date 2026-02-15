@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { secretManagersController } from './secret-managers.controller'
 
 export const secretManagersModule: FastifyPluginAsyncTypebox = async (app) => {

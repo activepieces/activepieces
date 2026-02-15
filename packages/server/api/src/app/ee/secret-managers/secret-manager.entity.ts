@@ -1,10 +1,11 @@
-import { Platform, SecretManager } from '@activepieces/shared'
+import { SecretManager } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-} from '../database/database-common'
-import { EncryptedObject } from '../helper/encryption'
+} from '../../database/database-common'
+import { EncryptedObject } from '../../helper/encryption'
 
 export type SecretManagerEntitySchema = Omit<SecretManager, 'auth'> & {
     platform?: Platform
