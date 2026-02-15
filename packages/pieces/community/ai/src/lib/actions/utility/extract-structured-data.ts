@@ -280,7 +280,6 @@ export const extractStructuredData = createAction({
 			return extractedData;
 
 		} catch (error) {
-			console.error('-----error is', error)
 			throw new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	},
