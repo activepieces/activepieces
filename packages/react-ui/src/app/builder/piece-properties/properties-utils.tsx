@@ -5,6 +5,7 @@ import {
   UseFormReturn,
 } from 'react-hook-form';
 
+import { SecretInput } from '@/app/connections/secret-input';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
@@ -44,6 +45,7 @@ export const selectGenericFormComponentForProperty = ({
   propertySettings,
   hideLabel,
   enableMarkdownForInputWithMention,
+  isConnectionProperty = false,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -245,6 +247,16 @@ export const selectGenericFormComponentForProperty = ({
               onChange={field.onChange}
               enableMarkdown={enableMarkdownForInputWithMention}
             ></TextInputWithMentions>
+          ) : isConnectionProperty ? (
+            <SecretInput
+              ref={field.ref}
+              value={field.value}
+              onChange={field.onChange}
+              disabled={disabled}
+              type={
+                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
+              }
+            ></SecretInput>
           ) : (
             <Input
               ref={field.ref}
@@ -310,6 +322,7 @@ export const selectGenericFormComponentForProperty = ({
 };
 
 export type SelectGenericFormComponentForPropertyParams = {
+  isConnectionProperty?: boolean;
   field: ControllerRenderProps<Record<string, any>, string>;
   hideLabel?: boolean;
   propertyName: string;

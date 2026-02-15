@@ -28,7 +28,8 @@ export type FeatureKey =
   | 'TABLES'
   | 'TODOS'
   | 'BILLING'
-  | 'MCPS';
+  | 'MCPS'
+  | 'SECRET_MANAGERS';
 
 type RequestTrialProps = {
   featureKey: FeatureKey;

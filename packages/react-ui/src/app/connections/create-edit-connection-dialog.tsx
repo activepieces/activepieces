@@ -2,7 +2,6 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useEffectOnce } from 'react-use';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -68,7 +67,10 @@ function CreateOrEditConnectionSection({
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
 }: CreateOrEditConnectionSectionProps) {
-  const formSchema = formUtils.buildConnectionSchema(selectedAuth.authProperty);
+  const formSchema = formUtils.buildConnectionSchema(
+    selectedAuth.authProperty,
+    selectedAuth.oauth2App?.oauth2Type,
+  );
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
     piece,
     reconnectConnection,
@@ -102,9 +104,6 @@ function CreateOrEditConnectionSection({
     resolver: typeboxResolver(formSchema),
   });
 
-  useEffectOnce(() => {
-    form.trigger();
-  });
   const [errorMessage, setErrorMessage] = useState('');
 
   const { mutate: upsertConnection, isPending } =
@@ -135,10 +134,10 @@ function CreateOrEditConnectionSection({
       </DialogHeader>
 
       <Form {...form}>
-        <form className="flex flex-col gap-3 ">
+        <form className="flex flex-col gap-3">
           <ScrollArea
             className="px-2"
-            viewPortClassName="max-h-[calc(70vh-180px)] px-4 mb-1"
+            viewPortClassName="max-h-[calc(70vh-180px)] px-4 py-2 mb-1"
           >
             {' '}
             <ApMarkdown

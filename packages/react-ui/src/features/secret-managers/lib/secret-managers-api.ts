@@ -1,0 +1,22 @@
+import { api } from '@/lib/api';
+import {
+  ConnectSecretManagerRequest,
+  DisconnectSecretManagerRequest,
+  ResolveSecretRequest,
+  SecretManagerProviderMetaData,
+} from '@activepieces/ee-shared';
+
+export const secretManagersApi = {
+  list() {
+    return api.get<SecretManagerProviderMetaData[]>('/v1/secret-managers');
+  },
+  connect(config: ConnectSecretManagerRequest) {
+    return api.post<void>('/v1/secret-managers/connect', config);
+  },
+  disconnect(request: DisconnectSecretManagerRequest) {
+    return api.delete<void>('/v1/secret-managers/disconnect', request);
+  },
+  resolve(request: ResolveSecretRequest) {
+    return api.post<string>('/v1/secret-managers/resolve', request);
+  },
+};

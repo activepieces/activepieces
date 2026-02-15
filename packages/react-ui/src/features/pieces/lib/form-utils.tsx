@@ -18,6 +18,7 @@ import {
   PieceActionSettings,
   PieceTrigger,
   isNil,
+  AppConnectionType,
   RouterActionSchema,
   RouterBranchesSchema,
   SampleDataSetting,
@@ -176,7 +177,30 @@ function getDefaultValueForProperties({
   );
 }
 
-function buildConnectionSchema(auth: PieceAuthProperty) {
+function getOAuth2Schemas(connectionType?: AppConnectionType) {
+  switch (connectionType) {
+    case AppConnectionType.CLOUD_OAUTH2:
+      return {
+        requestSchema: UpsertCloudOAuth2Request,
+        valueSchema: UpsertCloudOAuth2Request.properties.value,
+      };
+    case AppConnectionType.PLATFORM_OAUTH2:
+      return {
+        requestSchema: UpsertPlatformOAuth2Request,
+        valueSchema: UpsertPlatformOAuth2Request.properties.value,
+      };
+    default:
+      return {
+        requestSchema: UpsertOAuth2Request,
+        valueSchema: UpsertOAuth2Request.properties.value,
+      };
+  }
+}
+
+function buildConnectionSchema(
+  auth: PieceAuthProperty,
+  connectionType?: AppConnectionType,
+) {
   if (isNil(auth)) {
     return Type.Object({
       request: Type.Composite([
@@ -223,28 +247,15 @@ function buildConnectionSchema(auth: PieceAuthProperty) {
           }),
         ]),
       });
-    case PropertyType.OAUTH2:
+    case PropertyType.OAUTH2: {
+      const { requestSchema, valueSchema } = getOAuth2Schemas(connectionType);
       return Type.Object({
         request: Type.Composite([
-          Type.Omit(
-            Type.Union([
-              UpsertOAuth2Request,
-              UpsertCloudOAuth2Request,
-              UpsertPlatformOAuth2Request,
-            ]),
-            ['externalId', 'displayName', 'value'],
-          ),
+          Type.Omit(requestSchema, ['externalId', 'displayName', 'value']),
           Type.Object({
             //props in the request schema is any object, so we need to build a schema for it
             value: Type.Composite([
-              Type.Omit(
-                Type.Union([
-                  UpsertOAuth2Request.properties.value,
-                  UpsertCloudOAuth2Request.properties.value,
-                  UpsertPlatformOAuth2Request.properties.value,
-                ]),
-                ['props'],
-              ),
+              Type.Omit(valueSchema, ['props']),
               Type.Object({
                 props: Type.Optional(
                   piecePropertiesUtils.buildSchema(auth.props ?? {}, undefined),
@@ -255,6 +266,7 @@ function buildConnectionSchema(auth: PieceAuthProperty) {
           connectionSchema,
         ]),
       });
+    }
     default:
       return Type.Object({
         request: Type.Composite([

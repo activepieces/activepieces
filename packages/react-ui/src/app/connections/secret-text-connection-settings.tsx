@@ -8,9 +8,10 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { SecretTextProperty } from '@activepieces/pieces-framework';
 import { UpsertSecretTextRequest } from '@activepieces/shared';
+
+import { SecretInput } from './secret-input';
 
 type SecretTextConnectionSettingsProps = {
   authProperty: SecretTextProperty<boolean>;
@@ -29,10 +30,10 @@ const SecretTextConnectionSettings = React.memo(
         name="request.value.secret_text"
         control={form.control}
         render={({ field }) => (
-          <FormItem className="flex flex-col">
+          <FormItem className="flex flex-col gap-2">
             <FormLabel>{authProperty.displayName}</FormLabel>
             <FormControl>
-              <Input {...field} type="password" />
+              <SecretInput {...field} type="password" />
             </FormControl>
           </FormItem>
         )}
