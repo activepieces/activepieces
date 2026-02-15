@@ -89,7 +89,6 @@ export const UpsertProviderConfigForm = ({
                   required={apiKeyRequired}
                   id="apiKey"
                   placeholder={'sk_************************'}
-                  className="rounded-sm"
                   disabled={isLoading}
                 />
               </FormControl>
@@ -112,7 +111,6 @@ export const UpsertProviderConfigForm = ({
                   required
                   id="resourceName"
                   placeholder={'your-resource-name'}
-                  className="rounded-sm"
                   disabled={isLoading}
                 />
               </FormControl>
@@ -136,7 +134,6 @@ export const UpsertProviderConfigForm = ({
                     required
                     id="accountId"
                     placeholder={'your-account-id'}
-                    className="rounded-sm"
                     disabled={isLoading}
                   />
                 </FormControl>
@@ -157,7 +154,6 @@ export const UpsertProviderConfigForm = ({
                     required
                     id="gatewayId"
                     placeholder={'your-gateway-id'}
-                    className="rounded-sm"
                     disabled={isLoading}
                   />
                 </FormControl>
@@ -165,6 +161,45 @@ export const UpsertProviderConfigForm = ({
               </FormItem>
             )}
           />
+             <FormField
+            control={form.control}
+            name="config.vertexRegion"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="vertexRegion">{t('Google Vertex Region')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    required
+                    id="vertexRegion"
+                    placeholder={'global'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+             <FormField
+            control={form.control}
+            name="config.vertexProject"
+            render={({ field }) => (
+              <FormItem className="grid space-y-3">
+                <FormLabel htmlFor="vertexProjectId">{t('Google Vertex Project ID')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    required
+                    id="vertexProjectId"
+                    placeholder={'project-1234'}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
         </>
       )}
 
@@ -182,7 +217,6 @@ export const UpsertProviderConfigForm = ({
                     required
                     id="baseUrl"
                     placeholder={'your-base-url'}
-                    className="rounded-sm"
                     disabled={isLoading}
                   />
                 </FormControl>
@@ -205,7 +239,6 @@ export const UpsertProviderConfigForm = ({
                     required
                     id="apiKeyHeader"
                     placeholder={'your-api-key-header'}
-                    className="rounded-sm"
                     disabled={isLoading}
                   />
                 </FormControl>

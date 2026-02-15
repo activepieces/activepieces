@@ -73,7 +73,7 @@ export async function createAIModel({
             return provider.chat(modelId)
         }
         case AIProviderName.CLOUDFLARE_GATEWAY: {
-            const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
+            const { accountId, gatewayId,vertexProject,vertexRegion } = config as CloudflareGatewayProviderConfig
             const gatewayBaseUrl = `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}`
             const cfMetadataHeaders = {
                 'cf-aig-metadata': JSON.stringify({
@@ -93,8 +93,13 @@ export async function createAIModel({
             switch (providerPrefix) {
                 case 'anthropic': {
                     const provider = createAnthropic({
+                        apiKey: 'cf-gateway-managed', // dummy, satisfies SDK validation
                         baseURL: `${gatewayBaseUrl}/anthropic`,
-                        headers,
+                        headers: {
+                            'cf-aig-authorization': `Bearer ${auth.apiKey}`,
+                            'x-api-key': '', // suppress SDK's x-api-key
+                            ...cfMetadataHeaders,
+                        },
                     })
                     return provider(actualModelId)
                 }
@@ -113,17 +118,14 @@ export async function createAIModel({
                     // Model IDs come in as "google-vertex-ai/google/gemini-2.5-pro".
                     // After the first split, actualModelId = "google/gemini-2.5-pro".
                     // Strip the publisher prefix ("google/") since it's already in the baseURL.
-                    // const vertexProject = (config as CloudflareGatewayProviderConfig).models.find(model => model.modelId === modelId)?.vertexProject
-                    // const vertexRegion = (config as CloudflareGatewayProviderConfig).models.find(model => model.modelId === modelId)?.vertexRegion
-                    const vertexModelId = actualModelId.includes('/')
-                        ? actualModelId.substring(actualModelId.lastIndexOf('/') + 1)
-                        : actualModelId
+                    const publisher = actualModelId.split('/')[0]
+                    const modelId = actualModelId.split('/')[1]
                     const provider = createGoogleGenerativeAI({
                         apiKey: auth.apiKey,
-                        baseURL: `${gatewayBaseUrl}/google-vertex-ai/v1/projects/`,
+                        baseURL: `${gatewayBaseUrl}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
                         headers,
                     })
-                    return provider(vertexModelId)
+                    return provider(modelId)
                 }
                 default: {
                     // Fallback to OpenAI-compatible endpoint
