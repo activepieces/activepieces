@@ -9,6 +9,16 @@ interface WebhookInformation {
   owner: string;
 }
 
+interface PushCommit {
+  distinct?: boolean;
+}
+
+interface PushPayload {
+  deleted?: boolean;
+  ref?: string;
+  commits?: PushCommit[];
+}
+
 export const newCommitTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_commit',
@@ -57,21 +67,17 @@ export const newCommitTrigger = createTrigger({
       },
     });
 
-    await context.store.put<WebhookInformation>(
-      'github_new_commit_trigger',
-      {
-        webhookId: response.body.id,
-        repo,
-        owner,
-      }
-    );
+    await context.store.put<WebhookInformation>('github_new_commit_trigger', {
+      webhookId: response.body.id,
+      repo,
+      owner,
+    });
   },
 
   async onDisable(context) {
-    const webhook =
-      await context.store.get<WebhookInformation>(
-        'github_new_commit_trigger'
-      );
+    const webhook = await context.store.get<WebhookInformation>(
+      'github_new_commit_trigger'
+    );
 
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
@@ -83,8 +89,13 @@ export const newCommitTrigger = createTrigger({
   },
 
   async run(context) {
-    const body = context.payload.body as any;
+    const body = context.payload.body as PushPayload;
+    if (body.deleted || !body.ref?.startsWith('refs/heads/')) {
+      return [];
+    }
 
-    return body.commits ?? [];
+    const commits = body.commits ?? [];
+    // distinct is GitHub’s signal for whether commit is new in push history.
+    return commits.filter((commit) => commit.distinct === true);
   },
 });
