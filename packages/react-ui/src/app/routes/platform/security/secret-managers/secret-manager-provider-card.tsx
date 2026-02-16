@@ -7,6 +7,7 @@ import { secretManagersHooks } from '@/features/secret-managers/lib/secret-manag
 import { SecretManagerProviderMetaData } from '@activepieces/ee-shared';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 
 type SecretManagerProviderCardProps = {
   provider: SecretManagerProviderMetaData;
@@ -38,14 +39,16 @@ const SecretManagerProviderCard = ({
           </Button>
         </ConnectSecretManagerDialog>
         {provider.connected && (
-          <Button
-            variant={'ghost'}
-            size={'sm'}
-            loading={isPending}
-            onClick={() => disconnect({ providerId: provider.id })}
+          <ConfirmationDeleteDialog
+            title={t('Disconnect Secret Manager')}
+            message={t('Are you sure you want to disconnect this secret manager?')}
+            entityName={provider.name}
+            mutationFn={async () => disconnect({ providerId: provider.id })}
           >
-            <Trash className="size-4 text-destructive" />
-          </Button>
+            <Button variant={'ghost'} size={'sm'} loading={isPending}>
+              <Trash className="size-4 text-destructive" />
+            </Button>
+          </ConfirmationDeleteDialog>
         )}
       </div>
     </Card>

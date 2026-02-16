@@ -69,7 +69,6 @@ function CreateOrEditConnectionSection({
 }: CreateOrEditConnectionSectionProps) {
   const formSchema = formUtils.buildConnectionSchema(
     selectedAuth.authProperty,
-    selectedAuth.oauth2App?.oauth2Type,
   );
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
     piece,
