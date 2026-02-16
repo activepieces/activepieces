@@ -1,4 +1,3 @@
-import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
 import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
@@ -16,39 +15,20 @@ const fetchWithRetry = fetchRetry(global.fetch)
 
 const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
-let backupController: AbortController | null = null
-let backupLoopPromise: Promise<void> | null = null
-
-async function backupLoop(signal: AbortSignal): Promise<void> {
-    while (!signal.aborted) {
-        try {
-            if (latestUpdateParams) {
-                console.log('[Progress] Backup interval fired, starting backup')
-                await progressService.backup(latestUpdateParams)
-                console.log('[Progress] Backup interval completed')
-            }
-        }
-        catch (err) {
-            console.error('[Progress] Backup failed', err)
-        }
-
-        // Sleep for interval or until aborted
-        try {
-            await setTimeout(BACKUP_INTERVAL_MS, undefined, { signal })
-        }
-        catch {
-            // sleep aborted → loop will exit naturally
-        }
-    }
-}
+let backupIntervalId: NodeJS.Timeout | null = null
 
 export const progressService = {
     init: (): void => {
-        if (backupController) {
-            return
+        if (backupIntervalId) {
+            clearInterval(backupIntervalId)
         }
-        backupController = new AbortController()
-        backupLoopPromise = backupLoop(backupController.signal)
+
+        backupIntervalId = setInterval(async () => {
+            if (isNil(latestUpdateParams)) {
+                return
+            }
+            await progressService.backup(latestUpdateParams)
+        }, BACKUP_INTERVAL_MS)
     },
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return updateLock.runExclusive(async () => {
@@ -109,7 +89,8 @@ export const progressService = {
             return
         }
         await lock.runExclusive(async () => {
-            const { flowExecutorContext, engineConstants } = updateParams
+            const params = updateParams
+            const { flowExecutorContext, engineConstants } = params!
             const executionState = await logSerializer.serialize({
                 executionState: {   
                     steps: flowExecutorContext.steps,
@@ -154,28 +135,17 @@ export const progressService = {
             await sendLogsUpdate(request)
         })
     },
-    shutdown: async () => {
-        if (!backupController) {
-            return
+    shutdown: () => {
+        if (backupIntervalId) {
+            clearInterval(backupIntervalId)
+            backupIntervalId = null
         }
-        
-        console.log('[Progress] Shutdown called, stopping backup loop')
-        backupController.abort()
-        
-        if (backupLoopPromise) {
-            console.log('[Progress] Waiting for in-progress backup to complete')
-            await backupLoopPromise
-        }
-        
-        backupController = null
-        backupLoopPromise = null
         latestUpdateParams = null
-        console.log('[Progress] Shutdown complete')
     },
 }
 
-process.on('SIGTERM', () => void progressService.shutdown())
-process.on('SIGINT', () => void progressService.shutdown())
+process.on('SIGTERM', progressService.shutdown)
+process.on('SIGINT', progressService.shutdown)
 
 type CreateOutputContextParams = {
     engineConstants: EngineConstants
