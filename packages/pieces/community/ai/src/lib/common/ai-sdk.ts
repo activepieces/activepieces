@@ -8,9 +8,7 @@ import { ImageModel, LanguageModel } from 'ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/shared'
 import { createAiGateway } from 'ai-gateway-provider';
-// @ts-expect-error moduleResolution "node" doesn't support package.json exports
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
-// @ts-expect-error moduleResolution "node" doesn't support package.json exports
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;
@@ -98,11 +96,15 @@ export async function createAIModel({
             }
             switch (providerPrefix) {
                 case 'anthropic': {
-                    const anthropicProvider = createAnthropicGateway();
+                    const anthropicProvider = createAnthropicGateway({
+                        headers
+                    });
                     return aigateway(anthropicProvider(actualModelId));
                 }
                 case 'google-ai-studio': {
-                    const googleProvider = createGoogleGateway();
+                    const googleProvider = createGoogleGateway({
+                        headers
+                    });
                     return aigateway(googleProvider(actualModelId));
                 }
                 case 'google-vertex-ai': {

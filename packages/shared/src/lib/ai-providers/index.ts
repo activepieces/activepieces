@@ -239,18 +239,43 @@ export function splitCloudflareGatewayModelId(modelId: string): {
     provider: string
     model: string
     publisher: undefined
+} | {
+    provider: undefined
+    model: string
+    publisher: undefined
 } {
-    const [provider, publisher, model] = modelId.split('/')
-    if (provider !== 'google-vertex-ai') {
+    const slashIndex = modelId.indexOf('/')
+    if (slashIndex === -1) {
+        //console.error(`Invalid model ID "${modelId}": expected format "provider/model"`)
         return {
-            provider,
-            model: publisher,
+            provider: undefined,
+            model: modelId,
             publisher: undefined,
         }
     }
+    const provider = modelId.substring(0, slashIndex)
+    const rest = modelId.substring(slashIndex + 1)
+
+    if (provider === 'google-vertex-ai') {
+        const secondSlashIndex = rest.indexOf('/')
+        if (secondSlashIndex === -1) {
+            //console.error(`Invalid Google Vertex AI model ID "${modelId}": expected format "google-vertex-ai/publisher/model"`)
+            return {
+                provider: undefined,
+                model: modelId,
+                publisher: undefined,
+            }
+        }
+        return {
+            provider: 'google-vertex-ai',
+            publisher: rest.substring(0, secondSlashIndex),
+            model: rest.substring(secondSlashIndex + 1),
+        }
+    }
+
     return {
-        provider: 'google-vertex-ai',
-        publisher,
-        model,
+        provider,
+        model: rest,
+        publisher: undefined,
     }
 }

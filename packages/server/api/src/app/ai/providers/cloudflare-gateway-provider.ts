@@ -17,6 +17,9 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
                     if (isNil(config.vertexProject) || isNil(config.vertexRegion)) {
                         throw new Error('Google Vertex ai project and region are required for Google Vertex AI models')
                     }
+                    if (isNil(publisher)) {
+                        throw new Error('Google Vertex ai publisher is required for Google Vertex AI models')
+                    }
                     const providerConstructor = createGoogleGenerativeAI({
                         apiKey: authConfig.apiKey,
                         baseURL: `https://gateway.ai.cloudflare.com/v1/${config.accountId}/${config.gatewayId}/google-vertex-ai/v1/projects/${config.vertexProject}/locations/${config.vertexRegion}/publishers/${publisher}/`,

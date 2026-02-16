@@ -1804,6 +1804,12 @@
       ],
       "@activepieces/piece-amazon-secrets-manager": [
         "packages/pieces/community/amazon-secrets-manager/src/index.ts"
+      ],
+      "ai-gateway-provider/providers/anthropic": [
+        "node_modules/ai-gateway-provider/dist/providers/anthropic.d.ts"
+      ],
+      "ai-gateway-provider/providers/google": [
+        "node_modules/ai-gateway-provider/dist/providers/google.d.ts"
       ]
     },
     "resolveJsonModule": true

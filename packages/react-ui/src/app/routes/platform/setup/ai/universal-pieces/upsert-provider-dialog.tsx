@@ -121,6 +121,7 @@ export const UpsertAIProviderDialogContent = ({
             values.config.vertexRegion.trim().length === 0
           ) {
             errors.config = {
+              ...errors.config,
               vertexRegion: {
                 message: 'Required when using Google Vertex AI models',
                 type: 'required',
