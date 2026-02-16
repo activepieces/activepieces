@@ -56,7 +56,7 @@ export const AutomationsTable = ({
   return (
     <div className="rounded-md border overflow-x-auto">
       <div className="min-w-[1000px]">
-        <div className="flex items-center h-10 border-b text-sm font-medium text-muted-foreground">
+        <div className="flex items-center h-10 text-sm border-b font-medium text-muted-foreground">
           <div className="w-10 shrink-0 pl-2 pr-1">
             <Checkbox
               checked={
@@ -65,7 +65,7 @@ export const AutomationsTable = ({
               onCheckedChange={onToggleAllSelection}
             />
           </div>
-          <div className="w-[350px] shrink-0 pl-1">{t('Name')}</div>
+          <div className="w-[350px] shrink-0 pl-6">{t('Name')}</div>
           {!embedState.isEmbedded && (
             <div className="w-[200px] shrink-0 px-2">{t('Details')}</div>
           )}
@@ -78,7 +78,7 @@ export const AutomationsTable = ({
         {isLoading ? (
           <div>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center h-10 border-b px-2">
+              <div key={i} className="flex items-center h-10 px-2">
                 <Skeleton className="h-6 w-full" />
               </div>
             ))}
@@ -96,7 +96,7 @@ export const AutomationsTable = ({
                   <AccordionPrimitive.Item
                     key={`folder-${group.item.id}`}
                     value={group.item.id}
-                    className="border-b"
+                    className="not-last:border-b"
                   >
                     <div
                       className={cn(rowClassName)}
@@ -151,7 +151,7 @@ export const AutomationsTable = ({
               return (
                 <div
                   key={`${group.item.type}-${group.item.id}`}
-                  className={cn(rowClassName, 'border-b')}
+                  className={cn(rowClassName, 'not-last:border-b')}
                   onClick={() => onRowClick(group.item)}
                 >
                   <AutomationsTableRow

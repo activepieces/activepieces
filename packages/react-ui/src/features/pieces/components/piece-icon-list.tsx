@@ -27,6 +27,7 @@ const extraIconVariants = cva(
         lg: 'size-[40px]',
         md: 'size-[38px]',
         sm: 'size-[25px]',
+        xs: 'size-[25px]',
       },
       circle: {
         true: 'rounded-full',
@@ -47,7 +48,7 @@ export function PieceIconList({
 }: {
   trigger: FlowTrigger;
   maxNumberOfIconsToShow: number;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   className?: string;
   circle?: boolean;
   background?: string;
@@ -96,7 +97,7 @@ export function PieceIconList({
       {extraPieces > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={extraIconVariants({ size: size ?? 'md', circle })}>
+            <div className={extraIconVariants({ size: size ?? 'xs', circle })}>
               +{extraPieces}
             </div>
           </TooltipTrigger>
