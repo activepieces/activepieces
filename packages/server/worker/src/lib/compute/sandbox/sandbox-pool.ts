@@ -26,10 +26,11 @@ export const sandboxPool = {
         sandboxQueue = Array.from({ length: workerConcurrency }, () => nanoid())
     },
     allocate: async (log: FastifyBaseLogger): Promise<Sandbox> => {
-        const sandboxId = sandboxQueue.shift()
-        if (!sandboxId) {
+        const slotId = sandboxQueue.shift()
+        if (!slotId) {
             throw new Error('No sandbox available')
         }
+        const sandboxId = reusable ? slotId : nanoid()
         const existingSandbox = sandboxes.get(sandboxId)
         if (!isNil(existingSandbox)) {
             const workerGeneration = sandboxGenerations.get(sandboxId) ?? 0
@@ -76,8 +77,12 @@ export const sandboxPool = {
         if (!reusable) {
             await sandbox.shutdown()
             sandboxes.delete(sandbox.id)
+            sandboxGenerations.delete(sandbox.id)
+            sandboxQueue.push(nanoid())
         }
-        sandboxQueue.push(sandbox.id)
+        else {
+            sandboxQueue.push(sandbox.id)
+        }
     },
     drain: async () => {
         for (const sandbox of sandboxes.values()) {

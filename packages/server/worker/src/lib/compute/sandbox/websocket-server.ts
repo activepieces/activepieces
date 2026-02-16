@@ -43,7 +43,7 @@ export const sandboxWebsocketServer = {
                 if (isNil(listener)) {
                     const socketExists = !isNil(sockets[sandboxId])
                     const socketConnected = sockets[sandboxId]?.connected ?? false
-                    log.error({ 
+                    log.warn({ 
                         sandboxId, 
                         event, 
                         socketExists,
@@ -51,6 +51,7 @@ export const sandboxWebsocketServer = {
                         socketId: socket.id,
                         hasCallback: !isNil(callback),
                     }, '[WebSocket] Received message from sandbox after listener was removed')
+                    callback?.()
                     return
                 }
                 const promise = listener(event, payload)
@@ -63,16 +64,19 @@ export const sandboxWebsocketServer = {
 
             socket.on('disconnect', (reason) => {
                 const hadListener = !isNil(listeners[sandboxId])
+                const isCurrentSocket = sockets[sandboxId] === socket
                 log.info({ 
                     sandboxId, 
                     hadListener,
+                    isCurrentSocket,
                     reason,
                     socketId: socket.id,
                 }, '[WebSocket] Sandbox disconnected')
-                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                delete sockets[sandboxId]
+                if (isCurrentSocket) {
+                    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                    delete sockets[sandboxId]
+                }
                 socket.removeAllListeners('command')
-
             })
         })
 
