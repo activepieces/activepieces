@@ -184,7 +184,8 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
             },
             errorMessage,
         }
-    } catch (error) {
+    }
+    catch (error) {
         return {
             status: ExecutionToolStatus.FAILED,
             output: undefined,
