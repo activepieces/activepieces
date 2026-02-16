@@ -33,16 +33,18 @@ const ConnectSecretManagerDialog = ({
   manager,
 }: ConnectSecretManagerDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm();
+  const form = useForm<ConnectSecretManagerRequest>({
+     defaultValues: {
+      providerId: manager.id,
+      config: {},
+     },
+  });
+  
   const { mutate, isPending } = secretManagersHooks.useConnectSecretManager();
-
   const connect = () => {
     form.clearErrors('root.serverError');
     mutate(
-      {
-        providerId: manager.id,
-        config: form.getValues(),
-      } as ConnectSecretManagerRequest,
+      form.getValues(),
       {
         onSuccess: () => {
           form.reset();
@@ -51,7 +53,6 @@ const ConnectSecretManagerDialog = ({
         onError: (error) => {
           if (api.isError(error)) {
             const apError = error.response?.data as ApErrorParams;
-
             if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
               form.setError('root.serverError', {
                 type: 'manual',
@@ -62,19 +63,15 @@ const ConnectSecretManagerDialog = ({
                   },
                 ),
               });
-              return;
             }
           }
-          const err = error as AxiosError<{
-            message?: string;
-            params?: { message: string };
-          }>;
-          const data = err.response?.data;
-          form.setError('root.serverError', {
-            type: 'manual',
-            message:
-              data?.message ?? data?.params?.message ?? JSON.stringify(error),
-          });
+          else {
+            console.error(error);
+            form.setError('root.serverError', {
+              type: 'manual',
+              message: t('Failed to connect to secret manager, please check console'),
+            });
+          }
         },
       },
     );
