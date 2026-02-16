@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ConnectSecretManagerRequest,
   DisconnectSecretManagerRequest,
@@ -12,6 +13,7 @@ import { secretManagersApi } from './secret-managers-api';
 
 export const secretManagersHooks = {
   useSecretManagers: ({ connectedOnly }: { connectedOnly?: boolean } = {}) => {
+    const { platform } = platformHooks.useCurrentPlatform();
     return useQuery<SecretManagerProviderMetaData[]>({
       queryKey: ['secret-managers'],
       queryFn: async () => {
@@ -23,6 +25,7 @@ export const secretManagersHooks = {
         }
         return secretManagers.data;
       },
+      enabled: platform.plan.secretManagersEnabled,
     });
   },
   useConnectSecretManager: () => {
