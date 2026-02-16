@@ -11,7 +11,7 @@
     "write-file-atomic": "5.0.1",
     "tslib": "2.6.2",
     "@opentelemetry/api": "1.9.0",
-    "axios": "1.13.1",
+    "axios": "1.13.5",
     "axios-retry": "4.4.1",
     "fastify": "5.4.0",
     "fetch-retry": "6.0.0",
