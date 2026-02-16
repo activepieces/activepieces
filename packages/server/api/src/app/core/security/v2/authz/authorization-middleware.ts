@@ -67,7 +67,7 @@ export async function convertToSecurityAccessRequest(request: FastifyRequest): P
     }
 }
 
-async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
+export async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
     if (request.principal.type === PrincipalType.ENGINE) {
         return request.principal.projectId
     }
