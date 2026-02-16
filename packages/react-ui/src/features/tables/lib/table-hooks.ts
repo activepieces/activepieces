@@ -8,6 +8,7 @@ import {
   SharedTemplate,
   TableTemplate,
   Table,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import { fieldsApi } from './fields-api';
@@ -46,7 +47,7 @@ export const tableHooks = {
         const table = await tablesApi.create({
           projectId,
           name: data.name,
-          folderId: folderId,
+          folderId: folderId === UncategorizedFolderId ? undefined : folderId,
         });
         const field = await fieldsApi.create({
           name: 'Name',
