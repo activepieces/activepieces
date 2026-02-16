@@ -1,0 +1,11 @@
+{
+  "presets": [
+    [
+      "@nx/js/babel",
+      {
+        "useBuiltIns": "usage",
+        "corejs": 3
+      }
+    ]
+  ]
+}
