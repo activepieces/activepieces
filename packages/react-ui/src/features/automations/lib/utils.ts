@@ -108,7 +108,6 @@ export function buildTreeItems(
   rootTables: Table[],
   folderContents: Map<string, FolderContent>,
   folderCounts: Map<string, number>,
-  expandedFolders: Set<string>,
   folderVisibleCounts: Map<string, number>,
   rootPage: number,
 ): { items: TreeItem[]; totalRootItems: number } {
@@ -150,7 +149,7 @@ export function buildTreeItems(
     seenIds.add(key);
     result.push(item);
 
-    if (item.type === 'folder' && expandedFolders.has(item.id)) {
+    if (item.type === 'folder') {
       const content = folderContents.get(item.id);
       if (content) {
         const visibleCount =
@@ -199,4 +198,18 @@ export function hasActiveFilters(filters: AutomationsFilters): boolean {
 
 export function getItemKey(item: TreeItem): string {
   return `${item.type}-${item.id}`;
+}
+
+export type TreeRow = { item: TreeItem; children: TreeItem[] };
+
+export function groupTreeItemsByFolder(items: TreeItem[]): TreeRow[] {
+  return items.reduce<TreeRow[]>((rows, item) => {
+    if (item.depth === 1) {
+      const parent = rows[rows.length - 1];
+      if (parent) parent.children.push(item);
+    } else {
+      rows.push({ item, children: [] });
+    }
+    return rows;
+  }, []);
 }

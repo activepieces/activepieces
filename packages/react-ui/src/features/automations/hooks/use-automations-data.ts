@@ -300,7 +300,6 @@ export function useAutomationsData(filters: AutomationsFilters) {
       rootTables,
       folderContents,
       folderCounts,
-      expandedFolders,
       folderVisibleCounts,
       rootPage,
     );
@@ -312,7 +311,6 @@ export function useAutomationsData(filters: AutomationsFilters) {
     rootTablesQuery.data,
     folderContentsQuery.data,
     folderCountsQuery.data,
-    expandedFolders,
     folderVisibleCounts,
     rootPage,
     isFiltered,

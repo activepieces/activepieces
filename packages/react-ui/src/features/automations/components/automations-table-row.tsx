@@ -49,7 +49,6 @@ export const AutomationsTableRow = ({
   isSelected,
   isExpanded,
   isFolderLoading,
-  onRowClick,
   onToggleSelection,
   onRename,
   onDelete,
@@ -59,27 +58,27 @@ export const AutomationsTableRow = ({
 
   if (item.type === 'load-more-folder') {
     return (
-      <>
-        <td></td>
-        <td colSpan={6}>
-          <div
-            className="flex items-center justify-center gap-2 text-primary font-medium py-2 cursor-pointer hover:underline"
-            onClick={onLoadMore}
-          >
-            <ArrowDown className="h-4 w-4" />
-            <span>
-              {t('Load {count} more items...', { count: item.loadMoreCount })}
-            </span>
-          </div>
-        </td>
-      </>
+      <div className="flex-1 flex items-center justify-center gap-2 text-primary font-medium py-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer hover:underline"
+          onClick={(e) => {
+            e.stopPropagation();
+            onLoadMore?.();
+          }}
+        >
+          <ArrowDown className="h-4 w-4" />
+          <span>
+            {t('Load {count} more items...', { count: item.loadMoreCount })}
+          </span>
+        </div>
+      </div>
     );
   }
 
   const getItemIcon = () => {
     if (item.type === 'folder') {
       return (
-        <Folder className="h-4 w-4 text-muted-foreground fill-muted-foreground" />
+        <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />
       );
     }
     if (item.type === 'flow') {
@@ -132,14 +131,14 @@ export const AutomationsTableRow = ({
 
   return (
     <>
-      <td
-        className="pl-2 pr-1 py-1.5 align-middle w-[40px]"
+      <div
+        className="w-10 shrink-0 pl-2 pr-1 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
-      </td>
-      <td className="pl-1 pr-2 py-1.5 align-middle">
-        <div className="flex items-center">
+      </div>
+      <div className="w-[350px] shrink-0 pl-1 pr-2 flex items-center">
+        <div className="flex items-center min-w-0">
           <div className="w-5 shrink-0 flex items-center justify-center">
             {item.type === 'folder' &&
               (isFolderLoading ? (
@@ -151,36 +150,40 @@ export const AutomationsTableRow = ({
               ))}
           </div>
           <div
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 min-w-0"
             style={{ paddingLeft: item.depth * 24 }}
           >
             {getItemIcon()}
             <span className="truncate">{item.name}</span>
           </div>
         </div>
-      </td>
+      </div>
       {!embedState.isEmbedded && (
-        <td className="px-2 py-1.5 align-middle">{getItemDetails()}</td>
+        <div className="w-[200px] shrink-0 px-2 flex items-center">
+          {getItemDetails()}
+        </div>
       )}
-      <td className="px-2 py-1.5 align-middle">
+      <div className="flex-1 px-2 flex items-center">
         {item.data && (
           <FormattedDate
             date={new Date(item.data.updated)}
             className="text-left"
           />
         )}
-      </td>
-      <td className="px-2 py-1.5 align-middle">{renderOwnerCell()}</td>
-      <td
-        className="px-2 py-1.5 align-middle"
+      </div>
+      <div className="w-[150px] shrink-0 px-2 flex items-center">
+        {renderOwnerCell()}
+      </div>
+      <div
+        className="w-[100px] shrink-0 px-2 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         {item.type === 'flow' && (
           <FlowStatusToggle flow={item.data as PopulatedFlow} />
         )}
-      </td>
-      <td
-        className="px-2 py-1.5 align-middle"
+      </div>
+      <div
+        className="w-[50px] shrink-0 px-2 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         <DropdownMenu>
@@ -214,7 +217,7 @@ export const AutomationsTableRow = ({
             </ConfirmationDeleteDialog>
           </DropdownMenuContent>
         </DropdownMenu>
-      </td>
+      </div>
     </>
   );
 };

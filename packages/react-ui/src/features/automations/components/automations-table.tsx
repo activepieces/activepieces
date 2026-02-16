@@ -1,20 +1,15 @@
+import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { t } from 'i18next';
-import { AnimatePresence, motion } from 'motion/react';
+import React from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { TreeItem } from '../lib/types';
+import { groupTreeItemsByFolder } from '../lib/utils';
 
 import { AutomationsTableRow } from './automations-table-row';
 
@@ -35,6 +30,10 @@ type AutomationsTableProps = {
   isItemSelected: (item: TreeItem) => boolean;
 };
 
+
+const rowClassName =
+  'flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
+
 export const AutomationsTable = ({
   items,
   isLoading,
@@ -52,93 +51,128 @@ export const AutomationsTable = ({
   isItemSelected,
 }: AutomationsTableProps) => {
   const { embedState } = useEmbedding();
+  const groups = groupTreeItemsByFolder(items);
 
   return (
     <div className="rounded-md border overflow-x-auto">
-      <Table className="min-w-[1000px]">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-[40px] pl-2 pr-1">
-              <Checkbox
-                checked={
-                  selectableCount > 0 && selectedItems.size === selectableCount
-                }
-                onCheckedChange={onToggleAllSelection}
-              />
-            </TableHead>
-            <TableHead className="w-[350px] pl-1">{t('Name')}</TableHead>
-            {!embedState.isEmbedded && (
-              <TableHead className="w-[200px]">{t('Details')}</TableHead>
-            )}
-            <TableHead className="w-[200px]">{t('Last modified')}</TableHead>
-            <TableHead className="w-[150px]">{t('Owner')}</TableHead>
-            <TableHead className="w-[100px]">{t('Status')}</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>
-                <TableCell colSpan={7}>
-                  <Skeleton className="h-9 w-full" />
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <AnimatePresence initial={false}>
-              {items.map((item) =>
-                item.depth === 1 ? (
-                  <motion.tr
-                    key={`${item.type}-${item.id}`}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="border-b cursor-pointer hover:bg-muted/50"
-                    onClick={() => onRowClick(item)}
-                  >
-                    <AutomationsTableRow
-                      item={item}
-                      isSelected={isItemSelected(item)}
-                      isExpanded={false}
-                      projectMembers={projectMembers}
-                      onRowClick={() => onRowClick(item)}
-                      onToggleSelection={() => onToggleItemSelection(item)}
-                      onRename={() => onRenameItem(item)}
-                      onDelete={() => onDeleteItem(item)}
-                      onLoadMore={
-                        item.type === 'load-more-folder'
-                          ? () => onLoadMoreInFolder(item.folderId!)
-                          : undefined
-                      }
-                    />
-                  </motion.tr>
-                ) : (
-                  <TableRow
-                    key={`${item.type}-${item.id}`}
-                    className="cursor-pointer"
-                    onClick={() => onRowClick(item)}
-                  >
-                    <AutomationsTableRow
-                      item={item}
-                      isSelected={isItemSelected(item)}
-                      isExpanded={expandedFolders.has(item.id)}
-                      isFolderLoading={loadingFolders.has(item.id)}
-                      projectMembers={projectMembers}
-                      onRowClick={() => onRowClick(item)}
-                      onToggleSelection={() => onToggleItemSelection(item)}
-                      onRename={() => onRenameItem(item)}
-                      onDelete={() => onDeleteItem(item)}
-                      onLoadMore={undefined}
-                    />
-                  </TableRow>
-                ),
-              )}
-            </AnimatePresence>
+      <div className="min-w-[1000px]">
+        <div className="flex items-center h-10 border-b text-sm font-medium text-muted-foreground">
+          <div className="w-10 shrink-0 pl-2 pr-1">
+            <Checkbox
+              checked={
+                selectableCount > 0 && selectedItems.size === selectableCount
+              }
+              onCheckedChange={onToggleAllSelection}
+            />
+          </div>
+          <div className="w-[350px] shrink-0 pl-1">{t('Name')}</div>
+          {!embedState.isEmbedded && (
+            <div className="w-[200px] shrink-0 px-2">{t('Details')}</div>
           )}
-        </TableBody>
-      </Table>
+          <div className="flex-1 px-2">{t('Last modified')}</div>
+          <div className="w-[150px] shrink-0 px-2">{t('Owner')}</div>
+          <div className="w-[100px] shrink-0 px-2">{t('Status')}</div>
+          <div className="w-[50px] shrink-0 px-2"></div>
+        </div>
+
+        {isLoading ? (
+          <div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center h-10 border-b px-2">
+                <Skeleton className="h-6 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <AccordionPrimitive.Root
+            type="multiple"
+            value={Array.from(expandedFolders)}
+          >
+            {groups.map((group) => {
+              const isFolder = group.item.type === 'folder';
+
+              if (isFolder) {
+                return (
+                  <AccordionPrimitive.Item
+                    key={`folder-${group.item.id}`}
+                    value={group.item.id}
+                    className="border-b"
+                  >
+                    <div
+                      className={cn(rowClassName)}
+                      onClick={() => onRowClick(group.item)}
+                    >
+                      <AutomationsTableRow
+                        item={group.item}
+                        isSelected={isItemSelected(group.item)}
+                        isExpanded={expandedFolders.has(group.item.id)}
+                        isFolderLoading={loadingFolders.has(group.item.id)}
+                        projectMembers={projectMembers}
+                        onRowClick={() => onRowClick(group.item)}
+                        onToggleSelection={() =>
+                          onToggleItemSelection(group.item)
+                        }
+                        onRename={() => onRenameItem(group.item)}
+                        onDelete={() => onDeleteItem(group.item)}
+                        onLoadMore={undefined}
+                      />
+                    </div>
+                    <AccordionPrimitive.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                      {group.children.map((child) => (
+                        <div
+                          key={`${child.type}-${child.id}`}
+                          className={cn(rowClassName, 'border-t')}
+                          onClick={() => onRowClick(child)}
+                        >
+                          <AutomationsTableRow
+                            item={child}
+                            isSelected={isItemSelected(child)}
+                            isExpanded={false}
+                            projectMembers={projectMembers}
+                            onRowClick={() => onRowClick(child)}
+                            onToggleSelection={() =>
+                              onToggleItemSelection(child)
+                            }
+                            onRename={() => onRenameItem(child)}
+                            onDelete={() => onDeleteItem(child)}
+                            onLoadMore={
+                              child.type === 'load-more-folder'
+                                ? () => onLoadMoreInFolder(child.folderId!)
+                                : undefined
+                            }
+                          />
+                        </div>
+                      ))}
+                    </AccordionPrimitive.Content>
+                  </AccordionPrimitive.Item>
+                );
+              }
+
+              return (
+                <div
+                  key={`${group.item.type}-${group.item.id}`}
+                  className={cn(rowClassName, 'border-b')}
+                  onClick={() => onRowClick(group.item)}
+                >
+                  <AutomationsTableRow
+                    item={group.item}
+                    isSelected={isItemSelected(group.item)}
+                    isExpanded={false}
+                    projectMembers={projectMembers}
+                    onRowClick={() => onRowClick(group.item)}
+                    onToggleSelection={() =>
+                      onToggleItemSelection(group.item)
+                    }
+                    onRename={() => onRenameItem(group.item)}
+                    onDelete={() => onDeleteItem(group.item)}
+                    onLoadMore={undefined}
+                  />
+                </div>
+              );
+            })}
+          </AccordionPrimitive.Root>
+        )}
+      </div>
     </div>
   );
 };
