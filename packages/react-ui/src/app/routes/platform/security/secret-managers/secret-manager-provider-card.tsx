@@ -1,13 +1,13 @@
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { SecretManagerProviderMetaData } from '@activepieces/ee-shared';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 
 type SecretManagerProviderCardProps = {
   provider: SecretManagerProviderMetaData;
@@ -41,7 +41,9 @@ const SecretManagerProviderCard = ({
         {provider.connected && (
           <ConfirmationDeleteDialog
             title={t('Disconnect Secret Manager')}
-            message={t('Are you sure you want to disconnect this secret manager?')}
+            message={t(
+              'Are you sure you want to disconnect this secret manager?',
+            )}
             entityName={provider.name}
             mutationFn={async () => disconnect({ providerId: provider.id })}
           >

@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -34,47 +33,45 @@ const ConnectSecretManagerDialog = ({
 }: ConnectSecretManagerDialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<ConnectSecretManagerRequest>({
-     defaultValues: {
+    defaultValues: {
       providerId: manager.id,
       config: {},
-     },
+    },
   });
-  
+
   const { mutate, isPending } = secretManagersHooks.useConnectSecretManager();
   const connect = () => {
     form.clearErrors('root.serverError');
-    mutate(
-      form.getValues(),
-      {
-        onSuccess: () => {
-          form.reset();
-          setOpen(false);
-        },
-        onError: (error) => {
-          if (api.isError(error)) {
-            const apError = error.response?.data as ApErrorParams;
-            if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
-              form.setError('root.serverError', {
-                type: 'manual',
-                message: t(
-                  'Failed to connect to secret manager with error: "{msg}"',
-                  {
-                    msg: apError.params?.message,
-                  },
-                ),
-              });
-            }
-          }
-          else {
-            console.error(error);
+    mutate(form.getValues(), {
+      onSuccess: () => {
+        form.reset();
+        setOpen(false);
+      },
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
             form.setError('root.serverError', {
               type: 'manual',
-              message: t('Failed to connect to secret manager, please check console'),
+              message: t(
+                'Failed to connect to secret manager with error: "{msg}"',
+                {
+                  msg: apError.params?.message,
+                },
+              ),
             });
           }
-        },
+        } else {
+          console.error(error);
+          form.setError('root.serverError', {
+            type: 'manual',
+            message: t(
+              'Failed to connect to secret manager, please check console',
+            ),
+          });
+        }
       },
-    );
+    });
   };
 
   return (

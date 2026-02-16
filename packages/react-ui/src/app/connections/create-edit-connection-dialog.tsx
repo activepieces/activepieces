@@ -67,9 +67,7 @@ function CreateOrEditConnectionSection({
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
 }: CreateOrEditConnectionSectionProps) {
-  const formSchema = formUtils.buildConnectionSchema(
-    selectedAuth.authProperty,
-  );
+  const formSchema = formUtils.buildConnectionSchema(selectedAuth.authProperty);
   const { externalId, displayName } = newConnectionUtils.getConnectionName(
     piece,
     reconnectConnection,
