@@ -72,6 +72,40 @@ export const GmailProps = {
       };
     },
   }),
+  labels: Property.MultiSelectDropdown<GmailLabel, true, typeof gmailAuth>({
+    displayName: 'Labels',
+    description: 'Select one or more labels.',
+    required: true,
+    auth: gmailAuth,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please authenticate first',
+        };
+      }
+
+      const response = await GmailRequests.getLabels(
+        auth as OAuth2PropertyValue
+      );
+
+      const selectableLabels = response.body.labels.filter(
+        (label) =>
+          label.type === 'user' ||
+          ['INBOX', 'STARRED', 'IMPORTANT', 'SENT', 'DRAFT'].includes(label.id)
+      );
+
+      return {
+        disabled: false,
+        options: selectableLabels.map((label) => ({
+          label: `${label.name}${label.type === 'system' ? ' (System)' : ''}`,
+          value: label,
+        })),
+      };
+    },
+  }),
   unread: (required = false) =>
     Property.Checkbox({
       displayName: 'Is unread?',
