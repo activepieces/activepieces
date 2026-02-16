@@ -147,7 +147,11 @@ export const sendMessage = createAction({
     const hasImages = imageUrls.length > 0;
 
     if (!hasMessage && !hasImages) {
-      throw new Error('Either message or images must be provided');
+      return {
+        status: 'error',
+        message: 'Either "message" (text content) or "images" (comma-separated URLs) must be provided.',
+        detail: 'Both fields are empty or missing.',
+      };
     }
 
     const response = await httpClient.sendRequest({
