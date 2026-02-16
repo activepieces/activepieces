@@ -15,8 +15,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { cn } from '@/lib/utils';
-import { AIProviderName, SUPPORTED_AI_PROVIDERS } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/shared';
 
 import { aiModelHooks } from './hooks';
 

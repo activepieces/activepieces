@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
 import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
-import { buildFlowOriginContextBlock, processMessageTimestamp } from '../common/utils';
+import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
 
 export const updateMessage = createAction({
@@ -35,7 +35,7 @@ export const updateMessage = createAction({
     }
     const client = new WebClient(auth.access_token);
 
-    const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text: propsValue.text } }];
+    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
 
     if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
       blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));

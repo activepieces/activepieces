@@ -174,6 +174,7 @@
   "\n\tPlease make sure add the bot to the channel by following these steps:\n\t  1. Type /invite in the channel's chat.\n\t  2. Click on Add apps to this channel.\n\t  3. Search for and add the bot.\n  \n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly in an array like this: `{`{ ['your_channel_id_1', 'your_channel_id_2', ...] `}`}": "\n以下の手順に従って、ボットをチャンネルに追加してください。\n1. チャンネルのチャットに「/invite」と入力します。\n2. 「このチャンネルにアプリを追加する」をクリックします。\n3. ボットを検索して追加します。\n\n**注**: ドロップダウンリスト（最大2000件のチャンネルが表示されます）にチャンネルが見つからない場合は、**(F)** をクリックし、チャンネルIDを配列形式で直接入力してください。例: `{`{ ['your_channel_id_1', 'your_channel_id_2', ...] `}`}",
   "If no channel is selected, the flow will be triggered for username mentions in all channels": "チャンネルが選択されていない場合、フローはすべてのチャンネルのユーザー名メンションに対してトリガーされます",
   "Select emojis to trigger on": "トリガーする絵文字を選択してください",
+  "If no channel is selected, the flow will be triggered for reactions in all channels the app has access to": "チャンネルが選択されていない場合、アプリがアクセスできるすべてのチャンネルのリアクションに対してフローがトリガーされます。",
   "List of valid commands that the bot should respond to (e.g., help, ocr, remind)": "ボットが応答する有効なコマンドのリスト（例：ヘルプ、分かった、リマインダーなど）",
   "If no channel is selected, the flow will be triggered for commands in all channels": "チャンネルが選択されていない場合、フローはすべてのチャンネルのコマンドに対してトリガーされます"
 }
