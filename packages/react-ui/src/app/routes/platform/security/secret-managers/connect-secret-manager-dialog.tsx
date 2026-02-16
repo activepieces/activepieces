@@ -110,8 +110,8 @@ const ConnectSecretManagerDialog = ({
             {Object.entries(manager.fields).map(([fieldId, field]) => (
               <FormField
                 key={fieldId}
-                rules={{ required: true }}
-                name={fieldId}
+                rules={{ required: !field.optional }}
+                name={`config.${fieldId}`}
                 render={({ field: formField }) => (
                   <FormItem className="grid space-y-3">
                     <Label htmlFor="fieldName">
