@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
@@ -35,7 +36,16 @@ export const AutomationsPage = () => {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
 
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSetSearch = useDebouncedCallback(setSearchTerm, 300);
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInput(value);
+      debouncedSetSearch(value);
+    },
+    [debouncedSetSearch],
+  );
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [connectionFilter, setConnectionFilter] = useState<string[]>([]);
@@ -45,6 +55,7 @@ export const AutomationsPage = () => {
   useEffect(() => {
     if (prevProjectIdRef.current !== projectId) {
       prevProjectIdRef.current = projectId;
+      setSearchInput('');
       setSearchTerm('');
       setTypeFilter([]);
       setStatusFilter([]);
@@ -191,6 +202,7 @@ export const AutomationsPage = () => {
   };
 
   const clearAllFilters = useCallback(() => {
+    setSearchInput('');
     setSearchTerm('');
     setTypeFilter([]);
     setStatusFilter([]);
@@ -211,8 +223,8 @@ export const AutomationsPage = () => {
   return (
     <div className="flex flex-col w-full">
       <AutomationsFiltersComponent
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        searchTerm={searchInput}
+        onSearchChange={handleSearchChange}
         typeFilter={typeFilter}
         onTypeFilterChange={setTypeFilter}
         statusFilter={statusFilter}
