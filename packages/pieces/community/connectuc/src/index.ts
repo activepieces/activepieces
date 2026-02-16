@@ -8,6 +8,7 @@ import { newVoicemail } from "./lib/triggers/new-voicemail";
 import { newSms } from "./lib/triggers/new-sms";
 import { createContactAction } from "./lib/actions/create-contact";
 import { doNotDisturbAction } from "./lib/actions/do-not-disturb";
+import { findCdrAction } from "./lib/actions/find-cdr";
 import { initiateCallAction } from "./lib/actions/initiate-call";
 import { sendSmsAction } from "./lib/actions/send-sms";
 import { updateCdrAction } from "./lib/actions/update-cdr";
@@ -67,6 +68,6 @@ export const connectuc = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cuc-media.s3.us-east-1.amazonaws.com/cuc_logo_120x120.png",
   authors: [],
-  actions: [createContactAction, doNotDisturbAction, initiateCallAction, sendSmsAction, updateCdrAction],
+  actions: [createContactAction, doNotDisturbAction, findCdrAction, initiateCallAction, sendSmsAction, updateCdrAction],
   triggers: [newRecording, newCdr, newIncomingCall, newOutgoingCall, newVoicemail, newSms],
 });
