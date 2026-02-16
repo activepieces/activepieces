@@ -26,13 +26,13 @@ To test the trigger, publish the flow, perform the event. Then check the flow ru
 - [New Form Submission on Typeform](https://github.com/activepieces/activepieces/blob/main/packages/pieces/community/typeform/src/lib/trigger/new-submission.ts)
 
 <Warning>
-To make your webhook accessible from the internet, you need to configure the backend URL. Follow these steps:
+To make your webhook accessible from the internet, you need to expose your local development instance to the internet, do the following:
 
-1. Install ngrok.
-2. Run the command `ngrok http 4200`.
-3. Replace the `AP_FRONTEND_URL` environment variable in `packages/server/api/.env` with the ngrok URL.
-4. Go to /packages/react-ui/vite.config.ts, uncomment allowedHosts and set the value to what ngrok gives you.
+1. Install [localxpose](https://localxpose.io/docs#start-your-first-tunnel).
+2. Follow the documentation to start your first tunnel to localhost:4200.
+3. Copy the tunnel domain, i.e wozcsvaint.loclx.io, and replace the `AP_FRONTEND_URL` environment variable in `packages/server/api/.env` with the exposed url, i.e https://wozcsvaint.loclx.io
+4. Go to /packages/react-ui/vite.config.ts, uncomment allowedHosts and replace the value with the same tunnel domain, i.e wozcsvaint.loclx.io.
 
-Once you have completed these configurations, you are good to go!
+Once you have completed these configurations, you will be able to test webhook triggers and run published flows that have them.
 
 </Warning>
