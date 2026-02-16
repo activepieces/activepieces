@@ -42,6 +42,8 @@ const ModelFormPopover = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // so parent form doesn't submit
+    e.stopPropagation();
     onSubmit(model);
     if (!initialData) {
       setModel(defaultModel);
