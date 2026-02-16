@@ -31,8 +31,6 @@ import {
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
 
-import { SecretInput } from './secret-input';
-
 function OAuth2ConnectionSettings({
   authProperty,
   oauth2App,
@@ -102,7 +100,7 @@ function OAuth2ConnectionSettings({
               <FormItem className="flex flex-col">
                 <FormLabel>{t('Client Secret')}</FormLabel>
                 <FormControl>
-                  <SecretInput
+                  <Input
                     {...field}
                     type="password"
                     placeholder={t('Client Secret')}

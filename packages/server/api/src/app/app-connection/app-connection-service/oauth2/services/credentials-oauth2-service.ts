@@ -11,7 +11,6 @@ import { ActivepiecesError,
 } from '@activepieces/shared'
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { appConnectionService } from '../../app-connection-service'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
@@ -113,13 +112,11 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
     },
 
     async refresh({
-        platformId,
         connectionValue,
-    }: RefreshOAuth2Request<OAuth2ConnectionValueWithApp> & { platformId: string }): Promise<OAuth2ConnectionValueWithApp> {
-        const resolvedConnectionValues = await appConnectionService(log).resolveSecrets(connectionValue, platformId)
-
-        if (!oauth2Util(log).isExpired(resolvedConnectionValues)) {
-            return resolvedConnectionValues
+    }: RefreshOAuth2Request<OAuth2ConnectionValueWithApp>): Promise<OAuth2ConnectionValueWithApp> {
+        const appConnection = connectionValue
+        if (!oauth2Util(log).isExpired(appConnection)) {
+            return appConnection
         }
         const grantType =
             connectionValue.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
@@ -127,16 +124,16 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
         switch (grantType) {
             case OAuth2GrantType.AUTHORIZATION_CODE: {
                 body.grant_type = 'refresh_token'
-                body.refresh_token = resolvedConnectionValues.refresh_token
+                body.refresh_token = appConnection.refresh_token
                 break
             }
             case OAuth2GrantType.CLIENT_CREDENTIALS: {
                 body.grant_type = OAuth2GrantType.CLIENT_CREDENTIALS
-                if (resolvedConnectionValues.scope) {
-                    body.scope = resolveValueFromProps(resolvedConnectionValues.props, resolvedConnectionValues.scope)
+                if (appConnection.scope) {
+                    body.scope = resolveValueFromProps(appConnection.props, appConnection.scope)
                 }
-                if (resolvedConnectionValues.props) {
-                    Object.entries(resolvedConnectionValues.props).forEach(([key, value]) => {
+                if (appConnection.props) {
+                    Object.entries(appConnection.props).forEach(([key, value]) => {
                         body[key] = String(value)
                     })
                 }
@@ -151,34 +148,33 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             accept: 'application/json',
         }
         const authorizationMethod =
-            resolvedConnectionValues.authorization_method || OAuth2AuthorizationMethod.BODY
+            appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
-                body.client_id = resolvedConnectionValues.client_id
-                body.client_secret = resolvedConnectionValues.client_secret
+                body.client_id = appConnection.client_id
+                body.client_secret = appConnection.client_secret
                 break
             case OAuth2AuthorizationMethod.HEADER:
                 headers.authorization = `Basic ${Buffer.from(
-                    `${resolvedConnectionValues.client_id}:${resolvedConnectionValues.client_secret}`,
+                    `${appConnection.client_id}:${appConnection.client_secret}`,
                 ).toString('base64')}`
                 break
             default:
                 throw new Error(`Unknown authorization method: ${authorizationMethod}`)
         }
         const response = (
-            await apAxios.post(resolvedConnectionValues.token_url, new URLSearchParams(body), {
+            await apAxios.post(appConnection.token_url, new URLSearchParams(body), {
                 headers,
                 timeout: 20000,
             })
         ).data
         const mergedObject = mergeNonNull(
-            resolvedConnectionValues,
+            appConnection,
             oauth2Util(log).formatOAuth2Response({ ...response }),
         )
         return {
             ...mergedObject,
-            ...connectionValue,
-            props: resolvedConnectionValues.props,
+            props: appConnection.props,
         }
     },
 })
