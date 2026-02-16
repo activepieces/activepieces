@@ -62,8 +62,6 @@ const SecretManagerToggleButton = React.memo(
 
 SecretManagerToggleButton.displayName = 'SecretManagerToggleButton';
 
-const SECRET_VALUE_REGEX = /^\{\{\s*(\w+):(.*)\s*\}\}$/;
-
 const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
   ({ className, value, onChange, ...restProps }, ref) => {
     const { onBlur, name, disabled, ...otherProps } = restProps;
@@ -78,54 +76,11 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
           ?.getSecretParams ?? {},
       );
 
-    const parseSecretValue = (
-      value: string | undefined,
-    ): {
-      isSecretManager: boolean;
-      providerId: SecretManagerProviderId;
-      fieldValues: Record<string, string>;
-    } => {
-      const defaultOptions = {
-        isSecretManager: false,
-        providerId: SecretManagerProviderId.HASHICORP,
-        fieldValues: {},
-      };
-      if (!value) {
-        return defaultOptions;
-      }
+    const [useSecretManager, setUseSecretManager] = useState(false);
 
-      const match = value.match(SECRET_VALUE_REGEX);
-      if (!match) {
-        return defaultOptions;
-      }
-
-      const [, providerId, valuesString] = match;
-      const providerIdTyped = providerId as SecretManagerProviderId;
-      const fields = providerGetSecretParams(providerIdTyped);
-      const values = valuesString.split(':');
-
-      const fieldValues: Record<string, string> = {};
-      fields.forEach(([fieldKey], index) => {
-        fieldValues[fieldKey] = values[index] || '';
-      });
-
-      return {
-        isSecretManager: true,
-        providerId: providerIdTyped,
-        fieldValues,
-      };
-    };
-
-    const parsed = useMemo(() => parseSecretValue(value), [value]);
-
-    const [useSecretManager, setUseSecretManager] = useState(
-      parsed.isSecretManager,
-    );
     const [selectedProvider, setSelectedProvider] =
-      useState<SecretManagerProviderId>(parsed.providerId);
-    const [fieldValues, setFieldValues] = useState<Record<string, string>>(
-      parsed.fieldValues,
-    );
+      useState<SecretManagerProviderId>(SecretManagerProviderId.HASHICORP);
+    const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
     const buildSecretValue = (
       providerId: SecretManagerProviderId,
