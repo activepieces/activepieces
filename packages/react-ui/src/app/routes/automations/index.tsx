@@ -92,6 +92,8 @@ export const AutomationsPage = () => {
     toggleFolder,
     loadMoreInFolder,
     rootPage,
+    pageSize,
+    changePageSize,
     totalPages,
     totalPageItems,
     nextRootPage,
@@ -262,6 +264,8 @@ export const AutomationsPage = () => {
             currentPage={rootPage}
             totalItems={totalPageItems}
             totalPages={totalPages}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
             onPrevPage={prevRootPage}
             onNextPage={nextRootPage}
           />

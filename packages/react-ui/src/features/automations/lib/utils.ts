@@ -2,7 +2,8 @@ import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 
 import { AutomationsFilters, FolderContent, TreeItem } from './types';
 
-export const ROOT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 10;
+export const PAGE_SIZE_OPTIONS = [10, 20, 50];
 export const FOLDER_PAGE_SIZE = 10;
 export const PARALLEL_FOLDER_THRESHOLD = 50;
 
@@ -110,6 +111,7 @@ export function buildTreeItems(
   folderCounts: Map<string, number>,
   folderVisibleCounts: Map<string, number>,
   rootPage: number,
+  pageSize: number,
 ): { items: TreeItem[]; totalRootItems: number } {
   const seenIds = new Set<string>();
 
@@ -138,8 +140,8 @@ export function buildTreeItems(
   allTopLevel.sort((a, b) => getUpdatedDate(b.data!) - getUpdatedDate(a.data!));
 
   const totalRootItems = allTopLevel.length;
-  const start = rootPage * ROOT_PAGE_SIZE;
-  const pageItems = allTopLevel.slice(start, start + ROOT_PAGE_SIZE);
+  const start = rootPage * pageSize;
+  const pageItems = allTopLevel.slice(start, start + pageSize);
 
   const result: TreeItem[] = [];
 
@@ -178,11 +180,12 @@ export function buildFilteredTreeItems(
   flows: PopulatedFlow[],
   tables: Table[],
   page: number,
+  pageSize: number,
 ): { items: TreeItem[]; totalItems: number } {
   const merged = mergeAndSortItems(flows, tables);
   const total = merged.length;
-  const start = page * ROOT_PAGE_SIZE;
-  const pageItems = merged.slice(start, start + ROOT_PAGE_SIZE);
+  const start = page * pageSize;
+  const pageItems = merged.slice(start, start + pageSize);
   return { items: pageItems, totalItems: total };
 }
 

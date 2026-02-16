@@ -18,10 +18,10 @@ import { AutomationsFilters, FolderContent } from '../lib/types';
 import {
   buildFilteredTreeItems,
   buildTreeItems,
+  DEFAULT_PAGE_SIZE,
   FOLDER_PAGE_SIZE,
   hasActiveFilters,
   PARALLEL_FOLDER_THRESHOLD,
-  ROOT_PAGE_SIZE,
 } from '../lib/utils';
 
 type FolderContentsMap = Map<string, FolderContent>;
@@ -53,6 +53,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
   const isFiltered = hasActiveFilters(filters);
 
   const [rootPage, setRootPage] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
   );
@@ -278,6 +279,11 @@ export function useAutomationsData(filters: AutomationsFilters) {
     setFolderVisibleCounts(new Map());
   }, []);
 
+  const changePageSize = useCallback((size: number) => {
+    setPageSize(size);
+    setRootPage(0);
+  }, []);
+
   const { treeItems, totalPageItems } = useMemo(() => {
     const folders = foldersQuery.data ?? [];
     const rootFlows = rootFlowsQuery.data?.data ?? [];
@@ -290,6 +296,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
         rootFlows,
         rootTables,
         rootPage,
+        pageSize,
       );
       return { treeItems: items, totalPageItems: totalItems };
     }
@@ -302,6 +309,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
       folderCounts,
       folderVisibleCounts,
       rootPage,
+      pageSize,
     );
 
     return { treeItems: items, totalPageItems: totalRootItems };
@@ -313,10 +321,11 @@ export function useAutomationsData(filters: AutomationsFilters) {
     folderCountsQuery.data,
     folderVisibleCounts,
     rootPage,
+    pageSize,
     isFiltered,
   ]);
 
-  const totalPages = Math.ceil(totalPageItems / ROOT_PAGE_SIZE);
+  const totalPages = Math.ceil(totalPageItems / pageSize);
   const isLoading =
     foldersQuery.isLoading ||
     (rootFlowsQuery.isLoading && !skipFlows) ||
@@ -357,6 +366,8 @@ export function useAutomationsData(filters: AutomationsFilters) {
     toggleFolder,
     loadMoreInFolder,
     rootPage,
+    pageSize,
+    changePageSize,
     totalPages,
     totalPageItems,
     nextRootPage,
