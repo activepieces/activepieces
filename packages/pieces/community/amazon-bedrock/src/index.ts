@@ -10,6 +10,7 @@ import { generateContentFromImage } from './lib/actions/generate-content-from-im
 import { generateImage } from './lib/actions/generate-image';
 import { generateEmbeddings } from './lib/actions/generate-embeddings';
 import { createBedrockClient } from './lib/common';
+import { customApiCall } from './lib/actions/custom-api-call';
 
 export const awsBedrockAuth = PieceAuth.CustomAuth({
   description: 'AWS Bedrock authentication using Access Key and Secret Key.',
@@ -107,9 +108,9 @@ export const awsBedrock = createPiece({
   description: 'Build generative AI applications with foundation models',
   auth: awsBedrockAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/aws-bedrock.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["onyedikachi-david"],
-  actions: [sendPrompt, generateContentFromImage, generateImage, generateEmbeddings],
+  actions: [sendPrompt, generateContentFromImage, generateImage, generateEmbeddings, customApiCall],
   triggers: [],
 });
