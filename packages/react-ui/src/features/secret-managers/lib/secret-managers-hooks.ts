@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import {
   ConnectSecretManagerRequest,
   DisconnectSecretManagerRequest,
-  ResolveSecretRequest,
   SecretManagerProviderMetaData,
 } from '@activepieces/ee-shared';
 
@@ -18,11 +17,11 @@ export const secretManagersHooks = {
       queryFn: async () => {
         const secretManagers = await secretManagersApi.list();
         if (connectedOnly) {
-          return secretManagers.filter(
+          return secretManagers.data.filter(
             (secretManager) => secretManager.connected,
           );
         }
-        return secretManagers;
+        return secretManagers.data;
       },
     });
   },
@@ -44,13 +43,6 @@ export const secretManagersHooks = {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
         toast.success(t('Disconnected successfully'));
       },
-    });
-  },
-
-  useResolveSecret: () => {
-    return useMutation<string, Error, ResolveSecretRequest>({
-      mutationFn: (request: ResolveSecretRequest) =>
-        secretManagersApi.resolve(request),
     });
   },
 };

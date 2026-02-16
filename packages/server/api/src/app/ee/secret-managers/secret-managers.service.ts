@@ -1,5 +1,5 @@
 import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -9,13 +9,13 @@ import { SecretManagerEntity } from './secret-manager.entity'
 const secretManagerRepository = repoFactory(SecretManagerEntity)
 
 export const secretManagersService = (log: FastifyBaseLogger) => ({
-    list: async ({ platformId }: { platformId: string }): Promise<SecretManagerProviderMetaData[]> => {
+    list: async ({ platformId }: { platformId: string }): Promise<SeekPage<SecretManagerProviderMetaData>> => {
         const secretManagers = await secretManagerRepository().find({
             where: {
                 platformId,
             },
         })
-        return Promise.all(secretManagerProvidersMetadata().map(async (metadata) => {
+        const providers = await Promise.all(secretManagerProvidersMetadata().map(async (metadata) => {
             const provider = secretManagerProvider(log, metadata.id)
             const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
             const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
@@ -26,6 +26,11 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 connected: isConnected,
             }
         }))
+        return {
+            data: providers,
+            next: null,
+            previous: null,
+        }
     },
     connect: async (request: ConnectSecretManagerRequest & { platformId: string }) => {
         const provider = secretManagerProvider(log, request.providerId)

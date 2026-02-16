@@ -156,7 +156,7 @@ export function PlatformSidebar() {
           to: '/platform/security/secret-managers',
           label: t('Secret Managers'),
           icon: KeyRound,
-          locked: false,
+          locked: !platform.plan.secretManagersEnabled,
         },
       ],
     },
