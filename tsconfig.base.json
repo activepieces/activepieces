@@ -1804,6 +1804,9 @@
       ],
       "@activepieces/piece-amazon-secrets-manager": [
         "packages/pieces/community/amazon-secrets-manager/src/index.ts"
+      ],
+      "@activepieces/piece-validatedmails": [
+        "packages/pieces/community/validatedmails/src/index.ts"
       ]
     },
     "resolveJsonModule": true
