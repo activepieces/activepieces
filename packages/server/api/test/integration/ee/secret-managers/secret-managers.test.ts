@@ -45,7 +45,7 @@ describe('Secret Managers API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
-                }
+                },
             })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -76,7 +76,7 @@ describe('Secret Managers API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
-                }
+                },
             })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -120,7 +120,7 @@ describe('Secret Managers API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
-                }
+                },
             })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -159,7 +159,7 @@ describe('Secret Managers API', () => {
             const { mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
-                }
+                },
             })
 
             const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
@@ -181,7 +181,7 @@ describe('Secret Managers API', () => {
             const { mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
-                }
+                },
             })
 
             const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
@@ -203,7 +203,7 @@ describe('Secret Managers API', () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     secretManagersEnabled: true,
-                }
+                },
             })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,

@@ -2,7 +2,6 @@ import { api } from '@/lib/api';
 import {
   ConnectSecretManagerRequest,
   DisconnectSecretManagerRequest,
-  ResolveSecretRequest,
   SecretManagerProviderMetaData,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
@@ -18,8 +17,5 @@ export const secretManagersApi = {
   },
   disconnect(request: DisconnectSecretManagerRequest) {
     return api.delete<void>('/v1/secret-managers/disconnect', request);
-  },
-  resolve(request: ResolveSecretRequest) {
-    return api.post<string>('/v1/secret-managers/resolve', request);
   },
 };
