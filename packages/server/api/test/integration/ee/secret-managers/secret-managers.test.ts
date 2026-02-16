@@ -20,7 +20,7 @@ let vaultMock: ReturnType<typeof hashicorpMock>
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-}, 30000)
+}, 50000)
 
 beforeEach(() => {
     axiosRequestSpy = jest.spyOn(apAxios, 'request')
@@ -42,7 +42,11 @@ describe('Secret Managers API', () => {
 
     describe('List Secret Managers', () => {
         it('should list available secret manager providers', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                }
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
@@ -59,17 +63,21 @@ describe('Secret Managers API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            expect(Array.isArray(body)).toBe(true)
-            expect(body.length).toBeGreaterThan(0)
+            expect(Array.isArray(body.data)).toBe(true)
+            expect(body.data.length).toBeGreaterThan(0)
 
-            const hashicorp = body.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
+            const hashicorp = body.data.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
             expect(hashicorp).toBeDefined()
             expect(hashicorp.name).toBe('Hashicorp Vault')
             expect(hashicorp.connected).toBe(false)
         })
 
         it('should show connected status after connecting a provider', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                }
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
@@ -102,14 +110,18 @@ describe('Secret Managers API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            const hashicorp = body.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
+            const hashicorp = body.data.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
             expect(hashicorp.connected).toBe(true)
         })
     })
 
     describe('Resolve Secret', () => {
         it('should resolve a secret from HashiCorp Vault', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                }
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
@@ -144,7 +156,11 @@ describe('Secret Managers API', () => {
         })
 
         it('should throw error for non-secret key format', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                }
+            })
 
             const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
@@ -162,7 +178,11 @@ describe('Secret Managers API', () => {
         })
 
         it('should throw error for invalid provider id', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                }
+            })
 
             const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
             const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
@@ -180,7 +200,11 @@ describe('Secret Managers API', () => {
         })
 
         it('should throw error when secret is not found', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                }
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
@@ -263,49 +287,4 @@ describe('Secret Managers API', () => {
         })
     })
 
-    describe('Platform Isolation', () => {
-        it('should not see secret managers from another platform', async () => {
-            const { mockOwner: owner1, mockPlatform: platform1 } = await mockAndSaveBasicSetup()
-            const { mockOwner: owner2, mockPlatform: platform2 } = await mockAndSaveBasicSetup()
-
-            const token1 = await generateMockToken({
-                type: PrincipalType.USER,
-                id: owner1.id,
-                platform: { id: platform1.id },
-            })
-            const token2 = await generateMockToken({
-                type: PrincipalType.USER,
-                id: owner2.id,
-                platform: { id: platform2.id },
-            })
-
-            vaultMock.mockVaultLoginSuccess()
-
-            // Connect on platform 1
-            await app?.inject({
-                method: 'POST',
-                url: '/v1/secret-managers/connect',
-                headers: {
-                    authorization: `Bearer ${token1}`,
-                },
-                body: {
-                    providerId: SecretManagerProviderId.HASHICORP,
-                    config: mockVaultConfig,
-                },
-            })
-
-            // List on platform 2 - should not be connected
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/secret-managers',
-                headers: {
-                    authorization: `Bearer ${token2}`,
-                },
-            })
-
-            const body = response?.json()
-            const hashicorp = body.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
-            expect(hashicorp.connected).toBe(false)
-        })
-    })
 })

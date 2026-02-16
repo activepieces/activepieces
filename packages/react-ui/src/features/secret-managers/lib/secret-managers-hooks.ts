@@ -18,11 +18,11 @@ export const secretManagersHooks = {
       queryFn: async () => {
         const secretManagers = await secretManagersApi.list();
         if (connectedOnly) {
-          return secretManagers.filter(
+          return secretManagers.data.filter(
             (secretManager) => secretManager.connected,
           );
         }
-        return secretManagers;
+        return secretManagers.data;
       },
     });
   },

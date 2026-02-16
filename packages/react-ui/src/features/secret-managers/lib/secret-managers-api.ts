@@ -5,10 +5,13 @@ import {
   ResolveSecretRequest,
   SecretManagerProviderMetaData,
 } from '@activepieces/ee-shared';
+import { SeekPage } from '@activepieces/shared';
 
 export const secretManagersApi = {
   list() {
-    return api.get<SecretManagerProviderMetaData[]>('/v1/secret-managers');
+    return api.get<SeekPage<SecretManagerProviderMetaData>>(
+      '/v1/secret-managers',
+    );
   },
   connect(config: ConnectSecretManagerRequest) {
     return api.post<void>('/v1/secret-managers/connect', config);
