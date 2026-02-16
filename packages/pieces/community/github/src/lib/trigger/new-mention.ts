@@ -7,10 +7,32 @@ interface WebhookInformation {
   webhookId: number;
   repo: string;
   owner: string;
+  username: string;
 }
 
 interface GitHubUserResponse {
   login: string;
+}
+
+interface MentionPayload {
+  action?: string;
+  comment?: {
+    body?: string;
+  };
+}
+
+const STORE_KEY = 'github_new_mention_trigger';
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function containsMention(comment: string, username: string): boolean {
+  const pattern = new RegExp(
+    `(^|[^A-Za-z0-9-])@${escapeRegExp(username)}(?![A-Za-z0-9-])`,
+    'i'
+  );
+  return pattern.test(comment);
 }
 
 export const newMentionTrigger = createTrigger({
@@ -38,6 +60,11 @@ export const newMentionTrigger = createTrigger({
 
   async onEnable(context) {
     const { repo, owner } = context.propsValue.repository!;
+    const userResponse = await githubApiCall<GitHubUserResponse>({
+      accessToken: context.auth.access_token,
+      method: HttpMethod.GET,
+      resourceUri: '/user',
+    });
 
     const response = await githubApiCall<{ id: number }>({
       accessToken: context.auth.access_token,
@@ -54,17 +81,16 @@ export const newMentionTrigger = createTrigger({
       },
     });
 
-    await context.store.put<WebhookInformation>(
-      'github_new_mention_trigger',
-      { webhookId: response.body.id, repo, owner }
-    );
+    await context.store.put<WebhookInformation>(STORE_KEY, {
+      webhookId: response.body.id,
+      repo,
+      owner,
+      username: userResponse.body.login,
+    });
   },
 
   async onDisable(context) {
-    const webhook =
-      await context.store.get<WebhookInformation>(
-        'github_new_mention_trigger'
-      );
+    const webhook = await context.store.get<WebhookInformation>(STORE_KEY);
 
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
@@ -76,19 +102,29 @@ export const newMentionTrigger = createTrigger({
   },
 
   async run(context) {
-    const body = context.payload.body as any;
+    const body = context.payload.body as MentionPayload;
+    if (body.action !== 'created' && body.action !== 'edited') {
+      return [];
+    }
+
     const comment = body.comment?.body ?? '';
+    if (!comment) {
+      return [];
+    }
 
-    const userResponse = await githubApiCall<GitHubUserResponse>({
-      accessToken: context.auth.access_token,
-      method: HttpMethod.GET,
-      resourceUri: '/user',
-    });
+    const webhook = await context.store.get<WebhookInformation>(STORE_KEY);
+    let username = webhook?.username;
+    if (!username) {
+      const userResponse = await githubApiCall<GitHubUserResponse>({
+        accessToken: context.auth.access_token,
+        method: HttpMethod.GET,
+        resourceUri: '/user',
+      });
+      username = userResponse.body.login;
+    }
 
-    const username = userResponse.body.login;
-
-    if (comment.includes(`@${username}`)) {
-      return [body];
+    if (username && containsMention(comment, username)) {
+      return [context.payload.body];
     }
 
     return [];
