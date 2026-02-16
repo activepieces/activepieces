@@ -4,7 +4,7 @@ import {
   ChevronDown,
   ChevronRight,
   Folder,
-  FolderOpen,
+  Loader2,
   MoreHorizontal,
   Pencil,
   Table2,
@@ -25,10 +25,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { FormattedDate } from '@/components/ui/formatted-date';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { PopulatedFlow } from '@activepieces/shared';
 
 import { TreeItem } from '../lib/types';
@@ -37,7 +35,8 @@ type AutomationsTableRowProps = {
   item: TreeItem;
   isSelected: boolean;
   isExpanded: boolean;
-  projectMembers: ProjectMemberWithUser[] | undefined;
+  isFolderLoading?: boolean;
+  projectMembers: any;
   onRowClick: () => void;
   onToggleSelection: () => void;
   onRename: () => void;
@@ -49,6 +48,7 @@ export const AutomationsTableRow = ({
   item,
   isSelected,
   isExpanded,
+  isFolderLoading,
   onRowClick,
   onToggleSelection,
   onRename,
@@ -57,35 +57,33 @@ export const AutomationsTableRow = ({
 }: AutomationsTableRowProps) => {
   const { embedState } = useEmbedding();
 
-  if (item.type === 'load-more-folder' || item.type === 'load-more-root') {
+  if (item.type === 'load-more-folder') {
     return (
-      <TableRow
-        className="cursor-pointer hover:bg-muted/50"
-        onClick={onLoadMore}
-      >
-        <TableCell></TableCell>
-        <TableCell colSpan={6}>
-          <div className="flex items-center justify-center gap-2 text-primary font-medium">
+      <>
+        <td></td>
+        <td colSpan={6}>
+          <div
+            className="flex items-center justify-center gap-2 text-primary font-medium py-2 cursor-pointer hover:underline"
+            onClick={onLoadMore}
+          >
             <ArrowDown className="h-4 w-4" />
             <span>
               {t('Load {count} more items...', { count: item.loadMoreCount })}
             </span>
           </div>
-        </TableCell>
-      </TableRow>
+        </td>
+      </>
     );
   }
 
   const getItemIcon = () => {
     if (item.type === 'folder') {
-      return isExpanded ? (
-        <FolderOpen className="h-4 w-4 text-amber-500" />
-      ) : (
-        <Folder className="h-4 w-4 text-amber-500" />
+      return (
+        <Folder className="h-4 w-4 text-muted-foreground fill-muted-foreground" />
       );
     }
     if (item.type === 'flow') {
-      return <Workflow className="h-4 w-4 text-purple-500" />;
+      return <Workflow className="h-4 w-4 text-primary" />;
     }
     return <Table2 className="h-4 w-4 text-emerald-500" />;
   };
@@ -105,6 +103,7 @@ export const AutomationsTableRow = ({
           trigger={flow.version.trigger}
           maxNumberOfIconsToShow={3}
           size="sm"
+          circle={false}
         />
       );
     }
@@ -117,21 +116,14 @@ export const AutomationsTableRow = ({
   const renderOwnerCell = () => {
     if (item.type === 'flow') {
       const flow = item.data as PopulatedFlow;
-      const ownerId = flow.ownerId;
-
-      if (ownerId) {
+      if (flow.ownerId) {
         return (
-          <div className="text-left">
-            {ownerId && (
-              <ApAvatar
-                id={ownerId}
-                includeAvatar={true}
-                includeName={true}
-                size="small"
-              />
-            )}
-            {!ownerId && <div className="text-left">-</div>}
-          </div>
+          <ApAvatar
+            id={flow.ownerId}
+            includeAvatar={true}
+            includeName={true}
+            size="small"
+          />
         );
       }
     }
@@ -139,20 +131,24 @@ export const AutomationsTableRow = ({
   };
 
   return (
-    <TableRow className="cursor-pointer group" onClick={onRowClick}>
-      <TableCell onClick={(e) => e.stopPropagation()}>
+    <>
+      <td
+        className="pl-2 pr-1 py-1.5 align-middle w-[40px]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
-      </TableCell>
-      <TableCell>
+      </td>
+      <td className="pl-1 pr-2 py-1.5 align-middle">
         <div className="flex items-center">
-          <div className="w-5 flex-shrink-0 flex items-center justify-center">
-            {item.type === 'folder' && (
-              isExpanded ? (
+          <div className="w-5 shrink-0 flex items-center justify-center">
+            {item.type === 'folder' &&
+              (isFolderLoading ? (
+                <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+              ) : isExpanded ? (
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               ) : (
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )
-            )}
+              ))}
           </div>
           <div
             className="flex items-center gap-2"
@@ -162,25 +158,30 @@ export const AutomationsTableRow = ({
             <span className="truncate">{item.name}</span>
           </div>
         </div>
-      </TableCell>
-      {!embedState.isEmbedded && <TableCell>{getItemDetails()}</TableCell>}
-      <TableCell>
+      </td>
+      {!embedState.isEmbedded && (
+        <td className="px-2 py-1.5 align-middle">{getItemDetails()}</td>
+      )}
+      <td className="px-2 py-1.5 align-middle">
         {item.data && (
           <FormattedDate
             date={new Date(item.data.updated)}
             className="text-left"
           />
         )}
-      </TableCell>
-      <TableCell>{renderOwnerCell()}</TableCell>
-      <TableCell onClick={(e) => e.stopPropagation()}>
+      </td>
+      <td className="px-2 py-1.5 align-middle">{renderOwnerCell()}</td>
+      <td
+        className="px-2 py-1.5 align-middle"
+        onClick={(e) => e.stopPropagation()}
+      >
         {item.type === 'flow' && (
           <FlowStatusToggle flow={item.data as PopulatedFlow} />
         )}
-      </TableCell>
-      <TableCell
+      </td>
+      <td
+        className="px-2 py-1.5 align-middle"
         onClick={(e) => e.stopPropagation()}
-        className="flex items-center justify-center"
       >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -213,7 +214,7 @@ export const AutomationsTableRow = ({
             </ConfirmationDeleteDialog>
           </DropdownMenuContent>
         </DropdownMenu>
-      </TableCell>
-    </TableRow>
+      </td>
+    </>
   );
 };

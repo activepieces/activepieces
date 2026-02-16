@@ -1,21 +1,17 @@
 import {
   FolderDto,
   PopulatedFlow,
-  Table as TableType,
+  SeekPage,
+  Table,
 } from '@activepieces/shared';
 
-export type TreeItemType =
-  | 'folder'
-  | 'flow'
-  | 'table'
-  | 'load-more-folder'
-  | 'load-more-root';
+export type TreeItemType = 'folder' | 'flow' | 'table' | 'load-more-folder';
 
 export type TreeItem = {
   id: string;
   type: TreeItemType;
   name: string;
-  data: FolderDto | PopulatedFlow | (TableType & { rowCount?: number }) | null;
+  data: FolderDto | PopulatedFlow | Table | null;
   depth: number;
   parentId: string | null;
   childCount?: number;
@@ -23,18 +19,22 @@ export type TreeItem = {
   loadMoreCount?: number;
 };
 
-export type FilterState = {
+export type AutomationsFilters = {
   searchTerm: string;
-  typeFilter: string;
-  statusFilter: string;
-  connectionFilter: string;
-  ownerFilter: string;
+  typeFilter: string[];
+  statusFilter: string[];
+  connectionFilter: string[];
+  ownerFilter: string[];
 };
 
-export type SelectionState = {
-  selectedItems: Set<string>;
-  toggleItemSelection: (item: TreeItem) => void;
-  toggleAllSelection: () => void;
-  clearSelection: () => void;
-  selectedItemsList: TreeItem[];
+export type FolderContent = {
+  flows: PopulatedFlow[];
+  tables: Table[];
+  flowsNextCursor: string | null;
+  tablesNextCursor: string | null;
+};
+
+export type RootPage = {
+  flows: SeekPage<PopulatedFlow>;
+  tables: SeekPage<Table>;
 };

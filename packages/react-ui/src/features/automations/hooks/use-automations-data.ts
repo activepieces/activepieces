@@ -1,0 +1,371 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
+
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { foldersApi } from '@/features/folders/lib/folders-api';
+import { tablesApi } from '@/features/tables/lib/tables-api';
+import { authenticationSession } from '@/lib/authentication-session';
+import {
+  FolderDto,
+  PopulatedFlow,
+  SeekPage,
+  Table,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
+
+import { AutomationsFilters, FolderContent } from '../lib/types';
+import {
+  buildFilteredTreeItems,
+  buildTreeItems,
+  FOLDER_PAGE_SIZE,
+  hasActiveFilters,
+  PARALLEL_FOLDER_THRESHOLD,
+  ROOT_PAGE_SIZE,
+} from '../lib/utils';
+
+type FolderContentsMap = Map<string, FolderContent>;
+
+function buildFolderContentsMap(
+  folders: FolderDto[],
+  results: (SeekPage<PopulatedFlow> | SeekPage<Table>)[],
+): FolderContentsMap {
+  const map: FolderContentsMap = new Map();
+  folders.forEach((folder, i) => {
+    const flowsResult = results[i * 2] as SeekPage<PopulatedFlow>;
+    const tablesResult = results[i * 2 + 1] as SeekPage<Table>;
+    map.set(folder.id, {
+      flows: flowsResult.data,
+      tables: tablesResult.data,
+      flowsNextCursor: flowsResult.next,
+      tablesNextCursor: tablesResult.next,
+    });
+  });
+  return map;
+}
+
+const STALE_TIME = 30_000;
+
+export function useAutomationsData(filters: AutomationsFilters) {
+  const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
+  const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
+  const queryClient = useQueryClient();
+  const isFiltered = hasActiveFilters(filters);
+
+  const [rootPage, setRootPage] = useState(0);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
+  const [folderVisibleCounts, setFolderVisibleCounts] = useState<
+    Map<string, number>
+  >(new Map());
+  const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
+
+  const prevProjectIdRef = useRef(projectId);
+  useEffect(() => {
+    if (prevProjectIdRef.current !== projectId) {
+      prevProjectIdRef.current = projectId;
+      setRootPage(0);
+      setExpandedFolders(new Set());
+      setFolderVisibleCounts(new Map());
+      setLoadingFolders(new Set());
+    }
+  }, [projectId]);
+
+  const foldersQuery = useQuery({
+    queryKey: ['folders', projectId],
+    queryFn: () => foldersApi.list(),
+    staleTime: STALE_TIME,
+    refetchOnMount: 'always',
+  });
+
+  const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
+
+  const folderCountsQuery = useQuery<Map<string, number>>({
+    queryKey: ['folder-counts', projectId, folderIds],
+    queryFn: async () => {
+      const folders = foldersQuery.data!;
+      const results = await Promise.all(
+        folders.flatMap((folder) => [
+          flowsApi.count({ projectId, folderId: folder.id }),
+          tablesApi.count({ projectId, folderId: folder.id }),
+        ]),
+      );
+      const map = new Map<string, number>();
+      folders.forEach((folder, i) => {
+        map.set(folder.id, results[i * 2] + results[i * 2 + 1]);
+      });
+      return map;
+    },
+    enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
+    staleTime: STALE_TIME,
+    refetchOnMount: 'always',
+  });
+
+  const folderContentsQuery = useQuery<FolderContentsMap>({
+    queryKey: ['all-folder-contents', projectId, folderIds],
+    queryFn: async () => {
+      const folders = foldersQuery.data!;
+      if (folders.length > PARALLEL_FOLDER_THRESHOLD) {
+        return new Map();
+      }
+      const results = await Promise.all(
+        folders.flatMap((folder) => [
+          flowsApi.list({
+            projectId,
+            folderId: folder.id,
+            limit: FOLDER_PAGE_SIZE,
+            cursor: undefined,
+          }),
+          tablesApi.list({
+            projectId,
+            folderId: folder.id,
+            limit: FOLDER_PAGE_SIZE,
+            cursor: undefined,
+          }),
+        ]),
+      );
+      return buildFolderContentsMap(folders, results);
+    },
+    enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
+    staleTime: STALE_TIME,
+    refetchOnMount: 'always',
+  });
+
+  const skipFlows =
+    filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
+  const skipTables =
+    filters.typeFilter.length > 0 && !filters.typeFilter.includes('table');
+
+  const rootFlowsQuery = useQuery({
+    queryKey: ['root-flows', projectId, filters],
+    queryFn: () =>
+      flowsApi.list({
+        projectId,
+        folderId: isFiltered ? undefined : UncategorizedFolderId,
+        limit: 1000,
+        cursor: undefined,
+        name: filters.searchTerm || undefined,
+        status:
+          filters.statusFilter.length > 0
+            ? (filters.statusFilter as any)
+            : undefined,
+        connectionExternalIds:
+          filters.connectionFilter.length > 0
+            ? filters.connectionFilter
+            : undefined,
+      }),
+    enabled: !skipFlows,
+    staleTime: STALE_TIME,
+    refetchOnMount: 'always',
+  });
+
+  const rootTablesQuery = useQuery({
+    queryKey: ['root-tables', projectId, filters],
+    queryFn: () =>
+      tablesApi.list({
+        projectId,
+        folderId: isFiltered ? undefined : UncategorizedFolderId,
+        limit: 1000,
+        cursor: undefined,
+        name: filters.searchTerm || undefined,
+      }),
+    enabled: !skipTables,
+    staleTime: STALE_TIME,
+    refetchOnMount: 'always',
+  });
+
+  const toggleFolder = useCallback((folderId: string) => {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  }, []);
+
+  const loadMoreInFolder = useCallback(
+    async (folderId: string) => {
+      const contents = folderContentsQuery.data?.get(folderId);
+      if (!contents) return;
+
+      const hasMoreFlows = !!contents.flowsNextCursor;
+      const hasMoreTables = !!contents.tablesNextCursor;
+      if (!hasMoreFlows && !hasMoreTables) {
+        setFolderVisibleCounts((prev) => {
+          const next = new Map(prev);
+          const current = next.get(folderId) ?? FOLDER_PAGE_SIZE;
+          next.set(folderId, current + FOLDER_PAGE_SIZE);
+          return next;
+        });
+        return;
+      }
+
+      setLoadingFolders((prev) => new Set(prev).add(folderId));
+
+      const [newFlows, newTables] = await Promise.all([
+        hasMoreFlows
+          ? flowsApi.list({
+              projectId,
+              folderId,
+              limit: FOLDER_PAGE_SIZE,
+              cursor: contents.flowsNextCursor!,
+            })
+          : Promise.resolve({
+              data: [],
+              next: null,
+              previous: null,
+            } as SeekPage<PopulatedFlow>),
+        hasMoreTables
+          ? tablesApi.list({
+              projectId,
+              folderId,
+              limit: FOLDER_PAGE_SIZE,
+              cursor: contents.tablesNextCursor!,
+            })
+          : Promise.resolve({
+              data: [],
+              next: null,
+              previous: null,
+            } as SeekPage<Table>),
+      ]);
+
+      queryClient.setQueryData<FolderContentsMap>(
+        ['all-folder-contents', projectId, folderIds],
+        (old) => {
+          if (!old) return old;
+          const next = new Map(old);
+          const existing = next.get(folderId)!;
+          next.set(folderId, {
+            flows: [...existing.flows, ...newFlows.data],
+            tables: [...existing.tables, ...newTables.data],
+            flowsNextCursor: newFlows.next,
+            tablesNextCursor: newTables.next,
+          });
+          return next;
+        },
+      );
+
+      setFolderVisibleCounts((prev) => {
+        const next = new Map(prev);
+        const current = next.get(folderId) ?? FOLDER_PAGE_SIZE;
+        next.set(folderId, current + FOLDER_PAGE_SIZE);
+        return next;
+      });
+
+      setLoadingFolders((prev) => {
+        const next = new Set(prev);
+        next.delete(folderId);
+        return next;
+      });
+    },
+    [folderContentsQuery.data, projectId, folderIds, queryClient],
+  );
+
+  const nextRootPage = useCallback(() => {
+    setRootPage((prev) => prev + 1);
+  }, []);
+
+  const prevRootPage = useCallback(() => {
+    setRootPage((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const resetPagination = useCallback(() => {
+    setRootPage(0);
+    setFolderVisibleCounts(new Map());
+  }, []);
+
+  const { treeItems, totalPageItems } = useMemo(() => {
+    const folders = foldersQuery.data ?? [];
+    const rootFlows = rootFlowsQuery.data?.data ?? [];
+    const rootTables = rootTablesQuery.data?.data ?? [];
+    const folderContents = folderContentsQuery.data ?? new Map();
+    const folderCounts = folderCountsQuery.data ?? new Map();
+
+    if (isFiltered) {
+      const { items, totalItems } = buildFilteredTreeItems(
+        rootFlows,
+        rootTables,
+        rootPage,
+      );
+      return { treeItems: items, totalPageItems: totalItems };
+    }
+
+    const { items, totalRootItems } = buildTreeItems(
+      folders,
+      rootFlows,
+      rootTables,
+      folderContents,
+      folderCounts,
+      expandedFolders,
+      folderVisibleCounts,
+      rootPage,
+    );
+
+    return { treeItems: items, totalPageItems: totalRootItems };
+  }, [
+    foldersQuery.data,
+    rootFlowsQuery.data,
+    rootTablesQuery.data,
+    folderContentsQuery.data,
+    folderCountsQuery.data,
+    expandedFolders,
+    folderVisibleCounts,
+    rootPage,
+    isFiltered,
+  ]);
+
+  const totalPages = Math.ceil(totalPageItems / ROOT_PAGE_SIZE);
+  const isLoading =
+    foldersQuery.isLoading ||
+    (rootFlowsQuery.isLoading && !skipFlows) ||
+    (rootTablesQuery.isLoading && !skipTables) ||
+    folderContentsQuery.isLoading;
+
+  const invalidateAll = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['folders'] });
+    queryClient.invalidateQueries({ queryKey: ['root-flows'] });
+    queryClient.invalidateQueries({ queryKey: ['root-tables'] });
+    queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] });
+    queryClient.invalidateQueries({ queryKey: ['folder-counts'] });
+  }, [queryClient]);
+
+  const invalidateRoot = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['root-flows'] });
+    queryClient.invalidateQueries({ queryKey: ['root-tables'] });
+  }, [queryClient]);
+
+  const invalidateFolder = useCallback(
+    (_folderId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] });
+      queryClient.invalidateQueries({ queryKey: ['folders'] });
+      queryClient.invalidateQueries({ queryKey: ['folder-counts'] });
+    },
+    [queryClient],
+  );
+
+  return {
+    treeItems,
+    folders: foldersQuery.data ?? [],
+    rootFlows: rootFlowsQuery.data?.data ?? [],
+    rootTables: rootTablesQuery.data?.data ?? [],
+    isLoading,
+    isFiltered,
+    expandedFolders,
+    loadingFolders,
+    toggleFolder,
+    loadMoreInFolder,
+    rootPage,
+    totalPages,
+    totalPageItems,
+    nextRootPage,
+    prevRootPage,
+    resetPagination,
+    invalidateAll,
+    invalidateRoot,
+    invalidateFolder,
+  };
+}

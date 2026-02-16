@@ -98,7 +98,7 @@ export const tableService = {
             queryWhere.externalId = In(externalIds)
         }
 
-        if (folderId !== undefined) {
+        if (!isNil(folderId)) {
             queryWhere.folderId = folderId === UncategorizedFolderId ? IsNull() : folderId
         }
 

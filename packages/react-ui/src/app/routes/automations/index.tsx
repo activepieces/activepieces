@@ -1,61 +1,57 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
+import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
 import { AutomationsNoResultsState } from '@/features/automations/components/automations-no-results-state';
+import { AutomationsPagination } from '@/features/automations/components/automations-pagination';
+import { AutomationsSelectionBar } from '@/features/automations/components/automations-selection-bar';
+import { AutomationsTable } from '@/features/automations/components/automations-table';
+import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
+import { RenameDialog } from '@/features/automations/components/rename-dialog';
+import { useAutomationsData } from '@/features/automations/hooks/use-automations-data';
+import { useAutomationsMutations } from '@/features/automations/hooks/use-automations-mutations';
 import {
-  useAutomationsTree,
   useAutomationsSelection,
-  automationsCollectionUtils,
-  getSelectedIdsByType,
   hasMovableOrExportableItems,
-  flowsCollection,
-  tablesCollection,
-  type AutomationsFilters,
-  type TreeItem,
-} from '@/features/automations/lib/automations-collection';
+} from '@/features/automations/hooks/use-automations-selection';
+import { AutomationsFilters, TreeItem } from '@/features/automations/lib/types';
+import { hasActiveFilters } from '@/features/automations/lib/utils';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { flowsApi } from '@/features/flows/lib/flows-api';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
-import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { recordsApi } from '@/features/tables/lib/records-api';
-import { tablesApi } from '@/features/tables/lib/tables-api';
-import { tablesUtils } from '@/features/tables/lib/utils';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import {
-  FieldType,
-  isNil,
-  Permission,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
-
-import { AutomationsFilters as AutomationsFiltersComponent } from '../../../features/automations/components/automations-filters';
-import { AutomationsSelectionBar } from '../../../features/automations/components/automations-selection-bar';
-import { AutomationsTable } from '../../../features/automations/components/automations-table';
-import { MoveToFolderDialog } from '../../../features/automations/components/move-to-folder-dialog';
-import { RenameDialog } from '../../../features/automations/components/rename-dialog';
+import { Permission, UncategorizedFolderId } from '@activepieces/shared';
 
 export const AutomationsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const projectId = authenticationSession.getProjectId()!;
+  const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
+  const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [connectionFilter, setConnectionFilter] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState<string[]>([]);
+
+  const prevProjectIdRef = useRef(projectId);
+  useEffect(() => {
+    if (prevProjectIdRef.current !== projectId) {
+      prevProjectIdRef.current = projectId;
+      setSearchTerm('');
+      setTypeFilter([]);
+      setStatusFilter([]);
+      setConnectionFilter([]);
+      setOwnerFilter([]);
+    }
+  }, [projectId]);
 
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [isImportFlowDialogOpen, setIsImportFlowDialogOpen] = useState(false);
@@ -82,18 +78,29 @@ export const AutomationsPage = () => {
     [searchTerm, typeFilter, statusFilter, connectionFilter, ownerFilter],
   );
 
+  const filtersActive = hasActiveFilters(filters);
+
   const {
     treeItems,
+    folders,
+    rootFlows,
+    rootTables,
+    isLoading,
+    isFiltered,
     expandedFolders,
+    loadingFolders,
     toggleFolder,
     loadMoreInFolder,
-    loadMoreRoot,
+    rootPage,
+    totalPages,
+    totalPageItems,
+    nextRootPage,
+    prevRootPage,
     resetPagination,
-    isLoading,
-    flows,
-    tables,
-    folders,
-  } = useAutomationsTree(filters);
+    invalidateAll,
+    invalidateRoot,
+    invalidateFolder,
+  } = useAutomationsData(filters);
 
   useEffect(() => {
     resetPagination();
@@ -112,208 +119,29 @@ export const AutomationsPage = () => {
     toggleAllSelection,
     clearSelection,
     isItemSelected,
-  } = useAutomationsSelection(treeItems, flows, tables);
+    selectableItems,
+  } = useAutomationsSelection(treeItems);
+
+  useEffect(() => {
+    clearSelection();
+  }, [projectId, clearSelection]);
+
+  const mutations = useAutomationsMutations({
+    invalidateAll,
+    invalidateRoot,
+    invalidateFolder,
+    clearSelection,
+    flows: rootFlows,
+  });
 
   const { data: connections } = appConnectionsQueries.useAppConnections({
-    request: {
-      projectId,
-      limit: 10000,
-    },
+    request: { projectId, limit: 10000 },
     extraKeys: [projectId],
   });
 
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { pieces } = piecesHooks.usePieces({});
   const { data: currentUser } = userHooks.useCurrentUser();
-
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
-    mutationFn: async () => {
-      const flow = await flowsApi.create({
-        projectId,
-        displayName: t('Untitled'),
-      });
-      return flow;
-    },
-    onSuccess: (flow) => {
-      flowsCollection.utils.writeInsert(flow);
-      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
-    },
-  });
-
-  const { mutate: createTable, isPending: isCreatingTable } = useMutation({
-    mutationFn: async (data: { name: string }) => {
-      const table = await tablesApi.create({
-        projectId,
-        name: data.name,
-      });
-
-      const field = await fieldsApi.create({
-        name: 'Name',
-        type: FieldType.TEXT,
-        tableId: table.id,
-      });
-
-      await recordsApi.create({
-        records: [
-          [
-            {
-              fieldId: field.id,
-              value: '',
-            },
-          ],
-        ],
-        tableId: table.id,
-      });
-
-      return table;
-    },
-    onSuccess: (table) => {
-      tablesCollection.utils.writeInsert(table);
-      navigate(
-        `/projects/${projectId}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
-      );
-    },
-  });
-
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [isExportingTables, setIsExportingTables] = useState(false);
-
-  const { mutate: exportFlows, isPending: isExportFlowsPending } =
-    flowHooks.useExportFlows();
-  const isExporting = isExportFlowsPending || isExportingTables;
-
-  const handleBulkDelete = useCallback(async () => {
-    const { flowIds, tableIds, folderIds } =
-      getSelectedIdsByType(selectedItems);
-    setIsDeleting(true);
-
-    try {
-      if (flowIds.length > 0) {
-        automationsCollectionUtils.deleteFlows(flowIds);
-      }
-      if (tableIds.length > 0) {
-        automationsCollectionUtils.deleteTables(tableIds);
-      }
-      if (folderIds.length > 0) {
-        automationsCollectionUtils.deleteFolders(folderIds);
-      }
-      clearSelection();
-      toast.success(t('Items deleted successfully'));
-    } catch (error) {
-      toast.error(t('Failed to delete items'));
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [selectedItems, clearSelection]);
-
-  const handleBulkExport = useCallback(async () => {
-    const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
-
-    if (flowIds.length > 0) {
-      const flowsToExport = flows.filter((flow) => flowIds.includes(flow.id));
-      if (flowsToExport.length > 0) {
-        exportFlows(flowsToExport);
-      }
-    }
-
-    if (tableIds.length > 0) {
-      setIsExportingTables(true);
-      try {
-        const exportedTables = await Promise.all(
-          tableIds.map((id) => tablesApi.export(id)),
-        );
-        tablesUtils.exportTables(exportedTables);
-        toast.success(
-          exportedTables.length === 1
-            ? t('Table has been exported.')
-            : t('Tables have been exported.'),
-        );
-      } catch (error) {
-        toast.error(t('Failed to export tables'));
-      } finally {
-        setIsExportingTables(false);
-      }
-    }
-
-    clearSelection();
-  }, [selectedItems, flows, exportFlows, clearSelection]);
-
-  const handleBulkMoveTo = useCallback(async () => {
-    const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
-    const targetFolderId =
-      isNil(moveToFolderId) || moveToFolderId === UncategorizedFolderId
-        ? null
-        : moveToFolderId;
-    setIsMoving(true);
-
-    try {
-      flowIds.forEach((id) => {
-        automationsCollectionUtils.moveFlowToFolder(id, targetFolderId);
-      });
-      tableIds.forEach((id) => {
-        automationsCollectionUtils.moveTableToFolder(id, targetFolderId);
-      });
-      setMoveToDialogOpen(false);
-      clearSelection();
-      toast.success(t('Items moved successfully'));
-    } catch (error) {
-      toast.error(t('Failed to move items'));
-    } finally {
-      setIsMoving(false);
-    }
-  }, [selectedItems, moveToFolderId, clearSelection]);
-
-  const handleDeleteItem = useCallback((item: TreeItem) => {
-    switch (item.type) {
-      case 'flow':
-        automationsCollectionUtils.deleteFlows([item.id]);
-        toast.success(t('Flow deleted successfully'));
-        break;
-      case 'table':
-        automationsCollectionUtils.deleteTables([item.id]);
-        toast.success(t('Table deleted successfully'));
-        break;
-      case 'folder':
-        automationsCollectionUtils.deleteFolders([item.id]);
-        toast.success(t('Folder deleted successfully'));
-        break;
-    }
-  }, []);
-
-  const openRenameDialog = useCallback((item: TreeItem) => {
-    setItemToRename(item);
-    setNewName(item.name);
-    setRenameDialogOpen(true);
-  }, []);
-
-  const handleRename = useCallback(async () => {
-    if (!itemToRename || !newName.trim()) return;
-    setIsRenaming(true);
-    try {
-      switch (itemToRename.type) {
-        case 'flow':
-          automationsCollectionUtils.renameFlow(itemToRename.id, newName);
-          toast.success(t('Flow renamed successfully'));
-          break;
-        case 'table':
-          automationsCollectionUtils.renameTable(itemToRename.id, newName);
-          toast.success(t('Table renamed successfully'));
-          break;
-        case 'folder':
-          automationsCollectionUtils.renameFolder(itemToRename.id, newName);
-          toast.success(t('Folder renamed successfully'));
-          break;
-      }
-      setRenameDialogOpen(false);
-      setItemToRename(null);
-    } catch (error) {
-      toast.error(t('Failed to rename item'));
-    } finally {
-      setIsRenaming(false);
-    }
-  }, [itemToRename, newName]);
 
   const handleRowClick = useCallback(
     (item: TreeItem) => {
@@ -331,6 +159,24 @@ export const AutomationsPage = () => {
     },
     [navigate, toggleFolder],
   );
+
+  const openRenameDialog = useCallback((item: TreeItem) => {
+    setItemToRename(item);
+    setNewName(item.name);
+    setRenameDialogOpen(true);
+  }, []);
+
+  const handleRename = useCallback(async () => {
+    if (!itemToRename || !newName.trim()) return;
+    await mutations.handleRename(itemToRename, newName);
+    setRenameDialogOpen(false);
+    setItemToRename(null);
+  }, [itemToRename, newName, mutations]);
+
+  const handleBulkMoveTo = useCallback(async () => {
+    await mutations.handleBulkMoveTo(selectedItems, moveToFolderId);
+    setMoveToDialogOpen(false);
+  }, [selectedItems, moveToFolderId, mutations]);
 
   const updateSearchParams = (newFolderId: string | undefined) => {
     const newParams = new URLSearchParams(searchParams);
@@ -350,22 +196,14 @@ export const AutomationsPage = () => {
     setOwnerFilter([]);
   }, []);
 
-  const displayItems = treeItems;
-
-  const hasFiltersActive =
-    searchTerm.length > 0 ||
-    typeFilter.length > 0 ||
-    statusFilter.length > 0 ||
-    connectionFilter.length > 0 ||
-    ownerFilter.length > 0;
-
-  const hasAnyItems = flows.length > 0 || tables.length > 0;
-  const isEmptyState = !hasAnyItems && !isLoading;
+  const hasAnyItems =
+    rootFlows.length > 0 || rootTables.length > 0 || folders.length > 0;
+  const isEmptyState = !hasAnyItems && !isLoading && !filtersActive;
   const isNoResultsState =
-    hasAnyItems && displayItems.length === 0 && hasFiltersActive && !isLoading;
+    treeItems.length === 0 && filtersActive && !isLoading;
 
   if (isEmptyState) {
-    return <AutomationsEmptyState onRefresh={() => {}} />;
+    return <AutomationsEmptyState onRefresh={() => invalidateAll()} />;
   }
 
   return (
@@ -388,44 +226,57 @@ export const AutomationsPage = () => {
         userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
         userHasPermissionToWriteTable={userHasPermissionToWriteTable}
         userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
-        onCreateFlow={() => createFlow()}
-        onCreateTable={() => createTable({ name: t('New Table') })}
+        onCreateFlow={mutations.createFlow}
+        onCreateTable={() => mutations.createTable(t('New Table'))}
         onCreateFolder={() => setIsFolderDialogOpen(true)}
         onImportFlow={() => setIsImportFlowDialogOpen(true)}
         onImportTable={() => setIsImportTableDialogOpen(true)}
-        isCreatingFlow={isCreateFlowPending}
-        isCreatingTable={isCreatingTable}
+        onClearAllFilters={clearAllFilters}
+        hasActiveFilters={filtersActive}
+        isCreatingFlow={mutations.isCreateFlowPending}
+        isCreatingTable={mutations.isCreatingTable}
       />
 
       {isNoResultsState ? (
         <AutomationsNoResultsState onClearFilters={clearAllFilters} />
       ) : (
-        <AutomationsTable
-          items={displayItems}
-          isLoading={isLoading}
-          selectedItems={selectedItems}
-          expandedFolders={expandedFolders}
-          projectMembers={projectMembers}
-          onToggleAllSelection={toggleAllSelection}
-          onToggleItemSelection={toggleItemSelection}
-          onRowClick={handleRowClick}
-          onRenameItem={openRenameDialog}
-          onDeleteItem={handleDeleteItem}
-          onLoadMoreInFolder={loadMoreInFolder}
-          onLoadMoreRoot={loadMoreRoot}
-          isItemSelected={isItemSelected}
-        />
+        <>
+          <AutomationsTable
+            items={treeItems}
+            isLoading={isLoading}
+            selectedItems={selectedItems}
+            expandedFolders={expandedFolders}
+            loadingFolders={loadingFolders}
+            projectMembers={projectMembers}
+            selectableCount={selectableItems.length}
+            onToggleAllSelection={toggleAllSelection}
+            onToggleItemSelection={toggleItemSelection}
+            onRowClick={handleRowClick}
+            onRenameItem={openRenameDialog}
+            onDeleteItem={mutations.handleDeleteItem}
+            onLoadMoreInFolder={loadMoreInFolder}
+            isItemSelected={isItemSelected}
+          />
+
+          <AutomationsPagination
+            currentPage={rootPage}
+            totalItems={totalPageItems}
+            totalPages={totalPages}
+            onPrevPage={prevRootPage}
+            onNextPage={nextRootPage}
+          />
+        </>
       )}
 
       <AutomationsSelectionBar
         selectedCount={selectedItems.size}
-        isDeleting={isDeleting}
-        isMoving={isMoving}
-        isExporting={isExporting}
+        isDeleting={mutations.isDeleting}
+        isMoving={mutations.isMoving}
+        isExporting={mutations.isExporting}
         hasMovableOrExportableItems={hasMovableOrExportableItems(selectedItems)}
         onMoveClick={() => setMoveToDialogOpen(true)}
-        onDeleteClick={handleBulkDelete}
-        onExportClick={handleBulkExport}
+        onDeleteClick={() => mutations.handleBulkDelete(selectedItems)}
+        onExportClick={() => mutations.handleBulkExport(selectedItems)}
         onClearSelection={clearSelection}
       />
 
@@ -436,7 +287,7 @@ export const AutomationsPage = () => {
         selectedFolderId={moveToFolderId}
         onFolderChange={setMoveToFolderId}
         onConfirm={handleBulkMoveTo}
-        isMoving={isMoving}
+        isMoving={mutations.isMoving}
       />
 
       <RenameDialog
@@ -445,19 +296,22 @@ export const AutomationsPage = () => {
         value={newName}
         onChange={setNewName}
         onConfirm={handleRename}
-        isRenaming={isRenaming}
+        isRenaming={mutations.isRenaming}
       />
 
       <CreateFolderDialog
         updateSearchParams={updateSearchParams}
         open={isFolderDialogOpen}
-        onOpenChange={setIsFolderDialogOpen}
+        onOpenChange={(open) => {
+          setIsFolderDialogOpen(open);
+          if (!open) invalidateAll();
+        }}
       />
 
       <ImportFlowDialog
         insideBuilder={false}
         folderId={UncategorizedFolderId}
-        onRefresh={() => {}}
+        onRefresh={() => invalidateAll()}
       >
         <button
           className="hidden"
@@ -474,7 +328,7 @@ export const AutomationsPage = () => {
         open={isImportTableDialogOpen}
         setIsOpen={setIsImportTableDialogOpen}
         showTrigger={false}
-        onImportSuccess={() => {}}
+        onImportSuccess={() => invalidateAll()}
       />
     </div>
   );

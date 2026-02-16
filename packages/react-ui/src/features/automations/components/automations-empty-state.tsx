@@ -16,10 +16,6 @@ import { PermissionNeededTooltip } from '@/components/custom/permission-needed-t
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
-import {
-  flowsCollection,
-  tablesCollection,
-} from '@/features/automations/lib/automations-collection';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
@@ -234,7 +230,6 @@ export const AutomationsEmptyState = ({
       return flow;
     },
     onSuccess: (flow) => {
-      flowsCollection.utils.writeInsert(flow);
       navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
     },
   });
@@ -267,7 +262,6 @@ export const AutomationsEmptyState = ({
       return table;
     },
     onSuccess: (table) => {
-      tablesCollection.utils.writeInsert(table);
       navigate(
         `/projects/${projectId}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
       );

@@ -6,10 +6,12 @@ import {
   Link2,
   Loader2,
   Plus,
+  Search,
   Table2,
   ToggleLeft,
   User,
   Workflow,
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -64,6 +66,8 @@ type AutomationsFiltersProps = {
   onCreateFolder: () => void;
   onImportFlow: () => void;
   onImportTable: () => void;
+  onClearAllFilters: () => void;
+  hasActiveFilters: boolean;
   isCreatingFlow?: boolean;
   isCreatingTable?: boolean;
 };
@@ -191,6 +195,8 @@ export const AutomationsFilters = ({
   onCreateFolder,
   onImportFlow,
   onImportTable,
+  onClearAllFilters,
+  hasActiveFilters,
   isCreatingFlow = false,
   isCreatingTable = false,
 }: AutomationsFiltersProps) => {
@@ -247,12 +253,15 @@ export const AutomationsFilters = ({
     <div className="overflow-x-auto mb-4">
       <div className="flex items-center justify-between gap-4 min-w-max">
         <div className="flex items-center gap-2">
-          <Input
-            placeholder={t('Search flows and tables...')}
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="min-w-[200px] max-w-xs"
-          />
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('Search flows and tables...')}
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="min-w-[220px] max-w-xs pl-8"
+            />
+          </div>
 
           <MultiSelectFilter
             label={t('Type')}
@@ -285,6 +294,18 @@ export const AutomationsFilters = ({
             selectedValues={ownerFilter}
             onChange={onOwnerFilterChange}
           />
+
+          {hasActiveFilters && (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-9 text-sm gap-1 text-muted-foreground hover:text-foreground"
+              onClick={onClearAllFilters}
+            >
+              <X className="h-3.5 w-3.5" />
+              {t('Clear all')}
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -341,7 +362,11 @@ export const AutomationsFilters = ({
                 hasPermission={userHasPermissionToWriteFlow}
               >
                 <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteFlow || isCreatingFlow || isCreatingTable}
+                  disabled={
+                    !userHasPermissionToWriteFlow ||
+                    isCreatingFlow ||
+                    isCreatingTable
+                  }
                   onSelect={(e) => {
                     e.preventDefault();
                     onCreateFlow();
@@ -360,7 +385,11 @@ export const AutomationsFilters = ({
                 hasPermission={userHasPermissionToWriteTable}
               >
                 <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteTable || isCreatingFlow || isCreatingTable}
+                  disabled={
+                    !userHasPermissionToWriteTable ||
+                    isCreatingFlow ||
+                    isCreatingTable
+                  }
                   onSelect={(e) => {
                     e.preventDefault();
                     onCreateTable();
@@ -382,7 +411,11 @@ export const AutomationsFilters = ({
                     hasPermission={userHasPermissionToWriteFolder}
                   >
                     <DropdownMenuItem
-                      disabled={!userHasPermissionToWriteFolder || isCreatingFlow || isCreatingTable}
+                      disabled={
+                        !userHasPermissionToWriteFolder ||
+                        isCreatingFlow ||
+                        isCreatingTable
+                      }
                       onClick={onCreateFolder}
                       className="cursor-pointer"
                     >

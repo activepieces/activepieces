@@ -29,7 +29,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { foldersCollection } from '@/features/automations/lib/automations-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -95,8 +94,6 @@ export const CreateFolderDialog = ({
       form.reset();
       setIsDialogOpen(false);
       updateSearchParams(folder.id);
-      // Add to TanStack DB collection so it shows immediately
-      foldersCollection.utils.writeInsert(folder);
       refetchFolders?.();
       toast.success(t('Added folder successfully'));
     },

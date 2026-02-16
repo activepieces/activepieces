@@ -3,30 +3,31 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-import { getPaginationInfo, ROOT_PAGE_SIZE } from '../lib/utils';
+import { ROOT_PAGE_SIZE } from '../lib/utils';
 
 type AutomationsPaginationProps = {
   currentPage: number;
   totalItems: number;
-  onPageChange: (page: number) => void;
+  totalPages: number;
+  onPrevPage: () => void;
+  onNextPage: () => void;
 };
 
 export const AutomationsPagination = ({
   currentPage,
   totalItems,
-  onPageChange,
+  totalPages,
+  onPrevPage,
+  onNextPage,
 }: AutomationsPaginationProps) => {
-  const { totalPages, start, end, hasPreviousPage, hasNextPage } =
-    getPaginationInfo(currentPage, ROOT_PAGE_SIZE, totalItems);
-
-  if (totalPages <= 1) {
-    return null;
-  }
+  const start = totalItems === 0 ? 0 : currentPage * ROOT_PAGE_SIZE + 1;
+  const end = Math.min((currentPage + 1) * ROOT_PAGE_SIZE, totalItems);
+  const maxPages = Math.max(totalPages, 1);
 
   return (
     <div className="flex items-center justify-between px-2 py-4">
       <div className="text-sm text-muted-foreground">
-        {t('Showing {{start}} to {{end}} of {{total}} items', {
+        {t('Showing {start} to {end} of {total} items', {
           start,
           end,
           total: totalItems,
@@ -36,24 +37,22 @@ export const AutomationsPagination = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(Math.max(0, currentPage - 1))}
-          disabled={!hasPreviousPage}
+          onClick={onPrevPage}
+          disabled={currentPage === 0}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-sm">
-          {t('Page {{current}} of {{total}}', {
+          {t('Page {current} of {total}', {
             current: currentPage + 1,
-            total: totalPages,
+            total: maxPages,
           })}
         </span>
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            onPageChange(Math.min(totalPages - 1, currentPage + 1))
-          }
-          disabled={!hasNextPage}
+          onClick={onNextPage}
+          disabled={currentPage >= maxPages - 1}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
