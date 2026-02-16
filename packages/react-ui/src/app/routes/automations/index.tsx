@@ -1,7 +1,6 @@
 import { t } from 'i18next';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useDebouncedCallback } from 'use-debounce';
 
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
@@ -12,13 +11,14 @@ import { AutomationsTable } from '@/features/automations/components/automations-
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { useAutomationsData } from '@/features/automations/hooks/use-automations-data';
+import { useAutomationsDialogs } from '@/features/automations/hooks/use-automations-dialogs';
+import { useAutomationsFilters } from '@/features/automations/hooks/use-automations-filters';
 import { useAutomationsMutations } from '@/features/automations/hooks/use-automations-mutations';
 import {
   useAutomationsSelection,
   hasMovableOrExportableItems,
 } from '@/features/automations/hooks/use-automations-selection';
-import { AutomationsFilters, TreeItem } from '@/features/automations/lib/types';
-import { hasActiveFilters } from '@/features/automations/lib/utils';
+import { TreeItem } from '@/features/automations/lib/types';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
@@ -36,60 +36,26 @@ export const AutomationsPage = () => {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
 
-  const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSetSearch = useDebouncedCallback(setSearchTerm, 300);
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearchInput(value);
-      debouncedSetSearch(value);
-    },
-    [debouncedSetSearch],
-  );
-  const [typeFilter, setTypeFilter] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [connectionFilter, setConnectionFilter] = useState<string[]>([]);
-  const [ownerFilter, setOwnerFilter] = useState<string[]>([]);
-
-  const prevProjectIdRef = useRef(projectId);
-  useEffect(() => {
-    if (prevProjectIdRef.current !== projectId) {
-      prevProjectIdRef.current = projectId;
-      setSearchInput('');
-      setSearchTerm('');
-      setTypeFilter([]);
-      setStatusFilter([]);
-      setConnectionFilter([]);
-      setOwnerFilter([]);
-    }
-  }, [projectId]);
-
-  const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
-  const [isImportFlowDialogOpen, setIsImportFlowDialogOpen] = useState(false);
-  const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
-  const [moveToDialogOpen, setMoveToDialogOpen] = useState(false);
-  const [moveToFolderId, setMoveToFolderId] = useState<string>('');
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [itemToRename, setItemToRename] = useState<TreeItem | null>(null);
-
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToWriteTable = checkAccess(Permission.WRITE_TABLE);
   const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
 
-  const filters: AutomationsFilters = useMemo(
-    () => ({
-      searchTerm,
-      typeFilter,
-      statusFilter,
-      connectionFilter,
-      ownerFilter,
-    }),
-    [searchTerm, typeFilter, statusFilter, connectionFilter, ownerFilter],
-  );
-
-  const filtersActive = hasActiveFilters(filters);
+  const {
+    searchInput,
+    handleSearchChange,
+    typeFilter,
+    setTypeFilter,
+    statusFilter,
+    setStatusFilter,
+    connectionFilter,
+    setConnectionFilter,
+    ownerFilter,
+    setOwnerFilter,
+    filters,
+    filtersActive,
+    clearAllFilters,
+  } = useAutomationsFilters(projectId);
 
   const {
     treeItems,
@@ -97,7 +63,6 @@ export const AutomationsPage = () => {
     rootFlows,
     rootTables,
     isLoading,
-    isFiltered,
     expandedFolders,
     loadingFolders,
     toggleFolder,
@@ -118,11 +83,11 @@ export const AutomationsPage = () => {
   useEffect(() => {
     resetPagination();
   }, [
-    searchTerm,
-    typeFilter,
-    statusFilter,
-    connectionFilter,
-    ownerFilter,
+    filters.searchTerm,
+    filters.typeFilter,
+    filters.statusFilter,
+    filters.connectionFilter,
+    filters.ownerFilter,
     resetPagination,
   ]);
 
@@ -146,6 +111,8 @@ export const AutomationsPage = () => {
     clearSelection,
     flows: rootFlows,
   });
+
+  const dialogs = useAutomationsDialogs({ mutations, selectedItems });
 
   const { data: connections } = appConnectionsQueries.useAppConnections({
     request: { projectId, limit: 10000 },
@@ -173,24 +140,6 @@ export const AutomationsPage = () => {
     [navigate, toggleFolder],
   );
 
-  const openRenameDialog = useCallback((item: TreeItem) => {
-    setItemToRename(item);
-    setNewName(item.name);
-    setRenameDialogOpen(true);
-  }, []);
-
-  const handleRename = useCallback(async () => {
-    if (!itemToRename || !newName.trim()) return;
-    await mutations.handleRename(itemToRename, newName);
-    setRenameDialogOpen(false);
-    setItemToRename(null);
-  }, [itemToRename, newName, mutations]);
-
-  const handleBulkMoveTo = useCallback(async () => {
-    await mutations.handleBulkMoveTo(selectedItems, moveToFolderId);
-    setMoveToDialogOpen(false);
-  }, [selectedItems, moveToFolderId, mutations]);
-
   const updateSearchParams = (newFolderId: string | undefined) => {
     const newParams = new URLSearchParams(searchParams);
     if (newFolderId) {
@@ -200,15 +149,6 @@ export const AutomationsPage = () => {
     }
     setSearchParams(newParams);
   };
-
-  const clearAllFilters = useCallback(() => {
-    setSearchInput('');
-    setSearchTerm('');
-    setTypeFilter([]);
-    setStatusFilter([]);
-    setConnectionFilter([]);
-    setOwnerFilter([]);
-  }, []);
 
   const hasAnyItems =
     rootFlows.length > 0 || rootTables.length > 0 || folders.length > 0;
@@ -242,9 +182,9 @@ export const AutomationsPage = () => {
         userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
         onCreateFlow={mutations.createFlow}
         onCreateTable={() => mutations.createTable(t('New Table'))}
-        onCreateFolder={() => setIsFolderDialogOpen(true)}
-        onImportFlow={() => setIsImportFlowDialogOpen(true)}
-        onImportTable={() => setIsImportTableDialogOpen(true)}
+        onCreateFolder={() => dialogs.setIsFolderDialogOpen(true)}
+        onImportFlow={() => dialogs.setIsImportFlowDialogOpen(true)}
+        onImportTable={() => dialogs.setIsImportTableDialogOpen(true)}
         onClearAllFilters={clearAllFilters}
         hasActiveFilters={filtersActive}
         isCreatingFlow={mutations.isCreateFlowPending}
@@ -266,7 +206,7 @@ export const AutomationsPage = () => {
             onToggleAllSelection={toggleAllSelection}
             onToggleItemSelection={toggleItemSelection}
             onRowClick={handleRowClick}
-            onRenameItem={openRenameDialog}
+            onRenameItem={dialogs.openRenameDialog}
             onDeleteItem={mutations.handleDeleteItem}
             onLoadMoreInFolder={loadMoreInFolder}
             isItemSelected={isItemSelected}
@@ -290,36 +230,36 @@ export const AutomationsPage = () => {
         isMoving={mutations.isMoving}
         isExporting={mutations.isExporting}
         hasMovableOrExportableItems={hasMovableOrExportableItems(selectedItems)}
-        onMoveClick={() => setMoveToDialogOpen(true)}
+        onMoveClick={() => dialogs.setMoveToDialogOpen(true)}
         onDeleteClick={() => mutations.handleBulkDelete(selectedItems)}
         onExportClick={() => mutations.handleBulkExport(selectedItems)}
         onClearSelection={clearSelection}
       />
 
       <MoveToFolderDialog
-        open={moveToDialogOpen}
-        onOpenChange={setMoveToDialogOpen}
+        open={dialogs.moveToDialogOpen}
+        onOpenChange={dialogs.setMoveToDialogOpen}
         folders={folders}
-        selectedFolderId={moveToFolderId}
-        onFolderChange={setMoveToFolderId}
-        onConfirm={handleBulkMoveTo}
+        selectedFolderId={dialogs.moveToFolderId}
+        onFolderChange={dialogs.setMoveToFolderId}
+        onConfirm={dialogs.handleBulkMoveTo}
         isMoving={mutations.isMoving}
       />
 
       <RenameDialog
-        open={renameDialogOpen}
-        onOpenChange={setRenameDialogOpen}
-        value={newName}
-        onChange={setNewName}
-        onConfirm={handleRename}
+        open={dialogs.renameDialogOpen}
+        onOpenChange={dialogs.setRenameDialogOpen}
+        value={dialogs.newName}
+        onChange={dialogs.setNewName}
+        onConfirm={dialogs.handleRename}
         isRenaming={mutations.isRenaming}
       />
 
       <CreateFolderDialog
         updateSearchParams={updateSearchParams}
-        open={isFolderDialogOpen}
+        open={dialogs.isFolderDialogOpen}
         onOpenChange={(open) => {
-          setIsFolderDialogOpen(open);
+          dialogs.setIsFolderDialogOpen(open);
           if (!open) invalidateAll();
         }}
       />
@@ -332,17 +272,17 @@ export const AutomationsPage = () => {
         <button
           className="hidden"
           ref={(el) => {
-            if (el && isImportFlowDialogOpen) {
+            if (el && dialogs.isImportFlowDialogOpen) {
               el.click();
-              setIsImportFlowDialogOpen(false);
+              dialogs.setIsImportFlowDialogOpen(false);
             }
           }}
         />
       </ImportFlowDialog>
 
       <ImportTableDialog
-        open={isImportTableDialogOpen}
-        setIsOpen={setIsImportTableDialogOpen}
+        open={dialogs.isImportTableDialogOpen}
+        setIsOpen={dialogs.setIsImportTableDialogOpen}
         showTrigger={false}
         onImportSuccess={() => invalidateAll()}
       />

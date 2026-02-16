@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronRight,
@@ -17,20 +16,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
-import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { recordsApi } from '@/features/tables/lib/records-api';
-import { tablesApi } from '@/features/tables/lib/tables-api';
+import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import {
-  FieldType,
   Permission,
   Template,
   TemplateType,
@@ -207,7 +201,6 @@ export const AutomationsEmptyState = ({
 }: AutomationsEmptyStateProps) => {
   const navigate = useNavigate();
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
-  const projectId = authenticationSession.getProjectId()!;
 
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
@@ -221,52 +214,11 @@ export const AutomationsEmptyState = ({
       isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM,
     );
 
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
-    mutationFn: async () => {
-      const flow = await flowsApi.create({
-        projectId,
-        displayName: t('Untitled'),
-      });
-      return flow;
-    },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
-    },
-  });
+  const { mutate: createFlow, isPending: isCreateFlowPending } =
+    flowHooks.useStartFromScratch(UncategorizedFolderId);
 
-  const { mutate: createTable, isPending: isCreateTablePending } = useMutation({
-    mutationFn: async (data: { name: string }) => {
-      const table = await tablesApi.create({
-        projectId,
-        name: data.name,
-      });
-
-      const field = await fieldsApi.create({
-        name: 'Name',
-        type: FieldType.TEXT,
-        tableId: table.id,
-      });
-
-      await recordsApi.create({
-        records: [
-          [
-            {
-              fieldId: field.id,
-              value: '',
-            },
-          ],
-        ],
-        tableId: table.id,
-      });
-
-      return table;
-    },
-    onSuccess: (table) => {
-      navigate(
-        `/projects/${projectId}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
-      );
-    },
-  });
+  const { mutate: createTable, isPending: isCreateTablePending } =
+    tableHooks.useCreateTable(UncategorizedFolderId);
 
   const handleTemplateSelect = (template: Template) => {
     navigate(`/templates/${template.id}`);

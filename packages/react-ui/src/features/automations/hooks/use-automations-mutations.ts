@@ -1,19 +1,13 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { recordsApi } from '@/features/tables/lib/records-api';
+import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { tablesUtils } from '@/features/tables/lib/utils';
-import { authenticationSession } from '@/lib/authentication-session';
-import { NEW_FLOW_QUERY_PARAM, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import {
-  FieldType,
   FlowOperationType,
   PopulatedFlow,
   isNil,
@@ -33,42 +27,16 @@ type MutationDeps = {
 };
 
 export function useAutomationsMutations(deps: MutationDeps) {
-  const projectId = authenticationSession.getProjectId()!;
-  const navigate = useNavigate();
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isExportingTables, setIsExportingTables] = useState(false);
 
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
-    mutationFn: () =>
-      flowsApi.create({ projectId, displayName: t('Untitled') }),
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
-    },
-  });
+  const { mutate: startFromScratch, isPending: isCreateFlowPending } =
+    flowHooks.useStartFromScratch(UncategorizedFolderId);
 
-  const { mutate: createTable, isPending: isCreatingTable } = useMutation({
-    mutationFn: async (data: { name: string }) => {
-      const table = await tablesApi.create({ projectId, name: data.name });
-      const field = await fieldsApi.create({
-        name: 'Name',
-        type: FieldType.TEXT,
-        tableId: table.id,
-      });
-      await recordsApi.create({
-        records: [[{ fieldId: field.id, value: '' }]],
-        tableId: table.id,
-      });
-      return table;
-    },
-    onSuccess: (table) => {
-      navigate(
-        `/projects/${projectId}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
-      );
-    },
-  });
+  const { mutate: createTableMutation, isPending: isCreatingTable } =
+    tableHooks.useCreateTable(UncategorizedFolderId);
 
   const { mutate: exportFlows, isPending: isExportFlowsPending } =
     flowHooks.useExportFlows();
@@ -221,8 +189,8 @@ export function useAutomationsMutations(deps: MutationDeps) {
   );
 
   return {
-    createFlow: () => createFlow(),
-    createTable: (name: string) => createTable({ name }),
+    createFlow: () => startFromScratch(),
+    createTable: (name: string) => createTableMutation({ name }),
     isCreateFlowPending,
     isCreatingTable,
     handleDeleteItem,
