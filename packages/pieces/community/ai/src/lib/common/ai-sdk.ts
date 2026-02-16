@@ -106,24 +106,18 @@ export async function createAIModel({
                     return aigateway(googleProvider(actualModelId));
                 }
                 case 'google-vertex-ai': {
-                    const provider = createGoogleGenerativeAI({
-                        apiKey: auth.apiKey,
-                        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
-                        headers,
-                    })
-                    return provider(actualModelId);
+                    if(vertexProject && vertexRegion && publisher) {
+                        const provider = createGoogleGenerativeAI({
+                            apiKey: auth.apiKey,
+                            baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
+                            headers,
+                        })
+                        return provider(actualModelId);
+                    }
+                    return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
                 }
                 default: {
-                    // Fallback to OpenAI-compatible endpoint
-                    const provider = createOpenAICompatible({
-                        name: 'cloudflare',
-                        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
-                        headers,
-                    })
-                    if (isImage) {
-                        return provider.imageModel(modelId)
-                    }
-                    return provider.chatModel(modelId)
+                    return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
                 }
             }
         }
@@ -155,3 +149,21 @@ export async function createAIModel({
 export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
 export const openaiSearchTool = openai.tools.webSearchPreview;
 export const googleSearchTool = google.tools.googleSearch;
+
+const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage, modelId}: {
+    accountId: string;
+    gatewayId: string;
+    headers: Record<string, string>;
+    isImage?: boolean;
+    modelId: string;
+})=>{
+    const provider = createOpenAICompatible({
+        name: 'cloudflare',
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
+        headers,
+    })
+    if (isImage) {
+        return provider.imageModel(modelId)
+    }
+    return provider.chatModel(modelId)
+}
