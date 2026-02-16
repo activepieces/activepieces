@@ -69,7 +69,7 @@ const PieceIcon = React.memo(
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn(pieceIconVariants({ border, size, circle }))}
+            className={cn(pieceIconVariants({ border, size, circle }), 'overflow-hidden')}
             style={background ? { backgroundColor: background } : undefined}
           >
             {}

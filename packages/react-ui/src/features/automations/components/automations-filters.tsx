@@ -78,6 +78,7 @@ type MultiSelectFilterProps = {
   options: { value: string; label: string; icon?: React.ReactNode }[];
   selectedValues: string[];
   onChange: (values: string[]) => void;
+  searchable?: boolean;
 };
 
 const MultiSelectFilter = ({
@@ -86,8 +87,10 @@ const MultiSelectFilter = ({
   options,
   selectedValues,
   onChange,
+  searchable = false,
 }: MultiSelectFilterProps) => {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
 
   const toggleValue = (value: string) => {
     if (selectedValues.includes(value)) {
@@ -101,8 +104,21 @@ const MultiSelectFilter = ({
     .map((v) => options.find((o) => o.value === v)?.label)
     .filter(Boolean);
 
+  const filteredOptions =
+    searchable && search
+      ? options.filter((o) =>
+          o.label.toLowerCase().includes(search.toLowerCase()),
+        )
+      : options;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) setSearch('');
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -137,22 +153,43 @@ const MultiSelectFilter = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0" align="start">
+        {searchable && (
+          <div className="px-2 pt-2 pb-1 border-b">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder={t('Search...')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-8 pl-7 text-sm border-none shadow-none focus-visible:ring-0"
+              />
+            </div>
+          </div>
+        )}
         <ScrollArea className="max-h-[300px]">
           <div className="p-2 space-y-1">
-            {options.map((option) => (
-              <div
-                key={option.value}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-accent cursor-pointer"
-                onClick={() => toggleValue(option.value)}
-              >
-                <Checkbox
-                  checked={selectedValues.includes(option.value)}
-                  onCheckedChange={() => toggleValue(option.value)}
-                />
-                {option.icon}
-                <span className="text-sm flex-1 truncate">{option.label}</span>
+            {filteredOptions.length === 0 ? (
+              <div className="px-2 py-4 text-sm text-center text-muted-foreground">
+                {t('No results')}
               </div>
-            ))}
+            ) : (
+              filteredOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-accent cursor-pointer"
+                  onClick={() => toggleValue(option.value)}
+                >
+                  <Checkbox
+                    checked={selectedValues.includes(option.value)}
+                    onCheckedChange={() => toggleValue(option.value)}
+                  />
+                  {option.icon}
+                  <span className="text-sm flex-1 truncate">
+                    {option.label}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </ScrollArea>
         {selectedValues.length > 0 && (
@@ -259,8 +296,16 @@ export const AutomationsFilters = ({
               placeholder={t('Search flows and tables...')}
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="min-w-[220px] max-w-xs pl-8"
+              className="min-w-[220px] max-w-xs pl-8 pr-8"
             />
+            {searchTerm && (
+              <button
+                onClick={() => onSearchChange('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center h-5 w-5 rounded-full bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
 
           <MultiSelectFilter
@@ -285,6 +330,7 @@ export const AutomationsFilters = ({
             options={connectionOptions}
             selectedValues={connectionFilter}
             onChange={onConnectionFilterChange}
+            searchable
           />
 
           <MultiSelectFilter
@@ -293,6 +339,7 @@ export const AutomationsFilters = ({
             options={ownerOptions}
             selectedValues={ownerFilter}
             onChange={onOwnerFilterChange}
+            searchable
           />
 
           {hasActiveFilters && (

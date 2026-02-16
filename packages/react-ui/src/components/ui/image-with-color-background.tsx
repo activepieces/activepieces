@@ -36,7 +36,7 @@ const ImageWithColorBackground = ({
   return (
     <span
       className={cn(
-        'relative inline-block h-full w-full rounded-lg',
+        'relative inline-block h-full w-full',
         className,
         {
           'bg-background': backgroundColor === null,

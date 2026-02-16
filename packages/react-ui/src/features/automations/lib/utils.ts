@@ -179,14 +179,102 @@ export function buildTreeItems(
 export function buildFilteredTreeItems(
   flows: PopulatedFlow[],
   tables: Table[],
+  folders: FolderDto[],
+  folderVisibleCounts: Map<string, number>,
   page: number,
   pageSize: number,
 ): { items: TreeItem[]; totalItems: number } {
-  const merged = mergeAndSortItems(flows, tables);
-  const total = merged.length;
+  const folderMap = new Map<string, FolderDto>();
+  folders.forEach((f) => folderMap.set(f.id, f));
+
+  const folderChildren = new Map<string, TreeItem[]>();
+  const rootItems: TreeItem[] = [];
+
+  flows.forEach((flow) => {
+    const item: TreeItem = {
+      id: flow.id,
+      type: 'flow',
+      name: flow.version.displayName,
+      data: flow,
+      depth: flow.folderId && folderMap.has(flow.folderId) ? 1 : 0,
+      parentId:
+        flow.folderId && folderMap.has(flow.folderId) ? flow.folderId : null,
+    };
+    if (item.parentId) {
+      const list = folderChildren.get(item.parentId) ?? [];
+      list.push(item);
+      folderChildren.set(item.parentId, list);
+    } else {
+      rootItems.push(item);
+    }
+  });
+
+  tables.forEach((table) => {
+    const item: TreeItem = {
+      id: table.id,
+      type: 'table',
+      name: table.name,
+      data: table,
+      depth: table.folderId && folderMap.has(table.folderId) ? 1 : 0,
+      parentId:
+        table.folderId && folderMap.has(table.folderId) ? table.folderId : null,
+    };
+    if (item.parentId) {
+      const list = folderChildren.get(item.parentId) ?? [];
+      list.push(item);
+      folderChildren.set(item.parentId, list);
+    } else {
+      rootItems.push(item);
+    }
+  });
+
+  const folderItems: TreeItem[] = [];
+  for (const [folderId, children] of folderChildren) {
+    const folder = folderMap.get(folderId)!;
+    children.sort((a, b) => getUpdatedDate(b.data!) - getUpdatedDate(a.data!));
+    folderItems.push({
+      id: folder.id,
+      type: 'folder',
+      name: folder.displayName,
+      data: folder,
+      depth: 0,
+      parentId: null,
+      childCount: children.length,
+    });
+  }
+
+  const allTopLevel = [...folderItems, ...rootItems];
+  allTopLevel.sort((a, b) => getUpdatedDate(b.data!) - getUpdatedDate(a.data!));
+
+  const totalItems = allTopLevel.length;
   const start = page * pageSize;
-  const pageItems = merged.slice(start, start + pageSize);
-  return { items: pageItems, totalItems: total };
+  const pageTopLevel = allTopLevel.slice(start, start + pageSize);
+
+  const result: TreeItem[] = [];
+  for (const item of pageTopLevel) {
+    result.push(item);
+    if (item.type === 'folder') {
+      const children = folderChildren.get(item.id) ?? [];
+      const visibleCount = folderVisibleCounts.get(item.id) ?? FOLDER_PAGE_SIZE;
+      const visible = children.slice(0, visibleCount);
+      result.push(...visible);
+      const remaining = children.length - visible.length;
+      if (remaining > 0) {
+        result.push({
+          id: `load-more-${item.id}`,
+          type: 'load-more-folder',
+          name: '',
+          data: null,
+          depth: 1,
+          parentId: item.id,
+          folderId: item.id,
+          loadMoreCount: remaining,
+        });
+      }
+    }
+  }
+
+  return { items: result, totalItems };
 }
 
 export function hasActiveFilters(filters: AutomationsFilters): boolean {

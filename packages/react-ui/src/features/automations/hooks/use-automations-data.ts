@@ -191,7 +191,16 @@ export function useAutomationsData(filters: AutomationsFilters) {
   const loadMoreInFolder = useCallback(
     async (folderId: string) => {
       const contents = folderContentsQuery.data?.get(folderId);
-      if (!contents) return;
+
+      if (!contents) {
+        setFolderVisibleCounts((prev) => {
+          const next = new Map(prev);
+          const current = next.get(folderId) ?? FOLDER_PAGE_SIZE;
+          next.set(folderId, current + FOLDER_PAGE_SIZE);
+          return next;
+        });
+        return;
+      }
 
       const hasMoreFlows = !!contents.flowsNextCursor;
       const hasMoreTables = !!contents.tablesNextCursor;
@@ -295,6 +304,8 @@ export function useAutomationsData(filters: AutomationsFilters) {
       const { items, totalItems } = buildFilteredTreeItems(
         rootFlows,
         rootTables,
+        folders,
+        folderVisibleCounts,
         rootPage,
         pageSize,
       );
@@ -324,6 +335,17 @@ export function useAutomationsData(filters: AutomationsFilters) {
     pageSize,
     isFiltered,
   ]);
+
+  const effectiveExpandedFolders = useMemo(() => {
+    if (!isFiltered) return expandedFolders;
+    const all = new Set(expandedFolders);
+    for (const item of treeItems) {
+      if (item.type === 'folder') {
+        all.add(item.id);
+      }
+    }
+    return all;
+  }, [isFiltered, expandedFolders, treeItems]);
 
   const totalPages = Math.ceil(totalPageItems / pageSize);
   const isLoading =
@@ -361,7 +383,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
     rootTables: rootTablesQuery.data?.data ?? [],
     isLoading,
     isFiltered,
-    expandedFolders,
+    expandedFolders: effectiveExpandedFolders,
     loadingFolders,
     toggleFolder,
     loadMoreInFolder,

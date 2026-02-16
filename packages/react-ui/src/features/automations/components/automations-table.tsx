@@ -30,7 +30,6 @@ type AutomationsTableProps = {
   isItemSelected: (item: TreeItem) => boolean;
 };
 
-
 const rowClassName =
   'flex items-center min-h-[48px] py-2 text-sm cursor-pointer hover:bg-muted/50';
 
@@ -65,11 +64,11 @@ export const AutomationsTable = ({
               onCheckedChange={onToggleAllSelection}
             />
           </div>
-          <div className="w-[350px] shrink-0 pl-6">{t('Name')}</div>
+          <div className="flex-1 min-w-[200px] pl-6">{t('Name')}</div>
           {!embedState.isEmbedded && (
             <div className="w-[200px] shrink-0 px-2">{t('Details')}</div>
           )}
-          <div className="flex-1 px-2">{t('Last modified')}</div>
+          <div className="w-[180px] shrink-0 px-2">{t('Last modified')}</div>
           <div className="w-[150px] shrink-0 px-2">{t('Owner')}</div>
           <div className="w-[100px] shrink-0 px-2">{t('Status')}</div>
           <div className="w-[50px] shrink-0 px-2"></div>
@@ -160,9 +159,7 @@ export const AutomationsTable = ({
                     isExpanded={false}
                     projectMembers={projectMembers}
                     onRowClick={() => onRowClick(group.item)}
-                    onToggleSelection={() =>
-                      onToggleItemSelection(group.item)
-                    }
+                    onToggleSelection={() => onToggleItemSelection(group.item)}
                     onRename={() => onRenameItem(group.item)}
                     onDelete={() => onDeleteItem(group.item)}
                     onLoadMore={undefined}

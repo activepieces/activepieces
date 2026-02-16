@@ -77,9 +77,7 @@ export const AutomationsTableRow = ({
 
   const getItemIcon = () => {
     if (item.type === 'folder') {
-      return (
-        <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />
-      );
+      return <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />;
     }
     if (item.type === 'flow') {
       return <Workflow className="h-4 w-4 text-primary" />;
@@ -137,7 +135,7 @@ export const AutomationsTableRow = ({
       >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
       </div>
-      <div className="w-[350px] shrink-0 pl-6 pr-2 flex items-center">
+      <div className="flex-1 min-w-[200px] pl-6 pr-2 flex items-center">
         <div
           className="relative flex items-center gap-2 min-w-0"
           style={{ paddingLeft: item.depth * 24 }}
@@ -145,22 +143,22 @@ export const AutomationsTableRow = ({
           {item.type === 'folder' && (
             <span className="absolute -left-5 flex items-center justify-center w-5">
               {isFolderLoading ? (
-                <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                <Loader2 className="h-4 w-4 shrink-0 text-muted-foreground animate-spin" />
               ) : isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
               ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
               )}
             </span>
           )}
-          {getItemIcon()}
+          <span className="shrink-0">{getItemIcon()}</span>
           <span className="truncate">{item.name}</span>
         </div>
       </div>
       <div className="w-[200px] shrink-0 px-2 flex items-center">
         {getItemDetails()}
       </div>
-      <div className="flex-1 px-2 flex items-center">
+      <div className="w-[180px] shrink-0 px-2 flex items-center">
         {item.data && (
           <FormattedDate
             date={new Date(item.data.updated)}

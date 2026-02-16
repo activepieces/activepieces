@@ -9,7 +9,10 @@ type DialogsDeps = {
   selectedItems: Set<string>;
 };
 
-export function useAutomationsDialogs({ mutations, selectedItems }: DialogsDeps) {
+export function useAutomationsDialogs({
+  mutations,
+  selectedItems,
+}: DialogsDeps) {
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [isImportFlowDialogOpen, setIsImportFlowDialogOpen] = useState(false);
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
