@@ -10,7 +10,7 @@
     "tslib": "2.6.2",
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
-    "axios": "1.13.1",
+    "axios": "1.13.5",
     "axios-retry": "4.4.1",
     "dayjs": "1.11.9",
     "@sentry/node": "7.120.0",
