@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { canvaAuth } from '../../index';
 import { canvaApiCall } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { designTypeDropdown } from '../common';
 import { CanvaDesign } from '../common/types';
 
 export const createDesignAction = createAction({
@@ -15,19 +16,7 @@ export const createDesignAction = createAction({
       description: 'The title of the design',
       required: false,
     }),
-    designType: Property.StaticDropdown({
-      displayName: 'Design Type',
-      description: 'The type of design to create (preset)',
-      required: true,
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Document', value: 'doc' },
-          { label: 'Whiteboard', value: 'whiteboard' },
-          { label: 'Presentation', value: 'presentation' },
-        ],
-      },
-    }),
+    designType: designTypeDropdown,
   },
   async run(context) {
     const { title, designType } = context.propsValue;

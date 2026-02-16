@@ -9,20 +9,21 @@ export const moveFolderItemAction = createAction({
   displayName: 'Move Item to Folder',
   description: 'Move a design or asset to a specific folder',
   props: {
-    itemId: Property.ShortText({
-      displayName: 'Item ID',
-      description: 'The ID of the item (design or asset) to move',
-      required: true,
-    }),
     toFolderId: Property.ShortText({
       displayName: 'Destination Folder ID',
-      description: 'The ID of the destination folder. Use "root" for the top-level projects.',
+      description: 'The ID of the destination folder (use "root" for top level)',
+      required: true,
+    }),
+    itemId: Property.ShortText({
+      displayName: 'Item ID',
+      description: 'The ID of the design or asset to move',
       required: true,
     }),
   },
   async run(context) {
-    const { itemId, toFolderId } = context.propsValue;
+    const { toFolderId, itemId } = context.propsValue;
 
+    // Endpoint is POST /folders/move (not /folders/{id}/items)
     const response = await canvaApiCall({
       auth: context.auth,
       method: HttpMethod.POST,
@@ -35,8 +36,8 @@ export const moveFolderItemAction = createAction({
 
     return {
       success: true,
-      item_id: itemId,
       to_folder_id: toFolderId,
+      item_id: itemId,
       response,
     };
   },

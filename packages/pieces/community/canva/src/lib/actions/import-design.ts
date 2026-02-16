@@ -1,23 +1,39 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { canvaAuth } from '../../index';
-import { canvaApiCall } from '../common/client';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { canvaApiCallRaw, pollImportJob } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
 
 export const importDesignAction = createAction({
   auth: canvaAuth,
   name: 'import_design',
   displayName: 'Import Design',
-  description: 'Import a file as a new Canva design (PDF, PPTX, DOCX, PSD, AI, etc.)',
+  description: 'Import a design file (PDF, image, etc.) into Canva',
   props: {
     file: Property.File({
       displayName: 'File',
-      description: 'The file to import as a Canva design',
+      description: 'The file to import (PDF, PPTX, AI, image, etc.)',
       required: true,
     }),
     title: Property.ShortText({
       displayName: 'Design Title',
-      description: 'Optional title for the imported design',
+      description: 'Title for the imported design',
       required: false,
+    }),
+    mimeType: Property.StaticDropdown({
+      displayName: 'File Type',
+      description: 'The MIME type of the file being imported',
+      required: true,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'PDF', value: 'application/pdf' },
+          { label: 'PowerPoint (PPTX)', value: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' },
+          { label: 'Adobe Illustrator (AI)', value: 'application/illustrator' },
+          { label: 'JPEG', value: 'image/jpeg' },
+          { label: 'PNG', value: 'image/png' },
+          { label: 'SVG', value: 'image/svg+xml' },
+        ],
+      },
     }),
     waitForCompletion: Property.Checkbox({
       displayName: 'Wait for Completion',
@@ -27,97 +43,65 @@ export const importDesignAction = createAction({
     }),
     maxWaitTime: Property.Number({
       displayName: 'Max Wait Time (seconds)',
-      description: 'Maximum time to wait for import completion (default: 60)',
+      description: 'Maximum time to wait for import completion',
       required: false,
       defaultValue: 60,
     }),
   },
   async run(context) {
-    const { file, title, waitForCompletion, maxWaitTime } = context.propsValue;
-
-    // Build Import-Metadata header
-    const metadata: Record<string, string> = {};
-    if (title) {
-      metadata.title_base64 = Buffer.from(title).toString('base64');
-    }
-    if (file.extension) {
-      // Map common extensions to MIME types
-      const mimeMap: Record<string, string> = {
-        pdf: 'application/pdf',
-        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        ppt: 'application/vnd.ms-powerpoint',
-        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        doc: 'application/msword',
-        psd: 'image/vnd.adobe.photoshop',
-        ai: 'application/illustrator',
-        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      };
-      const ext = file.extension.toLowerCase().replace('.', '');
-      if (mimeMap[ext]) {
-        metadata.mime_type = mimeMap[ext];
-      }
-    }
+    const { file, title, mimeType, waitForCompletion, maxWaitTime } =
+      context.propsValue;
 
     const fileBuffer = Buffer.from(file.base64, 'base64');
 
-    // POST /imports with octet-stream body + Import-Metadata header
-    const createResponse = await httpClient.sendRequest<{
-      job: { id: string; status: string };
-    }>({
+    // Build Import-Metadata header
+    const importMetadata: Record<string, string> = {
+      mime_type: mimeType as string,
+    };
+
+    if (title) {
+      importMetadata.title_base64 = Buffer.from(title).toString('base64');
+    }
+
+    // Canva import uses application/octet-stream with metadata in header
+    const createResponse = await canvaApiCallRaw({
+      auth: context.auth,
       method: HttpMethod.POST,
-      url: 'https://api.canva.com/rest/v1/imports',
+      path: '/imports',
       headers: {
-        'Authorization': `Bearer ${context.auth.access_token}`,
         'Content-Type': 'application/octet-stream',
-        'Import-Metadata': JSON.stringify(metadata),
+        'Import-Metadata': JSON.stringify(importMetadata),
+        'Content-Length': String(fileBuffer.length),
       },
       body: fileBuffer,
     });
 
-    const jobId = createResponse.body.job.id;
+    const jobId = createResponse.job?.id;
 
-    // Poll GET /imports/{jobId} if waiting
+    if (!jobId) {
+      throw new Error('Failed to create import job');
+    }
+
     if (waitForCompletion) {
       const maxAttempts = Math.ceil((maxWaitTime || 60) / 2);
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const result = await canvaApiCall<{
-          job: {
-            id: string;
-            status: string;
-            result?: { designs: Array<{ id: string; url: string }> };
-            error?: { message: string };
-          };
-        }>({
-          auth: context.auth,
-          method: HttpMethod.GET,
-          path: `/imports/${jobId}`,
-        });
+      const result = await pollImportJob(
+        context.auth,
+        jobId,
+        maxAttempts,
+        2000
+      );
 
-        if (result.job.status === 'success') {
-          return {
-            job_id: jobId,
-            status: 'success',
-            designs: result.job.result?.designs,
-          };
-        }
-
-        if (result.job.status === 'failed') {
-          throw new Error(
-            `Import failed: ${result.job.error?.message || 'Unknown error'}`
-          );
-        }
-
-        if (attempt < maxAttempts - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-      }
-
-      throw new Error('Import timed out after maximum attempts');
+      return {
+        job_id: jobId,
+        status: result.job.status,
+        design: result.design,
+        success: true,
+      };
     }
 
     return {
       job_id: jobId,
-      status: createResponse.body.job.status,
+      status: createResponse.job.status,
       message: 'Import job created. Use the job ID to check status later.',
     };
   },
