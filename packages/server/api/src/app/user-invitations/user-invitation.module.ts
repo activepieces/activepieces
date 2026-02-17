@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -180,7 +180,10 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
 
 const ListUserInvitationsRequestParams = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
+            type: ProjectResourceType.QUERY,
+            queryKey: 'projectId',
+        }),
     },
     schema: {
         tags: ['user-invitations'],
@@ -221,7 +224,9 @@ const DeleteInvitationRequestParams = {
 
 const UpsertUserInvitationRequestParams = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: SendUserInvitationRequest,
