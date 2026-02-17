@@ -1,0 +1,126 @@
+{
+  "_description": "Webhook + Router flow: Webhook trigger -> Router with multiple AND conditions (TEXT_EXACTLY_MATCHES, TEXT_CONTAINS, EXISTS) -> API call. Demonstrates webhook triggers, complex condition groups, and multiple operators.",
+  "id": "UczsU4TJUcFvb6FW1adJL",
+  "created": "2025-02-24T09:07:24.518Z",
+  "updated": "2025-03-14T12:43:07.197Z",
+  "projectId": "y6CxWjc2KoKzBV1k7zs1F",
+  "folderId": null,
+  "status": "ENABLED",
+  "externalId": null,
+  "publishedVersionId": "kePVJdSWWhverNEdyf5QB",
+  "metadata": null,
+  "operationStatus": "NONE",
+  "timeSavedPerRun": null,
+  "ownerId": null,
+  "templateId": null,
+  "version": {
+    "id": "kePVJdSWWhverNEdyf5QB",
+    "created": "2025-03-04T10:44:07.810Z",
+    "updated": "2025-03-14T12:43:05.147Z",
+    "flowId": "UczsU4TJUcFvb6FW1adJL",
+    "displayName": "Inbound Sales - on call hung up",
+    "schemaVersion": "16",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "settings": {
+        "input": {},
+        "pieceName": "@activepieces/piece-webhook",
+        "triggerName": "catch_webhook",
+        "pieceVersion": "~0.1.13",
+        "propertySettings": {}
+      },
+      "nextAction": {
+        "name": "step_1",
+        "skip": false,
+        "type": "ROUTER",
+        "valid": true,
+        "children": [
+          {
+            "name": "step_2",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "url": "https://api.example.com/call/hungup",
+                "body": {
+                  "call_id": "{{trigger['body']['data']['id']}}",
+                  "direction": "{{trigger['body']['data']['direction']}}",
+                  "operator_name": "{{trigger['body']['data']['user']['name']}}",
+                  "duration_in_seconds": "{{trigger['body']['data']['duration']}}"
+                },
+                "method": "POST",
+                "headers": {}
+              },
+              "pieceName": "@activepieces/piece-http",
+              "actionName": "send_request",
+              "pieceVersion": "~0.3.0",
+              "propertySettings": {
+                "url": { "type": "MANUAL" },
+                "body": { "type": "MANUAL" },
+                "method": { "type": "MANUAL" },
+                "headers": { "type": "MANUAL" }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": { "value": false },
+                "continueOnFailure": { "value": false }
+              }
+            },
+            "displayName": "Call backend API"
+          },
+          null
+        ],
+        "settings": {
+          "branches": [
+            {
+              "branchName": "is FR Inbound Sales hungup event",
+              "branchType": "CONDITION",
+              "conditions": [
+                [
+                  {
+                    "operator": "TEXT_EXACTLY_MATCHES",
+                    "firstValue": "{{trigger['method']}}",
+                    "secondValue": "POST",
+                    "caseSensitive": true
+                  },
+                  {
+                    "operator": "TEXT_EXACTLY_MATCHES",
+                    "firstValue": "{{trigger['body']['event']}}",
+                    "secondValue": "call.hungup",
+                    "caseSensitive": true
+                  },
+                  {
+                    "operator": "TEXT_CONTAINS",
+                    "firstValue": "{{trigger['body']['data']['number']['name']}}",
+                    "secondValue": "Inbound Sales",
+                    "caseSensitive": false
+                  },
+                  {
+                    "operator": "EXISTS",
+                    "firstValue": "{{trigger['body']['data']['answered_at']}}"
+                  }
+                ]
+              ]
+            },
+            {
+              "branchName": "Otherwise",
+              "branchType": "FALLBACK"
+            }
+          ],
+          "executionType": "EXECUTE_FIRST_MATCH"
+        },
+        "displayName": "Router"
+      },
+      "displayName": "Catch Webhook"
+    },
+    "connectionIds": [],
+    "agentIds": [],
+    "updatedBy": null,
+    "valid": true,
+    "state": "LOCKED",
+    "backupFiles": null,
+    "notes": []
+  }
+}

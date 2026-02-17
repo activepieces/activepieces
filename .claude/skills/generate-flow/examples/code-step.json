@@ -1,0 +1,120 @@
+{
+  "_description": "Code step flow: Form trigger -> Code (compute result) -> Code (format markdown) -> Return response. Demonstrates CODE actions with input/output chaining and sourceCode format.",
+  "id": "94hIebviJBsh1T7EwFr9s",
+  "created": "2025-02-24T15:26:58.743Z",
+  "updated": "2025-03-26T13:43:20.028Z",
+  "projectId": "lhOxu97s1H2m27MvVm8Ny",
+  "folderId": null,
+  "status": "ENABLED",
+  "externalId": null,
+  "publishedVersionId": "yeX8rchnbgEbiOqKHlDbF",
+  "metadata": null,
+  "operationStatus": "NONE",
+  "timeSavedPerRun": null,
+  "ownerId": null,
+  "templateId": null,
+  "version": {
+    "id": "yeX8rchnbgEbiOqKHlDbF",
+    "created": "2025-02-26T14:37:16.479Z",
+    "updated": "2025-03-26T13:43:20.046Z",
+    "flowId": "94hIebviJBsh1T7EwFr9s",
+    "displayName": "CVSS to Exploitability calculator",
+    "schemaVersion": "16",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "settings": {
+        "input": {
+          "inputs": [
+            {
+              "type": "text",
+              "required": true,
+              "description": "Version 4.0",
+              "displayName": "CVSS vector string"
+            }
+          ],
+          "waitForResponse": true
+        },
+        "pieceName": "@activepieces/piece-forms",
+        "triggerName": "form_submission",
+        "pieceVersion": "~0.4.2",
+        "propertySettings": {
+          "inputs": { "type": "MANUAL" },
+          "waitForResponse": { "type": "MANUAL" }
+        }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "skip": false,
+        "type": "CODE",
+        "valid": true,
+        "settings": {
+          "input": {
+            "cvssVector": "{{trigger['cvssVectorString']}}"
+          },
+          "sourceCode": {
+            "code": "export const code = async (inputs) => {\n  const { cvssVector } = inputs;\n  // Parse the CVSS vector and compute exploitability score\n  const metrics = {};\n  cvssVector.replace('CVSS:4.0/', '').split('/').forEach(m => {\n    const [key, value] = m.split(':');\n    metrics[key] = value;\n  });\n  \n  // Simplified scoring logic\n  const score = metrics.AV === 'N' ? 4 : metrics.AV === 'A' ? 3 : 2;\n  return { level: score >= 4 ? 'Critical' : 'Medium', score };\n};",
+            "packageJson": "{}"
+          },
+          "errorHandlingOptions": {
+            "retryOnFailure": { "value": false },
+            "continueOnFailure": { "value": false }
+          }
+        },
+        "nextAction": {
+          "name": "step_2",
+          "skip": false,
+          "type": "CODE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "level": "{{step_1['level']}}",
+              "score": "{{step_1['score']}}"
+            },
+            "sourceCode": {
+              "code": "export const code = async (inputs) => {\n  const { level, score } = inputs;\n  const emoji = { Critical: '🔴', High: '🟠', Medium: '🟡', Low: '🟢' };\n  return `## ${emoji[level] || '⚪️'} ${level} (${score})`;\n};",
+              "packageJson": "{}"
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": { "value": false },
+              "continueOnFailure": { "value": false }
+            }
+          },
+          "nextAction": {
+            "name": "step_3",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "markdown": "{{step_2}}"
+              },
+              "pieceName": "@activepieces/piece-forms",
+              "actionName": "return_response",
+              "pieceVersion": "~0.4.2",
+              "propertySettings": {
+                "markdown": { "type": "MANUAL" }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": { "value": false },
+                "continueOnFailure": { "value": false }
+              }
+            },
+            "displayName": "Respond on UI"
+          },
+          "displayName": "Format as Markdown"
+        },
+        "displayName": "Compute exploitability"
+      },
+      "displayName": "Web Form"
+    },
+    "connectionIds": [],
+    "agentIds": [],
+    "updatedBy": null,
+    "valid": true,
+    "state": "LOCKED",
+    "backupFiles": null,
+    "notes": []
+  }
+}

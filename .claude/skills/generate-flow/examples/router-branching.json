@@ -1,0 +1,189 @@
+{
+  "_description": "Router branching flow: Slack message trigger -> Router (condition check) -> branch 1: Text Helper + Code + Linear + Slack reply, branch 2: fallback (null). Demonstrates ROUTER with CONDITION/FALLBACK branches, children array, and multi-step branch chains.",
+  "id": "dfpFuGk7YUAZdit6vzylt",
+  "created": "2025-10-27T13:45:37.578Z",
+  "updated": "2026-02-16T13:30:57.627Z",
+  "projectId": "sLXgp6v5K9RSAHIKP025R",
+  "folderId": null,
+  "status": "ENABLED",
+  "externalId": null,
+  "publishedVersionId": "gSsmgzBRUlfaMHZXhAcjm",
+  "metadata": null,
+  "operationStatus": "NONE",
+  "timeSavedPerRun": null,
+  "ownerId": null,
+  "templateId": null,
+  "version": {
+    "id": "gSsmgzBRUlfaMHZXhAcjm",
+    "created": "2026-02-16T13:30:56.346Z",
+    "updated": "2026-02-16T13:30:57.619Z",
+    "flowId": "dfpFuGk7YUAZdit6vzylt",
+    "displayName": "IBAN linear card from Slack message",
+    "schemaVersion": "16",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "settings": {
+        "input": {
+          "auth": "{{connections['slack']}}",
+          "channel": "C32P036SG",
+          "ignoreBots": false
+        },
+        "pieceName": "@activepieces/piece-slack",
+        "triggerName": "new-message-in-channel",
+        "pieceVersion": "0.10.19",
+        "propertySettings": {
+          "auth": { "type": "MANUAL" },
+          "channel": { "type": "DYNAMIC" },
+          "ignoreBots": { "type": "MANUAL" }
+        }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "skip": false,
+        "type": "ROUTER",
+        "valid": true,
+        "settings": {
+          "branches": [
+            {
+              "branchName": "IBAN change request",
+              "branchType": "CONDITION",
+              "conditions": [
+                [
+                  {
+                    "operator": "TEXT_CONTAINS",
+                    "firstValue": "{{trigger['text']}}",
+                    "secondValue": "A new settlement IBAN change request needs to be reviewed",
+                    "caseSensitive": false
+                  }
+                ]
+              ]
+            },
+            {
+              "branchName": "Otherwise",
+              "branchType": "FALLBACK"
+            }
+          ],
+          "executionType": "EXECUTE_FIRST_MATCH"
+        },
+        "displayName": "Router",
+        "children": [
+          {
+            "name": "step_2",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "text": "{{trigger['text']}}",
+                "expression": "Marmot:\\s*<([^>]+)>"
+              },
+              "pieceName": "@activepieces/piece-text-helper",
+              "actionName": "find",
+              "pieceVersion": "0.4.12",
+              "propertySettings": {
+                "text": { "type": "MANUAL" },
+                "expression": { "type": "MANUAL" }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": { "value": false },
+                "continueOnFailure": { "value": false }
+              }
+            },
+            "displayName": "Find URL in message",
+            "nextAction": {
+              "name": "step_3",
+              "skip": false,
+              "type": "CODE",
+              "valid": true,
+              "settings": {
+                "input": {},
+                "sourceCode": {
+                  "code": "export const code = async (inputs) => {\n  return [\n    \"label-id-1\",\n    \"label-id-2\",\n    \"label-id-3\"\n  ];\n};",
+                  "packageJson": "{}"
+                },
+                "errorHandlingOptions": {
+                  "retryOnFailure": { "value": false },
+                  "continueOnFailure": { "value": false }
+                }
+              },
+              "displayName": "Get label IDs",
+              "nextAction": {
+                "name": "step_4",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "auth": "{{connections['linear']}}",
+                    "title": "A new settlement IBAN change request needs to be reviewed",
+                    "labels": "{{step_3}}",
+                    "team_id": "team-uuid",
+                    "state_id": "state-uuid",
+                    "description": "### Review IBAN change\n\n1. Go to the member profile [**here**]({{step_2[1]}})\n2. Review the IBAN\n3. Mark this card as done"
+                  },
+                  "pieceName": "@activepieces/piece-linear",
+                  "actionName": "linear_create_issue",
+                  "pieceVersion": "0.1.17",
+                  "propertySettings": {
+                    "auth": { "type": "MANUAL" },
+                    "title": { "type": "MANUAL" },
+                    "labels": { "type": "DYNAMIC" },
+                    "team_id": { "type": "MANUAL" },
+                    "state_id": { "type": "MANUAL" },
+                    "description": { "type": "MANUAL" }
+                  },
+                  "errorHandlingOptions": {
+                    "retryOnFailure": { "value": false },
+                    "continueOnFailure": { "value": false }
+                  }
+                },
+                "displayName": "Create Linear Issue",
+                "nextAction": {
+                  "name": "step_5",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "auth": "{{connections['slack']}}",
+                      "text": "The linear card is <{{step_4['issue']['url']}}|here>",
+                      "channel": "C32P036SG",
+                      "threadTs": "{{trigger['ts']}}",
+                      "replyBroadcast": false
+                    },
+                    "pieceName": "@activepieces/piece-slack",
+                    "actionName": "send_channel_message",
+                    "pieceVersion": "0.10.19",
+                    "propertySettings": {
+                      "auth": { "type": "MANUAL" },
+                      "text": { "type": "MANUAL" },
+                      "channel": { "type": "MANUAL" },
+                      "threadTs": { "type": "MANUAL" },
+                      "replyBroadcast": { "type": "MANUAL" }
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": { "value": false },
+                      "continueOnFailure": { "value": false }
+                    }
+                  },
+                  "displayName": "Reply in thread"
+                }
+              }
+            }
+          },
+          null
+        ]
+      },
+      "displayName": "New Message Posted to Channel"
+    },
+    "connectionIds": [],
+    "agentIds": [],
+    "updatedBy": null,
+    "valid": true,
+    "state": "LOCKED",
+    "backupFiles": null,
+    "notes": []
+  }
+}

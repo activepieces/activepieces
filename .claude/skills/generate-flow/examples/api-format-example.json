@@ -1,0 +1,55 @@
+{
+  "_description": "API format (ImportFlowRequest): Same trigger+action tree but wrapped in the minimal import format. Use this format with --format api.",
+  "displayName": "Daily Slack standup reminder",
+  "trigger": {
+    "name": "trigger",
+    "type": "PIECE_TRIGGER",
+    "valid": true,
+    "settings": {
+      "input": {
+        "timezone": "America/New_York",
+        "hour_of_the_day": 9,
+        "day_of_the_week": "MONDAY",
+        "run_on_weekends": false
+      },
+      "pieceName": "@activepieces/piece-schedule",
+      "triggerName": "every_week",
+      "pieceVersion": "~0.1.5",
+      "propertySettings": {
+        "timezone": { "type": "MANUAL" },
+        "hour_of_the_day": { "type": "MANUAL" },
+        "day_of_the_week": { "type": "MANUAL" },
+        "run_on_weekends": { "type": "MANUAL" }
+      }
+    },
+    "nextAction": {
+      "name": "step_1",
+      "skip": false,
+      "type": "PIECE",
+      "valid": true,
+      "settings": {
+        "input": {
+          "auth": "{{connections['slack']}}",
+          "text": "Good morning team! Please post your standup update:\n- What did you work on yesterday?\n- What are you working on today?\n- Any blockers?",
+          "channel": "C_STANDUP_CHANNEL"
+        },
+        "pieceName": "@activepieces/piece-slack",
+        "actionName": "send_channel_message",
+        "pieceVersion": "~0.10.19",
+        "propertySettings": {
+          "auth": { "type": "MANUAL" },
+          "text": { "type": "MANUAL" },
+          "channel": { "type": "MANUAL" }
+        },
+        "errorHandlingOptions": {
+          "retryOnFailure": { "value": false },
+          "continueOnFailure": { "value": false }
+        }
+      },
+      "displayName": "Send standup reminder"
+    },
+    "displayName": "Every Monday at 9 AM"
+  },
+  "schemaVersion": "16",
+  "notes": []
+}

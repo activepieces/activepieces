@@ -1,0 +1,115 @@
+{
+  "_description": "Loop flow: Schedule trigger -> Snowflake query -> Loop on results -> Send Slack message per item. Demonstrates LOOP_ON_ITEMS with firstLoopAction and item reference syntax.",
+  "id": "TnPjvfTYvXWUofMA58eG3",
+  "created": "2024-10-04T12:43:10.502Z",
+  "updated": "2024-10-22T13:55:42.764Z",
+  "projectId": "VupdaLXpqR4cTZV1hp3J1",
+  "folderId": null,
+  "status": "ENABLED",
+  "externalId": null,
+  "publishedVersionId": "M2OrNi5y7efTjfB64KX0D",
+  "metadata": null,
+  "operationStatus": "NONE",
+  "timeSavedPerRun": null,
+  "ownerId": null,
+  "templateId": null,
+  "version": {
+    "id": "M2OrNi5y7efTjfB64KX0D",
+    "created": "2024-10-22T13:55:02.654Z",
+    "updated": "2024-10-22T13:55:40.801Z",
+    "flowId": "TnPjvfTYvXWUofMA58eG3",
+    "displayName": "Alaniversary reminder",
+    "schemaVersion": "16",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "settings": {
+        "input": {
+          "timezone": "Europe/Paris",
+          "hour_of_the_day": 15,
+          "run_on_weekends": true
+        },
+        "pieceName": "@activepieces/piece-schedule",
+        "triggerName": "every_day",
+        "pieceVersion": "~0.1.5",
+        "propertySettings": {
+          "timezone": { "type": "MANUAL" },
+          "hour_of_the_day": { "type": "MANUAL" },
+          "run_on_weekends": { "type": "MANUAL" }
+        }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "type": "PIECE",
+        "valid": true,
+        "settings": {
+          "input": {
+            "auth": "{{connections['snowflake']}}",
+            "binds": [],
+            "sqlText": "SELECT id, name, coach_slack_id FROM employees WHERE anniversary_reminder_date = CURRENT_DATE()",
+            "timeout": 30000,
+            "application": "ActivePieces"
+          },
+          "pieceName": "@activepieces/piece-snowflake",
+          "actionName": "runQuery",
+          "pieceVersion": "~0.0.9",
+          "propertySettings": {
+            "auth": { "type": "MANUAL" },
+            "binds": { "type": "MANUAL" },
+            "sqlText": { "type": "MANUAL" },
+            "timeout": { "type": "MANUAL" },
+            "application": { "type": "MANUAL" }
+          },
+          "errorHandlingOptions": {
+            "retryOnFailure": { "value": false },
+            "continueOnFailure": { "value": false }
+          }
+        },
+        "nextAction": {
+          "name": "step_2",
+          "type": "LOOP_ON_ITEMS",
+          "valid": true,
+          "settings": {
+            "items": "{{step_1}}"
+          },
+          "displayName": "Loop on Items",
+          "firstLoopAction": {
+            "name": "step_3",
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "auth": "{{connections['slack']}}",
+                "text": "<@{{step_2['item']['COACH_SLACK_ID']}}> *{{step_2['item']['NAME']}}* will reach their one-year anniversary in 2 months.\n\nPlease refer to the documentation and discuss with your lead.",
+                "channel": "C4TH3A4DA"
+              },
+              "pieceName": "@activepieces/piece-slack",
+              "actionName": "send_channel_message",
+              "pieceVersion": "~0.7.5",
+              "propertySettings": {
+                "auth": { "type": "MANUAL" },
+                "text": { "type": "MANUAL" },
+                "channel": { "type": "MANUAL" }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": { "value": false },
+                "continueOnFailure": { "value": false }
+              }
+            },
+            "displayName": "Send Message To A Channel"
+          }
+        },
+        "displayName": "Run Query"
+      },
+      "displayName": "Every Day"
+    },
+    "connectionIds": [],
+    "agentIds": [],
+    "updatedBy": null,
+    "valid": true,
+    "state": "LOCKED",
+    "backupFiles": null,
+    "notes": []
+  }
+}

@@ -69,6 +69,9 @@ scratch.md
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
+# Generated flows (Claude skill output)
+.claude/skills/generate-flow/generated-flows/
+
 # Playwright
 /test-results/
 /playwright-report/

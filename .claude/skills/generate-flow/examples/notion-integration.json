@@ -1,0 +1,108 @@
+{
+  "_description": "Notion integration flow: Salesforce trigger -> Create Notion database item with dynamic field mapping. Demonstrates DYNAMIC propertySettings with schema, Notion database fields, and simple trigger-to-action data mapping.",
+  "id": "sgXdTnrZX6LztiRFwLUgZ",
+  "created": "2026-01-19T14:13:38.246Z",
+  "updated": "2026-01-19T14:42:31.608Z",
+  "projectId": "1gLpRn8KwHYzAj68OpYVM",
+  "folderId": null,
+  "status": "ENABLED",
+  "externalId": null,
+  "publishedVersionId": "oeSSQ6tZHpWZuK0mg3JI9",
+  "metadata": null,
+  "operationStatus": "NONE",
+  "timeSavedPerRun": null,
+  "ownerId": null,
+  "templateId": null,
+  "version": {
+    "id": "oeSSQ6tZHpWZuK0mg3JI9",
+    "created": "2026-01-19T14:42:04.101Z",
+    "updated": "2026-01-19T14:42:05.640Z",
+    "flowId": "sgXdTnrZX6LztiRFwLUgZ",
+    "displayName": "Salesforce to Notion sync",
+    "schemaVersion": "16",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "settings": {
+        "input": {
+          "auth": "{{connections['salesforce']}}",
+          "object": "Account",
+          "conditions": "Status = 'Active'"
+        },
+        "pieceName": "@activepieces/piece-salesforce",
+        "triggerName": "new_record",
+        "pieceVersion": "~0.1.17",
+        "propertySettings": {
+          "auth": { "type": "MANUAL" },
+          "object": { "type": "MANUAL" },
+          "conditions": { "type": "MANUAL" }
+        }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "skip": false,
+        "type": "PIECE",
+        "valid": true,
+        "settings": {
+          "input": {
+            "auth": "{{connections['notion']}}",
+            "content": "{{trigger['Notes__c']}}",
+            "database_id": "database-uuid-here",
+            "databaseFields": {
+              "Owner": "{{trigger['Owner_Name__c']}}",
+              "Status": "{{trigger['Status__c']}}",
+              "Account Name": "{{trigger['Name']}}",
+              "Employee Count": "{{trigger['NumberOfEmployees']}}"
+            }
+          },
+          "pieceName": "@activepieces/piece-notion",
+          "actionName": "create_database_item",
+          "pieceVersion": "~0.3.3",
+          "propertySettings": {
+            "auth": { "type": "MANUAL" },
+            "database_id": { "type": "MANUAL" },
+            "databaseFields": {
+              "type": "MANUAL",
+              "schema": {
+                "Owner": {
+                  "type": "LONG_TEXT",
+                  "required": false,
+                  "displayName": "Owner"
+                },
+                "Status": {
+                  "type": "LONG_TEXT",
+                  "required": false,
+                  "displayName": "Status"
+                },
+                "Account Name": {
+                  "type": "SHORT_TEXT",
+                  "required": false,
+                  "displayName": "Account Name"
+                },
+                "Employee Count": {
+                  "type": "NUMBER",
+                  "required": false,
+                  "displayName": "Employee Count"
+                }
+              }
+            }
+          },
+          "errorHandlingOptions": {
+            "retryOnFailure": { "value": false },
+            "continueOnFailure": { "value": false }
+          }
+        },
+        "displayName": "Create Notion Database Item"
+      },
+      "displayName": "New Salesforce Record"
+    },
+    "connectionIds": [],
+    "agentIds": [],
+    "updatedBy": null,
+    "valid": true,
+    "state": "LOCKED",
+    "backupFiles": null,
+    "notes": []
+  }
+}

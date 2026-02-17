@@ -1,0 +1,104 @@
+{
+  "_description": "Simple linear flow: Schedule trigger -> Metabase query -> Slack message. Demonstrates a basic trigger-action-action chain with expression references.",
+  "id": "6ZOD9hKOxMPzcv9l0Yu5Z",
+  "created": "2025-02-28T15:15:09.512Z",
+  "updated": "2025-03-20T08:33:59.033Z",
+  "projectId": "sLXgp6v5K9RSAHIKP025R",
+  "folderId": null,
+  "status": "ENABLED",
+  "externalId": null,
+  "publishedVersionId": "5cyl9CuOcbTKknCgOFbwZ",
+  "metadata": null,
+  "operationStatus": "NONE",
+  "timeSavedPerRun": null,
+  "ownerId": null,
+  "templateId": null,
+  "version": {
+    "id": "U8nbQqY5FcqvnOU2Xkr3p",
+    "created": "2025-03-04T10:11:12.144Z",
+    "updated": "2025-03-04T10:14:19.385Z",
+    "flowId": "6ZOD9hKOxMPzcv9l0Yu5Z",
+    "displayName": "Claims backlog monitoring",
+    "schemaVersion": "16",
+    "trigger": {
+      "name": "trigger",
+      "type": "PIECE_TRIGGER",
+      "valid": true,
+      "settings": {
+        "input": {
+          "timezone": "Europe/Madrid",
+          "hour_of_the_day": 9,
+          "run_on_weekends": false
+        },
+        "pieceName": "@activepieces/piece-schedule",
+        "triggerName": "every_day",
+        "pieceVersion": "~0.1.5",
+        "propertySettings": {
+          "timezone": { "type": "MANUAL" },
+          "hour_of_the_day": { "type": "MANUAL" },
+          "run_on_weekends": { "type": "MANUAL" }
+        }
+      },
+      "nextAction": {
+        "name": "step_1",
+        "skip": false,
+        "type": "PIECE",
+        "valid": true,
+        "settings": {
+          "input": {
+            "auth": "{{connections['metabase']}}",
+            "parameters": {},
+            "questionId": "51739"
+          },
+          "pieceName": "@activepieces/piece-metabase",
+          "actionName": "getQuestion",
+          "pieceVersion": "~0.1.4",
+          "propertySettings": {
+            "auth": { "type": "MANUAL" },
+            "parameters": { "type": "MANUAL" },
+            "questionId": { "type": "MANUAL" }
+          },
+          "errorHandlingOptions": {
+            "retryOnFailure": { "value": false },
+            "continueOnFailure": { "value": false }
+          }
+        },
+        "nextAction": {
+          "name": "step_2",
+          "skip": false,
+          "type": "PIECE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "auth": "{{connections['slack']}}",
+              "text": "Total of {{step_1['data']['rows'][0][0]}} claims to manage\n\nOf which {{step_1['data']['rows'][0][1]}} out of SLA\n\nLink: https://metabase.example.com/question/31305",
+              "channel": "C02T4PLCW3T"
+            },
+            "pieceName": "@activepieces/piece-slack",
+            "actionName": "send_channel_message",
+            "pieceVersion": "~0.7.13",
+            "propertySettings": {
+              "auth": { "type": "MANUAL" },
+              "text": { "type": "MANUAL" },
+              "channel": { "type": "MANUAL" }
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": { "value": false },
+              "continueOnFailure": { "value": false }
+            }
+          },
+          "displayName": "Send Message To A Channel"
+        },
+        "displayName": "Get Metabase Question"
+      },
+      "displayName": "Every Day"
+    },
+    "connectionIds": [],
+    "agentIds": [],
+    "updatedBy": null,
+    "valid": true,
+    "state": "LOCKED",
+    "backupFiles": null,
+    "notes": []
+  }
+}
