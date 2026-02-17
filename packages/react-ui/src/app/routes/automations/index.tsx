@@ -8,6 +8,8 @@ import { AutomationsNoResultsState } from '@/features/automations/components/aut
 import { AutomationsPagination } from '@/features/automations/components/automations-pagination';
 import { AutomationsSelectionBar } from '@/features/automations/components/automations-selection-bar';
 import { AutomationsTable } from '@/features/automations/components/automations-table';
+import { CreateFolderDialog } from '@/features/automations/components/create-folder-dialog';
+import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { useAutomationsData } from '@/features/automations/hooks/use-automations-data';
@@ -20,8 +22,6 @@ import {
 } from '@/features/automations/hooks/use-automations-selection';
 import { TreeItem } from '@/features/automations/lib/types';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
-import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
-import { CreateFolderDialog } from '@/features/automations/components/create-folder-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';

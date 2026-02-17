@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Nullable } from '../../common'
 import { FieldState } from '../../project-release/project-state'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
-import { Nullable } from '../../common'
 
 export const CreateTableRequest = Type.Object({
     projectId: Type.String(),

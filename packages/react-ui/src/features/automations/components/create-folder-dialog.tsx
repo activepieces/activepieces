@@ -29,13 +29,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { FolderDto, Permission } from '@activepieces/shared';
-
-import { foldersApi } from '@/features/folders/lib/folders-api';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;
