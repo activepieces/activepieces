@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     ErrorCode,
     isNil,
+    isObject,
     PlatformRole,
     PlatformWithoutSensitiveData,
     PrincipalType,
@@ -84,7 +85,7 @@ export const projectMustBeTeamType: onRequestAsyncHookHandler =
         if (request.principal.type !== PrincipalType.USER && request.principal.type !== PrincipalType.SERVICE) {
             return
         }
-        const projectId = await getProjectIdFromRequest(request)
+        const projectId = await getProjectIdFromRequest(request) || requestUtils.extractProjectId(request)
 
         if (isNil(projectId)) {
             throw new ActivepiecesError({
@@ -122,6 +123,18 @@ export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
     }
 
     
+const requestUtils = {
+    extractProjectId(request: FastifyRequest): string | undefined {
+        if (isObject(request.body) && 'projectId' in request.body) {
+            return request.body.projectId as string
+        }
+        else if (isObject(request.query) && 'projectId' in request.query) {
+            return request.query.projectId as string
+        }
+    
+        return undefined
+    },
+}
 export const platformToEditMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
     async (request, _res) => {
         if (!request.params || typeof request.params !== 'object' || !('id' in request.params) || typeof request.params.id !== 'string') {
