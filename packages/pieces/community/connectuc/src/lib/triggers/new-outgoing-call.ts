@@ -1,6 +1,7 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
+import { domainProp, usersProp } from '../common/props';
 
 export const newOutgoingCall = createTrigger({
     auth: connectucAuth,
@@ -8,11 +9,8 @@ export const newOutgoingCall = createTrigger({
     displayName: 'New Outgoing Call',
     description: 'Triggers when a new outgoing call is initiated',
     props: {
-        users: Property.LongText({
-            displayName: 'Users',
-            description: 'Add comma-separated users to which this trigger applies',
-            required: false,
-        }),
+        domain: domainProp(),
+        users: usersProp(),
     },
     sampleData: {
         orig_callid: "cb4542b9-34ff-123f-9192-005056842248",

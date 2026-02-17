@@ -1,6 +1,7 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
+import { domainProp, usersProp } from '../common/props';
 
 export const newVoicemail = createTrigger({
     auth: connectucAuth,
@@ -8,11 +9,8 @@ export const newVoicemail = createTrigger({
     displayName: 'New Voicemail',
     description: 'Triggers when a new voicemail is received',
     props: {
-        users: Property.LongText({
-            displayName: 'Users',
-            description: 'Add comma-separated users to which this trigger applies',
-            required: false,
-        }),
+        domain: domainProp(),
+        users: usersProp(),
     },
     sampleData: {
         id: "vm-20251106141508017931-7e6c15a2661d06d7d0281ecd502b4679",
