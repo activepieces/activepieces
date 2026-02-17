@@ -7,7 +7,7 @@ import { newMilestoneTrigger } from './new-milestone';
 import { newReleaseTrigger } from './new-release';
 import { newCommitTrigger } from './new-commit';
 import { newReviewRequestTrigger } from './new-review-request';
-import  { newMentionTrigger } from './new-mention';
+import { newMentionTrigger } from './new-mention';
 
 export enum GithubEventType {
   PULL_REQUEST = 'pull_request',

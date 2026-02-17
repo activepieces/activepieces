@@ -46,10 +46,9 @@ export const newReviewRequestTrigger = createTrigger({
   },
 
   async onDisable(context) {
-    const webhook =
-      await context.store.get<WebhookInformation>(
-        'github_new_review_request_trigger'
-      );
+    const webhook = await context.store.get<WebhookInformation>(
+      'github_new_review_request_trigger'
+    );
 
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
