@@ -1,6 +1,7 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
+import { domainProp, usersProp } from '../common/props';
 
 export const newCdr = createTrigger({
     auth: connectucAuth,
@@ -8,11 +9,8 @@ export const newCdr = createTrigger({
     displayName: 'New CDR',
     description: 'Triggers when a new Call Detail Record (CDR) is created',
     props: {
-        users: Property.LongText({
-            displayName: 'Users',
-            description: 'Add comma-separated users to which this trigger applies',
-            required: false,
-        }),
+        domain: domainProp(),
+        users: usersProp(),
     },
     sampleData: {
         id: "17624380791dba1cd5a13fcb8b4c6b66094f564b0fa",
