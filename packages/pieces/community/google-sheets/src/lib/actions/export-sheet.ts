@@ -60,7 +60,29 @@ export const exportSheetAction = createAction({
       });
 
       if (returnAsText) {
-        const textData = Buffer.from(response.body).toString('utf-8');
+        let textData = Buffer.from(response.body).toString('utf-8');
+      
+        if (format === 'csv') {
+          textData = textData.replace(/\r/g, '');
+      
+          const lines = textData.split('\n');
+
+          const parsedRows = lines.map(line => line.split(','));
+      
+          const isSingleColumn = parsedRows.every(row => row.length === 1);
+      
+          if (isSingleColumn) {
+              const cleaned = lines.map(line => {
+                  line = line.replace(/\s+$/, ''); 
+                  return line.replace(/\t/g, ',');
+              });
+      
+              textData = cleaned.join(',');
+          }
+          else {
+              textData = lines.join('\n');
+          }
+        }      
         return {
           text: textData,
           format,
