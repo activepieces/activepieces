@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { foldersHooks } from '@/features/automations/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {

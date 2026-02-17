@@ -15,7 +15,7 @@ import { PermissionNeededTooltip } from '@/components/custom/permission-needed-t
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
-import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
+import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';

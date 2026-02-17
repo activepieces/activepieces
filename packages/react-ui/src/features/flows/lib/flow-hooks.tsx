@@ -7,7 +7,7 @@ import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-er
 import { useSocket } from '@/components/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { foldersApi } from '@/features/folders/lib/folders-api';
+import { foldersApi } from '@/features/automations/lib/folders-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { stepUtils } from '@/features/pieces/lib/step-utils';

@@ -52,7 +52,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
           toast.success(t('Table deleted successfully'));
         } else if (item.type === 'folder') {
           const { foldersApi } = await import(
-            '@/features/folders/lib/folders-api'
+            '@/features/automations/lib/folders-api'
           );
           await foldersApi.delete(item.id);
           toast.success(t('Folder deleted successfully'));
@@ -76,7 +76,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
           ...tableIds.map((id) => tablesApi.delete(id)),
           ...folderIds.map(async (id) => {
             const { foldersApi } = await import(
-              '@/features/folders/lib/folders-api'
+              '@/features/automations/lib/folders-api'
             );
             return foldersApi.delete(id);
           }),
@@ -173,7 +173,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
           toast.success(t('Table renamed successfully'));
         } else if (item.type === 'folder') {
           const { foldersApi } = await import(
-            '@/features/folders/lib/folders-api'
+            '@/features/automations/lib/folders-api'
           );
           await foldersApi.renameFolder(item.id, { displayName: newName });
           toast.success(t('Folder renamed successfully'));

@@ -20,8 +20,8 @@ import {
 } from '@/features/automations/hooks/use-automations-selection';
 import { TreeItem } from '@/features/automations/lib/types';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
-import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
-import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
+import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
+import { CreateFolderDialog } from '@/features/automations/components/create-folder-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';

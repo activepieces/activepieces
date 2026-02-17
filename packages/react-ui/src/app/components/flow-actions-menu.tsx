@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
-import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
+import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
 import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -49,7 +49,7 @@ import {
 } from '@activepieces/shared';
 
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { foldersHooks } from '@/features/automations/lib/folders-hooks';
 
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 
