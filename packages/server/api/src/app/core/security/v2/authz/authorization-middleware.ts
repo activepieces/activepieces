@@ -78,7 +78,7 @@ export async function getProjectIdFromRequest(request: FastifyRequest): Promise<
     if (security.kind === RouteKind.PUBLIC) {
         return undefined
     }
-    if (security.authorization.type !== AuthorizationType.PROJECT) {
+    if (security.authorization.type !== AuthorizationType.PROJECT && security.authorization.type !== AuthorizationType.PLATFORM) {
         return undefined
     }
     const projectResource = security.authorization.projectResource
