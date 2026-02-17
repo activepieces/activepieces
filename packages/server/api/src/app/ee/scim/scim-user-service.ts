@@ -4,6 +4,8 @@ import {
     assertNotNullOrUndefined,
     DefaultProjectRole,
     ErrorCode,
+    InvitationStatus,
+    InvitationType,
     isNil,
     PlatformRole,
     User,
@@ -26,6 +28,7 @@ import {
 import { projectService } from '../../project/project-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
 import { platformService } from '../../platform/platform.service'
+import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 
 export const scimUserService = (log: FastifyBaseLogger) => ({
     async create(params: {
@@ -38,10 +41,9 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         const lastName = request.name?.familyName ?? ''
         const externalId = request.externalId
         const active = request.active !== false
-        const password = request.password ?? await cryptoUtils.generateRandomPassword()
+        const generatedPassword = await cryptoUtils.generateRandomPassword()
         const platformRole = request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole ?? PlatformRole.MEMBER
 
-        // Check if user with this externalId already exists on this platform
         if (!isNil(externalId)) {
             const existingUser = await userService.getByPlatformAndExternalId({
                 platformId,
@@ -58,22 +60,20 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        // Get or create the identity
         let identity = await userIdentityService(log).getIdentityByEmail(email)
         if (isNil(identity)) {
             identity = await userIdentityService(log).create({
                 email,
-                password,
                 firstName,
                 lastName,
+                password: generatedPassword,
                 trackEvents: false,
                 newsLetter: false,
-                provider: UserIdentityProvider.EMAIL,
+                provider: UserIdentityProvider.SAML,
                 verified: true,
             })
         }
 
-        // Check if user already exists on this platform with this identity
         const existingUserForIdentity = await userService.getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
@@ -88,21 +88,13 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             })
         }
 
-
         const user = await userService.create({
             identityId: identity.id,
             platformId,
             externalId,
             platformRole,
+            isActive: active,
         })
-
-        if (!active) {
-            await userService.update({
-                id: user.id,
-                platformId,
-                status: UserStatus.INACTIVE,
-            })
-        }
 
         const defaultProject = await projectService.getOneByOwnerAndPlatform({ ownerId: 
             (await platformService.getOneOrThrow(platformId)).ownerId,
@@ -114,6 +106,17 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             userId: user.id,
             projectId: defaultProject.id,
             projectRoleName: DefaultProjectRole.VIEWER,
+        })
+
+        await userInvitationsService(log).create({
+            email,
+            platformId,
+            platformRole,
+            projectId: null,
+            projectRoleId: null,
+            type: InvitationType.PLATFORM,
+            invitationExpirySeconds: 7 * 24 * 60 * 60,
+            status: InvitationStatus.PENDING,
         })
 
         const finalUser = active ? user : await userService.getOrThrow({ id: user.id })
@@ -158,7 +161,6 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        // If filtering by email, do a targeted lookup
         if (!isNil(filterEmail)) {
             const identity = await userIdentityService(log).getIdentityByEmail(filterEmail)
             if (isNil(identity)) {
@@ -192,7 +194,6 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        // List all platform users
         const usersPage = await userService.list({
             platformId,
             cursorRequest: null,
@@ -266,94 +267,11 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         await userIdentityService(log).update(user.identityId, {
             firstName: request.name?.givenName,
             lastName: request.name?.familyName,
-            password: request.password,
         })
         const updatedIdentity = await userIdentityService(log).getBasicInformation(user.identityId)
 
         const updatedUser = await userService.getOrThrow({ id: userId })
         return toScimUserResource(updatedUser, updatedIdentity.email, updatedIdentity.firstName, updatedIdentity.lastName)
-    },
-
-    async patch(params: {
-        platformId: string
-        userId: string
-        request: ScimPatchRequest
-    }): Promise<ScimUserResource> {
-        const { platformId, userId, request } = params
-        const user = await userService.get({ id: userId })
-
-        if (isNil(user) || user.platformId !== platformId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'user',
-                    entityId: userId,
-                },
-            })
-        }
-
-        for (const operation of request.Operations) {
-            const op = operation.op.toLowerCase()
-            if (op === 'replace') {
-                const value = operation.value as Record<string, unknown>
-                if (!isNil(value)) {
-                    // Handle active status
-                    if ('active' in value) {
-                        const active = value.active as boolean
-                        await userService.update({
-                            id: userId,
-                            platformId,
-                            status: active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
-                        })
-                    }
-                    if ('externalId' in value) {
-                        await userService.update({
-                            id: userId,
-                            platformId,
-                            externalId: value.externalId as string,
-                        })
-                    }
-                }
-
-                // Handle path-based replace (e.g., "active" as path)
-                if (operation.path === 'active') {
-                    const active = operation.value as boolean
-                    await userService.update({
-                        id: userId,
-                        platformId,
-                        status: active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
-                    })
-                }
-            }
-        }
-
-        const updatedUser = await userService.getOrThrow({ id: userId })
-        const identity = await userIdentityService(log).getBasicInformation(updatedUser.identityId)
-        return toScimUserResource(updatedUser, identity.email, identity.firstName, identity.lastName)
-    },
-
-    async deactivate(params: {
-        platformId: string
-        userId: string
-    }): Promise<void> {
-        const { platformId, userId } = params
-        const user = await userService.get({ id: userId })
-
-        if (isNil(user) || user.platformId !== platformId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'user',
-                    entityId: userId,
-                },
-            })
-        }
-
-        await userService.update({
-            id: userId,
-            platformId,
-            status: UserStatus.INACTIVE,
-        })
     },
 })
 

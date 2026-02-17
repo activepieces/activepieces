@@ -12,9 +12,7 @@ import {
 import { scimUserService } from './scim-user-service'
 
 export const scimUserController: FastifyPluginAsyncTypebox = async (app) => {
-    // GET /scim/v2/Users - List users
     app.get('/', ListUsersRequest, async (request, reply) => {
-        console.error("list users", request.body)
         const platformId = request.principal.platform.id
         const result = await scimUserService(request.log).list({
             platformId,
@@ -25,9 +23,7 @@ export const scimUserController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    // GET /scim/v2/Users/:id - Get user by ID
     app.get('/:id', GetUserRequest, async (request, reply) => {
-        console.error("get user", request.body)
         const platformId = request.principal.platform.id
         const result = await scimUserService(request.log).getById({
             platformId,
@@ -36,9 +32,7 @@ export const scimUserController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    // POST /scim/v2/Users - Create user
     app.post('/', CreateUserRequest, async (request, reply) => {
-        console.error("create user", request.body)
         const platformId = request.principal.platform.id
         const result = await scimUserService(request.log).create({
             platformId,
@@ -47,9 +41,7 @@ export const scimUserController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.CREATED).send(result)
     })
 
-    // PUT /scim/v2/Users/:id - Replace user
     app.put('/:id', ReplaceUserRequest, async (request, reply) => {
-        console.error("replace user", request.body)
         const platformId = request.principal.platform.id
         const result = await scimUserService(request.log).replace({
             platformId,
@@ -57,29 +49,6 @@ export const scimUserController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
         return reply.status(StatusCodes.OK).send(result)
-    })
-
-    // PATCH /scim/v2/Users/:id - Update user
-    app.patch('/:id', PatchUserRequest, async (request, reply) => {
-        console.error("patch user", request.body)
-        const platformId = request.principal.platform.id
-        const result = await scimUserService(request.log).patch({
-            platformId,
-            userId: request.params.id,
-            request: request.body,
-        })
-        return reply.status(StatusCodes.OK).send(result)
-    })
-
-    // DELETE /scim/v2/Users/:id - Deactivate user
-    app.delete('/:id', DeleteUserRequest, async (request, reply) => {
-        console.error("delete user", request.body)
-        const platformId = request.principal.platform.id
-        await scimUserService(request.log).deactivate({
-            platformId,
-            userId: request.params.id,
-        })
-        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 

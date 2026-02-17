@@ -57,7 +57,6 @@ export const CreateScimUserRequest = Type.Object({
     name: Type.Optional(ScimName),
     emails: Type.Optional(Type.Array(ScimEmail)),
     active: Type.Optional(Type.Boolean()),
-    password: Type.Optional(Type.String()),
     ...ScimCustomAttributesSchema,
 })
 
@@ -70,7 +69,6 @@ export const ReplaceScimUserRequest = Type.Object({
     name: Type.Optional(ScimName),
     emails: Type.Optional(Type.Array(ScimEmail)),
     active: Type.Optional(Type.Boolean()),
-    password: Type.Optional(Type.String()),
     ...ScimCustomAttributesSchema,
 })
 
@@ -113,27 +111,6 @@ export const ReplaceScimGroupRequest = Type.Object({
 
 export type ReplaceScimGroupRequest = Static<typeof ReplaceScimGroupRequest>
 
-export const ScimPatchOperation = Type.Object({
-    op: Type.Union([
-        Type.Literal('add'),
-        Type.Literal('remove'),
-        Type.Literal('replace'),
-        Type.Literal('Add'),
-        Type.Literal('Remove'),
-        Type.Literal('Replace'),
-    ]),
-    path: Type.Optional(Type.String()),
-    value: Type.Optional(Type.Unknown()),
-})
-
-export type ScimPatchOperation = Static<typeof ScimPatchOperation>
-
-export const ScimPatchRequest = Type.Object({
-    schemas: Type.Array(Type.String()),
-    Operations: Type.Array(ScimPatchOperation),
-})
-
-export type ScimPatchRequest = Static<typeof ScimPatchRequest>
 
 export const ScimListResponse = Type.Object({
     schemas: Type.Array(Type.String()),

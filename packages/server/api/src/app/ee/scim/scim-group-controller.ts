@@ -13,9 +13,7 @@ import { scimGroupService } from './scim-group-service'
 
 export const scimGroupController: FastifyPluginAsyncTypebox = async (app) => {
 
-    // GET /scim/v2/Groups - List groups
     app.get('/', ListGroupsRequest, async (request, reply) => {
-        console.error("list", request.body)
         const platformId = request.principal.platform.id
         const result = await scimGroupService(request.log).list({
             platformId,
@@ -26,9 +24,7 @@ export const scimGroupController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    // GET /scim/v2/Groups/:id - Get group by ID
     app.get('/:id', GetGroupRequest, async (request, reply) => {
-        console.error("get group", request.body)
         const platformId = request.principal.platform.id
         const result = await scimGroupService(request.log).getById({
             platformId,
@@ -37,9 +33,7 @@ export const scimGroupController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    // POST /scim/v2/Groups - Create group
     app.post('/', CreateGroupRequest, async (request, reply) => {
-        console.error("post gropu", request.body)
         const platformId = request.principal.platform.id
         const result = await scimGroupService(request.log).create({
             platformId,
@@ -48,9 +42,7 @@ export const scimGroupController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.CREATED).send(result)
     })
 
-    // PUT /scim/v2/Groups/:id - Replace group
     app.put('/:id', ReplaceGroupRequest, async (request, reply) => {
-        console.error("put", request.body)
         const platformId = request.principal.platform.id
         const result = await scimGroupService(request.log).replace({
             platformId,
@@ -60,9 +52,7 @@ export const scimGroupController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    // PATCH /scim/v2/Groups/:id - Update group
     app.patch('/:id', PatchGroupRequest, async (request, reply) => {
-        console.error("patch", request.body)
         const platformId = request.principal.platform.id
         const result = await scimGroupService(request.log).patch({
             platformId,
@@ -72,9 +62,7 @@ export const scimGroupController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    // DELETE /scim/v2/Groups/:id - Soft-delete group
     app.delete('/:id', DeleteGroupRequest, async (request, reply) => {
-        console.error("get", request.body)
         const platformId = request.principal.platform.id
         await scimGroupService(request.log).softDelete({
             platformId,
