@@ -11,7 +11,7 @@ import SecretManagerProviderCard from './secret-manager-provider-card';
 const SecretMangersPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: secretManagerProviders, isLoading } =
-    secretManagersHooks.useSecretManagers();
+    secretManagersHooks.useListSecretManagers();
 
   return (
     <LockedFeatureGuard

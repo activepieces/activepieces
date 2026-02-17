@@ -66,9 +66,10 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
   ({ className, value, onChange, ...restProps }, ref) => {
     const { onBlur, name, disabled, ...otherProps } = restProps;
 
-    const { data: secretManagers } = secretManagersHooks.useSecretManagers({
+    const { data: secretManagers } = secretManagersHooks.useListSecretManagers({
       connectedOnly: true,
     });
+    console.log('secretManagers', secretManagers);
 
     const providerGetSecretParams = (providerId: SecretManagerProviderId) =>
       Object.entries(
@@ -76,7 +77,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
           ?.getSecretParams ?? {},
       );
 
-    const [useSecretManager, setUseSecretManager] = useState(false);
+    const [showSecretInput, setShowSecretInput] = useState(false);
 
     const [selectedProvider, setSelectedProvider] =
       useState<SecretManagerProviderId>(SecretManagerProviderId.HASHICORP);
@@ -93,16 +94,16 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     };
 
     const toggleSecretManager = useCallback(() => {
-      const newUseSecretManager = !useSecretManager;
-      setUseSecretManager(newUseSecretManager);
+      const newShowSecretInput = !showSecretInput;
+      setShowSecretInput(newShowSecretInput);
 
-      if (newUseSecretManager) {
+      if (newShowSecretInput) {
         const newValue = buildSecretValue(selectedProvider, fieldValues);
         onChange?.(newValue);
       } else {
         onChange?.('');
       }
-    }, [useSecretManager, selectedProvider, fieldValues, onChange]);
+    }, [showSecretInput, selectedProvider, fieldValues, onChange]);
 
     const handleProviderChange = useCallback(
       (newProvider: SecretManagerProviderId) => {
@@ -137,10 +138,10 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     const currentFields = useMemo(
       () => providerGetSecretParams(selectedProvider) || [],
-      [selectedProvider, useSecretManager],
+      [selectedProvider, showSecretInput],
     );
 
-    if (useSecretManager) {
+    if (showSecretInput) {
       return (
         <div className={cn('flex flex-col gap-2', className)}>
           <div className="flex items-center gap-2">

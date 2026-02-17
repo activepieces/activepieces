@@ -12,7 +12,7 @@ import {
 import { secretManagersApi } from './secret-managers-api';
 
 export const secretManagersHooks = {
-  useSecretManagers: ({ connectedOnly }: { connectedOnly?: boolean } = {}) => {
+  useListSecretManagers: ({ connectedOnly }: { connectedOnly?: boolean } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
     return useQuery<SecretManagerProviderMetaData[]>({
       queryKey: ['secret-managers'],
