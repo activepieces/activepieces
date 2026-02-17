@@ -69,7 +69,6 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     const { data: secretManagers } = secretManagersHooks.useListSecretManagers({
       connectedOnly: true,
     });
-    console.log('secretManagers', secretManagers);
 
     const providerGetSecretParams = (providerId: SecretManagerProviderId) =>
       Object.entries(

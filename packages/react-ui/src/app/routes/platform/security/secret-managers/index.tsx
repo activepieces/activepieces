@@ -18,12 +18,12 @@ const SecretMangersPage = () => {
       featureKey="SECRET_MANAGERS"
       locked={!platform.plan.secretManagersEnabled}
       lockTitle={t('Enable Secret Managers')}
-      lockDescription={t('Manage your secrets from a signle and secure place')}
+      lockDescription={t('Manage your secrets from a single and secure place')}
     >
       <div className="flex-col w-full">
         <DashboardPageHeader
           title={t('Secret Managers')}
-          description={t('Mange Secret Managers')}
+          description={t('Manage Secret Managers')}
         ></DashboardPageHeader>
         {isLoading ? (
           <Skeleton className="w-full h-10" />

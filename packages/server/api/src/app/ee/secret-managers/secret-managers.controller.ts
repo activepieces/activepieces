@@ -28,7 +28,7 @@ const ListSecretManagers = {
 
 const ConnectSecretManager = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: ConnectSecretManagerRequestSchema,
@@ -37,7 +37,7 @@ const ConnectSecretManager = {
 
 const DisconnectSecretManager = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         querystring: DisconnectSecretManagerRequestSchema,
