@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { foldersApi } from '@/features/automations/lib/folders-api';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {

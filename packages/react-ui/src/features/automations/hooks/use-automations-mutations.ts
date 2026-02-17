@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
@@ -51,9 +52,6 @@ export function useAutomationsMutations(deps: MutationDeps) {
           await tablesApi.delete(item.id);
           toast.success(t('Table deleted successfully'));
         } else if (item.type === 'folder') {
-          const { foldersApi } = await import(
-            '@/features/automations/lib/folders-api'
-          );
           await foldersApi.delete(item.id);
           toast.success(t('Folder deleted successfully'));
         }
@@ -74,12 +72,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
         await Promise.all([
           ...flowIds.map((id) => flowsApi.delete(id)),
           ...tableIds.map((id) => tablesApi.delete(id)),
-          ...folderIds.map(async (id) => {
-            const { foldersApi } = await import(
-              '@/features/automations/lib/folders-api'
-            );
-            return foldersApi.delete(id);
-          }),
+          ...folderIds.map((id) => foldersApi.delete(id)),
         ]);
         deps.clearSelection();
         deps.invalidateAll();
@@ -172,9 +165,6 @@ export function useAutomationsMutations(deps: MutationDeps) {
           await tablesApi.update(item.id, { name: newName });
           toast.success(t('Table renamed successfully'));
         } else if (item.type === 'folder') {
-          const { foldersApi } = await import(
-            '@/features/automations/lib/folders-api'
-          );
           await foldersApi.renameFolder(item.id, { displayName: newName });
           toast.success(t('Folder renamed successfully'));
         }

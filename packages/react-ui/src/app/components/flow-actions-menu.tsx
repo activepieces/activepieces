@@ -49,7 +49,7 @@ import {
 } from '@activepieces/shared';
 
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
-import { foldersHooks } from '@/features/automations/lib/folders-hooks';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 

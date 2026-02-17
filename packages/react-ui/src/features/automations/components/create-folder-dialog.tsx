@@ -35,7 +35,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { FolderDto, Permission } from '@activepieces/shared';
 
-import { foldersApi } from '../lib/folders-api';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;

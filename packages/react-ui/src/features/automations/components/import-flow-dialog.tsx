@@ -30,8 +30,8 @@ import {
 } from '@/components/ui/select';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { foldersApi } from '@/features/automations/lib/folders-api';
-import { foldersHooks } from '@/features/automations/lib/folders-hooks';
+import { foldersApi } from '@/features/folders/lib/folders-api';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
