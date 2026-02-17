@@ -7,6 +7,8 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { zoomCreateMeeting } from './lib/actions/create-meeting';
 import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-registrant';
+import { zoomFindMeeting } from './lib/actions/find-meeting';
+import { zoomUpdateMeeting } from './lib/actions/update-meeting';
 
 export const zoomAuth = PieceAuth.OAuth2({
   description: `
@@ -14,7 +16,7 @@ export const zoomAuth = PieceAuth.OAuth2({
   2. In the upper-right corner, click **Develop** then **Build App**.
   3. Select **General App**.
   4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.
-  5. Go to **Scopes** from left side bar and add **meeting:write:meeting** and **meeting:write:registrant** as scopes.`,
+  5. Go to **Scopes** from left side bar and add **meeting:write:meeting**, **meeting:read:meeting**, **webinar:read:webinar**, and **meeting:write:registrant** as scopes.`,
   authUrl: 'https://zoom.us/oauth/authorize',
   tokenUrl: 'https://zoom.us/oauth/token',
   required: true,
@@ -32,6 +34,8 @@ export const zoom = createPiece({
   actions: [
     zoomCreateMeeting,
     zoomCreateMeetingRegistrant,
+    zoomFindMeeting,
+    zoomUpdateMeeting,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.zoom.us/v2',
       auth: zoomAuth,
@@ -44,6 +48,6 @@ export const zoom = createPiece({
     }),
   ],
   auth: zoomAuth,
-  authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+  authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'murex971'],
   triggers: [],
 });
