@@ -1,6 +1,7 @@
-import { createTrigger, TriggerStrategy, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { registerConnectUCWebhook, unregisterConnectUCWebhook } from '../common/webhook-helpers';
+import { domainProp, usersProp } from '../common/props';
 
 export const newCallTranscription = createTrigger({
     auth: connectucAuth,
@@ -8,11 +9,8 @@ export const newCallTranscription = createTrigger({
     displayName: 'New Call Transcription',
     description: 'Triggers when a new call transcription is created',
     props: {
-        users: Property.LongText({
-            displayName: 'Users',
-            description: 'Add comma-separated users to which this trigger applies',
-            required: false,
-        }),
+        domain: domainProp(),
+        users: usersProp(),
     },
     sampleData: {
         id: "202602-760134328",
