@@ -172,9 +172,9 @@ export const sftpAuth = PieceAuth.CustomAuth({
       description: 'The password to authenticate with. Either this or private key is required. When using a private key, this field is used as the passphrase to decrypt the key.',
       required: false,
     }),
-    privateKey: Property.LongText({
+    privateKey: PieceAuth.SecretText({
       displayName: 'Private Key',
-      description: 'The private key to authenticate with. Either this or password is required. You can paste the key directly with newlines.',
+      description: 'The private key to authenticate with. Either this or password is required.',
       required: false,
     }),
     algorithm: Property.StaticMultiSelectDropdown({
