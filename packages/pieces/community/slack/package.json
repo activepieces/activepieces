@@ -2,7 +2,7 @@
   "name": "@activepieces/piece-slack",
   "version": "0.12.2",
   "dependencies": {
-    "@slack/web-api": "7.9.0",
+    "@slack/web-api": "7.13.0",
     "slackify-markdown": "4.4.0"
   }
 }
