@@ -600,6 +600,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-klaviyo": [
+        "packages/pieces/community/klaviyo/src/index.ts"
+      ],
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
