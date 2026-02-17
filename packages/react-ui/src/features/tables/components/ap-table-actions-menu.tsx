@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Download,
@@ -8,6 +9,7 @@ import {
   FileJson,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -26,8 +28,9 @@ import { Permission, Table } from '@activepieces/shared';
 import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';
 
+import { RenameDialog } from '@/features/automations/components/rename-dialog';
+
 import { ImportTableDialog } from './import-table-dialog';
-import RenameTableDialog from './rename-table-dialog';
 
 const ApTableActionsMenu = ({
   table,
@@ -41,6 +44,18 @@ const ApTableActionsMenu = ({
   children: React.ReactNode;
 }) => {
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState(table.name);
+
+  const { mutate: renameTable, isPending: isRenamePending } = useMutation({
+    mutationFn: async () => tablesApi.update(table.id, { name: renameValue }),
+    onSuccess: () => {
+      setIsRenameOpen(false);
+      refetch?.();
+      toast.success(t('Table renamed'));
+    },
+  });
+
   const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -71,28 +86,20 @@ const ApTableActionsMenu = ({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateTable}
           >
-            <RenameTableDialog
-              tableName={table.name}
-              tableId={table.id}
-              onRename={() => {
-                refetch?.();
+            <DropdownMenuItem
+              disabled={!userHasPermissionToUpdateTable}
+              onSelect={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setRenameValue(table.name);
+                setIsRenameOpen(true);
               }}
             >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateTable}
-                onSelect={(e) => e.preventDefault()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <PermissionNeededTooltip
-                  hasPermission={userHasPermissionToUpdateTable}
-                >
-                  <div className="flex items-center gap-2">
-                    <PencilIcon className="h-4 w-4" />
-                    {t('Rename')}
-                  </div>
-                </PermissionNeededTooltip>
-              </DropdownMenuItem>
-            </RenameTableDialog>
+              <div className="flex items-center gap-2">
+                <PencilIcon className="h-4 w-4" />
+                {t('Rename')}
+              </div>
+            </DropdownMenuItem>
           </PermissionNeededTooltip>
 
           <DropdownMenuSeparator />
@@ -172,6 +179,14 @@ const ApTableActionsMenu = ({
         onImportSuccess={() => {
           refetch?.();
         }}
+      />
+      <RenameDialog
+        open={isRenameOpen}
+        onOpenChange={setIsRenameOpen}
+        value={renameValue}
+        onChange={setRenameValue}
+        onConfirm={() => renameTable()}
+        isRenaming={isRenamePending}
       />
     </>
   );

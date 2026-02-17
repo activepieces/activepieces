@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -27,7 +28,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
-import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
+import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
@@ -47,7 +48,9 @@ import {
   PopulatedFlow,
 } from '@activepieces/shared';
 
-import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
+import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 
 type FlowActionMenuProps = {
@@ -102,6 +105,38 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const hasProjectMembers = projectMembers && projectMembers.length > 0;
 
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState(flowVersion.displayName);
+  const [isMoveOpen, setIsMoveOpen] = useState(false);
+  const [moveFolderId, setMoveFolderId] = useState('');
+  const { folders } = foldersHooks.useFolders();
+
+  const { mutate: renameFlow, isPending: isRenamePending } = useMutation({
+    mutationFn: async () =>
+      flowsApi.update(flow.id, {
+        type: FlowOperationType.CHANGE_NAME,
+        request: { displayName: renameValue },
+      }),
+    onSuccess: () => {
+      setIsRenameOpen(false);
+      onRename();
+      toast.success(t('Flow has been renamed.'));
+    },
+  });
+
+  const { mutate: moveFlow, isPending: isMovePending } = useMutation({
+    mutationFn: async () =>
+      flowsApi.update(flow.id, {
+        type: FlowOperationType.CHANGE_FOLDER,
+        request: { folderId: moveFolderId },
+      }),
+    onSuccess: () => {
+      setIsMoveOpen(false);
+      onMoveTo(moveFolderId);
+      toast.success(t('Moved flow successfully'));
+    },
+  });
+
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
       const modifiedFlowVersion = {
@@ -133,6 +168,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { mutate: exportFlow, isPending: isExportPending } =
     flowHooks.useExportFlows();
   return (
+    <>
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent
@@ -163,22 +199,21 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             )}
 
             {!insideBuilder && (
-              <RenameFlowDialog
-                flowId={flow.id}
-                onRename={onRename}
-                flowName={flowVersion.displayName}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setOpen(false);
+                  setRenameValue(flowVersion.displayName);
+                  setIsRenameOpen(true);
+                }}
+                disabled={!userHasPermissionToUpdateFlow}
               >
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  onClick={(e) => e.stopPropagation()}
-                  disabled={!userHasPermissionToUpdateFlow}
-                >
-                  <div className="flex cursor-pointer flex-row gap-2 items-center">
-                    <Pencil className="h-4 w-4" />
-                    <span>{t('Rename')}</span>
-                  </div>
-                </DropdownMenuItem>
-              </RenameFlowDialog>
+                <div className="flex cursor-pointer flex-row gap-2 items-center">
+                  <Pencil className="h-4 w-4" />
+                  <span>{t('Rename')}</span>
+                </div>
+              </DropdownMenuItem>
             )}
           </>
         )}
@@ -206,21 +241,23 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               userHasPermissionToUpdateFlow || userHasPermissionToWriteFolder
             }
           >
-            <MoveFlowDialog flows={[flow]} onMoveTo={onMoveTo}>
-              <DropdownMenuItem
-                disabled={
-                  !userHasPermissionToUpdateFlow ||
-                  !userHasPermissionToWriteFolder
-                }
-                onSelect={(e) => e.preventDefault()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <CornerUpLeft className="h-4 w-4" />
-                  <span>{t('Move To')}</span>
-                </div>
-              </DropdownMenuItem>
-            </MoveFlowDialog>
+            <DropdownMenuItem
+              disabled={
+                !userHasPermissionToUpdateFlow ||
+                !userHasPermissionToWriteFolder
+              }
+              onSelect={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setOpen(false);
+                setIsMoveOpen(true);
+              }}
+            >
+              <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                <CornerUpLeft className="h-4 w-4" />
+                <span>{t('Move To')}</span>
+              </div>
+            </DropdownMenuItem>
           </PermissionNeededTooltip>
         )}
         {!readonly && hasProjectMembers && !embedState.isEmbedded && (
@@ -360,6 +397,24 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           )}
       </DropdownMenuContent>
     </DropdownMenu>
+    <RenameDialog
+      open={isRenameOpen}
+      onOpenChange={setIsRenameOpen}
+      value={renameValue}
+      onChange={setRenameValue}
+      onConfirm={() => renameFlow()}
+      isRenaming={isRenamePending}
+    />
+    <MoveToFolderDialog
+      open={isMoveOpen}
+      onOpenChange={setIsMoveOpen}
+      folders={folders}
+      selectedFolderId={moveFolderId}
+      onFolderChange={setMoveFolderId}
+      onConfirm={() => moveFlow()}
+      isMoving={isMovePending}
+    />
+    </>
   );
 };
 

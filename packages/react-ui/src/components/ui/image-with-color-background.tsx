@@ -35,15 +35,11 @@ const ImageWithColorBackground = ({
 
   return (
     <span
-      className={cn(
-        'relative inline-block h-full w-full',
-        className,
-        {
-          'bg-background': backgroundColor === null,
-          'border border-border/50 dark:bg-foreground/10':
-            backgroundColor === null && props.border,
-        },
-      )}
+      className={cn('relative inline-block h-full w-full', className, {
+        'bg-background': backgroundColor === null,
+        'border border-border/50 dark:bg-foreground/10':
+          backgroundColor === null && props.border,
+      })}
       style={
         backgroundColor
           ? {
