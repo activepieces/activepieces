@@ -111,6 +111,27 @@ export const ReplaceScimGroupRequest = Type.Object({
 
 export type ReplaceScimGroupRequest = Static<typeof ReplaceScimGroupRequest>
 
+export const ScimPatchOperation = Type.Object({
+    op: Type.Union([
+        Type.Literal('add'),
+        Type.Literal('remove'),
+        Type.Literal('replace'),
+        Type.Literal('Add'),
+        Type.Literal('Remove'),
+        Type.Literal('Replace'),
+    ]),
+    path: Type.Optional(Type.String()),
+    value: Type.Optional(Type.Unknown()),
+})
+
+export type ScimPatchOperation = Static<typeof ScimPatchOperation>
+
+export const ScimPatchRequest = Type.Object({
+    schemas: Type.Array(Type.String()),
+    Operations: Type.Array(ScimPatchOperation),
+})
+
+export type ScimPatchRequest = Static<typeof ScimPatchRequest>
 
 export const ScimListResponse = Type.Object({
     schemas: Type.Array(Type.String()),
@@ -145,11 +166,16 @@ export const ScimResourceId = Type.Object({
 
 export type ScimResourceId = Static<typeof ScimResourceId>
 
-export function createScimError(status: number, detail: string, scimType?: string): ScimErrorResponse {
-    return {
-        schemas: [SCIM_ERROR_SCHEMA],
-        status: String(status),
-        detail,
-        ...(scimType ? { scimType } : {}),
+export class ScimError extends Error {
+    constructor(public status: number, public detail: string) {
+        super(detail)
+    }
+
+    override toString(): string {
+        return JSON.stringify({
+            schemas: [SCIM_ERROR_SCHEMA],
+            status: String(this.status),
+            detail: this.detail,
+        })
     }
 }

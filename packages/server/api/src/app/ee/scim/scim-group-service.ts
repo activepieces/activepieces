@@ -9,7 +9,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { platformService } from '../../platform/platform.service'
-import { projectRepo, projectService } from '../../project/project-service'
+import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { ProjectMemberEntity } from '../projects/project-members/project-member.entity'
 import { projectMemberService } from '../projects/project-members/project-member.service'
@@ -18,11 +18,14 @@ import {
     ReplaceScimGroupRequest,
     SCIM_GROUP_SCHEMA,
     SCIM_LIST_RESPONSE_SCHEMA,
+    ScimError,
     ScimGroupMember,
     ScimGroupResource,
     ScimListResponse,
     ScimPatchRequest,
 } from '@activepieces/ee-shared'
+import { StatusCodes } from 'http-status-codes'
+import { platformProjectService } from '../projects/platform-project-service'
 
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -35,6 +38,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
 
         const platform = await platformService.getOneOrThrow(platformId)
 
+        // no need for existing check, because SCIM will check if the group already exists and use PUT instead of POST
         const project = await projectService.create({
             displayName: request.displayName,
             ownerId: platform.ownerId,
@@ -43,24 +47,32 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             type: ProjectType.TEAM,
         })
 
-        // Add members
         const members: ScimGroupMember[] = []
         if (!isNil(request.members) && request.members.length > 0) {
-            for (const member of request.members) {
-                await addMemberToProject({
-                    userId: member.value,
-                    projectId: project.id,
-                    platformId,
-                    log,
-                })
-                const user = await userService.get({ id: member.value })
-                if (!isNil(user)) {
-                    const identity = await userService.getMetaInformation({ id: user.id })
-                    members.push({
-                        value: user.id,
-                        display: identity.email,
-                        $ref: `/scim/v2/Users/${user.id}`,
+            const users = await Promise.all(
+                request.members.map(async (member) => {
+                    await addMemberToProject({
+                        userId: member.value,
+                        projectId: project.id,
+                        platformId,
+                        log,
                     })
+                    const user = await userService.get({ id: member.value })
+                    if (!isNil(user)) {
+                        const identity = await userService.getMetaInformation({ id: user.id })
+                        return {
+                            value: user.id,
+                            display: identity.email,
+                            $ref: `/scim/v2/Users/${user.id}`,
+                        }
+                    }
+                    return null
+                })
+            )
+
+            for (const user of users) {
+                if (user) {
+                    members.push(user)
                 }
             }
         }
@@ -76,13 +88,10 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOne(projectId)
 
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    entityId: projectId,
-                },
-            })
+            throw new ScimError(
+                StatusCodes.NOT_FOUND,
+                'Project not found',
+            )
         }
 
         const members = await getProjectMembers(projectId, platformId)
@@ -97,7 +106,6 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
     }): Promise<ScimListResponse> {
         const { platformId, filter, startIndex = 1, count = 100 } = params
 
-        // Parse SCIM filter - support "displayName eq \"value\""
         let filterDisplayName: string | undefined
         if (!isNil(filter)) {
             const match = filter.match(/displayName\s+eq\s+"([^"]+)"/i)
@@ -133,7 +141,6 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        // List all team projects for this platform
         const projects = await projectService.getAllForUser({
             platformId,
             userId: '', // We pass isPrivileged=true so userId is not used
@@ -142,7 +149,6 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
 
         const teamProjects = projects.filter(p => p.type === ProjectType.TEAM)
 
-        // Apply pagination
         const paginatedProjects = teamProjects.slice(startIndex - 1, startIndex - 1 + count)
 
         const scimGroups: ScimGroupResource[] = await Promise.all(
@@ -170,34 +176,26 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOne(projectId)
 
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    entityId: projectId,
-                },
-            })
+            throw new ScimError(
+                StatusCodes.NOT_FOUND,
+                'Project not found',
+            )
         }
 
-        // Update project name
         await projectService.update(projectId, {
             type: ProjectType.TEAM,
             displayName: request.displayName,
             externalId: request.externalId,
         })
 
-        // Sync members - remove all existing, add new
-        const existingMembers = await projectMemberRepo().find({
+        let membersToDelete = await projectMemberRepo().find({
             where: { projectId, platformId },
         })
-
-        for (const existing of existingMembers) {
-            await projectMemberService(log).delete(projectId, existing.id)
-        }
 
         const members: ScimGroupMember[] = []
         if (!isNil(request.members) && request.members.length > 0) {
             for (const member of request.members) {
+                membersToDelete = membersToDelete.filter(m => m.userId !== member.value)
                 await addMemberToProject({
                     userId: member.value,
                     projectId,
@@ -216,6 +214,12 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             }
         }
 
+        await Promise.all(
+            membersToDelete.map(member =>
+                projectMemberService(log).delete(projectId, member.id)
+            )
+        )
+
         const updatedProject = await projectService.getOneOrThrow(projectId)
         return toScimGroupResource(updatedProject.id, updatedProject.displayName, updatedProject.externalId ?? undefined, members, updatedProject.created, updatedProject.updated)
     },
@@ -229,13 +233,10 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOne(projectId)
 
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    entityId: projectId,
-                },
-            })
+            throw new ScimError(
+                StatusCodes.NOT_FOUND,
+                'Project not found',
+            )
         }
 
         for (const operation of request.Operations) {
@@ -243,17 +244,18 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
 
             if (op === 'add' && operation.path === 'members') {
                 const memberValues = operation.value as ScimGroupMember[]
-                for (const member of memberValues) {
-                    await addMemberToProject({
-                        userId: member.value,
-                        projectId,
-                        platformId,
-                        log,
-                    })
-                }
+                await Promise.all(
+                    memberValues.map(member =>
+                        addMemberToProject({
+                            userId: member.value,
+                            projectId,
+                            platformId,
+                            log,
+                        })
+                    )
+                )
             }
             else if (op === 'remove' && !isNil(operation.path) && operation.path.startsWith('members')) {
-                // Parse path like: members[value eq "userId"]
                 const match = operation.path.match(/members\[value\s+eq\s+"([^"]+)"\]/i)
                 if (match) {
                     const userId = match[1]
@@ -285,20 +287,25 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                     // Handle replace on members (full replacement)
                     if ('members' in value) {
                         const newMembers = value.members as ScimGroupMember[]
-                        const existingMembers = await projectMemberRepo().find({
+                        let membersToDelete = await projectMemberRepo().find({
                             where: { projectId, platformId },
                         })
-                        for (const existing of existingMembers) {
-                            await projectMemberService(log).delete(projectId, existing.id)
-                        }
-                        for (const member of newMembers) {
-                            await addMemberToProject({
-                                userId: member.value,
-                                projectId,
-                                platformId,
-                                log,
+                        await Promise.all(
+                            newMembers.map(member => {
+                                membersToDelete = membersToDelete.filter(m => m.userId !== member.value)
+                                return addMemberToProject({
+                                    userId: member.value,
+                                    projectId,
+                                    platformId,
+                                    log,
+                                })
                             })
-                        }
+                        )
+                        await Promise.all(
+                            membersToDelete.map(member =>
+                                projectMemberService(log).delete(projectId, member.id)
+                            )
+                        )
                     }
                 }
             }
@@ -309,25 +316,24 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         return toScimGroupResource(updatedProject.id, updatedProject.displayName, updatedProject.externalId ?? undefined, members, updatedProject.created, updatedProject.updated)
     },
 
-    async softDelete(params: {
+    async delete(params: {
         platformId: string
         projectId: string
     }): Promise<void> {
         const { platformId, projectId } = params
         const project = await projectService.getOne(projectId)
-
+       
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    entityId: projectId,
-                },
-            })
+            throw new ScimError(
+                StatusCodes.NOT_FOUND,
+                'Project not found',
+            )
         }
 
-        // Soft delete via TypeORM (uses the deleted column)
-        await projectRepo().softDelete({ id: projectId })
+        await platformProjectService(log).hardDelete({
+            id: projectId,
+            platformId,
+        })
     },
 })
 
@@ -374,17 +380,16 @@ async function getProjectMembers(projectId: string, platformId: string): Promise
         where: { projectId, platformId },
     })
 
-    const scimMembers: ScimGroupMember[] = []
-    for (const member of members) {
-        const userMeta = await userService.getMetaInformation({ id: member.userId })
-        scimMembers.push({
-            value: member.userId,
-            display: userMeta.email,
-            $ref: `/scim/v2/Users/${member.userId}`,
+    return Promise.all(
+        members.map(async (member) => {
+            const userMeta = await userService.getMetaInformation({ id: member.userId })
+            return {
+                value: member.userId,
+                display: userMeta.email,
+                $ref: `/scim/v2/Users/${member.userId}`,
+            }
         })
-    }
-
-    return scimMembers
+    )
 }
 
 function toScimGroupResource(

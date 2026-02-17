@@ -64,7 +64,7 @@ export const scimGroupController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.delete('/:id', DeleteGroupRequest, async (request, reply) => {
         const platformId = request.principal.platform.id
-        await scimGroupService(request.log).softDelete({
+        await scimGroupService(request.log).delete({
             platformId,
             projectId: request.params.id,
         })

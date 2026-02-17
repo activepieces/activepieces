@@ -6,9 +6,12 @@ import { scimUserController } from './scim-user-controller'
 
 export const scimModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled))
- 
-    app.addContentTypeParser('application/scim+json', { parseAs: 'string' }, function (req, body, done) {
+    app.addContentTypeParser('application/scim+json', { parseAs: 'string' }, function (_req, body, done) {
         try {
+          if (body == null || (typeof body === 'string' && body.trim() === '') || (Array.isArray(body) && body.length === 0)) {
+            done(null, {});
+            return;
+          }
           var json = JSON.parse(body as string);
           done(null, json);
         } catch (err) {

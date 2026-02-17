@@ -50,6 +50,25 @@ export const scimUserController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.OK).send(result)
     })
+
+    app.patch('/:id', PatchUserRequest, async (request, reply) => {
+        const platformId = request.principal.platform.id
+        const result = await scimUserService(request.log).patch({
+            platformId,
+            userId: request.params.id,
+            request: request.body,
+        })
+        return reply.status(StatusCodes.OK).send(result)
+    })
+
+    app.delete('/:id', DeleteUserRequest, async (request, reply) => {
+        const platformId = request.principal.platform.id
+        await scimUserService(request.log).deactivate({
+            platformId,
+            userId: request.params.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
 }
 
 const scimSecurity = securityAccess.platformAdminOnly([PrincipalType.SERVICE])
