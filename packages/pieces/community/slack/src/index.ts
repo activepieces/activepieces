@@ -53,7 +53,7 @@ import { deleteMessageAction } from './lib/actions/delete-message';
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
   authUrl:
-    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites,channels:history,groups:history,chat:write,users:read',
+    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,reactions:write,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites,channels:history,groups:history,chat:write,users:read',
   tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
   scope: [
