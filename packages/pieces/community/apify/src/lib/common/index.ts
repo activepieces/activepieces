@@ -402,7 +402,7 @@ export const createTaskIdProperty = () => Property.Dropdown({
 });
 
 const createInputBodyProperty = (runType: RunType, defaultValue?: object) => Property.Json({
-  displayName: 'Input JSON',
+  displayName: `${runType === RunType.ACTOR ? '' : 'Override '}Input JSON`,
   description: `JSON input for the ${runType} run, which you can find on the ${runType} input page in Apify Console. If empty, the run uses the input specified in the default run configuration.`,
   required: true,
   defaultValue
