@@ -75,6 +75,10 @@ export const github = createPiece({
     'abuaboud',
     'tintinthedev',
     'murex971',
+<<<<<<< github-create-gist
+=======
+    'sanket-a11y',
+>>>>>>> main
   ],
   triggers: githubTriggers,
 });
