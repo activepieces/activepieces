@@ -184,6 +184,57 @@ export const deviceProp = () =>
     });
 
 /**
+ * Reusable SMS number dropdown property (single-select)
+ * Fetches SMS numbers from /sms/numbers endpoint
+ * Uses number as both label and value
+ */
+export const smsNumberProp = () =>
+    Property.Dropdown({
+        displayName: 'SMS Sender',
+        description: 'Select the SMS sender number',
+        required: true,
+        auth: connectucAuth,
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please connect your account first',
+                    options: [],
+                };
+            }
+
+            try {
+                const authValue = auth as OAuth2PropertyValue;
+
+                interface SmsNumbersResponse {
+                    numbers: { number: string }[];
+                }
+
+                const response = await connectucApiCall<SmsNumbersResponse>({
+                    accessToken: authValue.access_token,
+                    endpoint: '/sms/numbers',
+                    method: HttpMethod.GET,
+                });
+
+                const options = response.numbers.map(n => ({
+                    label: n.number,
+                    value: n.number,
+                }));
+
+                return { disabled: false, options };
+            } catch (error) {
+                console.error('Error fetching SMS numbers:', error);
+                return {
+                    disabled: true,
+                    placeholder: 'Error loading SMS numbers',
+                    options: [],
+                };
+            }
+        },
+    });
+
+/**
  * Reusable users dropdown property (multi-select)
  * Fetches subscribers from /activepieces/subscribers endpoint
  * Includes "All Always" option with value "*"

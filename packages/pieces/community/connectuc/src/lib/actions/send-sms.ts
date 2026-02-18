@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { connectucApiCall } from '../common/api-helpers';
+import { smsNumberProp } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { randomUUID } from 'crypto';
 
@@ -20,11 +21,7 @@ export const sendSmsAction = createAction({
             description: 'The SMS message content',
             required: true,
         }),
-        sender: Property.ShortText({
-            displayName: 'SMS Sender',
-            description: 'The SMS message sender',
-            required: true,
-        }),
+        sender: smsNumberProp(),
         attachment_urls: Property.Array({
             displayName: 'Media Attachments',
             description: 'The media attachment urls for the SMS message',
