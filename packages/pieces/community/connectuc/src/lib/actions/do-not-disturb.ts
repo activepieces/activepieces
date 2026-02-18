@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { connectucApiCall } from '../common/api-helpers';
+import { domainProp, subscriberUuidProp } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const doNotDisturbAction = createAction({
@@ -9,11 +10,8 @@ export const doNotDisturbAction = createAction({
     displayName: 'Set Do Not Disturb',
     description: 'Enable or disable Do Not Disturb status for a user in ConnectUC',
     props: {
-        uid: Property.ShortText({
-            displayName: 'UID',
-            description: 'The user ID to set Do Not Disturb status for in the format of user@domain',
-            required: true,
-        }),
+        domain: domainProp(),
+        user: subscriberUuidProp(),
         dnd: Property.Checkbox({
             displayName: 'Do Not Disturb',
             description: 'Enable or disable Do Not Disturb status',
@@ -21,7 +19,7 @@ export const doNotDisturbAction = createAction({
         }),
     },
     async run(context) {
-        const { uid, dnd } = context.propsValue;
+        const { user, dnd } = context.propsValue;
 
         // Build request body
         const body: Record<string, unknown> = {
@@ -32,7 +30,7 @@ export const doNotDisturbAction = createAction({
             // Make API call to set DND status
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
-                endpoint: `/users/${uid}/dnd/update`,
+                endpoint: `/users/${user}/dnd/update`,
                 method: HttpMethod.POST,
                 body,
             });
