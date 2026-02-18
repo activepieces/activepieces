@@ -1,13 +1,16 @@
 import { SecretManagerProviderId } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
-import { ErrorCode, PrincipalType } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { AppConnectionType, ErrorCode, PrincipalType, UpsertAppConnectionRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { hashicorpProvider } from '../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
+import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup, mockPieceMetadata } from '../../../helpers/mocks'
 import {
     hashicorpMock,
     mockVaultConfig,
@@ -16,10 +19,11 @@ import {
 let app: FastifyInstance | null = null
 let axiosRequestSpy: jest.SpyInstance
 let vaultMock: ReturnType<typeof hashicorpMock>
-
+let mockLog: FastifyBaseLogger
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 }, 50000)
 
 beforeEach(() => {
@@ -65,7 +69,6 @@ describe('Secret Managers API', () => {
             const body = response?.json()
             expect(Array.isArray(body.data)).toBe(true)
             expect(body.data.length).toBeGreaterThan(0)
-
             const hashicorp = body.data.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
             expect(hashicorp).toBeDefined()
             expect(hashicorp.name).toBe('Hashicorp Vault')
@@ -144,9 +147,6 @@ describe('Secret Managers API', () => {
             })
 
             vaultMock.mockVaultGetSecretSuccess({ 'my-api-key': 'super-secret-value' })
-
-            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
             const result = await secretManagersService(mockLog).resolve({
                 key: '{{hashicorp:secret/data/keys/my-api-key}}',
                 platformId: mockPlatform.id,
@@ -161,10 +161,6 @@ describe('Secret Managers API', () => {
                     secretManagersEnabled: true,
                 },
             })
-
-            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
-
             await expect(
                 secretManagersService(mockLog).resolve({
                     key: 'plain-text-value',
@@ -184,8 +180,6 @@ describe('Secret Managers API', () => {
                 },
             })
 
-            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
 
             await expect(
                 secretManagersService(mockLog).resolve({
@@ -227,9 +221,6 @@ describe('Secret Managers API', () => {
 
             vaultMock.mockVaultGetSecretNotFound()
 
-            const { secretManagersService } = await import('../../../../src/app/ee/secret-managers/secret-managers.service')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
-
             await expect(
                 secretManagersService(mockLog).resolve({
                     key: '{{hashicorp:secret/data/keys/nonexistent}}',
@@ -240,51 +231,105 @@ describe('Secret Managers API', () => {
                     code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 }),
             })
-        })
-    })
+        }),
+        it('should not allow persisting resolved secrets in the database', async () => {
+            const pieceMetadata = await mockPieceMetadata(mockLog)
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+                plan: {
+                    secretManagersEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
 
-    describe('HashiCorp Provider - Path Resolution', () => {
-        it('should resolve valid path format', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
+            vaultMock.mockVaultLoginSuccess()
 
-            const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key')
-            expect(result).toEqual({ path: 'secret/data/keys/my-key' })
-        })
+            // Connect first
+            await app?.inject({
+                method: 'POST',
+                url: '/v1/secret-managers/connect',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    providerId: SecretManagerProviderId.HASHICORP,
+                    config: mockVaultConfig,
+                },
+            })
+            const secretValue = 'super-secret-value'
+            const secretKey = 'my-api-key'
+            const secretPath = `{{hashicorp:secret/data/keys/${secretKey}}}`
+            vaultMock.mockVaultGetSecretSuccess({ [secretKey]: secretValue })
+            const mockUpsertAppConnectionRequest: UpsertAppConnectionRequestBody = {
+                externalId: 'test-app-connection-with-metadata',
+                displayName: 'Test Connection with Metadata',
+                pieceName: pieceMetadata.name,
+                projectId: mockProject.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: {
+                    type: AppConnectionType.SECRET_TEXT,
+                    secret_text: secretPath,
+                },
+                metadata: {
+                    foo: 'bar',
+                },
+                pieceVersion: pieceMetadata.version,
+            }
 
-        it('should remove trailing slash from path', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/app-connections',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: mockUpsertAppConnectionRequest,
+            })
 
-            const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key/')
-            expect(result).toEqual({ path: 'secret/data/keys/my-key' })
-        })
-
-        it('should throw error for path with less than 3 parts', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
-
-            await expect(
-                hashicorpProvider(mockLog).resolve('hashicorp:secret/key'),
-            ).rejects.toMatchObject({
-                error: expect.objectContaining({
-                    code: ErrorCode.VALIDATION,
-                }),
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+    
+            const connection = await appConnectionService(mockLog).getOne({
+                projectId: mockProject.id,
+                platformId: mockPlatform.id,
+                externalId: 'test-app-connection-with-metadata',
+            })
+            // make sure secrets are never stored in the database
+            expect(connection?.value).toEqual({
+                type: AppConnectionType.SECRET_TEXT,
+                secret_text: secretPath,
             })
         })
+        describe('HashiCorp Provider - Path Resolution', () => {
+            it('should resolve valid path format', async () => {
+                const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key')
+                expect(result).toEqual({ path: 'secret/data/keys/my-key' })
+            })
 
-        it('should throw error for key without colon separator', async () => {
-            const { hashicorpProvider } = await import('../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider')
-            const mockLog = { error: jest.fn(), info: jest.fn(), warn: jest.fn(), debug: jest.fn() } as unknown as import('fastify').FastifyBaseLogger
+            it('should remove trailing slash from path', async () => {
+                const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key/')
+                expect(result).toEqual({ path: 'secret/data/keys/my-key' })
+            })
 
-            await expect(
-                hashicorpProvider(mockLog).resolve('hashicorp'),
-            ).rejects.toMatchObject({
-                error: expect.objectContaining({
-                    code: ErrorCode.VALIDATION,
-                }),
+            it('should throw error for path with less than 3 parts', async () => {
+                await expect(
+                    hashicorpProvider(mockLog).resolve('hashicorp:secret/key'),
+                ).rejects.toMatchObject({
+                    error: expect.objectContaining({
+                        code: ErrorCode.VALIDATION,
+                    }),
+                })
+            })
+            it('should throw error for key without colon separator', async () => {
+                await expect(
+                    hashicorpProvider(mockLog).resolve('hashicorp'),
+                ).rejects.toMatchObject({
+                    error: expect.objectContaining({
+                        code: ErrorCode.VALIDATION,
+                    }),
+                })
             })
         })
     })
-
 })
