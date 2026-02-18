@@ -72,24 +72,17 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         })).version
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
-        const secretResolutionResult = await this.resolveSecrets(value, platformId)
         const validatedConnectionValue = await validateConnectionValue({
-            value: secretResolutionResult.resolved,
+            value: await this.resolveSecrets(value, platformId),
             pieceName,
             projectId: projectIds[0],
             platformId,
         }, log)
-        const connectionValueToPersist = {
+
+        const encryptedConnectionValue = await encryptUtils.encryptObject({
             ...validatedConnectionValue,
             ...value,
-        }
-        await this.assertNoResolvedSecretsPersisted({
-            hadResolvedSecrets: secretResolutionResult.hasResolvedSecrets,
-            valueToPersist: connectionValueToPersist,
-            platformId,
         })
-
-        const encryptedConnectionValue = await encryptUtils.encryptObject(connectionValueToPersist)
 
         const existingConnection = await appConnectionsRepo().findOneBy({
             externalId,
@@ -385,39 +378,15 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }))
         return [...platformAdmins, ...projectMembersDetails]
     },
-    /**We should not allow persisting resolved secrets in the database
-     */
-    async assertNoResolvedSecretsPersisted(params: {
-        hadResolvedSecrets: boolean
-        valueToPersist: Record<string, unknown>
-        platformId: string
-    }): Promise<void> {
-        const { hadResolvedSecrets, valueToPersist, platformId } = params
-        if (!hadResolvedSecrets) {
-            return
-        }
-        const persistedResolutionResult = await this.resolveSecrets(valueToPersist, platformId)
-        if (persistedResolutionResult.hasResolvedSecrets) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Resolved secret cannot be persisted',
-                },
-            })
-        }
-    },
-    async resolveSecrets<T extends Record<string, unknown>>(value: T, platformId: string): Promise<SecretResolutionResult<T>> {
+    async resolveSecrets<T extends Record<string, unknown>>(value: T, platformId: string): Promise<T> {
         const newValue = JSON.parse(JSON.stringify(value)) as T
-        let hasResolvedSecrets = false
         await Promise.all(
             Object.keys(value).map(async (field: keyof T) => {
                 if (isObject(value[field])) {
-                    const nestedResolution = await this.resolveSecrets(value[field] as Record<string, unknown>, platformId)
-                    newValue[field] = nestedResolution.resolved as T[keyof T]
-                    hasResolvedSecrets = hasResolvedSecrets || nestedResolution.hasResolvedSecrets
+                    newValue[field] = await this.resolveSecrets(value[field] as Record<string, unknown>, platformId) as T[keyof T]
                 }
                 else if (isString(value[field])) {
-                    const resolvedValue = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
+                    newValue[field] = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
                         const apError = error.error as ApErrorParams
                         if (apError && apError.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET) {
                             return value[field]
@@ -432,18 +401,11 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                             },
                         })
                     }) as T[keyof T]
-                    newValue[field] = resolvedValue
-                    if (resolvedValue !== value[field]) {
-                        hasResolvedSecrets = true
-                    }
                 }
             }),
         )
 
-        return {
-            resolved: newValue,
-            hasResolvedSecrets,
-        }
+        return newValue
     },
 })
 
@@ -759,11 +721,6 @@ type EngineValidateAuthParams = {
     projectId: ProjectId | undefined
     platformId: string
     auth: AppConnectionValue
-}
-
-type SecretResolutionResult<T> = {
-    resolved: T
-    hasResolvedSecrets: boolean
 }
 
 type ReplaceParams = {
