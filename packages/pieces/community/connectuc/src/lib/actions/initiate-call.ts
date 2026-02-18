@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { connectucApiCall } from '../common/api-helpers';
+import { domainProp, subscriberUuidProp, deviceProp } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const initiateCallAction = createAction({
@@ -9,46 +10,29 @@ export const initiateCallAction = createAction({
     displayName: 'Initiate Call',
     description: 'Initiate an outbound call from a ConnectUC extension',
     props: {
-        uid: Property.ShortText({
-            displayName: 'UID',
-            description: 'The user ID in the format of user@domain',
-            required: true,
-        }),
-        fromUid: Property.ShortText({
-            displayName: 'From UID',
-            description: 'The origin extension and domain of the call',
-            required: true,
-        }),
+        domain: domainProp(),
+        user: subscriberUuidProp(),
+        device: deviceProp(),
         toNumber: Property.ShortText({
             displayName: 'To Number',
             description: 'The destination number of the call',
             required: true,
         }),
-        callerId: Property.ShortText({
-            displayName: 'Caller ID',
-            description: 'The caller ID to display for the call',
-            required: false,
-        }),
     },
     async run(context) {
-        const { uid, fromUid, toNumber, callerId } = context.propsValue;
+        const { user, device, toNumber } = context.propsValue;
 
         // Build request body
         const body: Record<string, unknown> = {
-            fromUid: fromUid,
+            fromUid: device,
             toNumber: toNumber,
         };
-
-        // Add optional caller ID if provided
-        if (callerId) {
-            body['callerId'] = callerId;
-        }
 
         try {
             // Make API call to initiate call
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
-                endpoint: `/users/${uid}/activepieces/initiate-call`,
+                endpoint: `/users/${user}/activepieces/initiate-call`,
                 method: HttpMethod.POST,
                 body,
             });
