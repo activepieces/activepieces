@@ -59,6 +59,72 @@ export const domainProp = () =>
     });
 
 /**
+ * Reusable subscriber dropdown property (single-select)
+ * Fetches subscribers from /activepieces/subscribers endpoint filtered by domain
+ * Uses subscriber UUID as value
+ */
+export const subscriberUuidProp = () =>
+    Property.Dropdown({
+        displayName: 'User',
+        description: 'Select the user who owns this contact',
+        required: true,
+        auth: connectucAuth,
+        refreshers: ['domain'],
+        options: async ({ auth, domain }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please connect your account first',
+                    options: [],
+                };
+            }
+
+            if (!domain) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please select a domain first',
+                    options: [],
+                };
+            }
+
+            try {
+                const authValue = auth as OAuth2PropertyValue;
+
+                interface Subscriber {
+                    first_name: string;
+                    last_name: string;
+                    user: string;
+                    uuid: string;
+                }
+
+                const subscribers = await connectucApiCall<Subscriber[]>({
+                    accessToken: authValue.access_token,
+                    endpoint: '/activepieces/subscribers',
+                    method: HttpMethod.GET,
+                    queryParams: { domain: domain as string },
+                });
+
+                const options = subscribers.map(subscriber => {
+                    const fullName = `${subscriber.first_name} ${subscriber.last_name}`.trim();
+                    return {
+                        label: `${fullName} (${subscriber.user})`,
+                        value: subscriber.uuid,
+                    };
+                });
+
+                return { disabled: false, options };
+            } catch (error) {
+                console.error('Error fetching subscribers:', error);
+                return {
+                    disabled: true,
+                    placeholder: 'Error loading subscribers',
+                    options: [],
+                };
+            }
+        },
+    });
+
+/**
  * Reusable users dropdown property (multi-select)
  * Fetches subscribers from /activepieces/subscribers endpoint
  * Includes "All Always" option with value "*"

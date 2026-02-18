@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { connectucAuth } from '../../index';
 import { connectucApiCall } from '../common/api-helpers';
+import { domainProp, subscriberUuidProp } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createContactAction = createAction({
@@ -9,11 +10,8 @@ export const createContactAction = createAction({
     displayName: 'Create Contact',
     description: 'Create a new contact in ConnectUC',
     props: {
-        owner_uid: Property.ShortText({
-            displayName: 'Owner UID',
-            description: 'The user ID of the contact owner in the format of user@domain',
-            required: true,
-        }),
+        domain: domainProp(),
+        user: subscriberUuidProp(),
         first_name: Property.ShortText({
             displayName: 'First Name',
             description: 'The first name of the contact',
@@ -46,7 +44,7 @@ export const createContactAction = createAction({
         }),
     },
     async run(context) {
-        const { owner_uid, first_name, last_name, email, phones, company, tags } = context.propsValue;
+        const { user, first_name, last_name, email, phones, company, tags } = context.propsValue;
 
         // Map phones to the required format
         const tels = (phones as string[]).map((phone: string) => ({ number: phone, type: 'work' }));
@@ -68,7 +66,7 @@ export const createContactAction = createAction({
             // Make API call to create contact
             const response = await connectucApiCall({
                 accessToken: context.auth.access_token,
-                endpoint: `/users/${owner_uid}/contacts`,
+                endpoint: `/users/${user}/contacts`,
                 method: HttpMethod.POST,
                 body,
             });
