@@ -11,6 +11,7 @@ import {
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
+import { secretManagersService } from '../ee/secret-managers/secret-managers.service'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (app) => {
@@ -33,9 +34,10 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
                 },
             })
         }
+
         return {
             ...appConnection,
-            value: await appConnectionService(request.log).resolveSecrets(appConnection.value, enginePrincipal.platform.id),
+            value: await secretManagersService(request.log).resolveObject(appConnection.value, enginePrincipal.platform.id, false),
         }
     },
     )

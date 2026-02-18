@@ -3,7 +3,6 @@ import {
     ActivepiecesError,
     ApEdition,
     ApEnvironment,
-    ApErrorParams,
     apId,
     AppConnection,
     AppConnectionId,
@@ -19,8 +18,6 @@ import {
     ErrorCode,
     ExecuteValidateAuthResponse,
     isNil,
-    isObject,
-    isString,
     Metadata,
     OAuth2GrantType,
     PlatformId,
@@ -73,7 +70,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
-            value: await this.resolveSecrets(value, platformId),
+            value: await secretManagersService(log).resolveObject(value, platformId),
             pieceName,
             projectId: projectIds[0],
             platformId,
@@ -378,35 +375,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }))
         return [...platformAdmins, ...projectMembersDetails]
     },
-    async resolveSecrets<T extends Record<string, unknown>>(value: T, platformId: string): Promise<T> {
-        const newValue = JSON.parse(JSON.stringify(value)) as T
-        await Promise.all(
-            Object.keys(value).map(async (field: keyof T) => {
-                if (isObject(value[field])) {
-                    newValue[field] = await this.resolveSecrets(value[field] as Record<string, unknown>, platformId) as T[keyof T]
-                }
-                else if (isString(value[field])) {
-                    newValue[field] = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
-                        const apError = error.error as ApErrorParams
-                        if (apError && apError.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET) {
-                            return value[field]
-                        }
-                        if (apError) {
-                            throw error
-                        }
-                        throw new ActivepiecesError({
-                            code: ErrorCode.VALIDATION,
-                            params: {
-                                message: error.message ?? 'Failed to resolve secret',
-                            },
-                        })
-                    }) as T[keyof T]
-                }
-            }),
-        )
 
-        return newValue
-    },
 })
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {

@@ -71,7 +71,8 @@ const LICENSE_PROPS_MAP = {
   },
   secretManagersEnabled: {
     label: 'Secret Managers',
-    description: 'Manage your secrets from a single and secure place to use in your connections',
+    description:
+      'Manage your secrets from a single and secure place to use in your connections',
   },
 };
 

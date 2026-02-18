@@ -1,5 +1,5 @@
 import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApErrorParams, apId, ErrorCode, isEnumValue, isNil, isObject, isString, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -74,25 +74,50 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 
     async resolve({ key, platformId }: { key: string, platformId: string }) {
-
         const trimmedKey = trimKeyBraces(key)
-        const splits = trimmedKey.split(':')
-
-        if (!Object.values(SecretManagerProviderId).includes(splits[0] as SecretManagerProviderId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Invalid provider id',
-                },
-            })
-        }
-        const providerId = splits[0] as SecretManagerProviderId
+        const providerId = extractProviderId(trimmedKey)
 
         return secretManagersService(log).getSecret({
             providerId,
             request: await secretManagerProvider(log, providerId).resolve(trimmedKey),
             platformId,
         } as GetSecretManagerSecretRequest & { platformId: string })
+    },
+
+    async resolveObject<T extends Record<string, unknown>>(value: T, platformId: string, throwOnFailure: boolean = true): Promise<T> {
+        const newValue = JSON.parse(JSON.stringify(value)) as T
+        await Promise.all(
+            Object.keys(value).map(async (field: keyof T) => {
+                if (isObject(value[field])) {
+                    Object.assign(newValue, {
+                        [field]: await secretManagersService(log).resolveObject(value[field], platformId),
+                    })
+                }
+                else if (isString(value[field])) {
+                    const resolvedValue = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
+                        const apError = error.error as ApErrorParams
+                        if (!throwOnFailure || (apError && apError.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET)) {
+                            return value[field]
+                        }
+                        
+                        if (apError) {
+                            throw error
+                        }
+                        throw new ActivepiecesError({
+                            code: ErrorCode.VALIDATION,
+                            params: {
+                                message: error.message ?? 'Failed to resolve secret',
+                            },
+                        })
+                    })
+                    Object.assign(newValue, {
+                        [field]: resolvedValue,
+                    })
+                }
+            }),
+        )
+
+        return newValue
     },
 
     disconnect: async ({ platformId, providerId }: { platformId: string, providerId: SecretManagerProviderId }) => {
@@ -105,6 +130,10 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 })
 
+/**
+ * takes key in the format of {{providerId:secret-path}}
+ * returns trimmed key in the format of providerId:secret-path
+ */
 const trimKeyBraces = (key: string) => {
     const trimmedKey = key.trim()
     if (!(trimmedKey.startsWith('{{') && trimmedKey.endsWith('}}'))) {
@@ -117,3 +146,21 @@ const trimKeyBraces = (key: string) => {
     }
     return trimmedKey.substring(2, trimmedKey.length - 2)
 }
+
+/**
+ * takes trimmed key in the format of providerId:secret-path
+ * returns providerId
+ */
+const extractProviderId = (key: string): SecretManagerProviderId => {
+    const splits = key.split(':')
+    if (!isEnumValue(SecretManagerProviderId, splits[0])) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Invalid provider id',
+            },
+        })
+    }
+    return splits[0]
+}
+
