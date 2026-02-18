@@ -19,6 +19,7 @@ import { githubAddLabelsToIssueAction } from './lib/actions/add-labels-to-issue'
 import { githubCreateBranchAction } from './lib/actions/create-branch';
 import { githubDeleteBranchAction } from './lib/actions/delete-branch';
 import { githubUpdateIssueAction } from './lib/actions/update-issue';
+import { githubCreateGistAction } from './lib/actions/create-gist';
 
 import { githubFindBranchAction } from './lib/actions/find-branch';
 import { githubFindIssueAction } from './lib/actions/find-issue';
@@ -28,7 +29,7 @@ export const githubAuth = PieceAuth.OAuth2({
   required: true,
   authUrl: 'https://github.com/login/oauth/authorize',
   tokenUrl: 'https://github.com/login/oauth/access_token',
-  scope: ['admin:repo_hook', 'admin:org', 'repo'],
+  scope: ['admin:repo_hook', 'admin:org', 'repo', 'gist'],
 });
 
 export const github = createPiece({
@@ -57,6 +58,7 @@ export const github = createPiece({
     githubFindBranchAction,
     githubFindIssueAction,
     githubFindUserAction,
+    githubCreateGistAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,
