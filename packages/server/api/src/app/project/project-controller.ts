@@ -1,5 +1,5 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
+import { ApId, PrincipalType, Project, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRequestInCommunity } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -14,22 +14,11 @@ export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
         })
     })
 
-    fastify.get('/:id', {
-        config: {
-            security: securityAccess.project([PrincipalType.USER], undefined, {
-                type: ProjectResourceType.PARAM,
-                paramKey: 'id',
-            }),
-        },
-    }, async (request) => {
+    fastify.get('/:id', GetProjectRequest, async (request) => {
         return projectService.getOneOrThrow(request.projectId)
     })
 
-    fastify.get('/', {
-        config: {
-            security: securityAccess.publicPlatform([PrincipalType.USER]),
-        },
-    }, async (request) => {
+    fastify.get('/', ListProjectsRequest, async (request) => {
         return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
     })
 }
@@ -49,3 +38,35 @@ const UpdateProjectRequest = {
         body: UpdateProjectRequestInCommunity,
     },
 }
+
+
+const GetProjectRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.PARAM,
+            paramKey: 'id',
+        }),
+    },
+    schema: {
+        tags: ['projects'],
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: Project,
+        },
+    },
+}   
+
+const ListProjectsRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['projects'],
+        response: {
+            [StatusCodes.OK]: SeekPage(Project),
+        },
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}   

@@ -1,10 +1,8 @@
-import { QueryClient } from '@tanstack/react-query';
 import { Socket } from 'socket.io-client';
 import { StoreApi } from 'zustand';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import {
   FlowAction,
   FlowActionType,
@@ -61,7 +59,6 @@ type RunStateInitialState = {
   run: FlowRun | null;
   flowVersion: FlowVersion;
   socket: Socket;
-  queryClient: QueryClient;
 };
 type StepTestListener = {
   onProgress: (response: StepRunResponse) => void;
@@ -276,10 +273,6 @@ export const createRunState = (
           },
         });
       }
-      sampleDataHooks.invalidateSampleData(
-        flowVersion.id,
-        initialState.queryClient,
-      );
     },
     setErrorLogs: (stepName: string, error: string | null) => {
       set((state) => {

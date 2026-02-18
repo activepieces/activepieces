@@ -1,21 +1,12 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newResponse } from './lib/triggers/new-form-response';
+import { googleFormsAuth, getAccessToken } from './lib/common/common';
 
-export const googleFormsAuth = PieceAuth.OAuth2({
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: [
-    'https://www.googleapis.com/auth/forms.responses.readonly',
-    'https://www.googleapis.com/auth/drive.readonly',
-  ],
-});
+export { googleFormsAuth, getAccessToken, GoogleFormsAuthValue } from './lib/common/common';
 
 export const googleForms = createPiece({
   displayName: 'Google Forms',
@@ -31,7 +22,7 @@ export const googleForms = createPiece({
       baseUrl: () => 'https://forms.googleapis.com/v1',
       auth: googleFormsAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth).access_token}`,
+        Authorization: `Bearer ${await getAccessToken(auth as any)}`,
       }),
     }),
   ],

@@ -95,7 +95,6 @@ describe('Flow API', () => {
 
         it.each([
             DefaultProjectRole.VIEWER,
-            DefaultProjectRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
             // arrange
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
@@ -164,15 +163,6 @@ describe('Flow API', () => {
             },
             {
                 role: DefaultProjectRole.EDITOR,
-                request: {
-                    type: FlowOperationType.CHANGE_STATUS,
-                    request: {
-                        status: 'ENABLED',
-                    },
-                },
-            },
-            {
-                role: DefaultProjectRole.OPERATOR,
                 request: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: {
@@ -283,15 +273,6 @@ describe('Flow API', () => {
                     },
                 },
             },
-            {
-                role: DefaultProjectRole.OPERATOR,
-                request: {
-                    type: FlowOperationType.CHANGE_NAME,
-                    request: {
-                        displayName: 'hello',
-                    },
-                },
-            },
         ])('Fails if user role is %s', async ({ role, request }) => {
             // arrange
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
@@ -364,7 +345,6 @@ describe('Flow API', () => {
         it.each([
             DefaultProjectRole.ADMIN,
             DefaultProjectRole.EDITOR,
-            DefaultProjectRole.OPERATOR,
             DefaultProjectRole.VIEWER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange

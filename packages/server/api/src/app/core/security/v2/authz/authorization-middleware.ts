@@ -67,7 +67,7 @@ export async function convertToSecurityAccessRequest(request: FastifyRequest): P
     }
 }
 
-async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
+export async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
     if (request.principal.type === PrincipalType.ENGINE) {
         return request.principal.projectId
     }
@@ -78,7 +78,7 @@ async function getProjectIdFromRequest(request: FastifyRequest): Promise<string 
     if (security.kind === RouteKind.PUBLIC) {
         return undefined
     }
-    if (security.authorization.type !== AuthorizationType.PROJECT) {
+    if (security.authorization.type !== AuthorizationType.PROJECT && security.authorization.type !== AuthorizationType.PLATFORM) {
         return undefined
     }
     const projectResource = security.authorization.projectResource

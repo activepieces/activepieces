@@ -23,10 +23,7 @@ export const getWorkbooksAction = createAction({
   async run({ propsValue, auth }) {
     const limit = propsValue['limit'];
 
-    const queryParams: any = {
-      $filter:
-        "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-    };
+    const queryParams: any = {}
 
     if (limit !== null && limit !== undefined) {
       queryParams.$top = limit.toString();

@@ -14,6 +14,7 @@ import {
   TASK_COMPLETION_TOOL_NAME,
   AIProviderName,
   AgentProviderModel,
+  ExecutionToolStatus,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
@@ -167,9 +168,17 @@ export const runAgent = createAction({
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
                 continue;
               }
+              const toolOutput = chunk.output as Record<string, unknown>;
+              
+              if (toolOutput['status'] === ExecutionToolStatus.FAILED && toolOutput['errorMessage']) {
+                outputBuilder.addMarkdown(
+                  `\n\n**Error:** ${JSON.stringify(toolOutput['errorMessage'])}\n\n`
+                );
+              }
+              
               outputBuilder.finishToolCall({
                 toolCallId: chunk.toolCallId,
-                output: chunk.output as Record<string, unknown>,
+                output: toolOutput,
               });
               break;
             }

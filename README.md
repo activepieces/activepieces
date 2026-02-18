@@ -455,6 +455,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vishakha1411"><img src="https://avatars.githubusercontent.com/u/119448495?v=4?s=100" width="100px;" alt="vishakha1411"/><br /><sub><b>vishakha1411</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=vishakha1411" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/murex971"><img src="https://avatars.githubusercontent.com/u/46920259?v=4?s=100" width="100px;" alt="Nupur Agrawal"/><br /><sub><b>Nupur Agrawal</b></sub></a><br /><a href="#plugin-murex971" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

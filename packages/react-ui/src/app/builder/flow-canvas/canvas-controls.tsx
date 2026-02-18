@@ -192,7 +192,7 @@ const CanvasControls = ({
       id="canvas-controls"
       className="z-50 absolute bottom-2 left-0 flex items-center  w-full pointer-events-none "
     >
-      <div className="flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-background border border-sidebar-border">
+      <div className=" absolute flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-background border border-sidebar-border">
         <CanvasButtonWrapper
           tooltip={t('Minimap' + (isMac() ? ' (⌘ + M)' : ' (Ctrl + M)'))}
         >

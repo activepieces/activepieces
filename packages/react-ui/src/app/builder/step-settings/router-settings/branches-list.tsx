@@ -176,7 +176,7 @@ export const BranchListItem = ({
       )}
       <div className="grow"></div>
       <div
-        className={cn('flex gap-2 py-3 items-center button-group', {
+        className={cn('flex gap-2 py-1 items-center button-group', {
           'pointer-events-none': readonly,
           'opacity-0': readonly,
         })}

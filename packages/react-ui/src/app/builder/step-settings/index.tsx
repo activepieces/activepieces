@@ -2,7 +2,6 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
@@ -12,10 +11,11 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { cn, GAP_SIZE_FOR_STEP_SETTINGS, parentWindow } from '@/lib/utils';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import {
   FlowAction,
   FlowActionType,
@@ -24,7 +24,6 @@ import {
   FlowTriggerType,
   isNil,
 } from '@activepieces/shared';
-import { ActivepiecesClientEventName } from 'ee-embed-sdk';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
@@ -40,12 +39,11 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 import { RouterSettings } from './router-settings';
+import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-  const location = useLocation();
-  const { selectedStep, pieceModel, formSchema, hideTestStep } =
-    useStepSettingsContext();
+  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
     readonly,
@@ -77,6 +75,10 @@ const StepSettingsContainer = () => {
     disabled: readonly,
     reValidateMode: 'onChange',
     defaultValues: selectedStep,
+    resetOptions: {
+      keepDefaultValues: false,
+      keepDirtyValues: true,
+    },
     resolver: async (values, context, options) => {
       const result = await typeboxResolver(formSchema)(
         values,
@@ -131,9 +133,8 @@ const StepSettingsContainer = () => {
       pieceName: modifiedStep.settings.pieceName,
       triggerName: modifiedStep.settings.triggerName ?? '',
     });
-  const showGenerateSampleData = !readonly && !isManualTrigger && !hideTestStep;
-  const showStepInputOutFromRun =
-    !isNil(run) && !isManualTrigger && !hideTestStep;
+  const showGenerateSampleData = !readonly && !isManualTrigger;
+  const showStepInputOutFromRun = !isNil(run) && !isManualTrigger;
 
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
@@ -153,19 +154,6 @@ const StepSettingsContainer = () => {
 
   const { height, setHeight } = useResizableVerticalPanelsContext();
 
-  const handleClose = () => {
-    if (location.pathname.includes('/embed/step-settings')) {
-      parentWindow.postMessage(
-        {
-          type: ActivepiecesClientEventName.CLIENT_STEP_SETTINGS_DIALOG_CLOSED,
-          data: {},
-        },
-        '*',
-      );
-    }
-    exitStepSettings();
-  };
-
   return (
     <Form {...form}>
       <form
@@ -174,7 +162,7 @@ const StepSettingsContainer = () => {
         className="w-full h-full"
       >
         <div ref={sidebarHeaderContainerRef}>
-          <SidebarHeader onClose={handleClose}>
+          <SidebarHeader onClose={() => exitStepSettings()}>
             <EditableStepName
               selectedBranchIndex={selectedBranchIndex}
               setDisplayName={(value) => {
@@ -204,17 +192,20 @@ const StepSettingsContainer = () => {
               setSelectedBranchIndex={setSelectedBranchIndex}
               isEditingStepOrBranchName={isEditingStepOrBranchName}
               setIsEditingStepOrBranchName={setIsEditingStepOrBranchName}
-              stepMetadata={stepMetadata}
             ></EditableStepName>
           </SidebarHeader>
-          <div className="h-px bg-border w-full mb-4" />
+          <Separator className="w-full h-px" />
         </div>
+
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
+                <div className="w-full my-2 px-3">
+                  {stepMetadata && <StepInfo step={selectedStep} />}
+                </div>
                 <div
                   className={cn(
                     'flex flex-col px-4 pb-6',

@@ -57,6 +57,7 @@ export type PlatformAuthorization = {
     type: AuthorizationType.PLATFORM
     adminOnly: boolean
     allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
+    projectResource?: ProjectResource
 }
 
 export type ProjectAuthorization = {

@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-kapso",
+  "version": "0.0.2",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@kapso/whatsapp-cloud-api": "^0.1.1",
+    "tslib": "^2.3.0"
+  }
+}

@@ -2111,6 +2111,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "murex971",
+      "name": "Nupur Agrawal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46920259?v=4",
+      "profile": "https://github.com/murex971",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

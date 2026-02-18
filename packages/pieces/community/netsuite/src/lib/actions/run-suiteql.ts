@@ -1,10 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { netsuiteAuth } from '../..';
-import { createOAuthHeader } from '../oauth';
+import { NetSuiteClient } from '../common/client';
 import { format as formatSQL, ParamItems } from 'sql-formatter';
-
-const PAGE_SIZE = 1000;
 
 const mkdown = `
 - **DO NOT** insert dynamic input directly into the query string. Instead, use :1, :2, :3 and add them in args for parameterized queries
@@ -34,8 +32,7 @@ export const runSuiteQL = createAction({
     }),
   },
   async run(context) {
-    const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
-      context.auth.props;
+    const client = new NetSuiteClient(context.auth.props);
 
     const query = context.propsValue.query;
     const args: string[] = (context.propsValue.args as string[]) || [];
@@ -55,51 +52,12 @@ export const runSuiteQL = createAction({
       params: formattedArgs,
     });
 
-    const results = [];
-    let pageOffset = 0;
-    let hasMore = true;
-
-    const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql`;
-    const httpMethod = HttpMethod.POST;
-
-    // paginate results: https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156414087576.html
-    while (hasMore) {
-      const queryParams = {
-        limit: String(PAGE_SIZE),
-        offset: String(pageOffset),
-      };
-
-      const authHeader = createOAuthHeader(
-        accountId,
-        consumerKey,
-        consumerSecret,
-        tokenId,
-        tokenSecret,
-        requestUrl,
-        httpMethod,
-        queryParams
-      );
-
-      const response = await httpClient.sendRequest({
-        method: httpMethod,
-        url: requestUrl,
-        headers: {
-          Authorization: authHeader,
-          prefer: 'transient',
-          Cookie: 'NS_ROUTING_VERSION=LAGGING',
-        },
-        body: {
-          q: formattedSQL,
-        },
-        queryParams: queryParams,
-      });
-
-      results.push(...(response.body?.items || []));
-
-      hasMore = response.body?.hasMore || false;
-      pageOffset += PAGE_SIZE;
-    }
-
-    return results;
+    return client.makePaginatedRequest({
+      method: HttpMethod.POST,
+      url: `${client.baseUrl}/services/rest/query/v1/suiteql`,
+      body: {
+        q: formattedSQL,
+      },
+    });
   },
 });
