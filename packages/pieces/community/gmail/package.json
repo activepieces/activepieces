@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-gmail",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "dependencies": {
     "googleapis": "129.0.0",
     "mailparser": "3.7.5"
