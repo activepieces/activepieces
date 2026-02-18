@@ -69,12 +69,20 @@ export const usersProp = () =>
         description: 'Select users to which this trigger applies',
         required: false,
         auth: connectucAuth,
-        refreshers: [],
-        options: async ({ auth }) => {
+        refreshers: ['domain'],
+        options: async ({ auth, domain }) => {
             if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'Please connect your account first',
+                    options: [],
+                };
+            }
+
+            if (!domain) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please select a domain first',
                     options: [],
                 };
             }
@@ -92,6 +100,7 @@ export const usersProp = () =>
                     accessToken: authValue.access_token,
                     endpoint: '/activepieces/subscribers',
                     method: HttpMethod.GET,
+                    queryParams: { domain: domain as string },
                 });
 
                 const options = [
