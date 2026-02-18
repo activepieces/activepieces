@@ -7,6 +7,7 @@ interface ApiCallParams {
     endpoint: string;
     method: HttpMethod;
     body?: unknown;
+    queryParams?: Record<string, string>;
 }
 
 /**
@@ -15,7 +16,7 @@ interface ApiCallParams {
  * @returns The response body from the API
  */
 export async function connectucApiCall<T = unknown>(params: ApiCallParams): Promise<T> {
-    const { accessToken, endpoint, method, body } = params;
+    const { accessToken, endpoint, method, body, queryParams } = params;
 
     const response = await httpClient.sendRequest<T>({
         method,
@@ -25,6 +26,7 @@ export async function connectucApiCall<T = unknown>(params: ApiCallParams): Prom
             token: accessToken,
         },
         body,
+        queryParams,
     });
 
     return response.body;
