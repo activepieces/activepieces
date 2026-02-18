@@ -125,6 +125,65 @@ export const subscriberUuidProp = () =>
     });
 
 /**
+ * Reusable device dropdown property (single-select)
+ * Fetches registrations from /users/{user}/registration endpoint filtered by selected user
+ * Uses AOR (without "sip:" prefix) as both label and value
+ */
+export const deviceProp = () =>
+    Property.Dropdown({
+        displayName: 'Device',
+        description: 'Select the device to use for the call',
+        required: true,
+        auth: connectucAuth,
+        refreshers: ['user'],
+        options: async ({ auth, user }) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please connect your account first',
+                    options: [],
+                };
+            }
+
+            if (!user) {
+                return {
+                    disabled: true,
+                    placeholder: 'Please select a user first',
+                    options: [],
+                };
+            }
+
+            try {
+                const authValue = auth as OAuth2PropertyValue;
+
+                interface Registration {
+                    aor: string;
+                }
+
+                const registrations = await connectucApiCall<Registration[]>({
+                    accessToken: authValue.access_token,
+                    endpoint: `/users/${user}/registration`,
+                    method: HttpMethod.GET,
+                });
+
+                const options = registrations.map(reg => {
+                    const aor = reg.aor.replace('sip:', '');
+                    return { label: aor, value: aor };
+                });
+
+                return { disabled: false, options };
+            } catch (error) {
+                console.error('Error fetching registrations:', error);
+                return {
+                    disabled: true,
+                    placeholder: 'Error loading devices',
+                    options: [],
+                };
+            }
+        },
+    });
+
+/**
  * Reusable users dropdown property (multi-select)
  * Fetches subscribers from /activepieces/subscribers endpoint
  * Includes "All Always" option with value "*"
