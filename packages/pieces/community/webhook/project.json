@@ -43,6 +43,13 @@
         "{options.outputFile}"
       ]
     },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/pieces/community/webhook/jest.config.ts"
+      }
+    },
     "prebuild": {
       "executor": "nx:run-commands",
       "options": {
