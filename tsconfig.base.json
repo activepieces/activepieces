@@ -1813,6 +1813,9 @@
       ],
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
+      ],
+      "@activepieces/piece-logsnag": [
+        "packages/pieces/custom/logsnag/src/index.ts"
       ]
     },
     "resolveJsonModule": true
