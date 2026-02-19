@@ -13,6 +13,14 @@ import { disableUser } from './lib/actions/disable-user';
 import { findUser } from './lib/actions/find-user';
 import { addMemberToGroup } from './lib/actions/add-member-to-group';
 import { removeMemberFromGroup } from './lib/actions/remove-member-from-group';
+import { getPasswordValue } from './lib/actions/get-password-value';
+import { retrievePrivateSSHKey } from './lib/actions/retrieve-private-ssh-key';
+import { changeCredentialsInVault } from './lib/actions/change-credentials-in-vault';
+import { verifyCredentialsBulk } from './lib/actions/verify-credentials-bulk';
+import { changeCredentialsBulk } from './lib/actions/change-credentials-bulk';
+import { setNextPasswordBulk } from './lib/actions/set-next-password-bulk';
+import { changeCredentialsInVaultBulk } from './lib/actions/change-credentials-in-vault-bulk';
+import { reconcileCredentialsBulk } from './lib/actions/reconcile-credentials-bulk';
 
 export const cyberarkAuth = PieceAuth.CustomAuth({
   description: 'CyberArk PVWA Authentication',
@@ -53,7 +61,15 @@ export const cyberark = createPiece({
     disableUser,
     findUser,
     addMemberToGroup,
-    removeMemberFromGroup
+    removeMemberFromGroup,
+    getPasswordValue,
+    retrievePrivateSSHKey,
+    changeCredentialsInVault,
+    verifyCredentialsBulk,
+    changeCredentialsBulk,
+    setNextPasswordBulk,
+    changeCredentialsInVaultBulk,
+    reconcileCredentialsBulk
   ],
   triggers: []
 });

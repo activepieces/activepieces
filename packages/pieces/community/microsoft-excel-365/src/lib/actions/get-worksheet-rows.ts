@@ -155,8 +155,7 @@ export const getWorksheetRowsAction = createAction({
 					obj[String(headers[j])] = row[j];
 				}
 				result.push(obj);
-			}
-			else{
+			} else {
 				result.push(row);
 			}
 		}
@@ -173,17 +172,25 @@ type ColumnFilter = {
 
 function evaluateFilters(filters: ColumnFilter[], row: any[]): boolean {
 	return filters.every((filter) => {
-		const {
-			filterColumn: columnIndex,
-			filterOperator: operator,
-			filterValue: value,
-		} = filter;
+		const { filterColumn: columnIndex, filterOperator: operator, filterValue: value } = filter;
 
-		if (columnIndex === undefined || !operator || value === undefined) {
+		if (columnIndex === undefined || !operator) {
 			return true;
 		}
 
 		const cellValue = row[columnIndex];
+
+		if (operator === FilterOperator.EXISTS) {
+			return cellValue !== undefined && cellValue !== null && cellValue !== '';
+		}
+
+		if (operator === FilterOperator.DOES_NOT_EXIST) {
+			return cellValue === undefined || cellValue === null || cellValue === '';
+		}
+
+		if (value === undefined) {
+			return true;
+		}
 
 		switch (operator) {
 			case FilterOperator.TEXT_CONTAINS:
@@ -241,11 +248,7 @@ function toNumber(value: string): number | string {
 }
 
 function isValidDate(date: unknown): boolean {
-	if (
-		typeof date === 'string' ||
-		typeof date === 'number' ||
-		date instanceof Date
-	) {
+	if (typeof date === 'string' || typeof date === 'number' || date instanceof Date) {
 		return dayjs(date).isValid();
 	}
 	return false;
