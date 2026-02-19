@@ -1,6 +1,7 @@
 
     import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-    import { createEvent } from './lib/actions/create-event';
+    import { createEvent } from "./lib/actions/create-event";
+    import { newEventCreated } from "./lib/triggers/new-event-created";
 
     export const logsnagAuth = PieceAuth.SecretText({
       displayName: 'API Key',
@@ -15,5 +16,5 @@
       logoUrl: "https://cdn.activepieces.com/pieces/logsnag.png",
       authors: [],
       actions: [createEvent],
-      triggers: [],
+      triggers: [newEventCreated],
     });
