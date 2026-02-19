@@ -1,9 +1,12 @@
 import {logsnagAuth} from "../../";
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 
-// since LogSnag doesn't expose an endpoint to GET data,
+// since LogSnag doesn't expose an endpoint to GET data 
+// by polling or an endpoint to register webhooks,
 // this sample uses a fictional endpoint URL 
 // in order to demonstrate how it could work in theory
+// using a webhook
 
 export const newEventCreated = createTrigger({
     auth: logsnagAuth,
@@ -47,9 +50,9 @@ export const newEventCreated = createTrigger({
         if (webhookId) {
             await httpClient.sendRequest({
             method: HttpMethod.DELETE,
-            url: `${BASE_URL}/webhooks/${webhookId}/`,
+            url: `https://api.logsnag.com/v1/webhooks/${webhookId}/`,
             headers: {
-                Authorization: `Bearer ${context.auth.secretText}`,
+                Authorization: `Bearer ${context.auth.secret_text}`,
                 'Content-Type': 'application/json',
             },
             });
