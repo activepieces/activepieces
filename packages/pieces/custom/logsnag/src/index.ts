@@ -5,7 +5,7 @@
     export const logsnagAuth = PieceAuth.SecretText({
       displayName: 'API Key',
       required: true,
-      description: 'Please use **test-key** as value for API Key',
+      description: 'Your LogSnag API key specific to the project',
     });
 
     export const logsnag = createPiece({
