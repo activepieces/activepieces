@@ -1,9 +1,4 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { FastifyBaseLogger } from 'fastify'
-import { OperationResponse } from 'server-worker'
-import { fileService } from '../file/file.service'
-import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { pieceMetadataService } from './metadata/piece-metadata-service'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -21,6 +16,11 @@ import {
     ProjectId,
     WorkerJobType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { OperationResponse } from 'server-worker'
+import { fileService } from '../file/file.service'
+import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 export const pieceInstallService = (log: FastifyBaseLogger) => ({
     async installPiece(

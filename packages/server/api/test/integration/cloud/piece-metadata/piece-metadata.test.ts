@@ -1,3 +1,11 @@
+import {
+    apId,
+    FilteredPieceBehavior,
+    PiecesFilterType,
+    PieceType,
+    PlatformRole,
+    PrincipalType,
+} from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
@@ -12,14 +20,6 @@ import {
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
-import {
-    apId,
-    FilteredPieceBehavior,
-    PiecesFilterType,
-    PieceType,
-    PlatformRole,
-    PrincipalType,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
