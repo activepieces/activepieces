@@ -19,7 +19,7 @@ export const createEvent = createAction({
       method: HttpMethod.POST,
       url: 'https://api.logsnag.com/v1/log',
       headers: {
-        Authorization: `Bearer ${context.auth}`, // Pass API key in headers
+        Authorization: `Bearer ${context.auth.secret_text}`,
         "Content-Type": "application/json",
       },
       body: {
