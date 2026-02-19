@@ -2,17 +2,9 @@ import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 import { apId, isEmpty, isNil, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
-import { repoFactory } from '../../../core/db/repo-factory'
 import { system } from '../../../helper/system/system'
-import { PieceRegistryEntry } from '../cache'
-import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
-
-const repo = repoFactory(PieceMetadataEntity)
-
-export async function fetchPiecesFromDB(): Promise<PieceMetadataSchema[]> {
-    const piecesFromDatabase = await repo().find()
-    return piecesFromDatabase.sort(sortByNameAndVersionDesc)
-}
+import { PieceRegistryEntry } from '../piece-cache'
+import { PieceMetadataSchema } from '../piece-metadata-entity'
 
 export function sortByNameAndVersionDesc(a: PieceMetadataSchema, b: PieceMetadataSchema): number {
     if (a.name !== b.name) {
@@ -33,7 +25,13 @@ export function sortByNameAndVersionDesc(a: PieceMetadataSchema, b: PieceMetadat
 }
 
 export function lastVersionOfEachPiece(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
-    return pieces.filter((piece, index, self) => index === self.findIndex((t) => t.name === piece.name))
+    const seen = new Map<string, PieceMetadataSchema>()
+    for (const piece of pieces) {
+        if (!seen.has(piece.name)) {
+            seen.set(piece.name, piece)
+        }
+    }
+    return Array.from(seen.values())
 }
 
 export async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<PieceMetadataSchema[]> {
