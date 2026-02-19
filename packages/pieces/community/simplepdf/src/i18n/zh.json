@@ -1,7 +1,7 @@
 {
-  "PDF editing and generation tool": "PDF 编辑和生成工具",
-  "New Submission": "新建提交",
-  "Triggers when a form receives a new submission": "当一个表单收到一个新的提交书时触发",
+  "PDF editing and generation tool": "PDF editing and generation tool",
+  "New Submission": "New Submission",
+  "Triggers when a form receives a new submission": "Triggers when a form receives a new submission",
   "Markdown": "Markdown",
   "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n": "\n- Paste this URL in the webhook integration endpoint:\n```text\n{{webhookUrl}}\n```\n- Click update (keep other settings unchanged)\n<br>\n<br>\n\n_[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_\n"
 }
