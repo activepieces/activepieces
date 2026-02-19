@@ -40,4 +40,4 @@ export type FilterPiecesParams = {
     suggestionType?: SuggestionType
 }
 
-export * from './local-piece-cache-utils'
+export * from './piece-cache-utils'

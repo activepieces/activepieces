@@ -6,10 +6,8 @@ import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { fetchPiecesFromDB, filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
+import { filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, sortByNameAndVersionDesc } from './utils'
 import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
-
-export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -25,7 +23,7 @@ const CACHE_KEY = {
     registry: (): string => 'registry',
 }
 
-export const localPieceCache = (log: FastifyBaseLogger) => {
+export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
@@ -39,7 +37,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => {
 
             const cachedPieces = await getCachedOrFetch(cacheKey, async () => {
                 const allPieces = await fetchPiecesFromDB()
-                return translateLatestVersions(allPieces, locale)
+                return translateLatestVersionPerPlatform(allPieces, locale)
             })
 
             const devPieces = await loadDevPiecesIfEnabled(log)
@@ -104,7 +102,7 @@ function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {
     }
 }
 
-function translateLatestVersions(allPieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
+function translateLatestVersionPerPlatform(allPieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
     if (locale === LocalesEnum.ENGLISH) {
         allPieces.forEach((piece) => {
             piece.i18n = undefined
@@ -130,6 +128,11 @@ function translateLatestVersions(allPieces: PieceMetadataSchema[], locale: Local
         piece.i18n = undefined
         return piece
     })
+}
+
+async function fetchPiecesFromDB(): Promise<PieceMetadataSchema[]> {
+    const piecesFromDatabase = await repo().find()
+    return piecesFromDatabase.sort(sortByNameAndVersionDesc)
 }
 
 const inFlightQueries = new Map<string, Promise<unknown>>()

@@ -1,4 +1,9 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
+import { FastifyBaseLogger } from 'fastify'
+import { OperationResponse } from 'server-worker'
+import { fileService } from '../file/file.service'
+import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+import { pieceMetadataService } from './metadata/piece-metadata-service'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -16,13 +21,6 @@ import {
     ProjectId,
     WorkerJobType,
 } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
-import { OperationResponse } from 'server-worker'
-import { fileService } from '../file/file.service'
-import { pubsub } from '../helper/pubsub'
-import { userInteractionWatcher } from '../workers/user-interaction-watcher'
-import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/lru-piece-cache'
-import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 export const pieceInstallService = (log: FastifyBaseLogger) => ({
     async installPiece(
@@ -52,7 +50,6 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
-            await pubsub.publish(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, '')
             return savedPiece
         }
         catch (error) {
