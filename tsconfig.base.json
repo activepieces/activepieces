@@ -1813,6 +1813,9 @@
       ],
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
+      ],
+      "@activepieces/piece-coralogix": [
+        "packages/pieces/community/coralogix/src/index.ts"
       ]
     },
     "resolveJsonModule": true
