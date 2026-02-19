@@ -694,6 +694,8 @@
   "Resource Name": "资源名称",
   "Account ID": "",
   "Gateway ID": "",
+  "Google Vertex Project Region": "",
+  "Google Vertex Project ID": "",
   "Base URL": "",
   "API Key Header": "",
   "Models Configuration": "",

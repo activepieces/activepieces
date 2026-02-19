@@ -155,8 +155,7 @@ export const getWorksheetRowsAction = createAction({
 					obj[String(headers[j])] = row[j];
 				}
 				result.push(obj);
-			}
-			else{
+			} else {
 				result.push(row);
 			}
 		}
@@ -173,17 +172,25 @@ type ColumnFilter = {
 
 function evaluateFilters(filters: ColumnFilter[], row: any[]): boolean {
 	return filters.every((filter) => {
-		const {
-			filterColumn: columnIndex,
-			filterOperator: operator,
-			filterValue: value,
-		} = filter;
+		const { filterColumn: columnIndex, filterOperator: operator, filterValue: value } = filter;
 
-		if (columnIndex === undefined || !operator || value === undefined) {
+		if (columnIndex === undefined || !operator) {
 			return true;
 		}
 
 		const cellValue = row[columnIndex];
+
+		if (operator === FilterOperator.EXISTS) {
+			return cellValue !== undefined && cellValue !== null && cellValue !== '';
+		}
+
+		if (operator === FilterOperator.DOES_NOT_EXIST) {
+			return cellValue === undefined || cellValue === null || cellValue === '';
+		}
+
+		if (value === undefined) {
+			return true;
+		}
 
 		switch (operator) {
 			case FilterOperator.TEXT_CONTAINS:
@@ -197,6 +204,19 @@ function evaluateFilters(filters: ColumnFilter[], row: any[]): boolean {
 
 			case FilterOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
 				return !equalsText(cellValue, value);
+
+			case FilterOperator.TEXT_IN_LIST: {
+				const list = parseAndCoerceListAsArray(value)
+				return list.some((item) =>
+					toLowercaseIfCaseInsensitive(item, false) === toLowercaseIfCaseInsensitive(cellValue, false))
+			}
+
+			case FilterOperator.TEXT_NOT_IN_LIST: {
+				const list = parseAndCoerceListAsArray(value)
+				return !list.some((item) =>
+					toLowercaseIfCaseInsensitive(item, false) === toLowercaseIfCaseInsensitive(cellValue, false),
+				)
+			}
 
 			case FilterOperator.NUMBER_IS_GREATER_THAN:
 				return toNumber(cellValue) > toNumber(value);
@@ -241,11 +261,7 @@ function toNumber(value: string): number | string {
 }
 
 function isValidDate(date: unknown): boolean {
-	if (
-		typeof date === 'string' ||
-		typeof date === 'number' ||
-		date instanceof Date
-	) {
+	if (typeof date === 'string' || typeof date === 'number' || date instanceof Date) {
 		return dayjs(date).isValid();
 	}
 	return false;
@@ -269,4 +285,25 @@ function isSameOrAfterDate(a: any, b: any): boolean {
 
 function isSameOrBeforeDate(a: any, b: any): boolean {
 	return isValidDate(a) && isValidDate(b) && dayjs(a).isSameOrBefore(dayjs(b));
+}
+
+function parseAndCoerceListAsArray(input: unknown): unknown[] {
+	if (typeof input === 'string') {
+		try {
+			const parsed = JSON.parse(input)
+			return Array.isArray(parsed) ? parsed : [parsed]
+		}
+		catch (e) {
+			return [input]
+		}
+	}
+	return Array.isArray(input) ? input : [input]
+}
+
+function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | undefined): string {
+	if (typeof text === 'string') {
+		return caseSensitive ? text : text.toLowerCase()
+	}
+	const textAsString = JSON.stringify(text)
+	return caseSensitive ? textAsString : textAsString.toLowerCase()
 }
