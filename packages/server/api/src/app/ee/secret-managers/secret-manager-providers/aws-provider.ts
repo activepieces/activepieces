@@ -18,7 +18,7 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         },
     },
     getSecretParams: {
-        secretPath: {
+        path: {
             displayName: 'Secret Path',
             placeholder: 'secretPath',
         },
@@ -41,7 +41,7 @@ export const awsProvider = (_log: FastifyBaseLogger): SecretManagerProvider<Secr
     },
     resolve: async (key: string) => {
         return {
-            secretPath: key,
+            path: key,
         }
     },
 })

@@ -1,5 +1,5 @@
 import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApErrorParams, apId, ErrorCode, isEnumValue, isNil, isObject, isString, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isEnumValue, isNil, isObject, isString, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -74,52 +74,41 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 
     async resolve({ key, platformId }: { key: string, platformId: string }) {
-        const trimmedKey = trimKeyBraces(key)
-        const providerId = extractProviderId(trimmedKey)
-
-        return secretManagersService(log).getSecret({
+        const { providerId, keyWithoutBraces } = extractProviderId(key)
+        return this.getSecret({
             providerId,
-            request: await secretManagerProvider(log, providerId).resolve(trimmedKey),
+            request: await secretManagerProvider(log, providerId).resolve(keyWithoutBraces),
             platformId,
-        } as GetSecretManagerSecretRequest & { platformId: string })
+        })
     },
 
-    async resolveObject<T extends Record<string, unknown>>(value: T, platformId: string, throwOnFailure: boolean = true): Promise<T> {
-        const newValue = JSON.parse(JSON.stringify(value)) as T
-        await Promise.all(
-            Object.keys(value).map(async (field: keyof T) => {
-                if (isObject(value[field])) {
-                    Object.assign(newValue, {
-                        [field]: await secretManagersService(log).resolveObject(value[field], platformId),
-                    })
-                }
-                else if (isString(value[field])) {
-                    const resolvedValue = await secretManagersService(log).resolve({ key: value[field], platformId }).catch((error) => {
-                        const apError = error.error as ApErrorParams
-                        if (!throwOnFailure || (apError && apError.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET)) {
-                            return value[field]
-                        }
-                        
-                        if (apError) {
-                            throw error
-                        }
-                        throw new ActivepiecesError({
-                            code: ErrorCode.VALIDATION,
-                            params: {
-                                message: error.message ?? 'Failed to resolve secret',
-                            },
-                        })
-                    })
-                    Object.assign(newValue, {
-                        [field]: resolvedValue,
-                    })
-                }
-            }),
+    async resolveObject<T extends Record<string, unknown>>({ value, platformId, throwOnFailure = true }: { value: T, platformId: string, throwOnFailure?: boolean }): Promise<T> {
+        const entries = await Promise.all(
+            Object.entries(value).map(async ([field, fieldValue]) => [
+                field,
+                await this.resolveFieldValue({ fieldValue, platformId, throwOnFailure }),
+            ]),
         )
-
-        return newValue
+        return Object.fromEntries(entries) as T
     },
-
+    async resolveFieldValue({ fieldValue, platformId, throwOnFailure }: { fieldValue: unknown, platformId: string, throwOnFailure: boolean }): Promise<unknown> {
+        if (isObject(fieldValue)) {
+            return this.resolveObject({
+                value: fieldValue as Record<string, unknown>,
+                platformId,
+                throwOnFailure,
+            })
+        }
+        if (isString(fieldValue)) {
+            try {
+                return await this.resolve({ key: fieldValue, platformId })
+            }
+            catch (error) {
+                return handleResolveError(error, throwOnFailure, fieldValue)
+            }
+        }
+        return fieldValue
+    },
     disconnect: async ({ platformId, providerId }: { platformId: string, providerId: SecretManagerProviderId }) => {
         const provider = secretManagerProvider(log, providerId)
         await provider.disconnect()
@@ -129,6 +118,23 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+function handleResolveError(error: unknown, throwOnFailure: boolean, originalValue: unknown): unknown {
+    if (!throwOnFailure) {
+        return originalValue
+    }
+    if (error instanceof ActivepiecesError) {
+        if (error.error.code === ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET) {
+            return originalValue
+        }
+        throw error
+    }
+    const message = error instanceof Error ? error.message : 'Failed to resolve secret'
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message },
+    })
+}
 
 /**
  * takes key in the format of {{providerId:secret-path}}
@@ -151,16 +157,24 @@ const trimKeyBraces = (key: string) => {
  * takes trimmed key in the format of providerId:secret-path
  * returns providerId
  */
-const extractProviderId = (key: string): SecretManagerProviderId => {
-    const splits = key.split(':')
-    if (!isEnumValue(SecretManagerProviderId, splits[0])) {
+const extractProviderId = (key: string): {
+    providerId: SecretManagerProviderId
+    keyWithoutBraces: string
+} => {
+    const keyWithoutBraces = trimKeyBraces(key)
+    const splits = keyWithoutBraces.split(':')
+    const providerId = splits[0]
+    if (!isEnumValue(SecretManagerProviderId, providerId)) {
         throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
+            code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
             params: {
                 message: 'Invalid provider id',
             },
         })
     }
-    return splits[0]
+    return {
+        providerId,
+        keyWithoutBraces,
+    }
 }
 

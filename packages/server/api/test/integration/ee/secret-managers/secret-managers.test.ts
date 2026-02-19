@@ -180,7 +180,6 @@ describe('Secret Managers API', () => {
                 },
             })
 
-
             await expect(
                 secretManagersService(mockLog).resolve({
                     key: '{{invalid-provider:secret/data/keys/my-key}}',
@@ -188,7 +187,7 @@ describe('Secret Managers API', () => {
                 }),
             ).rejects.toMatchObject({
                 error: expect.objectContaining({
-                    code: ErrorCode.VALIDATION,
+                    code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
                 }),
             })
         })
