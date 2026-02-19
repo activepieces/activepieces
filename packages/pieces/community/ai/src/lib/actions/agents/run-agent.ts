@@ -15,6 +15,7 @@ import {
   AIProviderName,
   AgentProviderModel,
   ExecutionToolStatus,
+  normalizeToolOutputToExecuteResponse,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
@@ -168,7 +169,8 @@ export const runAgent = createAction({
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
                 continue;
               }
-              const toolOutput = chunk.output as Record<string, unknown>;
+              const rawOutput = chunk.output;
+              const toolOutput = normalizeToolOutputToExecuteResponse(rawOutput);
               
               if (toolOutput['status'] === ExecutionToolStatus.FAILED && toolOutput['errorMessage']) {
                 outputBuilder.addMarkdown(
@@ -201,19 +203,40 @@ export const runAgent = createAction({
               });
               break;
             }
+            case 'start':
+            case 'start-step':
+            case 'tool-input-start':
+            case 'tool-input-delta':
+            case 'tool-input-end':
+            case 'finish-step':
+            case 'finish':
+              break;
+            default:
+              break;
           }
           await context.output.update({ data: outputBuilder.build() });
         } catch (innerError) {
+          let detailsStr: string;
+          try {
+            detailsStr = typeof innerError === 'object' && innerError !== null && 'message' in innerError
+              ? `${(innerError as Error).message}${(innerError as Error).stack ? `\n${(innerError as Error).stack}` : ''}`
+              : inspect(innerError);
+          } catch {
+            detailsStr = String(innerError);
+          }
           errors.push({
             type: 'chunk-processing-error',
-            message: 'Error processing chunk',
-            details: inspect(innerError),
+            message: `Error processing chunk (type=${chunk.type})`,
+            details: detailsStr,
           });
         }
       }
 
       if (errors.length > 0) {
-        const errorSummary = errors.map(e => `${e.type}: ${e.message}`).join('\n');
+        const errorSummary = errors.map(e => {
+          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
+          return `${e.type}: ${e.message}${detail}`;
+        }).join('\n');
         outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
         outputBuilder.fail({ message: 'Agent completed with errors' });
         await context.output.update({ data: outputBuilder.build() });
