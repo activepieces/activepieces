@@ -279,19 +279,17 @@ export const usersProp = () =>
                     queryParams: { domain: domain as string },
                 });
 
-                const options = [
-                    {
-                        label: 'All Always',
-                        value: '*',
-                    },
-                    ...subscribers.map(subscriber => {
-                        const fullName = `${subscriber.first_name} ${subscriber.last_name}`.trim();
-                        return {
-                            label: `${fullName} (${subscriber.user})`,
-                            value: subscriber.user,
-                        };
-                    })
-                ];
+                const subscriberOptions = subscribers.map(subscriber => {
+                    const fullName = `${subscriber.first_name} ${subscriber.last_name}`.trim();
+                    return {
+                        label: `${fullName} (${subscriber.user})`,
+                        value: subscriber.user,
+                    };
+                });
+
+                const options = subscribers.length > 1
+                    ? [{ label: 'All Always', value: '*' }, ...subscriberOptions]
+                    : subscriberOptions;
 
                 return {
                     disabled: false,
