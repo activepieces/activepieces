@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, getAccessToken } from '../common';
 import { common } from '../common';
 
 export const googleDriveCreateNewTextFile = createAction({
@@ -79,7 +79,7 @@ export const googleDriveCreateNewTextFile = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
+        token: await getAccessToken(context.auth),
       },
     });
 

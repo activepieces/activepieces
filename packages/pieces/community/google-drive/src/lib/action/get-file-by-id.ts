@@ -1,7 +1,6 @@
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth, createGoogleClient } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { common } from '../common';
 
 export const googleDriveGetResourceById = createAction({
@@ -18,8 +17,7 @@ export const googleDriveGetResourceById = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const drive = google.drive({ version: 'v3', auth: authClient });
     const response = await drive.files.get({
       fileId: context.propsValue.id,
