@@ -279,3 +279,107 @@ const leadDropdown = () =>
 export const deleteLead = () => ({
   lead_id: leadDropdown(),
 });
+
+const assistantIdProperty = (displayName: string, description: string, required = true) =>
+  Property.Number({
+    displayName,
+    description,
+    required,
+  });
+
+const assistantUuidProperty = (displayName: string, description: string, required = true) =>
+  Property.ShortText({
+    displayName,
+    description,
+    required,
+  });
+
+const conversationUuidProperty = (displayName: string, description: string, required = true) =>
+  Property.ShortText({
+    displayName,
+    description,
+    required,
+  });
+
+const customerIdentifierProperty = (displayName: string, description: string, required = true) =>
+  Property.ShortText({
+    displayName,
+    description,
+    required,
+    defaultValue: '+49155551234',
+  });
+
+export const getCurrentUser = () => ({});
+
+export const generateAiReply = () => ({
+  assistant_id: assistantIdProperty(
+    'Assistant ID',
+    'The ID of the assistant to use for generating the response'
+  ),
+  customer_identifier: customerIdentifierProperty(
+    'Customer Identifier',
+    'A unique identifier for the customer (e.g., phone number, email, CRM contact ID). Maximum length: 255 characters.'
+  ),
+  message: Property.LongText({
+    displayName: 'Message',
+    description: 'The customer\'s message to respond to',
+    required: true,
+  }),
+  variables: Property.Object({
+    displayName: 'Variables',
+    description: 'Optional context variables to pass to the assistant',
+    required: false,
+    defaultValue: {
+      customer_name: 'John Smith',
+      source: 'whatsapp',
+    },
+  }),
+});
+
+export const createConversation = () => ({
+  assistant_id: assistantUuidProperty(
+    'Assistant UUID',
+    'The UUID of the assistant to start the conversation with'
+  ),
+  type: Property.StaticDropdown({
+    displayName: 'Type',
+    description: 'The type of conversation',
+    required: false,
+    defaultValue: 'widget',
+    options: {
+      options: [
+        { label: 'Widget (charged)', value: 'widget' },
+        { label: 'Test (free)', value: 'test' },
+      ],
+    },
+  }),
+  variables: Property.Object({
+    displayName: 'Variables',
+    description: 'Custom variables to pass to the assistant',
+    required: false,
+    defaultValue: {
+      customer_name: 'John Smith',
+      company: 'Acme Corp',
+      source: 'pricing_page',
+    },
+  }),
+});
+
+export const getConversation = () => ({
+  uuid: conversationUuidProperty(
+    'Conversation UUID',
+    'The unique UUID identifier of the conversation to retrieve'
+  ),
+});
+
+export const sendMessage = () => ({
+  uuid: conversationUuidProperty(
+    'Conversation UUID',
+    'The unique UUID identifier of the conversation'
+  ),
+  message: Property.LongText({
+    displayName: 'Message',
+    description: 'The user\'s message to send to the assistant. Maximum length: 2000 characters.',
+    required: true,
+  }),
+});

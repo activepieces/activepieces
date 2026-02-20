@@ -8,7 +8,16 @@ import {
   MakePhoneCallParams, 
   CampaignControlParams, 
   DeleteLeadParams,
-  LeadResponse 
+  LeadResponse,
+  GetCurrentUserResponse,
+  GenerateAiReplyParams,
+  GenerateAiReplyResponse,
+  CreateConversationParams,
+  CreateConversationResponse,
+  GetConversationParams,
+  GetConversationResponse,
+  SendMessageParams,
+  SendMessageResponse
 } from './types';
 
 export const baseApiUrl = 'https://app.famulor.de/';
@@ -26,6 +35,11 @@ export const famulorCommon = {
   makePhoneCallProperties: properties.makePhoneCall,
   campaignControlProperties: properties.campaignControl,
   deleteLeadProperties: properties.deleteLead,
+  getCurrentUserProperties: properties.getCurrentUser,
+  generateAiReplyProperties: properties.generateAiReply,
+  createConversationProperties: properties.createConversation,
+  getConversationProperties: properties.getConversation,
+  sendMessageProperties: properties.sendMessage,
 
   // Schemas
   addLeadSchema: schemas.addLead,
@@ -33,6 +47,11 @@ export const famulorCommon = {
   makePhoneCallSchema: schemas.makePhoneCall,
   campaignControlSchema: schemas.campaignControl,
   deleteLeadSchema: schemas.deleteLead,
+  getCurrentUserSchema: schemas.getCurrentUser,
+  generateAiReplySchema: schemas.generateAiReply,
+  createConversationSchema: schemas.createConversation,
+  getConversationSchema: schemas.getConversation,
+  sendMessageSchema: schemas.sendMessage,
 
   // Methods
   listAllAssistants: async ({ auth, per_page = 10, page = 1, type }: { auth: string; per_page?: number; page?: number; type?: string }) => {
@@ -264,6 +283,87 @@ export const famulorCommon = {
 
     if (response.status !== 200) {
       throw new Error(`Failed to disable post-call webhook: ${response.status}`);
+    }
+
+    return response.body;
+  },
+
+  getCurrentUser: async ({ auth }: { auth: string }): Promise<GetCurrentUserResponse> => {
+    const response = await httpClient.sendRequest<GetCurrentUserResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/user/me`,
+      headers: famulorCommon.baseHeaders(auth),
+    });
+
+    if (response.status !== 200) {
+      throw new Error(`Failed to get current user: ${response.status}`);
+    }
+
+    return response.body;
+  },
+
+  generateAiReply: async (params: GenerateAiReplyParams): Promise<GenerateAiReplyResponse> => {
+    const { auth, ...body } = params;
+    
+    const response = await httpClient.sendRequest<GenerateAiReplyResponse>({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/ai/generate-reply`,
+      headers: famulorCommon.baseHeaders(auth),
+      body,
+    });
+
+    if (response.status !== 200 && response.status !== 404 && response.status !== 402 && response.status !== 422 && response.status !== 429) {
+      throw new Error(`Failed to generate AI reply: ${response.status}`);
+    }
+
+    return response.body;
+  },
+
+  createConversation: async (params: CreateConversationParams): Promise<CreateConversationResponse> => {
+    const { auth, ...body } = params;
+    
+    const response = await httpClient.sendRequest<CreateConversationResponse>({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/conversations`,
+      headers: famulorCommon.baseHeaders(auth),
+      body,
+    });
+
+    if (response.status !== 200 && response.status !== 404 && response.status !== 400) {
+      throw new Error(`Failed to create conversation: ${response.status}`);
+    }
+
+    return response.body;
+  },
+
+  getConversation: async (params: GetConversationParams): Promise<GetConversationResponse> => {
+    const { auth, uuid } = params;
+    
+    const response = await httpClient.sendRequest<GetConversationResponse>({
+      method: HttpMethod.GET,
+      url: `${baseApiUrl}api/conversations/${uuid}`,
+      headers: famulorCommon.baseHeaders(auth),
+    });
+
+    if (response.status !== 200 && response.status !== 404) {
+      throw new Error(`Failed to get conversation: ${response.status}`);
+    }
+
+    return response.body;
+  },
+
+  sendMessage: async (params: SendMessageParams): Promise<SendMessageResponse> => {
+    const { auth, uuid, message } = params;
+    
+    const response = await httpClient.sendRequest<SendMessageResponse>({
+      method: HttpMethod.POST,
+      url: `${baseApiUrl}api/conversations/${uuid}/messages`,
+      headers: famulorCommon.baseHeaders(auth),
+      body: { message },
+    });
+
+    if (response.status !== 200 && response.status !== 404 && response.status !== 400 && response.status !== 422) {
+      throw new Error(`Failed to send message: ${response.status}`);
     }
 
     return response.body;

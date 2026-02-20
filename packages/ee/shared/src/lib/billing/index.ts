@@ -96,7 +96,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
-    embeddingEnabled: false,
+    embeddingEnabled: true,
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     includedAiCredits: 0,

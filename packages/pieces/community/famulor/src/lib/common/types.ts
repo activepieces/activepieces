@@ -64,3 +64,85 @@ export interface LeadResponse {
     id: string;
   };
 }
+
+export interface GetCurrentUserResponse {
+  name: string;
+  email: string;
+  total_balance: number;
+}
+
+export interface GenerateAiReplyParams {
+  auth: string;
+  assistant_id: number;
+  customer_identifier: string;
+  message: string;
+  variables?: Record<string, any>;
+}
+
+export interface GenerateAiReplyResponse {
+  success: boolean;
+  conversation_id?: string;
+  customer_identifier: string;
+  reply: string;
+  function_calls?: Array<{
+    name: string;
+    arguments: Record<string, any>;
+    result: Record<string, any>;
+  }>;
+  ai_disabled?: boolean;
+  error?: string;
+  error_code?: string;
+}
+
+export interface CreateConversationParams {
+  auth: string;
+  assistant_id: string;
+  type?: 'widget' | 'test';
+  variables?: Record<string, any>;
+}
+
+export interface CreateConversationResponse {
+  status: boolean;
+  conversation_id?: string;
+  history?: Array<{
+    role: string;
+    content: string;
+  }>;
+  error?: string;
+}
+
+export interface GetConversationParams {
+  auth: string;
+  uuid: string;
+}
+
+export interface GetConversationResponse {
+  status: boolean;
+  history?: Array<{
+    role: string;
+    content: string;
+    function_calls?: Array<{
+      name: string;
+      arguments: Record<string, any>;
+      result: Record<string, any>;
+    }>;
+  }>;
+  error?: string;
+}
+
+export interface SendMessageParams {
+  auth: string;
+  uuid: string;
+  message: string;
+}
+
+export interface SendMessageResponse {
+  status: boolean;
+  message?: string;
+  function_calls?: Array<{
+    name: string;
+    arguments: Record<string, any>;
+    result: Record<string, any>;
+  }>;
+  error?: string;
+}
