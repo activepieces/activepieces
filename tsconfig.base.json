@@ -1813,7 +1813,8 @@
       ],
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
-      ]
+      ],
+      "my-custom-app": ["packages/pieces/community/my-custom-app/src/index.ts"]
     },
     "resolveJsonModule": true
   },

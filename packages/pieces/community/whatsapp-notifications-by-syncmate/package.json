@@ -1,0 +1,6 @@
+{
+  "name": "@heratassistro/whatsapp-notifications-by-syncmate",
+  "version": "0.0.5",
+  "private": false,
+  "main": "./src/index.js"
+}

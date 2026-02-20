@@ -6,6 +6,7 @@
       "name": "activepieces",
       "dependencies": {
         "@activepieces/import-fresh-webpack": "3.3.0",
+        "@activepieces/shared": "link:@activepieces/shared",
         "@ai-sdk/anthropic": "^3.0.0",
         "@ai-sdk/azure": "^3.0.0",
         "@ai-sdk/google": "^3.0.0",
@@ -411,6 +412,8 @@
   },
   "packages": {
     "@activepieces/import-fresh-webpack": ["@activepieces/import-fresh-webpack@3.3.0", "", { "dependencies": { "parent-module": "^2.0.0", "resolve-from": "^5.0.0" } }, "sha512-lSNLON5thmhQfBt1Fw57wkux4MkMF+7GJszq8NaT+fsz2jKtWLIp156bOYgjGK/6y4AAp23RvXAlv4sPxmF3ow=="],
+
+    "@activepieces/shared": ["@activepieces/shared@link:@activepieces/shared", {}],
 
     "@ai-sdk/amazon-bedrock": ["@ai-sdk/amazon-bedrock@4.0.60", "", { "dependencies": { "@ai-sdk/anthropic": "3.0.44", "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.15", "@smithy/eventstream-codec": "^4.0.1", "@smithy/util-utf8": "^4.0.0", "aws4fetch": "^1.0.20" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-LNzRryLknon4fmnR6ySKhP6PosFBtlnG6KD40zd91ZQsn3dlrs4I9Fe54o+Gm38FqJufGF16yNiI/zvZur/OGQ=="],
 

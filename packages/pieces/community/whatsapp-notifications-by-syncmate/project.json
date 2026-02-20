@@ -1,0 +1,38 @@
+{
+  "name": "whatsapp-notifications-by-syncmate",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/whatsapp-notifications-by-syncmate/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/whatsapp-notifications-by-syncmate",
+        "tsConfig": "packages/pieces/community/whatsapp-notifications-by-syncmate/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/whatsapp-notifications-by-syncmate/package.json",
+        "main": "packages/pieces/community/whatsapp-notifications-by-syncmate/src/index.ts",
+        "assets": [
+          "packages/pieces/community/whatsapp-notifications-by-syncmate/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-whatsapp-notifications-by-syncmate {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  }
+}
