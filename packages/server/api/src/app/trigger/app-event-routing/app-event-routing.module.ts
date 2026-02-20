@@ -30,7 +30,7 @@ import { JobType } from '../../workers/queue/queue-manager'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
 
-const appWebhooks: Record<string, Piece<PieceAuthProperty | undefined>> = {
+const appWebhooks: Record<string, Piece<PieceAuthProperty | PieceAuthProperty[] | undefined>> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
