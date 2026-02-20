@@ -3,11 +3,11 @@ import {
   Trigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { orocommerceAuth } from './auth';
-import { oroCommerceApiCall } from './client';
+import { oroAuth } from './auth';
+import { oroApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const createOroCommerceWebhookTrigger = ({
+export const createOroWebhookTrigger = ({
   name,
   description,
   displayName,
@@ -23,7 +23,7 @@ export const createOroCommerceWebhookTrigger = ({
   sampleData: Record<string, unknown>;
 }): Trigger =>
   createTrigger({
-    auth: orocommerceAuth,
+    auth: oroAuth,
     name,
     description,
     displayName,
@@ -32,13 +32,13 @@ export const createOroCommerceWebhookTrigger = ({
     type: TriggerStrategy.WEBHOOK,
 
     async onEnable(context) {
-      const response = await oroCommerceApiCall({
+      const response = await oroApiCall({
         method: HttpMethod.POST,
-        resourceUri: '/remotenotifications',
+        resourceUri: '/remotewebhooks',
         auth: context.auth,
         body: {
           data: {
-            type: 'remotenotifications',
+            type: 'remotewebhooks',
             attributes: {
               channel: topic,
               event,
@@ -65,9 +65,9 @@ export const createOroCommerceWebhookTrigger = ({
       );
 
       if (webhookInfo !== null && webhookInfo !== undefined) {
-        await oroCommerceApiCall({
+        await oroApiCall({
           method: HttpMethod.DELETE,
-          resourceUri: `/remotenotifications/${webhookInfo.webhookId}`,
+          resourceUri: `/remotewebhooks/${webhookInfo.webhookId}`,
           auth: context.auth,
         });
       }

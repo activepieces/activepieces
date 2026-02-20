@@ -1,9 +1,9 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { oroCommerceApiCall } from './client';
+import { oroApiCall } from './client';
 import { AppConnectionType } from '@activepieces/shared';
 
-export const orocommerceAuth = PieceAuth.CustomAuth({
+export const oroAuth = PieceAuth.CustomAuth({
   description: `
 Authenticate to OroCommerce APIs using OAuth 2.0 Client Credentials.
 
@@ -46,7 +46,7 @@ Authenticate to OroCommerce APIs using OAuth 2.0 Client Credentials.
 
   validate: async ({ auth }) => {
     try {
-      await oroCommerceApiCall({
+      await oroApiCall({
         method: HttpMethod.GET,
         resourceUri: '/regions/US-CA',
         auth: {

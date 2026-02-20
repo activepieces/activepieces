@@ -7,20 +7,20 @@ import {
 } from '@activepieces/pieces-common';
 
 import {
-  type OroCommerceAuth,
-  type OroCommerceAuthResponseType,
-  type OroCommerceApiCallParams,
+  type OroAuth,
+  type OroAuthResponseType,
+  type OroApiCallParams,
 } from './types';
 
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
-async function getAccessToken(auth: OroCommerceAuth): Promise<string> {
+async function getAccessToken(auth: OroAuth): Promise<string> {
   if (cachedToken && Date.now() < tokenExpiresAt) {
     return cachedToken;
   }
 
-  const response = await httpClient.sendRequest<OroCommerceAuthResponseType>({
+  const response = await httpClient.sendRequest<OroAuthResponseType>({
     method: HttpMethod.POST,
     url: auth.props.serverUrl + '/oauth2-token',
     headers: {
@@ -39,13 +39,13 @@ async function getAccessToken(auth: OroCommerceAuth): Promise<string> {
   return cachedToken;
 }
 
-export async function oroCommerceApiCall({
+export async function oroApiCall({
   method,
   resourceUri,
   auth,
   queryParams,
   body,
-}: OroCommerceApiCallParams): Promise<HttpResponse<HttpMessageBody>> {
+}: OroApiCallParams): Promise<HttpResponse<HttpMessageBody>> {
   try {
     return await httpClient.sendRequest({
       method,

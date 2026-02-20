@@ -6,20 +6,20 @@ import {
 
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
-import { orocommerceAuth } from './auth';
+import { oroAuth } from './auth';
 
-export type OroCommerceAuth = AppConnectionValueForAuthProperty<typeof orocommerceAuth>;
+export type OroAuth = AppConnectionValueForAuthProperty<typeof oroAuth>;
 
-export type OroCommerceAuthResponseType = {
+export type OroAuthResponseType = {
   token_type: string;
   access_token: string;
   expires_in: number;
 };
 
-export type OroCommerceApiCallParams = {
+export type OroApiCallParams = {
   method: HttpMethod;
   resourceUri: string;
-  auth: OroCommerceAuth;
+  auth: OroAuth;
   queryParams?: QueryParams;
   body?: HttpMessageBody;
 };
