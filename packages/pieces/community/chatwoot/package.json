@@ -1,0 +1,20 @@
+{
+  "name": "@activepieces/piece-chatwoot",
+  "version": "0.1.0",
+  "description": "Chatwoot piece for ActivePieces — webhook trigger for incoming messages and send message action",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@activepieces/pieces-framework": "^0.4.0",
+    "@activepieces/pieces-common": "^0.4.0",
+    "@activepieces/shared": "^0.30.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0"
+  }
+}
