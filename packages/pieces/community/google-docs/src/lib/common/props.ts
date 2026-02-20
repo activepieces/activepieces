@@ -1,7 +1,6 @@
-import { googleDocsAuth } from '../../index';
-import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { google, drive_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { googleDocsAuth, createGoogleClient, GoogleDocsAuthValue } from '.';
+import { DropdownOption, Property } from '@activepieces/pieces-framework';
+import { drive_v3 } from 'googleapis';
 
 export const folderIdProp = Property.Dropdown({
 	displayName: 'Folder',
@@ -16,11 +15,11 @@ export const folderIdProp = Property.Dropdown({
 				options: [],
 			};
 		}
-		const authValue = auth as PiecePropValueSchema<typeof googleDocsAuth>;
+		const authValue = auth as GoogleDocsAuthValue;
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(authValue);
+		const authClient = await createGoogleClient(authValue);
 
+		const { google } = await import('googleapis');
 		const drive = google.drive({ version: 'v3', auth: authClient });
 
 		const options: DropdownOption<string>[] = [];

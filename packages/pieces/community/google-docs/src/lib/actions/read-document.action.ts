@@ -1,7 +1,6 @@
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth, createGoogleClient } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const readDocument = createAction({
   displayName: 'Read Document',
@@ -16,8 +15,7 @@ export const readDocument = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const docs = google.docs({ version: 'v1', auth: authClient });
     const response = await docs.documents.get({
