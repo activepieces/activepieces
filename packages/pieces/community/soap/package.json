@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-soap",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "dependencies": {
     "soap": "1.1.10"
   }
