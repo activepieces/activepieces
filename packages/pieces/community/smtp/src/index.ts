@@ -18,11 +18,13 @@ export const smtpAuth = PieceAuth.CustomAuth({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      required: true,
+      description: 'Leave blank if your mail relay does not require authentication.',
+      required: false,
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      required: true,
+      description: 'Leave blank if your mail relay does not require authentication.',
+      required: false,
     }),
     port: Property.StaticDropdown({
       displayName: 'Port',
