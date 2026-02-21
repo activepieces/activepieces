@@ -48,6 +48,9 @@ import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
 import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 import { listUsers } from './lib/actions/list-users';
+import { slackSendMessageMcpAction } from './lib/actions/send-message-mcp-action';
+import { slackCreateChannelMcpAction } from './lib/actions/create-channel-mcp-action';
+import { slackListThreadsMcpAction } from './lib/actions/list-threads-mcp-action';
 import { deleteMessageAction } from './lib/actions/delete-message';
 
 export const slackAuth = PieceAuth.OAuth2({
@@ -193,6 +196,9 @@ export const slack = createPiece({
     setChannelTopicAction,
     getMessageAction,
     inviteUserToChannelAction,
+    slackSendMessageMcpAction,
+    slackCreateChannelMcpAction,
+    slackListThreadsMcpAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
