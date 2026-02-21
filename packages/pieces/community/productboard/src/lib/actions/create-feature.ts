@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
+import { productboardProps } from '../common/props';
 
 export const createFeature = createAction({
     name: 'create_feature',
@@ -30,37 +31,8 @@ export const createFeature = createAction({
                 ]
             }
         }),
-        status: Property.Dropdown({
-            auth: productboardAuth,
-            displayName: 'Status',
-            description: 'Current status of the feature',
-            required: true,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first'
-                    };
-                }
-                const response = await productboardCommon.apiCall({
-                    auth: auth,
-                    method: HttpMethod.GET,
-                    resourceUri: '/feature-statuses'
-                });
-                const statuses = response.body['data'] ?? [];
-                return {
-                    disabled: false,
-                    options: statuses.map((status: { id: string; name: string }) => ({
-                        label: status.name,
-                        value: status.id
-                    }))
-                };
-            }
-        }),
+        status: productboardProps.status_id(),
         parent_type: Property.DynamicProperties({
-            auth: productboardAuth,
             displayName: 'Parent Type',
             required: true,
             refreshers: ['type'],
@@ -93,7 +65,6 @@ export const createFeature = createAction({
             }
         }),
         parent_id: Property.Dropdown({
-            auth: productboardAuth,
             displayName: 'Parent',
             required: true,
             refreshers: ['parent_type'],
@@ -113,7 +84,7 @@ export const createFeature = createAction({
                 if (!resourceUri) return { disabled: true, options: [], placeholder: 'Invalid parent type' };
 
                 const response = await productboardCommon.apiCall({
-                    auth: auth,
+                    auth: auth as any,
                     method: HttpMethod.GET,
                     resourceUri: resourceUri
                 });

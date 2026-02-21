@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
+import { productboardProps } from '../common/props';
 
 export const updateFeature = createAction({
     name: 'update_feature',
@@ -9,35 +10,7 @@ export const updateFeature = createAction({
     description: 'Updates an existing feature in Productboard.',
     auth: productboardAuth,
     props: {
-        feature_id: Property.Dropdown({
-            auth: productboardAuth,
-            displayName: 'Feature',
-            description: 'The feature to update.',
-            required: true,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first'
-                    };
-                }
-                const response = await productboardCommon.apiCall({
-                    auth: auth,
-                    method: HttpMethod.GET,
-                    resourceUri: '/features'
-                });
-                const features = response.body['data'] ?? [];
-                return {
-                    disabled: false,
-                    options: features.map((feature: { id: string; name: string }) => ({
-                        label: feature.name,
-                        value: feature.id
-                    }))
-                };
-            }
-        }),
+        feature_id: productboardProps.feature_id(),
         name: Property.ShortText({
             displayName: 'Feature Name',
             description: 'New name for the feature.',
@@ -48,35 +21,7 @@ export const updateFeature = createAction({
             description: 'New description for the feature.',
             required: false,
         }),
-        status: Property.Dropdown({
-            auth: productboardAuth,
-            displayName: 'Status',
-            description: 'New status for the feature.',
-            required: false,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first'
-                    };
-                }
-                const response = await productboardCommon.apiCall({
-                    auth: auth,
-                    method: HttpMethod.GET,
-                    resourceUri: '/feature-statuses'
-                });
-                const statuses = response.body['data'] ?? [];
-                return {
-                    disabled: false,
-                    options: statuses.map((status: { id: string; name: string }) => ({
-                        label: status.name,
-                        value: status.id
-                    }))
-                };
-            }
-        }),
+        status: productboardProps.status_id(false),
         archived: Property.Checkbox({
             displayName: 'Archived',
             description: 'Whether the feature is archived.',
