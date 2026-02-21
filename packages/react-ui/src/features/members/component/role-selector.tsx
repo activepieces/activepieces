@@ -1,3 +1,4 @@
+import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import {
@@ -9,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlatformRole } from '@activepieces/shared';
 
 type RoleConfig<T = string> = {
   value: T;

@@ -1,8 +1,7 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { mkdir, readdir, writeFile, unlink } from 'fs/promises';
+import { mkdir, readdir, writeFile } from 'fs/promises';
 import inquirer from 'inquirer';
-import assert from 'node:assert';
 import path from 'node:path';
 
 const validatePieceName = async (pieceName: string) => {

@@ -10,7 +10,7 @@
     "@types/pdf-parse": "1.1.4"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/pdf/",
+    "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -1,5 +1,3 @@
-import { t } from 'i18next';
-
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -17,6 +15,7 @@ import {
   StepOutput,
   StepRunResponse,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import {
   PieceStepMetadata,

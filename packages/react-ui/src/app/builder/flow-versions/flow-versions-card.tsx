@@ -1,3 +1,8 @@
+import {
+  FlowVersionMetadata,
+  FlowVersionState,
+  Permission,
+} from '@activepieces/shared';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Eye, EyeIcon, Pencil } from 'lucide-react';
@@ -23,11 +28,6 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import {
-  FlowVersionMetadata,
-  FlowVersionState,
-  Permission,
-} from '@activepieces/shared';
 
 import { OverwriteDraftDialog } from './overwrite-draft-dialog';
 

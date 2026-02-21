@@ -1,3 +1,8 @@
+import {
+  ApplicationEventName,
+  EventDestination,
+  CreatePlatformEventDestinationRequestBody,
+} from '@activepieces/ee-shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -23,11 +28,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  ApplicationEventName,
-  EventDestination,
-  CreatePlatformEventDestinationRequestBody,
-} from '@activepieces/ee-shared';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 

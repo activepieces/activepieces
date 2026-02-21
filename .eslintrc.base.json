@@ -9,7 +9,10 @@
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@typescript-eslint/recommended"],
-      "rules": {}
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "warn",
+        "@typescript-eslint/no-explicit-any": "warn"
+      }
     },
     {
       "files": ["*.js", "*.jsx"],

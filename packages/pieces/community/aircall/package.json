@@ -8,7 +8,7 @@
     "tslib": "^2.3.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/aircall/",
+    "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

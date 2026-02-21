@@ -1,4 +1,7 @@
-import { PieceAuth, OAuth2AuthorizationMethod } from '@activepieces/pieces-framework';
+import {
+  PieceAuth,
+  OAuth2AuthorizationMethod,
+} from '@activepieces/pieces-framework';
 
 export const notionAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.notion.com/v1/oauth/authorize',

@@ -1,3 +1,4 @@
+import { DefaultProjectRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 
@@ -13,7 +14,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { DefaultProjectRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;

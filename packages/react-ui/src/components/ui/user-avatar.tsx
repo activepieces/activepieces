@@ -1,7 +1,7 @@
+import { isNil } from '@activepieces/shared';
 import Avatar from 'boring-avatars';
 
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 

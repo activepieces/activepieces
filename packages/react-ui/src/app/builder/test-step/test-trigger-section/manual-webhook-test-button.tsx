@@ -1,9 +1,9 @@
+import { FlowTrigger } from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import { FlowTrigger } from '@activepieces/shared';
 
 import TestWebhookDialog from '../custom-test-step/test-webhook-dialog';
 

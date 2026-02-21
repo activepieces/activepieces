@@ -6,7 +6,7 @@
     "mailparser": "3.7.5"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/gmail/",
+    "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
   }
 }
