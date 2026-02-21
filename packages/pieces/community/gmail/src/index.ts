@@ -15,6 +15,7 @@ import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
 import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
 import { gmailGetEmailAction } from './lib/actions/get-mail-action';
+import { gmailCreateLabelAction } from './lib/actions/create-label-action';
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
@@ -26,6 +27,7 @@ export const gmailAuth = PieceAuth.OAuth2({
     'email',
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.labels',
   ],
 });
 
@@ -43,6 +45,7 @@ export const gmail = createPiece({
     gmailCreateDraftReplyAction,
     gmailGetEmailAction,
     gmailSearchMailAction,
+    gmailCreateLabelAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
