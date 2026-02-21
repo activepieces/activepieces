@@ -69,6 +69,9 @@ import { createBlogPostAction } from './lib/actions/create-blog-post';
 import {  createPageAction } from './lib/actions/create-page';
 import { getPageAction } from './lib/actions/get-page';
 import { deletePageAction } from './lib/actions/delete-page';
+import { hubspotCreateContactAction } from './lib/actions/create-contact-mcp-action';
+import { hubspotUpdateDealAction } from './lib/actions/update-deal-mcp-action';
+import { hubspotGetCompanyAction } from './lib/actions/get-company-mcp-action';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -77,6 +80,18 @@ export const hubspotAuth = PieceAuth.OAuth2({
 	scope: [
 		'crm.lists.read',
 		'crm.lists.write',
+		'crm.objects.companies.read',
+		'crm.objects.companies.write',
+		'crm.objects.contacts.read',
+		'crm.objects.contacts.write',
+		'crm.objects.custom.read',
+		'crm.objects.custom.write',
+		'crm.objects.deals.read',
+		'crm.objects.deals.write',
+		'crm.objects.line_items.read',
+		'crm.objects.owners.read',
+		'crm.objects.leads.read',
+		'crm.objects.leads.write',
 		'crm.objects.companies.read',
 		'crm.objects.companies.write',
 		'crm.objects.contacts.read',
@@ -117,6 +132,9 @@ export const hubspot = createPiece({
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: hubspotAuth,
 	actions: [
+		hubspotCreateContactAction,
+		hubspotUpdateDealAction,
+		hubspotGetCompanyAction,
 		hubSpotListsAddContactAction,
 		addContactToWorkflowAction,
 		createAssociationsAction,
@@ -196,3 +214,4 @@ export const hubspot = createPiece({
 		dealStageUpdatedTrigger,
 	],
 });
+
