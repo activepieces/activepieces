@@ -24,13 +24,12 @@ export const ActiveFlowsMetric = ({ report }: ActiveFlowsMetricProps) => {
       icon={Workflow}
       title={t('Active Flows')}
       value={activeFlows.toLocaleString()}
-      description={t(
-        'Flows running 24/7, eliminating repetitive manual tasks and reducing human error across your organization.',
-      )}
+      description={t('Number of currently active flows')}
       subtitle={t('{total} total flows created', {
         total: totalFlows.toLocaleString(),
       })}
-      iconColor="text-cyan-600"
+      iconColor="text-purple-500"
+      iconBgColor="bg-purple-500/10"
     />
   );
 };

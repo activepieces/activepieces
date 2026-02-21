@@ -25,11 +25,9 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
       icon={Zap}
       title={t('Automation Runs')}
       value={totalFlowRuns.toLocaleString()}
-      description={t(
-        'Total flow runs completed automatically, showing how many tasks your team automated in the last 3 months.',
-      )}
-      subtitle={t('')}
-      iconColor="text-amber-600"
+      description={t('Total automation executions')}
+      iconColor="text-rose-500"
+      iconBgColor="bg-rose-500/10"
     />
   );
 };

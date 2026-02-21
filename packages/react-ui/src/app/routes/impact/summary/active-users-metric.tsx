@@ -27,14 +27,13 @@ export const ActiveUsersMetric = ({ report }: ActiveUsersMetricProps) => {
       icon={Users}
       title={t('Active Users')}
       value={activeUsers.toLocaleString()}
-      description={t(
-        'Team members actively using automations in the last 30 days. Higher adoption means greater ROI on your automation investment.',
-      )}
+      description={t('Users actively using the platform')}
       subtitle={t('{rate}% adoption rate ({total} total users)', {
         rate: adoptionRate,
         total: totalUsers.toLocaleString(),
       })}
-      iconColor="text-indigo-600"
+      iconColor="text-amber-500"
+      iconBgColor="bg-amber-500/10"
     />
   );
 };

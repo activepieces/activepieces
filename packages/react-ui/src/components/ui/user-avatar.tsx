@@ -30,7 +30,7 @@ export function UserAvatar({
       alt={name}
       width={size}
       height={size}
-      className={cn('rounded-full object-cover', className)}
+      className={cn('rounded-full aspect-square object-cover', className)}
       style={{ width: `${size}px !important`, height: `${size}px !important` }}
     />
   ) : (

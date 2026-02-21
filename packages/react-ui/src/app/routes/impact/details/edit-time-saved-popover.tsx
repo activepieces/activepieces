@@ -15,17 +15,12 @@ import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { FlowOperationType } from '@activepieces/shared';
 
+import { hmsToMinutes, minutesToHMS } from '../lib/impact-utils';
+
 type EditTimeSavedPopoverProps = {
   flowId: string;
   currentValue: number | null | undefined;
   children: React.ReactNode;
-};
-
-const getInitialValue = (currentValue: number | null | undefined): string => {
-  if (currentValue === null || currentValue === undefined) {
-    return '';
-  }
-  return currentValue.toString();
 };
 
 export function EditTimeSavedPopover({
@@ -35,12 +30,17 @@ export function EditTimeSavedPopover({
 }: EditTimeSavedPopoverProps) {
   const { setTimeSavedPerRunOverride } = useContext(RefreshAnalyticsContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [value, setValue] = useState<string>(getInitialValue(currentValue));
+  const [hours, setHours] = useState('');
+  const [mins, setMins] = useState('');
+  const [secs, setSecs] = useState('');
   const previousValueRef = useRef<number | null | undefined>(currentValue);
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      setValue(getInitialValue(currentValue));
+      const hms = minutesToHMS(currentValue);
+      setHours(hms.hours);
+      setMins(hms.mins);
+      setSecs(hms.secs);
       previousValueRef.current = currentValue;
     }
     setIsOpen(open);
@@ -50,9 +50,7 @@ export function EditTimeSavedPopover({
     mutationFn: async (timeSavedPerRun: number | null) => {
       await flowsApi.update(flowId, {
         type: FlowOperationType.UPDATE_MINUTES_SAVED,
-        request: {
-          timeSavedPerRun,
-        },
+        request: { timeSavedPerRun },
       });
       await analyticsApi.markAsOutdated();
     },
@@ -67,48 +65,79 @@ export function EditTimeSavedPopover({
   });
 
   const handleSave = () => {
-    const newValue = value === '' ? null : parseInt(value, 10);
-    if (value !== '' && (isNaN(newValue!) || newValue! < 0)) {
-      toast.error(t('Please enter a valid number'));
-      return;
-    }
-    mutate(newValue);
+    mutate(hmsToMinutes(hours, mins, secs));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSave();
-    } else if (e.key === 'Escape') {
-      setIsOpen(false);
+    if (e.key === 'Enter') handleSave();
+    else if (e.key === 'Escape') setIsOpen(false);
+  };
+
+  const handleInputChange = (
+    value: string,
+    setter: (val: string) => void,
+    max: number,
+  ) => {
+    const numericValue = value.replace(/\D/g, '');
+    const num = parseInt(numericValue, 10);
+    if (numericValue === '' || (num >= 0 && num <= max)) {
+      setter(numericValue);
     }
   };
 
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
-        <div className="flex flex-col gap-3">
-          <div className="text-sm font-medium">{t('Time Saved Per Run')}</div>
-          <div className="text-xs text-muted-foreground">
-            {t(
-              'Enter minutes saved per run, or leave empty to use automatic estimation',
-            )}
+      <PopoverContent className="w-[260px] p-4" align="start">
+        <div className="flex flex-col gap-4">
+          <div className="text-sm font-semibold">{t('Time Saved Per Run')}</div>
+
+          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="hh"
+              value={hours}
+              onChange={(e) => handleInputChange(e.target.value, setHours, 99)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 text-center h-9 bg-background"
+              maxLength={2}
+              autoFocus
+            />
+            <span className="text-muted-foreground font-medium shrink-0">
+              :
+            </span>
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="mm"
+              value={mins}
+              onChange={(e) => handleInputChange(e.target.value, setMins, 59)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 text-center h-9 bg-background"
+              maxLength={2}
+            />
+            <span className="text-muted-foreground font-medium shrink-0">
+              :
+            </span>
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="ss"
+              value={secs}
+              onChange={(e) => handleInputChange(e.target.value, setSecs, 59)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 text-center h-9 bg-background"
+              maxLength={2}
+            />
           </div>
-          <Input
-            type="number"
-            min={0}
-            placeholder={t('e.g. 15')}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-          />
+
+          <p className="text-xs text-muted-foreground">
+            {t('How long this task takes without automation.')}
+          </p>
+
           <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>
               {t('Cancel')}
             </Button>
             <Button size="sm" onClick={handleSave} loading={isPending}>

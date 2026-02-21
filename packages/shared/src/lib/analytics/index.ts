@@ -6,7 +6,9 @@ import { UserWithMetaInformation } from '../user'
 export enum AnalyticsTimePeriod {
     LAST_WEEK = 'last-week',
     LAST_MONTH = 'last-month',
-    ALL_TIME = 'all-time',
+    LAST_THREE_MONTHS = 'last-three-months',
+    LAST_SIX_MONTHS = 'last-six-months',
+    LAST_YEAR = 'last-year',
 }
 
 export const AnalyticsRunsUsageItem = Type.Object({

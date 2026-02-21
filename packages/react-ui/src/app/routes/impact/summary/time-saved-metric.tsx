@@ -49,10 +49,11 @@ export const TimeSavedMetric = ({
         description={t(
           'Estimated hours saved through automation in the last 3 months. Each automated task saves valuable employee time that can be redirected to high-impact work.',
         )}
-        subtitle={t('Equivalent to {days} workdays saved', {
+        subtitle={t('{days} workdays saved', {
           days: 'N/A',
         })}
-        iconColor="text-emerald-600"
+        iconColor="text-emerald-500"
+        iconBgColor="bg-emerald-500/10"
       />
     );
   }
@@ -62,13 +63,12 @@ export const TimeSavedMetric = ({
       icon={Clock}
       title={t('Time Saved')}
       value={formatUtils.formatToHoursAndMinutes(minutesSaved)}
-      description={t(
-        'Estimated hours saved through automation in the last 3 months. Each automated task saves valuable employee time that can be redirected to high-impact work.',
-      )}
-      subtitle={t('Equivalent to {days} workdays saved', {
+      description={t('Total time saved by automation')}
+      subtitle={t('{days} workdays saved', {
         days: equivalentWorkdays.toLocaleString(),
       })}
-      iconColor="text-emerald-600"
+      iconColor="text-emerald-500"
+      iconBgColor="bg-emerald-500/10"
     />
   );
 };
