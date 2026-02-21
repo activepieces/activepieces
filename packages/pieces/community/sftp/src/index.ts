@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { isNil, PieceCategory } from '@activepieces/shared';
 import Client from 'ssh2-sftp-client';
+import { ServerHostKeyAlgorithm } from 'ssh2';
 import { Client as FTPClient } from 'basic-ftp';
 import { createFile } from './lib/actions/create-file';
 import { uploadFileAction } from './lib/actions/upload-file';
@@ -22,35 +23,56 @@ export async function getProtocolBackwardCompatibility(protocol: string | undefi
   }
   return protocol;
 }
-export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, allow_unauthorized_certificates: boolean | undefined, allow_anonymous_login: boolean | undefined, username: string, password: string | undefined, privateKey: string | undefined, algorithm: string[] | undefined }): Promise<T> {
+export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, allow_unauthorized_certificates: boolean | undefined, allow_anonymous_login: boolean | undefined, username: string, password: string | undefined, privateKey: string | undefined, algorithm: ServerHostKeyAlgorithm[] | string[] | undefined }): Promise<T> {
   const { protocol, host, port, allow_unauthorized_certificates, allow_anonymous_login, username, password, privateKey, algorithm } = auth;
   const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(protocol);
   if (protocolBackwardCompatibility === 'sftp') {
     const sftp = new Client();
 
-    if (password) {
-      await sftp.connect({
-        host,
-        port,
-        username,
-        password,
-        timeout: 10000,
-      });
-    }
-    else if (privateKey) {
-      if (!algorithm || algorithm.length === 0) {
-        throw new Error('At least one algorithm must be selected for SFTP Private Key authentication.');
+    if (privateKey) {
+      // Handle literal \\n strings (from users who manually escaped newlines)
+      let processedKey = privateKey
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .trim();
+
+      // Handle case where browser input converts newlines to spaces
+      if (!processedKey.includes('\n') && processedKey.match(/-----BEGIN [A-Z0-9 ]+ KEY-----.*-----END [A-Z0-9 ]+ KEY-----/)) {
+        processedKey = processedKey
+          .replace(/(-----BEGIN [A-Z0-9 ]+ KEY-----)\s+/, '$1\n')
+          .replace(/(Proc-Type:\s*\S+)\s+/, '$1\n')
+          .replace(/(DEK-Info:\s*\S+)\s+/, '$1\n\n')
+          .replace(/\s+(-----END [A-Z0-9 ]+ KEY-----)/, '\n$1');
+        const beginMatch = processedKey.match(/(-----BEGIN [A-Z0-9 ]+ KEY-----\n(?:Proc-Type:[^\n]+\n)?(?:DEK-Info:[^\n]+\n\n)?)/);
+        const endMatch = processedKey.match(/(\n-----END [A-Z0-9 ]+ KEY-----)/);
+        if (beginMatch && endMatch) {
+          const header = beginMatch[1];
+          const footer = endMatch[1];
+          const base64Content = processedKey.replace(header, '').replace(footer, '').replace(/\s+/g, '');
+          const lines = base64Content.match(/.{1,64}/g) || [];
+          processedKey = header + lines.join('\n') + footer;
+        }
       }
-      await sftp.connect({
+
+      const connectOptions: Client.ConnectOptions = {
         host,
         port,
         username,
-        privateKey: privateKey.replace(/\\n/g, '\n').trim(),
-        algorithms: {
-          serverHostKey: algorithm 
-        }  as Client.ConnectOptions['algorithms'],
+        privateKey: processedKey,
         timeout: 10000,
-      });
+      };
+      if (password) {
+        connectOptions.passphrase = password;
+      }
+      if (algorithm && algorithm.length > 0) {
+        connectOptions.algorithms = { serverHostKey: algorithm as ServerHostKeyAlgorithm[] };
+      }
+      await sftp.connect(connectOptions);
+    }
+    else if (password) {
+      await sftp.connect({ host, port, username, password, timeout: 10000 });
     }
 
     return sftp as T;
@@ -62,9 +84,7 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
       user: username,
       password,
       secure: protocolBackwardCompatibility === 'ftps',
-      secureOptions: {
-        rejectUnauthorized: !(allow_unauthorized_certificates ?? false),
-      }
+      secureOptions: { rejectUnauthorized: !(allow_unauthorized_certificates ?? false) }
     });
     return ftpClient as T;
   }
@@ -85,70 +105,51 @@ export const sftpAuth = PieceAuth.CustomAuth({
       displayName: 'Protocol',
       description: 'The protocol to use',
       required: false,
-      options: {
-        options: [
-          { value: 'sftp', label: 'SFTP' },
-          { value: 'ftp', label: 'FTP' },
-          { value: 'ftps', label: 'FTPS' }
-        ],
-      },
+      options: { options: [
+        { value: 'sftp', label: 'SFTP' },
+        { value: 'ftp', label: 'FTP' },
+        { value: 'ftps', label: 'FTPS' }
+      ] },
     }),
     allow_unauthorized_certificates: Property.Checkbox({
       displayName: 'Allow Unauthorized Certificates',
-      description:
-        'Allow connections to servers with self-signed certificates',
+      description: 'Allow connections to servers with self-signed certificates',
       defaultValue: false,
       required: false,
     }),
     allow_anonymous_login: Property.Checkbox({
       displayName: 'Allow Anonymous Login',
-      description:
-        'Allow anonymous login to FTP servers (only applicable for FTP/FTPS)',
+      description: 'Allow anonymous login to FTP servers (only applicable for FTP/FTPS)',
       defaultValue: false,
       required: false,
     }),
-    host: Property.ShortText({
-      displayName: 'Host',
-      description: 'The host of the server',
-      required: true,
-    }),
-    port: Property.Number({
-      displayName: 'Port',
-      description: 'The port of the server',
-      required: true,
-      defaultValue: 22,
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      description: 'The username to authenticate with',
-      required: true,
-    }),
+    host: Property.ShortText({ displayName: 'Host', description: 'The host of the server', required: true }),
+    port: Property.Number({ displayName: 'Port', description: 'The port of the server', required: true, defaultValue: 22 }),
+    username: Property.ShortText({ displayName: 'Username', description: 'The username to authenticate with', required: true }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description: 'The password to authenticate with. Either this or private key is required',
+      description: 'The password to authenticate with. Either this or private key is required. When using a private key, this field is used as the passphrase to decrypt the key.',
       required: false,
     }),
     privateKey: PieceAuth.SecretText({
       displayName: 'Private Key',
-      description: 'The private key to authenticate with. Either this or password is required',
+      description: 'The private key to authenticate with. Either this or password is required.',
       required: false,
     }),
     algorithm: Property.StaticMultiSelectDropdown({
       displayName: 'Host Key Algorithm',
-      description: 'The host key algorithm to use for SFTP Private Key authentication',
+      description: 'The host key algorithm to use for SFTP connection. Only needed if you want to override the default algorithms (e.g., to support ssh-dss).',
       required: false,
-      options: {
-        options: [
-          { value: 'ssh-rsa', label: 'ssh-rsa' },
-          { value: 'ssh-dss', label: 'ssh-dss' },
-          { value: 'ecdsa-sha2-nistp256', label: 'ecdsa-sha2-nistp256' },
-          { value: 'ecdsa-sha2-nistp384', label: 'ecdsa-sha2-nistp384' },
-          { value: 'ecdsa-sha2-nistp521', label: 'ecdsa-sha2-nistp521' },
-          { value: 'ssh-ed25519', label: 'ssh-ed25519' },
-          { value: 'rsa-sha2-256', label: 'rsa-sha2-256' },
-          { value: 'rsa-sha2-512', label: 'rsa-sha2-512' }
-        ],
-      },
+      options: { options: [
+        { value: 'ssh-rsa', label: 'ssh-rsa' },
+        { value: 'ssh-dss', label: 'ssh-dss' },
+        { value: 'ecdsa-sha2-nistp256', label: 'ecdsa-sha2-nistp256' },
+        { value: 'ecdsa-sha2-nistp384', label: 'ecdsa-sha2-nistp384' },
+        { value: 'ecdsa-sha2-nistp521', label: 'ecdsa-sha2-nistp521' },
+        { value: 'ssh-ed25519', label: 'ssh-ed25519' },
+        { value: 'rsa-sha2-256', label: 'rsa-sha2-256' },
+        { value: 'rsa-sha2-512', label: 'rsa-sha2-512' }
+      ] },
     })
   },
   validate: async ({ auth }) => {
@@ -156,21 +157,13 @@ export const sftpAuth = PieceAuth.CustomAuth({
     const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.protocol);
     try {
       if (!auth.privateKey && !auth.password && !auth.allow_anonymous_login) {
-        return {
-          valid: false,
-          error: 'Either password or private key must be provided for non-anonymous authentication.',
-        };
+        return { valid: false, error: 'Either password or private key must be provided for non-anonymous authentication.' };
       }
-
       switch (protocolBackwardCompatibility) {
         case 'sftp': {
           if (auth.allow_anonymous_login) {
-            return {
-              valid: false,
-              error: 'Anonymous login is not supported for SFTP protocol.',
-            };
+            return { valid: false, error: 'Anonymous login is not supported for SFTP protocol.' };
           }
-
           client = await getClient<Client>(auth);
           break;
         }
@@ -179,14 +172,9 @@ export const sftpAuth = PieceAuth.CustomAuth({
           break;
         }
       }
-      return {
-        valid: true,
-      };
+      return { valid: true };
     } catch (err) {
-      return {
-        valid: false,
-        error: (err as Error)?.message,
-      };
+      return { valid: false, error: (err as Error)?.message };
     } finally {
       if (client) {
         await endClient(client, auth.protocol);
@@ -202,24 +190,8 @@ export const ftpSftp = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/sftp.svg',
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
-  authors: [
-    'Abdallah-Alwarawreh',
-    'kishanprmr',
-    'AbdulTheActivePiecer',
-    'khaledmashaly',
-    'abuaboud',
-    'prasanna2000-max',
-  ],
+  authors: ['Abdallah-Alwarawreh', 'kishanprmr', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud', 'prasanna2000-max'],
   auth: sftpAuth,
-  actions: [
-    createFile,
-    uploadFileAction,
-    readFileContent,
-    deleteFileAction,
-    createFolderAction,
-    deleteFolderAction,
-    listFolderContentsAction,
-    renameFileOrFolderAction,
-  ],
+  actions: [createFile, uploadFileAction, readFileContent, deleteFileAction, createFolderAction, deleteFolderAction, listFolderContentsAction, renameFileOrFolderAction],
   triggers: [newOrModifiedFile],
 });
