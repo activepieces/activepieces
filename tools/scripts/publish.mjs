@@ -20,10 +20,10 @@ function invariant(condition, message) {
 
 // Known output paths for publishable packages
 const outputPaths = {
-  shared: 'dist/packages/shared',
+  shared: 'packages/shared/dist',
   engine: 'dist/packages/engine',
-  'pieces-framework': 'dist/packages/pieces/community/framework',
-  'pieces-common': 'dist/packages/pieces/community/common',
+  'pieces-framework': 'packages/pieces/community/framework/dist',
+  'pieces-common': 'packages/pieces/community/common/dist',
 };
 
 // Executing publish script: node path/to/publish.mjs {name} --version {version} --tag {tag}

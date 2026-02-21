@@ -2,7 +2,7 @@
   "name": "@activepieces/piece-mcp",
   "version": "0.0.15",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/mcp/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

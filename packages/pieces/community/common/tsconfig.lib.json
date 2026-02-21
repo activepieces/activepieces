@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "../../../../dist/packages/pieces/community/common",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"],
     "baseUrl": ".",

@@ -5,7 +5,6 @@ import chalk from 'chalk'
 import { FSWatcher, watch } from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
-import { devPiecesInstaller } from './dev-pieces-installer'
 import { devPiecesState } from './dev-pieces-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
@@ -19,7 +18,9 @@ async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLog
         }
     }
 
-    const filterArgs = pieceNames.map(name => `--filter=./packages/pieces/community/${name}`).join(' ')
+    const pieceFilters = pieceNames.map(name => `--filter=@activepieces/piece-${name}`).join(' ')
+    const sharedFilters = '--filter=@activepieces/pieces-framework --filter=@activepieces/pieces-common --filter=@activepieces/shared'
+    const filterArgs = `${sharedFilters} ${pieceFilters} --force`
     log.info(chalk.blue.bold(`🤌 Building ${pieceNames.length} piece(s): ${pieceNames.join(',')}... 🤌`))
 
     let lock: ApLock | undefined
@@ -67,19 +68,13 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
             app.log.info(chalk.yellow(`Piece directory not found for package: ${packageName}`))
             return null
         }
-        const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
-        return { packageName, pieceDirectory, packageJsonName }
+        return { packageName, pieceDirectory }
     }))
     const pieceInfos = resolvedInfos.filter((info) => info !== null)
 
     await buildPieces(pieceInfos.map(p => p.packageName), io, app.log)
 
-    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-    for (const { packageJsonName } of pieceInfos) {
-        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
-    }
-
-    for (const { packageName, pieceDirectory, packageJsonName } of pieceInfos) {
+    for (const { packageName, pieceDirectory } of pieceInfos) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
         app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
@@ -87,8 +82,6 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
             void (async (): Promise<void> => {
                 try {
                     await buildPieces([packageName], io, app.log)
-                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
                 }
                 catch (error) {
                     app.log.error(error)

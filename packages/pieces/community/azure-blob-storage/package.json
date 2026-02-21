@@ -10,7 +10,7 @@
     "@azure/storage-blob": "12.29.1"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/azure-blob-storage/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

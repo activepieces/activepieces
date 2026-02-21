@@ -5,7 +5,7 @@
     "@hubspot/api-client": "12.0.1"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/hubspot/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

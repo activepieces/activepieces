@@ -2,10 +2,10 @@
   "name": "@activepieces/shared",
   "version": "0.37.0",
   "type": "commonjs",
-  "main": "./src/index.ts",
+  "main": "./dist/src/index.js",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

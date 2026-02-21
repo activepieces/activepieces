@@ -5,7 +5,7 @@
     "@mailchain/sdk": "^0.31.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/mailchain/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

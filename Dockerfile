@@ -94,15 +94,13 @@ COPY docker-entrypoint.sh .
 # Create all necessary directories in one layer
 RUN mkdir -p \
     /usr/src/app/dist/packages/server \
-    /usr/src/app/dist/packages/engine \
-    /usr/src/app/dist/packages/shared && \
+    /usr/src/app/dist/packages/engine && \
     chmod +x docker-entrypoint.sh
 
 # Copy built artifacts from build stage
 COPY --from=build /usr/src/app/LICENSE .
 COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 COPY --from=build /usr/src/app/dist/packages/server/ ./dist/packages/server/
-COPY --from=build /usr/src/app/dist/packages/shared/ ./dist/packages/shared/
 COPY --from=build /usr/src/app/packages ./packages
 
 # Copy frontend files to Nginx document root

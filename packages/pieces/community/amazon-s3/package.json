@@ -6,7 +6,7 @@
     "openpgp": "^6.3.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/amazon-s3/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

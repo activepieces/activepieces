@@ -2,7 +2,7 @@
   "name": "@activepieces/piece-totalcms",
   "version": "0.1.5",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/totalcms/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

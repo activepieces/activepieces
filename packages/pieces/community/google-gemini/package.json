@@ -10,7 +10,7 @@
     "@types/wav": "^1.0.4"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/google-gemini/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

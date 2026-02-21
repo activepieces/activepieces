@@ -2,7 +2,7 @@
   "name": "@activepieces/piece-date-helper",
   "version": "0.1.26",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/date-helper/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -5,7 +5,7 @@
     "airtable": "0.11.6"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/airtable/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "../../../../dist/packages/pieces/community/framework",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"],
     "allowSyntheticDefaultImports": true,
