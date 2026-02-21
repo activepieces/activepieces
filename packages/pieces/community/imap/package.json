@@ -4,5 +4,9 @@
   "dependencies": {
     "imapflow": "1.0.200",
     "mailparser": "3.7.5"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

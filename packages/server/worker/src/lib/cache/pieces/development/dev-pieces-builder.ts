@@ -13,23 +13,21 @@ export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLogger): Promise<void> {
     if (pieceNames.length === 0) return
 
-    const projectNames = pieceNames.map(name => `pieces-${name}`)
-
-    for (const projectName of projectNames) {
-        if (!/^[A-Za-z0-9-]+$/.test(projectName)) {
-            throw new Error(`Piece package name contains invalid character: ${projectName}`)
+    for (const name of pieceNames) {
+        if (!/^[A-Za-z0-9-]+$/.test(name)) {
+            throw new Error(`Piece package name contains invalid character: ${name}`)
         }
     }
 
-    const projectList = projectNames.join(',')
-    log.info(chalk.blue.bold(`🤌 Building ${projectNames.length} piece(s): ${projectList}... 🤌`))
+    const filterArgs = pieceNames.map(name => `--filter=./packages/pieces/community/${name}`).join(' ')
+    log.info(chalk.blue.bold(`🤌 Building ${pieceNames.length} piece(s): ${pieceNames.join(',')}... 🤌`))
 
     let lock: ApLock | undefined
     try {
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
         const startTime = performance.now()
-        await spawnWithKill({ cmd: `npx nx run-many --batch -t build --projects=${projectList}`, printOutput: true })
+        await spawnWithKill({ cmd: `turbo run build ${filterArgs}`, printOutput: true })
         const endTime = performance.now()
         const buildTime = (endTime - startTime) / 1000
 

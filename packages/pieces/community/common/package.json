@@ -1,5 +1,11 @@
 {
   "name": "@activepieces/pieces-common",
   "version": "0.11.5",
-  "type": "commonjs"
+  "type": "commonjs",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

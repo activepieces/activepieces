@@ -3,5 +3,9 @@
   "version": "0.1.2",
   "dependencies": {
     "soap": "1.1.10"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

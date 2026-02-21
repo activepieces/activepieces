@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-firecrawl",
-  "version": "0.3.4"
+  "version": "0.3.4",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

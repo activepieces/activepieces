@@ -3,5 +3,9 @@
   "version": "0.1.2",
   "dependencies": {
     "@huggingface/inference": "4.7.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

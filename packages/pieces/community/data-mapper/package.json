@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-data-mapper",
-  "version": "0.3.14"
+  "version": "0.3.14",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

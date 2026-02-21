@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-tables",
-  "version": "0.2.16"
+  "version": "0.2.16",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

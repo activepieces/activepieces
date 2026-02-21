@@ -3,5 +3,9 @@
   "version": "0.2.3",
   "dependencies": {
     "@dust-tt/client": "1.0.57"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

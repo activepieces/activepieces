@@ -3,5 +3,9 @@
   "version": "0.1.2",
   "dependencies": {
     "google-auth-library": "8.9.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

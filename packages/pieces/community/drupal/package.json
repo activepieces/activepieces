@@ -11,5 +11,9 @@
     "@activepieces/shared": "*",
     "@activepieces/pieces-framework": "*",
     "@activepieces/pieces-common": "*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

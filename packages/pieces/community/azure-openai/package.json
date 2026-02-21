@@ -4,5 +4,9 @@
   "dependencies": {
     "tiktoken": "1.0.11",
     "@azure/openai": "1.0.0-beta.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

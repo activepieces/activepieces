@@ -1,6 +1,10 @@
 {
   "name": "@activepieces/engine",
   "version": "0.7.0",
-  "type": "commonjs"
+  "type": "commonjs",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }
 

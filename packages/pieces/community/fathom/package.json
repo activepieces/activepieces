@@ -7,5 +7,9 @@
   "dependencies": {
     "fathom-typescript": "^0.0.36",
     "tslib": "^2.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

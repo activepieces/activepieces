@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-rounded-studio",
-  "version": "0.2.3"
+  "version": "0.2.3",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

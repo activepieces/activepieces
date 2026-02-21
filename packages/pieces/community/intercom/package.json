@@ -4,5 +4,9 @@
   "dependencies": {
     "intercom-client": "6.2.0",
     "string-strip-html": "8.5.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

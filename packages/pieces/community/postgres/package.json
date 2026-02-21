@@ -4,5 +4,9 @@
   "dependencies": {
     "pg": "8.11.3",
     "pg-format": "1.0.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

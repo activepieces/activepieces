@@ -3,5 +3,9 @@
   "version": "0.2.3",
   "dependencies": {
     "https-proxy-agent": "7.0.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

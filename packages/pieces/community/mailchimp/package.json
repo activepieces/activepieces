@@ -3,5 +3,9 @@
   "version": "0.5.2",
   "dependencies": {
     "@mailchimp/mailchimp_marketing": "3.0.80"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { omnihrAuth } from '../../index';
+import { omnihrAuth } from '../auth';
 import { getAuthHeaders, OmniHrAuth } from '../common/client';
 
 export const getEmployeeInfo = createAction({

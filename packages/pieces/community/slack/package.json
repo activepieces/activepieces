@@ -4,5 +4,9 @@
   "dependencies": {
     "@slack/web-api": "7.9.0",
     "slackify-markdown": "4.4.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

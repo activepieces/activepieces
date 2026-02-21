@@ -3,5 +3,9 @@
   "version": "0.2.3",
   "dependencies": {
     "crypto-js": "4.2.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

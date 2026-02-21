@@ -1,5 +1,9 @@
 {
   "name": "@activepieces/ee-shared",
   "version": "0.0.11",
-  "type": "commonjs"
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

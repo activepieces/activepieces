@@ -1,4 +1,4 @@
-import { instaChartsAuth } from '../../index';
+import { instaChartsAuth } from '../auth';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import {
   createAction,

@@ -6,5 +6,9 @@
   },
   "dependencies": {
     "qrcode": "1.5.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

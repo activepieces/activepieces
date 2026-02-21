@@ -3,5 +3,9 @@
   "version": "0.2.2",
   "dependencies": {
     "@linear/sdk": "7.0.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-clickup",
-  "version": "0.7.3"
+  "version": "0.7.3",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

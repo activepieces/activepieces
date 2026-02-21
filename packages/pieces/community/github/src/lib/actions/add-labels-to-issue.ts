@@ -1,4 +1,4 @@
-import { githubAuth } from '../../index';
+import { githubAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';

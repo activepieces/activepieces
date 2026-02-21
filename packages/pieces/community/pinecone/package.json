@@ -7,5 +7,9 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "@pinecone-database/pinecone": "^6.1.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

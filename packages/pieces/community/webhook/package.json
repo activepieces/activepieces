@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-webhook",
-  "version": "0.1.28"
+  "version": "0.1.28",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

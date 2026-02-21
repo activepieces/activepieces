@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-dropbox",
-  "version": "0.6.3"
+  "version": "0.6.3",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

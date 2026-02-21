@@ -11,7 +11,7 @@ import { listFolders } from './lib/actions/list-folders';
 import { uploadFile } from './lib/actions/upload-file';
 import { oneDriveCommon } from './lib/common/common';
 import { newFile } from './lib/triggers/new-file';
-
+import { oneDriveAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -38,15 +38,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
-
-export const oneDriveAuth = PieceAuth.OAuth2({
-  description: authDesc,
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-  required: true,
-  scope: ['Files.ReadWrite', 'offline_access'],
-  prompt: 'omit'
-});
 
 export const microsoftOneDrive = createPiece({
   displayName: 'Microsoft OneDrive',

@@ -5,5 +5,9 @@
     "csv-parse": "5.6.0",
     "googleapis": "129.0.0",
     "lodash": "4.17.23"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

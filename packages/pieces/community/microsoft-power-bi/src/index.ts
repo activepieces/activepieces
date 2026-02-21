@@ -7,6 +7,7 @@ import { pushRowsToDatasetTableAction } from './lib/actions/push-rows-to-table';
 import { createDatasetAction } from './lib/actions/create-dataset';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { microsoftPowerBiAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -33,18 +34,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
-
-export const microsoftPowerBiAuth = PieceAuth.OAuth2({
-  description: authDesc,
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-  required: true,
-  scope: [
-    'https://analysis.windows.net/powerbi/api/Dataset.ReadWrite.All',
-    'offline_access',
-  ],
-  prompt: 'omit'
-});
 
 export const microsoftPowerBi = createPiece({
   displayName: 'Microsoft Power BI',

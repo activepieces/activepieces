@@ -1,0 +1,13 @@
+{
+  "name": "react-ui",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "serve": "vite",
+    "preview": "vite preview",
+    "test": "jest --config jest.config.ts",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+  }
+}

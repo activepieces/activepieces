@@ -4,5 +4,9 @@
   "dependencies": {
     "basic-ftp": "5.0.5",
     "ssh2-sftp-client": "9.1.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

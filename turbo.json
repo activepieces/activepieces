@@ -1,0 +1,54 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts",
+        "!jest.config.*"
+      ]
+    },
+    "lint": {
+      "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "jest.config.*"],
+      "outputs": ["coverage/**"]
+    },
+    "test-ce": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test-ee": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test-cloud": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "check-migrations": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "serve": {
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    }
+  }
+}

@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-taskade",
-  "version": "0.1.5"
+  "version": "0.1.5",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

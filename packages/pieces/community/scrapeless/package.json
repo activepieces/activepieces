@@ -6,5 +6,9 @@
   "types": "./src/index.d.ts",
   "dependencies": {
     "@scrapeless-ai/sdk": "1.5.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

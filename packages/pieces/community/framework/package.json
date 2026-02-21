@@ -1,5 +1,12 @@
 {
   "name": "@activepieces/pieces-framework",
   "version": "0.25.3",
-  "type": "commonjs"
+  "type": "commonjs",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "jest --config jest.config.ts"
+  }
 }

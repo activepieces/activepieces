@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-xero",
-  "version": "0.6.2"
+  "version": "0.6.2",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }
