@@ -13,6 +13,18 @@
         "!jest.config.*"
       ]
     },
+    "@activepieces/engine#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../dist/packages/engine/**"],
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "webpack.config.js",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts"
+      ]
+    },
     "lint": {
       "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"],
       "outputs": []

@@ -3,9 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "type": "commonjs",
+  "dependencies": {
+    "@activepieces/engine": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.app.json --noEmit",
-    "serve": "cd ../../.. && tsx --env-file=packages/server/api/.env --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/main.ts",
+    "serve": "cd ../../.. && npx tsx --env-file=packages/server/api/.env --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/main.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "npm run test-ce && npm run test-ee && npm run test-cloud",
     "test-unit": "jest --config jest.config.ts --testPathPattern 'test/unit' --bail --passWithNoTests=false",

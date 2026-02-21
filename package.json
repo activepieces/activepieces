@@ -398,6 +398,7 @@
     "ts-jest": "29.4.5",
     "ts-loader": "9.5.1",
     "ts-node": "10.9.1",
+    "tsx": "4.21.0",
     "turbo": "2.8.10",
     "typescript": "5.5.4",
     "verdaccio": "6.1.6",
