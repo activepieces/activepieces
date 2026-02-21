@@ -1,9 +1,12 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, StaticPropsValue } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpResponse } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
 import { productboardProps } from '../common/props';
 
+/**
+ * Action to get an existing feature from Productboard.
+ */
 export const getFeature = createAction({
     name: 'get_feature',
     displayName: 'Get Feature',

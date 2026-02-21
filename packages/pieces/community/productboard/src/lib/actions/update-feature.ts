@@ -1,9 +1,12 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property, StaticPropsValue } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpResponse } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
 import { productboardProps } from '../common/props';
 
+/**
+ * Action to update an existing feature in Productboard.
+ */
 export const updateFeature = createAction({
     name: 'update_feature',
     displayName: 'Update Feature',
@@ -31,27 +34,25 @@ export const updateFeature = createAction({
     async run(context) {
         const { feature_id, name, description, status, archived } = context.propsValue;
 
-        const feature: Record<string, any> = {
-            data: {},
-        };
+        const data: Record<string, any> = {};
 
         if (name) {
-            feature['data'].name = name;
+            data.name = name;
         }
 
         if (description) {
-            feature['data'].description = description;
+            data.description = description;
         }
 
         if (status) {
-            feature['data'].status = { id: status };
+            data.status = { id: status };
         }
 
         if (archived !== undefined) {
-            feature['data'].archived = archived;
+            data.archived = archived;
         }
 
-        if (Object.keys(feature['data']).length === 0) {
+        if (Object.keys(data).length === 0) {
             return { success: true, message: 'No fields to update.' };
         }
 
@@ -59,7 +60,7 @@ export const updateFeature = createAction({
             auth: context.auth,
             method: HttpMethod.PATCH,
             resourceUri: `/features/${feature_id}`,
-            body: feature,
+            body: { data },
         });
 
         return response.body;
