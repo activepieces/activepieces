@@ -49,11 +49,20 @@ type FormInputWithName = FormInput & {
 /**We do this because it was the behaviour in previous versions of Activepieces.*/
 const putBackQuotesForInputNames = (
   value: Record<string, unknown>,
-  inputs: FormInputWithName[],
+  inputs: FormInputWithName[]
 ) => {
+  const keyCounts: Record<string, number> = {};
   return inputs.reduce((acc, input) => {
-    const key = createKeyForFormInput(input.displayName);
-    acc[key] = value[key];
+    const baseKey = createKeyForFormInput(input.displayName);
+    if (keyCounts[baseKey] === undefined) {
+      keyCounts[baseKey] = 0;
+    } else {
+      keyCounts[baseKey]++;
+    }
+    const keyCountForThisKey = keyCounts[baseKey];
+    const key =
+      keyCountForThisKey === 0 ? baseKey : `${baseKey}_${keyCountForThisKey}`;
+    acc[key] = value[input.name];
     return acc;
   }, {} as Record<string, unknown>);
 };
@@ -82,14 +91,14 @@ function buildSchema(inputs: FormInputWithName[]) {
       inputs.reduce<Record<string, TSchema>>((acc, input) => {
         acc[input.name] = createPropertySchema(input);
         return acc;
-      }, {}),
+      }, {})
     ),
     defaultValues: inputs.reduce<Record<string, string | boolean>>(
       (acc, input) => {
         acc[input.name] = input.type === FormInputType.TOGGLE ? false : '';
         return acc;
       },
-      {},
+      {}
     ),
   };
 }
@@ -116,19 +125,20 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       acc[key.toLowerCase()] = value;
       return acc;
     },
-    {} as Record<string, string>,
+    {} as Record<string, string>
   );
 
   const inputs = useRef<FormInputWithName[]>(
-    form.props.inputs.map((input) => {
+    form.props.inputs.map((input, index) => {
       return {
         ...input,
-        name: createKeyForFormInput(input.displayName),
+        name: createKeyForFormInput(input.displayName) + index,
       };
-    }),
+    })
   );
 
   const schema = buildSchema(inputs.current);
+  const [formKey, setFormKey] = useState(0);
 
   const defaultValues = { ...schema.defaultValues };
   inputs.current.forEach((input) => {
@@ -140,7 +150,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
 
   const [markdownResponse, setMarkdownResponse] = useState<string | null>(null);
   const { data: showPoweredBy } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_POWERED_BY_IN_FORM,
+    ApFlagId.SHOW_POWERED_BY_IN_FORM
   );
   const reactForm = useForm({
     defaultValues,
@@ -153,9 +163,11 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
         humanInputApi.submitForm(
           form,
           useDraft,
-          putBackQuotesForInputNames(reactForm.getValues(), inputs.current),
+          putBackQuotesForInputNames(reactForm.getValues(), inputs.current)
         ),
       onSuccess: (formResult) => {
+        reactForm.reset();
+        setFormKey((prev) => prev + 1);
         switch (formResult?.type) {
           case HumanInputFormResultTypes.MARKDOWN: {
             setMarkdownResponse(formResult.value as string);
@@ -177,12 +189,14 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
         }
       },
       onError: (error) => {
+        reactForm.reset();
+        setFormKey((prev) => prev + 1);
         if (api.isError(error)) {
           const status = error.response?.status;
           if (status === 404) {
             toast.error(t('Flow not found'), {
               description: t(
-                'The flow you are trying to submit to does not exist.',
+                'The flow you are trying to submit to does not exist.'
               ),
               duration: 3000,
             });
@@ -194,12 +208,12 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
         }
         console.error(error);
       },
-    },
+    }
   );
   return (
     <div className="w-full h-full flex">
       <div className="container py-20">
-        <Form {...reactForm}>
+        <Form key={formKey} {...reactForm}>
           <form onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}>
             <Card className="w-[500px] mx-auto">
               <CardHeader>

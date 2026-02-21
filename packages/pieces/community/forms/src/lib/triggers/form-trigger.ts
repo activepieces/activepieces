@@ -9,7 +9,6 @@ import {
   USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared';
 
-
 const markdown = `**Published Form URL:**
 \`\`\`text
 {{formUrl}}
@@ -44,7 +43,9 @@ const parseBoolean = (value: unknown, fieldName: string): boolean => {
       return lowerValue === 'true';
     }
   }
-  throw new Error(`Field ${fieldName} must be a boolean or 'true'/'false' string`);
+  throw new Error(
+    `Field ${fieldName} must be a boolean or 'true'/'false' string`
+  );
 };
 
 export const onFormSubmission = createTrigger({
@@ -64,6 +65,11 @@ export const onFormSubmission = createTrigger({
       displayName: 'Wait for Response',
       defaultValue: false,
       required: true,
+    }),
+    note: Property.MarkDown({
+      value:
+        'Note: The Filed Name must be unique. if same field name is used multiple times, then rest filed name will be like fieldName_1, fieldName_2 etc.',
+      variant: MarkdownVariant.WARNING,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',
@@ -109,8 +115,19 @@ export const onFormSubmission = createTrigger({
     const inputs = context.propsValue.inputs as FormInput[];
 
     const processedPayload: Record<string, unknown> = {};
+    const keyCounts: Record<string, number> = {};
+
     for (const input of inputs) {
-      const key = createKeyForFormInput(input.displayName);
+      const baseKey = createKeyForFormInput(input.displayName);
+      if (keyCounts[baseKey] === undefined) {
+        keyCounts[baseKey] = 0;
+      } else {
+        keyCounts[baseKey]++;
+      }
+
+      const keyCountForThisKey = keyCounts[baseKey];
+      const key =
+        keyCountForThisKey === 0 ? baseKey : `${baseKey}_${keyCountForThisKey}`;
       const value = payload[key];
 
       switch (input.type) {
