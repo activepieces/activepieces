@@ -115,6 +115,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
 
 async function listTablesByExternalIds(projectId: string, externalIds: string[]): Promise<PopulatedTable[]> {
     const tables = await tableService.list({
+        folderId: undefined,
         projectId,
         limit: 10000,
         cursor: undefined,

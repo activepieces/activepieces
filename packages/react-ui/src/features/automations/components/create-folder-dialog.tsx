@@ -29,20 +29,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { FolderDto, Permission } from '@activepieces/shared';
 
-import { foldersApi } from '../lib/folders-api';
-
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;
-  refetchFolders: (
+  refetchFolders?: (
     options?: RefetchOptions,
   ) => Promise<QueryObserverResult<FolderDto[], Error>>;
   className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const CreateFolderFormSchema = Type.Object({
@@ -58,8 +59,19 @@ export const CreateFolderDialog = ({
   updateSearchParams,
   refetchFolders,
   className,
+  open,
+  onOpenChange,
 }: CreateFolderDialogProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isDialogOpen = isControlled ? open : internalOpen;
+  const setIsDialogOpen = (value: boolean) => {
+    if (isControlled) {
+      onOpenChange?.(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
   const form = useForm<CreateFolderFormSchema>({
     resolver: typeboxResolver(CreateFolderFormSchema),
   });
@@ -81,7 +93,7 @@ export const CreateFolderDialog = ({
       form.reset();
       setIsDialogOpen(false);
       updateSearchParams(folder.id);
-      refetchFolders();
+      refetchFolders?.();
       toast.success(t('Added folder successfully'));
     },
     onError: (error) => {
@@ -104,21 +116,23 @@ export const CreateFolderDialog = ({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              disabled={!userHasPermissionToUpdateFolders}
-              size="icon"
-              className={cn(className)}
-            >
-              <FolderPlus />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="right">{t('New folder')}</TooltipContent>
-      </Tooltip>
+      {!isControlled && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                disabled={!userHasPermissionToUpdateFolders}
+                size="icon"
+                className={cn(className)}
+              >
+                <FolderPlus />
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('New folder')}</TooltipContent>
+        </Tooltip>
+      )}
 
       <DialogContent>
         <DialogHeader>

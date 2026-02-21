@@ -43,8 +43,8 @@ import {
 } from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
-import { flowHooks } from '../lib/flow-hooks';
-import { templateUtils } from '../lib/template-parser';
+import { flowHooks } from '../../flows/lib/flow-hooks';
+import { templateUtils } from '../../flows/lib/template-parser';
 
 export type ImportFlowDialogProps =
   | {
