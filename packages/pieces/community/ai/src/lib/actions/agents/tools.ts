@@ -147,25 +147,23 @@ export async function constructAgentTools(
               : {
                   output: z
                     .string()
-                    .nullable()
                     .describe(
-                      'The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.'
+                      'Your complete response to the user. Always populate this with the full answer, result, or explanation — even if you already wrote text above. This is the final message that will be shown to the user.'
                     ),
                 }),
           }),
           execute: async (params) => {
             const { success, output } = params as {
               success: boolean;
-              output?: Record<string, unknown>;
+              output?: Record<string, unknown> | string;
             };
             outputBuilder.setStatus(
               success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
             );
             if (!isNil(structuredOutput) && !isNil(output)) {
-              outputBuilder.setStructuredOutput(output);
-            }
-            if (!isNil(structuredOutput) && !isNil(output)) {
-              outputBuilder.addMarkdown(output as unknown as string);
+              outputBuilder.setStructuredOutput(output as Record<string, unknown>);
+            } else if (isNil(structuredOutput) && !isNil(output) && !outputBuilder.hasTextContent()) {
+              outputBuilder.addMarkdown(output as string);
             }
             return {};
           },

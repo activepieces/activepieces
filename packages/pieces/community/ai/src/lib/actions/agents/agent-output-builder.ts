@@ -109,6 +109,13 @@ export const agentOutputBuilder = (prompt: string) => {
         },
       };
     },
+    hasTextContent(): boolean {
+      return steps.some(
+        (step) =>
+          step.type === ContentBlockType.MARKDOWN &&
+          (step as MarkdownContentBlock).markdown.trim().length > 0
+      );
+    },
     build(): AgentResult {
       return {
         status,
