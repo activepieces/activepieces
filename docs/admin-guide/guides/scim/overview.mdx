@@ -1,0 +1,39 @@
+---
+title: "SCIM Overview"
+description: "Automate user lifecycle management with SCIM in Activepieces."
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+## What is SCIM?
+
+SCIM (System for Cross-domain Identity Management) lets your identity provider automatically create, update, and deactivate users in Activepieces.
+
+## What SCIM Handles
+
+- **Provision users** when they are assigned in your identity provider
+- **Sync profile updates** such as name or email changes
+- **Deprovision users** when access is removed or accounts are deactivated
+
+## SCIM and SSO
+
+SCIM handles user lifecycle management.  
+SSO handles sign-in and authentication.
+
+You can use both together so user access is managed centrally in your identity provider.
+
+## Supported Providers
+
+<CardGroup cols={2}>
+  <Card title="Okta" icon="shield-check" href="./providers/okta">
+    Configure SCIM provisioning from Okta to Activepieces.
+  </Card>
+</CardGroup>
+
+## Architecture
+
+![SCIM Architecture Placeholder](/resources/screenshots/scim/scim-overview-placeholder.svg)
+
+<Tip>
+Replace this placeholder with your final architecture image later. Keep the same image path to avoid doc changes.
+</Tip>

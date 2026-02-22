@@ -230,6 +230,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeCustomerId: undefined,
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
+        scimEnabled: platformPlan?.scimEnabled ?? false,
         eventStreamingEnabled: platformPlan?.eventStreamingEnabled ?? false,
         aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
