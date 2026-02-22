@@ -24,6 +24,7 @@ export const SecretManagerFieldSchema =  Type.Object({
     displayName: Type.String(),
     placeholder: Type.String(),
     optional: Type.Optional(Type.Boolean()),
+    type: Type.Union([Type.Literal('text'), Type.Literal('password')]),
 })
 
 
