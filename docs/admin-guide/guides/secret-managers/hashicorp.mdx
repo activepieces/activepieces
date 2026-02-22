@@ -52,10 +52,14 @@ path "<secret_engine_name>/data/*" {
 
 When configuring a connection that requires credentials:
 
-1. Click the **key icon** (🔑) next to the input field
-2. Select **HashiCorp Vault** from the dropdown
-3. Enter the secret path in the format: `mount/data/path/key`
-   - if key is added via cli command `vault kv put -mount=secret app api_key='abc'`
-   - the input value should be secret/data/app/api_key
+1. Go to **Platform Admin -> Setup -> Global connections** and create a conneciton
+2. Click the **key icon** (🔑) next to the input field
+3. Select **HashiCorp Vault** from the dropdown
+4. Enter the secret path in the format: `mount/data/path/key`
+   - if key is added via cli command `vault kv put -mount=secret sec api_key='mysec'`
+   - the input value should be secret/data/mysec/api_key
+
+
+![Manage Oauth2 apps](/resources/screenshots/secret-manager.png)
 
 The connection will automatically retrieve the secret from Vault when the flow runs.

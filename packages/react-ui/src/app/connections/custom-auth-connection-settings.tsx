@@ -5,10 +5,11 @@ import { CustomAuthProperty } from '@activepieces/pieces-framework';
 
 type CustomAuthConnectionSettingsProps = {
   authProperty: CustomAuthProperty<any>;
+  isGlobalConnection: boolean;
 };
 
 const CustomAuthConnectionSettings = React.memo(
-  ({ authProperty }: CustomAuthConnectionSettingsProps) => {
+  ({ authProperty, isGlobalConnection }: CustomAuthConnectionSettingsProps) => {
     return (
       <GenericPropertiesForm
         prefixValue="request.value.props"
@@ -16,7 +17,7 @@ const CustomAuthConnectionSettings = React.memo(
         useMentionTextInput={false}
         propertySettings={null}
         dynamicPropsInfo={null}
-        isConnectionProperty={true}
+        showSecretInput={isGlobalConnection}
       />
     );
   },
