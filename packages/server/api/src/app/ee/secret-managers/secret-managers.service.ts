@@ -73,41 +73,45 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         return provider.getSecret(request.request, decryptedConfig) 
     },
 
-    async resolve({ key, platformId }: { key: string, platformId: string }) {
+    async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
         const { providerId, keyWithoutBraces } = extractProviderId(key)
-        return this.getSecret({
-            providerId,
-            request: await secretManagerProvider(log, providerId).resolve(keyWithoutBraces),
-            platformId,
-        })
+        try {
+            return await this.getSecret({
+                providerId,
+                request: await secretManagerProvider(log, providerId).resolve(keyWithoutBraces),
+                platformId,
+            })
+        }
+        catch (error) {
+            return handleResolveError(error, throwOnFailure, key)
+        }
     },
-
     async resolveObject<T extends Record<string, unknown>>({ value, platformId, throwOnFailure = true }: { value: T, platformId: string, throwOnFailure?: boolean }): Promise<T> {
         const entries = await Promise.all(
             Object.entries(value).map(async ([field, fieldValue]) => [
                 field,
-                await this.resolveFieldValue({ fieldValue, platformId, throwOnFailure }),
+                await this.resolveUnknownValue({ value: fieldValue, platformId, throwOnFailure }),
             ]),
         )
         return Object.fromEntries(entries) as T
     },
-    async resolveFieldValue({ fieldValue, platformId, throwOnFailure }: { fieldValue: unknown, platformId: string, throwOnFailure: boolean }): Promise<unknown> {
-        if (isObject(fieldValue)) {
+    async resolveUnknownValue({ value, platformId, throwOnFailure }: { value: unknown, platformId: string, throwOnFailure: boolean }): Promise<unknown> {
+        if (isObject(value)) {
             return this.resolveObject({
-                value: fieldValue as Record<string, unknown>,
+                value,
                 platformId,
                 throwOnFailure,
             })
         }
-        if (isString(fieldValue)) {
+        if (isString(value)) {
             try {
-                return await this.resolve({ key: fieldValue, platformId })
+                return await this.resolveString({ key: value, platformId, throwOnFailure })
             }
             catch (error) {
-                return handleResolveError(error, throwOnFailure, fieldValue)
+                return handleResolveError(error, throwOnFailure, value)
             }
         }
-        return fieldValue
+        return value
     },
     disconnect: async ({ platformId, providerId }: { platformId: string, providerId: SecretManagerProviderId }) => {
         const provider = secretManagerProvider(log, providerId)
