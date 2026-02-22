@@ -42,8 +42,9 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
 
 export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({
     checkConnection: async (config) => {
+        const url = removeEndingSlash(config.url)
         const response = await vaultApi({
-            url: `${config.url}/v1/auth/approle/login`,
+            url: `${url}/v1/auth/approle/login`,
             method: 'POST',
             body: {
                 role_id: config.roleId,
@@ -70,7 +71,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             })
         }
         await vaultApi({
-            url: `${config.url}/v1/sys/mounts`,
+            url: `${url}/v1/sys/mounts`,
             token,
             method: 'GET',
             namespace: config.namespace,
@@ -96,9 +97,10 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         const mountPath = pathParts.slice(0, -1).join('/')
         const secretKey = pathParts.slice(-1)[0]
         const token = await hashicorpProvider(log).checkConnection(config) as string
+        const url = removeEndingSlash(config.url)
 
         const response = await vaultApi({
-            url: `${config.url}/v1/${mountPath}`,
+            url: `${url}/v1/${mountPath}`,
             token,
             method: 'GET',
             namespace: config.namespace,
