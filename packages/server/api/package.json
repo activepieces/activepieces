@@ -5,7 +5,8 @@
   "type": "commonjs",
   "dependencies": {
     "@activepieces/engine": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "@activepieces/ee-shared": "workspace:*"
   },
   "devDependencies": {
     "@activepieces/piece-facebook-leads": "workspace:*",

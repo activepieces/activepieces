@@ -8,6 +8,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@activepieces/shared": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/pieces-common": "workspace:*"
   },
