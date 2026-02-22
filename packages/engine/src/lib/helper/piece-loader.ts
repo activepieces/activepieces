@@ -136,7 +136,7 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
             const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
             const packageJson = JSON.parse(packageJsonContent)
             if (packageJson.name === packageName) {
-                return path.join(path.dirname(packageJsonPath), 'src')
+                return path.join(path.dirname(packageJsonPath), 'src', 'index.js')
             }
             return null
         }))

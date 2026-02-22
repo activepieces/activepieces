@@ -1,6 +1,8 @@
 {
   "name": "@activepieces/piece-facebook-leads",
   "version": "0.3.2",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

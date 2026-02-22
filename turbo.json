@@ -10,7 +10,7 @@
         "package.json",
         "!src/**/*.spec.ts",
         "!src/**/*.test.ts",
-        "!jest.config.*"
+        "!vitest.config.*"
       ]
     },
     "@activepieces/engine#build": {
@@ -31,7 +31,7 @@
     },
     "test": {
       "dependsOn": ["build"],
-      "inputs": ["src/**", "test/**", "tsconfig*.json", "jest.config.*"],
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
     "test-ce": {
@@ -47,6 +47,10 @@
       "cache": false
     },
     "check-migrations": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "db-migration": {
       "dependsOn": ["build"],
       "cache": false
     },

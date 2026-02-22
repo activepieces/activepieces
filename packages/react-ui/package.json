@@ -6,7 +6,7 @@
     "build": "vite build",
     "serve": "vite",
     "preview": "vite preview",
-    "test": "jest --config jest.config.ts",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   }

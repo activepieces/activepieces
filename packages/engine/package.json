@@ -4,7 +4,14 @@
   "type": "commonjs",
   "scripts": {
     "build": "webpack --config webpack.config.js",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@activepieces/piece-http": "workspace:*",
+    "@activepieces/piece-data-mapper": "workspace:*",
+    "@activepieces/piece-approval": "workspace:*",
+    "@activepieces/piece-webhook": "workspace:*"
   }
 }
 

@@ -1,6 +1,8 @@
 {
   "name": "@activepieces/piece-slack",
   "version": "0.12.2",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "dependencies": {
     "@slack/web-api": "7.9.0",
     "slackify-markdown": "4.4.0"
