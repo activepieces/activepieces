@@ -1,3 +1,13 @@
+import {
+  ApFlagId,
+  FileResponseInterface,
+  FormInput,
+  FormInputType,
+  FormResponse,
+  HumanInputFormResultTypes,
+  HumanInputFormResult,
+  createKeyForFormInput,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Separator } from '@radix-ui/react-dropdown-menu';
 import { TSchema, Type } from '@sinclair/typebox';
@@ -24,16 +34,6 @@ import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
-import {
-  ApFlagId,
-  FileResponseInterface,
-  FormInput,
-  FormInputType,
-  FormResponse,
-  HumanInputFormResultTypes,
-  HumanInputFormResult,
-  createKeyForFormInput,
-} from '@activepieces/shared';
 
 import { Checkbox } from '../../../components/ui/checkbox';
 import { humanInputApi } from '../lib/human-input-api';

@@ -6,7 +6,7 @@ import {
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from '../common/models';
 
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 import { notionCommon } from '../common';
 export const updateDatabaseItem = createAction({
   auth: notionAuth,

@@ -1,7 +1,7 @@
+import { CustomAuthProperty } from '@activepieces/pieces-framework';
 import React from 'react';
 
 import { GenericPropertiesForm } from '@/app/builder/piece-properties/generic-properties-form';
-import { CustomAuthProperty } from '@activepieces/pieces-framework';
 
 type CustomAuthConnectionSettingsProps = {
   authProperty: CustomAuthProperty<any>;

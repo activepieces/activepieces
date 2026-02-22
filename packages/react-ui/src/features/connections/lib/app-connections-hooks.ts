@@ -1,13 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { UseFormReturn } from 'react-hook-form';
-import { toast } from 'sonner';
-
-import { useEmbedding } from '@/components/embed-provider';
-import { internalErrorToast } from '@/components/ui/sonner';
-import { projectMembersApi } from '@/features/members/lib/project-members-api';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
@@ -22,6 +12,16 @@ import {
   ReplaceAppConnectionsRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { UseFormReturn } from 'react-hook-form';
+import { toast } from 'sonner';
+
+import { useEmbedding } from '@/components/embed-provider';
+import { internalErrorToast } from '@/components/ui/sonner';
+import { projectMembersApi } from '@/features/members/lib/project-members-api';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { appConnectionsApi } from './api/app-connections';
 import { globalConnectionsApi } from './api/global-connections';

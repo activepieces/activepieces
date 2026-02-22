@@ -3,5 +3,9 @@
   "version": "0.1.2",
   "dependencies": {
     "snowflake-sdk": "2.3.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

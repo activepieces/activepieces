@@ -3,5 +3,9 @@
   "version": "0.5.2",
   "dependencies": {
     "feedparser": "2.2.10"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

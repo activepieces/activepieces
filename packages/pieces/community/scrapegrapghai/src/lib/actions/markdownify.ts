@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { scrapegraphaiAuth } from '../../index';
+import { scrapegraphaiAuth } from '../auth';
 
 export const markdownify = createAction({
   name: 'markdownify',

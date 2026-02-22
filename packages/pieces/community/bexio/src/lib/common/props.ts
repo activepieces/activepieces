@@ -1,7 +1,7 @@
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { BexioClient } from './client';
 import { BexioAccount, BexioTax, BexioCurrency } from './types';
-import { bexioAuth } from '../..';
+import { bexioAuth } from '../auth';
 
 export const bexioCommonProps = {
   account: (options: {

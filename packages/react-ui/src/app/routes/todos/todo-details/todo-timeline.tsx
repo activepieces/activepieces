@@ -1,7 +1,3 @@
-import { useEffect, useState } from 'react';
-
-import { useSocket } from '@/components/socket-provider';
-import { todoUtils } from '@/features/todos/lib/todo-utils';
 import {
   TodoChanged,
   WebsocketClientEvent,
@@ -9,6 +5,10 @@ import {
   TodoActivityChanged,
   PopulatedTodo,
 } from '@activepieces/shared';
+import { useEffect, useState } from 'react';
+
+import { useSocket } from '@/components/socket-provider';
+import { todoUtils } from '@/features/todos/lib/todo-utils';
 
 import { TodoComment, ActivityItem } from './todo-comment';
 import { TodoTimelineCommentSkeleton } from './todo-timeline-comment-skeleton';

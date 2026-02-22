@@ -1,3 +1,10 @@
+import {
+  AppConnectionScope,
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+  PlatformRole,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -52,13 +59,6 @@ import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import {
-  AppConnectionScope,
-  AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-  PlatformRole,
-} from '@activepieces/shared';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();

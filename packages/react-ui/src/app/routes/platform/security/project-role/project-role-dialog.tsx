@@ -1,3 +1,4 @@
+import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, ReactNode } from 'react';
@@ -13,7 +14,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
-import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
 
 const initialPermissions = [
   {

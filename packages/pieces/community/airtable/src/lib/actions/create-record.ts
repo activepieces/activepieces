@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 
 export const airtableCreateRecordAction = createAction({
   auth: airtableAuth,

@@ -1,16 +1,8 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { readdir, unlink, writeFile } from 'fs/promises';
+import { mkdir, readdir, writeFile } from 'fs/promises';
 import inquirer from 'inquirer';
-import assert from 'node:assert';
-import { exec } from '../utils/exec';
-import {
-  readPackageEslint,
-  readProjectJson,
-  writePackageEslint,
-  writeProjectJson,
-} from '../utils/files';
-import { findPiece } from '../utils/piece-utils';
+import path from 'node:path';
 
 const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
@@ -39,53 +31,110 @@ const validatePackageName = async (packageName: string) => {
 };
 
 const checkIfPieceExists = async (pieceName: string) => {
-  const pieceFolder = await findPiece(pieceName);
-  if (pieceFolder) {
-    console.log(chalk.red(`🚨 Piece already exists at ${pieceFolder}`));
+  const piecePath = path.resolve('packages', 'pieces', 'community', pieceName);
+  try {
+    await readdir(piecePath);
+    console.log(chalk.red(`🚨 Piece already exists at ${piecePath}`));
     process.exit(1);
+  } catch {
+    // Directory does not exist, which is expected
   }
 };
 
-const nxGenerateNodeLibrary = async (
+function capitalizeFirstLetter(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+const scaffoldPiece = async (
   pieceName: string,
   packageName: string,
   pieceType: string
 ) => {
-  const nxGenerateCommand = [
-    `npx nx generate @nx/node:library`,
-    `--directory=packages/pieces/${pieceType}/${pieceName}`,
-    `--name=pieces-${pieceName}`,
-    `--importPath=${packageName}`,
-    '--publishable',
-    '--buildable',
-    '--projectNameAndRootFormat=as-provided',
-    '--strict',
-    '--unitTestRunner=none',
-  ].join(' ');
+  const baseDir = path.resolve('packages', 'pieces', pieceType, pieceName);
+  const srcDir = path.join(baseDir, 'src');
+  const libDir = path.join(srcDir, 'lib');
+  const i18nDir = path.join(srcDir, 'i18n');
 
-  console.log(chalk.blue(`🛠️ Executing nx command: ${nxGenerateCommand}`));
+  // Create directory structure
+  await mkdir(libDir, { recursive: true });
+  await mkdir(i18nDir, { recursive: true });
 
-  await exec(nxGenerateCommand);
-};
+  // Create package.json
+  const packageJson = {
+    name: packageName,
+    version: '0.0.1',
+    type: 'commonjs',
+    scripts: {
+      build: 'tsc -p tsconfig.lib.json',
+      lint: "eslint 'src/**/*.ts'",
+    },
+  };
+  await writeFile(
+    path.join(baseDir, 'package.json'),
+    JSON.stringify(packageJson, null, 2)
+  );
 
-const removeUnusedFiles = async (pieceName: string, pieceType: string) => {
-  const path = `packages/pieces/${pieceType}/${pieceName}/src/lib/`;
-  const files = await readdir(path);
-  for (const file of files) {
-    await unlink(path + file);
-  }
-};
-function capitalizeFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-const generateIndexTsFile = async (pieceName: string, pieceType: string) => {
+  // Create tsconfig.json
+  const tsconfig = {
+    extends: '../../../../tsconfig.base.json',
+    compilerOptions: {
+      module: 'commonjs',
+      forceConsistentCasingInFileNames: true,
+      strict: true,
+      noImplicitOverride: true,
+      noPropertyAccessFromIndexSignature: true,
+      noImplicitReturns: true,
+      noFallthroughCasesInSwitch: true,
+    },
+    files: [],
+    include: [],
+    references: [
+      { path: './tsconfig.lib.json' },
+    ],
+  };
+  await writeFile(
+    path.join(baseDir, 'tsconfig.json'),
+    JSON.stringify(tsconfig, null, 2)
+  );
+
+  // Create tsconfig.lib.json
+  const tsconfigLib = {
+    extends: './tsconfig.json',
+    compilerOptions: {
+      outDir: `../../../../dist/packages/pieces/${pieceType}/${pieceName}`,
+      declaration: true,
+      types: ['node'],
+    },
+    include: ['src/**/*.ts'],
+    exclude: ['jest.config.ts', 'src/**/*.spec.ts', 'src/**/*.test.ts'],
+  };
+  await writeFile(
+    path.join(baseDir, 'tsconfig.lib.json'),
+    JSON.stringify(tsconfigLib, null, 2)
+  );
+
+  // Create .eslintrc.json
+  const eslintConfig = {
+    extends: ['../../../../.eslintrc.base.json'],
+    ignorePatterns: ['!**/*'],
+    overrides: [
+      { files: ['*.ts', '*.tsx', '*.js', '*.jsx'], rules: {} },
+      { files: ['*.ts', '*.tsx'], rules: {} },
+      { files: ['*.js', '*.jsx'], rules: {} },
+    ],
+  };
+  await writeFile(
+    path.join(baseDir, '.eslintrc.json'),
+    JSON.stringify(eslintConfig, null, 2)
+  );
+
+  // Create index.ts
   const pieceNameCamelCase = pieceName
     .split('-')
     .map((s, i) => {
       if (i === 0) {
         return s;
       }
-
       return s[0].toUpperCase() + s.substring(1);
     })
     .join('');
@@ -104,100 +153,7 @@ const generateIndexTsFile = async (pieceName: string, pieceType: string) => {
     });
     `;
 
-  await writeFile(
-    `packages/pieces/${pieceType}/${pieceName}/src/index.ts`,
-    indexTemplate
-  );
-};
-const updateProjectJsonConfig = async (
-  pieceName: string,
-  pieceType: string
-) => {
-  const projectJson = await readProjectJson(
-    `packages/pieces/${pieceType}/${pieceName}`
-  );
- const i18nAsset = {
-  input: `packages/pieces/${pieceType}/${pieceName}/src/i18n`,
-  output: './src/i18n',
-  glob: '**/!(i18n.json)'
-}
-  assert(
-    projectJson.targets?.build?.options,
-    '[updateProjectJsonConfig] targets.build.options is required'
-  );
-
-  projectJson.targets.build.dependsOn = ['prebuild', '^build'];
-  projectJson.targets.prebuild = {
-    dependsOn: ['^build'],
-    executor: 'nx:run-commands',
-    options: {
-      cwd: `packages/pieces/${pieceType}/${pieceName}`,
-      command: 'bun install --no-save --silent'
-    }
-  };
-
-  projectJson.targets.build.options.buildableProjectDepsInPackageJsonType =
-    'dependencies';
-  projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson =
-    true;
-  projectJson.targets.build.options.clean = false;
-   if(projectJson.targets.build.options.assets){
-    projectJson.targets.build.options.assets.push(i18nAsset);
-   }
-   else{
-    projectJson.targets.build.options.assets = [i18nAsset];
-   }
-
-    const lintFilePatterns = projectJson.targets.lint?.options?.lintFilePatterns;
-    
-    if (lintFilePatterns) {
-    const patternIndex = lintFilePatterns.findIndex((item) =>
-      item.endsWith('package.json')
-    );
-    if (patternIndex !== -1) lintFilePatterns?.splice(patternIndex, 1);
-  } else {
-  projectJson.targets.lint = {
-    executor: '@nx/eslint:lint',
-    outputs: ['{options.outputFile}'],
-  };
-}
-
-  await writeProjectJson(
-    `packages/pieces/${pieceType}/${pieceName}`,
-    projectJson
-  );
-};
-const addEslintFile = async (pieceName: string, pieceType: string) => {
-  const eslintFile ={
-    "extends": ["../../../../.eslintrc.base.json"],
-    "ignorePatterns": ["!**/*"],
-    "overrides": [
-      {
-        "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-        "rules": {}
-      },
-      {
-        "files": ["*.ts", "*.tsx"],
-        "rules": {}
-      },
-      {
-        "files": ["*.js", "*.jsx"],
-        "rules": {}
-      }
-    ]
-  }
-  
- 
-  await writePackageEslint(
-    `packages/pieces/${pieceType}/${pieceName}`,
-    eslintFile
-  );
-};
-const setupGeneratedLibrary = async (pieceName: string, pieceType: string) => {
-  await removeUnusedFiles(pieceName, pieceType);
-  await generateIndexTsFile(pieceName, pieceType);
-  await updateProjectJsonConfig(pieceName, pieceType);
-  await addEslintFile(pieceName, pieceType);
+  await writeFile(path.join(srcDir, 'index.ts'), indexTemplate);
 };
 
 export const createPiece = async (
@@ -208,8 +164,7 @@ export const createPiece = async (
   await validatePieceName(pieceName);
   await validatePackageName(packageName);
   await checkIfPieceExists(pieceName);
-  await nxGenerateNodeLibrary(pieceName, packageName, pieceType);
-  await setupGeneratedLibrary(pieceName, pieceType);
+  await scaffoldPiece(pieceName, packageName, pieceType);
   console.log(chalk.green('✨  Done!'));
   console.log(
     chalk.yellow(
@@ -231,8 +186,8 @@ export const createPieceCommand = new Command('create')
         type: 'input',
         name: 'packageName',
         message: 'Enter the package name:',
-        default: (answers: any) => `@activepieces/piece-${answers.pieceName}`,
-        when: (answers: any) => answers.pieceName !== undefined,
+        default: (answers: Record<string, string>) => `@activepieces/piece-${answers.pieceName}`,
+        when: (answers: Record<string, string>) => answers.pieceName !== undefined,
       },
       {
         type: 'list',

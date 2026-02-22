@@ -5,7 +5,7 @@ import {
   InferenceClient,
 } from '@huggingface/inference';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const textClassification = createAction({
   name: 'text_classification',

@@ -1,10 +1,10 @@
+import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
 import cronstrue from 'cronstrue/i18n';
 import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
 import { downloadFile } from '@/lib/utils';
-import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 

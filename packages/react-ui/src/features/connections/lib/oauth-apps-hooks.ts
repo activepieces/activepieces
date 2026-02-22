@@ -1,3 +1,5 @@
+import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
+import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
@@ -5,8 +7,6 @@ import { toast } from 'sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
-import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
-import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 
 import { oauthAppsApi } from './api/oauth-apps';
 

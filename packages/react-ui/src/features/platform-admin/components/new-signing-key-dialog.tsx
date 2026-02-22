@@ -1,3 +1,7 @@
+import {
+  AddSigningKeyRequestBody,
+  AddSigningKeyResponse,
+} from '@activepieces/ee-shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -18,10 +22,6 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
-import {
-  AddSigningKeyRequestBody,
-  AddSigningKeyResponse,
-} from '@activepieces/ee-shared';
 
 type NewSigningKeyDialogProps = {
   children: React.ReactNode;

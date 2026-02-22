@@ -4,7 +4,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { getChannels, multiSelectChannelInfo } from '../common/props';
 
 

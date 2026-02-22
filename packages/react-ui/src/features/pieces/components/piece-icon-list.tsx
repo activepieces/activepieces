@@ -1,11 +1,10 @@
-import { cva } from 'class-variance-authority';
-import { t } from 'i18next';
-
 import {
   FlowTrigger,
   flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';
+import { cva } from 'class-variance-authority';
+import { t } from 'i18next';
 
 import {
   Tooltip,

@@ -7,7 +7,7 @@ import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { figmaCommon } from '../common';
 import { figmaWebhookPostRequest, figmaDeleteRequest } from '../common/utils';
-import { figmaAuth } from '../../';
+import { figmaAuth } from '../auth';
 
 type TriggerData = {
   webhookId: string;

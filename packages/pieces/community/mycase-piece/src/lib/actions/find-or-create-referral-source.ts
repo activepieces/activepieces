@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mycaseAuth } from '../../index';
+import { mycaseAuth } from '../auth';
 import { createMyCaseApi } from '../common/mycase-api';
 
 export const findOrCreateReferralSource = createAction({

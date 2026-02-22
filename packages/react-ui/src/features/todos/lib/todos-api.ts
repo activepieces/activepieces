@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   ListTodosQueryParams,
   Todo,
@@ -6,6 +5,8 @@ import {
   SeekPage,
   UpdateTodoRequestBody,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const todosApi = {
   async get(id: string) {

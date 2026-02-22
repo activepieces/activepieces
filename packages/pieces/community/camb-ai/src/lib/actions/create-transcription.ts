@@ -1,6 +1,6 @@
 import { createAction, Property, ApFile, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpMessageBody, HttpHeaders } from '@activepieces/pieces-common';
-import { cambaiAuth } from '../../index';
+import { cambaiAuth } from '../auth';
 import { API_BASE_URL, listSourceLanguagesDropdown, POLLING_INTERVAL_MS, LONG_MAX_POLLING_ATTEMPTS } from '../common';
 import FormData from 'form-data';
 import { listFoldersDropdown } from '../common';

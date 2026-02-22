@@ -1,6 +1,3 @@
-import { StoreApi } from 'zustand';
-
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   AddNoteRequest,
   FlowOperationType,
@@ -8,6 +5,9 @@ import {
   Note,
   apId,
 } from '@activepieces/shared';
+import { StoreApi } from 'zustand';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { BuilderState } from '../builder-hooks';
 

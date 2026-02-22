@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy, StaticPropsValue, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { quickbaseAuth } from '../../index';
+import { quickbaseAuth } from '../auth';
 import { appIdProp, tableIdProp } from '../common/props';
 import { QuickbaseClient } from '../common/client';
 import { QuickbaseRecordResponse, QuickbaseField } from '../common/types';

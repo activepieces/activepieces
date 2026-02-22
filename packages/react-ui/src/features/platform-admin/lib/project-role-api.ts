@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import {
   CreateProjectRoleRequestBody,
@@ -7,6 +6,8 @@ import {
   SeekPage,
   ListProjectMembersForProjectRoleRequestQuery,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const projectRoleApi = {
   async get(id: string) {

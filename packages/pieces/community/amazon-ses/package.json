@@ -3,5 +3,9 @@
   "version": "0.1.2",
   "dependencies": {
     "@aws-sdk/client-ses": "3.864.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

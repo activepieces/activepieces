@@ -1,7 +1,6 @@
+import { FlowStatus, PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Workflow } from 'lucide-react';
-
-import { FlowStatus, PlatformAnalyticsReport } from '@activepieces/shared';
 
 import { MetricCard, MetricCardSkeleton } from './metric-card';
 

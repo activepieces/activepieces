@@ -1,3 +1,4 @@
+import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -29,7 +30,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { cn } from '@/lib/utils';
-import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 
 type ReplaceConnectionsDialogProps = {
   onConnectionMerged: () => void;

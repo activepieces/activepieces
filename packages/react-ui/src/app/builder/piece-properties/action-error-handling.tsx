@@ -1,3 +1,4 @@
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -11,7 +12,6 @@ import {
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
-import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
 type ActionErrorHandlingFormProps = {
   hideContinueOnFailure?: boolean;

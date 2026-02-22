@@ -1,3 +1,11 @@
+import {
+  AgentMcpTool,
+  AgentTool,
+  AgentToolType,
+  McpAuthType,
+  McpProtocol,
+  ValidateAgentMcpToolResponse,
+} from '@activepieces/shared';
 import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -13,14 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  AgentMcpTool,
-  AgentTool,
-  AgentToolType,
-  McpAuthType,
-  McpProtocol,
-  ValidateAgentMcpToolResponse,
-} from '@activepieces/shared';
 
 import { useMcpToolDialogStore } from '../stores/mcp-tools';
 

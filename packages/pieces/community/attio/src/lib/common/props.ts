@@ -3,7 +3,7 @@ import { attioApiCall, attioPaginatedApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { AttributeResponse, ListResponse, ObjectResponse, SelectOptionResponse } from './types';
 import { isNil } from '@activepieces/shared';
-import { attioAuth } from '../..';
+import { attioAuth } from '../auth';
 
 interface DropdownParams {
 	displayName: string;

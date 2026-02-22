@@ -1,7 +1,6 @@
+import { PlatformAnalyticsReport, UserStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Users } from 'lucide-react';
-
-import { PlatformAnalyticsReport, UserStatus } from '@activepieces/shared';
 
 import { MetricCard, MetricCardSkeleton } from './metric-card';
 

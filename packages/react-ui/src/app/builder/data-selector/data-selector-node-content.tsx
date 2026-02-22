@@ -1,7 +1,6 @@
+import { flowStructureUtil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-
-import { flowStructureUtil } from '@activepieces/shared';
 
 import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';

@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
@@ -8,7 +9,6 @@ import {
   FROM_QUERY_PARAM,
   useDefaultRedirectPath,
 } from '@/lib/navigation-utils';
-import { isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';

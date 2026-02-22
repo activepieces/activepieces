@@ -1,3 +1,4 @@
+import { Folder } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -19,7 +20,6 @@ import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { validationUtils } from '@/lib/utils';
-import { Folder } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
 

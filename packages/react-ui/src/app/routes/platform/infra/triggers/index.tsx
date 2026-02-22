@@ -1,3 +1,4 @@
+import { TriggerStatusReport } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
@@ -23,7 +24,6 @@ import { triggerRunHooks } from '@/features/flows/lib/trigger-run-api';
 import PieceDisplayName from '@/features/pieces/components/piece-display-name';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { cn } from '@/lib/utils';
-import { TriggerStatusReport } from '@activepieces/shared';
 
 import { StatusProgressBar, type DayStatus } from './status-progress-bar';
 

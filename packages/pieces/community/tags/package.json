@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-tags",
-  "version": "0.0.17"
+  "version": "0.0.17",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

@@ -1,6 +1,5 @@
-import { Navigate } from 'react-router-dom';
-
 import { ApFlagId } from '@activepieces/shared';
+import { Navigate } from 'react-router-dom';
 
 import { flagsHooks } from '../../hooks/flags-hooks';
 

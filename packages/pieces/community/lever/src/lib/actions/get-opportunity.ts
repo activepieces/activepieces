@@ -1,6 +1,7 @@
 import qs from 'qs';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { LEVER_BASE_URL, leverAuth } from '../..';
+import { leverAuth } from '../..';
+import { LEVER_BASE_URL } from '../..';
 import {
   AuthenticationType,
   httpClient,

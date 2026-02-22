@@ -1,3 +1,8 @@
+import {
+  PlatformRole,
+  UpdateUserRequestBody,
+  User,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -18,11 +23,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members/component/role-selector';
 import { platformUserApi } from '@/lib/platform-user-api';
-import {
-  PlatformRole,
-  UpdateUserRequestBody,
-  User,
-} from '@activepieces/shared';
 
 export const UpdateUserDialog = ({
   children,

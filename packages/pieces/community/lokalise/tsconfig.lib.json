@@ -1,7 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {},
+    "outDir": "../../../../dist/packages/pieces/community/lokalise",
     "declaration": true,
     "types": ["node"]
   },

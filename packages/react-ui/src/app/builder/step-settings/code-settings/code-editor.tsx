@@ -1,3 +1,4 @@
+import { ApFlagId, SourceCode, deepMergeAndCast } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { json } from '@codemirror/lang-json';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
@@ -11,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, SourceCode, deepMergeAndCast } from '@activepieces/shared';
 
 import { AddNpmDialog } from './add-npm-dialog';
 

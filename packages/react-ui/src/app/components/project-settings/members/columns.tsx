@@ -1,3 +1,9 @@
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import {
+  Permission,
+  UserInvitation,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -24,12 +30,6 @@ import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/utils';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import {
-  Permission,
-  UserInvitation,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
 
 export type MemberRowData =
   | {

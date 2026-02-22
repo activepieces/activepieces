@@ -1,3 +1,9 @@
+import {
+  RouterAction,
+  BranchExecutionType,
+  isNil,
+  RouterActionSettings,
+} from '@activepieces/shared';
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Trash, CopyPlus, Pencil } from 'lucide-react';
@@ -9,12 +15,6 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
-import {
-  RouterAction,
-  BranchExecutionType,
-  isNil,
-  RouterActionSettings,
-} from '@activepieces/shared';
 
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import { Button } from '../../../../components/ui/button';

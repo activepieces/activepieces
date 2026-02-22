@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { tickTickApiCall } from './client';
-import { ticktickAuth } from '../..';
+import { ticktickAuth } from '../auth';
 
 interface DropdownParams {
 	displayName: string;

@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-data-summarizer",
-  "version": "0.0.9"
+  "version": "0.0.9",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

@@ -1,3 +1,4 @@
+import { Template } from '@activepieces/shared';
 import { t } from 'i18next';
 import { LayoutGrid } from 'lucide-react';
 
@@ -9,7 +10,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Template } from '@activepieces/shared';
 
 import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
 import { ExploreTemplateCard } from './template-card';

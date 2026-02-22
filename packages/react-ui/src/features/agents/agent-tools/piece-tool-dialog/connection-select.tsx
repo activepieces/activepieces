@@ -1,3 +1,4 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 
@@ -6,7 +7,6 @@ import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-conn
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 type ConnectionDropdownProps = {
   piece: PieceMetadataModelSummary;

@@ -1,3 +1,4 @@
+import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Mail, Tag, Hash, Shield, Clock, Activity, Info } from 'lucide-react';
@@ -11,7 +12,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PlatformRole, UserStatus } from '@activepieces/shared';
 
 import { UserRowData } from './index';
 

@@ -1,3 +1,4 @@
+import { Template } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -9,7 +10,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { Template } from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
 

@@ -2,7 +2,6 @@ import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/piece
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
-
 import { createTask } from './lib/actions/create-task';
 import { createTaskListAction } from './lib/actions/create-task-list';
 import { updateTaskListAction } from './lib/actions/update-task-list';
@@ -14,12 +13,11 @@ import { deleteTaskAction } from './lib/actions/delete-task';
 import { findTaskListByNameAction } from './lib/actions/find-task-list-by-name';
 import { findTaskByTitleAction } from './lib/actions/find-task-by-title';
 
-
 import { newTaskCreatedTrigger } from './lib/triggers/new-task-created';
 import { newOrUpdatedTaskTrigger } from './lib/triggers/task-updated';
 import { newListCreatedTrigger } from './lib/triggers/new-list-created';
 import { taskCompletedTrigger } from './lib/triggers/task-completed';
-
+import { microsoftToDoAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -47,15 +45,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `;
-
-export const microsoftToDoAuth = PieceAuth.OAuth2({
-    description: authDesc,
-    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-    tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-    required: true,
-    scope: ['Tasks.ReadWrite', 'User.Read', 'offline_access'],
-    prompt: 'omit'
-});
 
 export const microsoftTodo = createPiece({
     displayName: 'Microsoft To Do',

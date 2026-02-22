@@ -10,6 +10,7 @@ import { deleteRecordAction } from './lib/actions/delete-record';
 import { getRecordAction } from './lib/actions/get-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { PieceCategory } from '@activepieces/shared';
+import { dynamicsCRMAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -33,35 +34,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
-
-export const dynamicsCRMAuth = PieceAuth.OAuth2({
-  description:authDesc,
-  props: {
-    hostUrl: Property.ShortText({
-      displayName: 'Host URL (without trailing slash)',
-      description:
-        'Host URL without trailing slash.For example **https://demo.crm.dynamics.com**',
-      required: true,
-    }),
-    tenantId: Property.ShortText({
-      displayName: 'Tenant ID',
-      description: 'You can find this in the Azure portal.',
-      defaultValue: 'common',
-      required: true,
-    }),
-    proxyUrl: Property.ShortText({
-      displayName: 'Proxy URL with Port',
-      description:
-        'Keep empty if not needed. Optional proxy URL used for establishing connections when proxying requests is needed. For example: **https://proxy.com:8080**.',
-      required: false,
-    }),
-  },
-  required: true,
-  scope: ['{hostUrl}/.default', 'openid', 'email', 'profile', 'offline_access'],
-  prompt: 'omit',
-  authUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token',
-});
 
 export function getBaseUrl(host: string, proxyUrl?: string): string {
   if (proxyUrl && proxyUrl !== '') {

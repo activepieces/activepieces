@@ -8,5 +8,9 @@
   },
   "devDependencies": {
     "@types/wav": "^1.0.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

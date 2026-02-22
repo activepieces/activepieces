@@ -1,12 +1,13 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
-import { exec } from './exec'
-import { readPackageJson, readProjectJson } from './files'
+import { execSync } from 'node:child_process'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
 
 export const publishNxProject = async (path: string): Promise<void> => {
-  console.info(`[publishNxProject] path=${path}`)
-  assert(path, '[publishNxProject] parameter "path" is required')
+  console.info(`[publishProject] path=${path}`)
+  assert(path, '[publishProject] parameter "path" is required')
 
   const packageAlreadyPublished = await packagePrePublishChecks(path);
 
@@ -15,18 +16,22 @@ export const publishNxProject = async (path: string): Promise<void> => {
   }
 
   const { version } = await readPackageJson(path)
-  const { name: nxProjectName } = await readProjectJson(path)
 
-  const nxPublishProjectCommand = `
-    node tools/scripts/publish.mjs \
-      ${nxProjectName} \
-      ${version} \
-      latest
-  `
+  // Output path follows the convention: dist/{source-path}
+  const outputPath = `dist/${path}`
 
-  await exec(nxPublishProjectCommand)
+  // Update version in dist package.json before publishing
+  try {
+    const json = JSON.parse(readFileSync(`${outputPath}/package.json`).toString())
+    json.version = version
+    writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))
+  } catch (e) {
+    console.error(`Error reading package.json file from build output at ${outputPath}`)
+  }
 
-  console.info(`[publishNxProject] success, path=${path}, version=${version}`)
+  execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
+
+  console.info(`[publishProject] success, path=${path}, version=${version}`)
 }
 
 const main = async (): Promise<void> => {

@@ -1,3 +1,4 @@
+import { ApFlagId } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown, Globe } from 'lucide-react';
@@ -24,7 +25,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, localesMap } from '@/lib/utils';
-import { ApFlagId } from '@activepieces/shared';
 
 export const LanguageToggle = () => {
   const { i18n } = useTranslation();

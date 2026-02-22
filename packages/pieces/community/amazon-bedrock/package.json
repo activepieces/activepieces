@@ -8,5 +8,9 @@
     "@aws-sdk/client-bedrock": "^3.987.0",
     "@aws-sdk/client-bedrock-runtime": "^3.987.0",
     "tslib": "^2.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

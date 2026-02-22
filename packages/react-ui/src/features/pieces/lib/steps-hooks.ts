@@ -1,7 +1,3 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowAction,
   FlowActionType,
@@ -10,6 +6,10 @@ import {
   SuggestionType,
   FlowTrigger,
 } from '@activepieces/shared';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 import {
   StepMetadataWithActionOrTriggerOrAgentDisplayName,

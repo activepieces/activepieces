@@ -1,3 +1,13 @@
+import {
+  PieceAuthProperty,
+  PieceProperty,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import {
+  FlowAction,
+  FlowTrigger,
+  PropertyExecutionType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Calendar, SquareFunction, File } from 'lucide-react';
 import React from 'react';
@@ -16,16 +26,6 @@ import {
 } from '@/components/ui/tooltip';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { cn } from '@/lib/utils';
-import {
-  PieceAuthProperty,
-  PieceProperty,
-  PropertyType,
-} from '@activepieces/pieces-framework';
-import {
-  FlowAction,
-  FlowTrigger,
-  PropertyExecutionType,
-} from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';

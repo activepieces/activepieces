@@ -1,9 +1,3 @@
-import { useReactFlow } from '@xyflow/react';
-import { t } from 'i18next';
-import { Split } from 'lucide-react';
-import { memo, useEffect } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
-
 import {
   FlowActionType,
   FlowOperationRequest,
@@ -14,6 +8,11 @@ import {
   RouterAction,
   RouterExecutionType,
 } from '@activepieces/shared';
+import { useReactFlow } from '@xyflow/react';
+import { t } from 'i18next';
+import { Split } from 'lucide-react';
+import { memo, useEffect } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { FormField, FormItem } from '../../../../components/ui/form';
 import { Label } from '../../../../components/ui/label';

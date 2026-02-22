@@ -1,4 +1,3 @@
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import {
   isNil,
   isObject,
@@ -7,6 +6,8 @@ import {
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
+
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 
 import {
   DataSelectorTreeNode,

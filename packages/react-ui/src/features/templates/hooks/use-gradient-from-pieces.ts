@@ -1,13 +1,13 @@
-import { useQueries } from '@tanstack/react-query';
-import { useMemo } from 'react';
-
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadata, StepMetadata } from '@/lib/types';
 import {
   FlowTrigger,
   flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';
+import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { PieceStepMetadata, StepMetadata } from '@/lib/types';
 
 const rgbToHex = (r: number, g: number, b: number): string => {
   return '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');

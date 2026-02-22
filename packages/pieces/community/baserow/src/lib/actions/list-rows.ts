@@ -2,7 +2,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
+import { baserowAuth } from '../auth';
 import { makeClient } from '../common';
 
 export const listRowsAction = createAction({

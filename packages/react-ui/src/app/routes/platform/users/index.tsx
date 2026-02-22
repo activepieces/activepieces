@@ -1,3 +1,9 @@
+import {
+  InvitationType,
+  UserInvitation,
+  UserStatus,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { User, UserPlus } from 'lucide-react';
@@ -12,12 +18,6 @@ import { InviteUserDialog } from '@/features/members/component/invite-user/invit
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
-import {
-  InvitationType,
-  UserInvitation,
-  UserStatus,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
 
 import { DeleteUserAction } from './actions/delete-user-action';
 import { EditUserAction } from './actions/edit-user-action';

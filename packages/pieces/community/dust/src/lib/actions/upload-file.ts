@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { createClient } from '../common';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
+import { DustAuthType } from '../..';
 import mimeTypes from 'mime-types';
 import { FileUploadUrlRequestType } from '@dust-tt/client';
 

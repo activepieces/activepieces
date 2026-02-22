@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   CreateTemplateRequestBody,
   ListTemplatesRequestQuery,
@@ -7,6 +6,8 @@ import {
   UpdateTemplateRequestBody,
   Flag,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const templatesApi = {
   getTemplate(templateId: string) {

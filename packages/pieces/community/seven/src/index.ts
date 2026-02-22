@@ -5,13 +5,7 @@ import { sendVoiceCallAction } from './action/send-voice-call';
 import { lookup } from './action/lookup';
 import { smsInbound } from './trigger/sms-inbound';
 import { PieceCategory } from '@activepieces/shared';
-
-export const sevenAuth = PieceAuth.SecretText({
-  description:
-    'You can find your API key in [Developer Menu](https://app.seven.io/developer).',
-  displayName: 'API key',
-  required: true,
-});
+import { sevenAuth } from './lib/auth';
 
 export const seven = createPiece({
   displayName: 'seven',

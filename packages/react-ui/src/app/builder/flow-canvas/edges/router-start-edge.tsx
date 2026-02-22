@@ -1,6 +1,5 @@
-import { BaseEdge, EdgeProps } from '@xyflow/react';
-
 import { StepLocationRelativeToParent } from '@activepieces/shared';
+import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { flowCanvasConsts } from '../utils/consts';
 import { ApRouterStartEdge } from '../utils/types';

@@ -3,5 +3,9 @@
   "version": "0.3.2",
   "dependencies": {
     "monday-sdk-js": "0.5.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

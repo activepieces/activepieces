@@ -1,3 +1,4 @@
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
@@ -11,7 +12,6 @@ import { gitSyncApi } from '@/features/project-releases/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 import { ReleaseCard } from './release-card';
 

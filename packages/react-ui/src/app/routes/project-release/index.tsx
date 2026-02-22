@@ -1,3 +1,8 @@
+import {
+  ProjectRelease,
+  ProjectReleaseType,
+  Permission,
+} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -35,11 +40,6 @@ import { projectReleaseApi } from '@/features/project-releases/lib/project-relea
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  ProjectRelease,
-  ProjectReleaseType,
-  Permission,
-} from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
 import { PushEverythingDialog } from './push-everything-dialog';

@@ -1,3 +1,9 @@
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
+import {
+  FieldControlMode,
+  isNil,
+  PredefinedInputField,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
@@ -17,12 +23,6 @@ import {
 import { ConnectionDropdown } from '@/features/agents/agent-tools/piece-tool-dialog/connection-select';
 import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import {
-  FieldControlMode,
-  isNil,
-  PredefinedInputField,
-} from '@activepieces/shared';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 

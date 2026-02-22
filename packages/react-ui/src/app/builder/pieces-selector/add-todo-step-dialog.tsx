@@ -1,3 +1,4 @@
+import { isNil, TodoType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { InfoIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -21,7 +22,6 @@ import {
 } from '@/components/ui/tooltip';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
-import { isNil, TodoType } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

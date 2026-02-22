@@ -4,5 +4,9 @@
   "dependencies": {
     "googleapis": "129.0.0",
     "mailparser": "3.7.5"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

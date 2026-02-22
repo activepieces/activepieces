@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-salesforce",
-  "version": "0.5.1"
+  "version": "0.5.1",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

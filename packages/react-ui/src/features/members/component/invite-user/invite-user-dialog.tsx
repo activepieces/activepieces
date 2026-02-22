@@ -1,3 +1,11 @@
+import {
+  InvitationType,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+  UserInvitationWithLink,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -36,13 +44,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
-import {
-  InvitationType,
-  Permission,
-  PlatformRole,
-  ProjectType,
-  UserInvitationWithLink,
-} from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../../lib/user-invitations-hooks';
 

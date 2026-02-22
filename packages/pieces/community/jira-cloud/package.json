@@ -5,5 +5,9 @@
     "@atlaskit/adf-schema": "50.4.0",
     "@atlaskit/editor-json-transformer": "8.27.2",
     "@atlaskit/editor-markdown-transformer": "5.16.6"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

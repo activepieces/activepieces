@@ -3,7 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { moveoAuth } from '../../index';
+import { moveoAuth } from '../auth';
 
 export const dialogInsights = createTrigger({
   name: 'dialog_insights',

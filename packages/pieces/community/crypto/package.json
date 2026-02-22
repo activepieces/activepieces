@@ -4,5 +4,9 @@
   "dependencies": {
     "openpgp": "^6.2.0",
     "buffer": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

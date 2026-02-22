@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { redditAuth } from '../../';
+import { redditAuth } from '../auth';
 
 export const retrieveRedditPost = createAction({
   auth: redditAuth,

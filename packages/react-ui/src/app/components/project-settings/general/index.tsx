@@ -1,3 +1,10 @@
+import {
+  ColorName,
+  PlatformRole,
+  PROJECT_COLOR_PALETTE,
+  ProjectIcon,
+  ProjectType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
@@ -22,13 +29,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import {
-  ColorName,
-  PlatformRole,
-  PROJECT_COLOR_PALETTE,
-  ProjectIcon,
-  ProjectType,
-} from '@activepieces/shared';
 
 export type FormValues = {
   projectName: string;

@@ -3,5 +3,9 @@
   "version": "0.1.21",
   "dependencies": {
     "@zip.js/zip.js": "^2.8.15"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

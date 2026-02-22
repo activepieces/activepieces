@@ -1,3 +1,15 @@
+import {
+  OAuth2Property,
+  PieceAuthProperty,
+  PropertyType,
+  DEFAULT_CONNECTION_DISPLAY_NAME,
+  OAuth2Props,
+} from '@activepieces/pieces-framework';
+import {
+  AppConnectionType,
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
+  OAuth2GrantType,
+} from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 
@@ -18,18 +30,6 @@ import {
   oauth2Utils,
 } from '@/lib/oauth2-utils';
 import { formatUtils } from '@/lib/utils';
-import {
-  OAuth2Property,
-  PieceAuthProperty,
-  PropertyType,
-  DEFAULT_CONNECTION_DISPLAY_NAME,
-  OAuth2Props,
-} from '@activepieces/pieces-framework';
-import {
-  AppConnectionType,
-  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  OAuth2GrantType,
-} from '@activepieces/shared';
 
 export function MutliAuthList({
   pieceAuth,

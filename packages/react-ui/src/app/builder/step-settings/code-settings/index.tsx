@@ -1,3 +1,4 @@
+import { CodeAction, MarkdownVariant } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -9,7 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { CodeAction, MarkdownVariant } from '@activepieces/shared';
 
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 

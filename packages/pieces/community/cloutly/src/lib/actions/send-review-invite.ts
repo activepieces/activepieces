@@ -1,4 +1,4 @@
-import { cloutlyAuth } from '../../index';
+import { cloutlyAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 

@@ -1,7 +1,3 @@
-import React from 'react';
-
-import { Skeleton } from '@/components/ui/skeleton';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
   isNil,
@@ -10,6 +6,10 @@ import {
   PieceTrigger,
   PieceTriggerSettings,
 } from '@activepieces/shared';
+import React from 'react';
+
+import { Skeleton } from '@/components/ui/skeleton';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
 import { useStepSettingsContext } from '../step-settings-context';

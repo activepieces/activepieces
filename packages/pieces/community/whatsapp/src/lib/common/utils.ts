@@ -4,7 +4,7 @@ import {
 	HttpMethod,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { whatsappAuth } from '../../';
+import { whatsappAuth } from '../auth';
 import {
 	Property,
 	PiecePropValueSchema,

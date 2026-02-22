@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
-import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { NoteDragOverlayMode } from '../../../state/notes-state';

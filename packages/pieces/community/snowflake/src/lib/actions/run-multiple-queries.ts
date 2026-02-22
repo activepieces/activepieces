@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import snowflake, { RowStatement, SnowflakeError } from 'snowflake-sdk';
-import { snowflakeAuth } from '../../index';
+import { snowflakeAuth } from '../auth';
 import { configureConnection } from '../common';
 
 type QueryResult = unknown[] | undefined;

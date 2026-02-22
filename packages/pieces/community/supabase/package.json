@@ -3,5 +3,9 @@
   "version": "0.1.3",
   "dependencies": {
     "@supabase/supabase-js": "2.49.9"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

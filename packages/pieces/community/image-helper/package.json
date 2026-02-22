@@ -4,5 +4,9 @@
   "dependencies": {
     "jimp": "^0.22.12",
     "exifreader": "4.20.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

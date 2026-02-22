@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { InferenceClient } from '@huggingface/inference';
 import type { ChatCompletionInput } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const chatCompletion = createAction({
   name: 'chat_completion',

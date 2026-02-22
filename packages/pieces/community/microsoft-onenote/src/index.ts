@@ -7,7 +7,7 @@ import { newNoteInSectionTrigger } from './lib/triggers/new-note-in-section';
 import { createNoteInSection } from './lib/actions/create-note-in-section';
 import { createPage } from './lib/actions/create-page';
 import { PieceCategory } from "@activepieces/shared";
-
+import { oneNoteAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -35,15 +35,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
-
-export const oneNoteAuth = PieceAuth.OAuth2({
-	description:authDesc,
-	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-	required: true,
-	scope: ['Notes.ReadWrite', 'User.Read', 'offline_access'],
-	prompt: 'omit'
-});
 
 export const microsoftOnenote = createPiece({
 	displayName: "Microsoft OneNote",

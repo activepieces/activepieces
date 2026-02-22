@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-talkable",
-  "version": "0.2.5"
+  "version": "0.2.5",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

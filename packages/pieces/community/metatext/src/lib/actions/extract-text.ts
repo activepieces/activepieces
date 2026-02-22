@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { metatextAuth } from '../../index';
+import { metatextAuth } from '../auth';
 import { metatextApiCall } from '../common';
 
 export const extractText = createAction({

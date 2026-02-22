@@ -1,8 +1,3 @@
-import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import { createCollection, useLiveQuery } from '@tanstack/react-db';
-import { QueryClient, useMutation } from '@tanstack/react-query';
-
-import { api } from '@/lib/api';
 import {
   CreatePlatformEventDestinationRequestBody,
   EventDestination,
@@ -10,6 +5,11 @@ import {
   UpdatePlatformEventDestinationRequestBody,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
+import { queryCollectionOptions } from '@tanstack/query-db-collection';
+import { createCollection, useLiveQuery } from '@tanstack/react-db';
+import { QueryClient, useMutation } from '@tanstack/react-query';
+
+import { api } from '@/lib/api';
 
 const collectionQueryClient = new QueryClient();
 

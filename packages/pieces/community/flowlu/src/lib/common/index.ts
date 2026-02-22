@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { flowluAuth } from '../..';
+import { flowluAuth } from '../auth';
 import { FlowluClient } from './client';
 
 export function makeClient(

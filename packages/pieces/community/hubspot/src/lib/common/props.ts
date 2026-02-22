@@ -24,7 +24,7 @@ import {
 	STANDARD_OBJECT_TYPES,
 } from './constants';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 
 const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
 	return {

@@ -3,7 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { lucidyaAuth } from '../../index';
+import { lucidyaAuth } from '../auth';
 
 export const newAlertTrigger = createTrigger({
   auth: lucidyaAuth,

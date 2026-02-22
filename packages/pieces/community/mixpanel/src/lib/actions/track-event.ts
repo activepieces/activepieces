@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { mixpanelAuth } from '../../index';
+import { mixpanelAuth } from '../auth';
 
 const API_URL = 'https://api.mixpanel.com';
 

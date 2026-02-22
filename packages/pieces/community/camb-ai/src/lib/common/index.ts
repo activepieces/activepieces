@@ -1,6 +1,6 @@
 import { Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { cambaiAuth } from "../..";
+import { cambaiAuth } from '../auth';
 
 
 export const API_BASE_URL = "https://client.camb.ai/apis";

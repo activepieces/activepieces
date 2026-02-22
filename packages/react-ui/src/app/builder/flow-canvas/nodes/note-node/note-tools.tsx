@@ -1,3 +1,4 @@
+import { NoteColorVariant } from '@activepieces/shared';
 import { Editor } from '@tiptap/core';
 import { t } from 'i18next';
 import { TrashIcon } from 'lucide-react';
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { NoteColorVariant } from '@activepieces/shared';
 
 export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);

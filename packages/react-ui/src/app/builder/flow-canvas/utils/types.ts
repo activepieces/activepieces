@@ -1,11 +1,10 @@
-import { Edge } from '@xyflow/react';
-
 import {
   FlowAction,
   StepLocationRelativeToParent,
   FlowTrigger,
   Note,
 } from '@activepieces/shared';
+import { Edge } from '@xyflow/react';
 
 export enum ApNodeType {
   STEP = 'STEP',

@@ -1,3 +1,16 @@
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/pieces-framework';
+import {
+  AppConnectionScope,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+  PieceAction,
+  PieceTrigger,
+  PropertyExecutionType,
+  isNil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Globe } from 'lucide-react';
 import { useState } from 'react';
@@ -25,19 +38,6 @@ import {
 } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import {
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
-import {
-  AppConnectionScope,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-  PieceAction,
-  PieceTrigger,
-  PropertyExecutionType,
-  isNil,
-} from '@activepieces/shared';
 
 function ConnectionSelect(params: ConnectionSelectProps) {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);

@@ -8,7 +8,7 @@ export class ExecutionError extends Error {
 
     public type: ExecutionErrorType
 
-    constructor(name: string, message: string, type: ExecutionErrorType, public cause?: unknown) {
+    constructor(name: string, message: string, type: ExecutionErrorType, public override cause?: unknown) {
         super(message)
         this.name = name
         this.type = type

@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-pipedrive",
-  "version": "0.8.3"
+  "version": "0.8.3",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

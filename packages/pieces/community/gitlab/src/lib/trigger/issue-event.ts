@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 import { gitlabCommon, makeClient } from '../common';
-import { gitlabAuth } from '../..';
+import { gitlabAuth } from '../auth';
 const sampleData = {
   object_kind: 'issue',
   event_type: 'issue',

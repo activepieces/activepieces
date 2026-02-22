@@ -6,7 +6,7 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { wufooAuth } from '../..';
+import { wufooAuth } from '../auth';
 
 export type WufooAuthProps = AppConnectionValueForAuthProperty<typeof wufooAuth>;
 

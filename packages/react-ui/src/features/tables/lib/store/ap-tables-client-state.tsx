@@ -1,6 +1,3 @@
-import { nanoid } from 'nanoid';
-import { create } from 'zustand';
-
 import {
   Field,
   FieldType,
@@ -8,6 +5,8 @@ import {
   Table,
   TableAutomationStatus,
 } from '@activepieces/shared';
+import { nanoid } from 'nanoid';
+import { create } from 'zustand';
 
 import { createServerState } from './ap-tables-server-state';
 

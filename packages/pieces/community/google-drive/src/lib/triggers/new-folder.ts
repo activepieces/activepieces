@@ -11,7 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 import { common } from '../common';
 
 const polling: Polling<

@@ -1,6 +1,7 @@
 import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { sftpAuth, getClient, getProtocolBackwardCompatibility, endClient } from '../..';
+import { getClient, getProtocolBackwardCompatibility, endClient } from '../common';
+import { sftpAuth } from '../auth';
 import dayjs from 'dayjs';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FileInfo as FTPFileInfo } from 'basic-ftp';

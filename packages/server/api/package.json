@@ -1,0 +1,34 @@
+{
+  "name": "server-api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "@activepieces/engine": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@activepieces/ee-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@activepieces/piece-facebook-leads": "workspace:*",
+    "@activepieces/piece-intercom": "workspace:*",
+    "@activepieces/piece-slack": "workspace:*",
+    "@activepieces/piece-square": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.app.json --noEmit",
+    "serve": "cd ../../.. && npx tsx --env-file=packages/server/api/.env --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/main.ts",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "npm run test-ce && npm run test-ee && npm run test-cloud",
+    "test-unit": "vitest run test/unit --bail 1 --passWithNoTests=false",
+    "test-ce-command": "vitest run test/integration/ce --bail 1 --passWithNoTests=false",
+    "test-ee-command": "vitest run test/integration/ee --bail 1 --passWithNoTests=false",
+    "test-cloud-command": "vitest run test/integration/cloud --bail 1 --passWithNoTests=false",
+    "test-ce": "export $(cat .env.tests | xargs) && AP_EDITION=ce npm run test-ce-command",
+    "test-ee": "export $(cat .env.tests | xargs) && AP_EDITION=ee npm run test-ee-command",
+    "test-cloud": "export $(cat .env.tests | xargs) && AP_EDITION=cloud npm run test-cloud-command",
+    "check-migrations": "echo '🔍 Checking for schema changes...' && export $(cat .env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && ts-node -r tsconfig-paths/register -P tsconfig.app.json ../../../node_modules/typeorm/cli.js migration:run -d src/app/database/migration-data-source.ts > /dev/null 2>&1 && echo 'Checking for schema drift...' && ts-node -r tsconfig-paths/register -P tsconfig.app.json ../../../node_modules/typeorm/cli.js migration:generate -p -d src/app/database/migration-data-source.ts src/app/database/migration/postgres/check --dryrun --check || (echo '❌ ERROR: Schema changes detected without migration!' && exit 1) && echo '✅ No missing migrations detected'",
+    "db": "ts-node -r tsconfig-paths/register -P tsconfig.app.json ../../../node_modules/typeorm/cli.js",
+    "db-migration": "export $(cat .env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && export AP_EDITION=ce && ts-node -r tsconfig-paths/register -P tsconfig.app.json ../../../node_modules/typeorm/cli.js migration:generate -p -d src/app/database/migration-data-source.ts",
+    "test:docker": "UID=\"$(id -u)\" GID=\"$(id -g)\" docker compose --profile full -f docker-compose.test.yml up --exit-code-from app --attach app"
+  }
+}

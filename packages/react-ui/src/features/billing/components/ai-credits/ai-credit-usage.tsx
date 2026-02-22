@@ -1,3 +1,9 @@
+import {
+  AiCreditsAutoTopUpState,
+  ApEdition,
+  ApFlagId,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Sparkles, Settings, Plus } from 'lucide-react';
@@ -13,12 +19,6 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import {
-  AiCreditsAutoTopUpState,
-  ApEdition,
-  ApFlagId,
-  PlatformBillingInformation,
-} from '@activepieces/shared';
 
 import { billingMutations } from '../../lib/billing-hooks';
 

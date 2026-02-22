@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { instabaseAuth } from '../../index';
+import { instabaseAuth } from '../auth';
 import { makeInstabaseApiCall } from '../common';
 
 type Conversation = {

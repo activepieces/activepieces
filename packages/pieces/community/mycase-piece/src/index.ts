@@ -41,6 +41,7 @@ import { eventAddedOrUpdated } from './lib/triggers/event-added-or-updated';
 import { personAddedOrUpdated } from './lib/triggers/person-added-or-updated';
 import { companyAddedOrUpdated } from './lib/triggers/company-added-or-updated';
 import { leadAddedOrUpdated } from './lib/triggers/lead-added-or-updated';
+import { mycaseAuth } from './lib/auth';
 
 const mycaseAuthDescription = `
 ## MyCase OAuth 2.0 Setup
@@ -69,15 +70,6 @@ MyCase uses OAuth 2.0 Authorization Code Grant flow with the following endpoints
 
 For detailed API documentation, visit: [https://mycaseapi.stoplight.io/docs/mycase-api-documentation/k5xpc4jyhkom7-getting-started](https://mycaseapi.stoplight.io/docs/mycase-api-documentation/k5xpc4jyhkom7-getting-started)
 `;
-
-export const mycaseAuth = PieceAuth.OAuth2({
-  description: mycaseAuthDescription,
-  authUrl: 'https://auth.mycase.com/login_sessions/new',
-  tokenUrl: 'https://auth.mycase.com/tokens',
-  required: true,
-  scope: [],
-  pkce: true
-});
 
 export const mycasePiece = createPiece({
   displayName: 'MyCase',

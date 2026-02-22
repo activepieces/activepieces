@@ -3,5 +3,9 @@
   "version": "0.3.2",
   "dependencies": {
     "@qdrant/js-client-rest": "1.7.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

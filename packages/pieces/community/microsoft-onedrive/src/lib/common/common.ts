@@ -6,7 +6,7 @@ import {
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import dayjs from 'dayjs';
-import { oneDriveAuth } from '../..';
+import { oneDriveAuth } from '../auth';
 
 export const oneDriveCommon = {
   baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',

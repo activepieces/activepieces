@@ -1,4 +1,4 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftSharePointCommon } from '../common';
 import { Client, ResponseType } from '@microsoft/microsoft-graph-client';

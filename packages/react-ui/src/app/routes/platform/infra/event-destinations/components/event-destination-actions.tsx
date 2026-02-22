@@ -1,3 +1,4 @@
+import { EventDestination } from '@activepieces/ee-shared';
 import { t } from 'i18next';
 import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
@@ -10,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { EventDestination } from '@activepieces/ee-shared';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 

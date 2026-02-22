@@ -300,7 +300,7 @@ We use [Checkly](https://checklyhq.com/) to run and debug E2E tests. Checkly pro
 
 ```bash
 # Run tests with Checkly (includes video reporting)
-npx nx run tests-e2e:test-checkly
+npx turbo run test-checkly --filter=tests-e2e
 ```
 
 - Test results, including video recordings, are available in the Checkly dashboard.
@@ -311,7 +311,7 @@ npx nx run tests-e2e:test-checkly
 Manual deployment is rarely needed, but you can trigger it with:
 
 ```bash
-npx nx run tests-e2e:deploy-checkly
+npx turbo run deploy-checkly --filter=tests-e2e
 ```
 
 <Info>

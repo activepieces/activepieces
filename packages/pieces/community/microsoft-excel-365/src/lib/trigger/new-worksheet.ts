@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
-import { excelAuth } from '../..';
+import { excelAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,

@@ -1,7 +1,6 @@
+import { isNil } from '@activepieces/shared';
 import { cva, type VariantProps } from 'class-variance-authority';
 import React from 'react';
-
-import { isNil } from '@activepieces/shared';
 
 const statusCodeVariants = cva(
   'inline-flex gap-1 rounded px-2.5 py-1 text-xs font-semibold',

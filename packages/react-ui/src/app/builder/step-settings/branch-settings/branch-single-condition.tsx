@@ -1,3 +1,9 @@
+import {
+  BranchOperator,
+  textConditions,
+  singleValueConditions,
+  RouterAction,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
@@ -8,12 +14,6 @@ import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import {
-  BranchOperator,
-  textConditions,
-  singleValueConditions,
-  RouterAction,
-} from '@activepieces/shared';
 
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import {

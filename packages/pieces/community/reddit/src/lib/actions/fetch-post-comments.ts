@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { redditAuth } from '../../index';
+import { redditAuth } from '../auth';
 
 export const fetchPostComments = createAction({
   auth: redditAuth,

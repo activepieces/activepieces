@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, Trash } from 'lucide-react';
 
@@ -21,7 +22,6 @@ import {
   alertMutations,
 } from '@/features/alerts/lib/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 

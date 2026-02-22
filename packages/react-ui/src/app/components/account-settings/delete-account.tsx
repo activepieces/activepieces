@@ -1,3 +1,5 @@
+import { isCloudPlanButNotEnterprise } from '@activepieces/ee-shared';
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -20,8 +22,6 @@ import {
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { isCloudPlanButNotEnterprise } from '@activepieces/ee-shared';
-import { isNil } from '@activepieces/shared';
 
 export const DeleteAccount = () => {
   const { platform } = platformHooks.useCurrentPlatform();

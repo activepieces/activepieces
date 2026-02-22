@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ChevronDown,
@@ -39,7 +40,6 @@ import {
   projectCollectionUtils,
 } from '@/hooks/project-collection';
 import { downloadFile } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
 
 import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';

@@ -7,7 +7,7 @@ import type {
   ZeroShotImageClassificationOutput,
 } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const imageClassification = createAction({
   name: 'image_classification',

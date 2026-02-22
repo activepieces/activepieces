@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-nuelink",
-  "version": "0.1.2"
+  "version": "0.1.2",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

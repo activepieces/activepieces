@@ -5,30 +5,7 @@ import { extractDataFromDocumentAction } from './lib/actions/extract-data-from-d
 import { uploadDocumentAction } from './lib/actions/upload-document-for-parsing';
 import { airparserApiCall } from './lib/common';
 import { documentParsedTrigger } from './lib/triggers/document-parsed';
-
-export const airparserAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	required: true,
-	description: 'You can find your API key in the Airparser dashboard under Account Settings.',
-	validate: async ({ auth }) => {
-		try {
-			await airparserApiCall({
-				apiKey: auth as string,
-				method: HttpMethod.GET,
-				resourceUri: '/inboxes',
-			});
-
-			return {
-				valid: true,
-			};
-		} catch {
-			return {
-				valid: false,
-				error: 'Invalid API key.',
-			};
-		}
-	},
-});
+import { airparserAuth } from './lib/auth';
 
 export const airparser = createPiece({
 	displayName: 'Airparser',

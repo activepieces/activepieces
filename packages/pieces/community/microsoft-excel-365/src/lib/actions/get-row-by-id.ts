@@ -5,7 +5,7 @@ import {
   AuthenticationType,
   HttpError
 } from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { excelCommon } from '../common/common';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

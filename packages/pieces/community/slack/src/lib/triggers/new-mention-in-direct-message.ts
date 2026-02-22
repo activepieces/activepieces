@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { userId } from '../common/props';
 
 export const newMentionInDirectMessageTrigger = createTrigger({

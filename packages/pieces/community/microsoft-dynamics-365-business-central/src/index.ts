@@ -12,7 +12,7 @@ import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record.
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { searchRecordsAction } from './lib/actions/search-records.action';
 import { PieceCategory } from '@activepieces/shared';
-
+import { businessCentralAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -39,26 +39,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
-
-export const businessCentralAuth = PieceAuth.OAuth2({
-  description:authDesc,
-  props: {
-    environment: Property.ShortText({
-      displayName: 'Environment',
-      description: `Name of the environment to connect to, e.g. 'Production' or 'Sandbox'. Environment names can be found in the Business Central Admin Center.`,
-      required: true,
-      defaultValue: 'Production',
-    }),
-  },
-  required: true,
-  scope: [
-    'https://api.businesscentral.dynamics.com/user_impersonation',
-    'https://api.businesscentral.dynamics.com/Financials.ReadWrite.All',
-  ],
-  prompt: 'omit',
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-});
 
 export const microsoftDynamics365BusinessCentral = createPiece({
   displayName: 'Microsoft Dynamics 365 Business Central',

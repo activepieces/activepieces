@@ -4,5 +4,9 @@
   "dependencies": {
     "cheerio": "1.0.0-rc.12",
     "feedparser": "2.2.10"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

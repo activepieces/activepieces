@@ -1,3 +1,4 @@
+import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -14,7 +15,6 @@ import { FormattedDate } from '@/components/ui/formatted-date';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
 
 const ApiKeysPage = () => {
   const queryClient = useQueryClient();

@@ -1,3 +1,4 @@
+import { AgentTool, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
@@ -24,7 +25,6 @@ import { PiecesList } from '@/features/agents/agent-tools/piece-tool-dialog/dial
 import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { AgentTool, isNil } from '@activepieces/shared';
 
 import { PredefinedInputsForm } from './predefined-inputs-form';
 

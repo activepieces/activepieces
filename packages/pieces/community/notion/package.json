@@ -8,5 +8,9 @@
   },
   "overrides": {
     "@notionhq/client": "2.2.14"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

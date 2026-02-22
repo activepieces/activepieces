@@ -1,3 +1,7 @@
+import {
+  AppConnectionScope,
+  AppConnectionWithoutSensitiveData,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
@@ -10,10 +14,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import {
-  AppConnectionScope,
-  AppConnectionWithoutSensitiveData,
-} from '@activepieces/shared';
 
 type ReconnectButtonDialogProps = {
   connection: AppConnectionWithoutSensitiveData;

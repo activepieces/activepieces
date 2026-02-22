@@ -1,9 +1,9 @@
+import { ExportTableResponse, FieldType } from '@activepieces/shared';
 import JSZip from 'jszip';
 import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
 import { createContext, ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/utils';
-import { ExportTableResponse, FieldType } from '@activepieces/shared';
 
 import { ClientField, ClientRecordData } from './store/ap-tables-client-state';
 

@@ -6,7 +6,6 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
-
 import { createFolderAction } from './lib/actions/create-folder';
 import { createListAction } from './lib/actions/create-list';
 import { createListItemAction } from './lib/actions/create-list-item';
@@ -14,7 +13,6 @@ import { updateListItemAction } from './lib/actions/update-list-item';
 import { deleteListItemAction } from './lib/actions/delete-list-item';
 import { findListItemAction } from './lib/actions/search-list-item';
 import { uploadFile } from './lib/actions/upload-file';
-
 
 import { publishPageAction } from './lib/actions/publish-page';
 import { copyItemAction } from './lib/actions/copy-item';
@@ -24,7 +22,6 @@ import { findFileAction } from './lib/actions/find-file';
 import { getFolderContentsAction } from './lib/actions/get-folder-contents';
 import { getSiteInformationAction } from './lib/actions/get-site-information';
 
-
 import { newFileInFolderTrigger } from './lib/triggers/new-file-in-folder';
 import { newFileInSubfoldersTrigger } from './lib/triggers/new-file-in-subfolders';
 import { newOrUpdatedFileTrigger } from './lib/triggers/new-or-updated-file';
@@ -33,7 +30,7 @@ import { newListItemTrigger } from './lib/triggers/new-list-item';
 import { updatedListItemTrigger } from './lib/triggers/updated-list-item';
 import { newListTrigger } from './lib/triggers/new-list';
 import { newOrUpdatedListTrigger } from './lib/triggers/new-or-updated-list';
-
+import { microsoftSharePointAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -66,24 +63,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
-
-export const microsoftSharePointAuth = PieceAuth.OAuth2({
-  description: authDesc,
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-  required: true,
-  scope: [
-    'openid',
-    'email',
-    'profile',
-    'offline_access',
-    'Sites.Read.All',
-    'Sites.ReadWrite.All',
-    'Sites.Manage.All',
-    'Files.ReadWrite.All',
-  ],
-  prompt: 'omit'
-});
 
 export const microsoftSharePoint = createPiece({
   displayName: 'Microsoft SharePoint',

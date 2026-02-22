@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { snowflakeAuth } from '../../';
+import { snowflakeAuth } from '../auth';
 import {
   configureConnection,
   connect,

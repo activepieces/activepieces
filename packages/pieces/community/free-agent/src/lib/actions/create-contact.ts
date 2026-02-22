@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { freeAgentAuth } from '../../index';
+import { freeAgentAuth } from '../auth';
 
 export const freeAgentCreateContact = createAction({
   displayName: 'Create Contact',

@@ -6,7 +6,7 @@ import {
 	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { pipedriveAuth } from '../..';
+import { pipedriveAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/shared';

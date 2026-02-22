@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { Mail } from 'lucide-react';
 
 import { UserBadges } from '@/components/custom/user-badges';
@@ -8,7 +9,6 @@ import {
 } from '@/components/ui/hover-card';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { UserAvatar } from '../ui/user-avatar';
 

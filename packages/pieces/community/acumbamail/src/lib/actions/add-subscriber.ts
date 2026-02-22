@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { acumbamailAuth } from '../../';
+import { acumbamailAuth } from '../auth';
 import { acumbamailCommon } from '../common';
 
 export const addUpdateSubscriberAction = createAction({

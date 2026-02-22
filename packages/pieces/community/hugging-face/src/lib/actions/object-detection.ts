@@ -5,7 +5,7 @@ import type {
   ObjectDetectionOutput,
 } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const objectDetection = createAction({
   name: 'object_detection',
