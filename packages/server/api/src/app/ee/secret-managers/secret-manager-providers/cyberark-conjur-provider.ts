@@ -1,7 +1,7 @@
 import https from 'https'
 import { CyberarkConjurGetSecretRequest, CyberarkConjurProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider } from './secret-manager-providers'
 
