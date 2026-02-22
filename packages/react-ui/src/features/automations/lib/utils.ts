@@ -33,7 +33,7 @@ export function mergeAndSortItems(
       name: flow.version.displayName,
       data: flow,
       depth: 0,
-      parentId: null,
+      folderId: null,
     });
   });
 
@@ -44,7 +44,7 @@ export function mergeAndSortItems(
       name: table.name,
       data: table,
       depth: 0,
-      parentId: null,
+      folderId: null,
     });
   });
 
@@ -67,7 +67,7 @@ export function buildFolderChildren(
       name: flow.version.displayName,
       data: flow,
       depth: 1,
-      parentId: folderId,
+      folderId,
     });
   });
 
@@ -78,7 +78,7 @@ export function buildFolderChildren(
       name: table.name,
       data: table,
       depth: 1,
-      parentId: folderId,
+      folderId,
     });
   });
 
@@ -94,7 +94,6 @@ export function buildFolderChildren(
       name: '',
       data: null,
       depth: 1,
-      parentId: folderId,
       folderId,
       loadMoreCount: remaining,
     });
@@ -122,7 +121,7 @@ export function buildTreeItems(
       name: folder.displayName,
       data: folder,
       depth: 0,
-      parentId: null,
+      folderId: null,
       childCount: folderCounts.get(folder.id) ?? 0,
     };
   });
@@ -191,38 +190,40 @@ export function buildFilteredTreeItems(
   const rootItems: TreeItem[] = [];
 
   flows.forEach((flow) => {
+    const itemFolderId =
+      flow.folderId && folderMap.has(flow.folderId) ? flow.folderId : null;
     const item: TreeItem = {
       id: flow.id,
       type: 'flow',
       name: flow.version.displayName,
       data: flow,
-      depth: flow.folderId && folderMap.has(flow.folderId) ? 1 : 0,
-      parentId:
-        flow.folderId && folderMap.has(flow.folderId) ? flow.folderId : null,
+      depth: itemFolderId ? 1 : 0,
+      folderId: itemFolderId,
     };
-    if (item.parentId) {
-      const list = folderChildren.get(item.parentId) ?? [];
+    if (item.folderId) {
+      const list = folderChildren.get(item.folderId) ?? [];
       list.push(item);
-      folderChildren.set(item.parentId, list);
+      folderChildren.set(item.folderId, list);
     } else {
       rootItems.push(item);
     }
   });
 
   tables.forEach((table) => {
+    const itemFolderId =
+      table.folderId && folderMap.has(table.folderId) ? table.folderId : null;
     const item: TreeItem = {
       id: table.id,
       type: 'table',
       name: table.name,
       data: table,
-      depth: table.folderId && folderMap.has(table.folderId) ? 1 : 0,
-      parentId:
-        table.folderId && folderMap.has(table.folderId) ? table.folderId : null,
+      depth: itemFolderId ? 1 : 0,
+      folderId: itemFolderId,
     };
-    if (item.parentId) {
-      const list = folderChildren.get(item.parentId) ?? [];
+    if (item.folderId) {
+      const list = folderChildren.get(item.folderId) ?? [];
       list.push(item);
-      folderChildren.set(item.parentId, list);
+      folderChildren.set(item.folderId, list);
     } else {
       rootItems.push(item);
     }
@@ -238,7 +239,7 @@ export function buildFilteredTreeItems(
       name: folder.displayName,
       data: folder,
       depth: 0,
-      parentId: null,
+      folderId: null,
       childCount: children.length,
     });
   }
@@ -266,7 +267,6 @@ export function buildFilteredTreeItems(
           name: '',
           data: null,
           depth: 1,
-          parentId: item.id,
           folderId: item.id,
           loadMoreCount: remaining,
         });

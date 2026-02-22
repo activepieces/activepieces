@@ -1,18 +1,24 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { TreeItem } from '../lib/types';
+import {
+  SelectableItemType,
+  SelectedItemsMap,
+  TreeItem,
+} from '../lib/types';
 import { getItemKey } from '../lib/utils';
 
 export function useAutomationsSelection(treeItems: TreeItem[]) {
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [selectedItems, setSelectedItems] = useState<SelectedItemsMap>(
+    new Map(),
+  );
 
   const childrenByFolder = useMemo(() => {
     const map = new Map<string, TreeItem[]>();
     treeItems.forEach((item) => {
-      if (item.parentId && item.type !== 'load-more-folder') {
-        const list = map.get(item.parentId) ?? [];
+      if (item.folderId && item.type !== 'load-more-folder') {
+        const list = map.get(item.folderId) ?? [];
         list.push(item);
-        map.set(item.parentId, list);
+        map.set(item.folderId, list);
       }
     });
     return map;
@@ -22,34 +28,38 @@ export function useAutomationsSelection(treeItems: TreeItem[]) {
     (item: TreeItem) => {
       const key = getItemKey(item);
       setSelectedItems((prev) => {
-        const next = new Set(prev);
+        const next = new Map(prev);
 
         if (item.type === 'folder') {
           const children = childrenByFolder.get(item.id) ?? [];
-          const childKeys = children.map(getItemKey);
           if (next.has(key)) {
             next.delete(key);
-            childKeys.forEach((k) => next.delete(k));
+            children.forEach((child) => next.delete(getItemKey(child)));
           } else {
-            next.add(key);
-            childKeys.forEach((k) => next.add(k));
+            next.set(key, 'folder');
+            children.forEach((child) =>
+              next.set(getItemKey(child), child.type as SelectableItemType),
+            );
           }
         } else {
+          const itemType = item.type as SelectableItemType;
           if (next.has(key)) {
             next.delete(key);
-            if (item.parentId) {
-              next.delete(`folder-${item.parentId}`);
+            if (item.folderId) {
+              next.delete(getItemKey({ type: 'folder', id: item.folderId } as TreeItem));
             }
           } else {
-            next.add(key);
-            if (item.parentId) {
-              const siblings = childrenByFolder.get(item.parentId) ?? [];
-              const siblingKeys = siblings.map(getItemKey);
-              const allSelected = siblingKeys.every(
-                (k) => k === key || next.has(k),
+            next.set(key, itemType);
+            if (item.folderId) {
+              const siblings = childrenByFolder.get(item.folderId) ?? [];
+              const allSelected = siblings.every(
+                (s) => getItemKey(s) === key || next.has(getItemKey(s)),
               );
               if (allSelected) {
-                next.add(`folder-${item.parentId}`);
+                next.set(
+                  getItemKey({ type: 'folder', id: item.folderId } as TreeItem),
+                  'folder',
+                );
               }
             }
           }
@@ -71,14 +81,21 @@ export function useAutomationsSelection(treeItems: TreeItem[]) {
       selectedItems.size === selectableItems.length &&
       selectableItems.length > 0
     ) {
-      setSelectedItems(new Set());
+      setSelectedItems(new Map());
     } else {
-      setSelectedItems(new Set(selectableItems.map(getItemKey)));
+      setSelectedItems(
+        new Map(
+          selectableItems.map((item) => [
+            getItemKey(item),
+            item.type as SelectableItemType,
+          ]),
+        ),
+      );
     }
   }, [selectableItems, selectedItems.size]);
 
   const clearSelection = useCallback(() => {
-    setSelectedItems(new Set());
+    setSelectedItems(new Map());
   }, []);
 
   const isItemSelected = useCallback(
@@ -98,27 +115,32 @@ export function useAutomationsSelection(treeItems: TreeItem[]) {
   };
 }
 
-export function getSelectedIdsByType(selectedKeys: Set<string>) {
+export function getSelectedIdsByType(selected: SelectedItemsMap) {
   const flowIds: string[] = [];
   const tableIds: string[] = [];
   const folderIds: string[] = [];
 
-  for (const key of selectedKeys) {
-    if (key.startsWith('flow-')) {
-      flowIds.push(key.replace('flow-', ''));
-    } else if (key.startsWith('table-')) {
-      tableIds.push(key.replace('table-', ''));
-    } else if (key.startsWith('folder-')) {
-      folderIds.push(key.replace('folder-', ''));
+  for (const [key, type] of selected) {
+    const id = key.slice(key.indexOf('-') + 1);
+    switch (type) {
+      case 'flow':
+        flowIds.push(id);
+        break;
+      case 'table':
+        tableIds.push(id);
+        break;
+      case 'folder':
+        folderIds.push(id);
+        break;
     }
   }
 
   return { flowIds, tableIds, folderIds };
 }
 
-export function hasMovableOrExportableItems(selectedKeys: Set<string>) {
-  for (const key of selectedKeys) {
-    if (key.startsWith('flow-') || key.startsWith('table-')) {
+export function hasMovableOrExportableItems(selected: SelectedItemsMap) {
+  for (const type of selected.values()) {
+    if (type === 'flow' || type === 'table') {
       return true;
     }
   }

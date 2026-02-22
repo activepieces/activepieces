@@ -17,7 +17,7 @@ import {
   UncategorizedFolderId,
 } from '@activepieces/shared';
 
-import { TreeItem } from '../lib/types';
+import { SelectedItemsMap, TreeItem } from '../lib/types';
 
 import { getSelectedIdsByType } from './use-automations-selection';
 
@@ -68,7 +68,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
   );
 
   const handleBulkDelete = useCallback(
-    async (selectedItems: Set<string>) => {
+    async (selectedItems: SelectedItemsMap) => {
       const { flowIds, tableIds, folderIds } =
         getSelectedIdsByType(selectedItems);
       setIsDeleting(true);
@@ -91,7 +91,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
   );
 
   const handleBulkMoveTo = useCallback(
-    async (selectedItems: Set<string>, targetFolderId: string) => {
+    async (selectedItems: SelectedItemsMap, targetFolderId: string) => {
       const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
       const folderId =
         isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
@@ -121,7 +121,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
   );
 
   const handleBulkExport = useCallback(
-    async (selectedItems: Set<string>) => {
+    async (selectedItems: SelectedItemsMap) => {
       const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
 
       if (flowIds.length > 0) {

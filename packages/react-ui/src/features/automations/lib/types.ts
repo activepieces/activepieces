@@ -7,15 +7,18 @@ import {
 
 export type TreeItemType = 'folder' | 'flow' | 'table' | 'load-more-folder';
 
+export type SelectableItemType = 'folder' | 'flow' | 'table';
+
+export type SelectedItemsMap = Map<string, SelectableItemType>;
+
 export type TreeItem = {
   id: string;
   type: TreeItemType;
   name: string;
   data: FolderDto | PopulatedFlow | Table | null;
   depth: number;
-  parentId: string | null;
+  folderId: string | null;
   childCount?: number;
-  folderId?: string;
   loadMoreCount?: number;
 };
 

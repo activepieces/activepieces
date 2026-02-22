@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 
-import { TreeItem } from '../lib/types';
+import { SelectedItemsMap, TreeItem } from '../lib/types';
 import { groupTreeItemsByFolder } from '../lib/utils';
 
 import { AutomationsTableRow } from './automations-table-row';
@@ -17,7 +17,7 @@ import { AutomationsTableRow } from './automations-table-row';
 type AutomationsTableProps = {
   items: TreeItem[];
   isLoading: boolean;
-  selectedItems: Set<string>;
+  selectedItems: SelectedItemsMap;
   expandedFolders: Set<string>;
   loadingFolders: Set<string>;
   projectMembers: ProjectMemberWithUser[] | undefined;

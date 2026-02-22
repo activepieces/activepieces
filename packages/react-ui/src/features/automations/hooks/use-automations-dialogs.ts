@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
 
-import { TreeItem } from '../lib/types';
+import { SelectedItemsMap, TreeItem } from '../lib/types';
 
 import { useAutomationsMutations } from './use-automations-mutations';
 
 type DialogsDeps = {
   mutations: ReturnType<typeof useAutomationsMutations>;
-  selectedItems: Set<string>;
+  selectedItems: SelectedItemsMap;
 };
 
 export function useAutomationsDialogs({
