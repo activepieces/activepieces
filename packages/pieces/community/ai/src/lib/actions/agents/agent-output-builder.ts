@@ -113,7 +113,7 @@ export const agentOutputBuilder = (prompt: string) => {
       return steps.some(
         (step) =>
           step.type === ContentBlockType.MARKDOWN &&
-          (step as MarkdownContentBlock).markdown.trim().length > 0
+          step.markdown.trim().length > 0
       );
     },
     build(): AgentResult {

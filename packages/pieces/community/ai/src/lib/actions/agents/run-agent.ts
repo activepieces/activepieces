@@ -154,13 +154,10 @@ export const runAgent = createAction({
               break;
             }
             case 'reasoning-delta': {
-              const reasoningText = 'text' in chunk && typeof chunk.text === 'string'
-                ? chunk.text
-                : 'delta' in chunk && typeof chunk.delta === 'string'
-                  ? chunk.delta
-                  : '';
-              if (reasoningText) {
-                outputBuilder.addMarkdown(reasoningText);
+              if ('text' in chunk && typeof chunk.text === 'string') {
+                outputBuilder.addMarkdown(chunk.text);
+              } else if ('delta' in chunk && typeof chunk.delta === 'string') {
+                outputBuilder.addMarkdown(chunk.delta);
               }
               break;
             }
