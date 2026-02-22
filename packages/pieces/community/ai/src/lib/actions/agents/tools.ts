@@ -2,7 +2,7 @@ import { dynamicTool, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
@@ -160,8 +160,8 @@ export async function constructAgentTools(
             outputBuilder.setStatus(
               success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
             );
-            if (!isNil(structuredOutput) && !isNil(output)) {
-              outputBuilder.setStructuredOutput(output as Record<string, unknown>);
+            if (!isNil(structuredOutput) && !isNil(output) && !isString(output)) {
+              outputBuilder.setStructuredOutput(output);
             } else if (isNil(structuredOutput) && !isNil(output) && !outputBuilder.hasTextContent()) {
               outputBuilder.addMarkdown(output as string);
             }
