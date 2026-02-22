@@ -405,6 +405,10 @@
     "packages/engine": {
       "name": "@activepieces/engine",
       "version": "0.7.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
       "devDependencies": {
         "@activepieces/piece-approval": "workspace:*",
         "@activepieces/piece-data-mapper": "workspace:*",
