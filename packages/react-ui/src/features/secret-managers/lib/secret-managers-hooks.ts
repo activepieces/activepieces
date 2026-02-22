@@ -30,14 +30,22 @@ export const secretManagersHooks = {
       enabled: platform.plan.secretManagersEnabled,
     });
   },
-  useConnectSecretManager: () => {
+  useConnectSecretManager: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: (error: Error) => void;
+  }) => {
     const queryClient = useQueryClient();
     return useMutation<void, Error, ConnectSecretManagerRequest>({
       mutationFn: secretManagersApi.connect,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
         toast.success(t('Connected successfully'));
+        onSuccess();
       },
+      onError,
     });
   },
   useDisconnectSecretManager: () => {
