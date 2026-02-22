@@ -26,7 +26,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ILike, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectStateService } from '../../ee/projects/project-release/project-state/project-state.service'
-import { flowFolderService } from '../../flows/folder/folder.service'
+import { getFolderIdFromRequest } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
@@ -39,24 +39,6 @@ export const tableRepo = repoFactory(TableEntity)
 export const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 const tablePieceName = '@activepieces/piece-tables'
-
-const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
-    if (folderId) {
-        return folderId
-    }
-    if (folderName) {
-        return (await flowFolderService(log).upsert({
-            projectId,
-            request: {
-                projectId,
-                displayName: folderName,
-            },
-        })).id
-    }
-    return null
-}
-
-
 
 export const tableService = {
     async create({

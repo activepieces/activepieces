@@ -8,9 +8,11 @@ import { foldersApi } from '@/features/folders/lib/folders-api';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { tablesUtils } from '@/features/tables/lib/utils';
+import { useNewWindow } from '@/lib/navigation-utils';
 import {
   FlowOperationType,
   PopulatedFlow,
+  Table,
   isNil,
   UncategorizedFolderId,
 } from '@activepieces/shared';
@@ -28,10 +30,12 @@ type MutationDeps = {
 };
 
 export function useAutomationsMutations(deps: MutationDeps) {
+  const openNewWindow = useNewWindow();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isExportingTables, setIsExportingTables] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const { mutate: startFromScratch, isPending: isCreateFlowPending } =
     flowHooks.useStartFromScratch(UncategorizedFolderId);
@@ -178,6 +182,86 @@ export function useAutomationsMutations(deps: MutationDeps) {
     [deps],
   );
 
+  const handleDuplicateFlow = useCallback(
+    async (flow: PopulatedFlow) => {
+      setIsDuplicating(true);
+      try {
+        const version = flow.version;
+        const displayName = `${version.displayName} - Copy`;
+        const createdFlow = await flowsApi.create({
+          displayName,
+          projectId: flow.projectId,
+          folderId: flow.folderId ?? undefined,
+        });
+        const updatedFlow = await flowsApi.update(createdFlow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName,
+            trigger: version.trigger,
+            schemaVersion: version.schemaVersion,
+            notes: version.notes,
+          },
+        });
+        openNewWindow(`/flows/${updatedFlow.id}`);
+        deps.invalidateAll();
+        toast.success(t('Flow duplicated successfully'));
+      } catch {
+        toast.error(t('Failed to duplicate flow'));
+      } finally {
+        setIsDuplicating(false);
+      }
+    },
+    [deps, openNewWindow],
+  );
+
+  const handleMoveItem = useCallback(
+    async (item: TreeItem, targetFolderId: string) => {
+      const folderId =
+        isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
+          ? null
+          : targetFolderId;
+      setIsMoving(true);
+      try {
+        if (item.type === 'flow') {
+          await flowsApi.update(item.id, {
+            type: FlowOperationType.CHANGE_FOLDER,
+            request: { folderId },
+          });
+          toast.success(t('Flow moved successfully'));
+        } else if (item.type === 'table') {
+          await tablesApi.update(item.id, { folderId });
+          toast.success(t('Table moved successfully'));
+        }
+        deps.invalidateAll();
+      } catch {
+        toast.error(t('Failed to move item'));
+      } finally {
+        setIsMoving(false);
+      }
+    },
+    [deps],
+  );
+
+  const handleExportFlow = useCallback(
+    (flow: PopulatedFlow) => {
+      exportFlows([flow]);
+    },
+    [exportFlows],
+  );
+
+  const handleExportTable = useCallback(async (table: Table) => {
+    setIsExportingTables(true);
+    try {
+      const exported = await tablesApi.export(table.id);
+      tablesUtils.exportTables([exported]);
+      toast.success(t('Table has been exported.'));
+    } catch {
+      toast.error(t('Failed to export table'));
+    } finally {
+      setIsExportingTables(false);
+    }
+  }, []);
+
   return {
     createFlow: () => startFromScratch(),
     createTable: (name: string) => createTableMutation({ name }),
@@ -188,9 +272,14 @@ export function useAutomationsMutations(deps: MutationDeps) {
     handleBulkMoveTo,
     handleBulkExport,
     handleRename,
+    handleDuplicateFlow,
+    handleMoveItem,
+    handleExportFlow,
+    handleExportTable,
     isDeleting,
     isMoving,
     isRenaming,
+    isDuplicating,
     isExporting: isExportFlowsPending || isExportingTables,
   };
 }

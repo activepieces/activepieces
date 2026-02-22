@@ -107,7 +107,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState(flowVersion.displayName);
   const [isMoveOpen, setIsMoveOpen] = useState(false);
-  const [moveFolderId, setMoveFolderId] = useState('');
+  const [folderToMoveId, setFolderToMoveId] = useState('');
   const { folders } = foldersHooks.useFolders();
 
   const { mutate: renameFlow, isPending: isRenamePending } = useMutation({
@@ -127,11 +127,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     mutationFn: async () =>
       flowsApi.update(flow.id, {
         type: FlowOperationType.CHANGE_FOLDER,
-        request: { folderId: moveFolderId },
+        request: { folderId: folderToMoveId },
       }),
     onSuccess: () => {
       setIsMoveOpen(false);
-      onMoveTo(moveFolderId);
+      onMoveTo(folderToMoveId);
       toast.success(t('Moved flow successfully'));
     },
   });
@@ -413,8 +413,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         open={isMoveOpen}
         onOpenChange={setIsMoveOpen}
         folders={folders}
-        selectedFolderId={moveFolderId}
-        onFolderChange={setMoveFolderId}
+        selectedFolderId={folderToMoveId}
+        onFolderChange={setFolderToMoveId}
         onConfirm={() => moveFlow()}
         isMoving={isMovePending}
       />

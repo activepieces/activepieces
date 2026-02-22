@@ -7,6 +7,7 @@ import { foldersApi } from '@/features/folders/lib/folders-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  FlowStatus,
   FolderDto,
   PopulatedFlow,
   SeekPage,
@@ -23,28 +24,6 @@ import {
   hasActiveFilters,
   PARALLEL_FOLDER_THRESHOLD,
 } from '../lib/utils';
-
-type FolderContentsMap = Map<string, FolderContent>;
-
-function buildFolderContentsMap(
-  folders: FolderDto[],
-  results: (SeekPage<PopulatedFlow> | SeekPage<Table>)[],
-): FolderContentsMap {
-  const map: FolderContentsMap = new Map();
-  folders.forEach((folder, i) => {
-    const flowsResult = results[i * 2] as SeekPage<PopulatedFlow>;
-    const tablesResult = results[i * 2 + 1] as SeekPage<Table>;
-    map.set(folder.id, {
-      flows: flowsResult.data,
-      tables: tablesResult.data,
-      flowsNextCursor: flowsResult.next,
-      tablesNextCursor: tablesResult.next,
-    });
-  });
-  return map;
-}
-
-const STALE_TIME = 30_000;
 
 export function useAutomationsData(filters: AutomationsFilters) {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
@@ -86,17 +65,20 @@ export function useAutomationsData(filters: AutomationsFilters) {
     queryKey: ['folder-counts', projectId, folderIds],
     queryFn: async () => {
       const folders = foldersQuery.data!;
-      const results = await Promise.all(
-        folders.flatMap((folder) => [
-          flowsApi.count({ projectId, folderId: folder.id }),
-          tablesApi.count({ projectId, folderId: folder.id }),
-        ]),
+      const [folderFlowCounts, folderTableCounts] = await Promise.all([
+        Promise.all(
+          folders.map(({ id }) => flowsApi.count({ projectId, folderId: id })),
+        ),
+        Promise.all(
+          folders.map(({ id }) => tablesApi.count({ projectId, folderId: id })),
+        ),
+      ]);
+      const folderTotalCounts = folderFlowCounts.map(
+        (count, index) => count + folderTableCounts[index],
       );
-      const map = new Map<string, number>();
-      folders.forEach((folder, i) => {
-        map.set(folder.id, results[i * 2] + results[i * 2 + 1]);
-      });
-      return map;
+      return new Map(
+        folderTotalCounts.map((count, index) => [folders[index].id, count]),
+      );
     },
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
@@ -110,23 +92,29 @@ export function useAutomationsData(filters: AutomationsFilters) {
       if (folders.length > PARALLEL_FOLDER_THRESHOLD) {
         return new Map();
       }
-      const results = await Promise.all(
-        folders.flatMap((folder) => [
-          flowsApi.list({
-            projectId,
-            folderId: folder.id,
-            limit: FOLDER_PAGE_SIZE,
-            cursor: undefined,
-          }),
-          tablesApi.list({
-            projectId,
-            folderId: folder.id,
-            limit: FOLDER_PAGE_SIZE,
-            cursor: undefined,
-          }),
-        ]),
-      );
-      return buildFolderContentsMap(folders, results);
+      const [folderFlowPages, folderTablePages] = await Promise.all([
+        Promise.all(
+          folders.map(({ id }) =>
+            flowsApi.list({
+              projectId,
+              folderId: id,
+              limit: FOLDER_PAGE_SIZE,
+              cursor: undefined,
+            }),
+          ),
+        ),
+        Promise.all(
+          folders.map(({ id }) =>
+            tablesApi.list({
+              projectId,
+              folderId: id,
+              limit: FOLDER_PAGE_SIZE,
+              cursor: undefined,
+            }),
+          ),
+        ),
+      ]);
+      return buildFolderContentsMap(folders, folderFlowPages, folderTablePages);
     },
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
@@ -149,7 +137,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
         name: filters.searchTerm || undefined,
         status:
           filters.statusFilter.length > 0
-            ? (filters.statusFilter as any)
+            ? (filters.statusFilter as FlowStatus[])
             : undefined,
         connectionExternalIds:
           filters.connectionFilter.length > 0
@@ -400,3 +388,25 @@ export function useAutomationsData(filters: AutomationsFilters) {
     invalidateFolder,
   };
 }
+
+type FolderContentsMap = Map<string, FolderContent>;
+
+function buildFolderContentsMap(
+  folders: FolderDto[],
+  flowPages: SeekPage<PopulatedFlow>[],
+  tablePages: SeekPage<Table>[],
+): FolderContentsMap {
+  return new Map(
+    folders.map((folder, i) => [
+      folder.id,
+      {
+        flows: flowPages[i].data,
+        tables: tablePages[i].data,
+        flowsNextCursor: flowPages[i].next,
+        tablesNextCursor: tablePages[i].next,
+      },
+    ]),
+  );
+}
+
+const STALE_TIME = 30_000;

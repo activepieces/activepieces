@@ -119,7 +119,7 @@ const routes = [
     element: (
       <ProjectDashboardLayout>
         <RoutePermissionGuard
-          permission={[Permission.READ_FLOW, Permission.READ_TABLE]}
+          requiredPermissions={[Permission.READ_FLOW, Permission.READ_TABLE]}
         >
           <PageTitle title="Automations">
             <AutomationsPage />
@@ -131,7 +131,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleFlow,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_FLOW}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
         <PageTitle title="Builder">
           <BuilderLayout>
             <FlowBuilderPage />
@@ -163,7 +163,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRun,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_RUN}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
         <PageTitle title="Flow Run">
           <BuilderLayout>
             <FlowRunPage />
@@ -176,7 +176,7 @@ const routes = [
     path: routesThatRequireProjectId.runs,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
           <PageTitle title="Runs">
             <RunsPage />
           </PageTitle>
@@ -202,7 +202,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_TABLE}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
         <PageTitle title="Table">
           <BuilderLayout>
             <ApTableStateProvider>
@@ -217,7 +217,9 @@ const routes = [
     path: routesThatRequireProjectId.connections,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_APP_CONNECTION}>
+        <RoutePermissionGuard
+          requiredPermissions={Permission.READ_APP_CONNECTION}
+        >
           <PageTitle title="Connections">
             <AppConnectionsPage />
           </PageTitle>

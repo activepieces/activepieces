@@ -26,7 +26,6 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Permission, UncategorizedFolderId } from '@activepieces/shared';
 
@@ -121,7 +120,6 @@ export const AutomationsPage = () => {
 
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { pieces } = piecesHooks.usePieces({});
-  const { data: currentUser } = userHooks.useCurrentUser();
 
   const handleRowClick = useCallback(
     (item: TreeItem) => {
@@ -174,9 +172,7 @@ export const AutomationsPage = () => {
         ownerFilter={ownerFilter}
         onOwnerFilterChange={setOwnerFilter}
         connections={connections?.data}
-        projectMembers={projectMembers}
         pieces={pieces}
-        currentUser={currentUser}
         userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}
         userHasPermissionToWriteTable={userHasPermissionToWriteTable}
         userHasPermissionToWriteFolder={userHasPermissionToWriteFolder}
@@ -202,12 +198,19 @@ export const AutomationsPage = () => {
             expandedFolders={expandedFolders}
             loadingFolders={loadingFolders}
             projectMembers={projectMembers}
+            folders={folders}
             selectableCount={selectableItems.length}
             onToggleAllSelection={toggleAllSelection}
             onToggleItemSelection={toggleItemSelection}
             onRowClick={handleRowClick}
             onRenameItem={dialogs.openRenameDialog}
             onDeleteItem={mutations.handleDeleteItem}
+            onDuplicateFlow={mutations.handleDuplicateFlow}
+            onMoveItem={mutations.handleMoveItem}
+            onExportFlow={mutations.handleExportFlow}
+            onExportTable={mutations.handleExportTable}
+            isMoving={mutations.isMoving}
+            isDuplicating={mutations.isDuplicating}
             onLoadMoreInFolder={loadMoreInFolder}
             isItemSelected={isItemSelected}
           />

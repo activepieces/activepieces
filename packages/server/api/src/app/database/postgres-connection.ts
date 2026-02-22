@@ -336,7 +336,6 @@ import { AddEventStreaming1769084311004 } from './migration/postgres/17690843110
 import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
 import { AddFolderColumnToTable1769638834372 } from './migration/postgres/1769638834372-add-folder-column-to-table'
 import { AddTableFolderForeignKey1769638834373 } from './migration/postgres/1769638834373-AddTableFolderForeignKey'
-import { DropCellRecordIdIndex1771336996554 } from './migration/postgres/1771336996554-DropCellRecordIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -689,7 +688,6 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveOperatorRole1769613456917,
         AddFolderColumnToTable1769638834372,
         AddTableFolderForeignKey1769638834373,
-        DropCellRecordIdIndex1771336996554,
     ]
     return migrations
 }

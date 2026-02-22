@@ -3,14 +3,19 @@ import {
   ArrowDown,
   ChevronDown,
   ChevronRight,
+  Copy,
+  CornerUpLeft,
+  Download,
   Folder,
   Loader2,
   MoreHorizontal,
   Pencil,
+  Share2,
   Table2,
   Trash2,
   Workflow,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -25,9 +30,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { FormattedDate } from '@/components/ui/formatted-date';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
+import { ShareTemplateDialog } from '@/features/flows/components/share-template-dialog';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { PopulatedFlow } from '@activepieces/shared';
+import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 
 import { TreeItem } from '../lib/types';
 
@@ -37,10 +45,17 @@ type AutomationsTableRowProps = {
   isExpanded: boolean;
   isFolderLoading?: boolean;
   projectMembers: any;
+  folders: FolderDto[];
   onRowClick: () => void;
   onToggleSelection: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onDuplicate: (flow: PopulatedFlow) => void;
+  onMoveTo: (item: TreeItem, folderId: string) => void;
+  onExportFlow: (flow: PopulatedFlow) => void;
+  onExportTable: (table: Table) => void;
+  isMoving: boolean;
+  isDuplicating: boolean;
   onLoadMore?: () => void;
 };
 
@@ -49,12 +64,21 @@ export const AutomationsTableRow = ({
   isSelected,
   isExpanded,
   isFolderLoading,
+  folders,
   onToggleSelection,
   onRename,
   onDelete,
+  onDuplicate,
+  onMoveTo,
+  onExportFlow,
+  onExportTable,
+  isMoving,
+  isDuplicating,
   onLoadMore,
 }: AutomationsTableRowProps) => {
   const { embedState } = useEmbedding();
+  const [isMoveOpen, setIsMoveOpen] = useState(false);
+  const [moveFolderId, setMoveFolderId] = useState('');
 
   if (item.type === 'load-more-folder') {
     return (
@@ -74,58 +98,6 @@ export const AutomationsTableRow = ({
       </div>
     );
   }
-
-  const getItemIcon = () => {
-    if (item.type === 'folder') {
-      return <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />;
-    }
-    if (item.type === 'flow') {
-      return <Workflow className="h-4 w-4 text-primary" />;
-    }
-    return <Table2 className="h-4 w-4 text-emerald-500" />;
-  };
-
-  const getItemDetails = () => {
-    if (item.type === 'folder') {
-      return (
-        <span className="text-muted-foreground">
-          {item.childCount} {item.childCount === 1 ? t('file') : t('files')}
-        </span>
-      );
-    }
-    if (item.type === 'flow') {
-      const flow = item.data as PopulatedFlow;
-      return (
-        <PieceIconList
-          trigger={flow.version.trigger}
-          maxNumberOfIconsToShow={3}
-          size="xs"
-          circle={false}
-        />
-      );
-    }
-    if (item.type === 'table') {
-      return <span className="text-muted-foreground">-</span>;
-    }
-    return null;
-  };
-
-  const renderOwnerCell = () => {
-    if (item.type === 'flow') {
-      const flow = item.data as PopulatedFlow;
-      if (flow.ownerId) {
-        return (
-          <ApAvatar
-            id={flow.ownerId}
-            includeAvatar={true}
-            includeName={true}
-            size="small"
-          />
-        );
-      }
-    }
-    return <span className="text-muted-foreground">-</span>;
-  };
 
   return (
     <>
@@ -151,12 +123,14 @@ export const AutomationsTableRow = ({
               )}
             </span>
           )}
-          <span className="shrink-0">{getItemIcon()}</span>
+          <span className="shrink-0">
+            <RowItemIcon item={item} />
+          </span>
           <span className="truncate">{item.name}</span>
         </div>
       </div>
       <div className="w-[200px] shrink-0 px-2 flex items-center">
-        {getItemDetails()}
+        <RowItemDetails item={item} />
       </div>
       <div className="w-[180px] shrink-0 px-2 flex items-center">
         {item.data && (
@@ -168,7 +142,7 @@ export const AutomationsTableRow = ({
       </div>
       {!embedState.isEmbedded && (
         <div className="w-[150px] shrink-0 px-2 flex items-center">
-          {renderOwnerCell()}
+          <RowItemOwner item={item} />
         </div>
       )}
       <div
@@ -194,6 +168,64 @@ export const AutomationsTableRow = ({
               <Pencil className="h-4 w-4 mr-2" />
               {t('Rename')}
             </DropdownMenuItem>
+
+            {item.type === 'flow' && !embedState.hideDuplicateFlow && (
+              <DropdownMenuItem
+                onClick={() => onDuplicate(item.data as PopulatedFlow)}
+                disabled={isDuplicating}
+              >
+                {isDuplicating ? (
+                  <LoadingSpinner className="mr-2" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-2" />
+                )}
+                {isDuplicating ? t('Duplicating...') : t('Duplicate')}
+              </DropdownMenuItem>
+            )}
+
+            {(item.type === 'flow' || item.type === 'table') &&
+              !embedState.hideFolders && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setMoveFolderId('');
+                    setIsMoveOpen(true);
+                  }}
+                >
+                  <CornerUpLeft className="h-4 w-4 mr-2" />
+                  {t('Move To')}
+                </DropdownMenuItem>
+              )}
+
+            {item.type === 'flow' && !embedState.hideExportAndImportFlow && (
+              <DropdownMenuItem
+                onClick={() => onExportFlow(item.data as PopulatedFlow)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('Export')}
+              </DropdownMenuItem>
+            )}
+
+            {item.type === 'table' && (
+              <DropdownMenuItem
+                onClick={() => onExportTable(item.data as Table)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('Export')}
+              </DropdownMenuItem>
+            )}
+
+            {item.type === 'flow' && !embedState.isEmbedded && (
+              <ShareTemplateDialog
+                flowId={item.id}
+                flowVersionId={(item.data as PopulatedFlow).version.id}
+              >
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  {t('Share')}
+                </DropdownMenuItem>
+              </ShareTemplateDialog>
+            )}
+
             <DropdownMenuSeparator />
             <ConfirmationDeleteDialog
               title={t('Delete {type}', { type: item.type })}
@@ -214,7 +246,72 @@ export const AutomationsTableRow = ({
             </ConfirmationDeleteDialog>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <MoveToFolderDialog
+          open={isMoveOpen}
+          onOpenChange={setIsMoveOpen}
+          folders={folders}
+          selectedFolderId={moveFolderId}
+          onFolderChange={setMoveFolderId}
+          onConfirm={() => {
+            onMoveTo(item, moveFolderId);
+            setIsMoveOpen(false);
+          }}
+          isMoving={isMoving}
+        />
       </div>
     </>
   );
+};
+
+const RowItemIcon = ({ item }: { item: TreeItem }) => {
+  switch (item.type) {
+    case 'folder':
+      return <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />;
+    case 'flow':
+      return <Workflow className="h-4 w-4 text-primary" />;
+    default:
+      return <Table2 className="h-4 w-4 text-emerald-500" />;
+  }
+};
+
+const RowItemDetails = ({ item }: { item: TreeItem }) => {
+  switch (item.type) {
+    case 'folder':
+      return (
+        <span className="text-muted-foreground">
+          {item.childCount} {item.childCount === 1 ? t('file') : t('files')}
+        </span>
+      );
+    case 'flow': {
+      const flow = item.data as PopulatedFlow;
+      return (
+        <PieceIconList
+          trigger={flow.version.trigger}
+          maxNumberOfIconsToShow={3}
+          size="xs"
+          circle={false}
+        />
+      );
+    }
+    default:
+      return <span className="text-muted-foreground">-</span>;
+  }
+};
+
+const RowItemOwner = ({ item }: { item: TreeItem }) => {
+  if (item.type === 'flow') {
+    const flow = item.data as PopulatedFlow;
+    if (flow.ownerId) {
+      return (
+        <ApAvatar
+          id={flow.ownerId}
+          includeAvatar={true}
+          includeName={true}
+          size="small"
+        />
+      );
+    }
+  }
+  return <span className="text-muted-foreground">-</span>;
 };

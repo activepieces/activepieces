@@ -34,13 +34,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useOwnerOptions } from '@/features/automations/hooks/use-owner-options';
 import { formatUtils } from '@/lib/utils';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   AppConnectionWithoutSensitiveData,
   FlowStatus,
-  UserWithBadges,
 } from '@activepieces/shared';
 
 type AutomationsFiltersProps = {
@@ -55,9 +54,7 @@ type AutomationsFiltersProps = {
   ownerFilter: string[];
   onOwnerFilterChange: (value: string[]) => void;
   connections: AppConnectionWithoutSensitiveData[] | undefined;
-  projectMembers: ProjectMemberWithUser[] | undefined;
   pieces: PieceMetadataModelSummary[] | undefined;
-  currentUser: UserWithBadges | null | undefined;
   userHasPermissionToWriteFlow: boolean;
   userHasPermissionToWriteTable: boolean;
   userHasPermissionToWriteFolder: boolean;
@@ -221,9 +218,7 @@ export const AutomationsFilters = ({
   ownerFilter,
   onOwnerFilterChange,
   connections,
-  projectMembers,
   pieces,
-  currentUser,
   userHasPermissionToWriteFlow,
   userHasPermissionToWriteTable,
   userHasPermissionToWriteFolder,
@@ -238,6 +233,7 @@ export const AutomationsFilters = ({
   isCreatingTable = false,
 }: AutomationsFiltersProps) => {
   const { embedState } = useEmbedding();
+  const ownerOptions = useOwnerOptions();
   const typeOptions = [
     { value: 'flow', label: t('Flows') },
     { value: 'table', label: t('Tables') },
@@ -260,31 +256,6 @@ export const AutomationsFilters = ({
       ) : undefined,
     };
   });
-
-  const ownerOptions = (() => {
-    const options: { value: string; label: string }[] = [];
-    const seenIds = new Set<string>();
-
-    if (currentUser) {
-      options.push({
-        value: currentUser.id,
-        label: `${currentUser.firstName} ${currentUser.lastName}`,
-      });
-      seenIds.add(currentUser.id);
-    }
-
-    (projectMembers || []).forEach((member) => {
-      if (!seenIds.has(member.userId)) {
-        options.push({
-          value: member.userId,
-          label: `${member.user.firstName} ${member.user.lastName}`,
-        });
-        seenIds.add(member.userId);
-      }
-    });
-
-    return options;
-  })();
 
   return (
     <div className="overflow-x-auto mb-4">

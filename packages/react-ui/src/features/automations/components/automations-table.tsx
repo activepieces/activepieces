@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 
 import { TreeItem } from '../lib/types';
 import { groupTreeItemsByFolder } from '../lib/utils';
@@ -20,12 +21,19 @@ type AutomationsTableProps = {
   expandedFolders: Set<string>;
   loadingFolders: Set<string>;
   projectMembers: ProjectMemberWithUser[] | undefined;
+  folders: FolderDto[];
   selectableCount: number;
   onToggleAllSelection: () => void;
   onToggleItemSelection: (item: TreeItem) => void;
   onRowClick: (item: TreeItem) => void;
   onRenameItem: (item: TreeItem) => void;
   onDeleteItem: (item: TreeItem) => void;
+  onDuplicateFlow: (flow: PopulatedFlow) => void;
+  onMoveItem: (item: TreeItem, folderId: string) => void;
+  onExportFlow: (flow: PopulatedFlow) => void;
+  onExportTable: (table: Table) => void;
+  isMoving: boolean;
+  isDuplicating: boolean;
   onLoadMoreInFolder: (folderId: string) => void;
   isItemSelected: (item: TreeItem) => boolean;
 };
@@ -40,12 +48,19 @@ export const AutomationsTable = ({
   expandedFolders,
   loadingFolders,
   projectMembers,
+  folders,
   selectableCount,
   onToggleAllSelection,
   onToggleItemSelection,
   onRowClick,
   onRenameItem,
   onDeleteItem,
+  onDuplicateFlow,
+  onMoveItem,
+  onExportFlow,
+  onExportTable,
+  isMoving,
+  isDuplicating,
   onLoadMoreInFolder,
   isItemSelected,
 }: AutomationsTableProps) => {
@@ -107,12 +122,19 @@ export const AutomationsTable = ({
                         isExpanded={expandedFolders.has(group.item.id)}
                         isFolderLoading={loadingFolders.has(group.item.id)}
                         projectMembers={projectMembers}
+                        folders={folders}
                         onRowClick={() => onRowClick(group.item)}
                         onToggleSelection={() =>
                           onToggleItemSelection(group.item)
                         }
                         onRename={() => onRenameItem(group.item)}
                         onDelete={() => onDeleteItem(group.item)}
+                        onDuplicate={onDuplicateFlow}
+                        onMoveTo={onMoveItem}
+                        onExportFlow={onExportFlow}
+                        onExportTable={onExportTable}
+                        isMoving={isMoving}
+                        isDuplicating={isDuplicating}
                         onLoadMore={undefined}
                       />
                     </div>
@@ -128,12 +150,19 @@ export const AutomationsTable = ({
                             isSelected={isItemSelected(child)}
                             isExpanded={false}
                             projectMembers={projectMembers}
+                            folders={folders}
                             onRowClick={() => onRowClick(child)}
                             onToggleSelection={() =>
                               onToggleItemSelection(child)
                             }
                             onRename={() => onRenameItem(child)}
                             onDelete={() => onDeleteItem(child)}
+                            onDuplicate={onDuplicateFlow}
+                            onMoveTo={onMoveItem}
+                            onExportFlow={onExportFlow}
+                            onExportTable={onExportTable}
+                            isMoving={isMoving}
+                            isDuplicating={isDuplicating}
                             onLoadMore={
                               child.type === 'load-more-folder'
                                 ? () => onLoadMoreInFolder(child.folderId!)
@@ -158,10 +187,17 @@ export const AutomationsTable = ({
                     isSelected={isItemSelected(group.item)}
                     isExpanded={false}
                     projectMembers={projectMembers}
+                    folders={folders}
                     onRowClick={() => onRowClick(group.item)}
                     onToggleSelection={() => onToggleItemSelection(group.item)}
                     onRename={() => onRenameItem(group.item)}
                     onDelete={() => onDeleteItem(group.item)}
+                    onDuplicate={onDuplicateFlow}
+                    onMoveTo={onMoveItem}
+                    onExportFlow={onExportFlow}
+                    onExportTable={onExportTable}
+                    isMoving={isMoving}
+                    isDuplicating={isDuplicating}
                     onLoadMore={undefined}
                   />
                 </div>

@@ -5,11 +5,11 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
 
 export const RoutePermissionGuard = ({
-  permission,
+  requiredPermissions: permission,
   children,
 }: {
   children: ReactNode;
-  permission: Permission | Permission[];
+  requiredPermissions: Permission | Permission[];
 }) => {
   const { checkAccess } = useAuthorization();
   const permissions = Array.isArray(permission) ? permission : [permission];
