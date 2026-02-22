@@ -89,7 +89,11 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     const [showSecretManagerInput, setShowSecretInput] = useState(false);
 
     const [selectedProvider, setSelectedProvider] =
-      useState<SecretManagerProviderId>(SecretManagerProviderId.HASHICORP);
+      useState<SecretManagerProviderId>(
+        secretManagers && secretManagers.length > 0
+          ? secretManagers[0].id
+          : SecretManagerProviderId.HASHICORP,
+      );
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
     const buildSecretValue = (
