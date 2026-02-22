@@ -11,16 +11,19 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         accessKeyId: {
             displayName: 'Access Key ID',
             placeholder: 'accessKeyId',
+            type: 'text',
         },
         secretAccessKey: {
             displayName: 'Secret Access Key',
             placeholder: 'secretAccessKey',
+            type: 'password',
         },
     },
     getSecretParams: {
         path: {
             displayName: 'Secret Path',
             placeholder: 'secretPath',
+            type: 'text',
         },
     },
 }

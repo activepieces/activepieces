@@ -12,25 +12,30 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         url: {
             displayName: 'URL',
             placeholder: 'http://localhost:8200',
+            type: 'text',
         },
         namespace: {
             displayName: 'Namespace',
             placeholder: 'namespace',
             optional: true,
+            type: 'text',
         },
         roleId: {
             displayName: 'Role ID',
             placeholder: 'role-id',
+            type: 'password',
         },
         secretId: {
             displayName: 'Secret ID',
             placeholder: 'secret-id',
+            type: 'password',
         },
     },
     getSecretParams: {
         path: {
             displayName: 'Secret Path',
             placeholder: 'eg: secret/data/keys/my-key',
+            type: 'text',
         },
     },
 }
@@ -68,6 +73,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             url: `${config.url}/v1/sys/mounts`,
             token,
             method: 'GET',
+            namespace: config.namespace,
         }).catch((error) => {
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_CONNECTION_FAILED,
@@ -95,6 +101,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             url: `${config.url}/v1/${mountPath}`,
             token,
             method: 'GET',
+            namespace: config.namespace,
         }).catch((error) => {
             log.error({
                 message: error.message,
