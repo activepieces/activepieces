@@ -1,8 +1,8 @@
 import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { awsProvider } from './aws-provider'
-import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from './hashicorp-provider'
 import { CYBERARK_PROVIDER_METADATA, cyberarkConjurProvider } from './cyberark-conjur-provider'
+import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from './hashicorp-provider'
 
 export type SecretManagerProvider<K extends SecretManagerProviderId> = {
     checkConnection: (config: SecretManagerConfigFor<K>) => Promise<unknown>

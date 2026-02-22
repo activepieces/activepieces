@@ -45,6 +45,7 @@ export type AWSGetSecretRequest = Static<typeof AWSGetSecretRequestSchema>
  */
 
 export const CyberarkConjurProviderConfigSchema = Type.Object({
+    organizationAccountName: Type.String(),
     loginId: Type.String(),
     url: Type.String(),
     apiKey: Type.String(),

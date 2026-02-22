@@ -1,41 +1,50 @@
-import { CyberarkConjurProviderConfig, CyberarkConjurGetSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import https from 'https'
+import { CyberarkConjurGetSecretRequest, CyberarkConjurProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider } from './secret-manager-providers'
-import https from 'https'
 
 export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     id: SecretManagerProviderId.CYBERARK,
     name: 'Cyberark Conjur',
     logo: 'https://cdn.activepieces.com/pieces/cyberark-conjur.png',
     fields: {
-        loginId: {
-            displayName: 'Login ID',
-            placeholder: 'login-id',
-        },
         url: {
             displayName: 'URL',
             placeholder: 'https://conjur.example.com',
+            type: 'text',
+        },
+        organizationAccountName: {
+            displayName: 'Organization Account Name',
+            placeholder: 'Your Conjur Organization Account Name',
+            type: 'text',
+        },
+        loginId: {
+            displayName: 'Login ID',
+            placeholder: 'Your Conjur Login ID',
+            type: 'text',
         },
         apiKey: {
             displayName: 'API Key',
-            placeholder: 'your-api-key',
+            placeholder: 'Your Conjur API Key',
+            type: 'password',
         },
     },
     getSecretParams: {
         secretKey: {
             displayName: 'Secret key',
-            placeholder: 'secret-key',
+            placeholder: 'Your Conjur Secret Key',
+            type: 'text',
         },
     },
 }
 
 export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
     checkConnection: async (config) => {
-        
+        const url = removeEndingSlash(config.url)
         const response = await conjurApi({
-            url: `${config.url}/authn/myConjurAccount/${encodeURIComponent(config.loginId)}/authenticate`,
+            url: `${url}/authn/${config.organizationAccountName}/${encodeURIComponent(config.loginId)}/authenticate`,
             method: 'POST',
             body: config.apiKey,
         }).catch((error) => {
@@ -68,10 +77,10 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
     getSecret: async (request: CyberarkConjurGetSecretRequest, config: CyberarkConjurProviderConfig) => {
 
         const token = await cyberarkConjurProvider(log).checkConnection(config) as string
+        const url = removeEndingSlash(config.url)
 
-        console.error('token', token)
         const response = await conjurApi({
-            url: `${config.url}/secrets/myConjurAccount/variable/${request.secretKey}`,
+            url: `${url}/secrets/${config.organizationAccountName}/variable/${encodeURIComponent(request.secretKey)}`,
             token,
             method: 'GET',
         }).catch((error) => {
@@ -90,7 +99,7 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
             })
         })
         const data = response.data
-        console.error('data', data)
+
         if (!data) {
             log.error({
                 message: 'No secret found at requested path',
@@ -125,6 +134,10 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
     },
 })
 
+const removeEndingSlash = (path: string) => {
+    return path.endsWith('/') ? path.slice(0, -1) : path
+}
+
 const conjurApi = async ({
     url,
     token,
@@ -148,6 +161,6 @@ const conjurApi = async ({
         responseType: typeof body === 'string' ? 'text' : 'json',
         httpsAgent: new https.Agent({
             rejectUnauthorized: false,
-        })
+        }),
     })
 }
