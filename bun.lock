@@ -2227,7 +2227,7 @@
       "name": "@activepieces/piece-letta",
       "version": "0.1.3",
       "dependencies": {
-        "@letta-ai/letta-client": "^1.3.1",
+        "@letta-ai/letta-client": "1.3.1",
         "tslib": "^2.3.0",
       },
     },
@@ -4067,6 +4067,7 @@
       "name": "server-api",
       "version": "0.0.1",
       "dependencies": {
+        "@activepieces/ee-shared": "workspace:*",
         "@activepieces/engine": "workspace:*",
         "@activepieces/shared": "workspace:*",
       },
@@ -6190,7 +6191,7 @@
 
     "@kwsites/promise-deferred": ["@kwsites/promise-deferred@1.1.1", "", {}, "sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw=="],
 
-    "@letta-ai/letta-client": ["@letta-ai/letta-client@1.7.8", "", {}, "sha512-l7BGsAZOI8b+H1RO2IMzMv3P0VXj6Of2wXLCg5LZejOk0dHLLBi2me4WspLg+6zWPGIRJwMRsxmfp4kV9Zzh6g=="],
+    "@letta-ai/letta-client": ["@letta-ai/letta-client@1.3.1", "", {}, "sha512-L+R7Zjsy2flB0CsGn/a6LAtRpC4HPBXpfU6/K6Xfxl8tHJXzgCEOjAxAuC7SxF0sfSRMF72a/Ves2A15NrCSag=="],
 
     "@lezer/common": ["@lezer/common@1.5.0", "", {}, "sha512-PNGcolp9hr4PJdXR4ix7XtixDrClScvtSCYW3rQG106oVMOOI+jFb+0+J3mbeL/53g1Zd6s0kJzaw6Ri68GmAA=="],
 
