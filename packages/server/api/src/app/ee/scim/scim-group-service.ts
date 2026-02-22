@@ -1,19 +1,4 @@
 import {
-    ActivepiecesError,
-    DefaultProjectRole,
-    ErrorCode,
-    isNil,
-    ProjectType,
-    UserStatus,
-} from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../../core/db/repo-factory'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
-import { ProjectMemberEntity } from '../projects/project-members/project-member.entity'
-import { projectMemberService } from '../projects/project-members/project-member.service'
-import {
     CreateScimGroupRequest,
     ReplaceScimGroupRequest,
     SCIM_GROUP_SCHEMA,
@@ -24,8 +9,21 @@ import {
     ScimListResponse,
     ScimPatchRequest,
 } from '@activepieces/ee-shared'
+import {
+    DefaultProjectRole,
+    isNil,
+    ProjectType,
+    UserStatus,
+} from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { repoFactory } from '../../core/db/repo-factory'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { platformProjectService } from '../projects/platform-project-service'
+import { ProjectMemberEntity } from '../projects/project-members/project-member.entity'
+import { projectMemberService } from '../projects/project-members/project-member.service'
 
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -67,7 +65,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                         }
                     }
                     return null
-                })
+                }),
             )
 
             for (const user of users) {
@@ -216,8 +214,8 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
 
         await Promise.all(
             membersToDelete.map(member =>
-                projectMemberService(log).delete(projectId, member.id)
-            )
+                projectMemberService(log).delete(projectId, member.id),
+            ),
         )
 
         const updatedProject = await projectService.getOneOrThrow(projectId)
@@ -251,8 +249,8 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                             projectId,
                             platformId,
                             log,
-                        })
-                    )
+                        }),
+                    ),
                 )
             }
             else if (op === 'remove' && !isNil(operation.path) && operation.path.startsWith('members')) {
@@ -299,12 +297,12 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                                     platformId,
                                     log,
                                 })
-                            })
+                            }),
                         )
                         await Promise.all(
                             membersToDelete.map(member =>
-                                projectMemberService(log).delete(projectId, member.id)
-                            )
+                                projectMemberService(log).delete(projectId, member.id),
+                            ),
                         )
                     }
                 }
@@ -388,7 +386,7 @@ async function getProjectMembers(projectId: string, platformId: string): Promise
                 display: userMeta.email,
                 $ref: `/scim/v2/Users/${member.userId}`,
             }
-        })
+        }),
     )
 }
 

@@ -1,7 +1,3 @@
-import { securityAccess } from '@activepieces/server-shared'
-import { PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
 import {
     SCIM_GROUP_SCHEMA,
     SCIM_RESOURCE_TYPE_SCHEMA,
@@ -9,6 +5,10 @@ import {
     SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA,
     SCIM_USER_SCHEMA,
 } from '@activepieces/ee-shared'
+import { securityAccess } from '@activepieces/server-shared'
+import { PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
 
 export const scimDiscoveryController: FastifyPluginAsyncTypebox = async (app) => {
 

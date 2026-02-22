@@ -1,4 +1,4 @@
-import { apId, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
+import { apId, PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +9,6 @@ import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockApiKey,
     mockAndSaveBasicSetup,
-    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -28,7 +27,7 @@ afterAll(async () => {
 async function setupScimPlatform() {
     const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
         plan: {
-            ssoEnabled: true,
+            scimEnabled: true,
             projectRolesEnabled: true,
         },
     })
@@ -94,7 +93,7 @@ describe('SCIM 2.0 API', () => {
     describe('SCIM User Provisioning', () => {
 
         it('should create a user from IdP', async () => {
-            const { bearerToken, mockPlatform } = await setupScimPlatform()
+            const { bearerToken } = await setupScimPlatform()
             const idpUser = mockIdpUser()
 
             const response = await app?.inject({
@@ -354,7 +353,7 @@ describe('SCIM 2.0 API', () => {
 
         it('should reject requests from non-SERVICE principals', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                plan: { ssoEnabled: true },
+                plan: { scimEnabled: true },
             })
 
             const userToken = await generateMockToken({
@@ -372,9 +371,9 @@ describe('SCIM 2.0 API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('should reject requests when SSO is disabled', async () => {
+        it('should reject requests when SCIM is disabled', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup({
-                plan: { ssoEnabled: false },
+                plan: { scimEnabled: false },
             })
 
             const mockApiKey = createMockApiKey({ platformId: mockPlatform.id })

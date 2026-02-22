@@ -1,3 +1,14 @@
+import {
+    CreateScimUserRequest,
+    ReplaceScimUserRequest,
+    SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA,
+    SCIM_LIST_RESPONSE_SCHEMA,
+    SCIM_USER_SCHEMA,
+    ScimError,
+    ScimListResponse,
+    ScimPatchRequest,
+    ScimUserResource,
+} from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
@@ -11,28 +22,17 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { userService } from '../../user/user-service'
-import {
-    CreateScimUserRequest,
-    ReplaceScimUserRequest,
-    SCIM_USER_SCHEMA,
-    ScimListResponse,
-    ScimPatchRequest,
-    ScimUserResource,
-    SCIM_LIST_RESPONSE_SCHEMA,
-    SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA,
-    ScimError,
-} from '@activepieces/ee-shared'
-import { projectService } from '../../project/project-service'
-import { projectMemberService } from '../projects/project-members/project-member.service'
-import { platformService } from '../../platform/platform.service'
-import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { StatusCodes } from 'http-status-codes'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { userInvitationsService } from '../../user-invitations/user-invitation.service'
+import { projectMemberService } from '../projects/project-members/project-member.service'
 
 export const scimUserService = (log: FastifyBaseLogger) => ({
     async create(params: {
-        platformId: string,
+        platformId: string
         request: CreateScimUserRequest
     }): Promise<ScimUserResource> {
         const { platformId, request } = params
@@ -92,7 +92,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
 
         const defaultProject = await projectService.getOneByOwnerAndPlatform({ ownerId: 
             (await platformService.getOneOrThrow(platformId)).ownerId,
-            platformId,
+        platformId,
         })
         assertNotNullOrUndefined(defaultProject, 'Default project not found')
 
