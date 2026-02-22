@@ -36,7 +36,7 @@ export const AWSProviderConfigSchema = Type.Object({
 export type AWSProviderConfig = Static<typeof AWSProviderConfigSchema>
 
 export const AWSGetSecretRequestSchema = Type.Object({
-    secretPath: Type.String(),
+    path: Type.String(),
 })
 export type AWSGetSecretRequest = Static<typeof AWSGetSecretRequestSchema>
 

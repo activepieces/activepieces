@@ -26,64 +26,13 @@ type ConnectSecretManagerDialogProps = {
   manager: SecretManagerProviderMetaData;
   children: React.ReactNode;
 };
-
 const ConnectSecretManagerDialog = ({
   children,
   manager,
 }: ConnectSecretManagerDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<ConnectSecretManagerRequest>({
-    defaultValues: {
-      providerId: manager.id,
-      config: {},
-    },
-  });
-
-  const { mutate, isPending } = secretManagersHooks.useConnectSecretManager();
-  const connect = () => {
-    form.clearErrors('root.serverError');
-    mutate(form.getValues(), {
-      onSuccess: () => {
-        form.reset();
-        setOpen(false);
-      },
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
-            form.setError('root.serverError', {
-              type: 'manual',
-              message: t(
-                'Failed to connect to secret manager with error: "{msg}"',
-                {
-                  msg: apError.params?.message,
-                },
-              ),
-            });
-          }
-        } else {
-          console.error(error);
-          form.setError('root.serverError', {
-            type: 'manual',
-            message: t(
-              'Failed to connect to secret manager, please check console',
-            ),
-          });
-        }
-      },
-    });
-  };
-
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset();
-        }
-        setOpen(open);
-      }}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -99,67 +48,123 @@ const ConnectSecretManagerDialog = ({
             </a>
           </DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={form.handleSubmit(connect)}
-          >
-            {Object.entries(manager.fields).map(([fieldId, field]) => (
-              <FormField
-                key={fieldId}
-                rules={{ required: !field.optional }}
-                name={`config.${fieldId}`}
-                render={({ field: formField }) => (
-                  <FormItem className="grid space-y-3">
-                    <Label htmlFor="fieldName">
-                      {field.displayName}
-                      {!field.optional && (
-                        <span className="text-red-500 ml-1">*</span>
-                      )}
-                    </Label>
-                    <div className="flex gap-2 items-center justify-center">
-                      <Input
-                        {...formField}
-                        required={!field.optional}
-                        id={fieldId}
-                        placeholder={field.placeholder}
-                        className="rounded-sm"
-                      />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-            {form.formState.errors.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-            <DialogFooter>
-              <Button
-                variant={'outline'}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setOpen(false);
-                }}
-              >
-                {t('Cancel')}
-              </Button>
-              <Button
-                disabled={!form.formState.isValid}
-                loading={isPending}
-                type="submit"
-              >
-                {t('Save')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+
+        <ConnectSecretManagerForm
+          key={open ? 'open' : 'closed'}
+          manager={manager}
+          setOpen={setOpen}
+        />
       </DialogContent>
     </Dialog>
   );
 };
 
 export default ConnectSecretManagerDialog;
+
+const ConnectSecretManagerForm = ({
+  manager,
+  setOpen,
+}: {
+  manager: SecretManagerProviderMetaData;
+  setOpen: (open: boolean) => void;
+}) => {
+  const form = useForm<ConnectSecretManagerRequest>({
+    defaultValues: {
+      providerId: manager.id,
+      config: {},
+    },
+  });
+
+  const { mutate, isPending } = secretManagersHooks.useConnectSecretManager({
+    onSuccess: () => {
+      setOpen(false);
+    },
+    onError: (error) => {
+      if (api.isError(error)) {
+        const apError = error.response?.data as ApErrorParams;
+        if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
+          form.setError('root.serverError', {
+            type: 'manual',
+            message: t(
+              'Failed to connect to secret manager with error: "{msg}"',
+              {
+                msg: apError.params?.message,
+              },
+            ),
+          });
+        }
+      } else {
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: t(
+            'Failed to connect to secret manager, please check console',
+          ),
+        });
+      }
+    },
+  });
+  const connect = () => {
+    form.clearErrors('root.serverError');
+    mutate(form.getValues());
+  };
+
+  return (
+    <Form {...form}>
+      <form className="grid space-y-4" onSubmit={form.handleSubmit(connect)}>
+        {Object.entries(manager.fields).map(([fieldId, field]) => (
+          <FormField
+            key={fieldId}
+            rules={{ required: !field.optional }}
+            name={`config.${fieldId}`}
+            render={({ field: formField }) => (
+              <FormItem className="grid space-y-3">
+                <Label htmlFor="fieldName">
+                  {field.displayName}
+                  {!field.optional && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
+                </Label>
+                <div className="flex gap-2 items-center justify-center">
+                  <Input
+                    {...formField}
+                    required={!field.optional}
+                    id={fieldId}
+                    placeholder={field.placeholder}
+                    className="rounded-sm"
+                    type={field.type}
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ))}
+        {form.formState.errors.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
+        <DialogFooter>
+          <Button
+            variant={'outline'}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setOpen(false);
+            }}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button
+            disabled={!form.formState.isValid}
+            loading={isPending}
+            type="submit"
+          >
+            {t('Save')}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+};

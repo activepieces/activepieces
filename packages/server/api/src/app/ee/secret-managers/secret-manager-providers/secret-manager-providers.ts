@@ -31,8 +31,8 @@ const secretManagerProvidersMap = (log: FastifyBaseLogger): SecretManagerProvide
     }
 }
 
-export const secretManagerProvider = (log: FastifyBaseLogger, providerId: SecretManagerProviderId): SecretManagerProvider<typeof providerId> => {
-    return secretManagerProvidersMap(log)[providerId] as SecretManagerProvider<typeof providerId>
+export const secretManagerProvider = <K extends SecretManagerProviderId>(log: FastifyBaseLogger, providerId: K): SecretManagerProvider<K> => {
+    return secretManagerProvidersMap(log)[providerId]
 }
 
 export const secretManagerProvidersMetadata = (): SecretManagerProviderMetaData[] => [

@@ -11,16 +11,19 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         accessKeyId: {
             displayName: 'Access Key ID',
             placeholder: 'accessKeyId',
+            type: 'text',
         },
         secretAccessKey: {
             displayName: 'Secret Access Key',
             placeholder: 'secretAccessKey',
+            type: 'password',
         },
     },
     getSecretParams: {
-        secretPath: {
+        path: {
             displayName: 'Secret Path',
             placeholder: 'secretPath',
+            type: 'text',
         },
     },
 }
@@ -41,7 +44,7 @@ export const awsProvider = (_log: FastifyBaseLogger): SecretManagerProvider<Secr
     },
     resolve: async (key: string) => {
         return {
-            secretPath: key,
+            path: key,
         }
     },
 })
