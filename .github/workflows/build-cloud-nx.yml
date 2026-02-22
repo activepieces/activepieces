@@ -34,7 +34,7 @@ jobs:
           s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
           s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
           s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
-          max-age: 2w
+          max-age: 3w
           max-size: 20gb
 
       - name: Get changed files
