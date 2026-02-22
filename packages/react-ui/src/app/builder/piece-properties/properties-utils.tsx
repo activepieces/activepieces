@@ -45,7 +45,7 @@ export const selectGenericFormComponentForProperty = ({
   propertySettings,
   hideLabel,
   enableMarkdownForInputWithMention,
-  isConnectionProperty = false,
+  showSecretInput = false,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -247,8 +247,9 @@ export const selectGenericFormComponentForProperty = ({
               onChange={field.onChange}
               enableMarkdown={enableMarkdownForInputWithMention}
             ></TextInputWithMentions>
-          ) : isConnectionProperty ? (
+          ) : showSecretInput ? (
             <SecretInput
+              allowTogglingSecretManagerMode={true}
               ref={field.ref}
               value={field.value}
               onChange={field.onChange}
@@ -322,7 +323,7 @@ export const selectGenericFormComponentForProperty = ({
 };
 
 export type SelectGenericFormComponentForPropertyParams = {
-  isConnectionProperty?: boolean;
+  showSecretInput?: boolean;
   field: ControllerRenderProps<Record<string, any>, string>;
   hideLabel?: boolean;
   propertyName: string;

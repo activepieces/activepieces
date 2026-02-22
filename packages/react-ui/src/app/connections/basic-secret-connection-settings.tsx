@@ -16,10 +16,11 @@ import { SecretInput } from './secret-input';
 
 type BasicAuthConnectionSettingsProps = {
   authProperty: BasicAuthProperty;
+  isGlobalConnection: boolean;
 };
 
 const BasicAuthConnectionSettings = React.memo(
-  ({ authProperty }: BasicAuthConnectionSettingsProps) => {
+  ({ authProperty, isGlobalConnection }: BasicAuthConnectionSettingsProps) => {
     const forSchema = Type.Object({
       request: UpsertBasicAuthRequest,
     });
@@ -34,7 +35,11 @@ const BasicAuthConnectionSettings = React.memo(
             <FormItem className="flex flex-col">
               <FormLabel>{authProperty.username.displayName}</FormLabel>
               <FormControl>
-                <SecretInput {...field} type="text" />
+                <SecretInput
+                  {...field}
+                  type="text"
+                  allowTogglingSecretManagerMode={isGlobalConnection}
+                />
               </FormControl>
               <FormDescription>
                 {authProperty.username.description}
@@ -49,7 +54,11 @@ const BasicAuthConnectionSettings = React.memo(
             <FormItem className="flex flex-col mt-3.5">
               <FormLabel>{authProperty.password.displayName}</FormLabel>
               <FormControl>
-                <SecretInput {...field} type="password" />
+                <SecretInput
+                  {...field}
+                  type="password"
+                  allowTogglingSecretManagerMode={isGlobalConnection}
+                />
               </FormControl>
               <FormDescription>
                 {authProperty.password.description}

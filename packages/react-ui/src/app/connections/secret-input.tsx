@@ -24,6 +24,7 @@ import { SecretManagerProviderId } from '@activepieces/ee-shared';
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
   onChange?: (value: string) => void;
+  allowTogglingSecretManagerMode: boolean;
 };
 
 type SecretManagerToggleButtonProps = {
@@ -63,7 +64,16 @@ const SecretManagerToggleButton = React.memo(
 SecretManagerToggleButton.displayName = 'SecretManagerToggleButton';
 
 const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
-  ({ className, value, onChange, ...restProps }, ref) => {
+  (
+    {
+      className,
+      value,
+      onChange,
+      allowTogglingSecretManagerMode,
+      ...restProps
+    },
+    ref,
+  ) => {
     const { onBlur, name, disabled, ...otherProps } = restProps;
 
     const { data: secretManagers } = secretManagersHooks.useListSecretManagers({
@@ -76,7 +86,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
           ?.getSecretParams ?? {},
       );
 
-    const [showSecretInput, setShowSecretInput] = useState(false);
+    const [showSecretManagerInput, setShowSecretInput] = useState(false);
 
     const [selectedProvider, setSelectedProvider] =
       useState<SecretManagerProviderId>(
@@ -97,7 +107,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     };
 
     const toggleSecretManager = useCallback(() => {
-      const newShowSecretInput = !showSecretInput;
+      const newShowSecretInput = !showSecretManagerInput;
       setShowSecretInput(newShowSecretInput);
 
       if (newShowSecretInput) {
@@ -106,7 +116,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       } else {
         onChange?.('');
       }
-    }, [showSecretInput, selectedProvider, fieldValues, onChange]);
+    }, [showSecretManagerInput, selectedProvider, fieldValues, onChange]);
 
     const handleProviderChange = useCallback(
       (newProvider: SecretManagerProviderId) => {
@@ -141,10 +151,10 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     const currentFields = useMemo(
       () => providerGetSecretParams(selectedProvider) || [],
-      [selectedProvider, showSecretInput],
+      [selectedProvider, showSecretManagerInput],
     );
 
-    if (showSecretInput) {
+    if (showSecretManagerInput) {
       return (
         <div className={cn('flex flex-col gap-2', className)}>
           <div className="flex items-center gap-2">
@@ -186,12 +196,14 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        {secretManagers && secretManagers?.length > 0 && (
-          <SecretManagerToggleButton
-            isActive={false}
-            onClick={toggleSecretManager}
-          />
-        )}
+        {secretManagers &&
+          secretManagers?.length > 0 &&
+          allowTogglingSecretManagerMode && (
+            <SecretManagerToggleButton
+              isActive={false}
+              onClick={toggleSecretManager}
+            />
+          )}
         <Input
           ref={ref}
           name={name}

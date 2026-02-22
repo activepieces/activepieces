@@ -70,7 +70,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
-            value: await secretManagersService(log).resolveObject({ value, platformId }),
+            value: scope === AppConnectionScope.PROJECT ? value : await secretManagersService(log).resolveObject({ value, platformId }),
             pieceName,
             projectId: projectIds[0],
             platformId,

@@ -2,6 +2,7 @@ import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AppConnection,
+    AppConnectionScope,
     assertNotNullOrUndefined,
     EnginePrincipal,
     ErrorCode,
@@ -37,7 +38,7 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
 
         return {
             ...appConnection,
-            value: await secretManagersService(request.log).resolveObject({ value: appConnection.value, platformId: enginePrincipal.platform.id, throwOnFailure: false }),
+            value: appConnection.scope === AppConnectionScope.PROJECT ? appConnection.value : await secretManagersService(request.log).resolveObject({ value: appConnection.value, platformId: enginePrincipal.platform.id, throwOnFailure: false }),
         }
     },
     )
