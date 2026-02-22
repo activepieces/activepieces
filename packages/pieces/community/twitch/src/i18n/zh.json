@@ -1,18 +1,18 @@
 {
-  "Twitch is the world's leading live streaming platform for gamers and the things we love!": "Twitch is the world's leading live streaming platform for gamers and the things we love!",
+  "Twitch is the world's leading live streaming platform for gamers and the things we love!": "Twitch是世界上为玩家和我们喜欢的东西而设计的主要直播平台。",
   "\nTo get your credentials, follow these steps:\n\n1. **Register Your App**\n   - Go to [Twitch Developer Console](https://dev.twitch.tv/console)\n   - Log in with your Twitch account (or create one if needed)\n   - Enable [Two-Factor Authentication](https://www.twitch.tv/settings/security) on your account\n   - Navigate to the Applications tab and click \"Register Your Application\"\n   - Set your application name (must be unique)\n   - Add an OAuth Redirect URL\n   - Select a category for your application\n   - Select ": "\nTo get your credentials, follow these steps:\n\n1. **Register Your App**\n   - Go to [Twitch Developer Console](https://dev.twitch.tv/console)\n   - Log in with your Twitch account (or create one if needed)\n   - Enable [Two-Factor Authentication](https://www.twitch.tv/settings/security) on your account\n   - Navigate to the Applications tab and click \"Register Your Application\"\n   - Set your application name (must be unique)\n   - Add an OAuth Redirect URL\n   - Select a category for your application\n   - Select the Client Type as \"Confidential\"\n   - Click Create\n\n2. **Get Your Credentials**\n   - Go to Applications tab and click \"Manage\" on your app\n   - Copy your **Client ID** (public, can be shared)\n   - Click \"New Secret\" to generate a **Client Secret** (keep this confidential)\n\nFor more details, visit the [Twitch Authentication Documentation](https://dev.twitch.tv/docs/authentication/register-app/)\n  ",
   "Custom API Call": "自定义 API 呼叫",
   "Make a custom API call to a specific endpoint": "将一个自定义 API 调用到一个特定的终点",
   "Method": "方法",
   "Headers": "信头",
   "Query Parameters": "查询参数",
-  "Body Type": "Body Type",
+  "Body Type": "正文类型",
   "Body": "正文内容",
-  "Response is Binary ?": "Response is Binary ?",
+  "Response is Binary ?": "响应是二进制的？",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
   "Authorization headers are injected automatically from your connection.": "授权头自动从您的连接中注入。",
-  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
+  "Enable for files like PDFs, images, etc.": "启用 PDF、图像等文件。",
   "GET": "获取",
   "POST": "帖子",
   "PATCH": "PATCH",
@@ -24,7 +24,7 @@
   "Form Data": "表单数据",
   "Raw": "原始文件",
   "Streamer(s) Go Live": "Streamer(s) Go Live",
-  "Triggers when a stream from a list of streamers has started": "Triggers when a stream from a list of streamers has started",
-  "Streamer Name(s)/URL(s)": "Streamer Name(s)/URL(s)",
-  "Add the usernames or URLs of the streamers you want to monitor (e.g., loltyler1 or https://twitch.tv/faker).": "Add the usernames or URLs of the streamers you want to monitor (e.g., loltyler1 or https://twitch.tv/faker)."
+  "Triggers when a stream from a list of streamers has started": "当从流列表中启动流时触发",
+  "Streamer Name(s)/URL(s)": "串流名称(s)/URL(s)",
+  "Add the usernames or URLs of the streamers you want to monitor (e.g., loltyler1 or https://twitch.tv/faker).": "添加您想要监视的串流的用户名或URL(如loltyler1 或 https://twitch.tv/faker)。"
 }
