@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/pieces-framework",
-  "version": "0.25.3",
+  "version": "0.25.4",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./src/index.ts",

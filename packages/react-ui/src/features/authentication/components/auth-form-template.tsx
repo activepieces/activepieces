@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { FullLogo } from '@/components/ui/full-logo';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
@@ -77,6 +78,7 @@ const AuthFormTemplate = React.memo(
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
       ApFlagId.EMAIL_AUTH_ENABLED,
     );
+    const isCloud = window.location.hostname === 'cloud.activepieces.com';
     const data = {
       signin: {
         title: t('Welcome Back!'),
@@ -101,35 +103,43 @@ const AuthFormTemplate = React.memo(
     }
 
     return (
-      <Card className="w-md rounded-sm drop-shadow-xl">
-        {!showCheckYourEmailNote && (
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{data.title}</CardTitle>
-            <CardDescription>{data.description}</CardDescription>
-          </CardHeader>
+      <>
+        {isCloud && (
+          <Link to="https://activepieces.com" target="_blank" rel="noreferrer">
+            <FullLogo />
+          </Link>
         )}
+        {!isCloud && <FullLogo />}
+        <Card className="w-md rounded-sm drop-shadow-xl">
+          {!showCheckYourEmailNote && (
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">{data.title}</CardTitle>
+              <CardDescription>{data.description}</CardDescription>
+            </CardHeader>
+          )}
 
-        <CardContent>
-          {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
-          <AuthSeparator
-            isEmailAuthEnabled={
-              (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote
-            }
-          ></AuthSeparator>
-          {isEmailAuthEnabled ? (
-            isSignUp ? (
-              <SignUpForm
-                setShowCheckYourEmailNote={setShowCheckYourEmailNote}
-                showCheckYourEmailNote={showCheckYourEmailNote}
-              />
-            ) : (
-              <SignInForm />
-            )
-          ) : null}
-        </CardContent>
+          <CardContent>
+            {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
+            <AuthSeparator
+              isEmailAuthEnabled={
+                (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote
+              }
+            ></AuthSeparator>
+            {isEmailAuthEnabled ? (
+              isSignUp ? (
+                <SignUpForm
+                  setShowCheckYourEmailNote={setShowCheckYourEmailNote}
+                  showCheckYourEmailNote={showCheckYourEmailNote}
+                />
+              ) : (
+                <SignInForm />
+              )
+            ) : null}
+          </CardContent>
 
-        <BottomNote isSignup={isSignUp}></BottomNote>
-      </Card>
+          <BottomNote isSignup={isSignUp}></BottomNote>
+        </Card>
+      </>
     );
   },
 );
