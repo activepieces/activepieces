@@ -1,12 +1,13 @@
 import { BaseModelSchema, DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { AWSGetSecretRequestSchema, AWSProviderConfigSchema, HashicorpGetSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
+import { AWSGetSecretRequestSchema, AWSProviderConfigSchema, CyberarkConjurGetSecretRequestSchema, CyberarkConjurProviderConfigSchema, HashicorpGetSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
 
 export * from './dto'
 
 export const SecretManagerConfigSchema = Type.Union([
     HashicorpProviderConfigSchema,
     AWSProviderConfigSchema,
+    CyberarkConjurProviderConfigSchema,
 ])
 export type SecretManagerConfig = Static<typeof SecretManagerConfigSchema>
 
@@ -46,6 +47,12 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
         id: Type.Literal(SecretManagerProviderId.AWS),
         fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema),
         getSecretParams: Type.Record(Type.KeyOf(AWSGetSecretRequestSchema), SecretManagerFieldSchema),
+    }),
+    Type.Object({
+        ...SecretManagerProviderMetaDataBaseSchema.properties,
+        id: Type.Literal(SecretManagerProviderId.CYBERARK),
+        fields: Type.Record(Type.KeyOf(CyberarkConjurProviderConfigSchema), SecretManagerFieldSchema),
+        getSecretParams: Type.Record(Type.KeyOf(CyberarkConjurGetSecretRequestSchema), SecretManagerFieldSchema),
     }),
 ])
 

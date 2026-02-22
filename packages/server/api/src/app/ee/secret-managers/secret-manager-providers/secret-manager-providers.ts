@@ -2,6 +2,7 @@ import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManag
 import { FastifyBaseLogger } from 'fastify'
 import { awsProvider } from './aws-provider'
 import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from './hashicorp-provider'
+import { CYBERARK_PROVIDER_METADATA, cyberarkConjurProvider } from './cyberark-conjur-provider'
 
 export type SecretManagerProvider<K extends SecretManagerProviderId> = {
     checkConnection: (config: SecretManagerConfigFor<K>) => Promise<unknown>
@@ -26,6 +27,7 @@ const secretManagerProvidersMap = (log: FastifyBaseLogger): SecretManagerProvide
     return {
         [SecretManagerProviderId.HASHICORP]: hashicorpProvider(log),
         [SecretManagerProviderId.AWS]: awsProvider(log),
+        [SecretManagerProviderId.CYBERARK]: cyberarkConjurProvider(log),
     }
 }
 
@@ -36,4 +38,5 @@ export const secretManagerProvider = (log: FastifyBaseLogger, providerId: Secret
 export const secretManagerProvidersMetadata = (): SecretManagerProviderMetaData[] => [
     HASHICORP_PROVIDER_METADATA,
     // AWS_PROVIDER_METADATA, // not shown in the UI yet
+    CYBERARK_PROVIDER_METADATA,
 ]

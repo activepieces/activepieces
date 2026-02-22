@@ -4,6 +4,7 @@ import { Static, Type } from '@sinclair/typebox'
 export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',
     AWS = 'aws',
+    CYBERARK = 'cyberark-conjur',
 }
 
 /**
@@ -39,6 +40,22 @@ export const AWSGetSecretRequestSchema = Type.Object({
 })
 export type AWSGetSecretRequest = Static<typeof AWSGetSecretRequestSchema>
 
+/**
+ * Cyberark Conjur Provider Config
+ */
+
+export const CyberarkConjurProviderConfigSchema = Type.Object({
+    loginId: Type.String(),
+    url: Type.String(),
+    apiKey: Type.String(),
+})
+export type CyberarkConjurProviderConfig = Static<typeof CyberarkConjurProviderConfigSchema>
+
+export const CyberarkConjurGetSecretRequestSchema = Type.Object({
+    secretKey: Type.String(),
+})
+export type CyberarkConjurGetSecretRequest = Static<typeof CyberarkConjurGetSecretRequestSchema>
+
 
 export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId', [
     Type.Object({
@@ -48,6 +65,10 @@ export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId'
     Type.Object({
         providerId: Type.Literal(SecretManagerProviderId.AWS),
         config: AWSProviderConfigSchema,
+    }),
+    Type.Object({
+        providerId: Type.Literal(SecretManagerProviderId.CYBERARK),
+        config: CyberarkConjurProviderConfigSchema,
     }),
 ])
 
@@ -66,6 +87,10 @@ export const GetSecretManagerSecretRequestSchema = DiscriminatedUnion('providerI
     Type.Object({
         providerId: Type.Literal(SecretManagerProviderId.AWS),
         request: AWSGetSecretRequestSchema,
+    }),
+    Type.Object({
+        providerId: Type.Literal(SecretManagerProviderId.CYBERARK),
+        request: CyberarkConjurGetSecretRequestSchema,
     }),
 ])
 
