@@ -75,14 +75,22 @@
                {
                   "group": "Guides",
                   "pages": [
-                     "admin-guide/guides/structure-projects",
-                     "admin-guide/guides/manage-pieces",
-                     "admin-guide/guides/sso",
-                     "admin-guide/guides/manage-oauth2",
-                     "admin-guide/guides/setup-ai-providers",
-                     "admin-guide/guides/permissions",
-                     "admin-guide/guides/event-streaming",
-                     "admin-guide/guides/project-releases"
+                    "admin-guide/guides/structure-projects",
+                    "admin-guide/guides/manage-pieces",
+                    "admin-guide/guides/sso",
+                    "admin-guide/guides/manage-oauth2",
+                    "admin-guide/guides/setup-ai-providers",
+                    {
+                      "group": "Secret Managers",
+                      "icon": "key",
+                      "pages": [
+                        "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/hashicorp"
+                      ]
+                    },
+                    "admin-guide/guides/permissions",
+                    "admin-guide/guides/event-streaming",
+                    "admin-guide/guides/project-releases"
                   ]
                },
                {

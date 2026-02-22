@@ -152,6 +152,12 @@ export function PlatformSidebar() {
           icon: FileJson2,
           locked: !platform.plan.apiKeysEnabled,
         },
+        {
+          to: '/platform/security/secret-managers',
+          label: t('Secret Managers'),
+          icon: KeyRound,
+          locked: !platform.plan.secretManagersEnabled,
+        },
       ],
     },
     {

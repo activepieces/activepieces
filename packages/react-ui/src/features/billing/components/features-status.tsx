@@ -69,6 +69,11 @@ const LICENSE_PROPS_MAP = {
     label: 'Event Streaming',
     description: 'Stream platform events to external destinations',
   },
+  secretManagersEnabled: {
+    label: 'Secret Managers',
+    description:
+      'Manage your secrets from a single and secure place to use in your connections',
+  },
 };
 
 export const FeatureStatus = ({

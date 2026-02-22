@@ -131,6 +131,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        secretManagersEnabled: {
+            type: Boolean,
+        },
     },
     indices: [
         {

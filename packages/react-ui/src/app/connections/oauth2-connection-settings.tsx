@@ -43,6 +43,7 @@ function OAuth2ConnectionSettings({
       | UpsertOAuth2Request
       | UpsertPlatformOAuth2Request;
   }>();
+
   const isClientIdValid = isNil(
     form.formState.errors.request?.value?.client_id,
   );
@@ -64,6 +65,7 @@ function OAuth2ConnectionSettings({
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
+
   return (
     <div className="flex flex-col gap-4">
       {showRedirectUrlInput && (
@@ -87,6 +89,7 @@ function OAuth2ConnectionSettings({
                 <FormControl>
                   <Input {...field} type="text" placeholder={t('Client ID')} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -103,6 +106,7 @@ function OAuth2ConnectionSettings({
                     placeholder={t('Client Secret')}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           ></FormField>
@@ -175,6 +179,7 @@ async function openPopup(
 ) {
   const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
   const authUrl = resolveValueFromProps(props, authProperty.authUrl);
+
   const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
     authUrl,
     clientId,
