@@ -221,7 +221,7 @@ async function executeSingleTask<Result extends OperationResult>(log: FastifyBas
         }
         finally {
             log.debug({ sandboxId: sandbox?.id }, 'Releasing sandbox')
-            await sandboxPool.release(sandbox)
+            await sandboxPool.release(sandbox, log)
             span.end()
         }
     })

@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-amazon-secrets-manager",
+  "version": "0.0.3",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "3.989.0",
+    "tslib": "^2.3.0"
+  }
+}

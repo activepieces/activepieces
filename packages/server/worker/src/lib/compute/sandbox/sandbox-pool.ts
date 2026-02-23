@@ -66,10 +66,13 @@ export const sandboxPool = {
         sandboxGenerations.set(sandboxId, devPiecesState.getGeneration())
         return newSandbox
     },
-    release: async (sandbox: Sandbox | undefined) => {
+    release: async (sandbox: Sandbox | undefined, log?: FastifyBaseLogger) => {
         if (isNil(sandbox)) {
             return
         }
+        log?.info({ 
+            sandboxId: sandbox.id,
+        }, '[SandboxPool] Releasing sandbox')
         if (!reusable) {
             await sandbox.shutdown()
             sandboxes.delete(sandbox.id)

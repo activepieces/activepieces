@@ -85,7 +85,7 @@ const BuilderPage = () => {
     useState(false);
 
   return (
-    <div className="flex h-full w-full flex-col relative">
+    <div className="flex h-full w-full flex-col relative max-h-[100vh]">
       <div className="z-40">
         <BuilderHeader />
       </div>
