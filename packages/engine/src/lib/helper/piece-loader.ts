@@ -127,8 +127,41 @@ export const pieceLoader = {
     },
 }
 
+async function resolveFromNodeModules(packageName: string): Promise<string | null> {
+    let currentDir = __dirname
+    const rootDir = path.parse(currentDir).root
+    const maxIterations = currentDir.split(path.sep).length
+    for (let i = 0; i < maxIterations; i++) {
+        const pkgDir = path.join(currentDir, 'node_modules', packageName)
+        if (await utils.folderExists(pkgDir)) {
+            const jsPath = path.join(pkgDir, 'src', 'index.js')
+            if (await utils.folderExists(jsPath)) {
+                return jsPath
+            }
+            const tsPath = path.join(pkgDir, 'src', 'index.ts')
+            if (await utils.folderExists(tsPath)) {
+                return tsPath
+            }
+        }
+        const parentDir = path.dirname(currentDir)
+        if (parentDir === currentDir || currentDir === rootDir) {
+            break
+        }
+        currentDir = parentDir
+    }
+    return null
+}
+
 async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
+    const nodeModulesResult = await resolveFromNodeModules(packageName)
+    if (nodeModulesResult) {
+        return nodeModulesResult
+    }
+
     const distPath = path.resolve('dist/packages/pieces')
+    if (!await utils.folderExists(distPath)) {
+        return null
+    }
     const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
     for (const entry of entries) {
         const { data: packageJsonPath } = await utils.tryCatchAndThrowOnEngineError((async () => {
