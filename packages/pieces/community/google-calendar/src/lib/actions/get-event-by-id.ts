@@ -5,8 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { googleCalendarCommon } from '../common';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
 
 export const getEventById = createAction({
@@ -42,7 +41,7 @@ export const getEventById = createAction({
       max_attendees: maxAttendees,
       time_zone: timeZone,
     } = context.propsValue;
-    const { access_token: token } = context.auth;
+    const token = await getAccessToken(context.auth);
 
     if (
       !calendarId ||

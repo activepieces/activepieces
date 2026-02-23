@@ -1,8 +1,6 @@
-import { googleCalendarAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { OAuth2Client } from 'googleapis-common';
 import { google } from 'googleapis';
-import { googleCalendarCommon } from '../common';
+import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 
 export const addCalendarToCalendarlist = createAction({
   auth: googleCalendarAuth,
@@ -20,8 +18,7 @@ export const addCalendarToCalendarlist = createAction({
     
     const id = context.propsValue.id;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);  
+    const authClient = await createGoogleClient(context.auth);
 
     const calendar = google.calendar({ version: 'v3', auth: authClient});
 
