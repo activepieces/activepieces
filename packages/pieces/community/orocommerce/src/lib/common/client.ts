@@ -10,6 +10,8 @@ import {
   type OroAuth,
   type OroAuthResponseType,
   type OroApiCallParams,
+  OroJsonApiItem,
+  OroJsonApiCollection,
 } from './types';
 
 let cachedToken: string | null = null;
@@ -69,4 +71,19 @@ export async function oroApiCall({
       `OroCommerce API Error (${statusCode || 'Unknown'}): ${errorMessage}`
     );
   }
+}
+
+export async function fetchCollection(
+  auth: OroAuth,
+  resourceUri: string,
+  queryParams?: Record<string, string>
+): Promise<OroJsonApiItem[]> {
+  const response = await oroApiCall({
+    method: HttpMethod.GET,
+    resourceUri,
+    auth,
+    queryParams: { 'page[size]': '50', ...queryParams },
+  });
+
+  return (response.body as OroJsonApiCollection).data ?? [];
 }

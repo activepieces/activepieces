@@ -9,6 +9,8 @@ import {
   ownerDropdown,
   websiteDropdown,
   orderInternalStatusDropdown,
+  orderStatusDropdown,
+  orderDropdown,
   paymentTermDropdown,
   warehouseDropdown,
   buildCountryDropdown,
@@ -68,6 +70,21 @@ export const createOrderAction = createAction({
       description: 'Shipping cost calculated from the selected shipping method.',
       required: false,
     }),
+    shippingMethod: Property.ShortText({
+      displayName: 'Shipping Method',
+      description: 'The shipping method selected for the order (e.g. "flat_rate_2").',
+      required: false,
+    }),
+    shippingMethodType: Property.ShortText({
+      displayName: 'Shipping Method Type',
+      description: 'The shipping method type (e.g. "primary").',
+      required: false,
+    }),
+    disablePromotions: Property.Checkbox({
+      displayName: 'Disable Promotions',
+      description: 'Prevent the promotions engine from running for this order.',
+      required: false,
+    }),
 
     // -- Optional relationships ------------------------------------------------
     customerUser: customerUserDropdown(false),
@@ -110,6 +127,18 @@ export const createOrderAction = createAction({
     warehouseId: Property.ShortText({
       displayName: 'Warehouse: Raw ID',
       description: 'Overrides the Warehouse dropdown.',
+      required: false,
+    }),
+    parent: orderDropdown,
+    parentId: Property.ShortText({
+      displayName: 'Parent Order: Raw ID',
+      description: 'Overrides the Parent Order dropdown. Paste an order ID from a previous step.',
+      required: false,
+    }),
+    status: orderStatusDropdown,
+    statusId: Property.ShortText({
+      displayName: 'Status: Raw ID',
+      description: 'Overrides the Status dropdown. Only applied when "Enable External Status Management" is on.',
       required: false,
     }),
 
@@ -245,6 +274,7 @@ export const createOrderAction = createAction({
       props: async ({ auth }) => {
         type JsonApiCollection = { data: { id: string; attributes: Record<string, unknown> }[] };
         const unitOptions: { label: string; value: string }[] = [];
+        const warehouseOptions: { label: string; value: string }[] = [];
 
         if (auth) {
           try {
@@ -261,6 +291,21 @@ export const createOrderAction = createAction({
               });
             }
           } catch { /* leave empty */ }
+
+          try {
+            const warehousesResp = await oroApiCall({
+              method: HttpMethod.GET,
+              resourceUri: '/warehouses',
+              auth: auth as OroAuth,
+              queryParams: { 'page[size]': '100', 'fields[warehouses]': 'id,name' },
+            });
+            for (const item of (warehousesResp.body as JsonApiCollection).data ?? []) {
+              warehouseOptions.push({
+                label: String(item.attributes['name'] || item.id),
+                value: item.id,
+              });
+            }
+          } catch { /* leave empty */ }
         }
 
         return {
@@ -268,9 +313,30 @@ export const createOrderAction = createAction({
             displayName: 'Line Items',
             required: true,
             properties: {
+              // -- Product relationship --------------------------------------
+              productId: Property.ShortText({
+                displayName: 'Product: Raw ID',
+                description:
+                  'Numeric Oro product ID. Use the top-level "Product Search" field to look up a product.',
+                required: false,
+              }),
+              // -- Optional attributes ---------------------------------------
+              productName: Property.ShortText({
+                displayName: 'Product Name',
+                description: 'Default name of the ordered product.',
+                required: false,
+              }),
+              freeFormProduct: Property.ShortText({
+                displayName: 'Free-Form Product',
+                description:
+                  'Product name for free-form (non-catalog) line items.',
+                required: false,
+              }),
+              // -- Required --------------------------------------------------
               productSku: Property.ShortText({
-                displayName: 'Product SKU or ID',
-                description: 'Enter the product SKU or numeric ID. Use the top-level "Product (Search)" field to look up products.',
+                displayName: 'Product SKU',
+                description:
+                  'Unique human-readable product identifier. Required.',
                 required: true,
               }),
               productUnit: Property.StaticDropdown({
@@ -279,32 +345,71 @@ export const createOrderAction = createAction({
                 required: true,
                 options: { disabled: false, options: unitOptions },
               }),
-              productUnitId: Property.ShortText({
+              productUnitRawId: Property.ShortText({
                 displayName: 'Product Unit: Raw ID',
-                description: 'Overrides the Product Unit dropdown (e.g. "piece", "kg").',
+                description:
+                  'Overrides the Product Unit dropdown (e.g. "piece", "kg").',
                 required: false,
               }),
               quantity: Property.Number({
                 displayName: 'Quantity',
+                description: 'Quantity of the product ordered.',
                 required: true,
               }),
               value: Property.Number({
                 displayName: 'Unit Price',
-                description: 'Price per unit used in this order.',
+                description: 'Price per unit used in this order. Required.',
                 required: true,
               }),
               currency: Property.ShortText({
                 displayName: 'Currency',
-                description: 'ISO-4217 code. Defaults to order currency if empty.',
+                description:
+                  'ISO-4217 code. Defaults to order-level currency if empty.',
                 required: false,
               }),
-              comment: Property.ShortText({
+              comment: Property.LongText({
                 displayName: 'Comment',
+                description: 'Comments to the line item.',
                 required: false,
               }),
               shipBy: Property.ShortText({
                 displayName: 'Ship By Date',
-                description: 'YYYY-MM-DD. Latest acceptable ship date for this line.',
+                description:
+                  'Latest acceptable ship date for this line (YYYY-MM-DD).',
+                required: false,
+              }),
+              priceType: Property.Number({
+                displayName: 'Price Type',
+                description:
+                  'Type of the product price (e.g. 10 = unit price).',
+                required: false,
+                defaultValue: 10,
+              }),
+              shippingEstimateAmount: Property.Number({
+                displayName: 'Shipping Estimate Amount',
+                description: 'Calculated shipping cost for this line item.',
+                required: false,
+              }),
+              shippingMethod: Property.ShortText({
+                displayName: 'Shipping Method',
+                description: 'Shipping method assigned to this line item.',
+                required: false,
+              }),
+              shippingMethodType: Property.ShortText({
+                displayName: 'Shipping Method Type',
+                description: 'Shipping method type assigned to this line item.',
+                required: false,
+              }),
+              // -- Warehouse relationship ------------------------------------
+              warehouse: Property.StaticDropdown({
+                displayName: 'Warehouse',
+                description: 'Warehouse this line item ships from.',
+                required: false,
+                options: { disabled: false, options: warehouseOptions },
+              }),
+              warehouseId: Property.ShortText({
+                displayName: 'Warehouse: Raw ID',
+                description: 'Overrides the Warehouse dropdown.',
                 required: false,
               }),
             },
@@ -400,7 +505,7 @@ export const createOrderAction = createAction({
       };
     }
 
-    // -- Shipping address --------------──────────────────────────────────────
+    // -- Shipping address ----------------------------------------------------
     const shippingAdded = buildAddress('shipping_address', {
       label:        p.shippingAddressLabel,
       firstName:    p.shippingAddressFirstName,
@@ -421,7 +526,7 @@ export const createOrderAction = createAction({
       };
     }
 
-    // ── Line items ──────────────────────────────────────────────────────────
+    // -- Line items ----------------------------------------------------------
     // DynamicProperties wraps the array in an object keyed by "lineItems"
     const dynamicValue = (p.lineItems ?? {}) as Record<string, unknown>;
     const rawItems = (dynamicValue['lineItems'] ?? []) as Array<Record<string, unknown>>;
@@ -429,28 +534,39 @@ export const createOrderAction = createAction({
     const lineItemsRelData = rawItems.map((item, index) => {
       const lid = `li_${index + 1}`;
 
-      // productSku holds either a numeric Oro ID or a SKU string
-      const productSku    = (item['productSku'] as string | undefined)?.trim();
-      const productUnitId = (item['productUnitId'] as string | undefined)?.trim()
-                         || (item['productUnit']   as string | undefined)
+      const productUnitId = (item['productUnitRawId'] as string | undefined)?.trim()
+                         || (item['productUnit']      as string | undefined)
                          || 'piece';
 
       const liAttributes: Record<string, unknown> = {
+        productSku:         String(item['productSku'] ?? ''),
         quantity:           Number(item['quantity']),
         value:              Number(item['value']),
         currency:           item['currency'] || p.currency || 'USD',
-        priceType:          10,
-        fromExternalSource: false,
-        checksum:           String(index),
+        priceType:          item['priceType'] != null ? Number(item['priceType']) : 10,
+        fromExternalSource: true,
       };
-      if (item['comment']) liAttributes['comment'] = item['comment'];
-      if (item['shipBy'])  liAttributes['shipBy']  = item['shipBy'];
+      if (item['productName'])              liAttributes['productName']           = item['productName'];
+      if (item['freeFormProduct'])          liAttributes['freeFormProduct']       = item['freeFormProduct'];
+      if (item['comment'])                  liAttributes['comment']               = item['comment'];
+      if (item['shipBy'])                   liAttributes['shipBy']                = item['shipBy'];
+      if (item['shippingEstimateAmount'] != null) liAttributes['shippingEstimateAmount'] = Number(item['shippingEstimateAmount']);
+      if (item['shippingMethod'])           liAttributes['shippingMethod']        = item['shippingMethod'];
+      if (item['shippingMethodType'])       liAttributes['shippingMethodType']    = item['shippingMethodType'];
 
       const liRelationships: Record<string, unknown> = {
         productUnit: { data: { type: 'productunits', id: String(productUnitId) } },
       };
-      if (productSku) {
-        liRelationships['product'] = { data: { type: 'products', id: productSku } };
+
+      const productId = (item['productId'] as string | undefined)?.trim();
+      if (productId) {
+        liRelationships['product'] = { data: { type: 'products', id: productId } };
+      }
+
+      const liWarehouseId = (item['warehouseId'] as string | undefined)?.trim()
+                         || (item['warehouse']   as string | undefined)?.trim();
+      if (liWarehouseId) {
+        liRelationships['warehouse'] = { data: { type: 'warehouses', id: liWarehouseId } };
       }
 
       included.push({
@@ -464,7 +580,7 @@ export const createOrderAction = createAction({
     });
     relationships['lineItems'] = { data: lineItemsRelData };
 
-    // ── Order attributes ────────────────────────────────────────────────────
+    // -- Order attributes ----------------------------------------------------
     const attributes: Record<string, unknown> = { external: false };
     if (p.currency)                             attributes['currency']                     = p.currency;
     if (p.identifier)                           attributes['identifier']                   = p.identifier;
@@ -473,8 +589,11 @@ export const createOrderAction = createAction({
     if (p.shipUntil)                            attributes['shipUntil']                    = p.shipUntil;
     if (p.overriddenShippingCostAmount != null) attributes['overriddenShippingCostAmount'] = p.overriddenShippingCostAmount;
     if (p.estimatedShippingCostAmount  != null) attributes['estimatedShippingCostAmount']  = p.estimatedShippingCostAmount;
+    if (p.shippingMethod)                       attributes['shippingMethod']               = p.shippingMethod;
+    if (p.shippingMethodType)                   attributes['shippingMethodType']           = p.shippingMethodType;
+    if (p.disablePromotions)                    attributes['disablePromotions']            = p.disablePromotions;
 
-    // ── Order relationships — each resolved via raw ID → dropdown fallback ──
+    // -- Order relationships — each resolved via raw ID → dropdown fallback --
     const customerId = resolve(p.customerId, p.customer);
     if (customerId) {
       relationships['customer'] = { data: { type: 'customers', id: customerId } };
@@ -515,7 +634,17 @@ export const createOrderAction = createAction({
       relationships['warehouse'] = { data: { type: 'warehouses', id: warehouseId } };
     }
 
-    // ── POST /orders ────────────────────────────────────────────────────────
+    const parentId = resolve(p.parentId, p.parent);
+    if (parentId) {
+      relationships['parent'] = { data: { type: 'orders', id: parentId } };
+    }
+
+    const statusId = resolve(p.statusId, p.status);
+    if (statusId) {
+      relationships['status'] = { data: { type: 'orderstatuses', id: statusId } };
+    }
+
+    // -- POST /orders ---------------------------------------------------------
     const response = await oroApiCall({
       method: HttpMethod.POST,
       resourceUri: '/orders',

@@ -1,20 +1,8 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { oroAuth } from './auth';
-import { oroApiCall } from './client';
-import { OroAuth } from './types';
-
-// --- Internal types -----------------------------------------------------------
-
-interface OroJsonApiItem {
-  id: string;
-  type: string;
-  attributes: Record<string, unknown>;
-}
-
-interface OroJsonApiCollection {
-  data: OroJsonApiItem[];
-}
+import { oroApiCall, fetchCollection } from './client';
+import { OroAuth, OroJsonApiItem } from './types';
 
 // --- Helpers ------------------------------------------------------------------
 
@@ -29,21 +17,6 @@ const FAILED = {
   placeholder: 'Failed to load options. Check your connection.',
   options: [],
 };
-
-async function fetchCollection(
-  auth: OroAuth,
-  resourceUri: string,
-  queryParams?: Record<string, string>
-): Promise<OroJsonApiItem[]> {
-  const response = await oroApiCall({
-    method: HttpMethod.GET,
-    resourceUri,
-    auth,
-    queryParams: { 'page[size]': '50', ...queryParams },
-  });
-
-  return (response.body as OroJsonApiCollection).data ?? [];
-}
 
 // --- Customers ----------------------------------------------------------------
 // Supports filter[searchText] — search across name and other indexed fields.
@@ -96,8 +69,7 @@ export const customerRequiredDropdown = buildCustomerOptions(
 );
 
 // --- Customer Users -----------------------------------------------------------
-// Supports filter[searchText] — searches email, firstName, lastName, etc.
-// Also pre-filters by customer relationship when customer is selected.
+// Pre-filters by customer relationship when customer is selected.
 
 export const customerUserDropdown = (required = false) =>
   Property.Dropdown({
@@ -152,7 +124,6 @@ export const customerUserDropdown = (required = false) =>
   });
 
 // --- Organizations ------------------------------------------------------------
-// Supports filter[searchText].
 
 export const organizationDropdown = Property.Dropdown({
   auth: oroAuth,
@@ -189,7 +160,6 @@ export const organizationDropdown = Property.Dropdown({
 });
 
 // --- Owner (admin users) ------------------------------------------------------
-// Supports filter[searchText] — searches username, email, firstName, lastName.
 
 export const ownerDropdown = Property.Dropdown({
   auth: oroAuth,
@@ -228,7 +198,6 @@ export const ownerDropdown = Property.Dropdown({
 });
 
 // --- Websites -----------------------------------------------------------------
-// Supports filter[searchText]. Small set in practice — still search-gated.
 
 export const websiteDropdown = Property.Dropdown({
   auth: oroAuth,
@@ -259,7 +228,7 @@ export const websiteDropdown = Property.Dropdown({
   },
 });
 
-// --- Internal Statuses (Invoice) ----------------------------------------------
+// --- Invoice Internal Statuses ----------------------------------------------
 // Small enum — loaded once, no search needed.
 
 export const invoiceInternalStatusDropdown = Property.Dropdown({
@@ -315,8 +284,7 @@ export const orderInternalStatusDropdown = Property.Dropdown({
   },
 });
 
-// --- Products ---──────────────────────────────────────────────────────────────
-// Supports filter[searchText] — searches SKU, names, descriptions, etc.
+// --- Products -----------------------------------------------------------------
 
 export const productDropdown = Property.Dropdown({
   auth: oroAuth,
@@ -329,7 +297,9 @@ export const productDropdown = Property.Dropdown({
     if (!auth) return NOT_CONNECTED;
     try {
       const params: Record<string, string> = {
-        'fields[products]': 'sku,status,names',
+        'fields[products]': 'id,sku,status,names',
+        'include': 'names',
+        'fields[productnames]': 'id,string,localization',
       };
       if (searchValue && searchValue.trim().length > 0) {
         params['filter[searchQuery]'] = `allText ~ "${searchValue.trim().replace('"', '')}" and productStatus = "enabled"`;
@@ -337,12 +307,42 @@ export const productDropdown = Property.Dropdown({
         params['filter[status]'] = 'enabled';
       }
 
-      const items = await fetchCollection(auth as OroAuth, '/products', params);
+      const response = await oroApiCall({
+        method: HttpMethod.GET,
+        resourceUri: '/products',
+        auth: auth as OroAuth,
+        queryParams: { 'page[size]': '50', ...params },
+      });
+
+      const body = response.body as {
+        data: OroJsonApiItem[];
+        included?: { type: string; id: string; attributes: Record<string, unknown>; relationships: Record<string, unknown> }[];
+      };
+
+      // Build a map: productId → default name (localization.data === null)
+      const nameMap: Record<string, string> = {};
+      for (const inc of body.included ?? []) {
+        if (inc.type === 'productnames') {
+          const localizationRel = inc.relationships['localization'] as { data: { type: string; id: string } | null } | undefined;
+          if (localizationRel?.data === null) {
+            const productRel = inc.relationships['product'] as { data: { type: string; id: string } | null } | undefined;
+            const productId = productRel?.data?.id;
+            if (productId) {
+              nameMap[productId] = String(inc.attributes['string'] ?? '');
+            }
+          }
+        }
+      }
+
       return {
-        options: items.map((item) => ({
-          label: String(item.attributes['sku'] ?? item.id),
-          value: item.id,
-        })),
+        options: (body.data ?? []).map((item) => {
+          const sku = String(item.attributes['sku'] ?? '');
+          const name = nameMap[item.id] ?? '';
+          const label = name
+            ? `${item.id}: ${sku} - ${name}`
+            : `${item.id}: ${sku}`;
+          return { label, value: item.id };
+        }),
       };
     } catch {
       return FAILED;
@@ -350,8 +350,7 @@ export const productDropdown = Property.Dropdown({
   },
 });
 
-// ─── Payment Terms ────────────────────────────────────────────────────────────
-// Supports filter[searchText].
+// --- Payment Terms ------------------------------------------------------------
 
 export const paymentTermDropdown = Property.Dropdown({
   auth: oroAuth,
@@ -387,7 +386,7 @@ export const paymentTermDropdown = Property.Dropdown({
   },
 });
 
-// ─── Warehouses ───────────────────────────────────────────────────────────────
+// --- Warehouses ---------------------------------------------------------------
 // Supports filter[searchText].
 
 export const warehouseDropdown = Property.Dropdown({
@@ -423,7 +422,7 @@ export const warehouseDropdown = Property.Dropdown({
   },
 });
 
-// ─── Countries ────────────────────────────────────────────────────────────────
+// --- Countries ----------------------------------------------------------------
 // Static dictionary — load full list once per connection (cached by auth refresher).
 // Uses filter[name] for client-side filtering via the UI's built-in search box.
 // Page size 300 to capture all ~250 ISO countries in one request.
@@ -441,9 +440,6 @@ export const buildCountryDropdown = (required = false, displayName = 'Country') 
         const params: Record<string, string> = {
           'fields[countries]': 'id,name'
         };
-        // if (searchValue && searchValue.trim().length > 0) {
-        //   params['filter[searchQuery]'] = `name ~ "${searchValue.trim().replace('"', '')}"`;
-        // }
 
         const items = await fetchCollection(
           auth as OroAuth,
@@ -452,6 +448,15 @@ export const buildCountryDropdown = (required = false, displayName = 'Country') 
         );
         return {
           options: items
+            .filter(function (item) {
+              if (!searchValue || searchValue?.length == 0) {
+                return true;
+              }
+
+              const searchBase = String(item.attributes['name'] ?? item.id);
+
+              return searchBase.toLowerCase().includes(searchValue.toLowerCase());
+            })
             .map((item) => ({
               label: String(item.attributes['name'] ?? item.id),
               value: item.id, // ISO2 code e.g. "US"
@@ -464,7 +469,7 @@ export const buildCountryDropdown = (required = false, displayName = 'Country') 
     },
   });
 
-// ─── Regions ──────────────────────────────────────────────────────────────────
+// --- Regions ------------------------------------------------------------------
 // Static dictionary per country — load all regions for the selected country once.
 // Cached by auth + countryRefresher. Uses filter[country] to scope results.
 
@@ -495,14 +500,19 @@ export const buildRegionDropdown = (
         };
       try {
         const params: Record<string, string> = {'filter[country]': countryId};
-        // if (searchValue && searchValue.trim().length > 0) {
-        //   params['filter[searchQuery]'] = `name ~ "${searchValue.trim().replace('"', '')}"`;
-        //   params['filter[name]'] = searchValue.trim();
-        // }
 
         const items = await fetchCollection(auth, '/regions', params);
         return {
           options: items
+            .filter(function (item) {
+              if (!searchValue || searchValue?.length == 0) {
+                return true;
+              }
+
+              const searchBase = String(item.attributes['name'] ?? item.id);
+
+              return searchBase.toLowerCase().includes(searchValue.toLowerCase());
+            })
             .map((item) => ({
               label: String(item.attributes['name'] ?? item.id),
               value: item.id, // ISO 3166-2 code e.g. "US-NY"
@@ -515,7 +525,67 @@ export const buildRegionDropdown = (
     },
   });
 
-// ─── Product Units ────────────────────────────────────────────────────────────
+// --- Order Statuses (external) ------------------------------------------------
+// Small enum managed by an external system. Loaded once, no search needed.
+
+export const orderStatusDropdown = Property.Dropdown({
+  auth: oroAuth,
+  displayName: 'Status',
+  description: 'Order status managed by an external system (only relevant when "Enable External Status Management" is on).',
+  required: false,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth) return NOT_CONNECTED;
+    try {
+      const items = await fetchCollection(auth as OroAuth, '/orderstatuses');
+      return {
+        options: items.map((item) => ({
+          label: String(item.attributes['name'] ?? item.id),
+          value: item.id,
+        })),
+      };
+    } catch {
+      return FAILED;
+    }
+  },
+});
+
+// --- Parent Order -------------------------------------------------------------
+
+export const orderDropdown = Property.Dropdown({
+  auth: oroAuth,
+  displayName: 'Parent Order',
+  description: 'Search orders to use as the parent order.',
+  required: false,
+  refreshers: [],
+  refreshOnSearch: true,
+  options: async ({ auth }, { searchValue }) => {
+    if (!auth) return NOT_CONNECTED;
+    try {
+      const params: Record<string, string> = {
+        'fields[orders]': 'id,identifier,poNumber',
+      };
+      if (searchValue && searchValue.trim().length > 0) {
+        params['filter[searchQuery]'] = `allText ~ "${searchValue.trim().replace('"', '')}"`;
+      }
+      const items = await fetchCollection(auth as OroAuth, '/orders', params);
+      return {
+        options: items.map((item) => ({
+          label: String(
+            item.attributes['identifier'] ??
+            item.attributes['poNumber'] ??
+            item.id
+          ),
+          value: item.id,
+        })),
+      };
+    } catch {
+      return FAILED;
+    }
+  },
+});
+
+// --- Product Units ------------------------------------------------------------
 // Small static list (each, set, kg, …) — load all once per connection.
 
 export const productUnitDropdown = Property.Dropdown({

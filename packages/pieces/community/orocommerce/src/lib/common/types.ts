@@ -23,3 +23,13 @@ export type OroApiCallParams = {
   queryParams?: QueryParams;
   body?: HttpMessageBody;
 };
+
+export interface OroJsonApiItem {
+  id: string;
+  type: string;
+  attributes: Record<string, unknown>;
+}
+
+export interface OroJsonApiCollection {
+  data: OroJsonApiItem[];
+}

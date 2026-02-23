@@ -8,9 +8,8 @@ import {
   invoiceInternalStatusDropdown,
   organizationDropdown,
   ownerDropdown,
-  websiteDropdown
+  websiteDropdown,
 } from '../common';
-import { OroAuth } from '../common/types';
 
 export const createInvoiceAction = createAction({
   auth: oroAuth,
@@ -48,13 +47,13 @@ export const createInvoiceAction = createAction({
       description: 'Overrides the Customer User dropdown.',
       required: false,
     }),
-    refCustomerId: Property.ShortText({
+    refCustomerId: Property.Number({
       displayName: 'External Customer ID',
       description:
         'An optional ID reference to a customer. Can be used for storing an arbitrary external ID.',
       required: false,
     }),
-    refCustomerUserId: Property.ShortText({
+    refCustomerUserId: Property.Number({
       displayName: 'External Customer User ID',
       description:
         'An optional ID reference to a customer user. Can be used for storing an arbitrary external ID.',
@@ -151,32 +150,7 @@ export const createInvoiceAction = createAction({
         'Invoice line items. Each item is sent via JSON:API included.',
       required: true,
       refreshers: [],
-      props: async ({ auth }) => {
-        type JsonApiCollection = {
-          data: { id: string; attributes: Record<string, unknown> }[];
-        };
-        const unitOptions: { label: string; value: string }[] = [];
-
-        if (auth) {
-          try {
-            const unitsResp = await oroApiCall({
-              method: HttpMethod.GET,
-              resourceUri: '/productunits',
-              auth: auth as OroAuth,
-              queryParams: { 'page[size]': '100' },
-            });
-            for (const item of (unitsResp.body as JsonApiCollection).data ??
-              []) {
-              unitOptions.push({
-                label: String(item.attributes['label'] || item.id),
-                value: item.id,
-              });
-            }
-          } catch {
-            /* leave empty */
-          }
-        }
-
+      props: async () => {
         return {
           lineItems: Property.Array({
             displayName: 'Line Items',
@@ -192,28 +166,15 @@ export const createInvoiceAction = createAction({
                 description: 'Line item description (HTML allowed).',
                 required: true,
               }),
-              productSku: Property.ShortText({
-                displayName: 'Product SKU or ID',
-                description:
-                  'Enter the product SKU or numeric ID. Use the top-level "Product (Search)" field to look up products.',
-                required: false,
-              }),
-              productUnit: Property.StaticDropdown({
-                displayName: 'Product Unit',
-                description: 'Unit of measurement (e.g. piece, kg, set).',
-                required: false,
-                options: { disabled: false, options: unitOptions },
-              }),
-              productUnitId: Property.ShortText({
-                displayName: 'Product Unit: Raw ID',
-                description:
-                  'Overrides the Product Unit dropdown (e.g. "piece", "kg").',
-                required: false,
-              }),
               quantity: Property.Number({
                 displayName: 'Quantity',
                 description: 'Quantity of the item.',
                 required: true,
+              }),
+              unitOfQuantity: Property.ShortText({
+                displayName: 'Product Unit',
+                description: 'Unit of measurement (e.g. piece, kg, set).',
+                required: false,
               }),
               unitPrice: Property.Number({
                 displayName: 'Unit Price',
@@ -261,36 +222,21 @@ export const createInvoiceAction = createAction({
     >;
 
     const included = rawItems.map((item, index) => {
-      const productSku = (item['productSku'] as string | undefined)?.trim();
-      const productUnitId =
-        (item['productUnitId'] as string | undefined)?.trim() ||
-        (item['productUnit'] as string | undefined);
-
       const attrs: Record<string, unknown> = {
         position: index + 1,
         lineNumber: item['lineNumber'] || String(index + 1),
         description: item['description'],
         quantity: Number(item['quantity']),
+        unitOfQuantity: item['unitOfQuantity'],
         unitPrice: Number(item['unitPrice']),
         rowTotal: Number(item['rowTotal']),
       };
       if (item['note']) attrs['note'] = item['note'];
 
-      const liRels: Record<string, unknown> = {};
-      if (productSku) {
-        liRels['product'] = { data: { type: 'products', id: productSku } };
-      }
-      if (productUnitId) {
-        liRels['productUnit'] = {
-          data: { type: 'productunits', id: productUnitId },
-        };
-      }
-
       return {
         type: 'invoicelineitems',
         id: `li_${index + 1}`,
         attributes: attrs,
-        ...(Object.keys(liRels).length > 0 ? { relationships: liRels } : {}),
       };
     });
 
