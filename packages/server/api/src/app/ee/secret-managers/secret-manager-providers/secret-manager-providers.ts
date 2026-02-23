@@ -9,7 +9,7 @@ export type SecretManagerProvider<K extends SecretManagerProviderId> = {
     connect: (config: SecretManagerConfigFor<K>) => Promise<void>
     disconnect: () => Promise<void>
     getSecret: (params: GetSecretManagerSecretRequestFor<K>, config: SecretManagerConfigFor<K>) => Promise<string>
-    resolve: (key: string) => Promise<GetSecretManagerSecretRequestFor<K>>
+    resolve: (key: string) => Promise<Extract<GetSecretManagerSecretRequest, { providerId: K }>>
 
 }
 

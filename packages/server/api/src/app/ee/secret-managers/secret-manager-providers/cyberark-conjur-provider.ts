@@ -129,7 +129,10 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
         }
        
         return {
-            secretKey: splits[1],
+            providerId: SecretManagerProviderId.CYBERARK,
+            request: {
+                secretKey: splits[1],
+            },
         }
     },
 })

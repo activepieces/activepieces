@@ -158,7 +158,10 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             })
         }
         return {
-            path,
+            providerId: SecretManagerProviderId.HASHICORP,
+            request: {
+                path,
+            },
         }
     },
 })
