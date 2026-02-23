@@ -11,9 +11,9 @@ import { devPiecesState } from './dev-pieces-state'
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
 type PieceInfo = {
-    packageName: string, // package name in package.json e.g @activepieces/piece-google-sheets
-    pieceName: string, // piece name e.g google-sheets
-    pieceDirectory: string,
+    packageName: string // package name in package.json e.g @activepieces/piece-google-sheets
+    pieceName: string // piece name e.g google-sheets
+    pieceDirectory: string
 }
 
 async function buildPieces(piecesInfo: PieceInfo[], io: Server, log: FastifyBaseLogger): Promise<void> {
