@@ -1,4 +1,5 @@
-import { resolve } from 'path'
+import { copyFile } from 'node:fs/promises'
+import { join, resolve } from 'path'
 import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
@@ -36,6 +37,7 @@ async function buildPieces(piecesInfo: PieceInfo[], io: Server, log: FastifyBase
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
 
         for (const piece of piecesInfo) {
+            await copyPackageJsonToDist(piece.pieceDirectory)
             const distPath = await filePiecesUtils(log).findDistPiecePathByPackageName(piece.packageName)
             if (distPath) {
                 filePiecesUtils(log).clearPieceModuleCache(distPath)
@@ -119,6 +121,13 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, piecesN
     app.addHook('onClose', async () => {
         await Promise.all(watchers.map(watcher => watcher.close().catch(app.log.error)))
     })
+}
+
+async function copyPackageJsonToDist(sourceDir: string): Promise<void> {
+    const piecesRoot = resolve('packages', 'pieces')
+    const relativePath = sourceDir.substring(sourceDir.indexOf(piecesRoot) + piecesRoot.length)
+    const distDir = join('dist', 'packages', 'pieces', relativePath)
+    await copyFile(join(sourceDir, 'package.json'), join(distDir, 'package.json'))
 }
 
 type PieceInfo = {
