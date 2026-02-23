@@ -161,11 +161,10 @@ export const organizationDropdown = Property.Dropdown({
 
 // --- Owner (admin users) ------------------------------------------------------
 
-export const ownerDropdown = Property.Dropdown({
+export const userDropdown = Property.Dropdown({
   auth: oroAuth,
-  displayName: 'Owner',
-  description:
-    'Search user by name, username or email.',
+  displayName: 'User',
+  description: 'Search user by name, username or email.',
   required: false,
   refreshers: [],
   refreshOnSearch: true,
@@ -173,7 +172,7 @@ export const ownerDropdown = Property.Dropdown({
     if (!auth) return NOT_CONNECTED;
     try {
       const params: Record<string, string> = {
-        'fields[users]': 'id,firstName,lastName,username'
+        'fields[users]': 'id,firstName,lastName,username',
       };
       if (searchValue && searchValue.trim().length > 0) {
         params['filter[searchQuery]'] = `allText ~ "${searchValue.trim().replace('"', '')}"`;
@@ -182,12 +181,12 @@ export const ownerDropdown = Property.Dropdown({
       return {
         options: items.map((item) => {
           const firstName = String(item.attributes['firstName'] ?? '');
-          const lastName = String(item.attributes['lastName'] ?? '');
-          const username = String(item.attributes['username'] ?? '');
-          const label =
-            [firstName, lastName].filter(Boolean).join(' ') ||
-            username ||
-            item.id;
+          const lastName  = String(item.attributes['lastName']  ?? '');
+          const username  = String(item.attributes['username']  ?? '');
+          const fullName  = [firstName, lastName].filter(Boolean).join(' ');
+          const label     = username
+            ? fullName ? `${username}: ${fullName}` : username
+            : fullName || item.id;
           return { label, value: item.id };
         }),
       };
@@ -438,7 +437,8 @@ export const buildCountryDropdown = (required = false, displayName = 'Country') 
       if (!auth) return NOT_CONNECTED;
       try {
         const params: Record<string, string> = {
-          'fields[countries]': 'id,name'
+          'fields[countries]': 'id,name',
+          'page[size]': '300',
         };
 
         const items = await fetchCollection(

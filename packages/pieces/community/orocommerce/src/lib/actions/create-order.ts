@@ -6,7 +6,7 @@ import {
   customerRequiredDropdown,
   customerUserDropdown,
   organizationDropdown,
-  ownerDropdown,
+  userDropdown,
   websiteDropdown,
   orderInternalStatusDropdown,
   orderStatusDropdown,
@@ -99,7 +99,7 @@ export const createOrderAction = createAction({
       description: 'Overrides the Organization dropdown.',
       required: false,
     }),
-    owner: ownerDropdown,
+    owner: userDropdown,
     ownerId: Property.ShortText({
       displayName: 'Owner: Raw ID',
       description: 'Overrides the Owner dropdown.',
