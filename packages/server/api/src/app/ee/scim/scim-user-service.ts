@@ -8,6 +8,7 @@ import {
     ScimListResponse,
     ScimPatchRequest,
     ScimUserResource,
+    parseScimFilter,
 } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
@@ -144,13 +145,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         const { platformId, filter, startIndex = 1, count = 100 } = params
 
         // Parse SCIM filter - we support "userName eq \"value\""
-        let filterEmail: string | undefined
-        if (!isNil(filter)) {
-            const match = filter.match(/userName\s+eq\s+"([^"]+)"/i)
-            if (match) {
-                filterEmail = match[1].toLowerCase().trim()
-            }
-        }
+        const filterEmail = parseScimFilter(filter, 'userName')
 
         if (!isNil(filterEmail)) {
             const identity = await userIdentityService(log).getIdentityByEmail(filterEmail)

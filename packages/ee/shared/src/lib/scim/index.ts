@@ -1,4 +1,4 @@
-import { PlatformRole } from '@activepieces/shared'
+import { isNil, PlatformRole } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const SCIM_USER_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:User'
@@ -179,3 +179,15 @@ export class ScimError extends Error {
         })
     }
 }
+
+export const parseScimFilter = (filter: string | undefined, field: string) => {
+    if (isNil(filter)) {
+      return undefined
+    }
+    const regex = new RegExp(`${field}\\s+eq\\s+"([^"]+)"`, 'i')
+    const match = filter.match(regex)
+    if (match) {
+        return match[1].toLowerCase().trim()
+    }
+    return undefined
+  }

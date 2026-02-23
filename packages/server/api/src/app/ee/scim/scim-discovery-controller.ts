@@ -12,7 +12,6 @@ import { StatusCodes } from 'http-status-codes'
 
 export const scimDiscoveryController: FastifyPluginAsyncTypebox = async (app) => {
 
-    // GET /scim/v2/ServiceProviderConfig
     app.get('/ServiceProviderConfig', ServiceProviderConfigRequest, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send({
             schemas: [SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA],
@@ -54,7 +53,6 @@ export const scimDiscoveryController: FastifyPluginAsyncTypebox = async (app) =>
         })
     })
 
-    // GET /scim/v2/ResourceTypes
     app.get('/ResourceTypes', ResourceTypesRequest, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send([
             {
@@ -84,7 +82,6 @@ export const scimDiscoveryController: FastifyPluginAsyncTypebox = async (app) =>
         ])
     })
 
-    // GET /scim/v2/Schemas
     app.get('/Schemas', SchemasRequest, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send([
             {
