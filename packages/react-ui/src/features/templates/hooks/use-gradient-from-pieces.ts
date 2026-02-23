@@ -102,9 +102,7 @@ const clusterSimilarColors = (
   return clusters;
 };
 
-const extractColorsFromImage = async (
-  imageUrl: string,
-): Promise<string[]> => {
+const extractColorsFromImage = async (imageUrl: string): Promise<string[]> => {
   try {
     const img = await colorsUtils.loadImage(imageUrl);
     const pixels = extractImagePixels(img);
@@ -118,9 +116,7 @@ const extractColorsFromImage = async (
     return clusters
       .sort((a, b) => b.count - a.count)
       .slice(0, 2)
-      .map((cluster) =>
-        rgbToHex(...(cluster.rgb as [number, number, number])),
-      );
+      .map((cluster) => rgbToHex(...(cluster.rgb as [number, number, number])));
   } catch {
     return [];
   }
@@ -161,8 +157,7 @@ export const useGradientFromPieces = (
       .filter((data): data is NonNullable<typeof data> => !!data)
       .filter(
         (piece) =>
-          !excludeCore ||
-          !piece.categories?.includes(PieceCategory.CORE),
+          !excludeCore || !piece.categories?.includes(PieceCategory.CORE),
       )
       .map((piece) => ({
         displayName: piece.displayName,
@@ -184,7 +179,11 @@ export const useGradientFromPieces = (
           (secondItem) => item.displayName === secondItem.displayName,
         ) === index,
     );
-  }, [pieceQueries.map((q) => q.dataUpdatedAt).join(','), coreMetadata, excludeCore]);
+  }, [
+    pieceQueries.map((q) => q.dataUpdatedAt).join(','),
+    coreMetadata,
+    excludeCore,
+  ]);
 
   const logosToProcess = useMemo(
     () =>
@@ -222,5 +221,3 @@ export const useGradientFromPieces = (
 
   return gradient;
 };
-
-

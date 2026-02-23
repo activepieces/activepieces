@@ -70,8 +70,7 @@ export function PieceIconList({
       .filter((data): data is NonNullable<typeof data> => !!data)
       .filter(
         (piece) =>
-          !excludeCore ||
-          !piece.categories?.includes(PieceCategory.CORE),
+          !excludeCore || !piece.categories?.includes(PieceCategory.CORE),
       )
       .map((piece) => ({
         displayName: piece.displayName,
@@ -135,5 +134,3 @@ export function PieceIconList({
     </div>
   );
 }
-
-
