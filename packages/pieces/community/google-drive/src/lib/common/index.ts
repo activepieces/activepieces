@@ -4,11 +4,82 @@ import {
   AuthenticationType,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { OAuth2Client } from 'googleapis-common';
 import { google } from 'googleapis';
-import { googleDriveAuth } from '../..';
+import { AppConnectionType } from '@activepieces/shared';
+
+export const googleDriveScopes = ['https://www.googleapis.com/auth/drive'];
+
+export const googleDriveAuth = [PieceAuth.OAuth2({
+  description: '',
+  authUrl: 'https://accounts.google.com/o/oauth2/auth',
+  tokenUrl: 'https://oauth2.googleapis.com/token',
+  required: true,
+  scope: googleDriveScopes,
+}), PieceAuth.CustomAuth({
+  displayName: 'Service Account (Advanced)',
+  description: 'Authenticate via service account from https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key.  <br> <br> You can optionally use domain-wide delegation (https://support.google.com/a/answer/162106?hl=en#zippy=%2Cset-up-domain-wide-delegation-for-a-client) to access files without adding the service account to each one. <br> <br> **Note:** Without a user email, the service account only has access to files/folders you explicitly share with it.',
+  required: true,
+  props: {
+    serviceAccount: Property.ShortText({
+      displayName: 'Service Account JSON Key',
+      required: true,
+    }),
+    userEmail: Property.ShortText({
+      displayName: 'User Email',
+      required: false,
+      description: 'Email address of the user to impersonate for domain-wide delegation.',
+    }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      await getAccessToken({
+        type: AppConnectionType.CUSTOM_AUTH,
+        props: { ...auth },
+      });
+    } catch (e) {
+      return {
+        valid: false,
+        error: (e as Error).message,
+      };
+    }
+    return {
+      valid: true,
+    };
+  },
+})];
+
+export type GoogleDriveAuthValue = AppConnectionValueForAuthProperty<typeof googleDriveAuth>;
+
+export async function createGoogleClient(auth: GoogleDriveAuthValue): Promise<OAuth2Client> {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    const serviceAccount = JSON.parse(auth.props.serviceAccount);
+    return new google.auth.JWT({
+      email: serviceAccount.client_email,
+      key: serviceAccount.private_key,
+      scopes: googleDriveScopes,
+      subject: auth.props.userEmail,
+    });
+  }
+  const authClient = new OAuth2Client();
+  authClient.setCredentials(auth);
+  return authClient;
+}
+
+export const getAccessToken = async (auth: GoogleDriveAuthValue): Promise<string> => {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    const googleClient = await createGoogleClient(auth);
+    const response = await googleClient.getAccessToken();
+    if (response.token) {
+      return response.token;
+    } else {
+      throw new Error('Could not retrieve access token from service account json');
+    }
+  }
+  return auth.access_token;
+};
 
 export const common = {
   properties: {
@@ -25,7 +96,8 @@ export const common = {
             placeholder: 'Please authenticate first',
           };
         }
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+        const authValue = auth as GoogleDriveAuthValue;
+        const accessToken = await getAccessToken(authValue);
         let folders: { id: string; name: string }[] = [];
         let pageToken = null;
         do {
@@ -39,7 +111,7 @@ export const common = {
             },
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: authProp!['access_token'],
+              token: accessToken,
             },
           };
           if (pageToken) {
@@ -80,7 +152,7 @@ export const common = {
   },
 
   async getFiles(
-    auth: OAuth2PropertyValue,
+    auth: GoogleDriveAuthValue,
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
@@ -89,8 +161,7 @@ export const common = {
     },
     order?: string
   ) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    const authClient = await createGoogleClient(auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 
@@ -109,13 +180,13 @@ export const common = {
       orderBy: order ?? 'createdTime desc',
       supportsAllDrives: true,
       includeItemsFromAllDrives: search?.includeTeamDrive,
-    });    
+    });
 
     return response.data.files;
   },
 
   async getFolders(
-    auth: OAuth2PropertyValue,
+    auth: GoogleDriveAuthValue,
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
@@ -146,7 +217,7 @@ export const common = {
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
+        token: await getAccessToken(auth),
       },
     });
 

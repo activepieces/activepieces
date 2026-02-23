@@ -1,7 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth, createGoogleClient } from '../common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { downloadFileFromDrive } from '../common/get-file-content';
 
 export const setPublicAccess = createAction({
@@ -17,8 +16,7 @@ export const setPublicAccess = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const fileId = context.propsValue.fileId;
 

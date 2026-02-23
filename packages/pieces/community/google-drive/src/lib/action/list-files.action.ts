@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth, getAccessToken } from '../common';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import querystring from 'querystring';
 import { common } from '../common';
@@ -27,10 +27,12 @@ async function getFilesRecursively(
   currentLevel = 0
 ): Promise<FileWithLevel[]> {
   const files: FileWithLevel[] = [];
-  
+
   if (currentLevel > maxLevel) {
     return files;
   }
+
+  const accessToken = await getAccessToken(auth);
 
   let q = `'${folderId}' in parents`;
   if (!includeTrashed) {
@@ -48,7 +50,7 @@ async function getFilesRecursively(
     method: HttpMethod.GET,
     url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(params)}`,
     headers: {
-      Authorization: `Bearer ${auth.access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
@@ -68,10 +70,10 @@ async function getFilesRecursively(
       method: HttpMethod.GET,
       url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(params)}`,
       headers: {
-        Authorization: `Bearer ${auth.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
-    
+
     for (const file of response.body.files) {
       files.push({
         file,
@@ -84,7 +86,7 @@ async function getFilesRecursively(
   // If we haven't reached max level, recursively get files from subfolders
   if (currentLevel + 1 < maxLevel) {
     const subfolders = files.filter(f => f.file.mimeType === 'application/vnd.google-apps.folder');
-    
+
     for (const subfolder of subfolders) {
       const subfolderFiles = await getFilesRecursively(
         auth,

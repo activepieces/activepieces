@@ -1,6 +1,4 @@
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 
@@ -23,14 +21,9 @@ import { setPublicAccess } from './lib/action/set-public-access';
 import { moveFileAction } from './lib/action/move-file';
 import { googleDriveDeleteFile } from './lib/action/delete-file';
 import { googleDriveTrashFile } from './lib/action/send-to-trash';
+import { googleDriveAuth, getAccessToken } from './lib/common';
 
-export const googleDriveAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: ['https://www.googleapis.com/auth/drive'],
-});
+export { googleDriveAuth, getAccessToken, GoogleDriveAuthValue, createGoogleClient } from './lib/common';
 
 export const googleDrive = createPiece({
   minimumSupportedRelease: '0.5.6',
@@ -73,7 +66,7 @@ export const googleDrive = createPiece({
       baseUrl: () => 'https://www.googleapis.com/drive/v3',
       auth: googleDriveAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth).access_token}`,
+        Authorization: `Bearer ${await getAccessToken(auth as any)}`,
       }),
     }),
   ],
