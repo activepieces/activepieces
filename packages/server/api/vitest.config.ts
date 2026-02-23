@@ -10,6 +10,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     testTimeout: 250000,
+    hookTimeout: 250000,
     pool: 'forks',
     poolOptions: {
       forks: {
