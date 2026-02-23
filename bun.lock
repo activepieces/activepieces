@@ -6719,6 +6719,7 @@
         "write-file-atomic": "5.0.1",
       },
       "devDependencies": {
+        "@activepieces/engine": "workspace:*",
         "@types/jsonwebtoken": "9.0.10",
       },
     },

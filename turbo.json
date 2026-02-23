@@ -16,6 +16,7 @@
     "@activepieces/engine#build": {
       "dependsOn": ["^build"],
       "outputs": ["../../dist/packages/engine/**"],
+      "cache": false,
       "inputs": [
         "src/**",
         "tsconfig*.json",
@@ -59,6 +60,7 @@
       "persistent": true
     },
     "serve": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },

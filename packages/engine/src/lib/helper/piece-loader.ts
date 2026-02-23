@@ -138,10 +138,6 @@ async function resolveFromNodeModules(packageName: string): Promise<string | nul
             if (await utils.folderExists(jsPath)) {
                 return jsPath
             }
-            const tsPath = path.join(pkgDir, 'src', 'index.ts')
-            if (await utils.folderExists(tsPath)) {
-                return tsPath
-            }
         }
         const parentDir = path.dirname(currentDir)
         if (parentDir === currentDir || currentDir === rootDir) {
