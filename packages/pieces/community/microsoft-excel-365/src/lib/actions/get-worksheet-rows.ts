@@ -205,6 +205,19 @@ function evaluateFilters(filters: ColumnFilter[], row: any[]): boolean {
 			case FilterOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
 				return !equalsText(cellValue, value);
 
+			case FilterOperator.TEXT_IN_LIST: {
+				const list = parseAndCoerceListAsArray(value)
+				return list.some((item) =>
+					toLowercaseIfCaseInsensitive(item, false) === toLowercaseIfCaseInsensitive(cellValue, false))
+			}
+
+			case FilterOperator.TEXT_NOT_IN_LIST: {
+				const list = parseAndCoerceListAsArray(value)
+				return !list.some((item) =>
+					toLowercaseIfCaseInsensitive(item, false) === toLowercaseIfCaseInsensitive(cellValue, false),
+				)
+			}
+
 			case FilterOperator.NUMBER_IS_GREATER_THAN:
 				return toNumber(cellValue) > toNumber(value);
 
@@ -272,4 +285,25 @@ function isSameOrAfterDate(a: any, b: any): boolean {
 
 function isSameOrBeforeDate(a: any, b: any): boolean {
 	return isValidDate(a) && isValidDate(b) && dayjs(a).isSameOrBefore(dayjs(b));
+}
+
+function parseAndCoerceListAsArray(input: unknown): unknown[] {
+	if (typeof input === 'string') {
+		try {
+			const parsed = JSON.parse(input)
+			return Array.isArray(parsed) ? parsed : [parsed]
+		}
+		catch (e) {
+			return [input]
+		}
+	}
+	return Array.isArray(input) ? input : [input]
+}
+
+function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | undefined): string {
+	if (typeof text === 'string') {
+		return caseSensitive ? text : text.toLowerCase()
+	}
+	const textAsString = JSON.stringify(text)
+	return caseSensitive ? textAsString : textAsString.toLowerCase()
 }

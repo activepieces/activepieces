@@ -254,7 +254,7 @@ export const useElementSize = (ref: RefObject<HTMLElement>) => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [ref.current]);
+  }, [debouncedSetSize, ref]);
 
   return size;
 };
