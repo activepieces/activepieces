@@ -188,7 +188,7 @@ export const ExecuteExtractPieceMetadataJobData = Type.Object({
     webserverId: Type.String(),
     schemaVersion: Type.Number(),
     jobType: Type.Literal(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
-    projectId: Type.Optional(Type.String()),
+    projectId: Type.Undefined(),
     platformId: Type.String(),
     piece: PiecePackage,
 })

@@ -276,7 +276,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       followRedirects: Property.Checkbox({
         displayName: 'Follow redirects',
         required: false,
-        defaultValue: true,
+        defaultValue: false,
       }),
       ...extraProps,
     },

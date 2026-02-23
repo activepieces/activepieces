@@ -142,45 +142,56 @@ async function resolveProperties(
 }
 
 async function execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
-
-    const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
-        pieceName: operation.pieceName,
-        pieceVersion: operation.pieceVersion,
-        actionName: operation.actionName,
-        devPieces: EngineConstants.DEV_PIECES,
-    })
-    const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
-    const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
-    const step: PieceAction = {
-        name: operation.actionName,
-        displayName: operation.actionName,
-        type: FlowActionType.PIECE,
-        settings: {
-            input: resolvedInput,
-            actionName: operation.actionName,
+    try {
+        const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: operation.pieceName,
             pieceVersion: operation.pieceVersion,
-            propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
-                type: PropertyExecutionType.MANUAL,
-                schema: undefined,
-            }])),
-        },
-        valid: true,
+            actionName: operation.actionName,
+            devPieces: EngineConstants.DEV_PIECES,
+        })
+        const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
+        const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
+        
+        const step: PieceAction = {
+            name: operation.actionName,
+            displayName: operation.actionName,
+            type: FlowActionType.PIECE,
+            settings: {
+                input: resolvedInput,
+                actionName: operation.actionName,
+                pieceName: operation.pieceName,
+                pieceVersion: operation.pieceVersion,
+                propertySettings: Object.fromEntries(Object.entries(resolvedInput).map(([key]) => [key, {
+                    type: PropertyExecutionType.MANUAL,
+                    schema: undefined,
+                }])),
+            },
+            valid: true,
+        }
+        const output = await flowExecutor.getExecutorForAction(step.type).handle({
+            action: step,
+            executionState: FlowExecutorContext.empty(),
+            constants: EngineConstants.fromExecuteActionInput(operation),
+        })
+        const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
+        
+        return {
+            status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
+            output: stepOutput,
+            resolvedInput: {
+                ...resolvedInput,
+                auth: 'Redacted',
+            },
+            errorMessage,
+        }
     }
-    const output = await flowExecutor.getExecutorForAction(step.type).handle({
-        action: step,
-        executionState: FlowExecutorContext.empty(),
-        constants: EngineConstants.fromExecuteActionInput(operation),
-    })
-    const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
-    return {
-        status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
-        output: stepOutput,
-        resolvedInput: {
-            ...resolvedInput,
-            auth: 'Redacted',
-        },
-        errorMessage,
+    catch (error) {
+        return {
+            status: ExecutionToolStatus.FAILED,
+            output: undefined,
+            resolvedInput: {},
+            errorMessage: `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+        }
     }
 }
 
@@ -327,7 +338,7 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
         property.type === PropertyType.STATIC_DROPDOWN ||
         property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
     ) {
-        const options = await loadOptions(propertyName, operation, input)
+        const options = await loadOptions(propertyName, property, operation, input)
         return {
             ...baseDetail,
             options,
@@ -337,7 +348,12 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
     return baseDetail
 }
 
-async function loadOptions(propertyName: string, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<DropdownOption<unknown>[]> {
+async function loadOptions(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, input: Record<string, unknown>): Promise<DropdownOption<unknown>[]> {
+    if (property.type === PropertyType.STATIC_DROPDOWN || property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN) {
+        const staticProperty = property as { options: { options: DropdownOption<unknown>[] } }
+        return staticProperty.options.options
+    }
+    
     const response = await pieceHelper.executeProps({
         ...operation,
         propertyName,

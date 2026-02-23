@@ -35,6 +35,13 @@ async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLog
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
 
+        for (const pieceName of pieceNames) {
+            const distPath = await filePiecesUtils(log).findDistPiecePathByPackageName(`@activepieces/piece-${pieceName}`)
+            if (distPath) {
+                filePiecesUtils(log).clearPieceModuleCache(distPath)
+            }
+        }
+
         devPiecesState.incrementGeneration()
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
@@ -74,7 +81,7 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
         await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
     }
 
-    for (const { packageName, pieceDirectory } of pieceInfos) {
+    for (const { packageName, pieceDirectory, packageJsonName } of pieceInfos) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
         app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
@@ -83,6 +90,7 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
                 try {
                     await buildPieces([packageName], io, app.log)
                     await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
+                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
                 }
                 catch (error) {
                     app.log.error(error)

@@ -25,6 +25,7 @@ beforeEach(() => {
         sendReminderJobHandler: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
         sendBadgeAwardedEmail: jest.fn(),
+        sendProjectMemberAdded: jest.fn(),
     }))
 
 })

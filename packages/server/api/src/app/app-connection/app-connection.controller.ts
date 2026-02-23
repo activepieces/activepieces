@@ -110,7 +110,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             userId: request.principal.id,
         })
-        await reply.status(StatusCodes.OK).send()
+        await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
@@ -189,8 +189,7 @@ const ReplaceAppConnectionsRequest = {
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_APP_CONNECTION,
             {
-                type: ProjectResourceType.TABLE,
-                tableName: AppConnectionEntity,
+                type: ProjectResourceType.BODY,
             },
         ),
     },

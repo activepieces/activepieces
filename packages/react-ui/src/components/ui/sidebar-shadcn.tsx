@@ -39,6 +39,7 @@ type SidebarContextProps = {
   toggleSidebar: () => void;
   hoverMode: boolean;
   isHoverExpanded: boolean;
+  shouldElevateZIndex: boolean;
   setHovered: (hovered: boolean) => void;
 };
 
@@ -71,12 +72,25 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
+  const [keepElevatedZIndex, setKeepElevatedZIndex] = React.useState(false);
 
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [_open, _setOpen] = React.useState(() => {
+    if (hoverMode) {
+      return defaultOpen;
+    }
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(SIDEBAR_COOKIE_NAME);
+      if (stored !== null) {
+        return stored === 'true';
+      }
+    }
+    return defaultOpen;
+  });
   const persistedOpen = openProp ?? _open;
 
   const isHoverExpanded = hoverMode && !persistedOpen && isHovered;
   const open = persistedOpen || isHoverExpanded;
+  const shouldElevateZIndex = isHoverExpanded || keepElevatedZIndex;
 
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -88,20 +102,58 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      if (!hoverMode) {
+        localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      }
     },
-    [setOpenProp, persistedOpen],
+    [setOpenProp, persistedOpen, hoverMode],
+  );
+
+  const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const zIndexTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
   );
 
   const setHovered = React.useCallback((hovered: boolean) => {
-    setIsHovered(hovered);
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    if (zIndexTimeoutRef.current) {
+      clearTimeout(zIndexTimeoutRef.current);
+      zIndexTimeoutRef.current = null;
+    }
+
+    if (hovered) {
+      setIsHovered(true);
+      setKeepElevatedZIndex(false);
+    } else {
+      setIsHovered(false);
+      setKeepElevatedZIndex(true);
+      zIndexTimeoutRef.current = setTimeout(() => {
+        setKeepElevatedZIndex(false);
+      }, 200);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+      if (zIndexTimeoutRef.current) {
+        clearTimeout(zIndexTimeoutRef.current);
+      }
+    };
   }, []);
 
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
   }, [isMobile, setOpen, setOpenMobile]);
 
-  // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -130,6 +182,7 @@ function SidebarProvider({
       toggleSidebar,
       hoverMode,
       isHoverExpanded,
+      shouldElevateZIndex,
       setHovered,
     }),
     [
@@ -139,6 +192,7 @@ function SidebarProvider({
       isMobile,
       openMobile,
       setOpenMobile,
+      shouldElevateZIndex,
       toggleSidebar,
       hoverMode,
       isHoverExpanded,
@@ -189,6 +243,7 @@ function Sidebar({
     setOpen,
     hoverMode,
     isHoverExpanded,
+    shouldElevateZIndex,
     setHovered,
   } = useSidebar();
 
@@ -273,7 +328,7 @@ function Sidebar({
             state === 'collapsed' &&
             collapsible === 'icon' &&
             '[&_*]:!cursor-nesw-resize [&_button]:!cursor-pointer [&_button]:relative [&_button]:z-20 [&_button_*]:!cursor-pointer [&_a]:!cursor-pointer [&_a]:relative [&_a]:z-20 [&_a_*]:!cursor-pointer [&_[role=button]]:!cursor-pointer [&_[role=button]]:relative [&_[role=button]]:z-20 [&_[role=button]_*]:!cursor-pointer [&_[data-sidebar=menu-button]]:!cursor-pointer [&_[data-sidebar=menu-button]]:relative [&_[data-sidebar=menu-button]]:z-20 [&_[data-sidebar=menu-button]_*]:!cursor-pointer cursor-nesw-resize',
-          isHoverExpanded && 'z-55',
+          shouldElevateZIndex && 'z-55',
           className,
         )}
         {...props}
@@ -642,7 +697,6 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<'div'> & {
   showIcon?: boolean;
 }) {
-  // Random width between 50 to 90%.
   const [width] = React.useState(() => {
     return `${Math.floor(Math.random() * 40) + 50}%`;
   });
