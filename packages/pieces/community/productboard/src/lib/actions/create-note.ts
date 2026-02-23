@@ -1,8 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property, StaticPropsValue } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpResponse } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
 
+/**
+ * Action to create a new note/feedback in Productboard.
+ */
 export const createNote = createAction({
     name: 'create_note',
     displayName: 'Create Note',
@@ -68,39 +71,39 @@ export const createNote = createAction({
             tags,
         } = context.propsValue;
 
-        const note: Record<string, any> = {
+        const noteBody: Record<string, any> = {
             title,
             content,
         };
 
         if (user_email) {
-            note['user'] = { email: user_email };
+            noteBody['user'] = { email: user_email };
         }
 
         if (company_domain) {
-            note['company'] = { domain: company_domain };
+            noteBody['company'] = { domain: company_domain };
         }
 
         if (display_url) {
-            note['display_url'] = display_url;
+            noteBody['display_url'] = display_url;
         }
 
         if (source_origin && source_record_id) {
-            note['source'] = {
+            noteBody['source'] = {
                 origin: source_origin,
                 record_id: source_record_id,
             };
         }
 
         if (tags) {
-            note['tags'] = (tags as { tag: string }[]).map((t) => t.tag);
+            noteBody['tags'] = (tags as { tag: string }[]).map((t) => t.tag);
         }
 
         const response = await productboardCommon.apiCall({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/notes',
-            body: note,
+            body: noteBody,
         });
 
         return response.body;
