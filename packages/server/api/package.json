@@ -9,9 +9,11 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/server-shared": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "jsonwebtoken": "9.0.1",
     "server-worker": "workspace:*"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "9.0.10",
     "@activepieces/piece-facebook-leads": "workspace:*",
     "@activepieces/piece-intercom": "workspace:*",
     "@activepieces/piece-slack": "workspace:*",
