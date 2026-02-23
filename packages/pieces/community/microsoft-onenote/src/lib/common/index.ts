@@ -11,18 +11,47 @@ export async function getNotebooksDropdown(auth: OAuth2PropertyValue) {
 	try {
 		const response = await client.api('/me/onenote/notebooks').get();
 		
+		// Check if response.value exists and is an array
+		if (!response || !response.value || !Array.isArray(response.value)) {
+			console.error('Invalid response structure from Microsoft Graph API:', response);
+			return {
+				disabled: true,
+				placeholder: 'Failed to load notebooks: Invalid response format',
+				options: [],
+			};
+		}
+
+		// Handle empty array case
+		if (response.value.length === 0) {
+			return {
+				disabled: false,
+				options: [],
+			};
+		}
+
 		return {
 			disabled: false,
 			options: response.value.map((notebook: any) => ({
-				label: notebook.displayName,
+				label: notebook.displayName || 'Untitled Notebook',
 				value: notebook.id,
 			})),
 		};
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Error fetching notebooks:', error);
+		
+		// Provide more specific error messages based on error type
+		let errorMessage = 'Failed to load notebooks';
+		if (error?.statusCode === 403 || error?.code === 'Forbidden') {
+			errorMessage = 'Failed to load notebooks: Insufficient permissions. Please ensure Notes.Read.All scope is granted.';
+		} else if (error?.statusCode === 401 || error?.code === 'Unauthorized') {
+			errorMessage = 'Failed to load notebooks: Authentication failed. Please reconnect your account.';
+		} else if (error?.message) {
+			errorMessage = `Failed to load notebooks: ${error.message}`;
+		}
+		
 		return {
 			disabled: true,
-			placeholder: 'Failed to load notebooks',
+			placeholder: errorMessage,
 			options: [],
 		};
 	}
