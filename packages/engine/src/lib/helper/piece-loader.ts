@@ -127,33 +127,7 @@ export const pieceLoader = {
     },
 }
 
-async function resolveFromNodeModules(packageName: string): Promise<string | null> {
-    let currentDir = __dirname
-    const rootDir = path.parse(currentDir).root
-    const maxIterations = currentDir.split(path.sep).length
-    for (let i = 0; i < maxIterations; i++) {
-        const pkgDir = path.join(currentDir, 'node_modules', packageName)
-        if (await utils.folderExists(pkgDir)) {
-            const jsPath = path.join(pkgDir, 'src', 'index.js')
-            if (await utils.folderExists(jsPath)) {
-                return jsPath
-            }
-        }
-        const parentDir = path.dirname(currentDir)
-        if (parentDir === currentDir || currentDir === rootDir) {
-            break
-        }
-        currentDir = parentDir
-    }
-    return null
-}
-
-async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
-    const nodeModulesResult = await resolveFromNodeModules(packageName)
-    if (nodeModulesResult) {
-        return nodeModulesResult
-    }
-
+async function findInDistFolder(packageName: string): Promise<string | null> {
     const distPath = path.resolve('dist/packages/pieces')
     if (!await utils.folderExists(distPath)) {
         return null
@@ -176,6 +150,41 @@ async function loadPieceFromDistFolder(packageName: string): Promise<string | nu
     return null
 }
 
+async function findInNodeModules(packageName: string): Promise<string | null> {
+    let currentDir = __dirname
+    const rootDir = path.parse(currentDir).root
+    const maxIterations = currentDir.split(path.sep).length
+    for (let i = 0; i < maxIterations; i++) {
+        const pkgDir = path.join(currentDir, 'node_modules', packageName)
+        if (await utils.folderExists(pkgDir)) {
+            const jsPath = path.join(pkgDir, 'src', 'index.js')
+            if (await utils.folderExists(jsPath)) {
+                return jsPath
+            }
+            if (isTestMode()) {
+                const tsPath = path.join(pkgDir, 'src', 'index.ts')
+                if (await utils.folderExists(tsPath)) {
+                    return tsPath
+                }
+            }
+        }
+        const parentDir = path.dirname(currentDir)
+        if (parentDir === currentDir || currentDir === rootDir) {
+            break
+        }
+        currentDir = parentDir
+    }
+    return null
+}
+
+async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
+    const distResult = await findInDistFolder(packageName)
+    if (distResult) {
+        return distResult
+    }
+    return findInNodeModules(packageName)
+}
+
 async function traverseAllParentFoldersToFindPiece(packageName: string): Promise<string | null> {
     const rootDir = path.parse(__dirname).root
     let currentDir = __dirname
@@ -194,6 +203,10 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
         currentDir = parentDir
     }
     return null
+}
+
+function isTestMode(): boolean {
+    return process.env['AP_TEST_MODE'] === 'true'
 }
 
 type GetPiecePathParams = {
