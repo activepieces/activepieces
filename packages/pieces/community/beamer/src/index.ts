@@ -7,31 +7,7 @@ import { createBeamerPost } from './lib/actions/create-posts';
 import { createVote } from './lib/actions/create-vote';
 import { beamerCommon } from './lib/common';
 import { newPost } from './lib/trigger/new-post';
-
-export const beamerAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'API key acquired from your Beamer settings',
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${beamerCommon.baseUrl}/ping`,
-        headers: {
-          'Beamer-Api-Key': `${auth}`,
-        },
-      })
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API key.',
-      };
-    }
-  },
-});
+import { beamerAuth } from './lib/auth';
 
 export const beamer = createPiece({
   displayName: 'Beamer',

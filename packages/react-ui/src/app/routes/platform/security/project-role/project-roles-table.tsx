@@ -1,3 +1,4 @@
+import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/tooltip';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 

@@ -2,7 +2,7 @@ import {
   createAction,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { flowluAuth } from '../../..';
+import { flowluAuth } from '../../auth';
 import { flowluCommon, makeClient } from '../../common';
 
 export const getTaskAction = createAction({

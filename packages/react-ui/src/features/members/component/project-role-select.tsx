@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect } from 'react';
@@ -8,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members/component/role-selector';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { isNil } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;

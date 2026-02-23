@@ -5,7 +5,7 @@ import {
 	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { confluenceAuth } from '../../index';
+import { confluenceAuth } from '../auth';
 import { confluenceApiCall, confluencePaginatedApiCall, PaginatedResponse } from '../common';
 import { isNil } from '@activepieces/shared';
 import { spaceIdProp } from '../common/props';

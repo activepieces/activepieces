@@ -1,4 +1,4 @@
-import { BaseModel, OAuth2GrantType, ProjectId } from '@activepieces/shared'
+import { OAuth2GrantType, ProjectId } from '@activepieces/shared'
 
 export type AppCredentialId = string
 
@@ -16,10 +16,13 @@ export type AppApiKeySettings = {
     type: AppCredentialType.API_KEY
 }
 export type AppCredential = {
+    id: AppCredentialId
+    created: string
+    updated: string
     appName: string
     projectId: ProjectId
     settings: AppOAuth2Settings | AppApiKeySettings
-} & BaseModel<AppCredentialId>
+}
 
 export enum AppCredentialType {
     OAUTH2 = 'OAUTH2',

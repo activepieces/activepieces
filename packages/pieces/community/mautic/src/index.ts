@@ -15,6 +15,7 @@ import {
   updateContact,
 } from './lib/actions';
 import { triggers } from './lib/triggers';
+import { mauticAuth } from './lib/auth';
 
 const markdownDescription = `
 Follow these steps:
@@ -24,25 +25,6 @@ Follow these steps:
 2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.
 
 `;
-
-export const mauticAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
-  props: {
-    base_url: Property.ShortText({
-      displayName: 'Base URL',
-      required: true,
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  required: true,
-});
 
 export const mautic = createPiece({
   displayName: 'Mautic',

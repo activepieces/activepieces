@@ -1,3 +1,4 @@
+import { FlowTrigger, TriggerEventWithPayload } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React from 'react';
@@ -10,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FlowTrigger, TriggerEventWithPayload } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 

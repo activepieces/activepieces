@@ -1,3 +1,9 @@
+import {
+  ApEdition,
+  ApFlagId,
+  WorkerMachineStatus,
+  WorkerMachineWithStatus,
+} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
@@ -23,12 +29,6 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { workersApi } from '@/features/platform-admin/lib/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, useTimeAgo } from '@/lib/utils';
-import {
-  ApEdition,
-  ApFlagId,
-  WorkerMachineStatus,
-  WorkerMachineWithStatus,
-} from '@activepieces/shared';
 
 import { WorkerConfigsModal } from './worker-configs-dialog';
 

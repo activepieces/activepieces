@@ -1,3 +1,8 @@
+import {
+  TemplateTag as TemplateTagType,
+  FlowVersionTemplate,
+  TemplateType,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -21,11 +26,6 @@ import { templateUtils } from '@/features/flows/lib/template-parser';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
-import {
-  TemplateTag as TemplateTagType,
-  FlowVersionTemplate,
-  TemplateType,
-} from '@activepieces/shared';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 

@@ -1,4 +1,4 @@
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 

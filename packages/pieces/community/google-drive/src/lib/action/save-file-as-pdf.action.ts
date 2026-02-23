@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';

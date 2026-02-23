@@ -18,21 +18,7 @@ import { dropboxMoveFolder } from './lib/actions/move-folder';
 import { dropboxSearch } from './lib/actions/search';
 import { dropboxUploadFile } from './lib/actions/upload-file';
 import { dropboxDownloadFile } from './lib/actions/download-file';
-
-export const dropboxAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://www.dropbox.com/oauth2/authorize',
-  tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
-  required: true,
-  // include token_access_type=offline as a parameter on Authorization URL in order to return a refresh_token
-  extra: { token_access_type: 'offline' },
-  scope: [
-    'files.metadata.write',
-    'files.metadata.read',
-    'files.content.write',
-    'files.content.read',
-  ],
-});
+import { dropboxAuth } from './lib/auth';
 
 export const dropbox = createPiece({
   minimumSupportedRelease: '0.30.0',

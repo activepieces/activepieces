@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { ListProjectsResponse } from './types';
-import { peekshotAuth } from '../..';
+import { peekshotAuth } from '../auth';
 
 export const projectId = Property.Dropdown({
   displayName: 'Project',

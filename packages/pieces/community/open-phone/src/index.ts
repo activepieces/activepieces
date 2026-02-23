@@ -8,13 +8,7 @@ import { outgoingMessageDelivered } from './lib/triggers/outgoing-message-delive
 import { outgoingCallCompleted } from './lib/triggers/outgoing-call-completed';
 import { incomingCallCompleted } from './lib/triggers/incoming-call-completed';
 import { incomingMessageReceived } from './lib/triggers/incoming-message-received';
-
-export const openPhoneAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description:
-    'Enter your OpenPhone API key. You can generate one from the API tab in your workspace settings.',
-});
+import { openPhoneAuth } from './lib/auth';
 
 export const openPhone = createPiece({
   displayName: 'OpenPhone',

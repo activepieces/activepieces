@@ -43,7 +43,7 @@ PGlite is a lightweight PostgreSQL implementation that runs embedded, so migrati
   <Step title="Generate Migration">
     Run the migration generation command:
     ```bash
-    nx db-migration server-api --name=<MIGRATION_NAME>
+    npx turbo run db-migration --filter=server-api -- --name=<MIGRATION_NAME>
     ```
     Replace `<MIGRATION_NAME>` with a descriptive name for your migration.
   </Step>

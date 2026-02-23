@@ -1,10 +1,10 @@
+import { Template } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
-import { Template } from '@activepieces/shared';
 
 type TemplateCardProps = {
   template: Template;

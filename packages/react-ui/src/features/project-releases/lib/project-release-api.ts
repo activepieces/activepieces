@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   ProjectSyncPlan,
   SeekPage,
@@ -7,6 +6,8 @@ import {
   DiffReleaseRequest,
   ListProjectReleasesRequest,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const projectReleaseApi = {
   async get(releaseId: string) {

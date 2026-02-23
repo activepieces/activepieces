@@ -1,9 +1,9 @@
+import { FieldType } from '@activepieces/shared';
 import { useEffect, useRef, useState } from 'react';
 import { CalculatedColumn } from 'react-data-grid';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { cn } from '@/lib/utils';
-import { FieldType } from '@activepieces/shared';
 
 import { ClientField } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
