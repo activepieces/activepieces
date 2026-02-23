@@ -20,7 +20,7 @@ export const slackSendDirectMessageAction = createAction({
   displayName: 'Send Message To A User',
   description: 'Send message to a user',
   props: {
-    userId,
+    userId: userId(true),
     text,
     username,
     profilePicture,
