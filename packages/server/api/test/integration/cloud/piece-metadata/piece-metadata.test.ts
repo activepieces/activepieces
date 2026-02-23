@@ -391,6 +391,9 @@ describe('Piece Metadata API', () => {
 
         it('Should list latest version by piece name', async () => {
             // arrange
+            const mockProject = createMockProject()
+            await databaseConnection().getRepository('project').save([mockProject])
+
             const mockPieceMetadataA = createMockPieceMetadata({
                 name: 'a',
                 pieceType: PieceType.OFFICIAL,
@@ -417,7 +420,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces',
+                url: `/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -434,6 +437,9 @@ describe('Piece Metadata API', () => {
 
         it('Sorts by piece name', async () => {
             // arrange
+            const mockProject = createMockProject()
+            await databaseConnection().getRepository('project').save([mockProject])
+
             const mockPieceMetadataA = createMockPieceMetadata({
                 name: 'a',
                 pieceType: PieceType.OFFICIAL,
@@ -458,7 +464,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces',
+                url: `/v1/pieces?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

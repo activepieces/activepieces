@@ -57,7 +57,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         }
         const includeTags = query.includeTags ?? false
         const platformId = getPlatformId(req.principal)
-        const projectId = req.query.projectId
+        const projectId = req.projectId ?? req.query.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             includeHidden: query.includeHidden ?? false,
             projectId,
