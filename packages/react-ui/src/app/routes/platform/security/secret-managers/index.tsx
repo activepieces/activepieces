@@ -26,7 +26,7 @@ const SecretMangersPage = () => {
           description={t('Manage Secret Managers')}
         ></DashboardPageHeader>
         {isLoading ? (
-          <Skeleton className="w-full h-10" />
+          <Skeleton className="w-full h-10 flex flex-col gap-4" />
         ) : (
           secretManagerProviders?.map((provider) => (
             <SecretManagerProviderCard key={provider.id} provider={provider} />
