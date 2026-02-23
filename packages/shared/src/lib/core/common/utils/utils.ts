@@ -184,3 +184,37 @@ export function isEnumValue<T extends { [key: string]: string | number }>(
 ): value is T[keyof T] {
     return Object.values(enumObj).includes(value as T[keyof T])
 }
+
+export type IsBase64Options = {
+    allowMime?: boolean
+}
+
+const INVALID_BASE64_CHARS = /[^A-Za-z0-9+/=]/
+
+export function isBase64(value: string, options?: IsBase64Options): boolean {
+    if (!isString(value) || value.length === 0) {
+        return false
+    }
+
+    if (options?.allowMime) {
+        const base64MarkerIndex = value.indexOf(';base64,')
+        if (base64MarkerIndex !== -1 && value.startsWith('data:')) {
+            const base64Part = value.slice(base64MarkerIndex + 8) // 8 = ';base64,'.length
+            return _isValidBase64String(base64Part)
+        }
+    }
+
+    return _isValidBase64String(value)
+}
+
+function _isValidBase64String(str: string): boolean {
+    const len = str.length
+    if (len === 0 || len % 4 !== 0 || INVALID_BASE64_CHARS.test(str)) {
+        return false
+    }
+    // Validate that '=' only appears at the end (padding), at most 2 chars
+    const firstPaddingIndex = str.indexOf('=')
+    return firstPaddingIndex === -1 ||
+        firstPaddingIndex === len - 1 ||
+        (firstPaddingIndex === len - 2 && str[len - 1] === '=')
+}
