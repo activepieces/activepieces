@@ -1,0 +1,6 @@
+{
+  "name": "@activepieces/piece-enrichlayer",
+  "version": "0.1.0",
+  "description": "Enrich Layer piece for Activepieces — professional network data enrichment API",
+  "main": "src/index.ts"
+}
