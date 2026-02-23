@@ -120,14 +120,39 @@ export const sendMessage = createAction({
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The message to be posted',
-      required: true,
+      description: 'The message to be posted (optional if images are provided)',
+      required: false,
+    }),
+    images: Property.LongText({
+      displayName: 'Images',
+      description: 'Image URLs separated by commas (e.g., https://example.com/image1.png, https://example.com/image2.png)',
+      required: false,
     }),
   },
   async run({ propsValue, auth }) {
     const authToken = auth.secret_text;
     const channelData = JSON.parse(propsValue.channel as string);
     const dynamicFields = propsValue.dynamicFields as DynamicPropsValue;
+
+    // Parse comma-separated image URLs
+    const imageUrls = propsValue.images
+      ? propsValue.images
+          .split(',')
+          .map((url) => url.trim())
+          .filter((url) => url.length > 0)
+      : [];
+
+    // Validate that at least message or images is provided
+    const hasMessage = propsValue.message && propsValue.message.trim().length > 0;
+    const hasImages = imageUrls.length > 0;
+
+    if (!hasMessage && !hasImages) {
+      return {
+        status: 'error',
+        message: 'Either "message" (text content) or "images" (comma-separated URLs) must be provided.',
+        detail: 'Both fields are empty or missing.',
+      };
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -141,6 +166,9 @@ export const sendMessage = createAction({
         sender: propsValue.user,
         ...(channelData.type === 'forum' && {
           forumTopicId: dynamicFields['topicId'],
+        }),
+        ...(hasImages && {
+          images: imageUrls,
         }),
       },
     });
