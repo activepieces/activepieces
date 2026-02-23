@@ -1,6 +1,7 @@
 import { microsoftTeamsAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import { ConversationMember } from '@microsoft/microsoft-graph-types';
 import { microsoftTeamsCommon } from '../common';
 
 export const sendChannelMessageAction = createAction({
@@ -31,13 +32,12 @@ export const sendChannelMessageAction = createAction({
     }),
     content: Property.LongText({
       displayName: 'Message',
+      description: 'Use @username to mention team members in the message.',
       required: true,
     }),
-    mentions: microsoftTeamsCommon.memberIds(false),
   },
   async run(context) {
-    const { teamId, channelId, contentType, content, mentions } =
-      context.propsValue;
+    const { teamId, channelId, contentType, content } = context.propsValue;
 
     const client = Client.initWithMiddleware({
       authProvider: {
@@ -46,49 +46,115 @@ export const sendChannelMessageAction = createAction({
     });
 
     let messageContent = content;
-    const messageMentions: any[] = [];
-    if (mentions && mentions.length > 0) {
-      const memberPromises = mentions.map((memberId: string) =>
-        client.api(`/teams/${teamId}/members/${memberId}`).get()
-      );
-      const memberDetails = await Promise.all(memberPromises);
+    const messageMentions: Array<{
+      id: number;
+      mentionText: string;
+      mentioned: {
+        user: {
+          id: string;
+          displayName: string;
+          userPrincipalName?: string;
+        };
+      };
+    }> = [];
+    const mentionPattern = /(^|[\s(>])@([A-Za-z0-9._-]+)/g;
+    const mentionHandles = Array.from(
+      content.matchAll(new RegExp(mentionPattern.source, 'g')),
+      (match) => match[2]
+    );
 
-      messageContent = content;
-      memberDetails.forEach((member, index) => {
-        const displayName =
-          member.displayName || member.userPrincipalName || member.userId;
+    if (mentionHandles.length > 0) {
+      const members: ConversationMember[] = [];
+      let response: PageCollection = await client
+        .api(`/teams/${teamId}/members`)
+        .get();
+      while (response.value.length > 0) {
+        members.push(...(response.value as ConversationMember[]));
+        if (response['@odata.nextLink']) {
+          response = await client.api(response['@odata.nextLink']).get();
+        } else {
+          break;
+        }
+      }
 
-        messageMentions.push({
-          id: index,
-          mentionText: displayName,
-          mentioned: {
-            user: {
-              id: member.userId,
-              displayName: displayName,
-              userPrincipalName: member.userPrincipalName,
+      const normalize = (value: string) => value.trim().toLowerCase();
+      const byHandle = new Map<string, ConversationMember>();
+
+      for (const member of members) {
+        const typedMember = member as ConversationMember & {
+          userPrincipalName?: string;
+          userId?: string;
+          email?: string;
+        };
+        const keys = [
+          typedMember.displayName,
+          typedMember.userPrincipalName,
+          typedMember.email,
+        ].filter((value): value is string => Boolean(value));
+
+        for (const key of keys) {
+          byHandle.set(normalize(key), member);
+          if (key.includes('@')) {
+            byHandle.set(normalize(key.split('@')[0]), member);
+          }
+          if (key.includes(' ')) {
+            byHandle.set(normalize(key.replace(/\s+/g, '')), member);
+          }
+        }
+      }
+
+      messageContent = content.replace(
+        mentionPattern,
+        (match, prefix: string, handle: string) => {
+          const member = byHandle.get(normalize(handle));
+          if (!member) {
+            return match;
+          }
+          const typedMember = member as ConversationMember & {
+            userPrincipalName?: string;
+            userId?: string;
+          };
+          const displayName =
+            typedMember.displayName ||
+            typedMember.userPrincipalName ||
+            typedMember.userId;
+          if (!displayName || !typedMember.userId) {
+            return match;
+          }
+
+          const mentionId = messageMentions.length;
+          messageMentions.push({
+            id: mentionId,
+            mentionText: displayName,
+            mentioned: {
+              user: {
+                id: typedMember.userId,
+                displayName: displayName,
+                userPrincipalName: typedMember.userPrincipalName,
+              },
             },
-          },
-        });
-      });
+          });
 
-      if (contentType === 'text') {
-        const mentionStrings = memberDetails
-          .map(
-            (member, index) =>
-              `<at id="${index}">${
-                member.displayName || member.userPrincipalName
-              }</at>`
-          )
-          .join(' ');
-        messageContent = `<div><div>${mentionStrings}</div>\n<div>${content}</div>\n</div>`;
+          return `${prefix}<at id="${mentionId}">${displayName}</at>`;
+        }
+      );
+
+      if (contentType === 'text' && messageMentions.length > 0) {
+        messageContent = `<div>${messageContent.replace(/\n/g, '<br>')}</div>`;
       }
     }
 
     //https://learn.microsoft.com/en-us/graph/api/channel-post-messages?view=graph-rest-1.0&tabs=http
-    const chatMessage: any = {
+    const chatMessage: {
+      body: {
+        content: string;
+        contentType: 'text' | 'html';
+      };
+      mentions?: typeof messageMentions;
+    } = {
       body: {
         content: messageContent,
-        contentType: messageMentions.length > 0 ? 'html' : contentType,
+        contentType: 'html',
       },
     };
 
