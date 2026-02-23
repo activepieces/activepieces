@@ -4,7 +4,6 @@
   "rcVersion": "0.78.0-rc.0",
   "packageManager": "bun@1.3.3",
   "scripts": {
-    "prepare": "husky install",
     "prebuild": "node tools/scripts/install-bun.js",
     "serve:frontend": "turbo run serve --filter=react-ui",
     "serve:backend": "turbo run serve --filter=server-api",
