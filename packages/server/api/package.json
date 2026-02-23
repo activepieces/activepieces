@@ -4,9 +4,12 @@
   "private": true,
   "type": "commonjs",
   "dependencies": {
+    "@activepieces/ee-shared": "workspace:*",
     "@activepieces/engine": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/server-shared": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@activepieces/ee-shared": "workspace:*"
+    "server-worker": "workspace:*"
   },
   "devDependencies": {
     "@activepieces/piece-facebook-leads": "workspace:*",

@@ -406,6 +406,9 @@
     "packages/ee/shared": {
       "name": "@activepieces/ee-shared",
       "version": "0.0.11",
+      "dependencies": {
+        "@activepieces/shared": "workspace:*",
+      },
     },
     "packages/ee/ui/embed-sdk": {
       "name": "ee-embed-sdk",
@@ -6469,6 +6472,12 @@
     "packages/react-ui": {
       "name": "react-ui",
       "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/ee-shared": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+      },
     },
     "packages/server/api": {
       "name": "server-api",
@@ -6476,7 +6485,10 @@
       "dependencies": {
         "@activepieces/ee-shared": "workspace:*",
         "@activepieces/engine": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/server-shared": "workspace:*",
         "@activepieces/shared": "workspace:*",
+        "server-worker": "workspace:*",
       },
       "devDependencies": {
         "@activepieces/piece-facebook-leads": "workspace:*",
@@ -6489,8 +6501,8 @@
       "name": "@activepieces/server-shared",
       "version": "0.0.2",
       "dependencies": {
-        "@activepieces/pieces-framework": "0.25.3",
-        "@activepieces/shared": "0.37.0",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
         "@hyperdx/node-opentelemetry": "0.8.2",
         "@sentry/node": "7.120.0",
         "@sinclair/typebox": "0.34.11",
@@ -6516,9 +6528,9 @@
       "name": "server-worker",
       "version": "0.1.0",
       "dependencies": {
-        "@activepieces/pieces-framework": "0.25.3",
-        "@activepieces/server-shared": "0.0.2",
-        "@activepieces/shared": "0.37.0",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/server-shared": "workspace:*",
+        "@activepieces/shared": "workspace:*",
         "@opentelemetry/api": "1.9.0",
         "axios": "1.13.5",
         "axios-retry": "4.4.1",
@@ -14174,8 +14186,6 @@
 
     "@activepieces/piece-zoho-campaigns/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
-    "@activepieces/server-shared/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.25.3", "", { "dependencies": { "@activepieces/shared": "0.34.0", "@sinclair/typebox": "0.34.11", "ai": "^6.0.0", "deepmerge-ts": "7.1.0", "i18next": "23.13.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2" } }, "sha512-EVnGBekW21JdjdEZIj7q/Qgqoqg3TxPzU/FQ4TvMjgXijKi5b9fncGAELsLiCM6A91bLmAadhvTl5sx5+p047Q=="],
-
     "@actual-app/api/node-fetch": ["node-fetch@3.3.2", "", { "dependencies": { "data-uri-to-buffer": "^4.0.0", "fetch-blob": "^3.1.4", "formdata-polyfill": "^4.0.10" } }, "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA=="],
 
     "@actual-app/api/uuid": ["uuid@9.0.1", "", { "bin": { "uuid": "dist/bin/uuid" } }, "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA=="],
@@ -16352,8 +16362,6 @@
 
     "send/mime": ["mime@1.6.0", "", { "bin": { "mime": "cli.js" } }, "sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg=="],
 
-    "server-worker/@activepieces/pieces-framework": ["@activepieces/pieces-framework@0.25.3", "", { "dependencies": { "@activepieces/shared": "0.34.0", "@sinclair/typebox": "0.34.11", "ai": "^6.0.0", "deepmerge-ts": "7.1.0", "i18next": "23.13.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2" } }, "sha512-EVnGBekW21JdjdEZIj7q/Qgqoqg3TxPzU/FQ4TvMjgXijKi5b9fncGAELsLiCM6A91bLmAadhvTl5sx5+p047Q=="],
-
     "showdown/commander": ["commander@9.5.0", "", {}, "sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ=="],
 
     "slackify-markdown/remark-gfm": ["remark-gfm@1.0.0", "", { "dependencies": { "mdast-util-gfm": "^0.1.0", "micromark-extension-gfm": "^0.3.0" } }, "sha512-KfexHJCiqvrdBZVbQ6RopMZGwaXz6wFJEfByIuEwGf0arvITHjiKKZ1dpXujjH9KZdm1//XJQwgfnJ3lmXaDPA=="],
@@ -16585,8 +16593,6 @@
     "@activepieces/piece-amazon-secrets-manager/@aws-sdk/client-secrets-manager/@aws-sdk/util-endpoints": ["@aws-sdk/util-endpoints@3.989.0", "", { "dependencies": { "@aws-sdk/types": "^3.973.1", "@smithy/types": "^4.12.0", "@smithy/url-parser": "^4.2.8", "@smithy/util-endpoints": "^3.2.8", "tslib": "^2.6.2" } }, "sha512-eKmAOeQM4Qusq0jtcbZPiNWky8XaojByKC/n+THbJ8vJf7t4ys8LlcZ4PrBSHZISe9cC484mQsPVOQh6iySjqw=="],
 
     "@activepieces/piece-rabbitmq/@types/amqplib/@types/node": ["@types/node@22.7.5", "", { "dependencies": { "undici-types": "~6.19.2" } }, "sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ=="],
-
-    "@activepieces/server-shared/@activepieces/pieces-framework/@activepieces/shared": ["@activepieces/shared@0.34.0", "", { "dependencies": { "@sinclair/typebox": "0.34.11", "deepmerge-ts": "7.1.0", "i18next": "23.13.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2" } }, "sha512-lD/go9FNtsl2Ft2Qyj1w5o2BPU8hfaTaIhsrNuN/3lQl+xTEcXMBEe31osWMeA4S+qu0BYAmGoh9FAd8EqJRMw=="],
 
     "@ai-sdk/google-vertex/@ai-sdk/provider-utils/eventsource-parser": ["eventsource-parser@3.0.6", "", {}, "sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg=="],
 
@@ -17741,8 +17747,6 @@
     "semver/lru-cache/yallist": ["yallist@4.0.0", "", {}, "sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A=="],
 
     "send/debug/ms": ["ms@2.0.0", "", {}, "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A=="],
-
-    "server-worker/@activepieces/pieces-framework/@activepieces/shared": ["@activepieces/shared@0.34.0", "", { "dependencies": { "@sinclair/typebox": "0.34.11", "deepmerge-ts": "7.1.0", "i18next": "23.13.0", "nanoid": "3.3.8", "semver": "7.6.0", "socket.io-client": "4.8.1", "tslib": "2.6.2" } }, "sha512-lD/go9FNtsl2Ft2Qyj1w5o2BPU8hfaTaIhsrNuN/3lQl+xTEcXMBEe31osWMeA4S+qu0BYAmGoh9FAd8EqJRMw=="],
 
     "slackify-markdown/remark-gfm/mdast-util-gfm": ["mdast-util-gfm@0.1.2", "", { "dependencies": { "mdast-util-gfm-autolink-literal": "^0.1.0", "mdast-util-gfm-strikethrough": "^0.2.0", "mdast-util-gfm-table": "^0.1.0", "mdast-util-gfm-task-list-item": "^0.1.0", "mdast-util-to-markdown": "^0.6.1" } }, "sha512-NNkhDx/qYcuOWB7xHUGWZYVXvjPFFd6afg6/e2g+SV4r9q5XUcCbV4Wfa3DLYIiD+xAEZc6K4MGaE/m0KDcPwQ=="],
 

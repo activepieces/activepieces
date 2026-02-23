@@ -2,6 +2,9 @@
   "name": "@activepieces/ee-shared",
   "version": "0.0.11",
   "type": "commonjs",
+  "dependencies": {
+    "@activepieces/shared": "workspace:*"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
