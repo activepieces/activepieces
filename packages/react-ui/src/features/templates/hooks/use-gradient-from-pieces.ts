@@ -1,13 +1,16 @@
 import {
   FlowTrigger,
+  FlowActionType,
   flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadata, StepMetadata } from '@/lib/types';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { extractPieceNamesAndCoreMetadata } from '@/features/pieces/lib/step-utils';
+import { colorsUtils } from '@/lib/color-utils';
+import { StepMetadata } from '@/lib/types';
 
 const rgbToHex = (r: number, g: number, b: number): string => {
   return '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
@@ -99,38 +102,28 @@ const clusterSimilarColors = (
   return clusters;
 };
 
-const extractColorsFromImage = async (imageUrl: string): Promise<string[]> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
+const extractColorsFromImage = async (
+  imageUrl: string,
+): Promise<string[]> => {
+  try {
+    const img = await colorsUtils.loadImage(imageUrl);
+    const pixels = extractImagePixels(img);
+    if (!pixels) {
+      return [];
+    }
 
-    img.onload = () => {
-      try {
-        const pixels = extractImagePixels(img);
-        if (!pixels) {
-          resolve([]);
-          return;
-        }
+    const colorMap = buildColorMap(pixels);
+    const clusters = clusterSimilarColors(colorMap);
 
-        const colorMap = buildColorMap(pixels);
-        const clusters = clusterSimilarColors(colorMap);
-
-        const topColors = clusters
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 2)
-          .map((cluster) =>
-            rgbToHex(...(cluster.rgb as [number, number, number])),
-          );
-
-        resolve(topColors);
-      } catch {
-        resolve([]);
-      }
-    };
-
-    img.onerror = () => resolve([]);
-    img.src = imageUrl;
-  });
+    return clusters
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 2)
+      .map((cluster) =>
+        rgbToHex(...(cluster.rgb as [number, number, number])),
+      );
+  } catch {
+    return [];
+  }
 };
 
 const buildGradientFromColors = (colors: string[]): string => {
@@ -155,40 +148,43 @@ export const useGradientFromPieces = (
     [trigger],
   );
 
-  const stepsMetadataResults = stepsHooks.useStepsMetadata(steps);
-
-  const stepsMetadata: StepMetadata[] = useMemo(
-    () =>
-      stepsMetadataResults
-        .map((data) => data.data)
-        .filter((data) => !!data) as StepMetadata[],
-    [JSON.stringify(stepsMetadataResults.map((r) => r.dataUpdatedAt))],
+  const { pieceNames, coreMetadata } = useMemo(
+    () => extractPieceNamesAndCoreMetadata(steps, excludeCore),
+    [steps, excludeCore],
   );
 
-  const filteredMetadata = useMemo(
-    () =>
-      excludeCore
-        ? stepsMetadata.filter((metadata) => {
-            const pieceMetadata = metadata as PieceStepMetadata;
-            return (
-              !pieceMetadata.categories ||
-              !pieceMetadata.categories.includes(PieceCategory.CORE)
-            );
-          })
-        : stepsMetadata,
-    [stepsMetadata, excludeCore],
-  );
+  const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
 
-  const uniqueMetadata: StepMetadata[] = useMemo(
-    () =>
-      filteredMetadata.filter(
-        (item, index, self) =>
-          self.findIndex(
-            (secondItem) => item.displayName === secondItem.displayName,
-          ) === index,
-      ),
-    [filteredMetadata.map((m) => m.displayName).join(',')],
-  );
+  const uniqueMetadata: StepMetadata[] = useMemo(() => {
+    const pieceMetadata: StepMetadata[] = pieceQueries
+      .map((q) => q.data)
+      .filter((data): data is NonNullable<typeof data> => !!data)
+      .filter(
+        (piece) =>
+          !excludeCore ||
+          !piece.categories?.includes(PieceCategory.CORE),
+      )
+      .map((piece) => ({
+        displayName: piece.displayName,
+        logoUrl: piece.logoUrl,
+        description: piece.description,
+        type: FlowActionType.PIECE as const,
+        pieceType: piece.pieceType,
+        pieceName: piece.name,
+        pieceVersion: piece.version,
+        categories: piece.categories ?? [],
+        packageType: piece.packageType,
+        auth: piece.auth,
+      }));
+
+    const allMetadata = [...coreMetadata, ...pieceMetadata];
+    return allMetadata.filter(
+      (item, index, self) =>
+        self.findIndex(
+          (secondItem) => item.displayName === secondItem.displayName,
+        ) === index,
+    );
+  }, [pieceQueries.map((q) => q.dataUpdatedAt).join(','), coreMetadata, excludeCore]);
 
   const logosToProcess = useMemo(
     () =>
@@ -226,3 +222,5 @@ export const useGradientFromPieces = (
 
   return gradient;
 };
+
+

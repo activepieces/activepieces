@@ -1,18 +1,21 @@
 import {
   FlowTrigger,
+  FlowActionType,
   flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { PieceStepMetadata, StepMetadata } from '../../../lib/types';
-import { stepsHooks } from '../lib/steps-hooks';
+import { StepMetadata } from '../../../lib/types';
+import { piecesHooks } from '../lib/pieces-hooks';
+import { extractPieceNamesAndCoreMetadata } from '../lib/step-utils';
 
 import { PieceIcon } from './piece-icon';
 
@@ -53,22 +56,39 @@ export function PieceIconList({
   excludeCore?: boolean;
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
-  const stepsMetadata: StepMetadata[] = stepsHooks
-    .useStepsMetadata(steps)
-    .map((data) => data.data)
-    .filter((data) => !!data) as StepMetadata[];
 
-  const filteredMetadata = excludeCore
-    ? stepsMetadata.filter((metadata) => {
-        const pieceMetadata = metadata as PieceStepMetadata;
-        return (
-          !pieceMetadata.categories ||
-          !pieceMetadata.categories.includes(PieceCategory.CORE)
-        );
-      })
-    : stepsMetadata;
+  const { pieceNames, coreMetadata } = useMemo(
+    () => extractPieceNamesAndCoreMetadata(steps, excludeCore),
+    [steps, excludeCore],
+  );
 
-  const uniqueMetadata: StepMetadata[] = filteredMetadata.filter(
+  const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
+
+  const stepsMetadata: StepMetadata[] = useMemo(() => {
+    const pieceMetadata: StepMetadata[] = pieceQueries
+      .map((q) => q.data)
+      .filter((data): data is NonNullable<typeof data> => !!data)
+      .filter(
+        (piece) =>
+          !excludeCore ||
+          !piece.categories?.includes(PieceCategory.CORE),
+      )
+      .map((piece) => ({
+        displayName: piece.displayName,
+        logoUrl: piece.logoUrl,
+        description: piece.description,
+        type: FlowActionType.PIECE as const,
+        pieceType: piece.pieceType,
+        pieceName: piece.name,
+        pieceVersion: piece.version,
+        categories: piece.categories ?? [],
+        packageType: piece.packageType,
+        auth: piece.auth,
+      }));
+    return [...coreMetadata, ...pieceMetadata];
+  }, [pieceQueries.map((q) => q.dataUpdatedAt).join(','), coreMetadata]);
+
+  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
     (item, index, self) =>
       self.findIndex(
         (secondItem) => item.displayName === secondItem.displayName,
@@ -88,7 +108,7 @@ export function PieceIconList({
           size={size ?? 'md'}
           border={true}
           displayName={metadata.displayName}
-          key={metadata.logoUrl}
+          key={metadata.displayName}
           background={background}
         />
       ))}
@@ -115,3 +135,5 @@ export function PieceIconList({
     </div>
   );
 }
+
+
