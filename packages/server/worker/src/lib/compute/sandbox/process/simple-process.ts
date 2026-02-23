@@ -11,7 +11,6 @@ export const simpleProcess = (_log: FastifyBaseLogger): ProcessMaker => ({
                 // IMPORTANT DO NOT REMOVE THIS ARGUMENT: https://github.com/laverdet/isolated-vm/issues/424
                 '--no-node-snapshot',
                 `--max-old-space-size=${memoryLimitMb}`,
-                `--max-semi-space-size=${memoryLimitMb}`,
             ],
             env: {
                 ...env,

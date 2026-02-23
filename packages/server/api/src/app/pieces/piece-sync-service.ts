@@ -6,7 +6,6 @@ import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { localPieceCache } from './metadata/local-piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
@@ -53,7 +52,6 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
-            await localPieceCache(log).refresh()
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')

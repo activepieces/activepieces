@@ -138,15 +138,17 @@ export async function createAIModel({
             }
             return provider.chatModel(modelId)
         }
-        case AIProviderName.ACTIVEPIECES: 
+        case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
-            const provider = createOpenRouter({ apiKey: auth.apiKey })
-            return provider.chat(modelId) as LanguageModel
+            const openRouterProvider = createOpenRouter({ apiKey: auth.apiKey })
+            return openRouterProvider.chat(modelId) as LanguageModel
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
     }
 }
+
+
 
 export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
 export const openaiSearchTool = openai.tools.webSearchPreview;

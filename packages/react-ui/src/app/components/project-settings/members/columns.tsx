@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { RoleDropdown } from '@/features/members/component/role-selector';
+import { RoleSelector } from '@/features/members/component/role-selector';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
@@ -138,12 +138,15 @@ const RoleCell = ({
 
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateRole}>
-      <RoleDropdown
-        value={roleName}
-        onValueChange={handleValueChange}
-        disabled={!userHasPermissionToUpdateRole}
-        roles={roles}
-      />
+      <div className="w-[150px]">
+        <RoleSelector
+          type="project"
+          value={roleName}
+          onValueChange={handleValueChange}
+          disabled={!userHasPermissionToUpdateRole}
+          roles={roles}
+        />
+      </div>
     </PermissionNeededTooltip>
   );
 };

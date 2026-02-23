@@ -21,6 +21,7 @@ export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
             value={field.value}
             onValueChange={field.onChange}
             placeholder={t('Select a platform role')}
+            showDescriptionInTrigger={true}
           />
           <FormMessage />
         </FormItem>
