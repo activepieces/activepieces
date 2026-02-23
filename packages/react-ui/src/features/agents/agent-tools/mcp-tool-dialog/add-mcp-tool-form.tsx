@@ -1,3 +1,12 @@
+import {
+  AgentMcpTool,
+  AgentTool,
+  AgentToolType,
+  McpAuthConfig,
+  McpAuthType,
+  McpProtocol,
+  ValidateAgentMcpToolResponse,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { X } from 'lucide-react';
@@ -22,15 +31,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  AgentMcpTool,
-  AgentTool,
-  AgentToolType,
-  McpAuthConfig,
-  McpAuthType,
-  McpProtocol,
-  ValidateAgentMcpToolResponse,
-} from '@activepieces/shared';
 
 import { useMcpToolDialogStore } from '../stores/mcp-tools';
 

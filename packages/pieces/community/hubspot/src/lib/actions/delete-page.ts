@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../index';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { pageType } from '../common/props';

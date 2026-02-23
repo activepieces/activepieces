@@ -1,8 +1,8 @@
+import { AIProviderModel, AIProviderName, isNil } from '@activepieces/shared';
 import { Provider } from '@radix-ui/react-tooltip';
 import { useQuery } from '@tanstack/react-query';
 
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
-import { AIProviderModel, AIProviderName, isNil } from '@activepieces/shared';
 
 type Provider =
   | 'activepieces'

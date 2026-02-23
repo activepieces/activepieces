@@ -9,6 +9,7 @@
   "Password": "Wachtwoord",
   "Port": "Poort",
   "Require TLS?": "TLS vereisen?",
+  "Leave blank if your mail relay does not require authentication.": "Laat dit leeg als je email relay geen authenticatie vereist.",
   "Send Email": "E-mail verzenden",
   "Send an email using a custom SMTP server.": "Stuur een e-mail met behulp van een aangepaste SMTP-server.",
   "From Email": "Van e-mail",

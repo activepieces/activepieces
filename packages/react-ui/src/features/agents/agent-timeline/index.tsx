@@ -1,12 +1,12 @@
-import { t } from 'i18next';
-
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   type AgentResult,
   AgentTaskStatus,
   ContentBlockType,
   isNil,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import {
   AgentToolBlock,

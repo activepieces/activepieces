@@ -1,7 +1,7 @@
+import { isNil } from '@activepieces/shared';
 import Avatar from 'boring-avatars';
 
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
@@ -12,6 +12,7 @@ type UserAvatarProps = {
   disableTooltip?: boolean;
   imageUrl?: string | null;
   className?: string;
+  withoutBorder?: boolean;
 };
 
 export function UserAvatar({
@@ -21,6 +22,7 @@ export function UserAvatar({
   disableTooltip = false,
   imageUrl,
   className,
+  withoutBorder = false,
 }: UserAvatarProps) {
   const tooltip = `${name} (${email})`;
 
@@ -51,7 +53,7 @@ export function UserAvatar({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="size-12 border">
+        <div className={cn('size-12 border', { 'border-none': withoutBorder })}>
           {avatarElement} {disableTooltip}
         </div>
       </TooltipTrigger>

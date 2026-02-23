@@ -1,3 +1,9 @@
+import {
+  ApplicationEvent,
+  ApplicationEventName,
+  summarizeApplicationEvent,
+} from '@activepieces/ee-shared';
+import { isNil } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -37,12 +43,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/utils';
-import {
-  ApplicationEvent,
-  ApplicationEventName,
-  summarizeApplicationEvent,
-} from '@activepieces/ee-shared';
-import { isNil } from '@activepieces/shared';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();

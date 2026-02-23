@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
@@ -6,6 +5,8 @@ import {
   UpdateAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/ee-shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {

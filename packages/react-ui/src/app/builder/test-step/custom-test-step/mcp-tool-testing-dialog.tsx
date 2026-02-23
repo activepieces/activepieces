@@ -1,3 +1,9 @@
+import {
+  PropertyType,
+  PiecePropertyMap,
+  PieceProperty,
+} from '@activepieces/pieces-framework';
+import { FlowTrigger, McpPropertyType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useForm, useFormContext } from 'react-hook-form';
 
@@ -12,12 +18,6 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  PropertyType,
-  PiecePropertyMap,
-  PieceProperty,
-} from '@activepieces/pieces-framework';
-import { FlowTrigger, McpPropertyType } from '@activepieces/shared';
 
 import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
 import { testStepHooks } from '../utils/test-step-hooks';

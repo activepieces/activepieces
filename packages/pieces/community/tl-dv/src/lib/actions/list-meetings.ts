@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { tldvAuth } from '../../index';
+import { tldvAuth } from '../..';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { tldvCommon } from '../common/client';
 

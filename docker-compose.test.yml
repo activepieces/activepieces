@@ -4,7 +4,7 @@ services:
       file: docker-compose.dev.yml
       service: app
     user: "${UID}:${GID}"
-    command: /bin/sh -c "npm_config_cache=/usr/src/app/.npm-cache npx nx run-tests backend"
+    command: /bin/sh -c "npm_config_cache=/usr/src/app/.npm-cache turbo run test --filter=server-api"
 
   postgres:
     extends:

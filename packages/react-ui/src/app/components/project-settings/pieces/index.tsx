@@ -1,3 +1,5 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -26,8 +28,6 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { PieceType } from '@activepieces/shared';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 

@@ -1,9 +1,16 @@
 {
   "name": "@activepieces/piece-csv",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "csv-parse": "5.6.0",
     "csv-stringify": "6.5.2",
     "safe-flat": "2.1.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

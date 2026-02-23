@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { clockodoCommon, makeClient, reformatDateTime } from '../../common';
 import { TimeRecordEntry } from '../../common/models/entry';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,

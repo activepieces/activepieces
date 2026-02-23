@@ -1,3 +1,10 @@
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
@@ -15,13 +22,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import {
-  ApFlagId,
-  isNil,
-  Permission,
-  PlatformRole,
-  ProjectType,
-} from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectAvatar } from '../project-avatar';

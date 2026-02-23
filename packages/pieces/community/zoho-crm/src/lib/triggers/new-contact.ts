@@ -13,7 +13,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { zohoCrmAuth } from '../..';
+import { zohoCrmAuth } from '../auth';
 
 export const newContact = createTrigger({
   auth: zohoCrmAuth,

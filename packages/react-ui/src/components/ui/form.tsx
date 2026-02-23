@@ -153,7 +153,7 @@ const FormError = React.forwardRef<
       ref={ref}
       id={props.formMessageId}
       className={cn(
-        'text-sm font-medium text-destructive wrap-break-word',
+        'text-sm font-medium text-destructive wrap-break-word ',
         className,
       )}
       {...props}
@@ -167,7 +167,7 @@ FormError.displayName = 'FormError';
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
->(({ className, children, ...props }, ref) => {
+>(({ children, ...props }, ref) => {
   const { error, formMessageId } = useFormField();
   const body = error ? String(error?.message) : children;
 

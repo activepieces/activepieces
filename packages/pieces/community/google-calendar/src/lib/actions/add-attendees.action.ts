@@ -1,4 +1,4 @@
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { google, calendar_v3 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';

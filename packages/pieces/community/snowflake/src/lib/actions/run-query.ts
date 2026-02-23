@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import snowflake from 'snowflake-sdk';
-import { snowflakeAuth } from '../../index';
+import { snowflakeAuth } from '../auth';
 import { configureConnection } from '../common';
 
 const DEFAULT_APPLICATION_NAME = 'ActivePieces';

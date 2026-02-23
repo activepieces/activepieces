@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { excelAuth } from '../..';
+import { excelAuth } from '../auth';
 import { excelCommon } from '../common/common';
 
 export const lookupTableColumnAction = createAction({

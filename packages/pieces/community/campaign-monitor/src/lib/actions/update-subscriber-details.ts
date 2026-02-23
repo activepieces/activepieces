@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
-import { campaignMonitorAuth } from '../../index';
+import { campaignMonitorAuth } from '../auth';
 import { clientId, customFields, listId } from '../common/props';
 import { HttpStatusCode } from 'axios';
 

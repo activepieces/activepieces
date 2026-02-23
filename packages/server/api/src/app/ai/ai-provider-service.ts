@@ -136,6 +136,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
             const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+            log.error(error)
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
                 params: {

@@ -1,10 +1,29 @@
+import {
+  AIProviderConfig,
+  AIProviderName,
+  AnthropicProviderAuthConfig,
+  AnthropicProviderConfig,
+  AzureProviderAuthConfig,
+  AzureProviderConfig,
+  CloudflareGatewayProviderAuthConfig,
+  CloudflareGatewayProviderConfig,
+  CreateAIProviderRequest,
+  GoogleProviderAuthConfig,
+  GoogleProviderConfig,
+  isNil,
+  OpenAICompatibleProviderAuthConfig,
+  OpenAICompatibleProviderConfig,
+  OpenAIProviderAuthConfig,
+  OpenAIProviderConfig,
+  UpdateAIProviderRequest,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { FieldErrors, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,25 +45,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
-import {
-  AIProviderConfig,
-  AIProviderName,
-  AnthropicProviderAuthConfig,
-  AnthropicProviderConfig,
-  AzureProviderAuthConfig,
-  AzureProviderConfig,
-  CloudflareGatewayProviderAuthConfig,
-  CloudflareGatewayProviderConfig,
-  CreateAIProviderRequest,
-  GoogleProviderAuthConfig,
-  GoogleProviderConfig,
-  isNil,
-  OpenAICompatibleProviderAuthConfig,
-  OpenAICompatibleProviderConfig,
-  OpenAIProviderAuthConfig,
-  OpenAIProviderConfig,
-  UpdateAIProviderRequest,
-} from '@activepieces/shared';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 import { SUPPORTED_AI_PROVIDERS } from '../../../../../../features/agents/ai-providers';
@@ -94,7 +94,50 @@ export const UpsertAIProviderDialogContent = ({
   );
 
   const form = useForm<CreateAIProviderRequest>({
-    resolver: typeboxResolver(createFormSchema(provider, !isNil(providerId))),
+    resolver: (values, context, options) => {
+      const originalResolve = typeboxResolver(
+        createFormSchema(provider, !isNil(providerId)),
+      );
+      if (values.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+        if (
+          values.config.models.some((m) =>
+            m.modelId.includes('google-vertex-ai'),
+          )
+        ) {
+          const errors: FieldErrors<CreateAIProviderRequest> = {};
+          if (
+            isNil(values.config.vertexProject) ||
+            values.config.vertexProject.trim().length === 0
+          ) {
+            errors.config = {
+              vertexProject: {
+                message: 'Required when using Google Vertex AI models',
+                type: 'required',
+              },
+            };
+          }
+          if (
+            isNil(values.config.vertexRegion) ||
+            values.config.vertexRegion.trim().length === 0
+          ) {
+            errors.config = {
+              ...errors.config,
+              vertexRegion: {
+                message: 'Required when using Google Vertex AI models',
+                type: 'required',
+              },
+            };
+          }
+          if (Object.keys(errors).length > 0) {
+            return {
+              errors,
+              values: {},
+            };
+          }
+        }
+      }
+      return originalResolve(values, context, options);
+    },
     defaultValues: {
       provider,
       displayName: defaultDisplayName,
@@ -192,7 +235,7 @@ export const UpsertAIProviderDialogContent = ({
               />
 
               {form.formState.errors.root?.serverError && (
-                <FormMessage>
+                <FormMessage className="mt-2">
                   {form.formState.errors.root.serverError.message}
                 </FormMessage>
               )}

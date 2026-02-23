@@ -1,3 +1,4 @@
+import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/popover';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { cn } from '@/lib/utils';
-import { AIProviderName } from '@activepieces/shared';
 
 import { aiModelHooks } from './hooks';
 

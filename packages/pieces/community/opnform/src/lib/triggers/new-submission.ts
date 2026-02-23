@@ -1,6 +1,6 @@
 import { opnformCommon, workspaceIdProp, formIdProp } from '../common';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { opnformAuth } from '../..';
+import { opnformAuth } from '../auth';
 
 export const opnformNewSubmission = createTrigger({
   auth: opnformAuth,

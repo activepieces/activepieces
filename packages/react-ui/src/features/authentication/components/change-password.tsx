@@ -1,3 +1,4 @@
+import { ResetPasswordRequestBody } from '@activepieces/ee-shared';
 import { Popover } from '@radix-ui/react-popover';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -22,7 +23,6 @@ import { PasswordValidator } from '@/features/authentication/components/password
 import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
 import { HttpError } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
-import { ResetPasswordRequestBody } from '@activepieces/ee-shared';
 
 const ChangePasswordForm = () => {
   const navigate = useNavigate();

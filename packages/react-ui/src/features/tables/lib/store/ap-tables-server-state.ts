@@ -1,4 +1,3 @@
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   CreateFieldRequest,
   Field,
@@ -6,6 +5,8 @@ import {
   Table,
   UpdateTableRequest,
 } from '@activepieces/shared';
+
+import { PromiseQueue } from '@/lib/promise-queue';
 
 import { fieldsApi } from '../fields-api';
 import { recordsApi } from '../records-api';

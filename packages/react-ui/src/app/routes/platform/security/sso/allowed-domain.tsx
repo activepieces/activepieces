@@ -1,3 +1,7 @@
+import {
+  PlatformWithoutSensitiveData,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -19,10 +23,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { platformApi } from '@/lib/platforms-api';
-import {
-  PlatformWithoutSensitiveData,
-  UpdatePlatformRequestBody,
-} from '@activepieces/shared';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;

@@ -1,3 +1,8 @@
+import {
+  ArrayProperty,
+  ArraySubProps,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
@@ -9,11 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
-import {
-  ArrayProperty,
-  ArraySubProps,
-  PropertyType,
-} from '@activepieces/pieces-framework';
 
 import { GenericPropertiesForm } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
