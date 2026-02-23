@@ -61,6 +61,7 @@
     "bullmq-otel": "1.0.1",
     "content-disposition": "0.5.4",
     "dayjs": "1.11.9",
+    "dotenv": "17.2.3",
     "decompress": "4.2.1",
     "deep-equal": "2.2.2",
     "fastify": "5.7.3",
@@ -116,7 +117,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.app.json --noEmit",
-    "serve": "cd ../../.. && npx tsx --env-file=packages/server/api/.env --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/main.ts",
+    "serve": "cd ../../.. && npx tsx --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "npm run test-ce && npm run test-ee && npm run test-cloud",
     "test-unit": "vitest run test/unit --bail 1 --passWithNoTests=false",

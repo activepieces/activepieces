@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -514,7 +513,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5281,7 +5280,7 @@
     },
     "packages/pieces/community/sftp": {
       "name": "@activepieces/piece-sftp",
-      "version": "0.4.11",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6611,6 +6610,7 @@
         "dayjs": "1.11.9",
         "decompress": "4.2.1",
         "deep-equal": "2.2.2",
+        "dotenv": "17.2.3",
         "fastify": "5.7.3",
         "fastify-favicon": "5.0.0",
         "fastify-plugin": "5.0.1",
