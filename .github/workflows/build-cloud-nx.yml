@@ -6,6 +6,7 @@ permissions:
   actions: read
   contents: read
 
+
 jobs:
   main:
     runs-on: ubuntu-latest
