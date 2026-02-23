@@ -65,7 +65,7 @@ export const CategorySection = ({
           </div>
         </div>
 
-        <CarouselContent className="pb-3 gap-6">
+        <CarouselContent className="pb-3">
           {templates.map((template) => (
             <CarouselItem
               key={template.id}

@@ -25,7 +25,7 @@ export const ExploreTemplateCard = ({
     <Card
       onClick={() => onTemplateSelect(template)}
       variant={'interactive'}
-      className="h-[260px] w-[330px] flex flex-col"
+      className="h-[260px] w-full flex flex-col"
     >
       <CardContent className="py-5 px-4 flex flex-col gap-1 flex-1 min-h-0">
         <div className="h-14 flex flex-col justify-start flex-shrink-0">
