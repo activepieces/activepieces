@@ -2,8 +2,11 @@
   "name": "@activepieces/piece-azure-openai",
   "version": "0.1.2",
   "dependencies": {
-    "tiktoken": "1.0.11",
-    "@azure/openai": "1.0.0-beta.11"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@azure/openai": "1.0.0-beta.11",
+    "tiktoken": "1.0.11"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

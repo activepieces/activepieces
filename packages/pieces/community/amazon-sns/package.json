@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-amazon-sns",
   "version": "0.1.2",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@aws-sdk/client-sns": "3.726.1"
   },
   "scripts": {

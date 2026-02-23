@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-matrix",
   "version": "0.4.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "marked": "4.3.0"
   },
   "scripts": {

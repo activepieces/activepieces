@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-azure-communication-services",
   "version": "0.1.2",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@azure/communication-email": "1.0.0"
   },
   "scripts": {

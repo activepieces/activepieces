@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-rabbitmq",
   "version": "0.1.2",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "amqplib": "0.10.7"
   },
   "devDependencies": {

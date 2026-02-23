@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-http",
   "version": "0.11.6",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "https-proxy-agent": "7.0.4"
   },
   "scripts": {

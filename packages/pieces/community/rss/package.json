@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-rss",
   "version": "0.5.2",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "feedparser": "2.2.10"
   },
   "scripts": {

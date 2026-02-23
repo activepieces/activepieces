@@ -5,8 +5,11 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "tslib": "^2.3.0",
-    "@pinecone-database/pinecone": "^6.1.1"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@pinecone-database/pinecone": "^6.1.1",
+    "tslib": "^2.3.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

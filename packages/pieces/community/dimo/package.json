@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-dimo",
   "version": "0.3.2",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "ethers": "6.15.0"
   },
   "scripts": {

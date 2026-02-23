@@ -16,6 +16,9 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "assemblyai": "4.7.0"
   }
 }

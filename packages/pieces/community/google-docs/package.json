@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-google-docs",
   "version": "0.3.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "googleapis": "129.0.0"
   },
   "scripts": {

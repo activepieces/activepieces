@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-sftp",
   "version": "0.4.11",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "basic-ftp": "5.0.5",
     "ssh2-sftp-client": "9.1.0"
   },

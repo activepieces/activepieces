@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-youtube",
   "version": "0.4.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "cheerio": "1.0.0-rc.12",
     "feedparser": "2.2.10"
   },

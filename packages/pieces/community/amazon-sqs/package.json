@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-amazon-sqs",
   "version": "0.1.2",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@aws-sdk/client-sqs": "^3.806.0"
   },
   "scripts": {

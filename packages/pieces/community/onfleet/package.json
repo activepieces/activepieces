@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-onfleet",
   "version": "0.1.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@onfleet/node-onfleet": "1.3.3"
   },
   "scripts": {

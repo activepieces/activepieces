@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-graphql",
   "version": "0.0.9",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "https-proxy-agent": "7.0.4"
   },
   "scripts": {

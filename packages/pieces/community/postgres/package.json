@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-postgres",
   "version": "0.2.2",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "pg": "8.11.3",
     "pg-format": "1.0.4"
   },

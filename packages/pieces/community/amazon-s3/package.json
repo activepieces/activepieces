@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-amazon-s3",
   "version": "0.5.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "openpgp": "^6.3.0"
   },

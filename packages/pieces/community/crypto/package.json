@@ -2,8 +2,11 @@
   "name": "@activepieces/piece-crypto",
   "version": "0.0.18",
   "dependencies": {
-    "openpgp": "^6.2.0",
-    "buffer": "6.0.3"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "buffer": "6.0.3",
+    "openpgp": "^6.2.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

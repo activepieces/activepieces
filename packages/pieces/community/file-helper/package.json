@@ -2,6 +2,9 @@
   "name": "@activepieces/piece-file-helper",
   "version": "0.1.21",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@zip.js/zip.js": "^2.8.15"
   },
   "scripts": {
