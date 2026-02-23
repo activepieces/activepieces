@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-sharepoint",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

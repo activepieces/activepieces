@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-openai",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

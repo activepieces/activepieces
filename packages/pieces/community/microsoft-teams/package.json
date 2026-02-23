@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-teams",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

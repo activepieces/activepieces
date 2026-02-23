@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-invoiceninja",
-  "version": "0.3.3",
+"version": "0.3.4",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

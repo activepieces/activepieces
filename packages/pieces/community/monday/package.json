@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-monday",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

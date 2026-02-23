@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mautic",
-  "version": "0.5.3",
+"version": "0.5.4",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

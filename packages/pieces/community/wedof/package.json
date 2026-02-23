@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-wedof",
-  "version": "1.4.2",
+"version": "1.4.3",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

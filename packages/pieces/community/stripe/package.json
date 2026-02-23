@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-stripe",
-  "version": "0.6.4",
+"version": "0.6.5",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-hubspot",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

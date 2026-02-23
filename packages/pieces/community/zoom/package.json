@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-zoom",
-  "version": "0.5.2",
+"version": "0.5.3",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

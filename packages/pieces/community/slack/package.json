@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-slack",
-  "version": "0.12.2",
+  "version": "0.12.3",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {

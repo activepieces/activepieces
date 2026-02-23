@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mailer-lite",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

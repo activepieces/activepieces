@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-metabase",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
