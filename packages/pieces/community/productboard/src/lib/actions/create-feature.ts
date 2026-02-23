@@ -1,8 +1,12 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property, StaticPropsValue } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpResponse } from '@activepieces/pieces-common';
 import { productboardAuth } from '../common/auth';
 import { productboardCommon } from '../common/client';
+import { productboardProps } from '../common/props';
 
+/**
+ * Action to create a new feature in Productboard.
+ */
 export const createFeature = createAction({
     name: 'create_feature',
     displayName: 'Create Feature',
@@ -30,43 +34,14 @@ export const createFeature = createAction({
                 ]
             }
         }),
-        status: Property.Dropdown({
-            auth: productboardAuth,
-            displayName: 'Status',
-            description: 'Current status of the feature',
-            required: true,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first'
-                    };
-                }
-                const response = await productboardCommon.apiCall({
-                    auth: auth,
-                    method: HttpMethod.GET,
-                    resourceUri: '/feature-statuses'
-                });
-                const statuses = response.body['data'] ?? [];
-                return {
-                    disabled: false,
-                    options: statuses.map((status: { id: string; name: string }) => ({
-                        label: status.name,
-                        value: status.id
-                    }))
-                };
-            }
-        }),
+        status: productboardProps.status_id(),
         parent_type: Property.DynamicProperties({
-            auth: productboardAuth,
             displayName: 'Parent Type',
             required: true,
             refreshers: ['type'],
             props: async (props) => {
-                const typeValue = props['type'] as unknown as string
-                const fields: { [key: string]: any } = {}
+                const typeValue = props['type'] as string;
+                const fields: Record<string, any> = {};
                 if (typeValue === 'subfeature') {
                     fields['parent_type'] = Property.StaticDropdown({
                         displayName: 'Parent Type',
@@ -93,40 +68,39 @@ export const createFeature = createAction({
             }
         }),
         parent_id: Property.Dropdown({
-            auth: productboardAuth,
             displayName: 'Parent',
             required: true,
             refreshers: ['parent_type'],
             options: async (props) => {
-                const auth = props['auth']
-                const parent_type = props['parent_type'] as unknown as { parent_type: string }
+                const auth = props['auth'] as StaticPropsValue<typeof productboardAuth>;
+                const parent_type = props['parent_type'] as { parent_type: string };
 
                 if (!auth) return { disabled: true, options: [], placeholder: 'Please authenticate first' };
                 if (!parent_type) return { disabled: true, options: [], placeholder: 'Please select a parent type first' };
 
-                const parentTypeValue = parent_type.parent_type
-                let resourceUri = ''
-                if (parentTypeValue === 'product') resourceUri = '/products'
-                else if (parentTypeValue === 'component') resourceUri = '/components'
-                else if (parentTypeValue === 'feature') resourceUri = '/features'
+                const parentTypeValue = parent_type.parent_type;
+                let resourceUri = '';
+                if (parentTypeValue === 'product') resourceUri = '/products';
+                else if (parentTypeValue === 'component') resourceUri = '/components';
+                else if (parentTypeValue === 'feature') resourceUri = '/features';
 
                 if (!resourceUri) return { disabled: true, options: [], placeholder: 'Invalid parent type' };
 
-                const response = await productboardCommon.apiCall({
-                    auth: auth,
+                const response: HttpResponse<{ data: { id: string; name: string; type?: string }[] }> = await productboardCommon.apiCall({
+                    auth,
                     method: HttpMethod.GET,
                     resourceUri: resourceUri
                 });
-                const items = response.body['data'] || [];
+                const items = response.body.data || [];
 
                 let filteredItems = items;
                 if (parentTypeValue === 'feature') {
-                    filteredItems = items.filter((item: { type: string }) => item.type === 'feature');
+                    filteredItems = items.filter((item) => item.type === 'feature');
                 }
 
                 return {
                     disabled: false,
-                    options: filteredItems.map((item: { id: string; name: string }) => ({
+                    options: filteredItems.map((item) => ({
                         label: item.name,
                         value: item.id
                     }))
@@ -142,7 +116,7 @@ export const createFeature = createAction({
     async run(context) {
         const { name, description, type, status, parent_type, parent_id, archived } = context.propsValue;
 
-        const feature: Record<string, any> = {
+        const featureBody = {
             data: {
                 name,
                 description: `<p>${description}</p>`,
@@ -163,7 +137,7 @@ export const createFeature = createAction({
             auth: context.auth,
             method: HttpMethod.POST,
             resourceUri: '/features',
-            body: feature,
+            body: featureBody,
         });
 
         return response.body;
