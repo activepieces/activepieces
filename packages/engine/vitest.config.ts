@@ -17,4 +17,11 @@ export default defineConfig({
     testTimeout: 20000,
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
   },
+  resolve: {
+    alias: {
+      '@activepieces/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
+      '@activepieces/pieces-framework': path.resolve(__dirname, '../../packages/pieces/community/framework/src/index.ts'),
+      '@activepieces/pieces-common': path.resolve(__dirname, '../../packages/pieces/community/common/src/index.ts'),
+    },
+  },
 })
