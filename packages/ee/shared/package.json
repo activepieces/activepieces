@@ -3,7 +3,8 @@
   "version": "0.0.11",
   "type": "commonjs",
   "dependencies": {
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "@sinclair/typebox": "0.34.11"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

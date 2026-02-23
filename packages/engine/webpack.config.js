@@ -12,6 +12,11 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    alias: {
+      '@activepieces/shared': path.resolve(__dirname, '../shared/src'),
+      '@activepieces/pieces-framework': path.resolve(__dirname, '../pieces/community/framework/src'),
+      '@activepieces/pieces-common': path.resolve(__dirname, '../pieces/community/common/src'),
+    },
   },
   module: {
     rules: [{ test: /\.ts$/, use: 'ts-loader', exclude: /node_modules/ }],

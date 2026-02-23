@@ -29,6 +29,7 @@
     "socket.io-client": "4.8.1",
     "jsonwebtoken": "9.0.1",
     "socket.io": "4.8.1",
+    "chalk": "4.1.2",
     "http-status-codes": "2.2.0",
     "ioredis": "5.4.1"
   },

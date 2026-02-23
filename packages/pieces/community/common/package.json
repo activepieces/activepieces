@@ -10,6 +10,11 @@
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "axios": "1.13.5",
+    "axios-retry": "4.4.1",
+    "form-data": "4.0.4",
+    "mime-types": "2.1.35",
+    "zod": "4.1.13"
   }
 }

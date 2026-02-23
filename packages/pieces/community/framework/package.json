@@ -10,6 +10,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "@sinclair/typebox": "0.34.11",
+    "ai": "^6.0.0",
+    "semver": "7.6.0"
   }
 }
