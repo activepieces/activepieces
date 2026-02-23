@@ -18,6 +18,7 @@ import { dropboxMoveFolder } from './lib/actions/move-folder';
 import { dropboxSearch } from './lib/actions/search';
 import { dropboxUploadFile } from './lib/actions/upload-file';
 import { dropboxDownloadFile } from './lib/actions/download-file';
+import { dropboxNewFolder } from './lib/triggers/new-folder';
 
 export const dropboxAuth = PieceAuth.OAuth2({
   description: '',
@@ -69,6 +70,6 @@ export const dropbox = createPiece({
     'abuaboud',
   ],
   categories: [PieceCategory.CONTENT_AND_FILES],
-  triggers: [],
+  triggers: [dropboxNewFolder],
   auth: dropboxAuth,
 });
