@@ -50,15 +50,17 @@ export const securityAccess = {
      * - platformId field is available on the request.principal (request.principal.platformId)
      *
      * @param allowedPrincipals - Array of allowed principal types (USER, ENGINE, or SERVICE)
+     * @param projectResource - Optional resource configuration for extracting projectId from the request
      * @returns Security configuration for public platform routes
      */
-    publicPlatform: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) => {
+    publicPlatform: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[], projectResource?: ProjectResource) => {
         return {
             kind: RouteKind.AUTHENTICATED,
             authorization: {
                 type: AuthorizationType.PLATFORM,
                 allowedPrincipals,
                 adminOnly: false,
+                projectResource,
             },
         } as const
     },

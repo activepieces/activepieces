@@ -14,6 +14,8 @@ import {
   TASK_COMPLETION_TOOL_NAME,
   AIProviderName,
   AgentProviderModel,
+  ExecutionToolStatus,
+  normalizeToolOutputToExecuteResponse,
 } from '@activepieces/shared';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
@@ -151,6 +153,14 @@ export const runAgent = createAction({
               outputBuilder.addMarkdown(chunk.text);
               break;
             }
+            case 'reasoning-delta': {
+              if ('text' in chunk && typeof chunk.text === 'string') {
+                outputBuilder.addMarkdown(chunk.text);
+              } else if ('delta' in chunk && typeof chunk.delta === 'string') {
+                outputBuilder.addMarkdown(chunk.delta);
+              }
+              break;
+            }
             case 'tool-call': {
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
                 continue;
@@ -167,9 +177,18 @@ export const runAgent = createAction({
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
                 continue;
               }
+              const rawOutput = chunk.output;
+              const toolOutput = normalizeToolOutputToExecuteResponse(rawOutput);
+              
+              if (toolOutput['status'] === ExecutionToolStatus.FAILED && toolOutput['errorMessage']) {
+                outputBuilder.addMarkdown(
+                  `\n\n**Error:** ${JSON.stringify(toolOutput['errorMessage'])}\n\n`
+                );
+              }
+              
               outputBuilder.finishToolCall({
                 toolCallId: chunk.toolCallId,
-                output: chunk.output as Record<string, unknown>,
+                output: toolOutput,
               });
               break;
             }
@@ -192,19 +211,48 @@ export const runAgent = createAction({
               });
               break;
             }
+            case 'start':
+            case 'start-step':
+            case 'tool-input-start':
+            case 'tool-input-delta':
+            case 'tool-input-end':
+            case 'finish-step':
+            case 'finish':
+              break;
+            default:
+              break;
           }
           await context.output.update({ data: outputBuilder.build() });
         } catch (innerError) {
+          let detailsStr: string;
+          try {
+            detailsStr = typeof innerError === 'object' && innerError !== null && 'message' in innerError
+              ? `${(innerError as Error).message}${(innerError as Error).stack ? `\n${(innerError as Error).stack}` : ''}`
+              : inspect(innerError);
+          } catch {
+            detailsStr = String(innerError);
+          }
           errors.push({
             type: 'chunk-processing-error',
-            message: 'Error processing chunk',
-            details: inspect(innerError),
+            message: `Error processing chunk (type=${chunk.type})`,
+            details: detailsStr,
           });
         }
       }
 
+      if (!outputBuilder.hasTextContent()) {
+        const accumulatedText = await stream.text;
+        if (accumulatedText?.trim()) {
+          outputBuilder.addMarkdown(accumulatedText);
+          await context.output.update({ data: outputBuilder.build() });
+        }
+      }
+
       if (errors.length > 0) {
-        const errorSummary = errors.map(e => `${e.type}: ${e.message}`).join('\n');
+        const errorSummary = errors.map(e => {
+          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
+          return `${e.type}: ${e.message}${detail}`;
+        }).join('\n');
         outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
         outputBuilder.fail({ message: 'Agent completed with errors' });
         await context.output.update({ data: outputBuilder.build() });

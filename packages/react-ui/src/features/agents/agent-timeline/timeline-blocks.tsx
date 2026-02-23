@@ -23,13 +23,13 @@ import {
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
-  ExecuteToolResponse,
   isNil,
   MarkdownContentBlock,
   MarkdownVariant,
   TASK_COMPLETION_TOOL_NAME,
   ToolCallStatus,
   ExecutionToolStatus,
+  normalizeToolOutputToExecuteResponse,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
 
@@ -75,15 +75,18 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
   const { data: metadata, isLoading } = agentToolHooks.useToolMetadata(block);
 
-  const output = block.output as ExecuteToolResponse | null;
-  const errorMessage = output?.errorMessage as string | null;
+  const output = normalizeToolOutputToExecuteResponse(block.output);
+  const errorMessage = (output.errorMessage as string) ?? null;
   const isDone = block.status === ToolCallStatus.COMPLETED;
-  const isSuccess = output?.status ?? ExecutionToolStatus.FAILED;
+  const isSuccess = output.status;
   const hasInstructions = !isNil(block.input?.instruction);
-  const resolvedFields = output?.resolvedInput ?? null;
-  const result = output?.output
-    ? parseJsonOrReturnOriginal(output.output)
-    : null;
+  const resolvedFields =
+    (Object.keys(output.resolvedInput ?? {}).length > 0
+      ? output.resolvedInput
+      : null) ??
+    (Object.keys(block.input ?? {}).length > 0 ? block.input : null);
+  const result =
+    output.output != null ? parseJsonOrReturnOriginal(output.output) : null;
 
   const defaultTab = resolvedFields ? 'resolvedFields' : 'result';
 

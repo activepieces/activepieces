@@ -159,7 +159,6 @@ const DynamicPropertiesImplementation = React.memo(
                 form,
               );
             }
-
             form.setValue(
               prependPrefixToPropertyName({
                 propertyName: props.propertyName,
