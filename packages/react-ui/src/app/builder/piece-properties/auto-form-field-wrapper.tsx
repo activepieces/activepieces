@@ -202,6 +202,9 @@ function DynamicValueToggle({
     form.setValue(
       `settings.propertySettings.${propertyName}`,
       propertySettingsForSingleProperty,
+      {
+        shouldValidate: true,
+      },
     );
   }
   function handleDynamicValueToggleChange(mode: PropertyExecutionType) {
