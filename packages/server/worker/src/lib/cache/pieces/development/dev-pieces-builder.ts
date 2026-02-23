@@ -6,7 +6,6 @@ import chalk from 'chalk'
 import { FSWatcher, watch } from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
-import { devPiecesInstaller } from './dev-pieces-installer'
 import { devPiecesState } from './dev-pieces-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
@@ -78,11 +77,6 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, piecesN
 
     await buildPieces(pieceInfos, io, app.log)
 
-    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-    for (const { packageName } of pieceInfos) {
-        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageName)
-    }
-
     for (const pieceInfo of pieceInfos) {
         app.log.info(chalk.blue(`Starting watch for package: ${pieceInfo.packageName}`))
         app.log.info(chalk.yellow(`Found piece directory: ${pieceInfo.pieceDirectory}`))
@@ -91,8 +85,6 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, piecesN
             void (async (): Promise<void> => {
                 try {
                     await buildPieces([pieceInfo], io, app.log)
-                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(pieceInfo.packageName)
                 }
                 catch (error) {
                     app.log.error(error)
