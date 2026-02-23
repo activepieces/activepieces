@@ -144,7 +144,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       !field.disabled &&
                       selectedConnection &&
                       (!isGlobalConnection || isPLatformAdmin) && (
-                        <div className="z-50 absolute right-8 top-2 ">
+                        <div className="z-50 absolute right-8 top-1 ">
                           <PermissionNeededTooltip
                             hasPermission={hasPermissionToCreateConnection}
                           >

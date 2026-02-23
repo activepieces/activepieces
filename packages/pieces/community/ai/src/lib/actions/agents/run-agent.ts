@@ -153,6 +153,14 @@ export const runAgent = createAction({
               outputBuilder.addMarkdown(chunk.text);
               break;
             }
+            case 'reasoning-delta': {
+              if ('text' in chunk && typeof chunk.text === 'string') {
+                outputBuilder.addMarkdown(chunk.text);
+              } else if ('delta' in chunk && typeof chunk.delta === 'string') {
+                outputBuilder.addMarkdown(chunk.delta);
+              }
+              break;
+            }
             case 'tool-call': {
               if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
                 continue;
@@ -229,6 +237,14 @@ export const runAgent = createAction({
             message: `Error processing chunk (type=${chunk.type})`,
             details: detailsStr,
           });
+        }
+      }
+
+      if (!outputBuilder.hasTextContent()) {
+        const accumulatedText = await stream.text;
+        if (accumulatedText?.trim()) {
+          outputBuilder.addMarkdown(accumulatedText);
+          await context.output.update({ data: outputBuilder.build() });
         }
       }
 

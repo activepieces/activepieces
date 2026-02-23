@@ -80,6 +80,7 @@ export const UpdateUserDialog = ({
                     type="platform"
                     value={field.value}
                     onValueChange={field.onChange}
+                    showDescriptionInTrigger={true}
                   />
                   <FormMessage />
                 </FormItem>
