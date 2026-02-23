@@ -1783,6 +1783,36 @@
       ],
       "@activepieces/piece-asknews": [
         "packages/pieces/community/asknews/src/index.ts"
+      ],
+      "@activepieces/piece-valyu": [
+        "packages/pieces/community/valyu/src/index.ts"
+      ],
+      "@activepieces/piece-alai": [
+        "packages/pieces/community/alai/src/index.ts"
+      ],
+      "@activepieces/piece-kapso": [
+        "packages/pieces/community/kapso/src/index.ts"
+      ],
+      "@activepieces/piece-pdfcrowd": [
+        "packages/pieces/community/pdfcrowd/src/index.ts"
+      ],
+      "@activepieces/piece-amazon-bedrock": [
+        "packages/pieces/community/amazon-bedrock/src/index.ts"
+      ],
+      "@activepieces/piece-brave-search": [
+        "packages/pieces/community/brave-search/src/index.ts"
+      ],
+      "@activepieces/piece-amazon-secrets-manager": [
+        "packages/pieces/community/amazon-secrets-manager/src/index.ts"
+      ],
+      "ai-gateway-provider/providers/anthropic": [
+        "node_modules/ai-gateway-provider/dist/providers/anthropic.d.ts"
+      ],
+      "ai-gateway-provider/providers/google": [
+        "node_modules/ai-gateway-provider/dist/providers/google.d.ts"
+      ],
+      "@activepieces/piece-validatedmails": [
+        "packages/pieces/community/validatedmails/src/index.ts"
       ]
     },
     "resolveJsonModule": true

@@ -54,7 +54,7 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => ({
         const packages = sharedPiecesPackages()
         for (const [name, pkg] of Object.entries(packages)) {
             try {
-                await spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --quiet`, printOutput: true })
+                await spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --quite`, printOutput: true })
             }
             catch (e: unknown) {
                 const errorMessage = e instanceof Error ? e.message : String(e)
@@ -82,7 +82,7 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => ({
 
             for (const dependency of apDependencies) {
                 try {
-                    await spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --save ${dependency} --quiet`, printOutput: true })
+                    await spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --save ${dependency} --quite`, printOutput: true })
                 }
                 catch (e: unknown) {
                     const errorMessage = e instanceof Error ? e.message : String(e)

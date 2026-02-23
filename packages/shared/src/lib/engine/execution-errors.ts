@@ -31,7 +31,7 @@ export class ConnectionNotFoundError extends ExecutionError {
 
 export class ConnectionLoadingError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.ENGINE, cause)
+        super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.USER, cause)
     }
 }
 

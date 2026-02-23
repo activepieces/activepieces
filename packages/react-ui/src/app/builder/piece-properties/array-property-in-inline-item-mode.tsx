@@ -1,6 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useFormContext } from 'react-hook-form';
 
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import { ArraySubProps } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { flowCanvasHooks } from '../flow-canvas/hooks';
@@ -39,11 +42,16 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
       setIsFocusInsideListMapperModeInput,
       isFocusInsideListMapperModeInput,
     });
-
+    useFixInlineArrayPropertyValue(inputName, props);
     return (
       <div className="w-full" ref={containerRef}>
         {props.arrayProperties ? (
-          <div className="p-4 border rounded-md flex flex-col gap-4">
+          <div
+            className={cn(
+              'p-4 border rounded-md flex flex-col',
+              GAP_SIZE_FOR_STEP_SETTINGS,
+            )}
+          >
             <GenericPropertiesForm
               prefixValue={inputName}
               props={props.arrayProperties}
@@ -68,3 +76,23 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
 ArrayPiecePropertyInInlineItemMode.displayName =
   'ArrayPiecePropertyInInlineItemMode';
 export { ArrayPiecePropertyInInlineItemMode };
+
+/**
+ * we had a bug where the value for inline array property was not an object
+ * this will always insure the value is an object
+ */
+const useFixInlineArrayPropertyValue = (
+  inputName: string,
+  props: ArrayPiecePropertyInInlineItemModeProps,
+) => {
+  const form = useFormContext();
+  useEffect(() => {
+    const value = form.getValues(inputName);
+    if (
+      props.arrayProperties &&
+      (isNil(value) || typeof value !== 'object' || Array.isArray(value))
+    ) {
+      form.setValue(inputName, {}, { shouldValidate: true });
+    }
+  }, []);
+};

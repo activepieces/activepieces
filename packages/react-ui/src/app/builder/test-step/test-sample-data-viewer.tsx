@@ -26,8 +26,8 @@ type TestSampleDataViewerProps = {
   currentStep?: FlowAction;
   isTesting: boolean;
   agentResult?: AgentResult;
-  sampleData: unknown;
-  sampleDataInput: unknown | null;
+  sampleData?: unknown;
+  sampleDataInput?: unknown | null;
   errorMessage: string | null;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
@@ -96,7 +96,8 @@ export const TestSampleDataViewer = React.memo(
     } = props;
     const isFailed =
       isRunAgent(currentStep) &&
-      (sampleData as AgentResult).status === AgentTaskStatus.FAILED;
+      (sampleData as AgentResult | undefined)?.status ===
+        AgentTaskStatus.FAILED;
 
     return (
       <>
@@ -199,7 +200,7 @@ const TestSampleDataViewerContent = ({
   if (isRunAgent(currentStep)) {
     return (
       <AgentTestStep
-        agentResult={sampleData as AgentResult}
+        agentResult={getAgentResult(sampleData)}
         errorMessage={errorMessage}
       />
     );
@@ -244,3 +245,13 @@ const TestSampleDataViewerContent = ({
     );
   }
 };
+
+//In case the user has mangled sample data
+function getAgentResult(sampleData: unknown) {
+  if (isNil(sampleData)) return undefined;
+  if (typeof sampleData !== 'object' || sampleData === null) return undefined;
+  if (!('status' in sampleData)) return undefined;
+  if (!('steps' in sampleData)) return undefined;
+  if (!('prompt' in sampleData)) return undefined;
+  return sampleData as AgentResult;
+}
