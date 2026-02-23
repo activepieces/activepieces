@@ -1,9 +1,7 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { GmailRequests } from './data';
+import { Property } from '@activepieces/pieces-framework';
+import { GmailRequests, gmailAuth, createGoogleClient, GmailAuthValue } from './data';
 import { GmailLabel } from './models';
-import { gmailAuth } from '../..';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 
 export const GmailProps = {
   from: Property.ShortText({
@@ -96,14 +94,13 @@ export const GmailProps = {
       }
 
       try {
-        const authValue = auth as OAuth2PropertyValue;
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(authValue);
+        const authValue = auth as GmailAuthValue;
+        const authClient = await createGoogleClient(authValue);
 
         const gmail = google.gmail({ version: 'v1', auth: authClient });
 
         const response = await GmailRequests.getRecentMessages(
-          auth as OAuth2PropertyValue,
+          authValue,
           20 // Get last 20 messages
         );
 
@@ -184,14 +181,13 @@ export const GmailProps = {
       }
 
       try {
-        const authValue = auth as OAuth2PropertyValue;
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(authValue);
+        const authValue = auth as GmailAuthValue;
+        const authClient = await createGoogleClient(authValue);
 
         const gmail = google.gmail({ version: 'v1', auth: authClient });
 
         const response = await GmailRequests.getRecentThreads(
-          auth as OAuth2PropertyValue,
+          authValue,
           15 // Get last 15 threads
         );
 

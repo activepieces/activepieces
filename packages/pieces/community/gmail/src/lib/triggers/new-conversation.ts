@@ -5,10 +5,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
-import { gmailAuth } from '../../';
+import { gmailAuth, createGoogleClient, parseStream, convertAttachment } from '../common/data';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { parseStream, convertAttachment } from '../common/data';
 
 async function enrichNewConversation({
   gmail,
@@ -162,8 +160,7 @@ export const gmailNewConversationTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const profile = await gmail.users.getProfile({ userId: 'me' });
@@ -175,8 +172,7 @@ export const gmailNewConversationTrigger = createTrigger({
     await context.store.delete('processedThreads');
   },
   run: async (context) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const lastHistoryId = await context.store.get('lastHistoryId');
@@ -324,8 +320,7 @@ export const gmailNewConversationTrigger = createTrigger({
     }
   },
   test: async (context) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const maxAge = (context.propsValue.maxAgeHours || 24) * 60 * 60 * 1000;
