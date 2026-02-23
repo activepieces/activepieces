@@ -10,10 +10,16 @@ import { devPiecesState } from './dev-pieces-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
-async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLogger): Promise<void> {
-    if (pieceNames.length === 0) return
+type PieceInfo = {
+    packageName: string // package name in package.json e.g @activepieces/piece-google-sheets
+    pieceName: string // piece name e.g google-sheets
+    pieceDirectory: string
+}
 
-    const projectNames = pieceNames.map(name => `pieces-${name}`)
+async function buildPieces(piecesInfo: PieceInfo[], io: Server, log: FastifyBaseLogger): Promise<void> {
+    if (piecesInfo.length === 0) return
+
+    const projectNames = piecesInfo.map(piece => `pieces-${piece.pieceName}`)
 
     for (const projectName of projectNames) {
         if (!/^[A-Za-z0-9-]+$/.test(projectName)) {
@@ -35,8 +41,8 @@ async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLog
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
 
-        for (const pieceName of pieceNames) {
-            const distPath = await filePiecesUtils(log).findDistPiecePathByPackageName(`@activepieces/piece-${pieceName}`)
+        for (const piece of piecesInfo) {
+            const distPath = await filePiecesUtils(log).findDistPiecePathByPackageName(piece.packageName)
             if (distPath) {
                 filePiecesUtils(log).clearPieceModuleCache(distPath)
             }
@@ -60,37 +66,37 @@ async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLog
     }
 }
 
-export async function devPiecesBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
+export async function devPiecesBuilder(app: FastifyInstance, io: Server, piecesNames: string[]): Promise<void> {
     const watchers: FSWatcher[] = []
 
-    const resolvedInfos = await Promise.all(packages.map(async (packageName) => {
-        const pieceDirectory = await filePiecesUtils(app.log).findSourcePiecePathByPieceName(packageName)
+    const resolvedInfos = await Promise.all(piecesNames.map(async (pieceName) => {
+        const pieceDirectory = await filePiecesUtils(app.log).findSourcePiecePathByPieceName(pieceName)
         if (isNil(pieceDirectory)) {
-            app.log.info(chalk.yellow(`Piece directory not found for package: ${packageName}`))
+            app.log.info(chalk.yellow(`Piece directory not found for package: ${pieceName}`))
             return null
         }
-        const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
-        return { packageName, pieceDirectory, packageJsonName }
+        const packageName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
+        return { pieceName, pieceDirectory, packageName }
     }))
-    const pieceInfos = resolvedInfos.filter((info) => info !== null)
+    const pieceInfos: PieceInfo[] = resolvedInfos.filter((info) => info !== null)
 
-    await buildPieces(pieceInfos.map(p => p.packageName), io, app.log)
+    await buildPieces(pieceInfos, io, app.log)
 
     await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-    for (const { packageJsonName } of pieceInfos) {
-        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
+    for (const { packageName } of pieceInfos) {
+        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageName)
     }
 
-    for (const { packageName, pieceDirectory, packageJsonName } of pieceInfos) {
-        app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
-        app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
+    for (const pieceInfo of pieceInfos) {
+        app.log.info(chalk.blue(`Starting watch for package: ${pieceInfo.packageName}`))
+        app.log.info(chalk.yellow(`Found piece directory: ${pieceInfo.pieceDirectory}`))
 
         const debouncedBuild = debounce((): void => {
             void (async (): Promise<void> => {
                 try {
-                    await buildPieces([packageName], io, app.log)
+                    await buildPieces([pieceInfo], io, app.log)
                     await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
+                    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(pieceInfo.packageName)
                 }
                 catch (error) {
                     app.log.error(error)
@@ -98,7 +104,7 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
             })()
         }, 2000)
 
-        const watcher = watch(resolve(pieceDirectory), {
+        const watcher = watch(resolve(pieceInfo.pieceDirectory), {
             ignored: [/^\./, /node_modules/, /dist/],
             persistent: true,
             ignoreInitial: true,
