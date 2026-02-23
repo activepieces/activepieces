@@ -38,9 +38,7 @@ import { FolderDto, Permission } from '@activepieces/shared';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;
-  refetchFolders?: (
-    options?: RefetchOptions,
-  ) => Promise<QueryObserverResult<FolderDto[], Error>>;
+  refetchFolders: () => void;
   className?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -93,7 +91,7 @@ export const CreateFolderDialog = ({
       form.reset();
       setIsDialogOpen(false);
       updateSearchParams(folder.id);
-      refetchFolders?.();
+      refetchFolders();
       toast.success(t('Added folder successfully'));
     },
     onError: (error) => {

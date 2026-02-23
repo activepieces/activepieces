@@ -1,5 +1,6 @@
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
@@ -31,11 +32,6 @@ type MutationDeps = {
 
 export function useAutomationsMutations(deps: MutationDeps) {
   const openNewWindow = useNewWindow();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [isExportingTables, setIsExportingTables] = useState(false);
-  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const { mutate: startFromScratch, isPending: isCreateFlowPending } =
     flowHooks.useStartFromScratch(UncategorizedFolderId);
@@ -46,82 +42,167 @@ export function useAutomationsMutations(deps: MutationDeps) {
   const { mutate: exportFlows, isPending: isExportFlowsPending } =
     flowHooks.useExportFlows();
 
-  const handleDeleteItem = useCallback(
-    async (item: TreeItem) => {
-      try {
-        if (item.type === 'flow') {
-          await flowsApi.delete(item.id);
-          toast.success(t('Flow deleted successfully'));
-        } else if (item.type === 'table') {
-          await tablesApi.delete(item.id);
-          toast.success(t('Table deleted successfully'));
-        } else if (item.type === 'folder') {
-          await foldersApi.delete(item.id);
-          toast.success(t('Folder deleted successfully'));
-        }
-        deps.invalidateAll();
-      } catch {
-        toast.error(t('Failed to delete item'));
+  const { mutateAsync: deleteItem } = useMutation({
+    mutationFn: async (item: TreeItem) => {
+      if (item.type === 'flow') {
+        await flowsApi.delete(item.id);
+      } else if (item.type === 'table') {
+        await tablesApi.delete(item.id);
+      } else if (item.type === 'folder') {
+        await foldersApi.delete(item.id);
       }
     },
-    [deps],
-  );
+    onSuccess: () => {
+      deps.invalidateAll();
+      toast.success(t('Item deleted successfully'));
+    },
+    onError: () => toast.error(t('Failed to delete item')),
+  });
 
-  const handleBulkDelete = useCallback(
-    async (selectedItems: SelectedItemsMap) => {
+  const { mutateAsync: bulkDelete, isPending: isDeleting } = useMutation({
+    mutationFn: async (selectedItems: SelectedItemsMap) => {
       const { flowIds, tableIds, folderIds } =
         getSelectedIdsByType(selectedItems);
-      setIsDeleting(true);
-      try {
-        await Promise.all([
-          ...flowIds.map((id) => flowsApi.delete(id)),
-          ...tableIds.map((id) => tablesApi.delete(id)),
-          ...folderIds.map((id) => foldersApi.delete(id)),
-        ]);
-        deps.clearSelection();
-        deps.invalidateAll();
-        toast.success(t('Items deleted successfully'));
-      } catch {
-        toast.error(t('Failed to delete items'));
-      } finally {
-        setIsDeleting(false);
-      }
+      await Promise.all([
+        ...flowIds.map((id) => flowsApi.delete(id)),
+        ...tableIds.map((id) => tablesApi.delete(id)),
+        ...folderIds.map((id) => foldersApi.delete(id)),
+      ]);
     },
-    [deps],
-  );
+    onSuccess: () => {
+      deps.clearSelection();
+      deps.invalidateAll();
+      toast.success(t('Items deleted successfully'));
+    },
+    onError: () => toast.error(t('Failed to delete items')),
+  });
 
-  const handleBulkMoveTo = useCallback(
-    async (selectedItems: SelectedItemsMap, targetFolderId: string) => {
+  const {
+    mutateAsync: bulkMoveTo,
+    isPending: isBulkMoving,
+  } = useMutation({
+    mutationFn: async ({
+      selectedItems,
+      targetFolderId,
+    }: {
+      selectedItems: SelectedItemsMap;
+      targetFolderId: string;
+    }) => {
       const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
       const folderId =
         isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
           ? null
           : targetFolderId;
-      setIsMoving(true);
-      try {
-        await Promise.all([
-          ...flowIds.map((id) =>
-            flowsApi.update(id, {
-              type: FlowOperationType.CHANGE_FOLDER,
-              request: { folderId },
-            }),
-          ),
-          ...tableIds.map((id) => tablesApi.update(id, { folderId })),
-        ]);
-        deps.clearSelection();
-        deps.invalidateAll();
-        toast.success(t('Items moved successfully'));
-      } catch {
-        toast.error(t('Failed to move items'));
-      } finally {
-        setIsMoving(false);
+      await Promise.all([
+        ...flowIds.map((id) =>
+          flowsApi.update(id, {
+            type: FlowOperationType.CHANGE_FOLDER,
+            request: { folderId },
+          }),
+        ),
+        ...tableIds.map((id) => tablesApi.update(id, { folderId })),
+      ]);
+    },
+    onSuccess: () => {
+      deps.clearSelection();
+      deps.invalidateAll();
+      toast.success(t('Items moved successfully'));
+    },
+    onError: () => toast.error(t('Failed to move items')),
+  });
+
+  const { mutateAsync: rename, isPending: isRenaming } = useMutation({
+    mutationFn: async ({
+      item,
+      newName,
+    }: {
+      item: TreeItem;
+      newName: string;
+    }) => {
+      if (item.type === 'flow') {
+        await flowsApi.update(item.id, {
+          type: FlowOperationType.CHANGE_NAME,
+          request: { displayName: newName },
+        });
+      } else if (item.type === 'table') {
+        await tablesApi.update(item.id, { name: newName });
+      } else if (item.type === 'folder') {
+        await foldersApi.renameFolder(item.id, { displayName: newName });
       }
     },
-    [deps],
-  );
+    onSuccess: () => {
+      deps.invalidateAll();
+      toast.success(t('Renamed successfully'));
+    },
+    onError: () => toast.error(t('Failed to rename item')),
+  });
+
+  const { mutate: duplicateFlow, isPending: isDuplicating } = useMutation({
+    mutationFn: async (flow: PopulatedFlow) => {
+      const version = flow.version;
+      const displayName = `${version.displayName} - Copy`;
+      const createdFlow = await flowsApi.create({
+        displayName,
+        projectId: flow.projectId,
+        folderId: flow.folderId ?? undefined,
+      });
+      return flowsApi.update(createdFlow.id, {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: {
+          displayName,
+          trigger: version.trigger,
+          schemaVersion: version.schemaVersion,
+          notes: version.notes,
+        },
+      });
+    },
+    onSuccess: (data) => {
+      openNewWindow(`/flows/${data.id}`);
+      deps.invalidateAll();
+      toast.success(t('Flow duplicated successfully'));
+    },
+    onError: () => toast.error(t('Failed to duplicate flow')),
+  });
+
+  const { mutate: moveItem, isPending: isMovingItem } = useMutation({
+    mutationFn: async ({
+      item,
+      targetFolderId,
+    }: {
+      item: TreeItem;
+      targetFolderId: string;
+    }) => {
+      const folderId =
+        isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
+          ? null
+          : targetFolderId;
+      if (item.type === 'flow') {
+        await flowsApi.update(item.id, {
+          type: FlowOperationType.CHANGE_FOLDER,
+          request: { folderId },
+        });
+      } else if (item.type === 'table') {
+        await tablesApi.update(item.id, { folderId });
+      }
+    },
+    onSuccess: () => {
+      deps.invalidateAll();
+      toast.success(t('Moved successfully'));
+    },
+    onError: () => toast.error(t('Failed to move item')),
+  });
+
+  const { mutate: exportTable, isPending: isExportingTable } = useMutation({
+    mutationFn: async (table: Table) => {
+      const exported = await tablesApi.export(table.id);
+      tablesUtils.exportTables([exported]);
+    },
+    onSuccess: () => toast.success(t('Table has been exported.')),
+    onError: () => toast.error(t('Failed to export table')),
+  });
 
   const handleBulkExport = useCallback(
-    async (selectedItems: SelectedItemsMap) => {
+    (selectedItems: SelectedItemsMap) => {
       const { flowIds, tableIds } = getSelectedIdsByType(selectedItems);
 
       if (flowIds.length > 0) {
@@ -132,114 +213,24 @@ export function useAutomationsMutations(deps: MutationDeps) {
       }
 
       if (tableIds.length > 0) {
-        setIsExportingTables(true);
-        try {
-          const exported = await Promise.all(
-            tableIds.map((id) => tablesApi.export(id)),
-          );
-          tablesUtils.exportTables(exported);
-          toast.success(
-            exported.length === 1
-              ? t('Table has been exported.')
-              : t('Tables have been exported.'),
-          );
-        } catch {
-          toast.error(t('Failed to export tables'));
-        } finally {
-          setIsExportingTables(false);
-        }
+        const tables = tableIds.map(
+          (id) => ({ id }) as Table,
+        );
+        Promise.all(tables.map((tbl) => tablesApi.export(tbl.id)))
+          .then((exported) => {
+            tablesUtils.exportTables(exported);
+            toast.success(
+              exported.length === 1
+                ? t('Table has been exported.')
+                : t('Tables have been exported.'),
+            );
+          })
+          .catch(() => toast.error(t('Failed to export tables')));
       }
 
       deps.clearSelection();
     },
     [deps, exportFlows],
-  );
-
-  const handleRename = useCallback(
-    async (item: TreeItem, newName: string) => {
-      setIsRenaming(true);
-      try {
-        if (item.type === 'flow') {
-          await flowsApi.update(item.id, {
-            type: FlowOperationType.CHANGE_NAME,
-            request: { displayName: newName },
-          });
-          toast.success(t('Flow renamed successfully'));
-        } else if (item.type === 'table') {
-          await tablesApi.update(item.id, { name: newName });
-          toast.success(t('Table renamed successfully'));
-        } else if (item.type === 'folder') {
-          await foldersApi.renameFolder(item.id, { displayName: newName });
-          toast.success(t('Folder renamed successfully'));
-        }
-        deps.invalidateAll();
-      } catch {
-        toast.error(t('Failed to rename item'));
-      } finally {
-        setIsRenaming(false);
-      }
-    },
-    [deps],
-  );
-
-  const handleDuplicateFlow = useCallback(
-    async (flow: PopulatedFlow) => {
-      setIsDuplicating(true);
-      try {
-        const version = flow.version;
-        const displayName = `${version.displayName} - Copy`;
-        const createdFlow = await flowsApi.create({
-          displayName,
-          projectId: flow.projectId,
-          folderId: flow.folderId ?? undefined,
-        });
-        const updatedFlow = await flowsApi.update(createdFlow.id, {
-          type: FlowOperationType.IMPORT_FLOW,
-          request: {
-            displayName,
-            trigger: version.trigger,
-            schemaVersion: version.schemaVersion,
-            notes: version.notes,
-          },
-        });
-        openNewWindow(`/flows/${updatedFlow.id}`);
-        deps.invalidateAll();
-        toast.success(t('Flow duplicated successfully'));
-      } catch {
-        toast.error(t('Failed to duplicate flow'));
-      } finally {
-        setIsDuplicating(false);
-      }
-    },
-    [deps, openNewWindow],
-  );
-
-  const handleMoveItem = useCallback(
-    async (item: TreeItem, targetFolderId: string) => {
-      const folderId =
-        isNil(targetFolderId) || targetFolderId === UncategorizedFolderId
-          ? null
-          : targetFolderId;
-      setIsMoving(true);
-      try {
-        if (item.type === 'flow') {
-          await flowsApi.update(item.id, {
-            type: FlowOperationType.CHANGE_FOLDER,
-            request: { folderId },
-          });
-          toast.success(t('Flow moved successfully'));
-        } else if (item.type === 'table') {
-          await tablesApi.update(item.id, { folderId });
-          toast.success(t('Table moved successfully'));
-        }
-        deps.invalidateAll();
-      } catch {
-        toast.error(t('Failed to move item'));
-      } finally {
-        setIsMoving(false);
-      }
-    },
-    [deps],
   );
 
   const handleExportFlow = useCallback(
@@ -249,37 +240,27 @@ export function useAutomationsMutations(deps: MutationDeps) {
     [exportFlows],
   );
 
-  const handleExportTable = useCallback(async (table: Table) => {
-    setIsExportingTables(true);
-    try {
-      const exported = await tablesApi.export(table.id);
-      tablesUtils.exportTables([exported]);
-      toast.success(t('Table has been exported.'));
-    } catch {
-      toast.error(t('Failed to export table'));
-    } finally {
-      setIsExportingTables(false);
-    }
-  }, []);
-
   return {
     createFlow: () => startFromScratch(),
     createTable: (name: string) => createTableMutation({ name }),
     isCreateFlowPending,
     isCreatingTable,
-    handleDeleteItem,
-    handleBulkDelete,
-    handleBulkMoveTo,
+    handleDeleteItem: deleteItem,
+    handleBulkDelete: bulkDelete,
+    handleBulkMoveTo: (selectedItems: SelectedItemsMap, targetFolderId: string) =>
+      bulkMoveTo({ selectedItems, targetFolderId }),
     handleBulkExport,
-    handleRename,
-    handleDuplicateFlow,
-    handleMoveItem,
+    handleRename: (item: TreeItem, newName: string) =>
+      rename({ item, newName }),
+    handleDuplicateFlow: duplicateFlow,
+    handleMoveItem: (item: TreeItem, targetFolderId: string) =>
+      moveItem({ item, targetFolderId }),
     handleExportFlow,
-    handleExportTable,
+    handleExportTable: exportTable,
     isDeleting,
-    isMoving,
+    isMoving: isBulkMoving || isMovingItem,
     isRenaming,
     isDuplicating,
-    isExporting: isExportFlowsPending || isExportingTables,
+    isExporting: isExportFlowsPending || isExportingTable,
   };
 }

@@ -261,9 +261,9 @@ export const AutomationsPage = () => {
       <CreateFolderDialog
         updateSearchParams={updateSearchParams}
         open={dialogs.isFolderDialogOpen}
+        refetchFolders={() => invalidateAll()}
         onOpenChange={(open) => {
           dialogs.setIsFolderDialogOpen(open);
-          if (!open) invalidateAll();
         }}
       />
 
