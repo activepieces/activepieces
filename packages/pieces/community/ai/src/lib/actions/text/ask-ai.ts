@@ -204,11 +204,9 @@ export const askAI = createAction({
       }
     }
 
-    const tools = context.propsValue.webSearch
-      ? isOpenRouterWebSearch
-        ? undefined
-        : createWebSearchTool(provider, webSearchOptions)
-      : undefined;
+    const tools = !context.propsValue.webSearch || isOpenRouterWebSearch
+      ? undefined
+      : createWebSearchTool(provider, webSearchOptions);
 
     const stopWhen = tools
       ? stepCountIs(webSearchOptions?.maxUses ?? 5)
