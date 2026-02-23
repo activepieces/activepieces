@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports */
 // Uses require() instead of import to prevent hoisting, ensuring dotenv
 // populates process.env before any module-level code reads it.
 const path = require('path')
