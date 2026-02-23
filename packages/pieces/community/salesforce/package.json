@@ -8,6 +8,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "fast-xml-parser": "5.3.7"
   }
 }

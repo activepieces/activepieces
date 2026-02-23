@@ -5,7 +5,11 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "jsonwebtoken": "9.0.1",
     "playwright": "1.56.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "9.0.10"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

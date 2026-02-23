@@ -6,7 +6,9 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "csv-parse": "5.6.0",
+    "gaxios": "6.7.1",
     "googleapis": "129.0.0",
+    "googleapis-common": "7.2.0",
     "lodash": "4.17.23"
   },
   "scripts": {

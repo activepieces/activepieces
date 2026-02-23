@@ -5,7 +5,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "googleapis": "129.0.0"
+    "googleapis": "129.0.0",
+    "googleapis-common": "7.2.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

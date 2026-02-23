@@ -11,6 +11,9 @@
     "oracledb": "^6.10.0",
     "tslib": "^2.3.0"
   },
+  "devDependencies": {
+    "@types/oracledb": "6.10.1"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

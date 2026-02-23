@@ -8,6 +8,10 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "jsonwebtoken": "9.0.1"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "9.0.10"
   }
 }

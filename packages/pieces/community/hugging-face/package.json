@@ -5,7 +5,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@huggingface/inference": "4.7.1"
+    "@huggingface/inference": "4.7.1",
+    "@huggingface/tasks": "0.19.85"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
