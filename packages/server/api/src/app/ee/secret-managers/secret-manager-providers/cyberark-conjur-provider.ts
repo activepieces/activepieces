@@ -8,7 +8,7 @@ import { SecretManagerProvider } from './secret-manager-providers'
 export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     id: SecretManagerProviderId.CYBERARK,
     name: 'Cyberark Conjur',
-    logo: 'https://cdn.activepieces.com/pieces/cyberark-conjur.png',
+    logo: 'https://cdn.activepieces.com/pieces/cyberark.png',
     fields: {
         url: {
             displayName: 'URL',
