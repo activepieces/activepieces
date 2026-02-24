@@ -14,6 +14,7 @@ import {
 	TELEMETRY_BASE_URL,
 	TOKEN_EXCHANGE_API,
 	TriggerField,
+	VALUATIONS_API,
 	VEHICLE_EVENTS_API,
 } from './constants';
 import {
@@ -362,6 +363,50 @@ export class DimoClient {
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: input.developerJwt,
+			},
+		});
+
+		return response.body;
+	}
+
+	async getVehicleValuations(input: { vehicleJwt: string; tokenId: number }) {
+		const response = await httpClient.sendRequest({
+			method: HttpMethod.GET,
+			url: VALUATIONS_API + `/v2/vehicles/${input.tokenId}/valuations`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: input.vehicleJwt,
+			},
+		});
+
+		return response.body;
+	}
+
+	async requestInstantOffer(input: { 
+		vehicleJwt: string; 
+		tokenId: number; 
+		provider?: string;
+	}) {
+		const response = await httpClient.sendRequest({
+			method: HttpMethod.POST,
+			url: VALUATIONS_API + `/v2/vehicles/${input.tokenId}/instant-offer`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: input.vehicleJwt,
+			},
+			body: input.provider ? { provider: input.provider } : {},
+		});
+
+		return response.body;
+	}
+
+	async getVehicleOffers(input: { vehicleJwt: string; tokenId: number }) {
+		const response = await httpClient.sendRequest({
+			method: HttpMethod.GET,
+			url: VALUATIONS_API + `/v2/vehicles/${input.tokenId}/offers`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: input.vehicleJwt,
 			},
 		});
 

@@ -4,6 +4,7 @@ export const TOKEN_EXCHANGE_API = 'https://token-exchange-api.dimo.zone';
 export const DEVICE_DEFINIATION_API = 'https://device-definitions-api.dimo.zone';
 export const ATTESTATION_API = 'https://attestation-api.dimo.zone';
 export const VEHICLE_EVENTS_API = 'https://vehicle-triggers-api.dimo.zone';
+export const VALUATIONS_API = 'https://valuations-api.dimo.zone';
 
 export enum Operator {
 	EQUAL = 'equal',

@@ -5,6 +5,7 @@ import {
 	identityApiActions,
 	telemetryApiActions,
 	tokenExchangeApiActions,
+	valuationsApiActions,
     vehicleEventsApiActions,
 } from './lib/actions';
 import {
@@ -52,6 +53,7 @@ export const dimo = createPiece({
 		...tokenExchangeApiActions,
 		...identityApiActions,
 		...telemetryApiActions,
+		...valuationsApiActions,
 		...vehicleEventsApiActions,
 	],
 	triggers: [
