@@ -2,13 +2,16 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, Medal, Trophy, User, Workflow } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
+import { FirstIcon } from './icons/1st-icon';
+import { SecondIcon } from './icons/2nd-icon';
+import { ThirdIcon } from './icons/3rd-icon';
 
 export type UserStats = {
   id: string;
@@ -25,17 +28,21 @@ type UsersLeaderboardProps = {
 };
 
 const getRankIcon = (index: number) => {
-  if (index === 0) return <Medal className="w-5 h-5 text-yellow-500" />;
-  if (index === 1) return <Medal className="w-5 h-5 text-gray-400" />;
-  if (index === 2) return <Medal className="w-5 h-5 text-amber-600" />;
+  if (index === 0) return <FirstIcon className="size-6" />;
+  if (index === 1) return <SecondIcon className="size-6" />;
+  if (index === 2) return <ThirdIcon className="size-6" />;
   return null;
+};
+
+const getRankText = (index: number) => {
+  return [0, 1, 2].includes(index) ? null : `#${index + 1}`;
 };
 
 const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
   {
     accessorKey: 'rank',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Rank')} icon={Medal} />
+      <DataTableColumnHeader column={column} title={t('Rank')} />
     ),
     cell: ({ row, table }) => {
       const sortedRows = table.getSortedRowModel().rows;
@@ -44,28 +51,29 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       return (
         <div className="flex items-center gap-2 shrink-0">
           {rankIcon && <div>{rankIcon}</div>}
-          <span className="text-sm text-foreground">#{index + 1}</span>
+          <span className="text-sm text-foreground">{getRankText(index)}</span>
         </div>
       );
     },
     enableSorting: false,
-    size: 60,
+    size: 20,
   },
   {
     accessorKey: 'userName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('User')} icon={User} />
+      <DataTableColumnHeader column={column} title={t('User')} />
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
         <ApAvatar
           id={row.original.visibleId}
-          size="medium"
+          size="small"
           includeAvatar={true}
           includeName={true}
         />
       </div>
     ),
+    enableSorting: false,
   },
   {
     accessorKey: 'flowCount',
@@ -73,13 +81,12 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       <DataTableColumnHeader
         column={column}
         title={t('Active Flows')}
-        icon={Workflow}
-        sortable={true}
       />
     ),
     cell: ({ row }) => (
       <div className="text-left">{row.original.flowCount}</div>
     ),
+    enableSorting: false,
   },
   {
     accessorKey: 'minutesSaved',
@@ -87,8 +94,6 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       <DataTableColumnHeader
         column={column}
         title={t('Time Saved')}
-        icon={Clock}
-        sortable={true}
       />
     ),
     cell: ({ row }) => (
@@ -96,9 +101,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
         {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
       </div>
     ),
-    sortingFn: (rowA, rowB) => {
-      return rowA.original.minutesSaved - rowB.original.minutesSaved;
-    },
+    enableSorting: false,
   },
 ];
 
@@ -114,8 +117,7 @@ export function UsersLeaderboard({ data, isLoading }: UsersLeaderboardProps) {
         previous: null,
       }}
       isLoading={isLoading ?? false}
-      hidePagination={true}
-      initialSorting={[{ id: 'flowCount', desc: true }]}
+      clientPagination={true}
       emptyStateTextTitle={t('No automation heroes yet')}
       emptyStateTextDescription={t(
         'Once your team starts building flows, their achievements will shine here',
