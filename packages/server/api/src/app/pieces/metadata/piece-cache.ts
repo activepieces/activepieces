@@ -213,6 +213,9 @@ function handleCreate(piece: PieceMetadataSchema): void {
             cache.set(registryKey, [...cachedRegistry, toRegistryEntry(piece)])
         }
     }
+    else {
+        invalidateAfterInflight(registryKey)
+    }
 
     cache.set(CACHE_KEY.piece(piece.name, piece.version, piece.platformId), piece)
 
@@ -234,6 +237,9 @@ function handleDelete(pieces: { name: string, version: string }[]): void {
     const cachedRegistry = cache.get(registryKey) as PieceRegistryEntry[] | undefined
     if (!isNil(cachedRegistry)) {
         cache.set(registryKey, cachedRegistry.filter(entry => !toDelete.has(`${entry.name}:${entry.version}`)))
+    }
+    else {
+        invalidateAfterInflight(registryKey)
     }
 
     for (const piece of pieces) {
@@ -257,12 +263,27 @@ function handleUpdateUsage(piece: { name: string, version: string, platformId?: 
     ))
 }
 
+/**
+ * If there's an in-flight DB fetch for a cache key, the result it stores will be stale
+ * (it won't include changes from pub/sub messages that arrived during the fetch).
+ * Chain a .then() to evict the stale entry so the next reader re-fetches from DB.
+ */
+function invalidateAfterInflight(cacheKey: string): void {
+    const inFlight = inFlightQueries.get(cacheKey)
+    if (!isNil(inFlight)) {
+        void inFlight.then(() => cache.delete(cacheKey))
+    }
+}
+
 function updateListEntries(updater: (list: PieceMetadataSchema[], locale: LocalesEnum) => PieceMetadataSchema[]): void {
     for (const locale of Object.values(LocalesEnum)) {
         const cacheKey = CACHE_KEY.list(locale as LocalesEnum)
         const cachedList = cache.get(cacheKey) as PieceMetadataSchema[] | undefined
         if (!isNil(cachedList)) {
             cache.set(cacheKey, updater(cachedList, locale as LocalesEnum))
+        }
+        else {
+            invalidateAfterInflight(cacheKey)
         }
     }
 }
