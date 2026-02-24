@@ -1,6 +1,6 @@
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
-import { existsSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, mkdirSync, readdirSync, copyFileSync, symlinkSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 
 function getChangedPiecePaths(): string[] | null {
     const changedPieces = process.env['CHANGED_PIECES']
@@ -20,6 +20,7 @@ function copyPieceAssets(piecePath: string): boolean {
 
     copyPackageJson(piecePath, distPath)
     copyI18nAssets(piecePath, distPath)
+    symlinkNodeModules(piecePath, distPath)
     return true
 }
 
@@ -47,6 +48,16 @@ function copyI18nAssets(piecePath: string, distPath: string): void {
     }
 
     console.info(`[copyPieceAssets] copied ${files.length} i18n files for ${piecePath}`)
+}
+
+function symlinkNodeModules(piecePath: string, distPath: string): void {
+    const srcNodeModules = resolve(piecePath, 'node_modules')
+    const distNodeModules = join(distPath, 'node_modules')
+    if (!existsSync(srcNodeModules) || existsSync(distNodeModules)) {
+        return
+    }
+    symlinkSync(resolve(srcNodeModules), distNodeModules, 'dir')
+    console.info(`[copyPieceAssets] symlinked node_modules for ${piecePath}`)
 }
 
 const main = async () => {
