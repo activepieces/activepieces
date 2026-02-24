@@ -76,50 +76,31 @@ jobs:
       - name: Find changed pieces
         id: changed
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "scope=all" >> "$GITHUB_OUTPUT"
-            exit 0
+          OUTPUT=$(npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/find-changed-pieces.ts)
+
+          TURBO_FILTER=$(echo "$OUTPUT" | grep '^TURBO_FILTER:' | sed 's/^TURBO_FILTER://')
+          CHANGED_DIRS=$(echo "$OUTPUT" | sed -n '/^CHANGED_DIRS:$/,/^TURBO_FILTER:/{ /^CHANGED_DIRS:$/d; /^TURBO_FILTER:/d; p; }')
+
+          if [ -z "$TURBO_FILTER" ]; then
+            echo "No changed pieces found"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "turbo_filter=$TURBO_FILTER" >> "$GITHUB_OUTPUT"
+            {
+              echo "changed_dirs<<PIECES_EOF"
+              echo "$CHANGED_DIRS"
+              echo "PIECES_EOF"
+            } >> "$GITHUB_OUTPUT"
+            echo "Changed pieces: $TURBO_FILTER"
           fi
-
-          CHANGED=$(git diff --name-only origin/main -- 'packages/pieces/**/package.json' \
-            | grep -v -E '(common|framework)/package.json$' \
-            | while read -r f; do dirname "$f"; done \
-            | sort -u)
-
-          if [ -z "$CHANGED" ]; then
-            echo "No piece package.json changes detected"
-            echo "scope=none" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "scope=changed" >> "$GITHUB_OUTPUT"
-
-          FILTERS=""
-          while IFS= read -r dir; do
-            [ -z "$dir" ] && continue
-            PKG_NAME=$(node -p "require('./$dir/package.json').name")
-            FILTERS="$FILTERS --filter=$PKG_NAME"
-          done <<< "$CHANGED"
-          echo "turbo_filter=$FILTERS" >> "$GITHUB_OUTPUT"
-
-          {
-            echo "changed_dirs<<PIECES_EOF"
-            echo "$CHANGED"
-            echo "PIECES_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-          echo "Changed pieces:$FILTERS"
-
-      - name: Build all packages
-        if: steps.changed.outputs.scope == 'all'
-        run: npx turbo run build
 
       - name: Build changed pieces
-        if: steps.changed.outputs.scope == 'changed'
+        if: steps.changed.outputs.has_changes == 'true'
         run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }}
 
       - name: publish pieces packages
-        if: steps.changed.outputs.scope != 'none'
+        if: steps.changed.outputs.has_changes == 'true'
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -129,7 +110,7 @@ jobs:
         run: free -h
 
       - name: update pieces metadata
-        if: steps.changed.outputs.scope != 'none'
+        if: steps.changed.outputs.has_changes == 'true'
         run: npx ts-node -r tsconfig-paths/register -r ./tools/scripts/fix-dts-require.js -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/community/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
