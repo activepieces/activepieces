@@ -3,6 +3,10 @@ import { PieceCategory } from '@activepieces/shared';
 import { renderDocumentAction } from './lib/actions/render-document';
 import { uploadTemplateAction } from './lib/actions/upload-template';
 import { deleteTemplateAction } from './lib/actions/delete-template';
+import { updateTemplateAction } from './lib/actions/update-template';
+import { listTemplatesAction } from './lib/actions/list-templates';
+import { listCategoriesAction } from './lib/actions/list-categories';
+import { listTagsAction } from './lib/actions/list-tags';
 
 export const carboneAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -18,12 +22,20 @@ To get your Carbone API key:
 export const carbone = createPiece({
   displayName: 'Carbone',
   description:
-    'Generate documents (PDF, DOCX, XLSX, ODS, and more) from templates and JSON data using the Carbone report generator.',
+    'Generate documents (PDF, DOCX, XLSX, ODS, and more) from templates and JSON data using the Carbone report generator. V5 features: versioning, metadata, categories/tags, and advanced PDF converters.',
   auth: carboneAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/carbone.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['Harmatta'],
-  actions: [renderDocumentAction, uploadTemplateAction, deleteTemplateAction],
+  authors: ['Harmatta', 'onyedikachi-david'],
+  actions: [
+    renderDocumentAction,
+    uploadTemplateAction,
+    deleteTemplateAction,
+    updateTemplateAction,
+    listTemplatesAction,
+    listCategoriesAction,
+    listTagsAction,
+  ],
   triggers: [],
 });

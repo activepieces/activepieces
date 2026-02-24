@@ -3,6 +3,16 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/carbone/src",
   "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -15,39 +25,42 @@
         "packageJson": "packages/pieces/community/carbone/package.json",
         "main": "packages/pieces/community/carbone/src/index.ts",
         "assets": [
-          "packages/pieces/community/carbone/*.md"
+          "packages/pieces/community/carbone/*.md",
+          {
+            "input": "packages/pieces/community/carbone/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true,
         "clean": false
       },
       "dependsOn": [
-        "^build",
-        "prebuild"
+        "prebuild",
+        "^build"
       ]
     },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-carbone {args.ver} {args.tag}",
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    },
+    "prebuild": {
       "dependsOn": [
-        "build"
-      ]
+        "^build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/carbone",
+        "command": "bun install --no-save --silent"
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
       ]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/carbone",
-        "command": "bun install --no-save --silent"
-      },
-      "dependsOn": [
-        "^build"
-      ]
     }
-  },
-  "tags": []
+  }
 }
