@@ -97,7 +97,7 @@ jobs:
 
       - name: Build changed pieces
         if: steps.changed.outputs.has_changes == 'true'
-        run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }}
+        run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }} --force
 
       - name: publish pieces packages
         if: steps.changed.outputs.has_changes == 'true'
