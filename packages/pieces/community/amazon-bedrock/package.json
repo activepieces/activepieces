@@ -1,12 +1,22 @@
 {
   "name": "@activepieces/piece-amazon-bedrock",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@aws-crypto/sha256-js": "5.2.0",
     "@aws-sdk/client-bedrock": "^3.987.0",
     "@aws-sdk/client-bedrock-runtime": "^3.987.0",
+    "@smithy/protocol-http": "5.3.8",
+    "@smithy/signature-v4": "5.3.8",
     "tslib": "^2.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

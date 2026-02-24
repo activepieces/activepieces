@@ -303,7 +303,8 @@
                         "pages": [
                            "endpoints/users/schema",
                            "endpoints/users/update",
-                           "endpoints/users/list"
+                           "endpoints/users/list",
+                           "endpoints/users/delete"
                         ]
                      },
                      {

@@ -24,7 +24,7 @@ import {
   AirtableView,
 } from './models';
 import { isNil } from '@activepieces/shared';
-import { airtableAuth } from '../..';
+import { airtableAuth } from '../auth';
 
 
 interface Params {

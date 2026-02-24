@@ -4,7 +4,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { dripAuth } from '../..';
+import { dripAuth } from '../auth';
 
 export const dripCommon = {
   baseUrl: (accountId: string) => {

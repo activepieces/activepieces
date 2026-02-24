@@ -1,3 +1,18 @@
+import {
+  getAuthPropertyForValue,
+  PieceAuthProperty,
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import {
+  ApFlagId,
+  AppConnectionType,
+  AppConnectionWithoutSensitiveData,
+  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
+  isNil,
+  UpsertAppConnectionRequestBody,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -32,21 +47,6 @@ import { appConnectionsMutations } from '@/features/connections/lib/app-connecti
 import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { oauth2Utils, PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
-import {
-  getAuthPropertyForValue,
-  PieceAuthProperty,
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-  PropertyType,
-} from '@activepieces/pieces-framework';
-import {
-  ApFlagId,
-  AppConnectionType,
-  AppConnectionWithoutSensitiveData,
-  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
-  UpsertAppConnectionRequestBody,
-} from '@activepieces/shared';
 
 import { newConnectionUtils } from '../../features/connections/lib/utils';
 import { formUtils } from '../../features/pieces/lib/form-utils';

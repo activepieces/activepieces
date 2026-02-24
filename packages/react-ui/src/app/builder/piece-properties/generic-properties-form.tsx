@@ -1,8 +1,3 @@
-import React from 'react';
-import { useFormContext } from 'react-hook-form';
-
-import { FormField } from '@/components/ui/form';
-import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 import {
   OAuth2Props,
   PiecePropertyMap,
@@ -13,6 +8,11 @@ import {
   PropertyExecutionType,
   PropertySettings,
 } from '@activepieces/shared';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
+
+import { FormField } from '@/components/ui/form';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import {
   selectGenericFormComponentForProperty,

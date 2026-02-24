@@ -1,7 +1,7 @@
+import { FlowTriggerType } from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 
 import { RightSideBarType, StepMetadataWithSuggestions } from '@/lib/types';
-import { FlowTriggerType } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
 

@@ -1,3 +1,4 @@
+import { AgentPieceTool } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
 import { useMemo } from 'react';
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/tooltip';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { AgentPieceTool } from '@activepieces/shared';
 
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
 

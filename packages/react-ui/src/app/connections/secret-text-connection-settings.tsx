@@ -1,3 +1,5 @@
+import { SecretTextProperty } from '@activepieces/pieces-framework';
+import { UpsertSecretTextRequest } from '@activepieces/shared';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -8,8 +10,7 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-import { SecretTextProperty } from '@activepieces/pieces-framework';
-import { UpsertSecretTextRequest } from '@activepieces/shared';
+
 
 import { SecretInput } from './secret-input';
 

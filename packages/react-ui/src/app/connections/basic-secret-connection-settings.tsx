@@ -1,3 +1,5 @@
+import { BasicAuthProperty } from '@activepieces/pieces-framework';
+import { UpsertBasicAuthRequest } from '@activepieces/shared';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -9,8 +11,7 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-import { BasicAuthProperty } from '@activepieces/pieces-framework';
-import { UpsertBasicAuthRequest } from '@activepieces/shared';
+
 
 import { SecretInput } from './secret-input';
 

@@ -1,3 +1,9 @@
+import {
+  PieceProperty,
+  PiecePropertyMap,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import { isNil, PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ControllerRenderProps,
@@ -14,12 +20,6 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import {
-  PieceProperty,
-  PiecePropertyMap,
-  PropertyType,
-} from '@activepieces/pieces-framework';
-import { isNil, PropertySettings } from '@activepieces/shared';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';

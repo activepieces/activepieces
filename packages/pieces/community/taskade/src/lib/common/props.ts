@@ -1,6 +1,6 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { TaskadeAPIClient } from './client';
-import { taskadeAuth } from '../..';
+import { taskadeAuth } from '../auth';
 
 const createEmptyOptions = (placeholder: string) => {
 	return {

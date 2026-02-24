@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth } from '../auth';
 import mime from 'mime-types';
 import { common } from '../common';
 

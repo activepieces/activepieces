@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import {
   Navigate,
   RouterProvider,
@@ -23,7 +24,6 @@ import { Error } from '@/features/billing/components/error';
 import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/members/component/accept-invitation';
 import { routesThatRequireProjectId } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { BuilderLayout } from '../components/builder-layout';
