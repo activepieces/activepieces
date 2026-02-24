@@ -53,6 +53,7 @@
       ]
     },
     "lint": {
+      "dependsOn": ["^build"],
       "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"],
       "outputs": []
     },
