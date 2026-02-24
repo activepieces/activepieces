@@ -1,14 +1,3 @@
-import { TObject, Type } from '@sinclair/typebox';
-import {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from 'react';
-import { UseFormReturn } from 'react-hook-form';
-
 import {
   PieceMetadataModel,
   PiecePropertyMap,
@@ -20,6 +9,16 @@ import {
   FlowTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
+import { TObject, Type } from '@sinclair/typebox';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from 'react';
+import { UseFormReturn } from 'react-hook-form';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 const numberReplacement = 'anyOf[0]items';

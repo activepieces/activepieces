@@ -1,7 +1,14 @@
 {
   "name": "@activepieces/piece-pastefy",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "crypto-js": "4.2.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

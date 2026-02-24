@@ -1,3 +1,9 @@
+import {
+  isNil,
+  PROJECT_COLOR_PALETTE,
+  ProjectIcon,
+  ProjectType,
+} from '@activepieces/shared';
 import { User } from 'lucide-react';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -9,12 +15,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import {
-  isNil,
-  PROJECT_COLOR_PALETTE,
-  ProjectIcon,
-  ProjectType,
-} from '@activepieces/shared';
 
 type ApProjectDisplayProps = {
   title: string;

@@ -1,7 +1,14 @@
 {
   "name": "@activepieces/piece-customer-io",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "buffer": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

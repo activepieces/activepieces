@@ -1,3 +1,4 @@
+import { isNil, ProjectReleaseType } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
 import { t } from 'i18next';
@@ -19,7 +20,6 @@ import {
 } from '@/components/ui/tooltip';
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { isNil, ProjectReleaseType } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
 

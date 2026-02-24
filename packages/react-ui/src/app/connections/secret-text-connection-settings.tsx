@@ -1,3 +1,5 @@
+import { SecretTextProperty } from '@activepieces/pieces-framework';
+import { UpsertSecretTextRequest } from '@activepieces/shared';
 import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -9,8 +11,6 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { SecretTextProperty } from '@activepieces/pieces-framework';
-import { UpsertSecretTextRequest } from '@activepieces/shared';
 
 type SecretTextConnectionSettingsProps = {
   authProperty: SecretTextProperty<boolean>;

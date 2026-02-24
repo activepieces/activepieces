@@ -1,9 +1,18 @@
 {
   "name": "@activepieces/piece-google-sheets",
-  "version": "0.14.5",
+  "version": "0.14.6",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "csv-parse": "5.6.0",
+    "gaxios": "6.7.1",
     "googleapis": "129.0.0",
+    "googleapis-common": "7.2.0",
     "lodash": "4.17.23"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

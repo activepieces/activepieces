@@ -1,3 +1,8 @@
+import {
+  ApSubscriptionStatus,
+  PRICE_PER_EXTRA_ACTIVE_FLOWS,
+} from '@activepieces/ee-shared';
+import { PlatformPlan } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Zap, Info, Loader2 } from 'lucide-react';
@@ -15,11 +20,6 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
-import {
-  ApSubscriptionStatus,
-  PRICE_PER_EXTRA_ACTIVE_FLOWS,
-} from '@activepieces/ee-shared';
-import { PlatformPlan } from '@activepieces/shared';
 
 import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
 import { billingMutations, billingQueries } from '../../lib/billing-hooks';

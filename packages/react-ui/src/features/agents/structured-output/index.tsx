@@ -1,10 +1,10 @@
+import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
 import { t } from 'i18next';
 import { X } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
 
 import { AddFieldPopover } from './add-field-popover';
 import { FieldTypeIcon } from './field-type-icon';

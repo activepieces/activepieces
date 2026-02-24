@@ -4,16 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { textToImage } from './lib/actions/text-to-image';
-
-export const stableDiffusionAuth = PieceAuth.CustomAuth({
-  required: true,
-  props: {
-    baseUrl: Property.ShortText({
-      displayName: 'Stable Diffusion web UI API base URL',
-      required: true,
-    }),
-  },
-});
+import { stableDiffusionAuth } from './lib/auth';
 
 export type StableDiffusionAuthType = {
   baseUrl: string;

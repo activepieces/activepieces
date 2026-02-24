@@ -1,4 +1,13 @@
 import {
+  FlowActionType,
+  flowStructureUtil,
+  FlowTriggerType,
+  FlowVersion,
+  isNil,
+  Note,
+  Step,
+} from '@activepieces/shared';
+import {
   ReactFlow,
   Background,
   SelectionMode,
@@ -12,16 +21,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-
-import {
-  FlowActionType,
-  flowStructureUtil,
-  FlowTriggerType,
-  FlowVersion,
-  isNil,
-  Note,
-  Step,
-} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { useHandleKeyPressOnCanvas } from '../shortcuts';

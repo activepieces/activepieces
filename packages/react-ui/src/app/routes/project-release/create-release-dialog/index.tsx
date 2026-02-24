@@ -1,3 +1,10 @@
+import {
+  ConnectionOperationType,
+  DiffReleaseRequest,
+  ProjectReleaseType,
+  ProjectSyncPlan,
+  TableOperationType,
+} from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -24,13 +31,6 @@ import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  ConnectionOperationType,
-  DiffReleaseRequest,
-  ProjectReleaseType,
-  ProjectSyncPlan,
-  TableOperationType,
-} from '@activepieces/shared';
 
 import { OperationChange } from './operation-change';
 

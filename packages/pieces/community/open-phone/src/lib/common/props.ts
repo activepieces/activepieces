@@ -6,7 +6,7 @@ import {
   OpenPhoneCallsListResponse,
   OpenPhoneNumbersListResponse,
 } from './index';
-import { openPhoneAuth } from '../..';
+import { openPhoneAuth } from '../auth';
 
 export const contactDropdown = Property.Dropdown({
   auth: openPhoneAuth,

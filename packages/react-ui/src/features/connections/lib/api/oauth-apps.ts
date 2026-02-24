@@ -1,10 +1,11 @@
-import { api } from '@/lib/api';
 import {
   ListOAuth2AppRequest,
   OAuthApp,
   UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared';
 import { ApEdition, SeekPage } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const oauthAppsApi = {
   listCloudOAuth2Apps(

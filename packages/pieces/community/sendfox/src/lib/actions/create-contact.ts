@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../../index';
+import { sendfoxAuth } from '../auth';
 import { callsendfoxApi, sendfoxCommon } from '../../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 

@@ -1,4 +1,4 @@
-import { supabaseAuth } from '../../index';
+import { supabaseAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { createClient } from '@supabase/supabase-js';
 

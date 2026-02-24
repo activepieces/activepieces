@@ -1,0 +1,72 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts",
+        "!vitest.config.*"
+      ]
+    },
+    "@activepieces/engine#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../dist/packages/engine/**"],
+      "cache": false,
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "webpack.config.js",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts"
+      ]
+    },
+    "lint": {
+      "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
+      "outputs": ["coverage/**"]
+    },
+    "test-ce": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test-ee": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test-cloud": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "check-migrations": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "db-migration": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "serve": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    }
+  }
+}

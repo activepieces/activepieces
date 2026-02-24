@@ -1,11 +1,18 @@
 {
   "name": "@activepieces/piece-runware",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "tslib": "^2.3.0",
-    "@runware/sdk-js": "1.1.44"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@runware/sdk-js": "1.1.44",
+    "tslib": "^2.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

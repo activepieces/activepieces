@@ -88,6 +88,7 @@ export type RunsMetadataQueueConfig = {
 export const RunsMetadataUpsertData = Type.Composite([
     Type.Required(Type.Pick(FlowRunSchema, ['id', 'projectId'])),
     Type.Partial(Type.Pick(FlowRunSchema, [
+        'created',
         'flowId',
         'flowVersionId',
         'environment',

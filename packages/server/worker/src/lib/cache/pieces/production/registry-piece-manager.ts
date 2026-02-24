@@ -302,8 +302,10 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
     const writeToDiskJobs = pieces.map(async (piece) => {
+        const pieceFolder = piecePath(rootWorkspace, piece)
+        await fileSystemUtils.threadSafeMkdir(pieceFolder)
         await writeFileAtomic(
-            join(piecePath(rootWorkspace, piece), 'ready'),
+            join(pieceFolder, 'ready'),
             'true',
         )
     })

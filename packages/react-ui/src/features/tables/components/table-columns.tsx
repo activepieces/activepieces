@@ -1,10 +1,10 @@
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 import { Plus } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Column, RenderCellProps } from 'react-data-grid';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { ClientRecordData } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { airparserAuth } from '../../index';
+import { airparserAuth } from '../auth';
 import { airparserApiCall, GetDocumentResponse } from '../common';
 import { documentIdDropdown, inboxIdDropdown } from '../common/props';
 
