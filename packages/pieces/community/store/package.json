@@ -12,5 +12,8 @@
     "deep-equal": "2.2.2",
     "zod": "4.1.13",
     "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/deep-equal": "1.0.4"
   }
 }

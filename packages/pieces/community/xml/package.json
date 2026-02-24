@@ -11,5 +11,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/json2xml": "0.1.4"
   }
 }

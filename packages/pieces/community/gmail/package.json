@@ -18,6 +18,8 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1"
+    "@types/mime-types": "2.1.1",
+    "@types/mailparser": "3.4.6",
+    "@types/nodemailer": "7.0.11"
   }
 }

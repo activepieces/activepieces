@@ -11,5 +11,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/mailchimp__mailchimp_marketing": "3.0.22"
   }
 }

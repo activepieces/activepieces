@@ -12,5 +12,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/onfleet__node-onfleet": "1.3.12"
   }
 }

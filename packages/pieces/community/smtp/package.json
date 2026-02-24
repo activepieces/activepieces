@@ -14,6 +14,7 @@
     "tslib": "2.6.2"
   },
   "devDependencies": {
-    "@types/mime-types": "2.1.1"
+    "@types/mime-types": "2.1.1",
+    "@types/nodemailer": "7.0.11"
   }
 }

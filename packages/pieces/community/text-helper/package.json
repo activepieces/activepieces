@@ -15,5 +15,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/showdown": "2.0.6",
+    "@types/turndown": "5.0.6"
   }
 }

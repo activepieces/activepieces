@@ -13,5 +13,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/pg": "8.16.0",
+    "@types/pg-format": "1.0.5"
   }
 }
