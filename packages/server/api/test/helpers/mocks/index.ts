@@ -798,7 +798,7 @@ export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<Pie
         packageType: PackageType.REGISTRY,
     })
     await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
-    pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+    pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
     return mockPieceMetadata
 }
 

@@ -9,7 +9,9 @@ export const mockVaultConfig = {
     secretId: MOCK_SECRET_ID,
 }
 
-export const hashicorpMock = (axiosRequestSpy: jest.SpyInstance) => ({
+import { MockInstance } from 'vitest'
+
+export const hashicorpMock = (axiosRequestSpy: MockInstance) => ({
     mockVaultLoginSuccess: () => {
         axiosRequestSpy.mockImplementation(async (config: { url: string, method: string }) => {
             if (config.url.includes('/v1/auth/approle/login') && config.method === 'POST') {

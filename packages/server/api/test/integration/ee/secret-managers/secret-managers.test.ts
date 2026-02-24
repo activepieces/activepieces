@@ -3,6 +3,7 @@ import { apAxios } from '@activepieces/server-shared'
 import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { MockInstance } from 'vitest'
 import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -17,7 +18,7 @@ import {
 } from './hashicorp-mock'
 
 let app: FastifyInstance | null = null
-let axiosRequestSpy: jest.SpyInstance
+let axiosRequestSpy: MockInstance
 let vaultMock: ReturnType<typeof hashicorpMock>
 let mockLog: FastifyBaseLogger
 beforeAll(async () => {
@@ -27,7 +28,7 @@ beforeAll(async () => {
 }, 50000)
 
 beforeEach(() => {
-    axiosRequestSpy = jest.spyOn(apAxios, 'request')
+    axiosRequestSpy = vi.spyOn(apAxios, 'request')
     vaultMock = hashicorpMock(axiosRequestSpy)
 })
 
