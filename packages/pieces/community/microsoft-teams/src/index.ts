@@ -24,6 +24,7 @@ import { createGraphClient, withGraphRetry } from './lib/common/graph';
 import { deleteChatMessageAction } from './lib/actions/delete-chat-message';
 import { requestApprovalDirectMessage } from './lib/actions/request-approval-direct-message';
 import { requestApprovalInChannel } from './lib/actions/request-approval-channel-message';
+import { microsoftTeamsAuth } from './lib/auth';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -62,40 +63,6 @@ const authDesc = `
     - Click **Add permissions**.
 12. Copy your **Client ID** and **Client Secret**.
 `
-
-export const microsoftTeamsAuth = PieceAuth.OAuth2({
-	description:authDesc,
-	required: true,
-	scope: [
-		'openid',
-		'email',
-		'profile',
-		'offline_access',
-		'User.Read',
-		'Channel.Create',
-		'Channel.ReadBasic.All',
-		'ChannelMessage.Send',
-		'Team.ReadBasic.All',
-		'Chat.ReadWrite',
-		'ChannelMessage.Read.All',
-		'TeamMember.Read.All',
-    'User.ReadBasic.All',
-    'Presence.Read.All',
-	],
-	prompt: 'omit',
-	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-	validate: async ({ auth }) => {
-		try {
-			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
-			const client = createGraphClient(authValue.access_token);
-			await withGraphRetry(() => client.api('/me').get());
-			return { valid: true };
-		} catch (error) {
-			return { valid: false, error: 'Invalid Credentials.' };
-		}
-	},
-});
 
 export const microsoftTeams = createPiece({
 	displayName: 'Microsoft Teams',

@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +17,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const branding = flagsHooks.useWebsiteBranding();

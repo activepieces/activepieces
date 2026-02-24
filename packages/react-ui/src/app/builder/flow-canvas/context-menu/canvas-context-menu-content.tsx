@@ -1,3 +1,10 @@
+import {
+  FlowAction,
+  FlowActionType,
+  FlowOperationType,
+  flowStructureUtil,
+  StepLocationRelativeToParent,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowLeftRight,
@@ -19,13 +26,6 @@ import {
   ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
 import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
-import {
-  FlowAction,
-  FlowActionType,
-  FlowOperationType,
-  flowStructureUtil,
-  StepLocationRelativeToParent,
-} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { CanvasShortcuts } from '../../shortcuts';

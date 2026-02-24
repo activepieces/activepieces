@@ -1,10 +1,10 @@
 'use client';
 
+import { isNil } from '@activepieces/shared';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { ScrollArea } from './scroll-area';
 

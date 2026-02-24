@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { zooAuth } from '../../../index'
+import { zooAuth } from '../../auth'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOrgSubscriptionAction = createAction({

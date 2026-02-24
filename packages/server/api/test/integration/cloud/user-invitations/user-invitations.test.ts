@@ -27,7 +27,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    emailService(mockLog).sendInvitation = jest.fn()
+    emailService(mockLog).sendInvitation = vi.fn()
 })
 
 afterAll(async () => {

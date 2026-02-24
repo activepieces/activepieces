@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
 import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../auth';
 
 export const updateClickupTask = createAction({
   auth: clickupAuth,

@@ -1,3 +1,7 @@
+import {
+  ApFlagId,
+  ThirdPartyAuthnProvidersToShowMap,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -12,10 +16,6 @@ import {
 import { FullLogo } from '@/components/ui/full-logo';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
-import {
-  ApFlagId,
-  ThirdPartyAuthnProvidersToShowMap,
-} from '@activepieces/shared';
 
 import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';

@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { fromObjectTypeAssociationDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';

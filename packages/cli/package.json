@@ -6,7 +6,8 @@
     },
     "scripts": {
         "start": "ts-node src/index.ts",
-        "build": "tsc"
+        "build": "tsc -p tsconfig.lib.json",
+        "lint": "eslint 'src/**/*.ts'"
     },
     "dependencies": {
         "@activepieces/pieces-framework": "*",

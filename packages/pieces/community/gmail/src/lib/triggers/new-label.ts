@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { gmailAuth } from '../../';
+import { gmailAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { getFirstFiveOrAll } from '../common/data';

@@ -2,6 +2,13 @@
   "name": "@activepieces/piece-clarifai",
   "version": "0.3.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "clarifai-nodejs-grpc": "11.3.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

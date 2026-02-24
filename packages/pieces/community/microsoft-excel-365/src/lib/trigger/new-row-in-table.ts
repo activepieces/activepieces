@@ -15,7 +15,7 @@ import {
     AuthenticationType
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { excelAuth } from '../..';
+import { excelAuth } from '../auth';
 
 interface TableRow {
     index: number;

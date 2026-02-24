@@ -2,9 +2,16 @@
   "name": "@activepieces/piece-actualbudget",
   "version": "0.1.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@actual-app/api": "25.3.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.9"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }
