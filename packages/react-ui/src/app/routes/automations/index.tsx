@@ -37,7 +37,7 @@ export const AutomationsPage = () => {
 };
 
 const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const { checkAccess } = useAuthorization();
@@ -129,13 +129,18 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
   );
 
   const updateSearchParams = (newFolderId: string | undefined) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (newFolderId) {
-      newParams.set('folderId', newFolderId);
-    } else {
-      newParams.delete('folderId');
-    }
-    setSearchParams(newParams);
+    setSearchParams(
+      (prev) => {
+        const newParams = new URLSearchParams(prev);
+        if (newFolderId) {
+          newParams.set('folderId', newFolderId);
+        } else {
+          newParams.delete('folderId');
+        }
+        return newParams;
+      },
+      { replace: true },
+    );
   };
 
   const hasAnyItems =
