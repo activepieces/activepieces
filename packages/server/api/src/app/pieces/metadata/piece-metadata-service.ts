@@ -26,7 +26,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pubsub } from '../../helper/pubsub'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { pieceCache, PieceMetadataRefreshMessage, PieceMetadataRefreshType, PIECE_METADATA_REFRESH_CHANNEL } from './piece-cache'
+import { PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType, pieceCache } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
 
