@@ -10,7 +10,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission } from '@activepieces/shared';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 
