@@ -84,3 +84,18 @@ export function isSupportedRelease(release: string | undefined, piece: { minimum
     }
     return true
 }
+
+export function binarySearchInsertIndex(list: PieceMetadataSchema[], piece: PieceMetadataSchema): number {
+    let low = 0
+    let high = list.length
+    while (low < high) {
+        const mid = (low + high) >>> 1
+        if (sortByNameAndVersionDesc(piece, list[mid]) > 0) {
+            high = mid
+        }
+        else {
+            low = mid + 1
+        }
+    }
+    return low
+}
