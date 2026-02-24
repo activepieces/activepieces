@@ -43,18 +43,6 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.2.1
-        with:
-          provider: s3
-          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
-          s3-region: auto
-          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
-          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
-          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
-          max-age: 2w
-          max-size: 20gb
-
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
@@ -98,6 +86,12 @@ jobs:
       - name: Build changed pieces
         if: steps.changed.outputs.has_changes == 'true'
         run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }} --force
+
+      - name: Copy piece assets to dist
+        if: steps.changed.outputs.has_changes == 'true'
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/copy-piece-assets.ts
+        env:
+          CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
 
       - name: publish pieces packages
         if: steps.changed.outputs.has_changes == 'true'
