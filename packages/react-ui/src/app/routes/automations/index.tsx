@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
@@ -30,10 +30,15 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { Permission, UncategorizedFolderId } from '@activepieces/shared';
 
 export const AutomationsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
+
+  return <AutomationsPageContent key={projectId} projectId={projectId} />;
+};
+
+const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
@@ -54,7 +59,7 @@ export const AutomationsPage = () => {
     filters,
     filtersActive,
     clearAllFilters,
-  } = useAutomationsFilters(projectId);
+  } = useAutomationsFilters();
 
   const {
     treeItems,
@@ -79,17 +84,6 @@ export const AutomationsPage = () => {
     invalidateFolder,
   } = useAutomationsData(filters);
 
-  useEffect(() => {
-    resetPagination();
-  }, [
-    filters.searchTerm,
-    filters.typeFilter,
-    filters.statusFilter,
-    filters.connectionFilter,
-    filters.ownerFilter,
-    resetPagination,
-  ]);
-
   const {
     selectedItems,
     toggleItemSelection,
@@ -98,10 +92,6 @@ export const AutomationsPage = () => {
     isItemSelected,
     selectableItems,
   } = useAutomationsSelection(treeItems);
-
-  useEffect(() => {
-    clearSelection();
-  }, [projectId, clearSelection]);
 
   const mutations = useAutomationsMutations({
     invalidateAll,
@@ -171,6 +161,7 @@ export const AutomationsPage = () => {
         onConnectionFilterChange={setConnectionFilter}
         ownerFilter={ownerFilter}
         onOwnerFilterChange={setOwnerFilter}
+        onFilterChange={resetPagination}
         connections={connections?.data}
         pieces={pieces}
         userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}

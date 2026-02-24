@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { AutomationsFilters } from '../lib/types';
 import { hasActiveFilters } from '../lib/utils';
 
-export function useAutomationsFilters(projectId: string) {
+export function useAutomationsFilters() {
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSetSearch = useDebouncedCallback(setSearchTerm, 300);
@@ -20,19 +20,6 @@ export function useAutomationsFilters(projectId: string) {
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [connectionFilter, setConnectionFilter] = useState<string[]>([]);
   const [ownerFilter, setOwnerFilter] = useState<string[]>([]);
-
-  const prevProjectIdRef = useRef(projectId);
-  useEffect(() => {
-    if (prevProjectIdRef.current !== projectId) {
-      prevProjectIdRef.current = projectId;
-      setSearchInput('');
-      setSearchTerm('');
-      setTypeFilter([]);
-      setStatusFilter([]);
-      setConnectionFilter([]);
-      setOwnerFilter([]);
-    }
-  }, [projectId]);
 
   const filters: AutomationsFilters = {
     searchTerm,

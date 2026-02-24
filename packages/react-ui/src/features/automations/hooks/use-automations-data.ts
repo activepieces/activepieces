@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -39,17 +39,6 @@ export function useAutomationsData(filters: AutomationsFilters) {
     Map<string, number>
   >(new Map());
   const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
-
-  const prevProjectIdRef = useRef(projectId);
-  useEffect(() => {
-    if (prevProjectIdRef.current !== projectId) {
-      prevProjectIdRef.current = projectId;
-      setRootPage(0);
-      setExpandedFolders(new Set());
-      setFolderVisibleCounts(new Map());
-      setLoadingFolders(new Set());
-    }
-  }, [projectId]);
 
   const foldersQuery = useQuery({
     queryKey: ['folders', projectId],
