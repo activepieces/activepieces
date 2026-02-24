@@ -305,6 +305,16 @@ export function hasActiveFilters(filters: AutomationsFilters): boolean {
   );
 }
 
+export function hasNonFolderFilters(filters: AutomationsFilters): boolean {
+  return (
+    filters.searchTerm.length > 0 ||
+    filters.typeFilter.length > 0 ||
+    filters.statusFilter.length > 0 ||
+    filters.connectionFilter.length > 0 ||
+    filters.ownerFilter.length > 0
+  );
+}
+
 export function getItemKey(item: TreeItem): string {
   return `${item.type}-${item.id}`;
 }

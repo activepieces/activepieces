@@ -21,7 +21,7 @@ import {
   buildTreeItems,
   DEFAULT_PAGE_SIZE,
   FOLDER_PAGE_SIZE,
-  hasActiveFilters,
+  hasNonFolderFilters,
 } from '../lib/utils';
 
 export function useAutomationsData(
@@ -31,7 +31,7 @@ export function useAutomationsData(
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
   const queryClient = useQueryClient();
-  const isFiltered = hasActiveFilters(filters);
+  const isFiltered = hasNonFolderFilters(filters);
 
   const [rootPage, setRootPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
@@ -270,23 +270,25 @@ export function useAutomationsData(
   }, []);
 
   const { treeItems, totalPageItems } = useMemo(() => {
-    const folders = foldersQuery.data ?? [];
+    let folders = foldersQuery.data ?? [];
     let rootFlows = rootFlowsQuery.data?.data ?? [];
     let rootTables = rootTablesQuery.data?.data ?? [];
     const folderContents = folderContentsQuery.data ?? new Map();
     const folderCounts = folderCountsQuery.data ?? new Map();
 
-    if (filters.folderFilter.length > 0) {
-      const folderSet = new Set(filters.folderFilter);
-      rootFlows = rootFlows.filter(
-        (f) => f.folderId && folderSet.has(f.folderId),
-      );
-      rootTables = rootTables.filter(
-        (t) => t.folderId && folderSet.has(t.folderId),
-      );
-    }
+    const hasFolderFilter = filters.folderFilter.length > 0;
 
     if (isFiltered) {
+      if (hasFolderFilter) {
+        const folderSet = new Set(filters.folderFilter);
+        rootFlows = rootFlows.filter(
+          (f) => f.folderId && folderSet.has(f.folderId),
+        );
+        rootTables = rootTables.filter(
+          (t) => t.folderId && folderSet.has(t.folderId),
+        );
+      }
+
       const { items, totalItems } = buildFilteredTreeItems(
         rootFlows,
         rootTables,
@@ -297,6 +299,13 @@ export function useAutomationsData(
         pinnedList,
       );
       return { treeItems: items, totalPageItems: totalItems };
+    }
+
+    if (hasFolderFilter) {
+      const folderSet = new Set(filters.folderFilter);
+      folders = folders.filter((f) => folderSet.has(f.id));
+      rootFlows = [];
+      rootTables = [];
     }
 
     const { items, totalRootItems } = buildTreeItems(
@@ -326,8 +335,9 @@ export function useAutomationsData(
     pinnedList,
   ]);
 
+  const hasFolderFilter = filters.folderFilter.length > 0;
   const effectiveExpandedFolders = useMemo(() => {
-    if (!isFiltered) return expandedFolders;
+    if (!isFiltered && !hasFolderFilter) return expandedFolders;
     const all = new Set(expandedFolders);
     for (const item of treeItems) {
       if (item.type === 'folder') {
@@ -335,7 +345,7 @@ export function useAutomationsData(
       }
     }
     return all;
-  }, [isFiltered, expandedFolders, treeItems]);
+  }, [isFiltered, hasFolderFilter, expandedFolders, treeItems]);
 
   const totalPages = Math.ceil(totalPageItems / pageSize);
   const isLoading =

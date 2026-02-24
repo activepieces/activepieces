@@ -7,6 +7,7 @@ import {
   CornerUpLeft,
   Download,
   Folder,
+  Link,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -17,6 +18,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -31,6 +33,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
@@ -121,19 +128,28 @@ export const AutomationsTableRow = ({
         onClick={(e) => e.stopPropagation()}
       >
         {item.depth === 0 && (
-          <button
-            onClick={onTogglePin}
-            className="p-0.5 rounded hover:bg-muted transition-colors"
-          >
-            <Star
-              className={cn(
-                'h-4 w-4',
-                isPinned
-                  ? 'text-yellow-500 fill-yellow-500'
-                  : 'text-muted-foreground/40 hover:text-muted-foreground',
-              )}
-            />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onTogglePin}
+                className="p-0.5 rounded hover:bg-muted transition-colors"
+              >
+                <Star
+                  className={cn(
+                    'h-4 w-4',
+                    isPinned
+                      ? 'text-yellow-500 fill-yellow-500'
+                      : 'text-muted-foreground/40 hover:text-muted-foreground',
+                  )}
+                />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {isPinned
+                ? t('Unpin {type}', { type: item.type })
+                : t('Pin {type}', { type: item.type })}
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
       <div className="flex-1 min-w-[200px] pl-2 pr-2 flex items-center">
@@ -193,6 +209,20 @@ export const AutomationsTableRow = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {item.type === 'folder' && (
+              <DropdownMenuItem
+                onClick={() => {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('folder', item.id);
+                  navigator.clipboard.writeText(url.toString());
+                  toast.success(t('URL copied to clipboard'));
+                }}
+              >
+                <Link className="h-4 w-4 mr-2" />
+                {t('Copy URL')}
+              </DropdownMenuItem>
+            )}
+
             <DropdownMenuItem onClick={onRename}>
               <Pencil className="h-4 w-4 mr-2" />
               {t('Rename')}
