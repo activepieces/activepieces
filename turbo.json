@@ -11,7 +11,8 @@
         "!src/**/*.spec.ts",
         "!src/**/*.test.ts",
         "!vitest.config.*"
-      ]
+      ],
+      "cache": false
     },
     "react-ui#build": {
       "dependsOn": ["^build"],
