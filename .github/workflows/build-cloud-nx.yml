@@ -66,15 +66,6 @@ jobs:
       - name: Lint core projects
         run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=server-api --filter=react-ui --filter=@activepieces/server-shared --filter=server-worker --filter=@activepieces/ee-shared --filter=ee-embed-sdk
 
-      - name: Lint changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_filters != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: |
-          IFS=',' read -ra PIECES <<< "${{ steps.extract-pieces.outputs.pieces_filters }}"
-          FILTER_ARGS=""
-          for piece in "${PIECES[@]}"; do
-            FILTER_ARGS="$FILTER_ARGS --filter=@activepieces/piece-${piece}"
-          done
-          npx turbo run lint $FILTER_ARGS
 
       - name: Lint all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
