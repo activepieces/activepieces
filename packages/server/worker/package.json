@@ -35,6 +35,8 @@
   },
   "devDependencies": {
     "@activepieces/engine": "workspace:*",
-    "@types/jsonwebtoken": "9.0.10"
+    "@types/jsonwebtoken": "9.0.10",
+    "@types/node": "20.19.9",
+    "@types/write-file-atomic": "4.0.3"
   }
 }

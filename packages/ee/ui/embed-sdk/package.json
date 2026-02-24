@@ -8,5 +8,10 @@
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
   },
-  "dependencies": {}
+  "dependencies": {
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9"
+  }
 }

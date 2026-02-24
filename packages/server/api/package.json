@@ -95,6 +95,7 @@
     "tiny-lru": "11.4.7",
     "tinycolor2": "1.6.0",
     "typeorm": "0.3.26",
+    "tslib": "2.6.2",
     "typeorm-pglite": "0.3.2",
     "zod": "4.1.13"
   },

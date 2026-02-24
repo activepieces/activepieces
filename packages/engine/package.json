@@ -26,10 +26,12 @@
     "priority-queue-typescript": "1.0.1",
     "socket.io-client": "4.8.1",
     "string-replace-async": "3.0.2",
+    "tslib": "2.6.2",
     "zod": "4.1.13"
   },
   "devDependencies": {
     "@activepieces/piece-approval": "workspace:*",
+    "@types/node": "20.19.9",
     "@activepieces/piece-data-mapper": "workspace:*",
     "@activepieces/piece-http": "workspace:*",
     "@activepieces/piece-webhook": "workspace:*",

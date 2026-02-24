@@ -119,6 +119,7 @@
     "use-deep-compare-effect": "1.8.1",
     "use-ripple-hook": "1.0.24",
     "vaul": "1.1.2",
+    "tslib": "2.6.2",
     "zod": "4.1.13",
     "zustand": "4.5.4"
   },

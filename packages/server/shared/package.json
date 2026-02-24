@@ -30,5 +30,8 @@
     "tree-kill": "1.2.2",
     "tslib": "2.6.2",
     "typeorm": "0.3.26"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9"
   }
 }
