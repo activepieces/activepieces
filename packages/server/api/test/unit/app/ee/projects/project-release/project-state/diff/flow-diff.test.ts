@@ -1,9 +1,16 @@
 import { faker } from '@faker-js/faker'
+import { FlowVersion } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { projectDiffService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
 import { projectStateService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
 import { system } from '../../../../../../../../src/app/helper/system/system'
 import { flowGenerator } from '../../../../../../../helpers/flow-generator'
+
+vi.mock('../../../../../../../../src/app/flows/flow-version/migrations', () => ({
+    flowMigrations: {
+        apply: async (version: FlowVersion) => version,
+    },
+}))
 
 const logger = system.globalLogger()
 describe('Flow Diff Service', () => {
@@ -85,11 +92,12 @@ describe('Flow Diff Service', () => {
     it('should skip the flow to update if the flow is not changed', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowOneDist = flowGenerator.randomizeMetadata(undefined, flowOne.version)
-        flowOneDist.version.trigger.settings.propertySettings = faker.airline.airplane()
+        // Ensure trigger propertySettings match (randomizeMetadata randomizes them)
+        flowOneDist.version.trigger.settings.propertySettings = flowOne.version.trigger.settings.propertySettings
         flowOne.externalId = flowOneDist.id
 
-        const stateOne = projectStateService(logger).getFlowState(flowOne)
-        const stateTwo = projectStateService(logger).getFlowState(flowOneDist)
+        const stateOne = await projectStateService(logger).getFlowState(flowOne)
+        const stateTwo = await projectStateService(logger).getFlowState(flowOneDist)
         const diff = await projectDiffService.diff({
             currentState: {
                 flows: [stateOne],
@@ -174,7 +182,7 @@ describe('Flow Diff Service', () => {
 
     it('should not detect flow as changed when trigger properties are in different order', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
-        const flowStateOne = projectStateService(logger).getFlowState(flowOne)
+        const flowStateOne = await projectStateService(logger).getFlowState(flowOne)
 
         // Create a flow with identical trigger content but different property ordering
         const flowTwo = {
@@ -192,7 +200,7 @@ describe('Flow Diff Service', () => {
                 },
             },
         }
-        const flowStateTwo = projectStateService(logger).getFlowState(flowTwo)
+        const flowStateTwo = await projectStateService(logger).getFlowState(flowTwo)
 
         // Also test with nested trigger.settings properties in different order
         const flowThree = {
@@ -212,7 +220,7 @@ describe('Flow Diff Service', () => {
                 },
             },
         }
-        const flowStateThree = projectStateService(logger).getFlowState(flowThree)
+        const flowStateThree = await projectStateService(logger).getFlowState(flowThree)
 
         // Test flowOne vs flowTwo (different trigger top-level property order)
         const diff1 = await projectDiffService.diff({

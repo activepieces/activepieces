@@ -1,5 +1,3 @@
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   CreateFolderRequest,
   Folder,
@@ -7,6 +5,9 @@ import {
   ListFolderRequest,
   UpdateFolderRequest,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const foldersApi = {
   async list(): Promise<FolderDto[]> {

@@ -12,7 +12,7 @@ import {
 	pipedrivePaginatedV1ApiCall,
 	pipedriveTransformCustomFields,
 } from '../common';
-import { pipedriveAuth } from '../..';
+import { pipedriveAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { FieldsResponse, GetField, RequestParams } from '../common/types';
 import { isNil } from '@activepieces/shared';

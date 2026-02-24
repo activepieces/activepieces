@@ -109,6 +109,9 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 else {
                     log.info({ codePath, timeTaken: `${Math.floor(performance.now() - startTimeCompilation)}ms` }, '[CodeBuilder#processCodeStep] Compilation success')
                 }
+
+                // node_modules is no longer needed after bun build bundles everything into index.js
+                await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
             skipSave: NO_SAVE_GUARD,

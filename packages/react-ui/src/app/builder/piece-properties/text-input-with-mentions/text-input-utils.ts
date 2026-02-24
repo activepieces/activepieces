@@ -1,13 +1,13 @@
-import { MentionNodeAttrs } from '@tiptap/extension-mention';
-import { JSONContent } from '@tiptap/react';
-
-import { StepMetadata } from '@/lib/types';
 import {
   FlowAction,
   FlowTrigger,
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
+import { MentionNodeAttrs } from '@tiptap/extension-mention';
+import { JSONContent } from '@tiptap/react';
+
+import { StepMetadata } from '@/lib/types';
 
 const removeQuotes = (text: string) => {
   if (

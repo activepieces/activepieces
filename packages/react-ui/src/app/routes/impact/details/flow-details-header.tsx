@@ -1,9 +1,9 @@
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { downloadFile } from '@/lib/utils';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type FlowDetailsHeaderProps = {
   report?: PlatformAnalyticsReport;

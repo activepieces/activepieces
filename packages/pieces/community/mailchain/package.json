@@ -1,7 +1,14 @@
 {
   "name": "@activepieces/piece-mailchain",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@mailchain/sdk": "^0.31.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

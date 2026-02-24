@@ -1,3 +1,4 @@
+import { ErrorCode, isNil } from '@activepieces/shared';
 import {
   DefaultErrorFunction,
   SetErrorFunction,
@@ -18,7 +19,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { api } from '@/lib/api';
-import { ErrorCode, isNil } from '@activepieces/shared';
 
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';

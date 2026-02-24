@@ -1,8 +1,9 @@
-import { api } from '@/lib/api';
 import {
   PopulatedMcpServer,
   UpdateMcpServerRequest,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const mcpApi = {
   async get(projectId: string): Promise<PopulatedMcpServer> {

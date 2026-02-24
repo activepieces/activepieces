@@ -1,9 +1,9 @@
+import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
 
 import { AiProviderInfo } from '../../../../../../features/agents/ai-providers';
 

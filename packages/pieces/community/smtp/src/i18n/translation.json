@@ -9,6 +9,7 @@
   "Password": "Password",
   "Port": "Port",
   "Require TLS?": "Require TLS?",
+  "Leave blank if your mail relay does not require authentication.": "Leave blank if your mail relay does not require authentication.",
   "Send Email": "Send Email",
   "Send an email using a custom SMTP server.": "Send an email using a custom SMTP server.",
   "From Email": "From Email",

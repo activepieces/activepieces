@@ -1,6 +1,3 @@
-import { create } from 'zustand';
-
-import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { ActionBase } from '@activepieces/pieces-framework';
 import {
   AgentPieceTool,
@@ -8,6 +5,9 @@ import {
   isNil,
   PredefinedInputsStructure,
 } from '@activepieces/shared';
+import { create } from 'zustand';
+
+import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 
 import { sanitizeToolName } from '../componenets/piece-tool';
 

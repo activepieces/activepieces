@@ -1,3 +1,4 @@
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
@@ -22,7 +23,6 @@ import {
 } from '@/components/ui/select';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { projectMembersApi } from '../lib/project-members-api';
 

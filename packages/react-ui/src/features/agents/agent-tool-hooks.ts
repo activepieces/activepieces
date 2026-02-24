@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-
 import { ToolCallType, type ToolCallContentBlock } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 
 import { piecesApi } from '../pieces/lib/pieces-api';
 
@@ -34,6 +33,11 @@ export const agentToolHooks = {
           case ToolCallType.FLOW:
             return {
               displayName: contentBlock.displayName,
+              logoUrl: null,
+            };
+          case ToolCallType.MCP:
+            return {
+              displayName: contentBlock.displayName ?? contentBlock.toolName,
               logoUrl: null,
             };
           default:

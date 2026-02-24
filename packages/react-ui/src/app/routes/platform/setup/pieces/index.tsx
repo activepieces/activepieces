@@ -1,3 +1,8 @@
+import {
+  PieceMetadataModelSummary,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -27,11 +32,6 @@ import { InstallPieceDialog } from '@/features/pieces/components/install-piece-d
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  PieceMetadataModelSummary,
-  PropertyType,
-} from '@activepieces/pieces-framework';
-import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();

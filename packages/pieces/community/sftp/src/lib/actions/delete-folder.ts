@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
-import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
+import { endClient, getClient, getProtocolBackwardCompatibility } from '../common';
+import { sftpAuth } from '../auth';
 import { getSftpError } from './common';
 
 async function deleteFolderFTP(client: FTPClient, directoryPath: string, recursive: boolean) {

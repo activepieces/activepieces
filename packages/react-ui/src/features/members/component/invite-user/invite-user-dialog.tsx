@@ -1,6 +1,14 @@
+import {
+  InvitationType,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+  UserInvitationWithLink,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
 import { useState, useRef } from 'react';
@@ -29,22 +37,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PlatformRoleSelect } from '@/features/members/component/platform-role-select';
-import { RoleSelector } from '@/features/members/component/role-selector';
+import { ProjectRoleSelect } from '@/features/members/component/project-role-select';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
-import {
-  InvitationType,
-  isNil,
-  Permission,
-  PlatformRole,
-  ProjectType,
-  UserInvitationWithLink,
-} from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../../lib/user-invitations-hooks';
 
@@ -141,18 +140,6 @@ export const InviteUserDialog = ({
     },
   });
 
-  const { data: rolesData } = useQuery({
-    queryKey: ['project-roles'],
-    queryFn: () => projectRoleApi.list(),
-    enabled:
-      !isNil(platform.plan.projectRolesEnabled) &&
-      platform.plan.projectRolesEnabled,
-  });
-
-  const roles = rolesData?.data ?? [];
-  const defaultProjectRole =
-    roles?.find((role) => role.name === 'Editor')?.name || roles?.[0]?.name;
-
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
@@ -163,7 +150,7 @@ export const InviteUserDialog = ({
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.MEMBER,
-      projectRole: defaultProjectRole,
+      projectRole: undefined,
     },
   });
 
@@ -191,8 +178,7 @@ export const InviteUserDialog = ({
       return;
     }
 
-    const projectRole = data.projectRole || defaultProjectRole;
-    if (data.type === InvitationType.PROJECT && !projectRole) {
+    if (data.type === InvitationType.PROJECT && !data.projectRole) {
       form.setError('projectRole', {
         type: 'required',
         message: t('Please select a project role'),
@@ -200,10 +186,7 @@ export const InviteUserDialog = ({
       return;
     }
 
-    mutate({
-      ...data,
-      projectRole,
-    });
+    mutate(data);
   };
 
   const copyInvitationLink = () => {
@@ -318,23 +301,7 @@ export const InviteUserDialog = ({
                     <PlatformRoleSelect form={form} />
                   )}
                   {form.getValues().type === InvitationType.PROJECT && (
-                    <FormField
-                      control={form.control}
-                      name="projectRole"
-                      render={({ field }) => (
-                        <FormItem className="grid gap-2">
-                          <Label>{t('Project Role')}</Label>
-                          <RoleSelector
-                            type="project"
-                            value={field.value || defaultProjectRole}
-                            onValueChange={field.onChange}
-                            roles={roles}
-                            placeholder={t('Select Role')}
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <ProjectRoleSelect form={form} />
                   )}
 
                   {form?.formState?.errors?.root?.serverError && (

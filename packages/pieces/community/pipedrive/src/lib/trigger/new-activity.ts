@@ -1,7 +1,7 @@
 import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { pipedriveApiCall, pipedriveCommon } from '../common';
-import { pipedriveAuth } from '../..';
+import { pipedriveAuth } from '../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/shared';

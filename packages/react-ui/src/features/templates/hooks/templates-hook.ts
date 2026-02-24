@@ -1,8 +1,7 @@
+import { Template, TemplateType } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
-
-import { Template, TemplateType } from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 

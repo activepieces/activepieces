@@ -1,3 +1,7 @@
+import {
+  PlatformAnalyticsReport,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Clock, LayoutGrid, Pencil, User, Workflow } from 'lucide-react';
@@ -14,10 +18,6 @@ import {
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/utils';
-import {
-  PlatformAnalyticsReport,
-  ProjectWithLimits,
-} from '@activepieces/shared';
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';

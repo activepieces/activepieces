@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   UpsertTagRequest,
   ListTagsRequest,
@@ -6,6 +5,8 @@ import {
   SetPieceTagsRequest,
   Tag,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const piecesTagsApi = {
   upsert(tag: UpsertTagRequest) {

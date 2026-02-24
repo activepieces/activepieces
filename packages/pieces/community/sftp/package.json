@@ -1,8 +1,19 @@
 {
   "name": "@activepieces/piece-sftp",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "basic-ftp": "5.0.5",
+    "ssh2": "1.16.0",
     "ssh2-sftp-client": "9.1.0"
+  },
+  "devDependencies": {
+    "@types/ssh2": "1.15.5"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

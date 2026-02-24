@@ -1,3 +1,9 @@
+import {
+  Template,
+  TemplateTelemetryEventType,
+  TemplateType,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Search } from 'lucide-react';
 import { useMemo } from 'react';
@@ -10,12 +16,6 @@ import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  Template,
-  TemplateTelemetryEventType,
-  TemplateType,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
 
 import { AllCategoriesView } from './all-categories-view';
 import { CategoryFilterCarousel } from './category-filter-carousel';

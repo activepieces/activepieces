@@ -1,3 +1,4 @@
+import { FileResponseInterface } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import ReactCodeMirror, {
@@ -13,7 +14,6 @@ import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { FileResponseInterface } from '@activepieces/shared';
 
 interface TextMessageProps {
   content: string;

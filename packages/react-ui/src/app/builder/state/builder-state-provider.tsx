@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
@@ -10,7 +11,6 @@ import {
 import { useSocket } from '@/components/socket-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-collection';
-import { Permission } from '@activepieces/shared';
 
 type BuilderStateProviderProps = Omit<
   React.PropsWithChildren<BuilderInitialState>,

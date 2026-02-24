@@ -6,7 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { googleCalendarCommon } from '../common';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../auth';
 import { GoogleCalendarEvent } from '../common/types';
 
 export const getEventById = createAction({

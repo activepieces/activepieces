@@ -1,7 +1,7 @@
+import { PopulatedMcpServer, FlowStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { Badge } from '@/components/ui/badge';
-import { PopulatedMcpServer, FlowStatus } from '@activepieces/shared';
 
 export function McpFlows({ mcpServer }: McpFlowsProps) {
   const flows = mcpServer?.flows ?? [];

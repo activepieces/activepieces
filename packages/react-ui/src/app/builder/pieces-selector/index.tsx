@@ -1,3 +1,4 @@
+import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckCircle2Icon,
@@ -26,7 +27,6 @@ import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
-import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 
 import {
   PieceSearchProvider,

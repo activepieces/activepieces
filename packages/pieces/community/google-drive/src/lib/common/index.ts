@@ -8,7 +8,7 @@ import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { OAuth2Client } from 'googleapis-common';
 import { google } from 'googleapis';
-import { googleDriveAuth } from '../..';
+import { googleDriveAuth } from '../auth';
 
 export const common = {
   properties: {

@@ -9,6 +9,7 @@
   "Password": "Senha",
   "Port": "Porta",
   "Require TLS?": "Exigir TLS?",
+  "Leave blank if your mail relay does not require authentication.": "Deixe em branco se o relé de e-mail não requer autenticação.",
   "Send Email": "Enviar e-mail",
   "Send an email using a custom SMTP server.": "Enviar um e-mail utilizando um servidor SMTP personalizado.",
   "From Email": "E-mail do Remetente",

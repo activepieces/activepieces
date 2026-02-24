@@ -1,3 +1,4 @@
+import { AgentFlowTool } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Workflow, X } from 'lucide-react';
 
@@ -12,7 +13,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AgentFlowTool } from '@activepieces/shared';
 
 import { useFlowToolDialogStore } from '../stores/flows-tools';
 

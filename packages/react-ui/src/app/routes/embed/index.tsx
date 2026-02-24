@@ -1,4 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
+import {
+  ActivepiecesClientAuthenticationFailed,
+  ActivepiecesClientAuthenticationSuccess,
+  ActivepiecesClientConfigurationFinished,
+  ActivepiecesClientEventName,
+  ActivepiecesClientInit,
+  ActivepiecesVendorEventName,
+  ActivepiecesVendorInit,
+  ActivepiecesVendorRouteChanged,
+} from 'ee-embed-sdk';
 import React from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,16 +27,6 @@ import {
   parentWindow,
   routesThatRequireProjectId,
 } from '@/lib/utils';
-import {
-  ActivepiecesClientAuthenticationFailed,
-  ActivepiecesClientAuthenticationSuccess,
-  ActivepiecesClientConfigurationFinished,
-  ActivepiecesClientEventName,
-  ActivepiecesClientInit,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorInit,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
 
 const notifyVendorPostAuthentication = () => {
   const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {

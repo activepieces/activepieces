@@ -1,3 +1,10 @@
+import {
+  GitBranchType,
+  GitPushOperationType,
+  PushEverythingGitRepoRequest,
+  PushGitRepoRequest,
+} from '@activepieces/ee-shared';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -32,13 +39,6 @@ import { gitSyncApi } from '@/features/project-releases/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  GitBranchType,
-  GitPushOperationType,
-  PushEverythingGitRepoRequest,
-  PushGitRepoRequest,
-} from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 type PushEverythingDialogProps = {
   children?: React.ReactNode;

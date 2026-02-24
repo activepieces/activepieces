@@ -1,10 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
-
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { userHooks } from '@/hooks/user-hooks';
-import { authenticationApi } from '@/lib/authentication-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import { platformApi } from '@/lib/platforms-api';
 import {
   ApEdition,
   ApFlagId,
@@ -12,6 +5,13 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
+
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { userHooks } from '@/hooks/user-hooks';
+import { authenticationApi } from '@/lib/authentication-api';
+import { authenticationSession } from '@/lib/authentication-session';
+import { platformApi } from '@/lib/platforms-api';
 
 export const useAuthorization = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);

@@ -55,7 +55,7 @@ export const newOutboundMessage = createTrigger({
             parseTagValue: true,
             parseAttributeValue: true,
             trimValues: true,
-            isArray: (name) => {
+            isArray: (name: string) => {
                 return name === "Notification";
             }
         });

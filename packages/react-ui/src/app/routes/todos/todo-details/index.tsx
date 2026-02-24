@@ -1,3 +1,10 @@
+import {
+  Todo,
+  TodoChanged,
+  WebsocketClientEvent,
+  UNRESOLVED_STATUS,
+  TodoActivityCreated,
+} from '@activepieces/shared';
 import { X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -9,13 +16,6 @@ import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoActivitiesHook } from '@/features/todos/lib/todos-activity-hook';
 import { todosApi } from '@/features/todos/lib/todos-api';
 import { cn } from '@/lib/utils';
-import {
-  Todo,
-  TodoChanged,
-  WebsocketClientEvent,
-  UNRESOLVED_STATUS,
-  TodoActivityCreated,
-} from '@activepieces/shared';
 
 import { TodoCreateComment } from './todo-create-comment';
 import { TodoDetailsStatus } from './todo-details-status';

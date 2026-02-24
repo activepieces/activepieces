@@ -11,6 +11,7 @@ import { deleteRedditPost } from './lib/actions/delete-reddit-post';
 import { deleteRedditComment } from './lib/actions/delete-reddit-comment';
 import { PieceCategory } from '@activepieces/shared';
 import { OAuth2GrantType } from '@activepieces/shared';
+import { redditAuth } from './lib/auth';
 
 const markdown = `
 To obtain your Reddit API credentials:
@@ -26,19 +27,6 @@ To obtain your Reddit API credentials:
 5. Click "create app".
 6. Note down the client ID (under the app name) and client secret.
 `;
-
-export const redditAuth = PieceAuth.OAuth2({
-  description: markdown,
-  authUrl: 'https://www.reddit.com/api/v1/authorize',
-  tokenUrl: 'https://www.reddit.com/api/v1/access_token',
-  required: true,
-  scope: ['identity', 'read', 'submit', 'edit', 'history', 'flair'],
-  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
-  extra: {
-    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
-    responseType: 'code'
-  }
-});
 
 export const reddit = createPiece({
   displayName: 'Reddit',

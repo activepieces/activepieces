@@ -1,3 +1,4 @@
+import { Permission, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -23,7 +24,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
-import { Permission, PlatformRole } from '@activepieces/shared';
 
 interface EditProjectDialogProps {
   open: boolean;

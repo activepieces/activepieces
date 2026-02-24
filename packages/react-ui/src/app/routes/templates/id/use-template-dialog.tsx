@@ -1,3 +1,11 @@
+import {
+  PopulatedFlow,
+  Template,
+  TemplateTelemetryEventType,
+  TemplateType,
+  UncategorizedFolderId,
+  isNil,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, useEffect } from 'react';
@@ -28,14 +36,6 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  PopulatedFlow,
-  Template,
-  TemplateTelemetryEventType,
-  TemplateType,
-  UncategorizedFolderId,
-  isNil,
-} from '@activepieces/shared';
 
 type UseTemplateDialogProps = {
   template: Template;

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bexioAuth } from '../../index';
+import { bexioAuth } from '../auth';
 import { BexioClient } from '../common/client';
 
 export const searchQuoteAction = createAction({

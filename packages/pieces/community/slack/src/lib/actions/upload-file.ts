@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../index';
+import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import {
   slackChannel,

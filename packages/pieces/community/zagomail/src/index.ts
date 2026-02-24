@@ -10,33 +10,7 @@ import { searchSubscriberByEmail } from './lib/actions/search-subscriber-by-emai
 import { getSubscriberDetails } from './lib/actions/get-subscriber-details';
 import { getCampaignDetails } from './lib/actions/get-campaign-details';
 import { zagoMailApiService } from './lib/common/request';
-
-export const zagomailAuth = PieceAuth.SecretText({
-	displayName: 'Application Public Key',
-	required: true,
-	description:
-		'Please provide your application public key by generating one in your zagomail account settings or by directly visiting https://app.zagomail.com/user/api-keys/index.',
-	validate: async ({ auth }) => {
-		try {
-			const response = await zagoMailApiService.getAllLists(auth);
-
-			if (response.status !== 'success') {
-				return {
-					valid: false,
-					error: 'Invalid Public Key.',
-				};
-			}
-			return {
-				valid: true,
-			};
-		} catch (e) {
-			return {
-				valid: false,
-				error: 'Invalid Public Key.',
-			};
-		}
-	},
-});
+import { zagomailAuth } from './lib/auth';
 
 export const zagomail = createPiece({
 	displayName: 'Zagomail',

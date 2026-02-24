@@ -5,5 +5,5 @@
 ### Generate database migrations
 
 ```sh
-npx nx db-migration server-api -- --name migration-name
+npx turbo run db-migration --filter=server-api -- --name migration-name
 ```

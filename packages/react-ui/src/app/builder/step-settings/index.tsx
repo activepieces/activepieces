@@ -1,3 +1,11 @@
+import {
+  FlowAction,
+  FlowActionType,
+  FlowOperationType,
+  FlowTrigger,
+  FlowTriggerType,
+  isNil,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { useEffect, useRef, useState } from 'react';
@@ -16,14 +24,6 @@ import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
-import {
-  FlowAction,
-  FlowActionType,
-  FlowOperationType,
-  FlowTrigger,
-  FlowTriggerType,
-  isNil,
-} from '@activepieces/shared';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';

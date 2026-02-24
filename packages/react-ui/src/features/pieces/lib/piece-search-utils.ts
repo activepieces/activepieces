@@ -1,3 +1,9 @@
+import {
+  PieceCategory,
+  FlowTriggerType,
+  FlowActionType,
+  AI_PIECE_NAME,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 
 import {
@@ -6,12 +12,6 @@ import {
   StepMetadata,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  PieceCategory,
-  FlowTriggerType,
-  FlowActionType,
-  AI_PIECE_NAME,
-} from '@activepieces/shared';
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (

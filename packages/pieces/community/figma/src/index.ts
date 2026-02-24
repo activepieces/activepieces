@@ -8,14 +8,7 @@ import { getCommentsAction } from './lib/actions/get-comments-action';
 import { getFileAction } from './lib/actions/get-file-action';
 import { postCommentAction } from './lib/actions/post-comment-action';
 import { newCommentTrigger } from './lib/trigger/new-comment';
-
-export const figmaAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://www.figma.com/oauth',
-  tokenUrl: 'https://www.figma.com/api/oauth/token',
-  required: true,
-  scope: ['file_read'],
-});
+import { figmaAuth } from './lib/auth';
 
 export const figma = createPiece({
   displayName: 'Figma',

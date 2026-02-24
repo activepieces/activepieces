@@ -4,7 +4,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { APITableCommon, makeClient } from '../common';
-import { APITableAuth } from '../../index';
+import { APITableAuth } from '../auth';
 import { prepareQuery } from '../common/client';
 
 export const findRecordAction = createAction({

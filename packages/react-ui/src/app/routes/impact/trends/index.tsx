@@ -1,6 +1,5 @@
-import { t } from 'i18next';
-
 import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { RunsChart } from './runs-chart';
 import { TimeSavedChart } from './time-saved-chart';

@@ -1,10 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
-
-import { memoryRouter } from '@/app/guards';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
-import { cn, parentWindow } from '@/lib/utils';
 import {
   apId,
   AppConnectionWithoutSensitiveData,
@@ -18,6 +11,13 @@ import {
   ActivepiecesNewConnectionDialogClosed,
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
+import { useEffect, useRef, useState } from 'react';
+
+import { memoryRouter } from '@/app/guards';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
+import { cn, parentWindow } from '@/lib/utils';
 
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hooks';
 import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';

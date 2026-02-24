@@ -1,7 +1,7 @@
+import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 

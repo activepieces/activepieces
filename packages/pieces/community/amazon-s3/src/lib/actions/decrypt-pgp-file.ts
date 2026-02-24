@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import * as openpgp from 'openpgp';
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3, createSecretsManagerClient } from '../common';
 
 export const decryptPgpFile = createAction({

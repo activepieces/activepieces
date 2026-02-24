@@ -1,4 +1,4 @@
-import { tarventAuth } from '../..';
+import { tarventAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, tarventCommon } from '../common';
 

@@ -8,7 +8,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { opnformAuth } from '../../index';
+import { opnformAuth } from '../auth';
 
 export const API_URL_DEFAULT = 'https://api.opnform.com';
 

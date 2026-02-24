@@ -1,7 +1,6 @@
+import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
 import { BotIcon, CircleX, RotateCcw } from 'lucide-react';
 import React from 'react';
-
-import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
 
 import {
   ChatBubble,

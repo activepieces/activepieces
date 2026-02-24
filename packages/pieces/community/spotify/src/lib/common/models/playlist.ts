@@ -30,7 +30,7 @@ export interface PlaylistAddItemsRequest {
 }
 
 export interface PlaylistRemoveItemsRequest {
-  tracks: HasURI[];
+  items: HasURI[];
 }
 
 export interface PlaylistReorderItemsRequest {

@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
@@ -14,7 +15,6 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
-import { isNil } from '@activepieces/shared';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 

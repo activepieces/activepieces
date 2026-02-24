@@ -1,3 +1,4 @@
+import { FieldType, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { nanoid } from 'nanoid';
 import { useState } from 'react';
@@ -18,7 +19,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
 import { tablesUtils } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
-import { FieldType, isNil } from '@activepieces/shared';
 
 type NewFieldDialogProps = {
   children: React.ReactNode;

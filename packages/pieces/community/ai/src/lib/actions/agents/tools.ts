@@ -2,7 +2,7 @@ import { dynamicTool, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
@@ -147,25 +147,23 @@ export async function constructAgentTools(
               : {
                   output: z
                     .string()
-                    .nullable()
                     .describe(
-                      'The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.'
+                      'Your complete response to the user. Always populate this with the full answer, result, or explanation — even if you already wrote text above. This is the final message that will be shown to the user.'
                     ),
                 }),
           }),
           execute: async (params) => {
             const { success, output } = params as {
               success: boolean;
-              output?: Record<string, unknown>;
+              output?: Record<string, unknown> | string;
             };
             outputBuilder.setStatus(
               success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
             );
-            if (!isNil(structuredOutput) && !isNil(output)) {
+            if (!isNil(structuredOutput) && !isNil(output) && !isString(output)) {
               outputBuilder.setStructuredOutput(output);
-            }
-            if (!isNil(structuredOutput) && !isNil(output)) {
-              outputBuilder.addMarkdown(output as unknown as string);
+            } else if (isNil(structuredOutput) && !isNil(output) && !outputBuilder.hasTextContent()) {
+              outputBuilder.addMarkdown(output as string);
             }
             return {};
           },

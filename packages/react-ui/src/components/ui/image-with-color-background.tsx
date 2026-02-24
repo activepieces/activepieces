@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { colorsUtils } from '@/lib/color-utils';
@@ -17,19 +17,35 @@ const ImageWithColorBackground = ({
 }: ImageWithColorBackgroundProps) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [backgroundColor, setBackgroundColor] = useState<string | null>(null);
 
-  const backgroundColor = colorsUtils.useAverageColorInImage({
-    imgUrl: src ?? '',
-    transparency: 10,
-  });
-  const handleLoad = () => {
-    setIsLoading(false);
-  };
+  const handleLoad = useCallback(
+    (e: React.SyntheticEvent<HTMLImageElement>) => {
+      setIsLoading(false);
+      const img = e.currentTarget;
+      colorsUtils.fac
+        .getColorAsync(img, { algorithm: 'simple' })
+        .then((color) => {
+          const [r, g, b] = color.value;
+          if (colorsUtils.isGrayColor(r, g, b)) {
+            setBackgroundColor(null);
+          } else {
+            setBackgroundColor(
+              `color-mix(in srgb, rgb(${r},${g},${b}) 10%, #fff 92%)`,
+            );
+          }
+        })
+        .catch(() => {
+          setBackgroundColor(null);
+        });
+    },
+    [],
+  );
 
-  const handleError = () => {
+  const handleError = useCallback(() => {
     setHasError(true);
     setIsLoading(false);
-  };
+  }, []);
 
   const { className, ...rest } = props;
 
@@ -61,6 +77,7 @@ const ImageWithColorBackground = ({
         <img
           src={src}
           alt={alt}
+          crossOrigin="anonymous"
           onLoad={handleLoad}
           onError={handleError}
           className={cn(

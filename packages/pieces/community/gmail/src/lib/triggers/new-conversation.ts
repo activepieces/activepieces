@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
-import { gmailAuth } from '../../';
+import { gmailAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { parseStream, convertAttachment } from '../common/data';

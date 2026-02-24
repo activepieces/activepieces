@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { dropboxAuth } from '../auth';
 
 export const dropboxUploadFile = createAction({
   auth: dropboxAuth,

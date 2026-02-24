@@ -1,3 +1,9 @@
+import {
+  FlowOperationType,
+  Step,
+  FlowTriggerType,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
@@ -8,12 +14,6 @@ import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-inp
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { RightSideBarType } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  Step,
-  FlowTriggerType,
-  flowStructureUtil,
-} from '@activepieces/shared';
 
 import { flowCanvasConsts } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';

@@ -1,3 +1,4 @@
+import { Permission, Table } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Download,
@@ -21,7 +22,6 @@ import {
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission, Table } from '@activepieces/shared';
 
 import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';

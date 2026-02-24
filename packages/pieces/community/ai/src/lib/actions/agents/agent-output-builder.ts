@@ -57,17 +57,18 @@ export const agentOutputBuilder = (prompt: string) => {
       input,
       agentTools,
     }: StartToolCallParams) {
+      const baseTool: ToolCallBase = {
+        toolName,
+        toolCallId,
+        type: ContentBlockType.TOOL_CALL,
+        status: ToolCallStatus.IN_PROGRESS,
+        input,
+        output: undefined,
+        startTime: new Date().toISOString(),
+      };
       const metadata = getToolMetadata({
         toolName,
-        baseTool: {
-          toolName,
-          toolCallId,
-          type: ContentBlockType.TOOL_CALL,
-          status: ToolCallStatus.IN_PROGRESS,
-          input,
-          output: undefined,
-          startTime: new Date().toISOString(),
-        },
+        baseTool,
         tools: agentTools,
       });
       steps.push(metadata);
@@ -78,8 +79,10 @@ export const agentOutputBuilder = (prompt: string) => {
           block.type === ContentBlockType.TOOL_CALL &&
           (block as ToolCallContentBlock).toolCallId === toolCallId
       );
+      if (toolIdx === -1) {
+        return;
+      }
       const tool = steps[toolIdx] as ToolCallContentBlock;
-      assertNotNullOrUndefined(tool, 'Last block must be a tool call');
       steps[toolIdx] = {
         ...tool,
         status: ToolCallStatus.COMPLETED,
@@ -93,8 +96,10 @@ export const agentOutputBuilder = (prompt: string) => {
           block.type === ContentBlockType.TOOL_CALL &&
           (block as ToolCallContentBlock).toolCallId === toolCallId
       );
+      if (toolIdx === -1) {
+        return;
+      }
       const tool = steps[toolIdx] as ToolCallContentBlock;
-      assertNotNullOrUndefined(tool, 'Last block must be a tool call');
       steps[toolIdx] = {
         ...tool,
         status: ToolCallStatus.COMPLETED,
@@ -103,6 +108,13 @@ export const agentOutputBuilder = (prompt: string) => {
           status: ExecutionToolStatus.FAILED
         },
       };
+    },
+    hasTextContent(): boolean {
+      return steps.some(
+        (step) =>
+          step.type === ContentBlockType.MARKDOWN &&
+          step.markdown.trim().length > 0
+      );
     },
     build(): AgentResult {
       return {

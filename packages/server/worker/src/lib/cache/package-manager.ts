@@ -17,7 +17,6 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
         const args = [
             '--ignore-scripts',
-            '--linker isolated',
         ]
         const filters: string[] = filtersPath
             .map(sanitizeFilterPath)

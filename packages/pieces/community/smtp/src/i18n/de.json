@@ -9,6 +9,7 @@
   "Password": "Kennwort",
   "Port": "Port",
   "Require TLS?": "TLS erforderlich?",
+  "Leave blank if your mail relay does not require authentication.": "Leer lassen, wenn Ihr Mail-Server keine Authentifizierung benötigt.",
   "Send Email": "E-Mail senden",
   "Send an email using a custom SMTP server.": "Senden Sie eine E-Mail mit einem benutzerdefinierten SMTP-Server.",
   "From Email": "Absender-E-Mail",

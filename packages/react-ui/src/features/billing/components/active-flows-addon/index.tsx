@@ -1,3 +1,11 @@
+import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  PlanName,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { CircleHelp, Plus, Zap } from 'lucide-react';
 
@@ -11,14 +19,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  isNil,
-  PlanName,
-  PlatformBillingInformation,
-} from '@activepieces/shared';
 
 import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
 

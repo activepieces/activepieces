@@ -1,3 +1,4 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, useEffect, useRef } from 'react';
@@ -21,7 +22,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 type ApplyTagsProps = {
   selectedPieces: PieceMetadataModelSummary[];

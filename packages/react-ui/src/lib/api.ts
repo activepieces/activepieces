@@ -1,3 +1,4 @@
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
 import axios, {
   AxiosError,
   AxiosRequestConfig,
@@ -8,7 +9,6 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
 
 export const API_BASE_URL =
   import.meta.env.MODE === 'cloud'

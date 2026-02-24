@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { chargekeepCommon } from '../common/common';
-import { chargekeepAuth } from '../..';
+import { chargekeepAuth } from '../auth';
 
 export const newSubscription = createTrigger({
   auth: chargekeepAuth,

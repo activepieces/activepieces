@@ -1,3 +1,4 @@
+import { Alert, AlertChannel } from '@activepieces/ee-shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -7,7 +8,6 @@ import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Alert, AlertChannel } from '@activepieces/ee-shared';
 
 import { alertsApi } from './api';
 

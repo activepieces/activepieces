@@ -1,6 +1,3 @@
-import { TSchema, Type } from '@sinclair/typebox';
-import { t } from 'i18next';
-
 import {
   piecePropertiesUtils,
   OAuth2Props,
@@ -37,6 +34,8 @@ import {
   PropertySettings,
   PieceTriggerSettings,
 } from '@activepieces/shared';
+import { TSchema, Type } from '@sinclair/typebox';
+import { t } from 'i18next';
 
 function buildInputSchemaForStep(
   type: FlowActionType | FlowTriggerType,

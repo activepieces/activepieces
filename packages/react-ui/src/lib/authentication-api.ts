@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   CreateOtpRequestBody,
   GetCurrentProjectMemberRoleQuery,
@@ -16,6 +15,8 @@ import {
   ThirdPartyAuthnProviderEnum,
   UserIdentity,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const authenticationApi = {
   signIn(request: SignInRequest) {

@@ -1,7 +1,14 @@
 {
   "name": "@activepieces/piece-linear",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@linear/sdk": "7.0.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { chatbaseAuth } from '../../index';
+import { chatbaseAuth } from '../auth';
 import { makeRequest } from '../common';
 import { chatbotIdDropdown } from '../common/props';
 

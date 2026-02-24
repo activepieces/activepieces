@@ -1,3 +1,4 @@
+import { ApFlagId, BADGES, UserWithBadges } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Lock } from 'lucide-react';
 
@@ -7,7 +8,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, BADGES, UserWithBadges } from '@activepieces/shared';
 
 interface UserBadgesProps {
   user: UserWithBadges | null | undefined;

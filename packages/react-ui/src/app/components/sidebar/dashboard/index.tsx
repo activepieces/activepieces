@@ -1,3 +1,10 @@
+import {
+  isNil,
+  PlatformRole,
+  ProjectType,
+  TeamProjectsLimit,
+  TemplateTelemetryEventType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -35,13 +42,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import {
-  isNil,
-  PlatformRole,
-  ProjectType,
-  TeamProjectsLimit,
-  TemplateTelemetryEventType,
-} from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';

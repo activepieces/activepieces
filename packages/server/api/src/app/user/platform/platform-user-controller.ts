@@ -97,6 +97,12 @@ const DeleteUserRequest = {
         params: Type.Object({
             id: ApId,
         }),
+        tags: ['users'],
+        description: 'Delete user',
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Never(),
+        },
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),

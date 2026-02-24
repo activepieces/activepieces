@@ -1,3 +1,4 @@
+import { FlowVersionState } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 
@@ -6,7 +7,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { FlowVersionState } from '@activepieces/shared';
 
 type FlowVersionStateProps = {
   state: FlowVersionState;

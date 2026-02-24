@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { bookedinAuth } from '../../index';
+import { bookedinAuth } from '../auth';
 import { BASE_URL, getBookedinHeaders, leadIdDropdown, extractApiKey } from '../common/props';
 import { isNil } from '@activepieces/shared';
 

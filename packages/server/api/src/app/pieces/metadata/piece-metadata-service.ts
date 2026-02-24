@@ -25,7 +25,7 @@ import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { localPieceCache } from './local-piece-cache'
+import { pieceCache } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
 
@@ -34,10 +34,10 @@ export const pieceRepos = repoFactory(PieceMetadataEntity)
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
-            await localPieceCache(log).setup()
+            await pieceCache(log).setup()
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
-            const translatedPieces = await localPieceCache(log).getList({
+            const translatedPieces = await pieceCache(log).getList({
                 platformId: params.platformId,
                 locale: params.locale,
             })
@@ -51,7 +51,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             return toPieceMetadataModelSummary(filteredPieces, translatedPieces, params.suggestionType)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
-            const registry = await localPieceCache(log).getRegistry({ release: params.release })
+            const registry = await pieceCache(log).getRegistry({ release: params.release })
             return registry.map((piece) => ({
                 name: piece.name,
                 version: piece.version,
@@ -62,7 +62,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             if (isNil(bestMatch)) {
                 return undefined
             }
-            const piece = await localPieceCache(log).getPieceVersion({
+            const piece = await pieceCache(log).getPieceVersion({
                 pieceName: bestMatch.name,
                 version: bestMatch.version,
                 platformId: bestMatch.platformId,
@@ -92,8 +92,10 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            const resolvedLocale = locale ?? LocalesEnum.ENGLISH
-            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale: resolvedLocale, mutate: true })
+            if (isNil(locale) || locale === LocalesEnum.ENGLISH) {
+                return piece
+            }
+            return pieceTranslation.translatePiece<PieceMetadataModel>({ piece, locale, mutate: false })
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
@@ -276,7 +278,7 @@ const findExactVersion = async (
 ): Promise<{ name: string, version: string, platformId: string | undefined } | undefined> => {
     const { name, version, platformId } = params
     const versionToSearch = findNextExcludedVersion(version)
-    const registry = await localPieceCache(log).getRegistry({ release: undefined, platformId })
+    const registry = await pieceCache(log).getRegistry({ release: undefined, platformId })
     const matchingRegistryEntries = registry.filter((entry) => {
         if (entry.name !== name) {
             return false

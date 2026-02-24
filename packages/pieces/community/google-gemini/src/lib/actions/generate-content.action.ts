@@ -1,4 +1,4 @@
-import { googleGeminiAuth } from '../../index';
+import { googleGeminiAuth } from '../auth';
 import { ApFile, DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GenerateContentParameters, GoogleGenAI } from '@google/genai';

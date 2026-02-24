@@ -1,5 +1,6 @@
 'use client';
 
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TrendingUp } from 'lucide-react';
 import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
@@ -12,7 +13,6 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type RunsChartProps = {
   report?: PlatformAnalyticsReport;

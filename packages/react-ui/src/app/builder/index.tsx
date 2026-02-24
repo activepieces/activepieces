@@ -1,3 +1,11 @@
+import {
+  FlowAction,
+  FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
+  FlowVersionState,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import { useEffect, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -14,14 +22,6 @@ import {
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { RightSideBarType } from '@/lib/types';
-import {
-  FlowAction,
-  FlowActionType,
-  FlowTrigger,
-  FlowTriggerType,
-  FlowVersionState,
-  flowStructureUtil,
-} from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
 

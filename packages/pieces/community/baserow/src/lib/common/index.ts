@@ -3,7 +3,7 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { baserowAuth } from '../../';
+import { baserowAuth } from '../auth';
 import { BaserowClient } from './client';
 import { BaserowFieldType } from './constants';
 

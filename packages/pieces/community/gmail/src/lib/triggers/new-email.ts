@@ -7,7 +7,7 @@ import {
 import dayjs from 'dayjs';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
-import { gmailAuth } from '../../';
+import { gmailAuth } from '../auth';
 import {
   GmailRequests,
   parseStream,

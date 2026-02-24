@@ -34,7 +34,7 @@ export const CategorySectionSkeleton = ({
           </div>
         </div>
 
-        <CarouselContent className="pb-3 gap-6">
+        <CarouselContent className="pb-3">
           {[...Array(4)].map((_, index) => (
             <CarouselItem
               key={index}

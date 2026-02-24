@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Control } from 'react-hook-form';
 
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { isNil } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 import { FormField, FormItem, FormMessage } from '../../../components/ui/form';

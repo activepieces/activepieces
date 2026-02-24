@@ -1,3 +1,5 @@
+import { FlowActionType, FlowOperationType, isNil } from '@activepieces/shared';
+
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import {
   PieceSelectorTabType,
@@ -6,7 +8,6 @@ import {
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { PieceSelectorOperation } from '@/lib/types';
-import { FlowActionType, FlowOperationType, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

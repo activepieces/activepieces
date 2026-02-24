@@ -1,6 +1,6 @@
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
 
 export const getClickupSpaces = createAction({
