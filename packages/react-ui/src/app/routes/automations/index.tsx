@@ -56,6 +56,8 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     setConnectionFilter,
     ownerFilter,
     setOwnerFilter,
+    folderFilter,
+    setFolderFilter,
     filters,
     filtersActive,
     clearAllFilters,
@@ -166,7 +168,10 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         onConnectionFilterChange={setConnectionFilter}
         ownerFilter={ownerFilter}
         onOwnerFilterChange={setOwnerFilter}
+        folderFilter={folderFilter}
+        onFolderFilterChange={setFolderFilter}
         onFilterChange={resetPagination}
+        folders={folders}
         connections={connections?.data}
         pieces={pieces}
         userHasPermissionToWriteFlow={userHasPermissionToWriteFlow}

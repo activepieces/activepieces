@@ -28,6 +28,7 @@ export type AutomationsFilters = {
   statusFilter: string[];
   connectionFilter: string[];
   ownerFilter: string[];
+  folderFilter: string[];
 };
 
 export type FolderContent = {

@@ -268,10 +268,20 @@ export function useAutomationsData(filters: AutomationsFilters) {
 
   const { treeItems, totalPageItems } = useMemo(() => {
     const folders = foldersQuery.data ?? [];
-    const rootFlows = rootFlowsQuery.data?.data ?? [];
-    const rootTables = rootTablesQuery.data?.data ?? [];
+    let rootFlows = rootFlowsQuery.data?.data ?? [];
+    let rootTables = rootTablesQuery.data?.data ?? [];
     const folderContents = folderContentsQuery.data ?? new Map();
     const folderCounts = folderCountsQuery.data ?? new Map();
+
+    if (filters.folderFilter.length > 0) {
+      const folderSet = new Set(filters.folderFilter);
+      rootFlows = rootFlows.filter(
+        (f) => f.folderId && folderSet.has(f.folderId),
+      );
+      rootTables = rootTables.filter(
+        (t) => t.folderId && folderSet.has(t.folderId),
+      );
+    }
 
     if (isFiltered) {
       const { items, totalItems } = buildFilteredTreeItems(
@@ -307,6 +317,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
     rootPage,
     pageSize,
     isFiltered,
+    filters.folderFilter,
   ]);
 
   const effectiveExpandedFolders = useMemo(() => {

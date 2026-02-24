@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import {
   Filter,
+  FolderIcon,
   FolderPlus,
   Import,
   Link2,
@@ -31,6 +32,7 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   AppConnectionWithoutSensitiveData,
   FlowStatus,
+  FolderDto,
 } from '@activepieces/shared';
 import { MultiSelectFilter } from './multi-select-filter';
 
@@ -45,7 +47,10 @@ type AutomationsFiltersProps = {
   onConnectionFilterChange: (value: string[]) => void;
   ownerFilter: string[];
   onOwnerFilterChange: (value: string[]) => void;
+  folderFilter: string[];
+  onFolderFilterChange: (value: string[]) => void;
   onFilterChange?: () => void;
+  folders: FolderDto[];
   connections: AppConnectionWithoutSensitiveData[] | undefined;
   pieces: PieceMetadataModelSummary[] | undefined;
   userHasPermissionToWriteFlow: boolean;
@@ -73,7 +78,10 @@ export const AutomationsFilters = ({
   onConnectionFilterChange,
   ownerFilter,
   onOwnerFilterChange,
+  folderFilter,
+  onFolderFilterChange,
   onFilterChange,
+  folders,
   connections,
   pieces,
   userHasPermissionToWriteFlow,
@@ -99,6 +107,11 @@ export const AutomationsFilters = ({
   const statusOptions = Object.values(FlowStatus).map((status) => ({
     value: status,
     label: formatUtils.convertEnumToHumanReadable(status),
+  }));
+
+  const folderOptions = folders.map((folder) => ({
+    value: folder.id,
+    label: folder.displayName,
   }));
 
   const connectionOptions = (connections || []).map((connection) => {
@@ -187,6 +200,20 @@ export const AutomationsFilters = ({
             }}
             searchable
           />
+
+          {folderOptions.length > 0 && (
+            <MultiSelectFilter
+              label={t('Folder')}
+              icon={<FolderIcon className="h-4 w-4" />}
+              options={folderOptions}
+              selectedValues={folderFilter}
+              onChange={(values) => {
+                onFolderFilterChange(values);
+                onFilterChange?.();
+              }}
+              searchable
+            />
+          )}
 
           {hasActiveFilters && (
             <Button

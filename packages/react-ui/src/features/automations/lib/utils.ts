@@ -282,7 +282,8 @@ export function hasActiveFilters(filters: AutomationsFilters): boolean {
     filters.typeFilter.length > 0 ||
     filters.statusFilter.length > 0 ||
     filters.connectionFilter.length > 0 ||
-    filters.ownerFilter.length > 0
+    filters.ownerFilter.length > 0 ||
+    filters.folderFilter.length > 0
   );
 }
 

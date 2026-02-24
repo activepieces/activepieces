@@ -10,6 +10,7 @@ const TYPE_PARAM = 'type';
 const STATUS_PARAM = 'status';
 const CONNECTION_PARAM = 'connection';
 const OWNER_PARAM = 'owner';
+const FOLDER_PARAM = 'folder';
 
 const FILTER_PARAMS = [
   SEARCH_PARAM,
@@ -17,6 +18,7 @@ const FILTER_PARAMS = [
   STATUS_PARAM,
   CONNECTION_PARAM,
   OWNER_PARAM,
+  FOLDER_PARAM,
 ] as const;
 
 export function useAutomationsFilters() {
@@ -39,6 +41,9 @@ export function useAutomationsFilters() {
   );
   const [ownerFilter, setOwnerFilterState] = useState<string[]>(
     () => searchParams.getAll(OWNER_PARAM),
+  );
+  const [folderFilter, setFolderFilterState] = useState<string[]>(
+    () => searchParams.getAll(FOLDER_PARAM),
   );
 
   const updateParams = useCallback(
@@ -108,12 +113,21 @@ export function useAutomationsFilters() {
     [updateParams],
   );
 
+  const setFolderFilter = useCallback(
+    (value: string[]) => {
+      setFolderFilterState(value);
+      updateParams({ [FOLDER_PARAM]: value.length > 0 ? value : null });
+    },
+    [updateParams],
+  );
+
   const filters: AutomationsFilters = {
     searchTerm,
     typeFilter,
     statusFilter,
     connectionFilter,
     ownerFilter,
+    folderFilter,
   };
 
   const filtersActive = hasActiveFilters(filters);
@@ -125,6 +139,7 @@ export function useAutomationsFilters() {
     setStatusFilterState([]);
     setConnectionFilterState([]);
     setOwnerFilterState([]);
+    setFolderFilterState([]);
     updateParams(
       Object.fromEntries(FILTER_PARAMS.map((key) => [key, null])),
     );
@@ -141,6 +156,8 @@ export function useAutomationsFilters() {
     setConnectionFilter,
     ownerFilter,
     setOwnerFilter,
+    folderFilter,
+    setFolderFilter,
     filters,
     filtersActive,
     clearAllFilters,
