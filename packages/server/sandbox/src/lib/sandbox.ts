@@ -27,8 +27,8 @@ export function createSandbox(
             }, 'Starting sandbox')
             childProcess = await processMaker.create({
                 sandboxId,
-                command: [],
-                mounts: [],
+                command: options.command ?? [],
+                mounts: options.mounts ?? [],
                 env: options.env,
                 resourceLimits: {
                     memoryBytes: options.memoryLimitMb * 1024 * 1024,

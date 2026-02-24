@@ -43,6 +43,8 @@ export type SandboxInitOptions = {
     cpuMsPerSec: number
     timeLimitSeconds: number
     reusable: boolean
+    command?: string[]
+    mounts?: SandboxMount[]
 }
 
 export type SandboxResult = {

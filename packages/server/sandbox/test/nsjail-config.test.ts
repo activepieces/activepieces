@@ -26,11 +26,12 @@ describe('generateNsjailConfig', () => {
 
         expect(config).toContain('name: "test-sandbox-1"')
         expect(config).toContain('time_limit: 30')
+        expect(config).toContain('detect_cgroupv2: true')
         expect(config).toContain('cgroup_mem_max: 536870912')
         expect(config).toContain('cgroup_cpu_ms_per_sec: 500')
         expect(config).toContain('clone_newnet: false')
         expect(config).toContain('exec_bin {')
-        expect(config).toContain('  arg: "node"')
+        expect(config).toContain('  path: "node"')
         expect(config).toContain('  arg: "/root/main.js"')
     })
 
@@ -51,7 +52,7 @@ describe('generateNsjailConfig', () => {
         expect(config).toContain('clone_newnet: false')
     })
 
-    it('should mount /proc', () => {
+    it('should include default system mounts', () => {
         const params: CreateSandboxProcessParams = {
             sandboxId: 'proc-test',
             command: ['node', 'app.js'],
@@ -65,9 +66,15 @@ describe('generateNsjailConfig', () => {
         }
 
         const config = generateNsjailConfig(params)
+        expect(config).toContain('src: "/usr"')
+        expect(config).toContain('dst: "/usr"')
+        expect(config).toContain('src: "/lib"')
+        expect(config).toContain('dst: "/lib"')
         expect(config).toContain('src: "/proc"')
         expect(config).toContain('dst: "/proc"')
         expect(config).toContain('fstype: "proc"')
+        expect(config).toContain('fstype: "tmpfs"')
+        expect(config).toContain('dst: "/tmp"')
     })
 
     it('should handle optional mounts with mandatory: false', () => {
@@ -144,6 +151,25 @@ describe('generateNsjailConfig', () => {
         const config = generateNsjailConfig(params)
         expect(config).toContain('envar: "FOO=bar"')
         expect(config).toContain('envar: "BAZ=qux"')
+    })
+
+    it('should omit cgroup config when limits are zero', () => {
+        const params: CreateSandboxProcessParams = {
+            sandboxId: 'no-cgroup-test',
+            command: ['node', 'app.js'],
+            mounts: [],
+            env: {},
+            resourceLimits: {
+                memoryBytes: 0,
+                cpuMsPerSec: 0,
+                timeLimitSeconds: 10,
+            },
+        }
+
+        const config = generateNsjailConfig(params)
+        expect(config).not.toContain('cgroup_mem_max')
+        expect(config).not.toContain('cgroup_cpu_ms_per_sec')
+        expect(config).not.toContain('detect_cgroupv2')
     })
 
     it('should generate bind mounts correctly', () => {

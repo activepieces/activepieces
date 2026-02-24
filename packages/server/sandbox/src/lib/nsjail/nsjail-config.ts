@@ -1,67 +1,90 @@
 import { CreateSandboxProcessParams } from '../types'
 
-export function generateNsjailConfig(params: CreateSandboxProcessParams): string {
-    const lines: string[] = []
+/**
+ * nsjail protobuf text-format config template.
+ * Placeholders are replaced at runtime by {@link generateNsjailConfig}.
+ *
+ * @see https://github.com/google/nsjail (config.proto)
+ * @see https://github.com/windmill-labs/windmill/tree/main/backend/windmill-worker/nsjail
+ */
+const CONFIG_TEMPLATE = `\
+name: "{SANDBOX_ID}"
 
-    lines.push(`name: "${escapeProtobuf(params.sandboxId)}"`)
-    lines.push('')
+mode: ONCE
+time_limit: {TIME_LIMIT_SECONDS}
 
-    lines.push('mode: ONCE')
-    lines.push(`time_limit: ${params.resourceLimits.timeLimitSeconds}`)
-    lines.push('')
+clone_newnet: false
+clone_newuser: true
+clone_newns: true
+clone_newpid: true
+clone_newipc: true
+clone_newuts: true
 
-    lines.push('clone_newnet: false')
-    lines.push('clone_newuser: true')
-    lines.push('clone_newns: true')
-    lines.push('clone_newpid: true')
-    lines.push('clone_newipc: true')
-    lines.push('clone_newuts: true')
-    lines.push('')
+{CGROUP_CONFIG}
 
-    lines.push(`cgroup_mem_max: ${params.resourceLimits.memoryBytes}`)
-    lines.push(`cgroup_cpu_ms_per_sec: ${params.resourceLimits.cpuMsPerSec}`)
-    lines.push('')
-
-    lines.push('mount {')
-    lines.push('  src: "/proc"')
-    lines.push('  dst: "/proc"')
-    lines.push('  fstype: "proc"')
-    lines.push('  rw: false')
-    lines.push('}')
-    lines.push('')
-
-    for (const mount of params.mounts) {
-        lines.push('mount {')
-        lines.push(`  src: "${escapeProtobuf(mount.hostPath)}"`)
-        lines.push(`  dst: "${escapeProtobuf(mount.sandboxPath)}"`)
-        lines.push('  is_bind: true')
-        lines.push('  rw: false')
-        if (mount.optional) {
-            lines.push('  mandatory: false')
-        }
-        lines.push('}')
-        lines.push('')
-    }
-
-    for (const [key, value] of Object.entries(params.env)) {
-        lines.push(`envar: "${escapeProtobuf(key)}=${escapeProtobuf(value)}"`)
-    }
-    if (Object.keys(params.env).length > 0) {
-        lines.push('')
-    }
-
-    if (params.command.length > 0) {
-        lines.push('exec_bin {')
-        for (const arg of params.command) {
-            lines.push(`  arg: "${escapeProtobuf(arg)}"`)
-        }
-        lines.push('}')
-    }
-
-    return lines.join('\n')
+mount {
+  src: "/usr"
+  dst: "/usr"
+  is_bind: true
+  rw: false
 }
 
-function escapeProtobuf(value: string): string {
+mount {
+  src: "/lib"
+  dst: "/lib"
+  is_bind: true
+  rw: false
+}
+
+mount {
+  src: "/proc"
+  dst: "/proc"
+  fstype: "proc"
+  rw: false
+}
+
+mount {
+  dst: "/tmp"
+  fstype: "tmpfs"
+  rw: true
+}
+
+{EXTRA_MOUNTS}
+
+{ENVARS}
+
+{EXEC_BIN}
+`
+
+export function generateNsjailConfig(params: CreateSandboxProcessParams): string {
+    const { sandboxId, resourceLimits, mounts, env, command } = params
+
+    const hasCgroupLimits = resourceLimits.memoryBytes > 0 || resourceLimits.cpuMsPerSec > 0
+
+    return CONFIG_TEMPLATE
+        .replace('{SANDBOX_ID}', esc(sandboxId))
+        .replace('{TIME_LIMIT_SECONDS}', String(resourceLimits.timeLimitSeconds))
+        .replace('{CGROUP_CONFIG}', hasCgroupLimits
+            ? [
+                'detect_cgroupv2: true',
+                `cgroup_mem_max: ${resourceLimits.memoryBytes}`,
+                `cgroup_cpu_ms_per_sec: ${resourceLimits.cpuMsPerSec}`,
+            ].join('\n')
+            : '')
+        .replace('{EXTRA_MOUNTS}', mounts.map((m) =>
+            `mount {\n  src: "${esc(m.hostPath)}"\n  dst: "${esc(m.sandboxPath)}"\n  is_bind: true\n  rw: false${m.optional ? '\n  mandatory: false' : ''}\n}`,
+        ).join('\n\n'))
+        .replace('{ENVARS}', Object.entries(env)
+            .map(([key, value]) => `envar: "${esc(key)}=${esc(value)}"`)
+            .join('\n'))
+        .replace('{EXEC_BIN}', command.length > 0
+            ? `exec_bin {\n  path: "${esc(command[0])}"${command.slice(1).map((arg) => `\n  arg: "${esc(arg)}"`).join('')}\n}`
+            : '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trimEnd()
+}
+
+function esc(value: string): string {
     return value
         .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"')

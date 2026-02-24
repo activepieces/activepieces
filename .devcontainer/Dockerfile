@@ -1,8 +1,11 @@
+# [Choice] Node.js version (use -bullseye variants on local arm64/Apple Silicon): 20, 18, 16, 14, 20-bullseye, 18-bullseye, 16-bullseye, 14-bullseye, 20-buster, 18-buster, 16-buster, 14-buster
+ARG VARIANT=20-bullseye
+
 # Build nsjail from source
 FROM debian:bullseye-slim AS nsjail-build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    autoconf bison flex gcc g++ git libprotobuf-dev libnl-route-3-dev \
+    autoconf bison flex gcc g++ git ca-certificates libprotobuf-dev libnl-route-3-dev \
     libtool make pkg-config protobuf-compiler \
     && rm -rf /var/lib/apt/lists/*
 
@@ -11,9 +14,7 @@ RUN git clone --branch 3.4 https://github.com/google/nsjail.git /nsjail \
     && make clean \
     && make
 
-# [Choice] Node.js version (use -bullseye variants on local arm64/Apple Silicon): 20, 18, 16, 14, 20-bullseye, 18-bullseye, 16-bullseye, 14-bullseye, 20-buster, 18-buster, 16-buster, 14-buster
-ARG VARIANT=20-bullseye
-FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
+FROM mcr.microsoft.com/devcontainers/javascript-node:0-${VARIANT}
 
 RUN npm install -g nx
 RUN apt-get update && apt-get install -y git
@@ -29,9 +30,9 @@ RUN apt-get update \
 RUN apt-get update && apt-get install -y poppler-utils poppler-data
 
 # Set the locale
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 COPY --from=nsjail-build /nsjail/nsjail /usr/bin/nsjail
 
