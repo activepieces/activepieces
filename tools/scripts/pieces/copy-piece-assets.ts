@@ -1,5 +1,5 @@
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 function getChangedPiecePaths(): string[] | null {
@@ -8,33 +8,6 @@ function getChangedPiecePaths(): string[] | null {
         return null
     }
     return changedPieces.split('\n').filter(Boolean)
-}
-
-function resolveWorkspaceVersion(packageName: string): string | null {
-    for (const searchPath of WORKSPACE_SEARCH_PATHS) {
-        const pkgPath = join(searchPath, 'package.json')
-        if (!existsSync(pkgPath)) {
-            continue
-        }
-        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-        if (pkg.name === packageName) {
-            return pkg.version
-        }
-    }
-    return null
-}
-
-function resolveWorkspaceVersions(dependencies: Record<string, string>): Record<string, string> {
-    const resolved: Record<string, string> = {}
-    for (const [name, version] of Object.entries(dependencies)) {
-        if (version.startsWith('workspace:')) {
-            const resolvedVersion = resolveWorkspaceVersion(name)
-            resolved[name] = resolvedVersion ?? version
-        } else {
-            resolved[name] = version
-        }
-    }
-    return resolved
 }
 
 function copyPieceAssets(piecePath: string): boolean {
@@ -55,11 +28,7 @@ function copyPackageJson(piecePath: string, distPath: string): void {
     if (!existsSync(srcPackageJson)) {
         return
     }
-    const pkg = JSON.parse(readFileSync(srcPackageJson, 'utf-8'))
-    if (pkg.dependencies) {
-        pkg.dependencies = resolveWorkspaceVersions(pkg.dependencies)
-    }
-    writeFileSync(join(distPath, 'package.json'), JSON.stringify(pkg, null, 2))
+    copyFileSync(srcPackageJson, join(distPath, 'package.json'))
     console.info(`[copyPieceAssets] copied package.json for ${piecePath}`)
 }
 
@@ -97,9 +66,3 @@ const main = async () => {
 }
 
 main()
-
-const WORKSPACE_SEARCH_PATHS = [
-    'packages/shared',
-    'packages/pieces/community/common',
-    'packages/pieces/community/framework',
-]

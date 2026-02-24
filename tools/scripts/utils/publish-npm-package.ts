@@ -28,7 +28,7 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   json.version = version
   writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))
 
-  execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
+  execSync(`bun publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
 
   console.info(`[publishProject] success, path=${path}, version=${version}`)
 }
