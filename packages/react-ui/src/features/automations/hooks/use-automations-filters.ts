@@ -30,20 +30,20 @@ export function useAutomationsFilters() {
   const [searchTerm, setSearchTerm] = useState(
     () => searchParams.get(SEARCH_PARAM) ?? '',
   );
-  const [typeFilter, setTypeFilterState] = useState<string[]>(
-    () => searchParams.getAll(TYPE_PARAM),
+  const [typeFilter, setTypeFilterState] = useState<string[]>(() =>
+    searchParams.getAll(TYPE_PARAM),
   );
-  const [statusFilter, setStatusFilterState] = useState<string[]>(
-    () => searchParams.getAll(STATUS_PARAM),
+  const [statusFilter, setStatusFilterState] = useState<string[]>(() =>
+    searchParams.getAll(STATUS_PARAM),
   );
-  const [connectionFilter, setConnectionFilterState] = useState<string[]>(
-    () => searchParams.getAll(CONNECTION_PARAM),
+  const [connectionFilter, setConnectionFilterState] = useState<string[]>(() =>
+    searchParams.getAll(CONNECTION_PARAM),
   );
-  const [ownerFilter, setOwnerFilterState] = useState<string[]>(
-    () => searchParams.getAll(OWNER_PARAM),
+  const [ownerFilter, setOwnerFilterState] = useState<string[]>(() =>
+    searchParams.getAll(OWNER_PARAM),
   );
-  const [folderFilter, setFolderFilterState] = useState<string[]>(
-    () => searchParams.getAll(FOLDER_PARAM),
+  const [folderFilter, setFolderFilterState] = useState<string[]>(() =>
+    searchParams.getAll(FOLDER_PARAM),
   );
 
   const updateParams = useCallback(
@@ -140,9 +140,7 @@ export function useAutomationsFilters() {
     setConnectionFilterState([]);
     setOwnerFilterState([]);
     setFolderFilterState([]);
-    updateParams(
-      Object.fromEntries(FILTER_PARAMS.map((key) => [key, null])),
-    );
+    updateParams(Object.fromEntries(FILTER_PARAMS.map((key) => [key, null])));
   }, [updateParams]);
 
   return {

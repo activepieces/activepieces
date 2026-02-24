@@ -1,3 +1,9 @@
+import {
+  Permission,
+  Template,
+  TemplateType,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ChevronRight,
@@ -24,12 +30,6 @@ import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  Permission,
-  Template,
-  TemplateType,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
 
 type ActionRowProps = {
   icon: React.ReactNode;

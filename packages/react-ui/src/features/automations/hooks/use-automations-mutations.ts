@@ -1,3 +1,10 @@
+import {
+  FlowOperationType,
+  PopulatedFlow,
+  Table,
+  isNil,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback } from 'react';
@@ -10,13 +17,6 @@ import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { tablesUtils } from '@/features/tables/lib/utils';
 import { useNewWindow } from '@/lib/navigation-utils';
-import {
-  FlowOperationType,
-  PopulatedFlow,
-  Table,
-  isNil,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
 
 import { SelectedItemsMap, TreeItem } from '../lib/types';
 

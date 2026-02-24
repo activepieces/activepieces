@@ -1,3 +1,9 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import {
+  AppConnectionWithoutSensitiveData,
+  FlowStatus,
+  FolderDto,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Filter,
@@ -28,12 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useOwnerOptions } from '@/features/automations/hooks/use-owner-options';
 import { formatUtils } from '@/lib/utils';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import {
-  AppConnectionWithoutSensitiveData,
-  FlowStatus,
-  FolderDto,
-} from '@activepieces/shared';
+
 import { MultiSelectFilter } from './multi-select-filter';
 
 type AutomationsFiltersProps = {

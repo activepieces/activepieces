@@ -1,3 +1,4 @@
+import { Permission, UncategorizedFolderId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -16,11 +17,11 @@ import { useAutomationsData } from '@/features/automations/hooks/use-automations
 import { useAutomationsDialogs } from '@/features/automations/hooks/use-automations-dialogs';
 import { useAutomationsFilters } from '@/features/automations/hooks/use-automations-filters';
 import { useAutomationsMutations } from '@/features/automations/hooks/use-automations-mutations';
-import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
 import {
   useAutomationsSelection,
   hasMovableOrExportableItems,
 } from '@/features/automations/hooks/use-automations-selection';
+import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
 import { TreeItem } from '@/features/automations/lib/types';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
@@ -28,7 +29,6 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission, UncategorizedFolderId } from '@activepieces/shared';
 
 export const AutomationsPage = () => {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();

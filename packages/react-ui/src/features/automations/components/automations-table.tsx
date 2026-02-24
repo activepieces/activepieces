@@ -1,3 +1,5 @@
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { t } from 'i18next';
 import React from 'react';
@@ -6,8 +8,6 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 
 import { SelectedItemsMap, TreeItem } from '../lib/types';
 import { groupTreeItemsByFolder } from '../lib/utils';

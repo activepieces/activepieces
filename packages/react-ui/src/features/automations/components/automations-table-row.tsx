@@ -1,3 +1,4 @@
+import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDown,
@@ -25,7 +26,6 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,18 +33,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { FormattedDate } from '@/components/ui/formatted-date';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ShareTemplateDialog } from '@/features/flows/components/share-template-dialog';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
+import { cn } from '@/lib/utils';
 
 import { TreeItem } from '../lib/types';
 

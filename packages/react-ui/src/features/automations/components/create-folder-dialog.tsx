@@ -1,4 +1,4 @@
-import { FolderDto  } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';

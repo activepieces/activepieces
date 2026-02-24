@@ -1,7 +1,7 @@
+import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { t } from 'i18next';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -20,7 +20,11 @@ function readPinnedList(projectId: string): string[] {
     const raw = localStorage.getItem(getStorageKey(projectId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+    if (
+      Array.isArray(parsed) &&
+      parsed.length > 0 &&
+      typeof parsed[0] === 'object'
+    ) {
       return [];
     }
     return parsed as string[];
@@ -37,8 +41,8 @@ export function usePinnedItems() {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
 
-  const [pinnedList, setPinnedList] = useState<string[]>(
-    () => readPinnedList(projectId),
+  const [pinnedList, setPinnedList] = useState<string[]>(() =>
+    readPinnedList(projectId),
   );
 
   const pinnedIds = new Set(pinnedList);

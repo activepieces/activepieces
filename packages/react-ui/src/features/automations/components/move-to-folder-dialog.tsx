@@ -1,3 +1,4 @@
+import { FolderDto, UncategorizedFolderId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FolderDto, UncategorizedFolderId } from '@activepieces/shared';
 
 type MoveToFolderDialogProps = {
   open: boolean;
