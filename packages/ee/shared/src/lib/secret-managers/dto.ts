@@ -4,6 +4,7 @@ import { Static, Type } from '@sinclair/typebox'
 export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',
     AWS = 'aws',
+    CYBERARK = 'cyberark-conjur',
 }
 
 /**
@@ -18,10 +19,6 @@ export const HashicorpProviderConfigSchema = Type.Object({
 })
 export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchema>
 
-export const HashicorpGetSecretRequestSchema = Type.Object({
-    path: Type.String(),
-})
-export type HashicorpGetSecretRequest = Static<typeof HashicorpGetSecretRequestSchema>
 
 
 /**
@@ -34,10 +31,21 @@ export const AWSProviderConfigSchema = Type.Object({
 })
 export type AWSProviderConfig = Static<typeof AWSProviderConfigSchema>
 
-export const AWSGetSecretRequestSchema = Type.Object({
-    path: Type.String(),
+
+
+/**
+ * Cyberark Conjur Provider Config
+ */
+
+export const CyberarkConjurProviderConfigSchema = Type.Object({
+    organizationAccountName: Type.String(),
+    loginId: Type.String(),
+    url: Type.String(),
+    apiKey: Type.String(),
 })
-export type AWSGetSecretRequest = Static<typeof AWSGetSecretRequestSchema>
+export type CyberarkConjurProviderConfig = Static<typeof CyberarkConjurProviderConfigSchema>
+
+
 
 
 export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId', [
@@ -49,6 +57,10 @@ export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId'
         providerId: Type.Literal(SecretManagerProviderId.AWS),
         config: AWSProviderConfigSchema,
     }),
+    Type.Object({
+        providerId: Type.Literal(SecretManagerProviderId.CYBERARK),
+        config: CyberarkConjurProviderConfigSchema,
+    }),
 ])
 
 export type ConnectSecretManagerRequest = Static<typeof ConnectSecretManagerRequestSchema>
@@ -58,15 +70,8 @@ export const DisconnectSecretManagerRequestSchema = Type.Object({
 })
 export type DisconnectSecretManagerRequest = Static<typeof DisconnectSecretManagerRequestSchema>
 
-export const GetSecretManagerSecretRequestSchema = DiscriminatedUnion('providerId', [
-    Type.Object({
-        providerId: Type.Literal(SecretManagerProviderId.HASHICORP),
-        request: HashicorpGetSecretRequestSchema,
-    }),
-    Type.Object({
-        providerId: Type.Literal(SecretManagerProviderId.AWS),
-        request: AWSGetSecretRequestSchema,
-    }),
-])
+export const GetSecretManagerSecretRequestSchema = Type.Object({
+    path: Type.String(),
+})
 
 export type GetSecretManagerSecretRequest = Static<typeof GetSecretManagerSecretRequestSchema>

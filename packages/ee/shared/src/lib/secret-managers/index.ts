@@ -1,12 +1,13 @@
 import { BaseModelSchema, DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { AWSGetSecretRequestSchema, AWSProviderConfigSchema, HashicorpGetSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
+import {  AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, GetSecretManagerSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
 
 export * from './dto'
 
 export const SecretManagerConfigSchema = Type.Union([
     HashicorpProviderConfigSchema,
     AWSProviderConfigSchema,
+    CyberarkConjurProviderConfigSchema,
 ])
 export type SecretManagerConfig = Static<typeof SecretManagerConfigSchema>
 
@@ -40,13 +41,19 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.HASHICORP),
         fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema),
-        getSecretParams: Type.Record(Type.KeyOf(HashicorpGetSecretRequestSchema), SecretManagerFieldSchema),
+        getSecretParams: Type.Record(Type.KeyOf(GetSecretManagerSecretRequestSchema), SecretManagerFieldSchema),
     }),
     Type.Object({
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.AWS),
         fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema),
-        getSecretParams: Type.Record(Type.KeyOf(AWSGetSecretRequestSchema), SecretManagerFieldSchema),
+        getSecretParams: Type.Record(Type.KeyOf(GetSecretManagerSecretRequestSchema), SecretManagerFieldSchema),
+    }),
+    Type.Object({
+        ...SecretManagerProviderMetaDataBaseSchema.properties,
+        id: Type.Literal(SecretManagerProviderId.CYBERARK),
+        fields: Type.Record(Type.KeyOf(CyberarkConjurProviderConfigSchema), SecretManagerFieldSchema),
+        getSecretParams: Type.Record(Type.KeyOf(GetSecretManagerSecretRequestSchema), SecretManagerFieldSchema),
     }),
 ])
 
