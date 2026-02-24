@@ -24,8 +24,9 @@ import semVer from 'semver'
 import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
+import { pubsub } from '../../helper/pubsub'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
-import { pieceCache } from './piece-cache'
+import { pieceCache, PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { pieceListUtils } from './utils'
 
@@ -106,6 +107,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 updated: existingMetadata.updated,
                 created: existingMetadata.created,
             })
+            const message: PieceMetadataRefreshMessage = {
+                type: PieceMetadataRefreshType.UPDATE_USAGE,
+                piece: { name: existingMetadata.name, version: existingMetadata.version, platformId: existingMetadata.platformId, projectUsage: usage },
+            }
+            await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
         },
         async resolveExactVersion({ name, version, platformId }: GetExactPieceVersionParams): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
@@ -128,6 +134,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             packageType,
             pieceType,
             archiveId,
+            publishCacheRefresh = true,
         }: CreateParams): Promise<PieceMetadataSchema> {
             const existingMetadata = await pieceRepos().findOneBy({
                 name: pieceMetadata.name,
@@ -146,7 +153,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            return pieceRepos().save({
+            const savedPiece = await pieceRepos().save({
                 id: apId(),
                 packageType,
                 pieceType,
@@ -155,15 +162,28 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 created: createdDate,
                 ...pieceMetadata,
             })
+            if (publishCacheRefresh) {
+                const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.CREATE, piece: savedPiece }
+                await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
+            }
+            return savedPiece
         },
 
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
+            const deleted: { name: string, version: string }[] = []
             await Promise.all(pieces.map(async (piece) => {
-                await pieceRepos().delete({
+                const result = await pieceRepos().delete({
                     name: piece.name,
                     version: piece.version,
                 })
+                if (result.affected && result.affected > 0) {
+                    deleted.push(piece)
+                }
             }))
+            if (deleted.length > 0) {
+                const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.DELETE, pieces: deleted }
+                await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
+            }
         },
     }
 }
@@ -383,6 +403,7 @@ type CreateParams = {
     packageType: PackageType
     pieceType: PieceType
     archiveId?: string
+    publishCacheRefresh?: boolean
 }
 
 type UpdateUsage = {

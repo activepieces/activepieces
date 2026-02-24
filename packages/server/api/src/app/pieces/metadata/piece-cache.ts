@@ -5,17 +5,29 @@ import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, sortByNameAndVersionDesc } from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
 
-const CACHE_TTL_MS = 5 * 60 * 1000
-
 let cache: LRU<unknown>
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
+
+export const PIECE_METADATA_REFRESH_CHANNEL = 'piece-metadata-refresh'
+
+export enum PieceMetadataRefreshType {
+    CREATE = 'CREATE',
+    DELETE = 'DELETE',
+    UPDATE_USAGE = 'UPDATE_USAGE',
+}
+
+export type PieceMetadataRefreshMessage =
+    | { type: PieceMetadataRefreshType.CREATE, piece: PieceMetadataSchema }
+    | { type: PieceMetadataRefreshType.DELETE, pieces: { name: string, version: string }[] }
+    | { type: PieceMetadataRefreshType.UPDATE_USAGE, piece: { name: string, version: string, platformId?: string, projectUsage: number } }
 
 const CACHE_KEY = {
     list: (locale: LocalesEnum): string => `list:${locale}`,
@@ -27,8 +39,15 @@ export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
-            cache = lru(cacheMaxSize, CACHE_TTL_MS)
+            cache = lru(cacheMaxSize)
             log.info('[lruPieceCache] LRU piece cache initialized')
+            if (!isTestingEnvironment) {
+                await pubsub.subscribe(PIECE_METADATA_REFRESH_CHANNEL, (message: string) => {
+                    const parsed = JSON.parse(message) as PieceMetadataRefreshMessage
+                    handleRefreshMessage(parsed)
+                    log.debug({ type: parsed.type }, '[lruPieceCache] Handled piece metadata refresh message')
+                })
+            }
         },
 
         async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
@@ -169,6 +188,83 @@ async function getCachedOrFetch<T>(
     inFlightQueries.set(cacheKey, queryPromise)
 
     return queryPromise
+}
+
+function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
+    switch (message.type) {
+        case PieceMetadataRefreshType.CREATE:
+            handleCreate(message.piece)
+            break
+        case PieceMetadataRefreshType.DELETE:
+            handleDelete(message.pieces)
+            break
+        case PieceMetadataRefreshType.UPDATE_USAGE:
+            handleUpdateUsage(message.piece)
+            break
+    }
+}
+
+function handleCreate(piece: PieceMetadataSchema): void {
+    const registryKey = CACHE_KEY.registry()
+    const cachedRegistry = cache.get(registryKey) as PieceRegistryEntry[] | undefined
+    if (!isNil(cachedRegistry)) {
+        const alreadyExists = cachedRegistry.some(e => e.name === piece.name && e.version === piece.version)
+        if (!alreadyExists) {
+            cache.set(registryKey, [...cachedRegistry, toRegistryEntry(piece)])
+        }
+    }
+
+    cache.set(CACHE_KEY.piece(piece.name, piece.version, piece.platformId), piece)
+
+    updateListEntries((list, locale) => {
+        const alreadyExists = list.some(e => e.name === piece.name && e.version === piece.version)
+        if (alreadyExists) {
+            return list
+        }
+        const translatedPiece = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
+        translatedPiece.i18n = undefined
+        return [...list, translatedPiece].sort(sortByNameAndVersionDesc)
+    })
+}
+
+function handleDelete(pieces: { name: string, version: string }[]): void {
+    const toDelete = new Set(pieces.map(p => `${p.name}:${p.version}`))
+
+    const registryKey = CACHE_KEY.registry()
+    const cachedRegistry = cache.get(registryKey) as PieceRegistryEntry[] | undefined
+    if (!isNil(cachedRegistry)) {
+        cache.set(registryKey, cachedRegistry.filter(entry => !toDelete.has(`${entry.name}:${entry.version}`)))
+    }
+
+    for (const piece of pieces) {
+        cache.delete(CACHE_KEY.piece(piece.name, piece.version, undefined))
+    }
+
+    updateListEntries((list) => list.filter(entry => !toDelete.has(`${entry.name}:${entry.version}`)))
+}
+
+function handleUpdateUsage(piece: { name: string, version: string, platformId?: string, projectUsage: number }): void {
+    const pieceKey = CACHE_KEY.piece(piece.name, piece.version, piece.platformId)
+    const cachedPiece = cache.get(pieceKey) as PieceMetadataSchema | undefined
+    if (!isNil(cachedPiece)) {
+        cache.set(pieceKey, { ...cachedPiece, projectUsage: piece.projectUsage })
+    }
+
+    updateListEntries((list) => list.map(e =>
+        e.name === piece.name && e.version === piece.version && e.platformId === piece.platformId
+            ? { ...e, projectUsage: piece.projectUsage }
+            : e,
+    ))
+}
+
+function updateListEntries(updater: (list: PieceMetadataSchema[], locale: LocalesEnum) => PieceMetadataSchema[]): void {
+    for (const locale of Object.values(LocalesEnum)) {
+        const cacheKey = CACHE_KEY.list(locale as LocalesEnum)
+        const cachedList = cache.get(cacheKey) as PieceMetadataSchema[] | undefined
+        if (!isNil(cachedList)) {
+            cache.set(cacheKey, updater(cachedList, locale as LocalesEnum))
+        }
+    }
 }
 
 export type PieceRegistryEntry = {
