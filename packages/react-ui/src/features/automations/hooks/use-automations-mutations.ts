@@ -28,6 +28,7 @@ type MutationDeps = {
   invalidateFolder: (folderId: string) => void;
   clearSelection: () => void;
   flows: PopulatedFlow[];
+  unpinItem?: (itemId: string) => void;
 };
 
 export function useAutomationsMutations(deps: MutationDeps) {
@@ -104,7 +105,12 @@ export function useAutomationsMutations(deps: MutationDeps) {
         ...tableIds.map((id) => tablesApi.update(id, { folderId })),
       ]);
     },
-    onSuccess: () => {
+    onSuccess: (_data, { selectedItems, targetFolderId }) => {
+      if (targetFolderId && targetFolderId !== UncategorizedFolderId) {
+        for (const [id] of selectedItems) {
+          deps.unpinItem?.(id);
+        }
+      }
       deps.clearSelection();
       deps.invalidateAll();
       toast.success(t('Items moved successfully'));
@@ -186,7 +192,10 @@ export function useAutomationsMutations(deps: MutationDeps) {
         await tablesApi.update(item.id, { folderId });
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, { item, targetFolderId }) => {
+      if (targetFolderId && targetFolderId !== UncategorizedFolderId) {
+        deps.unpinItem?.(item.id);
+      }
       deps.invalidateAll();
       toast.success(t('Moved successfully'));
     },

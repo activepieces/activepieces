@@ -23,6 +23,8 @@ type AutomationsTableProps = {
   projectMembers: ProjectMemberWithUser[] | undefined;
   folders: FolderDto[];
   selectableCount: number;
+  isPinned: (itemId: string) => boolean;
+  onTogglePin: (itemId: string, itemName: string) => void;
   onToggleAllSelection: () => void;
   onToggleItemSelection: (item: TreeItem) => void;
   onRowClick: (item: TreeItem) => void;
@@ -50,6 +52,8 @@ export const AutomationsTable = ({
   projectMembers,
   folders,
   selectableCount,
+  isPinned,
+  onTogglePin,
   onToggleAllSelection,
   onToggleItemSelection,
   onRowClick,
@@ -79,7 +83,8 @@ export const AutomationsTable = ({
               onCheckedChange={onToggleAllSelection}
             />
           </div>
-          <div className="flex-1 min-w-[200px] pl-6">{t('Name')}</div>
+          <div className="w-8 shrink-0"></div>
+          <div className="flex-1 min-w-[200px] pl-2">{t('Name')}</div>
           {!embedState.isEmbedded && (
             <div className="w-[200px] shrink-0 px-2">{t('Details')}</div>
           )}
@@ -120,12 +125,16 @@ export const AutomationsTable = ({
                         item={group.item}
                         isSelected={isItemSelected(group.item)}
                         isExpanded={expandedFolders.has(group.item.id)}
+                        isPinned={isPinned(group.item.id)}
                         isFolderLoading={loadingFolders.has(group.item.id)}
                         projectMembers={projectMembers}
                         folders={folders}
                         onRowClick={() => onRowClick(group.item)}
                         onToggleSelection={() =>
                           onToggleItemSelection(group.item)
+                        }
+                        onTogglePin={() =>
+                          onTogglePin(group.item.id, group.item.name)
                         }
                         onRename={() => onRenameItem(group.item)}
                         onDelete={() => onDeleteItem(group.item)}
@@ -149,11 +158,15 @@ export const AutomationsTable = ({
                             item={child}
                             isSelected={isItemSelected(child)}
                             isExpanded={false}
+                            isPinned={isPinned(child.id)}
                             projectMembers={projectMembers}
                             folders={folders}
                             onRowClick={() => onRowClick(child)}
                             onToggleSelection={() =>
                               onToggleItemSelection(child)
+                            }
+                            onTogglePin={() =>
+                              onTogglePin(child.id, child.name)
                             }
                             onRename={() => onRenameItem(child)}
                             onDelete={() => onDeleteItem(child)}
@@ -186,10 +199,14 @@ export const AutomationsTable = ({
                     item={group.item}
                     isSelected={isItemSelected(group.item)}
                     isExpanded={false}
+                    isPinned={isPinned(group.item.id)}
                     projectMembers={projectMembers}
                     folders={folders}
                     onRowClick={() => onRowClick(group.item)}
                     onToggleSelection={() => onToggleItemSelection(group.item)}
+                    onTogglePin={() =>
+                      onTogglePin(group.item.id, group.item.name)
+                    }
                     onRename={() => onRenameItem(group.item)}
                     onDelete={() => onDeleteItem(group.item)}
                     onDuplicate={onDuplicateFlow}

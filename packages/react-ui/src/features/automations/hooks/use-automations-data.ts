@@ -24,7 +24,10 @@ import {
   hasActiveFilters,
 } from '../lib/utils';
 
-export function useAutomationsData(filters: AutomationsFilters) {
+export function useAutomationsData(
+  filters: AutomationsFilters,
+  pinnedList?: string[],
+) {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
   const queryClient = useQueryClient();
@@ -291,6 +294,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
         folderVisibleCounts,
         rootPage,
         pageSize,
+        pinnedList,
       );
       return { treeItems: items, totalPageItems: totalItems };
     }
@@ -304,6 +308,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
       folderVisibleCounts,
       rootPage,
       pageSize,
+      pinnedList,
     );
 
     return { treeItems: items, totalPageItems: totalRootItems };
@@ -318,6 +323,7 @@ export function useAutomationsData(filters: AutomationsFilters) {
     pageSize,
     isFiltered,
     filters.folderFilter,
+    pinnedList,
   ]);
 
   const effectiveExpandedFolders = useMemo(() => {

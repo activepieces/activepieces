@@ -16,6 +16,7 @@ import { useAutomationsData } from '@/features/automations/hooks/use-automations
 import { useAutomationsDialogs } from '@/features/automations/hooks/use-automations-dialogs';
 import { useAutomationsFilters } from '@/features/automations/hooks/use-automations-filters';
 import { useAutomationsMutations } from '@/features/automations/hooks/use-automations-mutations';
+import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
 import {
   useAutomationsSelection,
   hasMovableOrExportableItems,
@@ -63,6 +64,8 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     clearAllFilters,
   } = useAutomationsFilters();
 
+  const { pinnedList, isPinned, togglePin, unpinItem } = usePinnedItems();
+
   const {
     treeItems,
     folders,
@@ -84,7 +87,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     invalidateAll,
     invalidateRoot,
     invalidateFolder,
-  } = useAutomationsData(filters);
+  } = useAutomationsData(filters, pinnedList);
 
   const {
     selectedItems,
@@ -101,6 +104,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     invalidateFolder,
     clearSelection,
     flows: rootFlows,
+    unpinItem,
   });
 
   const dialogs = useAutomationsDialogs({ mutations, selectedItems });
@@ -201,6 +205,8 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             projectMembers={projectMembers}
             folders={folders}
             selectableCount={selectableItems.length}
+            isPinned={isPinned}
+            onTogglePin={togglePin}
             onToggleAllSelection={toggleAllSelection}
             onToggleItemSelection={toggleItemSelection}
             onRowClick={handleRowClick}

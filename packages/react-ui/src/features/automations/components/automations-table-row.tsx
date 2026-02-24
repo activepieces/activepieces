@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Pencil,
   Share2,
+  Star,
   Table2,
   Trash2,
   Workflow,
@@ -22,6 +23,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,11 +45,13 @@ type AutomationsTableRowProps = {
   item: TreeItem;
   isSelected: boolean;
   isExpanded: boolean;
+  isPinned: boolean;
   isFolderLoading?: boolean;
   projectMembers: any;
   folders: FolderDto[];
   onRowClick: () => void;
   onToggleSelection: () => void;
+  onTogglePin: () => void;
   onRename: () => void;
   onDelete: () => void;
   onDuplicate: (flow: PopulatedFlow) => void;
@@ -63,9 +67,11 @@ export const AutomationsTableRow = ({
   item,
   isSelected,
   isExpanded,
+  isPinned,
   isFolderLoading,
   folders,
   onToggleSelection,
+  onTogglePin,
   onRename,
   onDelete,
   onDuplicate,
@@ -107,7 +113,30 @@ export const AutomationsTableRow = ({
       >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
       </div>
-      <div className="flex-1 min-w-[200px] pl-6 pr-2 flex items-center">
+      <div
+        className={cn(
+          'w-8 shrink-0 flex items-center justify-center',
+          item.type === 'folder' && 'mr-1',
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {item.depth === 0 && (
+          <button
+            onClick={onTogglePin}
+            className="p-0.5 rounded hover:bg-muted transition-colors"
+          >
+            <Star
+              className={cn(
+                'h-4 w-4',
+                isPinned
+                  ? 'text-yellow-500 fill-yellow-500'
+                  : 'text-muted-foreground/40 hover:text-muted-foreground',
+              )}
+            />
+          </button>
+        )}
+      </div>
+      <div className="flex-1 min-w-[200px] pl-2 pr-2 flex items-center">
         <div
           className="relative flex items-center gap-2 min-w-0"
           style={{ paddingLeft: item.depth * 24 }}

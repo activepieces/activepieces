@@ -110,6 +110,7 @@ export function buildTreeItems(
   folderVisibleCounts: Map<string, number>,
   rootPage: number,
   pageSize: number,
+  pinnedList?: string[],
 ): { items: TreeItem[]; totalRootItems: number } {
   const seenIds = new Set<string>();
 
@@ -135,7 +136,15 @@ export function buildTreeItems(
 
   const rootItems = mergeAndSortItems(dedupedFlows, dedupedTables);
   const allTopLevel = [...folderItems, ...rootItems];
-  allTopLevel.sort((a, b) => getUpdatedDate(b.data!) - getUpdatedDate(a.data!));
+  allTopLevel.sort((a, b) => {
+    const aOrder = pinnedList ? pinnedList.indexOf(a.id) : -1;
+    const bOrder = pinnedList ? pinnedList.indexOf(b.id) : -1;
+    const aPinned = aOrder !== -1;
+    const bPinned = bOrder !== -1;
+    if (aPinned && bPinned) return aOrder - bOrder;
+    if (aPinned !== bPinned) return aPinned ? -1 : 1;
+    return getUpdatedDate(b.data!) - getUpdatedDate(a.data!);
+  });
 
   const totalRootItems = allTopLevel.length;
   const start = rootPage * pageSize;
@@ -181,6 +190,7 @@ export function buildFilteredTreeItems(
   folderVisibleCounts: Map<string, number>,
   page: number,
   pageSize: number,
+  pinnedList?: string[],
 ): { items: TreeItem[]; totalItems: number } {
   const folderMap = new Map<string, FolderDto>();
   folders.forEach((f) => folderMap.set(f.id, f));
@@ -244,7 +254,15 @@ export function buildFilteredTreeItems(
   }
 
   const allTopLevel = [...folderItems, ...rootItems];
-  allTopLevel.sort((a, b) => getUpdatedDate(b.data!) - getUpdatedDate(a.data!));
+  allTopLevel.sort((a, b) => {
+    const aOrder = pinnedList ? pinnedList.indexOf(a.id) : -1;
+    const bOrder = pinnedList ? pinnedList.indexOf(b.id) : -1;
+    const aPinned = aOrder !== -1;
+    const bPinned = bOrder !== -1;
+    if (aPinned && bPinned) return aOrder - bOrder;
+    if (aPinned !== bPinned) return aPinned ? -1 : 1;
+    return getUpdatedDate(b.data!) - getUpdatedDate(a.data!);
+  });
 
   const totalItems = allTopLevel.length;
   const start = page * pageSize;
