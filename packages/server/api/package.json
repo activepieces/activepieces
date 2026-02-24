@@ -8,6 +8,7 @@
     "@activepieces/engine": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/server-shared": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.0",
     "@ai-sdk/azure": "^3.0.0",
@@ -73,6 +74,7 @@
     "firebase-scrypt": "2.2.0",
     "fuse.js": "7.0.0",
     "http-status-codes": "2.2.0",
+    "ioredis": "5.4.1",
     "jsonwebtoken": "9.0.1",
     "jwks-rsa": "3.1.0",
     "mime-types": "2.1.35",
@@ -116,7 +118,7 @@
     "@activepieces/piece-square": "workspace:*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.app.json --noEmit",
+    "build": "tsc -p tsconfig.app.json",
     "serve": "cd ../../.. && npx tsx --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "npm run test-ce && npm run test-ee && npm run test-cloud",

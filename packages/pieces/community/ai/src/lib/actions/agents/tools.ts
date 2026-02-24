@@ -41,26 +41,38 @@ function createTransportConfig(
     }
 }
 
+export function sanitizeToolName(name: string): string {
+  return String(name).replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').slice(0, 128);
+}
+
 type FlattenedMcpResult = {
   mcpClients: MCPClient[];
   tools: Record<string, Tool>;
+  keyToAgentTool: Record<string, AgentMcpTool>;
 };
 
 function flattenMcpServers(
-    servers: McpServerTools[]
+    servers: McpServerTools[],
+    agentMcpTools: AgentMcpTool[],
   ): FlattenedMcpResult {
     const mcpClients: MCPClient[] = [];
     const tools: Record<string, Tool> = {};
+    const keyToAgentTool: Record<string, AgentMcpTool> = {};
 
     for (const server of servers) {
       mcpClients.push(server.mcpClient);
+      const agentTool = agentMcpTools.find((t) => t.toolName === server.mcpName);
 
       for (const [toolName, fn] of Object.entries(server.tools)) {
-        tools[`${toolName}_${server.mcpName}`] = fn;
+        const key = sanitizeToolName(`${toolName}_${server.mcpName}`);
+        tools[key] = fn;
+        if (agentTool) {
+          keyToAgentTool[key] = agentTool;
+        }
       }
     }
 
-    return { mcpClients, tools };
+    return { mcpClients, tools, keyToAgentTool };
 }
 
 async function constructMcpServersTools(
@@ -98,7 +110,7 @@ async function constructMcpServersTools(
 
 export async function constructAgentTools(
   params: ConstructAgentToolParams
-): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[] }> {
+): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[], toolKeyToAgentTool: Record<string, AgentTool> }> {
 
     const { outputBuilder, structuredOutput, agentTools, context, model } = params;
     const agentPieceTools = await context.agent.tools({
@@ -111,8 +123,9 @@ export async function constructAgentTools(
       publicUrl: context.server.publicUrl,
       token: context.server.token
     })
-    const mcpServerTools = await constructMcpServersTools(agentTools.filter(tool => tool.type === AgentToolType.MCP))
-    const { mcpClients, tools: mcpTools } = flattenMcpServers(mcpServerTools)
+    const agentMcpTools = agentTools.filter((tool): tool is AgentMcpTool => tool.type === AgentToolType.MCP);
+    const mcpServerTools = await constructMcpServersTools(agentMcpTools)
+    const { mcpClients, tools: mcpTools, keyToAgentTool: mcpKeyToAgentTool } = flattenMcpServers(mcpServerTools, agentMcpTools)
 
     const combinedTools = {
       ...agentPieceTools,
@@ -120,8 +133,15 @@ export async function constructAgentTools(
       ...mcpTools,
     };
 
+    const toolKeyToAgentTool: Record<string, AgentTool> = {};
+    for (const agentTool of agentTools.filter(t => t.type !== AgentToolType.MCP)) {
+      toolKeyToAgentTool[agentTool.toolName] = agentTool;
+    }
+    Object.assign(toolKeyToAgentTool, mcpKeyToAgentTool);
+
     return {
         mcpClients,
+        toolKeyToAgentTool,
         tools: {
             ...combinedTools,
             [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
