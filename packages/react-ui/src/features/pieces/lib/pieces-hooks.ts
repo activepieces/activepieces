@@ -1,16 +1,3 @@
-import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useTranslation } from 'react-i18next';
-
-import { useTelemetry } from '@/components/telemetry-provider';
-import { appConnectionsApi } from '@/features/connections/lib/api/app-connections';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  StepMetadataWithSuggestions,
-  CategorizedStepMetadataWithSuggestions,
-} from '@/lib/types';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -28,6 +15,19 @@ import {
   ApEnvironment,
   TelemetryEventName,
 } from '@activepieces/shared';
+import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
+import { useTelemetry } from '@/components/telemetry-provider';
+import { appConnectionsApi } from '@/features/connections/lib/api/app-connections';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+import {
+  StepMetadataWithSuggestions,
+  CategorizedStepMetadataWithSuggestions,
+} from '@/lib/types';
 
 import { pieceSearchUtils } from './piece-search-utils';
 import {

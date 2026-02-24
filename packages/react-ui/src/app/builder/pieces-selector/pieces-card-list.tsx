@@ -1,3 +1,8 @@
+import {
+  FlowActionType,
+  FlowOperationType,
+  FlowTriggerType,
+} from '@activepieces/shared';
 import React, { useState } from 'react';
 
 import { CardListItemSkeleton } from '@/components/custom/card-list';
@@ -18,11 +23,6 @@ import {
   StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  FlowActionType,
-  FlowOperationType,
-  FlowTriggerType,
-} from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
 import { useBuilderStateContext } from '../builder-hooks';

@@ -6,7 +6,7 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { rabbitmqAuth } from '../../index';
+import { rabbitmqAuth } from '../auth';
 import { rabbitmqConnect } from '../common';
 import dayjs from 'dayjs';
 

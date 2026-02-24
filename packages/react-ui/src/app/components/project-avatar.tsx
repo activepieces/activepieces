@@ -1,9 +1,10 @@
-import { Avatar } from '@/components/ui/avatar';
 import {
   ColorName,
   PROJECT_COLOR_PALETTE,
   ProjectType,
 } from '@activepieces/shared';
+
+import { Avatar } from '@/components/ui/avatar';
 
 interface ProjectAvatarProps {
   displayName: string;

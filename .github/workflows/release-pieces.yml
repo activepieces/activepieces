@@ -13,9 +13,6 @@ concurrency:
   group: release-pieces
   cancel-in-progress: false
 
-env:
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-  
 jobs:
   Release-Pieces:
     if: github.repository == 'activepieces/activepieces'
@@ -46,44 +43,79 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.2.1
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 2w
+          max-size: 20gb
+
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
       - name: publish shared package
-        run: npx nx run-many --target=build --projects=shared && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
+        run: npx turbo run build --filter=@activepieces/shared --force && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/shared 
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
 
       - name: publish pieces-common package
-        run: npx nx run-many --target=build --projects=pieces-common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
+        run: npx turbo run build --filter=@activepieces/pieces-common --force && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
 
       - name: publish pieces-framework package
-        run: npx nx run-many --target=build --projects=pieces-framework && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
+        run: npx turbo run build --filter=@activepieces/pieces-framework --force && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/community/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Find changed pieces
+        id: changed
+        run: |
+          OUTPUT=$(npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/find-changed-pieces.ts)
 
-      - name: build packages
-        run: npx nx run-many --target=build
+          TURBO_FILTER=$(echo "$OUTPUT" | grep '^TURBO_FILTER:' | sed 's/^TURBO_FILTER://')
+          CHANGED_DIRS=$(echo "$OUTPUT" | sed -n '/^CHANGED_DIRS:$/,/^TURBO_FILTER:/{ /^CHANGED_DIRS:$/d; /^TURBO_FILTER:/d; p; }')
+
+          if [ -z "$TURBO_FILTER" ]; then
+            echo "No changed pieces found"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "turbo_filter=$TURBO_FILTER" >> "$GITHUB_OUTPUT"
+            {
+              echo "changed_dirs<<PIECES_EOF"
+              echo "$CHANGED_DIRS"
+              echo "PIECES_EOF"
+            } >> "$GITHUB_OUTPUT"
+            echo "Changed pieces: $TURBO_FILTER"
+          fi
+
+      - name: Build changed pieces
+        if: steps.changed.outputs.has_changes == 'true'
+        run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }} --force
 
       - name: publish pieces packages
+        if: steps.changed.outputs.has_changes == 'true'
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
+          CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
 
       - name: Check available memory
         run: free -h
 
       - name: update pieces metadata
+        if: steps.changed.outputs.has_changes == 'true'
         run: npx ts-node -r tsconfig-paths/register -r ./tools/scripts/fix-dts-require.js -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/community/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
           NODE_OPTIONS: "--max-old-space-size=8192"
+          CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
 
       - name: Notify Discord on failure
         if: failure()

@@ -1,5 +1,15 @@
 {
   "name": "@activepieces/ee-shared",
   "version": "0.0.11",
-  "type": "commonjs"
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
+  "dependencies": {
+    "@activepieces/shared": "workspace:*",
+    "@sinclair/typebox": "0.34.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

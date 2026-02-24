@@ -1,3 +1,4 @@
+import { FolderDto  } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -20,7 +21,6 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { FolderDto } from '@activepieces/shared';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;

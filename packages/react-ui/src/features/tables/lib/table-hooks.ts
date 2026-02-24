@@ -1,8 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-
-import { authenticationSession } from '@/lib/authentication-session';
-import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import {
   FieldType,
   SharedTemplate,
@@ -10,6 +5,11 @@ import {
   Table,
   UncategorizedFolderId,
 } from '@activepieces/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { authenticationSession } from '@/lib/authentication-session';
+import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 
 import { fieldsApi } from './fields-api';
 import { recordsApi } from './records-api';

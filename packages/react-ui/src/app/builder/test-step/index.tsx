@@ -1,7 +1,6 @@
+import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
-
-import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 
 import { TestActionSection } from './test-action-section';
 import { TestTriggerSection } from './test-trigger-section';

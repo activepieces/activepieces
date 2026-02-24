@@ -8,7 +8,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { ClickupTask, ClickupWorkspace } from './models';
-import { clickupAuth } from '../..';
+import { clickupAuth } from '../auth';
 
 export const clickupCommon = {
   workspace_id: (required = true) =>

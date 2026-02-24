@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 import { BASE_URL, subscriberId, tagIdDropdown } from '../common/props';
 
 export const addTagToUserAction = createAction({

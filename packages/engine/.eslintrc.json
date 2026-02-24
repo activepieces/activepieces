@@ -10,7 +10,7 @@
       ],
       "parserOptions": {
         "project": [
-          "packages/engine/tsconfig.*?.json"
+          "tsconfig.*?.json"
         ]
       },
       "rules": {

@@ -1,10 +1,26 @@
 {
   "name": "@activepieces/piece-ai",
-  "version": "0.1.9",
+  "version": "0.1.11",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@ai-sdk/anthropic": "^3.0.0",
+    "@ai-sdk/azure": "^3.0.0",
+    "@ai-sdk/google": "^3.0.0",
+    "@ai-sdk/mcp": "1.0.11",
+    "@ai-sdk/openai": "^3.0.0",
+    "@ai-sdk/openai-compatible": "2.0.16",
+    "@ai-sdk/provider-utils": "^4.0.0",
+    "ai": "^6.0.0",
+    "ajv": "8.12.0",
     "tslib": "^2.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

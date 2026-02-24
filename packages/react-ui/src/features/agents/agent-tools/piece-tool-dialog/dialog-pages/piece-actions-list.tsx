@@ -1,3 +1,4 @@
+import { AgentTool, isNil } from '@activepieces/shared';
 import Fuse from 'fuse.js';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
@@ -6,7 +7,6 @@ import { useDebounce } from 'use-debounce';
 
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AgentTool, isNil } from '@activepieces/shared';
 
 import { sanitizeToolName } from '../../componenets/piece-tool';
 import { usePieceToolsDialogStore } from '../../stores/pieces-tools';

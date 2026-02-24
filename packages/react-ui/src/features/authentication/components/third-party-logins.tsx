@@ -1,13 +1,13 @@
-import { t } from 'i18next';
-import React from 'react';
-
-import { Button } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
 import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '../../../assets/img/custom/auth/saml.svg';

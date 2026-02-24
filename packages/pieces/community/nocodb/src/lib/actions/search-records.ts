@@ -1,4 +1,4 @@
-import { nocodbAuth } from '../../';
+import { nocodbAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeClient, nocodbCommon } from '../common';
 import { ListAPIResponse, ListAPIV3Response } from '../common/types';

@@ -1,14 +1,14 @@
-import { Static, Type } from '@sinclair/typebox';
-import { BotIcon } from 'lucide-react';
-import React from 'react';
-
-import { cn } from '@/lib/utils';
 import {
   ApErrorParams,
   ChatUIResponse,
   FileResponseInterface,
   isNil,
 } from '@activepieces/shared';
+import { Static, Type } from '@sinclair/typebox';
+import { BotIcon } from 'lucide-react';
+import React from 'react';
+
+import { cn } from '@/lib/utils';
 
 import {
   ChatBubble,

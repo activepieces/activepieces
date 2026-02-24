@@ -1,3 +1,14 @@
+import {
+  GitPushOperationType,
+  PushGitRepoRequest,
+  PushFlowsGitRepoRequest,
+  PushTablesGitRepoRequest,
+} from '@activepieces/ee-shared';
+import {
+  assertNotNullOrUndefined,
+  PopulatedFlow,
+  Table,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -24,17 +35,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  GitPushOperationType,
-  PushGitRepoRequest,
-  PushFlowsGitRepoRequest,
-  PushTablesGitRepoRequest,
-} from '@activepieces/ee-shared';
-import {
-  assertNotNullOrUndefined,
-  PopulatedFlow,
-  Table,
-} from '@activepieces/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';

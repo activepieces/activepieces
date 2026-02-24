@@ -2,7 +2,7 @@ import {
   PiecePropValueSchema,
   createAction,
 } from '@activepieces/pieces-framework';
-import { dynamicsCRMAuth } from '../../';
+import { dynamicsCRMAuth } from '../auth';
 import { DynamicsCRMCommon, makeClient } from '../common';
 
 export const deleteRecordAction = createAction({

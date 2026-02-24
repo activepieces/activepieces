@@ -1,3 +1,4 @@
+import path from 'path'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import axios from 'axios'
 import { environmentMigrations } from './env-migrations'
@@ -162,9 +163,8 @@ export const environmentVariables = {
 
 export const apVersionUtil = {
     async getCurrentRelease(): Promise<string> {
-        // eslint-disable-next-line @nx/enforce-module-boundaries
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const packageJson = require('package.json')
+        const packageJson = require(path.resolve(process.cwd(), 'package.json'))
         return packageJson.version
     },
     async getLatestRelease(): Promise<string> {

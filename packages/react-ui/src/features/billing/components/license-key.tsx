@@ -1,3 +1,4 @@
+import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Shield, AlertTriangle, Check, Zap } from 'lucide-react';
@@ -7,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { formatUtils } from '@/lib/utils';
-import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
 import { FeatureStatus } from './features-status';

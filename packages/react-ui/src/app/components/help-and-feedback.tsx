@@ -1,3 +1,4 @@
+import { ApFlagId, supportUrl } from '@activepieces/shared';
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { BookOpen, History } from 'lucide-react';
@@ -10,7 +11,6 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 export const HelpAndFeedback = () => {
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(

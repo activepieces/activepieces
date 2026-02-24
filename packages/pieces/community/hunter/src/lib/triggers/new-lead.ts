@@ -1,4 +1,4 @@
-import { hunterAuth } from '../../index';
+import { hunterAuth } from '../auth';
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';

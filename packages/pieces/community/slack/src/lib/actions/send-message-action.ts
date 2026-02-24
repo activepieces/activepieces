@@ -10,7 +10,7 @@ import {
   iconEmoji,
 } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { Block,KnownBlock } from '@slack/web-api';
 
 

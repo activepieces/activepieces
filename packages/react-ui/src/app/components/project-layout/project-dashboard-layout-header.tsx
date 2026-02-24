@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { History, Link2, ListTodo, Zap } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -7,7 +8,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission } from '@activepieces/shared';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 

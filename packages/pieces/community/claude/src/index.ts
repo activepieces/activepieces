@@ -4,16 +4,7 @@ import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
 import { PieceCategory } from '@activepieces/shared';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
-
-export const claudeAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: `Follow these instructions to get your Claude API Key:
-
-1. Visit the following website: https://console.anthropic.com/settings/keys.
-2. Once on the website, locate and click on the option to obtain your Claude API Key.
-`,
-});
+import { claudeAuth } from './lib/auth';
 
 export const claude = createPiece({
   displayName: 'Anthropic Claude',

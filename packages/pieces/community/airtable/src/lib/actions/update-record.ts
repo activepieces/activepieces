@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../auth';
 
 export const airtableUpdateRecordAction = createAction({
   auth: airtableAuth,

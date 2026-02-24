@@ -12,7 +12,7 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2021", "dom"],
+    "lib": ["es2022", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -745,6 +745,9 @@
       ],
       "@activepieces/piece-murf-api": [
         "packages/pieces/community/murf-api/src/index.ts"
+      ],
+      "@activepieces/piece-mysendingbox": [
+        "packages/pieces/community/mysendingbox/src/index.ts"
       ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"

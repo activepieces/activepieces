@@ -2,11 +2,15 @@
   "name": "@activepieces/server-shared",
   "version": "0.0.2",
   "type": "commonjs",
-  "main": "./src/index.js",
-  "typings": "./src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
   "dependencies": {
-    "@activepieces/pieces-framework": "0.25.3",
-    "@activepieces/shared": "0.37.0",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "tslib": "2.6.2",
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",

@@ -14,14 +14,7 @@ import { deleteItemLikeAction } from './lib/actions/items/delete-item-like';
 import { getItemLikesAction } from './lib/actions/items/get-item-likes';
 import { sortItemsAction } from './lib/actions/items/sort-items';
 import { getCompanyInfoAction } from './lib/actions/company';
-
-export const weekdoneAuth = PieceAuth.OAuth2({
-  description: 'Weekdone OAuth2 Authentication',
-  authUrl: 'https://weekdone.com/oauth_authorize',
-  tokenUrl: 'https://weekdone.com/oauth_token',
-  required: true,
-  scope: [],
-});
+import { weekdoneAuth } from './lib/auth';
 
 export const weekdone = createPiece({
   displayName: 'Weekdone',

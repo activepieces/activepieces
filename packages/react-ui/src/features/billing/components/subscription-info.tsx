@@ -1,9 +1,9 @@
+import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CalendarDays } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { isNil, PlatformBillingInformation } from '@activepieces/shared';
 
 type SubscriptionInfoProps = {
   info: PlatformBillingInformation;

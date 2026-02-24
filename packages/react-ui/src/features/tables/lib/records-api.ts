@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   CreateRecordsRequest,
   DeleteRecordsRequest,
@@ -7,6 +6,8 @@ import {
   SeekPage,
   UpdateRecordRequest,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 import { FieldsMapping } from './utils';
 

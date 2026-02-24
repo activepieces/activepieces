@@ -5,7 +5,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { FilterOperator, filterOperatorLabels } from '../common/constants';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { WorkbookRange } from '@microsoft/microsoft-graph-types';
