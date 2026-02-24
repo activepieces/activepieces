@@ -71,10 +71,7 @@ export const DisconnectSecretManagerRequestSchema = Type.Object({
 export type DisconnectSecretManagerRequest = Static<typeof DisconnectSecretManagerRequestSchema>
 
 export const GetSecretManagerSecretRequestSchema = Type.Object({
-    providerId: Type.Enum(SecretManagerProviderId),
-    request: Type.Object({
-        path: Type.String(),
-    }),
+    path: Type.String(),
 })
 
 export type GetSecretManagerSecretRequest = Static<typeof GetSecretManagerSecretRequestSchema>

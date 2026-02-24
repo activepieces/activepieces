@@ -69,7 +69,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return provider.getSecret({ path: request.path }, decryptedConfig) 
+        return provider.getSecret(request, decryptedConfig) 
     },
 
     async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
