@@ -1,3 +1,4 @@
+import { Template } from '@activepieces/shared';
 import { t } from 'i18next';
 import { LayoutGrid } from 'lucide-react';
 
@@ -9,7 +10,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Template } from '@activepieces/shared';
 
 import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
 import { ExploreTemplateCard } from './template-card';
@@ -29,7 +29,7 @@ const SelectedCategoryViewSkeleton = ({
         </div>
       )}
 
-      <div className="flex flex-row flex-wrap gap-6 pb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 pb-4">
         {[...Array(6)].map((_, index) => (
           <TemplateCardSkeleton
             key={index}
@@ -83,7 +83,7 @@ export const SelectedCategoryView = ({
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className="flex flex-row flex-wrap gap-6 pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 pb-4">
           {templates.map((template) => (
             <ExploreTemplateCard
               key={template.id}

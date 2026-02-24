@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { Compass, LineChart, Trophy } from 'lucide-react';
 import React, { ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +10,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-collection';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
@@ -80,7 +80,7 @@ export function ProjectDashboardLayout({
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <SidebarProvider>
+      <SidebarProvider hoverMode={true}>
         {!isEmbedded && <ProjectDashboardSidebar />}
         <SidebarInset className={`relative overflow-auto gap-4`}>
           <div className="flex flex-col">

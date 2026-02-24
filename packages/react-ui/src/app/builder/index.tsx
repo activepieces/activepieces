@@ -1,4 +1,12 @@
-import { useRef, useState } from 'react';
+import {
+  FlowAction,
+  FlowActionType,
+  FlowTrigger,
+  FlowTriggerType,
+  FlowVersionState,
+  flowStructureUtil,
+} from '@activepieces/shared';
+import { useEffect, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
@@ -14,15 +22,6 @@ import {
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { RightSideBarType } from '@/lib/types';
-import {
-  FlowAction,
-  FlowActionType,
-  FlowTrigger,
-  FlowTriggerType,
-  FlowVersionState,
-  flowStructureUtil,
-  isNil,
-} from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
 
@@ -43,25 +42,28 @@ const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [flowVersion, rightSidebar, selectedStep] = useBuilderStateContext(
-    (state) => [state.flowVersion, state.rightSidebar, state.selectedStep],
-  );
-  flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
-  const { memorizedSelectedStep } = useBuilderStateContext((state) => {
-    const flowVersion = state.flowVersion;
-    if (isNil(state.selectedStep) || isNil(flowVersion)) {
-      return {
-        memorizedSelectedStep: undefined,
-      };
-    }
-    const step = flowStructureUtil.getStep(
-      state.selectedStep,
-      flowVersion.trigger,
-    );
-    return {
-      memorizedSelectedStep: step,
+  const [
+    flowVersion,
+    rightSidebar,
+    selectedStepName,
+    removeAllStepTestsListeners,
+    selectedStep,
+  ] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.rightSidebar,
+    state.selectedStep,
+    state.removeAllStepTestsListeners,
+    flowStructureUtil.getStep(
+      state.selectedStep ?? '',
+      state.flowVersion.trigger,
+    ),
+  ]);
+  useEffect(() => {
+    return () => {
+      removeAllStepTestsListeners();
     };
-  });
+  }, [removeAllStepTestsListeners]);
+  flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
@@ -69,20 +71,22 @@ const BuilderPage = () => {
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
-      name: memorizedSelectedStep?.settings.pieceName,
-      version: memorizedSelectedStep?.settings.pieceVersion,
+      name: selectedStep?.settings.pieceName,
+      version: selectedStep?.settings.pieceVersion,
       enabled:
-        memorizedSelectedStep?.type === FlowActionType.PIECE ||
-        memorizedSelectedStep?.type === FlowTriggerType.PIECE,
+        selectedStep?.type === FlowActionType.PIECE ||
+        selectedStep?.type === FlowTriggerType.PIECE,
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
+  flowCanvasHooks.useListenToExistingRun();
+
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
   return (
-    <div className="flex h-full w-full flex-col relative">
-      <div className="z-50">
+    <div className="flex h-full w-full flex-col relative max-h-[100vh]">
+      <div className="z-40">
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
@@ -103,7 +107,7 @@ const BuilderPage = () => {
                   canvasHeight={middlePanelRef.current?.clientHeight ?? 0}
                   canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
                   hasCanvasBeenInitialised={hasCanvasBeenInitialised}
-                  selectedStep={selectedStep}
+                  selectedStep={selectedStepName}
                 ></CanvasControls>
               )}
 
@@ -139,19 +143,21 @@ const BuilderPage = () => {
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{
-            transitionDuration: `${flowCanvasConsts.SIDEBAR_ANIMATION_DURATION}ms`,
+            transitionDuration: `${
+              isDraggingHandle ? 0 : flowCanvasConsts.SIDEBAR_ANIMATION_DURATION
+            }ms`,
           }}
         >
           <div ref={rightSidePanelRef} className="h-full w-full">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              memorizedSelectedStep && (
+              selectedStep && (
                 <ResizableVerticalPanelsProvider>
                   <StepSettingsProvider
                     pieceModel={pieceModel}
-                    selectedStep={memorizedSelectedStep}
+                    selectedStep={selectedStep}
                     key={constructContainerKey({
                       flowVersionId: flowVersion.id,
-                      step: memorizedSelectedStep,
+                      step: selectedStep,
                       hasPieceModelLoaded: !!pieceModel,
                     })}
                   >
@@ -164,6 +170,7 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+
       <ChatDrawer />
     </div>
   );

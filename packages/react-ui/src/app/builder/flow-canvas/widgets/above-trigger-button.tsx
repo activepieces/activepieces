@@ -12,7 +12,7 @@ import { cn, isMac } from '@/lib/utils';
 type AboveTriggerButtonProps = {
   onClick: () => void;
   text: string;
-  triggerHasNoSampleData?: boolean;
+  disable?: boolean;
   loading?: boolean;
   showKeyboardShortcut?: boolean;
   shortCutIsEscape?: boolean;
@@ -22,7 +22,7 @@ type AboveTriggerButtonProps = {
 const AboveTriggerButton = ({
   onClick,
   text,
-  triggerHasNoSampleData = false,
+  disable = false,
   loading = false,
   showKeyboardShortcut = true,
   shortCutIsEscape = false,
@@ -43,7 +43,7 @@ const AboveTriggerButton = ({
       if (isEscapePressed || ctrlAndDPressed) {
         event.preventDefault();
         event.stopPropagation();
-        if (!loading && !triggerHasNoSampleData) {
+        if (!loading && !disable) {
           onClick();
         }
       }
@@ -70,7 +70,7 @@ const AboveTriggerButton = ({
               },
             )}
             loading={loading}
-            disabled={triggerHasNoSampleData}
+            disabled={disable}
             onClick={onClick}
           >
             <div className="flex justify-center items-center gap-2">
@@ -95,7 +95,7 @@ const AboveTriggerButton = ({
           </Button>
         </div>
       </TooltipTrigger>
-      {triggerHasNoSampleData && (
+      {disable && (
         <TooltipContent side="bottom">
           {t('Please test the trigger first')}
         </TooltipContent>

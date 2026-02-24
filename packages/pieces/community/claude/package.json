@@ -1,8 +1,15 @@
 {
   "name": "@activepieces/piece-claude",
-  "version": "0.4.0",
+  "version": "0.4.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@anthropic-ai/sdk": "0.39.0",
     "ajv": "8.12.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronRight, Info, Play, Sparkles, Workflow } from 'lucide-react';
 import React, { ReactNode } from 'react';
@@ -14,7 +15,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 
 const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -107,7 +107,7 @@ const UsageRow = ({
     <div className="flex items-center justify-between gap-2 w-full text-xs">
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground">{icon}</span>
-        <span>{name}</span>
+        <span className="truncate">{name}</span>
         {tooltip && (
           <Tooltip>
             <TooltipTrigger asChild>

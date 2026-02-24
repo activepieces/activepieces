@@ -7,60 +7,12 @@ import {
   AIProviderWithoutSensitiveData,
 } from '@activepieces/shared';
 
-type Provider =
-  | 'activepieces'
-  | 'openai'
-  | 'anthropic'
-  | 'google'
-  | 'openrouter'
-  | 'cloudflare-gateway'
-  | 'custom'
-  | 'azure';
-
 type AIModelType = 'text' | 'image';
 
 type AIPropsParams<T extends AIModelType> = {
   modelType: T;
   allowedProviders?: AIProviderName[];
 };
-
-const RESTRICTED_PROVIDER_MODELS: Partial<Record<Provider, string[]>> = {
-  openai: [
-    'gpt-5.2',
-    'gpt-5.1',
-    'gpt-5-mini',
-  ],
-  anthropic: [
-    'claude-sonnet-4-5-20250929',
-    'claude-opus-4-5-20251101',
-    'claude-haiku-4-5-20251001',
-  ],
-  google: [
-    'gemini-3-pro-preview',
-    'gemini-3-flash-preview',
-    'gemini-2.5-flash-preview-09-2025',
-    'gemini-2.5-flash-lite-preview-09-2025',
-  ],
-};
-
-function getAllowedModelsForProvider(
-  provider: Provider,
-  allModels: AIProviderModel[],
-  modelType: AIModelType
-): AIProviderModel[] {
-  const restrictedModels = RESTRICTED_PROVIDER_MODELS[provider];
-
-  return allModels
-    .filter(model => model.type === modelType)
-    .filter(model => {
-      if (isNil(restrictedModels)) {
-        return true;
-      }
-
-      return restrictedModels.includes(model.id);
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
 
 export const aiProps = <T extends AIModelType>({
   modelType,
@@ -104,7 +56,7 @@ export const aiProps = <T extends AIModelType>({
     required: true,
     refreshers: ['provider'],
     options: async (propsValue, ctx) => {
-      const provider = propsValue['provider'] as Provider | undefined;
+      const provider = propsValue['provider'] as string
 
       if (isNil(provider)) {
         return {
@@ -123,16 +75,10 @@ export const aiProps = <T extends AIModelType>({
           },
         });
 
-      const models = getAllowedModelsForProvider(
-        provider,
-        allModels,
-        modelType
-      );
-
       return {
         placeholder: 'Select AI Model',
         disabled: false,
-        options: models.map(model => ({
+        options: allModels.filter(model => model.type === modelType).map(model => ({
           label: model.name,
           value: model.id,
         })),

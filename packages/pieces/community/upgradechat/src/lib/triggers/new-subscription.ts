@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { upgradechatAuth } from '../..';
+import { upgradechatAuth } from '../auth';
 import { upgradechatCommon } from '../common/common';
 
 export const newSubscription = createTrigger({

@@ -1,8 +1,13 @@
+import {
+  ProjectType,
+  ProjectWithLimits,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -25,11 +30,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import {
-  ProjectType,
-  ProjectWithLimits,
-  TeamProjectsLimit,
-} from '@activepieces/shared';
 
 import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';
@@ -37,11 +37,28 @@ import { NewProjectDialog } from './new-project-dialog';
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: allProjects } = projectCollectionUtils.useAll();
+
+  const displayNameFilter = searchParams.get('displayName') || undefined;
+  const typeFilter = searchParams.getAll('type');
+
+  const filters = useMemo(
+    () => ({
+      displayName: displayNameFilter,
+      type:
+        typeFilter.length > 0
+          ? typeFilter.map((t) => t as ProjectType)
+          : undefined,
+    }),
+    [displayNameFilter, typeFilter.join(',')],
+  );
+
+  const { data: allProjects } =
+    projectCollectionUtils.useAllPlatformProjects(filters);
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

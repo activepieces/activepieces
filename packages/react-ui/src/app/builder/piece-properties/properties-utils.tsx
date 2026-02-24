@@ -1,3 +1,9 @@
+import {
+  PieceProperty,
+  PiecePropertyMap,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import { isNil, PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ControllerRenderProps,
@@ -13,12 +19,6 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import {
-  PieceProperty,
-  PiecePropertyMap,
-  PropertyType,
-} from '@activepieces/pieces-framework';
-import { isNil, PropertySettings } from '@activepieces/shared';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
@@ -43,6 +43,7 @@ export const selectGenericFormComponentForProperty = ({
   dynamicPropsInfo,
   propertySettings,
   hideLabel,
+  enableMarkdownForInputWithMention,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -242,6 +243,7 @@ export const selectGenericFormComponentForProperty = ({
               disabled={disabled}
               initialValue={field.value}
               onChange={field.onChange}
+              enableMarkdown={enableMarkdownForInputWithMention}
             ></TextInputWithMentions>
           ) : (
             <Input
@@ -320,6 +322,7 @@ export type SelectGenericFormComponentForPropertyParams = {
   dynamicInputModeToggled: boolean;
   form: UseFormReturn<FieldValues, any, undefined>;
   propertySettings: Record<string, PropertySettings> | null;
+  enableMarkdownForInputWithMention?: boolean;
   dynamicPropsInfo:
     | ({
         pieceName: string;

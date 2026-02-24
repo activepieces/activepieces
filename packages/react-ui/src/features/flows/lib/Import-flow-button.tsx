@@ -1,5 +1,6 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Upload } from 'lucide-react';
+import { Import } from 'lucide-react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
@@ -11,7 +12,6 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
 
 import { ImportFlowDialog } from '../components/import-flow-dialog';
 
@@ -58,19 +58,17 @@ export const ImportFlowButton = ({
               data-testid="import-flow-button"
             >
               {variant === 'small' ? (
-                <Upload className="h-4 w-4" />
+                <Import className="h-4 w-4" />
               ) : (
                 <>
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Import className="h-4 w-4 mr-2" />
                   <span>{t('Import')}</span>
                 </>
               )}
             </Button>
           </TooltipTrigger>
         </ImportFlowDialog>
-        <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
-          {t('Import flow')}
-        </TooltipContent>
+        <TooltipContent>{t('Import flow')}</TooltipContent>
       </Tooltip>
     </PermissionNeededTooltip>
   );

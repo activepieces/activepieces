@@ -1,8 +1,10 @@
 {
   "name": "@activepieces/piece-assemblyai",
-  "version": "1.1.0",
+  "version": "1.1.4",
   "scripts": {
-    "generate": "tsx ./scripts/generateFromSpec.ts"
+    "generate": "tsx ./scripts/generateFromSpec.ts",
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
     "@readme/openapi-parser": "^2.6.0",
@@ -14,6 +16,9 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "assemblyai": "4.7.0"
   }
 }

@@ -1,3 +1,4 @@
+import { ApFlagId, Permission } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { useRef, useEffect } from 'react';
 import DataGrid, { DataGridHandle } from 'react-data-grid';
@@ -17,7 +18,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApFlagId, Permission } from '@activepieces/shared';
 
 import './react-data-grid.css';
 
@@ -111,7 +111,7 @@ const ApTableEditorPage = () => {
               selectedRows={selectedRecords}
               onSelectedRowsChange={setSelectedRecords}
               className={cn(
-                'scroll-smooth w-full !h-full bg-muted/30',
+                'scroll-smooth w-full !h-full bg-muted/30 !border-0',
                 theme === 'dark' ? 'rdg-dark' : 'rdg-light',
               )}
               bottomSummaryRows={

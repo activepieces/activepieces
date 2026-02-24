@@ -1,0 +1,10 @@
+{
+  "Lookup product information by barcode number": "Zoek productinformatie op barcode nummer",
+  "API Key for Barcode Lookup": "API sleutel voor het opzoeken van barcode",
+  "Search By Barcode": "Zoeken op barcode",
+  "Search for product information by barcode": "Zoek productinformatie op barcode",
+  "Barcode": "Barcode",
+  "Formatted Output": "Opgemaakte uitvoer",
+  "The barcode/UPC/EAN number to search for": "Het streepjescode/UPC/EAN-nummer om naar te zoeken",
+  "Return results in a clean, easy to read format": "Resultaten in een schoon, eenvoudig te lezen formaat"
+}

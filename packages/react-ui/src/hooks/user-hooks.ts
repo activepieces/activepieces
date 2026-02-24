@@ -1,8 +1,8 @@
+import { isNil, UserWithBadges } from '@activepieces/shared';
 import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { userApi } from '@/lib/user-api';
-import { isNil, UserWithBadges } from '@activepieces/shared';
 
 export const userHooks = {
   useCurrentUser: () => {
@@ -34,7 +34,12 @@ export const userHooks = {
     return useQuery({
       queryKey: ['user', id],
       queryFn: async () => {
-        return await userApi.getUserById(id!);
+        try {
+          return await userApi.getUserById(id!);
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
       },
       enabled: !isNil(id),
       staleTime: Infinity,

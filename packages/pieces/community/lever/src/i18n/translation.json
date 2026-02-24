@@ -30,6 +30,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "If you select one, you must select an interview too": "If you select one, you must select an interview too",
   "Mandatory is you select an interview panel": "Mandatory is you select an interview panel",
   "Ignored if you select an interview panel and an interview": "Ignored if you select an interview panel and an interview",

@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { AlertCircleIcon } from 'lucide-react';
 
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { Button } from '@/components/ui/button';
-import { isNil } from '@activepieces/shared';
 
 import {
   Dialog,

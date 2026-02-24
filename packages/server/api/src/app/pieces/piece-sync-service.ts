@@ -6,7 +6,6 @@ import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { localPieceCache } from './metadata/local-piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
@@ -16,9 +15,9 @@ const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-            await pieceSyncService(log).sync()
+            await pieceSyncService(log).sync({ publishCacheRefresh: true })
         })
-        rejectedPromiseHandler(pieceSyncService(log).sync(), log)
+        rejectedPromiseHandler(pieceSyncService(log).sync({ publishCacheRefresh: false }), log)
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.PIECES_SYNC,
@@ -30,7 +29,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async sync(): Promise<void> {
+    async sync({ publishCacheRefresh }: { publishCacheRefresh: boolean }): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             log.info('Piece sync service is disabled')
             return
@@ -45,7 +44,8 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                     pieceType: true,
                 },
             }), listCloudPieces()])
-            const added = await installNewPieces(cloudPieces, dbPieces, log)
+            log.info({ dbCount: dbPieces.length, cloudCount: cloudPieces.length }, 'Fetched pieces from DB and Cloud')
+            const added = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
             const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
 
             log.info({
@@ -53,7 +53,6 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
-            await localPieceCache(log).refresh()
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
@@ -68,7 +67,7 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
     return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger): Promise<number> {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, publishCacheRefresh: boolean): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5
@@ -86,12 +85,9 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 pieceMetadata,
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
+                publishCacheRefresh,
             })
         }))
-        if (done % 500 === 0) {
-            await localPieceCache(log).refresh()
-        }
-
     }
     return newPiecesToFetch.length
 }

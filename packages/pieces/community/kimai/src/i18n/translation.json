@@ -24,6 +24,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Kimai project": "Kimai project",
   "Kimai activity": "Kimai activity",
   "Begin Date of Timesheet": "Begin Date of Timesheet",

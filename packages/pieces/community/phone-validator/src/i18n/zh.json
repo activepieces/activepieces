@@ -1,0 +1,12 @@
+{
+  "Validate phone numbers and retrieve line type, carrier, and location information": "Validate phone numbers and retrieve line type, carrier, and location information",
+  "\nTo get your API Key:\n\n1. Sign up and create an account at Phone Validator\n2. Visit your account information to obtain your API key\n3. Copy your API key and paste it here\n": "\nTo get your API Key:\n\n1. Sign up and create an account at Phone Validator\n2. Visit your account information to obtain your API key\n3. Copy your API key and paste it here\n",
+  "Validate Phone Number": "Validate Phone Number",
+  "Validate a phone number and retrieve line type, carrier, and location information": "Validate a phone number and retrieve line type, carrier, and location information",
+  "Phone Number": "Phone Number",
+  "Search Type": "Search Type",
+  "The phone number to validate (e.g., 7029270000, 1-702-927-0000)": "The phone number to validate (e.g., 7029270000, 1-702-927-0000)",
+  "Type of phone lookup to perform": "Type of phone lookup to perform",
+  "Basic (Line Type + Carrier + Location + Fake Check)": "Basic (Line Type + Carrier + Location + Fake Check)",
+  "Fake Number Check Only": "Fake Number Check Only"
+}

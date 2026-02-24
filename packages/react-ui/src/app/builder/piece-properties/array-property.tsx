@@ -1,3 +1,8 @@
+import {
+  ArrayProperty,
+  ArraySubProps,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
@@ -8,11 +13,7 @@ import { ArrayInput } from '@/components/custom/array-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-import {
-  ArrayProperty,
-  ArraySubProps,
-  PropertyType,
-} from '@activepieces/pieces-framework';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { GenericPropertiesForm } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -125,10 +126,15 @@ const ArrayPieceProperty = React.memo(
       <>
         {arrayProperty.properties && (
           <>
-            <div className="flex w-full flex-col gap-4">
+            <div
+              className={cn('flex w-full flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}
+            >
               {fields.map((field, index) => (
                 <div
-                  className="p-4 border rounded-md flex flex-col gap-4"
+                  className={cn(
+                    'p-4 border rounded-md flex flex-col',
+                    GAP_SIZE_FOR_STEP_SETTINGS,
+                  )}
                   key={'array-item-' + field.id}
                 >
                   <div className="flex justify-between">

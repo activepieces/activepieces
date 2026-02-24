@@ -1,6 +1,7 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pinchPaymentsAuth, getPinchPaymentsToken } from '../common/auth';
+import { pinchPaymentsAuth } from '../common/auth';
+import { pinchPaymentsClient } from '../common/client';
 
 export const findEventAction = createAction({
   auth: pinchPaymentsAuth,
@@ -20,19 +21,9 @@ export const findEventAction = createAction({
     const credentials = {
       username: context.auth.props.username,
       password: context.auth.props.password,
+      environment: context.auth.props.environment
     };
-
-    const tokenResponse = await getPinchPaymentsToken(credentials);
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.getpinch.com.au/test/events/${eventId}`,
-      headers: {
-        'Authorization': `Bearer ${tokenResponse.access_token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    return response.body;
+    
+    return pinchPaymentsClient(credentials, HttpMethod.GET, `/events/${eventId}`);
   },
 });

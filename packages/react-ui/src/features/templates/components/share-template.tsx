@@ -1,3 +1,9 @@
+import {
+  ApErrorParams,
+  ErrorCode,
+  isNil,
+  Template,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
@@ -12,15 +18,8 @@ import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
-import {
-  ApErrorParams,
-  ErrorCode,
-  isNil,
-  Template,
-} from '@activepieces/shared';
 
 import { PieceIconList } from '../../pieces/components/piece-icon-list';
-import { templatesApi } from '../lib/templates-api';
 
 const TemplateViewer = ({ template }: { template: Template }) => {
   const navigate = useNavigate();
@@ -36,7 +35,6 @@ const TemplateViewer = ({ template }: { template: Template }) => {
       return flows[0];
     },
     onSuccess: (data) => {
-      templatesApi.incrementUsageCount(template.id);
       navigate(`/flows/${data.id}`);
     },
     onError: (error) => {

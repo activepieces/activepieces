@@ -16,6 +16,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Please select assistant": "Please select assistant",
   "The input message to be processed by the assistant": "The input message to be processed by the assistant",
   "The Conversation ID of the previous conversation. If empty, a new conversation will be created": "The Conversation ID of the previous conversation. If empty, a new conversation will be created",

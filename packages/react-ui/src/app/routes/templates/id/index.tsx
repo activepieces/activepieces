@@ -1,3 +1,13 @@
+import {
+  isNil,
+  PopulatedFlow,
+  FlowVersionState,
+  apId,
+  FlowStatus,
+  FlowOperationStatus,
+  TemplateType,
+  Template,
+} from '@activepieces/shared';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
 import { ArrowLeft, ArrowRight, Link, ExternalLink } from 'lucide-react';
@@ -10,22 +20,11 @@ import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar-shadcn';
+import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import {
-  isNil,
-  PopulatedFlow,
-  FlowVersionState,
-  apId,
-  FlowStatus,
-  FlowOperationStatus,
-  TemplateType,
-  Template,
-} from '@activepieces/shared';
 
 import { FlowCard } from './flow-card';
 import { PieceCard } from './piece-card';
@@ -81,6 +80,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
         updatedBy: null,
         agentIds: [],
         connectionIds: [],
+        notes: selectedFlow.notes ?? [],
       },
     };
   }, [template, selectedFlowIndex]);
@@ -136,8 +136,6 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
       {template.type !== TemplateType.SHARED && (
         <div className="border-b py-4 px-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <SidebarTrigger />
-            <Separator orientation="vertical" className="h-5" />
             <Button
               variant="ghost"
               size="sm"

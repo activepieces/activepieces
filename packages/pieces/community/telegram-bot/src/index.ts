@@ -6,6 +6,7 @@ import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
 import { telegramGetFileAction } from './lib/action/get-file.action';
 import { telegramSendMediaAction } from './lib/action/send-media.action';
 import { telegramSendMessageAction } from './lib/action/send-text-message.action';
+import { telegramRequestApprovalMessageAction } from './lib/action/request-approval-message';
 import { telegramCommons } from './lib/common';
 import { telegramNewMessage } from './lib/trigger/new-message';
 
@@ -39,11 +40,12 @@ export const telegramBot = createPiece({
     telegramGetChatMemberAction,
     telegramGetFileAction,
     telegramCreateInviteLinkAction,
+    telegramRequestApprovalMessageAction,
     createCustomApiCallAction({
       baseUrl: (auth) => auth ? telegramCommons.getApiUrl(auth, '') : '',
       auth: telegramBotAuth,
     }),
   ],
-  authors: ["abdullahranginwala","tanoggy","alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["abdullahranginwala","tanoggy","alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","khaledmashaly","abuaboud",'sanket-a11y'],
   triggers: [telegramNewMessage],
 });

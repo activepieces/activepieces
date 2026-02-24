@@ -1,9 +1,8 @@
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { cryptoUtils, fileSystemUtils } from '@activepieces/server-shared'
-import { ExecutionMode, tryCatch } from '@activepieces/shared'
+import { ExecutionMode, FlowVersionState, SourceCode, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { CodeArtifact } from '../compute/engine-runner-types'
 import { workerMachine } from '../utils/machine'
 import { cacheState, NO_SAVE_GUARD } from './cache-state'
 import { packageManager } from './package-manager'
@@ -110,6 +109,9 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
                 else {
                     log.info({ codePath, timeTaken: `${Math.floor(performance.now() - startTimeCompilation)}ms` }, '[CodeBuilder#processCodeStep] Compilation success')
                 }
+
+                // node_modules is no longer needed after bun build bundles everything into index.js
+                await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
             skipSave: NO_SAVE_GUARD,
@@ -197,6 +199,14 @@ type ProcessCodeStepParams = {
     codesFolderPath: string
     log: FastifyBaseLogger
 }
+
+export type CodeArtifact = {
+    name: string
+    sourceCode: SourceCode
+    flowVersionId: string
+    flowVersionState: FlowVersionState
+}
+
 
 type InstallDependenciesParams = {
     path: string

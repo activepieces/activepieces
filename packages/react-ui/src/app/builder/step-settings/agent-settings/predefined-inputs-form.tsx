@@ -1,9 +1,16 @@
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
+import {
+  FieldControlMode,
+  isNil,
+  PredefinedInputField,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ApMarkdown } from '@/components/custom/markdown';
 import { Form, FormField } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -16,14 +23,9 @@ import {
 import { ConnectionDropdown } from '@/features/agents/agent-tools/piece-tool-dialog/connection-select';
 import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { PieceProperty } from '@activepieces/pieces-framework';
-import {
-  FieldControlMode,
-  isNil,
-  PredefinedInputField,
-} from '@activepieces/shared';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
+
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
   Type.Object(
     requireAuth
@@ -36,9 +38,11 @@ const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
       ...(requireAuth && { required: ['auth'] }),
     },
   );
+
 type PredefinedInputsFormValues = Static<
   ReturnType<typeof createPredefinedInputsFormSchema>
 >;
+
 export const PredefinedInputsForm = () => {
   const {
     predefinedInputs,
@@ -48,7 +52,7 @@ export const PredefinedInputsForm = () => {
   } = usePieceToolsDialogStore();
   const { pieces } = piecesHooks.usePieces({});
   const selectedPiece = pieces?.find((p) => p.name === piece?.pieceName);
-  const requireAuth = selectedAction?.requireAuth ?? false;
+  const requireAuth = selectedAction?.requireAuth ?? true;
   const formSchema = useMemo(
     () => createPredefinedInputsFormSchema(requireAuth),
     [requireAuth],
@@ -150,7 +154,7 @@ export const PredefinedInputsForm = () => {
       form.setValue(propertyName, undefined, { shouldDirty: false });
     }
   };
-  const pieceHasAuth = requireAuth;
+  const pieceHasAuth = requireAuth && selectedPiece?.auth;
   return (
     <Form {...form}>
       <ScrollArea className="h-full">
@@ -185,6 +189,19 @@ export const PredefinedInputsForm = () => {
           {Object.keys(properties).length > 0 && (
             <div className="space-y-5">
               {Object.entries(properties).map(([propertyName, property]) => {
+                const isMarkdown = property.type === PropertyType.MARKDOWN;
+
+                if (isMarkdown) {
+                  return (
+                    <ApMarkdown
+                      key={propertyName}
+                      markdown={property.description}
+                      variables={{}}
+                      variant={property.variant}
+                    />
+                  );
+                }
+
                 const mode = getModeForProperty(propertyName);
                 const showInput = mode === FieldControlMode.CHOOSE_YOURSELF;
                 return (

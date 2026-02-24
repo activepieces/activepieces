@@ -1,3 +1,4 @@
+import { ApFlagId, Permission, PopulatedMcpServer } from '@activepieces/shared';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Eye, EyeOff, RefreshCw } from 'lucide-react';
@@ -9,7 +10,6 @@ import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ApFlagId, Permission, PopulatedMcpServer } from '@activepieces/shared';
 
 import { mcpHooks } from './utils/mcp-hooks';
 

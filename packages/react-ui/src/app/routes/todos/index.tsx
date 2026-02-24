@@ -1,3 +1,9 @@
+import {
+  Todo,
+  PopulatedTodo,
+  STATUS_COLORS,
+  STATUS_VARIANT,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -31,12 +37,6 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
 import { userHooks } from '@/hooks/user-hooks';
-import {
-  Todo,
-  PopulatedTodo,
-  STATUS_COLORS,
-  STATUS_VARIANT,
-} from '@activepieces/shared';
 
 import { ApAvatar } from '../../../components/custom/ap-avatar';
 

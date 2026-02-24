@@ -273,6 +273,11 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         required: false,
         ...(props?.timeout ?? {}),
       }),
+      followRedirects: Property.Checkbox({
+        displayName: 'Follow redirects',
+        required: false,
+        defaultValue: false,
+      }),
       ...extraProps,
     },
 
@@ -287,6 +292,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         failsafe,
         timeout,
         response_is_binary,
+        followRedirects,
       } = context.propsValue;
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
@@ -317,6 +323,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
           ...((queryParams as QueryParams) ?? {}),
         },
         timeout: timeout ? timeout * 1000 : 0,
+        followRedirects,
       };
 
       // Set response type to arraybuffer if binary response is expected

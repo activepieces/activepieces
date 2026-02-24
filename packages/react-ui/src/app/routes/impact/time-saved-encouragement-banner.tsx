@@ -1,7 +1,6 @@
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Lightbulb, Pencil } from 'lucide-react';
-
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type TimeSavedEncouragementBannerProps = {
   report?: PlatformAnalyticsReport;

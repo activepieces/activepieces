@@ -43,6 +43,7 @@ import { newOrUpdatedRecord } from './lib/trigger/new-updated-record';
 import { newOutboundMessage } from './lib/trigger/new-outbound-message';
 import { newRecord } from './lib/trigger/new-record';
 import { newUpdatedFile } from './lib/trigger/new-updated-file';
+import { exportReport } from './lib/action/export-report';
 
 export const salesforceAuth = PieceAuth.OAuth2({
     props: {
@@ -85,6 +86,7 @@ export const salesforce = createPiece({
         'khaledmashaly',
         'abuaboud',
         'Pranith124',
+        'sanket-a11y'
     ],
     categories: [PieceCategory.SALES_AND_CRM],
     auth: salesforceAuth,
@@ -102,6 +104,7 @@ export const salesforce = createPiece({
         createTask,
         deleteOpportunity,
         deleteRecord,
+        exportReport,
         findChildRecords,
         findRecord,
         findRecordsByQuery,

@@ -158,6 +158,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The email of the contact to add to the workflow.": "The email of the contact to add to the workflow.",
   "The ID of the object being associated.": "The ID of the object being associated.",
   "The type of the object being associated.": "The type of the object being associated.",

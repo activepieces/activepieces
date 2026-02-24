@@ -5,7 +5,7 @@ import {
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { drupalAuth } from '../../';
+import { drupalAuth } from '../auth';
 import { drupal } from '../common/jsonapi';
 import { 
   fetchEntityTypesForEditing,

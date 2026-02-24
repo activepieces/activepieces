@@ -1,98 +1,78 @@
-import { dynamicTool, LanguageModel, Tool, ToolSet } from "ai";
+import { dynamicTool, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, isNil, McpAuthConfig, McpAuthType, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
-import { experimental_createMCPClient as createMCPClient, MCPClient } from '@ai-sdk/mcp';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
+
+function createTransportConfig(
+    protocol: McpProtocol,
+    serverUrl: string,
+    headers: Record<string, string> = {},
+) {
+    const url = new URL(serverUrl)
+
+    switch (protocol) {
+        case McpProtocol.SIMPLE_HTTP: {
+            return {
+                type: 'http',
+                url: serverUrl,
+                headers,
+            }
+        }
+        case McpProtocol.STREAMABLE_HTTP: {
+            return new StreamableHTTPClientTransport(url, {
+                requestInit: {
+                    headers,
+                },
+            })
+        }
+        case McpProtocol.SSE: {
+            return {
+                type: 'sse',
+                url: serverUrl,
+                headers,
+            }
+        }
+        default:
+            throw new Error(`Unsupported MCP protocol type: ${protocol}`)
+    }
+}
+
+export function sanitizeToolName(name: string): string {
+  return String(name).replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').slice(0, 128);
+}
 
 type FlattenedMcpResult = {
   mcpClients: MCPClient[];
   tools: Record<string, Tool>;
+  keyToAgentTool: Record<string, AgentMcpTool>;
 };
 
 function flattenMcpServers(
-    servers: McpServerTools[]
+    servers: McpServerTools[],
+    agentMcpTools: AgentMcpTool[],
   ): FlattenedMcpResult {
     const mcpClients: MCPClient[] = [];
     const tools: Record<string, Tool> = {};
+    const keyToAgentTool: Record<string, AgentMcpTool> = {};
 
     for (const server of servers) {
       mcpClients.push(server.mcpClient);
+      const agentTool = agentMcpTools.find((t) => t.toolName === server.mcpName);
 
       for (const [toolName, fn] of Object.entries(server.tools)) {
-        tools[`${toolName}_${server.mcpName}`] = fn;
+        const key = sanitizeToolName(`${toolName}_${server.mcpName}`);
+        tools[key] = fn;
+        if (agentTool) {
+          keyToAgentTool[key] = agentTool;
+        }
       }
     }
 
-    return { mcpClients, tools };
-}
-
-function buildAuthHeaders(authConfig: McpAuthConfig): Record<string, string> {
-  let headers: Record<string, string> = {};
-
-  switch (authConfig.type) {
-    case McpAuthType.NONE:
-      break;
-    case McpAuthType.HEADERS: {
-      headers = authConfig.headers
-      break;
-    }
-    case McpAuthType.ACCESS_TOKEN: {
-      headers['Authorization'] = `Bearer ${authConfig.accessToken}`
-      break;
-    }
-    case McpAuthType.API_KEY: {
-      const headerName = authConfig.apiKeyHeader;
-      headers[headerName] = authConfig.apiKey
-      break;
-    }
-  }
-
-  return headers;
-}
-
-function createTransportConfig(
-  protocol: McpProtocol,
-  serverUrl: string,
-  headers: Record<string, string> = {}
-): any {
-  const url = new URL(serverUrl);
-
-  switch (protocol) {
-    case McpProtocol.SIMPLE_HTTP: {
-      return {
-        type: 'http',
-        url: serverUrl,
-        headers: headers,
-      };
-    }
-    case McpProtocol.STREAMABLE_HTTP: {
-      const sessionId = crypto.randomUUID()
-      return new StreamableHTTPClientTransport(url, {
-        sessionId: sessionId,
-        requestInit: {
-          headers
-        }
-      })
-    }
-    case McpProtocol.SSE: {
-      return {
-        type: 'sse',
-        url: serverUrl,
-        headers: headers,
-      };
-    }
-    default:
-      throw new Error(`Unsupported MCP protocol type: ${protocol}`);
-  }
-}
-
-type McpServerTools = {
-  mcpName: string;
-  mcpClient: MCPClient;
-  tools: Record<string, Tool>
+    return { mcpClients, tools, keyToAgentTool };
 }
 
 async function constructMcpServersTools(
@@ -107,7 +87,7 @@ async function constructMcpServersTools(
             tool.protocol,
             tool.serverUrl,
             buildAuthHeaders(tool.auth)
-          ),
+          ) as MCPTransport,
         });
 
         const mcpTools = await mcpClient.tools();
@@ -130,7 +110,7 @@ async function constructMcpServersTools(
 
 export async function constructAgentTools(
   params: ConstructAgentToolParams
-): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[] }> {
+): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[], toolKeyToAgentTool: Record<string, AgentTool> }> {
 
     const { outputBuilder, structuredOutput, agentTools, context, model } = params;
     const agentPieceTools = await context.agent.tools({
@@ -143,8 +123,9 @@ export async function constructAgentTools(
       publicUrl: context.server.publicUrl,
       token: context.server.token
     })
-    const mcpServerTools = await constructMcpServersTools(agentTools.filter(tool => tool.type === AgentToolType.MCP))
-    const { mcpClients, tools: mcpTools } = flattenMcpServers(mcpServerTools)
+    const agentMcpTools = agentTools.filter((tool): tool is AgentMcpTool => tool.type === AgentToolType.MCP);
+    const mcpServerTools = await constructMcpServersTools(agentMcpTools)
+    const { mcpClients, tools: mcpTools, keyToAgentTool: mcpKeyToAgentTool } = flattenMcpServers(mcpServerTools, agentMcpTools)
 
     const combinedTools = {
       ...agentPieceTools,
@@ -152,8 +133,15 @@ export async function constructAgentTools(
       ...mcpTools,
     };
 
+    const toolKeyToAgentTool: Record<string, AgentTool> = {};
+    for (const agentTool of agentTools.filter(t => t.type !== AgentToolType.MCP)) {
+      toolKeyToAgentTool[agentTool.toolName] = agentTool;
+    }
+    Object.assign(toolKeyToAgentTool, mcpKeyToAgentTool);
+
     return {
         mcpClients,
+        toolKeyToAgentTool,
         tools: {
             ...combinedTools,
             [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
@@ -179,25 +167,23 @@ export async function constructAgentTools(
               : {
                   output: z
                     .string()
-                    .nullable()
                     .describe(
-                      'The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.'
+                      'Your complete response to the user. Always populate this with the full answer, result, or explanation — even if you already wrote text above. This is the final message that will be shown to the user.'
                     ),
                 }),
           }),
           execute: async (params) => {
             const { success, output } = params as {
               success: boolean;
-              output?: Record<string, unknown>;
+              output?: Record<string, unknown> | string;
             };
             outputBuilder.setStatus(
               success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
             );
-            if (!isNil(structuredOutput) && !isNil(output)) {
+            if (!isNil(structuredOutput) && !isNil(output) && !isString(output)) {
               outputBuilder.setStructuredOutput(output);
-            }
-            if (!isNil(structuredOutput) && !isNil(output)) {
-              outputBuilder.addMarkdown(output as unknown as string);
+            } else if (isNil(structuredOutput) && !isNil(output) && !outputBuilder.hasTextContent()) {
+              outputBuilder.addMarkdown(output as string);
             }
             return {};
           },
@@ -213,3 +199,9 @@ type ConstructAgentToolParams = {
   context: ActionContext
   model: LanguageModel
 };
+
+export type McpServerTools = {
+    mcpName: string
+    mcpClient: MCPClient
+    tools: Record<string, Tool>
+}

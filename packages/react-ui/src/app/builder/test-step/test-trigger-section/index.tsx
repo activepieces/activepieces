@@ -1,3 +1,4 @@
+import { FlowTrigger, isNil } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useRef, useState } from 'react';
@@ -6,7 +7,6 @@ import { useFormContext } from 'react-hook-form';
 import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ChatDrawerSource } from '@/lib/types';
-import { FlowTrigger, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
@@ -183,11 +183,13 @@ const TestTriggerSection = React.memo(
             {showSampleDataViewer && (
               <TestSampleDataViewer
                 onRetest={onTest}
+                hideCancel={true}
                 isValid={isValid}
+                consoleLogs={null}
                 isTesting={isPollingTesting}
                 sampleData={sampleData}
                 sampleDataInput={sampleDataInput ?? null}
-                errorMessage={errorMessage}
+                errorMessage={errorMessage ?? null}
                 lastTestDate={lastTestDate}
                 isSaving={isSaving}
               >

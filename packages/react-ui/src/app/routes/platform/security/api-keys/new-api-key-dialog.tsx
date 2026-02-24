@@ -1,3 +1,4 @@
+import { ApiKeyResponseWithValue } from '@activepieces/ee-shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -24,7 +25,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
-import { ApiKeyResponseWithValue } from '@activepieces/ee-shared';
 
 type NewApiKeyDialogProps = {
   children: React.ReactNode;

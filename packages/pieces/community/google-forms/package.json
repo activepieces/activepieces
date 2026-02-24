@@ -1,4 +1,15 @@
 {
   "name": "@activepieces/piece-google-forms",
-  "version": "0.4.0"
+  "version": "0.5.1",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "googleapis": "129.0.0",
+    "googleapis-common": "7.2.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
 }

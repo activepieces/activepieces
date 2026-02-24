@@ -1,14 +1,11 @@
-import { securityAccess, WorkerSystemProp } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
     ErrorCode,
-    FileCompression,
     FileType,
-    isMultipartFile,
-    isNil,
     PlatformWithoutSensitiveData,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -34,48 +31,28 @@ import { platformRepo, platformService } from './platform.service'
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
-        const assets = [req.body.logoIcon, req.body.fullLogo, req.body.favIcon]
-        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/webp', 'image/avif', 'image/apng']
+        const platformId = req.principal.platform.id
 
-        const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all(
-            assets.map(async (file) => {
-                if (!isNil(file) && !req.isMultipart() && !isMultipartFile(file)) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'Request must be multipart/form-data',
-                        },
-                    })
-                }
-
-                if (isNil(file) || !isMultipartFile(file)) {
-                    return undefined
-                }
-
-                if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'Invalid file type',
-                        },
-                    })
-                }
-
-                const savedFile = await fileService(app.log).save({
-                    data: file.data,
-                    size: file.data.length,
-                    type: FileType.PLATFORM_ASSET,
-                    compression: FileCompression.NONE,
-                    platformId: req.principal.platform.id,
-                    fileName: file.filename,
-                    metadata: {
-                        platformId: req.principal.platform.id,
-                        mimetype: file.mimetype ?? '',
-                    },
-                })
-                return `${system.get(WorkerSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
+        const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
+            fileService(app.log).uploadPublicAsset({
+                file: req.body.logoIcon,
+                type: FileType.PLATFORM_ASSET,
+                platformId,
+                metadata: { platformId },
             }),
-        )
+            fileService(app.log).uploadPublicAsset({
+                file: req.body.fullLogo,
+                type: FileType.PLATFORM_ASSET,
+                platformId,
+                metadata: { platformId },
+            }),
+            fileService(app.log).uploadPublicAsset({
+                file: req.body.favIcon,
+                type: FileType.PLATFORM_ASSET,
+                platformId,
+                metadata: { platformId },
+            }),
+        ])
 
         await platformService.update({
             id: req.params.id,
@@ -100,8 +77,9 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
-        const file = await fileService(app.log).getFileOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET })
-        const data = await fileService(app.log).getDataOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET })
+        const [file, data] = await Promise.all([
+            fileService(app.log).getFileOrThrow({ fileId: req.params.id }),
+            fileService(app.log).getDataOrThrow({ fileId: req.params.id })])
 
         return reply
             .header(

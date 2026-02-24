@@ -25,10 +25,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The model which will generate the completion.": "Het model dat de voltooiing zal genereren.",
   "Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.": "Bestuurt willekeurigheid: Het verlagen van de temperatuur resulteert in minder willekeurige aanvullingen. Zodra de temperatuur nul nadert, zal het model deterministisch en herhalend worden.",
   "The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.": "Het maximale aantal tokens om te genereren. De totale lengte van de ingangstokens en gegenereerde tokens wordt beperkt door de context lengte van het model.",
@@ -48,7 +50,7 @@
   "An optional text in English to guide the model's style or continue a previous audio segment.": "Een optionele tekst in het Engels om de stijl van het model te begeleiden of door te gaan met een vorig audiosegment.",
   "The format of the translation output.": "Het formaat van de vertaaluitvoer.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "JSON": "JSON",
   "Text": "Tekstveld",
   "Verbose JSON": "Verbose JSON",
@@ -57,5 +59,8 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }

@@ -1,12 +1,14 @@
-import { api } from '@/lib/api';
 import {
   CreateTableRequest,
   ExportTableResponse,
   ListTablesRequest,
   SeekPage,
   Table,
+  TableTemplate,
   UpdateTableRequest,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const tablesApi = {
   async list(request: ListTablesRequest): Promise<SeekPage<Table>> {
@@ -28,7 +30,16 @@ export const tablesApi = {
   export(id: string): Promise<ExportTableResponse> {
     return api.get<ExportTableResponse>(`/v1/tables/${id}/export`);
   },
+
+  getTemplate(id: string): Promise<TableTemplate> {
+    return api.get<TableTemplate>(`/v1/tables/${id}/template`);
+  },
+
   update(id: string, request: UpdateTableRequest): Promise<Table> {
     return api.post<Table>(`/v1/tables/${id}`, request);
+  },
+
+  clear(id: string): Promise<void> {
+    return api.post<void>(`/v1/tables/${id}/clear`);
   },
 };

@@ -35,6 +35,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The email address of the new user.": "The email address of the new user.",
   "The full name of the new user.": "The full name of the new user.",
   "The password for the new user.": "The password for the new user.",

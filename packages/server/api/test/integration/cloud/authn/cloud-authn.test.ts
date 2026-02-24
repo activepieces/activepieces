@@ -40,7 +40,9 @@ import {
 } from '../../../helpers/mocks/authn'
 
 let app: FastifyInstance | null = null
-let sendOtpSpy: jest.Mock
+import { Mock } from 'vitest'
+
+let sendOtpSpy: Mock
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
@@ -48,16 +50,17 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    sendOtpSpy = jest.fn()
-    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
+    sendOtpSpy = vi.fn()
+    vi.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
         sendOtp: sendOtpSpy,
-        sendInvitation: jest.fn(),
-        sendIssueCreatedNotification: jest.fn(),
-        sendQuotaAlert: jest.fn(),
-        sendTrialReminder: jest.fn(),
-        sendReminderJobHandler: jest.fn(),
-        sendExceedFailureThresholdAlert: jest.fn(),
-        sendBadgeAwardedEmail: jest.fn(),
+        sendInvitation: vi.fn(),
+        sendIssueCreatedNotification: vi.fn(),
+        sendQuotaAlert: vi.fn(),
+        sendTrialReminder: vi.fn(),
+        sendReminderJobHandler: vi.fn(),
+        sendExceedFailureThresholdAlert: vi.fn(),
+        sendBadgeAwardedEmail: vi.fn(),
+        sendProjectMemberAdded: vi.fn(),
     }))
 
     await databaseConnection().getRepository('flag').createQueryBuilder().delete().execute()

@@ -1,5 +1,7 @@
+import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  CheckCircle2Icon,
   LayoutGridIcon,
   PuzzleIcon,
   SparklesIcon,
@@ -25,7 +27,6 @@ import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
-import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 
 import {
   PieceSearchProvider,
@@ -33,6 +34,7 @@ import {
 } from '../../../features/pieces/lib/piece-search-context';
 
 import { AITabContent } from './ai-tab-content';
+import { ApprovalsTabContent } from './approvals-tab-content';
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
@@ -68,6 +70,11 @@ const getTabsList = (
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
       icon: <SparklesIcon className="size-5" />,
+    });
+    baseTabs.push({
+      value: PieceSelectorTabType.APPROVALS,
+      name: t('Approvals'),
+      icon: <CheckCircle2Icon className="size-5" />,
     });
   }
 
@@ -208,6 +215,7 @@ const PieceSelectorContent = ({
             >
               <ExploreTabContent operation={operation} />
               <AITabContent operation={operation} />
+              <ApprovalsTabContent operation={operation} />
 
               <PiecesCardList
                 //this is done to avoid debounced results when user clears search

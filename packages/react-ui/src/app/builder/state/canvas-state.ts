@@ -1,8 +1,8 @@
+import { FlowTriggerType, isNil } from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { RightSideBarType } from '@/lib/types';
-import { FlowTriggerType, isNil } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
@@ -57,7 +57,6 @@ export const createCanvasState = (
   const isEmptyTriggerInitiallySelected =
     initiallySelectedStep === 'trigger' &&
     initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
-
   return {
     showMinimap: false,
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
@@ -98,7 +97,6 @@ export const createCanvasState = (
     selectStepByName: (selectedStep: string) => {
       set((state) => {
         const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
-
         const rightSidebar =
           selectedStep === 'trigger' &&
           state.flowVersion.trigger.type === FlowTriggerType.EMPTY

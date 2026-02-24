@@ -1,0 +1,14 @@
+{
+  "Upload, process, and manage documents programmatically with FlowParser's REST API.": "FlowParser の REST API を使用して、ドキュメントをプログラム的にアップロード、処理、管理します。",
+  "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n": "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n",
+  "Upload Document": "ドキュメントをアップロード",
+  "Upload a new document to FlowParser for processing": "処理のために新しいドキュメントを FlowParser にアップロードします",
+  "File": "ファイル",
+  "The document file to upload": "アップロードするドキュメントファイル",
+  "New Parsed Document by Template": "テンプレートによる新しい解析ドキュメント",
+  "New Parsed Document Found": "新しい解析済みドキュメントが見つかりました",
+  "Triggers when a new document is parsed using a specific template": "特定のテンプレートを使用して新しいドキュメントが解析されたときにトリガーされます",
+  "Triggers when a document has been successfully parsed": "ドキュメントが正常に解析されたときにトリガーします",
+  "Template": "テンプレート",
+  "Select a template to monitor for new parsed documents": "新しい解析済みドキュメントを監視するテンプレートを選択してください"
+}

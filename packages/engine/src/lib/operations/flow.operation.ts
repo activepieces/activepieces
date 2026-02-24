@@ -27,11 +27,12 @@ export const flowOperation = {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
-        await progressService.sendUpdate({
+        console.log('[FlowOperation] Flow execution finished, calling explicit final backup')
+        await progressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,
-            updateImmediate: true,
         })
+        console.log('[FlowOperation] Explicit final backup completed')
         return {
             status: EngineResponseStatus.OK,
             response: undefined,
@@ -51,6 +52,7 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
             projectId: input.projectId,
             engineToken: input.engineToken,
             sampleData: input.sampleData,
+            engineConstants: constants,
         })
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
@@ -78,6 +80,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
             break
         }
         case ExecutionType.RESUME: {
+            flowContext = flowContext.addTags(input.executionState.tags)
             break
         }
     }

@@ -2,7 +2,6 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
-import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
@@ -63,7 +62,8 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
 
     loadDistPiecesMetadata: async (piecesNames: string[]): Promise<PieceMetadata[]> => {
         try {
-            const paths = (await findAllPiecesFolder(DIST_PIECES_PATH)).filter(path => piecesNames.some(name => path.endsWith(sep + name)))
+            const devPieces = await findAllPiecesFolder(DIST_PIECES_PATH)
+            const paths = devPieces.filter(path => piecesNames.some(name => path.endsWith(sep + name)))
             const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
             return pieces.filter((p): p is PieceMetadata => p !== null)
         }
@@ -72,6 +72,14 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
             log.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
             return []
         }
+    },
+
+
+    clearPieceModuleCache: (distFolderPath: string): void => {
+        const indexPath = join(distFolderPath, 'src', 'index')
+        const packageJsonPath = join(distFolderPath, 'package.json')
+        clearModule(indexPath)
+        clearModule(packageJsonPath)
     },
 })
 
@@ -100,13 +108,11 @@ const loadPieceFromFolder = async (
     folderPath: string,
 ): Promise<PieceMetadata | null> => {
     const indexPath = join(folderPath, 'src', 'index')
-    clearModule(indexPath)
-    const packageJson = importFresh<Record<string, string>>(
-        join(folderPath, 'package.json'),
-    )
-    const module = importFresh<Record<string, unknown>>(
-        indexPath,
-    )
+    const packageJsonPath = join(folderPath, 'package.json')
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const packageJson = require(packageJsonPath)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const module = require(indexPath)
     const { name: pieceName, version: pieceVersion } = packageJson
     const piece = extractPieceFromModule<Piece>({
         module,

@@ -1,3 +1,23 @@
+import {
+  ApFlagId,
+  FlowOperationType,
+  FlowStatus,
+  FlowVersion,
+  FlowVersionMetadata,
+  FlowVersionTemplate,
+  ListFlowsRequest,
+  PopulatedFlow,
+  FlowTrigger,
+  FlowTriggerType,
+  WebsocketClientEvent,
+  FlowStatusUpdatedResponse,
+  isNil,
+  ErrorCode,
+  SeekPage,
+  Template,
+  UncategorizedFolderId,
+  UpdateRunProgressRequest,
+} from '@activepieces/shared';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
@@ -14,26 +34,6 @@ import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import {
-  ApFlagId,
-  FlowOperationType,
-  FlowRun,
-  FlowStatus,
-  FlowVersion,
-  FlowVersionMetadata,
-  FlowVersionTemplate,
-  ListFlowsRequest,
-  PopulatedFlow,
-  FlowTrigger,
-  FlowTriggerType,
-  WebsocketClientEvent,
-  FlowStatusUpdatedResponse,
-  isNil,
-  ErrorCode,
-  SeekPage,
-  Template,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
@@ -272,25 +272,29 @@ export const flowHooks = {
       staleTime: 0,
     });
   },
-  useTestFlow: ({
+  useTestFlowOrStartManualTrigger: ({
     flowVersionId,
     onUpdateRun,
+    isForManualTrigger,
   }: {
     flowVersionId: string;
-    onUpdateRun: (run: FlowRun) => void;
+    onUpdateRun: (stepResponse: UpdateRunProgressRequest) => void;
+    isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
     return useMutation<void>({
       mutationFn: () =>
-        flowRunsApi.testFlow(
+        flowRunsApi.subscribeToTestFlowOrManualRun(
           socket,
           {
             flowVersionId,
           },
           onUpdateRun,
+          isForManualTrigger,
         ),
     });
   },
+
   useListFlowVersions: (flowId: string) => {
     return useQuery<SeekPage<FlowVersionMetadata>, Error>({
       queryKey: ['flow-versions', flowId],
@@ -397,6 +401,7 @@ export const flowHooks = {
       for (const templateFlow of flows) {
         const flow = await flowsApi.create({
           displayName: templateFlow.displayName,
+          templateId: template.id,
           projectId,
           folderName,
         });
@@ -434,6 +439,7 @@ export const flowHooks = {
             displayName: templateFlow.displayName,
             trigger: updatedTrigger,
             schemaVersion: templateFlow.schemaVersion,
+            notes: templateFlow.notes,
           },
         });
       },

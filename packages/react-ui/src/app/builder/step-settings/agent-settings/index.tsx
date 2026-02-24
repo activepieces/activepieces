@@ -1,15 +1,17 @@
+import {
+  AgentPieceProps,
+  AgentProviderModel,
+  isNil,
+  PieceAction,
+  PieceActionSettings,
+} from '@activepieces/shared';
 import { useFormContext } from 'react-hook-form';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AIModelSelector } from '@/features/agents/ai-model';
 import { AgentStructuredOutput } from '@/features/agents/structured-output';
-import {
-  AgentPieceProps,
-  isNil,
-  PieceAction,
-  PieceActionSettings,
-} from '@activepieces/shared';
 
 import {
   selectGenericFormComponentForProperty,
@@ -108,8 +110,24 @@ const selectAgentFormComponentForProperty = (
         />
       );
     }
+    case AgentPieceProps.AI_PROVIDER_MODEL: {
+      const provider = (field.value as AgentProviderModel).provider;
+      const model = (field.value as AgentProviderModel).model;
+      return (
+        <AIModelSelector
+          defaultModel={model}
+          defaultProvider={provider}
+          onChange={field.onChange}
+          disabled={disabled}
+        />
+      );
+    }
     default: {
-      return selectGenericFormComponentForProperty(params);
+      return selectGenericFormComponentForProperty({
+        ...params,
+        enableMarkdownForInputWithMention:
+          propertyName === AgentPieceProps.PROMPT,
+      });
     }
   }
 };

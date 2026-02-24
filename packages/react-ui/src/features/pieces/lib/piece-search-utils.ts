@@ -1,3 +1,9 @@
+import {
+  PieceCategory,
+  FlowTriggerType,
+  FlowActionType,
+  AI_PIECE_NAME,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 
 import {
@@ -6,12 +12,6 @@ import {
   StepMetadata,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  PieceCategory,
-  FlowTriggerType,
-  FlowActionType,
-  AI_PIECE_NAME,
-} from '@activepieces/shared';
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (
@@ -161,6 +161,7 @@ const sortByPieceNameOrder = (
 const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
   '@activepieces/piece-webhook',
   '@activepieces/piece-schedule',
+  '@activepieces/piece-manual-trigger',
   '@activepieces/piece-forms',
   '@activepieces/piece-tables',
 ];

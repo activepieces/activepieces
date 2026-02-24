@@ -14,6 +14,7 @@ function createMinimalFlowVersion(template: FlowVersionTemplate): FlowVersion {
         agentIds: [],
         connectionIds: [],
         backupFiles: null,
+        notes: template.notes ?? [],
     }
 }
 
@@ -49,7 +50,7 @@ export const templateValidator = {
 
             const validator = flowVersionValidationUtil(log)
 
-            await validator.prepareRequest({ platformId, request: importOperation })
+            await validator.prepareRequest({ platformId, request: importOperation, userId: null })
             
             flowOperations.apply(minimalFlowVersion, importOperation)
         }))

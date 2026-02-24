@@ -46,7 +46,7 @@ export const apify = createPiece({
   description: 'Access Apify tools for web scraping, data extraction, and automation.',
   auth: apifyAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/apify.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/apify.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['buttonsbond'],
   actions: [getDatasetItems, runActor, runTask, getKeyValueStoreRecord, scrapeSingleUrl],

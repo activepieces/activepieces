@@ -68,6 +68,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The title of the issue": "The title of the issue",
   "The description of the issue": "The description of the issue",
   "Labels for the Issue": "Labels for the Issue",
@@ -126,6 +127,9 @@
   "New Label": "New Label",
   "New Milestone": "New Milestone",
   "New Release": "New Release",
+  "New Commit": "New Commit",
+  "New Review Request": "New Review Request",
+  "New Mention": "New Mention",
   "Triggers when there is activity on a pull request.": "Triggers when there is activity on a pull request.",
   "Trigger when there is activity relating to repository stars.": "Trigger when there is activity relating to repository stars.",
   "Triggers when there is activity relating to an issue.": "Triggers when there is activity relating to an issue.",
@@ -136,5 +140,8 @@
   "Triggers when a new collaborator is added to a repository.": "Triggers when a new collaborator is added to a repository.",
   "Triggers when a new label is created in a repository.": "Triggers when a new label is created in a repository.",
   "Triggers when a new milestone is created.": "Triggers when a new milestone is created.",
-  "Triggers when a new release is added.": "Triggers when a new release is added."
+  "Triggers when a new release is added.": "Triggers when a new release is added.",
+  "Triggers when a new commit is pushed.": "Triggers when a new commit is pushed.",
+  "Triggers when you are requested to review a pull request.": "Triggers when you are requested to review a pull request.",
+  "Triggers when you are mentioned in a comment.": "Triggers when you are mentioned in a comment."
 }

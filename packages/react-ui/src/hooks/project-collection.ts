@@ -1,17 +1,3 @@
-import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import {
-  createCollection,
-  eq,
-  or,
-  useLiveSuspenseQuery,
-} from '@tanstack/react-db';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-
-import { useEmbedding } from '@/components/embed-provider';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
@@ -24,6 +10,21 @@ import {
   ProjectWithLimitsWithPlatform,
   SeekPage,
 } from '@activepieces/shared';
+import { queryCollectionOptions } from '@tanstack/query-db-collection';
+import {
+  createCollection,
+  eq,
+  like,
+  or,
+  useLiveSuspenseQuery,
+} from '@tanstack/react-db';
+import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+import { useEmbedding } from '@/components/embed-provider';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 const collectionQueryClient = new QueryClient();
 
@@ -146,6 +147,43 @@ export const projectCollectionUtils = {
           .orderBy(({ project }) => project.created, 'asc')
           .select(({ project }) => ({ ...project })),
       [currentUserId],
+    );
+  },
+  useAllPlatformProjects: (filters?: {
+    displayName?: string;
+    type?: ProjectType[];
+  }) => {
+    return useLiveSuspenseQuery(
+      (q) => {
+        let query = q.from({ project: projectCollection });
+
+        if (filters?.displayName) {
+          query = query.where(({ project }) =>
+            like(project.displayName, `%${filters.displayName}%`),
+          );
+        }
+
+        if (filters?.type && filters.type.length > 0) {
+          query = query.where(({ project }) => {
+            const types = filters.type!;
+            if (types.length === 1) {
+              return eq(project.type, types[0]);
+            }
+            const conditions = types.map((t) => eq(project.type, t)) as [
+              any,
+              any,
+              ...any[],
+            ];
+            return or(...conditions);
+          });
+        }
+
+        return query
+          .orderBy(({ project }) => project.type, 'asc')
+          .orderBy(({ project }) => project.created, 'asc')
+          .select(({ project }) => ({ ...project }));
+      },
+      [filters?.displayName, filters?.type?.join(',')],
     );
   },
   useHasAccessToProject: (projectId: string) => {

@@ -1,10 +1,14 @@
 {
   "name": "@activepieces/piece-file-helper",
-  "version": "0.1.14",
+  "version": "0.1.22",
   "dependencies": {
-    "adm-zip": "^0.5.16"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@zip.js/zip.js": "^2.8.15"
   },
-  "devDependencies": {
-    "@types/adm-zip": "^0.5.7"
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

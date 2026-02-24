@@ -1,3 +1,10 @@
+import {
+  isNil,
+  PopulatedFlow,
+  TelemetryEventName,
+  UncategorizedFolderId,
+  Template,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -32,16 +39,8 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  isNil,
-  PopulatedFlow,
-  TelemetryEventName,
-  UncategorizedFolderId,
-  Template,
-} from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
 import { flowHooks } from '../lib/flow-hooks';
@@ -129,7 +128,6 @@ const ImportFlowDialog = (
           multiple: flows.length > 1,
         },
       });
-      templatesApi.incrementUsageCount(templates[0].id);
 
       toast.success(
         t(`flowsImported`, {

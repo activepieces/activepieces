@@ -1,11 +1,18 @@
 {
   "name": "@activepieces/piece-microsoft-onenote",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
-    "tslib": "^2.3.0",
-    "@microsoft/microsoft-graph-client": "3.0.7"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@microsoft/microsoft-graph-client": "3.0.7",
+    "tslib": "^2.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

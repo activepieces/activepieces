@@ -17,6 +17,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Due date of the task (YYYY-MM-DD)": "Due date of the task (YYYY-MM-DD)",
   "Mark task as completed": "Mark task as completed",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

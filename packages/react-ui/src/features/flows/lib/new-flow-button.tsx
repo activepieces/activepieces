@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
@@ -10,7 +11,6 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
 
 import { flowHooks } from './flow-hooks';
 
@@ -59,9 +59,7 @@ export const NewFlowButton = ({
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
-          {t('New flow')}
-        </TooltipContent>
+        <TooltipContent>{t('New flow')}</TooltipContent>
       </Tooltip>
     </PermissionNeededTooltip>
   );

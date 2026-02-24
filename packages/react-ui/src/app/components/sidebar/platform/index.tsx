@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowLeft,
@@ -16,6 +17,7 @@ import {
   Settings2,
   FileHeart,
   MousePointerClick,
+  Webhook,
 } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -37,7 +39,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
@@ -170,6 +171,12 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/triggers',
           label: t('Triggers'),
           icon: MousePointerClick,
+        },
+        {
+          to: '/platform/infrastructure/event-destinations',
+          label: t('Event Streaming'),
+          icon: Webhook,
+          locked: !platform.plan.eventStreamingEnabled,
         },
       ],
     },

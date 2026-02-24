@@ -1,8 +1,15 @@
 {
   "name": "@activepieces/piece-youtube",
-  "version": "0.4.0",
+  "version": "0.4.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "cheerio": "1.0.0-rc.12",
     "feedparser": "2.2.10"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

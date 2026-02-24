@@ -6,7 +6,6 @@ import {
     ApFlagId,
     CreateTemplateRequestBody,
     ErrorCode,
-    FlowVersionTemplate,
     isNil,
     ListTemplatesRequestQuery,
     Principal,
@@ -22,10 +21,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
-import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
+import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
-import { communityTemplates } from './community-flow-template.service'
+import { communityTemplates } from './community-templates.service'
 import { templateService } from './template.service'
 
 const edition = system.getEdition()
@@ -71,14 +70,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', {
         ...CreateParams,
         preValidation: async (request) => {
-            const migratedFlows = await Promise.all((request.body.flows ?? []).map(async (flow: FlowVersionTemplate) => {
-                const migratedFlow = await migrateFlowVersionTemplate(flow.trigger, flow.schemaVersion)
-                return {
-                    ...flow,
-                    trigger: migratedFlow.trigger,
-                    schemaVersion: migratedFlow.schemaVersion,
-                }
-            }))
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
             request.body.flows = migratedFlows
         },
     }, async (request, reply) => {
@@ -106,14 +98,14 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.CREATED).send(result)
     })
 
-    app.post('/:id', UpdateParams, async (request, reply) => {
+    app.post('/:id', { ...UpdateParams,
+        preValidation: async (request) => {
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+            request.body.flows = migratedFlows
+        },
+    }, async (request, reply) => {
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
-    })
-
-    app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => {
-        await templateService(app.log).incrementUsageCount({ id: request.params.id })
-        return reply.status(StatusCodes.OK).send()
     })
 
     app.delete('/:id', DeleteParams, async (request, reply) => {
@@ -206,19 +198,6 @@ const UpdateParams = {
         body: UpdateTemplateRequestBody,
     },
 }
-
-const IncrementUsageCountParams = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-    schema: {
-        description: 'Increment usage count of a template.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: GetIdParams,
-    },
-}
-
 
 async function loadOfficialTemplatesOrReturnEmpty(
     log: FastifyBaseLogger,

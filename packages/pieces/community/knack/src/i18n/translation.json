@@ -26,6 +26,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The ID of the record to delete.": "The ID of the record to delete.",
   "Field to find the record by": "Field to find the record by",
   "The value to search for in the specified field.": "The value to search for in the specified field.",

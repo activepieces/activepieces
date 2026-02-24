@@ -8,7 +8,6 @@ import {
 	ValueInputOption,
 } from '../common/common';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { commonProps } from '../common/props';
 
@@ -16,7 +15,7 @@ export const createColumnAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'create-column',
 	displayName: 'Create Spreadsheet Column',
-	description: 'Adds a new column to a spreadsheet.',
+	description: 'Creates a new column in a specific spreadsheet.',
 	props: {
 		...commonProps,
 		columnName: Property.ShortText({
@@ -52,7 +51,7 @@ export const createColumnAction = createAction({
 								range: {
 									sheetId,
 									dimension: 'COLUMNS',
-									startIndex: columnIndex -1,
+									startIndex: columnIndex - 1,
 									endIndex: columnIndex,
 								},
 							},
@@ -60,11 +59,11 @@ export const createColumnAction = createAction({
 					],
 				},
 			});
-			columnLabel = columnToLabel(columnIndex-1);
+			columnLabel = columnToLabel(columnIndex - 1);
 		} else {
 			const headers = await getHeaderRow({
-				spreadsheetId:spreadsheetId as string,
-				sheetId :sheetId as number,
+				spreadsheetId: spreadsheetId as string,
+				sheetId: sheetId as number,
 				auth: context.auth,
 			});
 
@@ -90,7 +89,11 @@ export const createColumnAction = createAction({
 			columnLabel = columnToLabel(newColumnIndex);
 		}
 
-		const sheetName = await getWorkSheetName(context.auth, spreadsheetId as string	, sheetId as number);
+		const sheetName = await getWorkSheetName(
+			context.auth,
+			spreadsheetId as string,
+			sheetId as number,
+		);
 
 		const response = await sheets.spreadsheets.values.update({
 			range: `${sheetName}!${columnLabel}1`,

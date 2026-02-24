@@ -19,10 +19,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The search query to find keywords for": "キーワードを検索するクエリ:",
   "Search engine to use for keyword analysis": "キーワード分析に使用する検索エンジン",
   "List of keywords to exclude from the search": "検索から除外するキーワードのリスト",
@@ -38,7 +40,7 @@
   "Page number in response.": "レスポンスページ番号です。",
   "Number of results per page in response.": "レスポンスのページあたりの結果数です。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "United States": "アメリカ",
   "Singapore": "シンガポール",
   "Indonesia": "インドネシア",
@@ -57,5 +59,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }

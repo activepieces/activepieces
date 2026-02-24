@@ -1,11 +1,11 @@
-import { t } from 'i18next';
-import { Check, Lock } from 'lucide-react';
-
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   PlatformPlanLimits,
   PlatformWithoutSensitiveData,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+import { Check, Lock } from 'lucide-react';
+
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 
 const LICENSE_PROPS_MAP = {
   environmentsEnabled: {
@@ -64,6 +64,10 @@ const LICENSE_PROPS_MAP = {
   customRolesEnabled: {
     label: 'Custom Roles',
     description: 'Create and manage custom roles for your team',
+  },
+  eventStreamingEnabled: {
+    label: 'Event Streaming',
+    description: 'Stream platform events to external destinations',
   },
 };
 

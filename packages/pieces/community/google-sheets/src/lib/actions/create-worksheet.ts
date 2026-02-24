@@ -8,7 +8,7 @@ export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
   name: 'create-worksheet',
   displayName: 'Create Worksheet',
-  description:'Create a blank worksheet with a title.',
+  description:'Create a new blank worksheet with a title.',
   props: {
     includeTeamDrives: includeTeamDrivesProp(),
     spreadsheetId: spreadsheetIdProp('Spreadsheet',''),

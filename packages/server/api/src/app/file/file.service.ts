@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, fileCompressor } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -9,6 +9,7 @@ import {
     FileId,
     FileLocation,
     FileType,
+    isMultipartFile,
     isNil,
     ProjectId,
 } from '@activepieces/shared'
@@ -19,6 +20,8 @@ import { repoFactory } from '../core/db/repo-factory'
 import { system } from '../helper/system/system'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
+
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/avif', 'image/apng']
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
@@ -171,6 +174,55 @@ export const fileService = (log: FastifyBaseLogger) => ({
             types,
         }, '[FileService#deleteStaleBulk] completed')
     },
+    async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
+        const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
+        
+        if (isNil(file)) {
+            return undefined
+        }
+        
+        if (!isMultipartFile(file)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'File must be a multipart file',
+                },
+            })
+        }
+
+        if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`,
+                },
+            })
+        }
+
+        if (!isNil(maxFileSizeInBytes) && file.data.length > maxFileSizeInBytes) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `File size exceeds ${Math.round(maxFileSizeInBytes / (1024 * 1024))}MB limit`,
+                },
+            })
+        }
+
+        const savedFile = await this.save({
+            data: file.data,
+            size: file.data.length,
+            type,
+            compression: FileCompression.NONE,
+            platformId,
+            fileName: file.filename,
+            metadata: {
+                ...metadata,
+                mimetype: file.mimetype ?? '',
+            },
+        })
+
+        return `${system.get(WorkerSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
+    },
 })
 
 type GetDataResponse = {
@@ -194,6 +246,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
         case FileType.PLATFORM_ASSET:
+        case FileType.USER_PROFILE_PICTURE:
             return true
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:
@@ -222,4 +275,13 @@ type GetOneParams = {
     fileId: FileId
     projectId?: ProjectId
     type?: FileType
+}
+
+type UploadPublicAssetParams = {
+    file: unknown
+    type: FileType
+    platformId: string
+    allowedMimeTypes?: string[]
+    maxFileSizeInBytes?: number
+    metadata?: Record<string, string>
 }

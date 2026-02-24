@@ -1,0 +1,16 @@
+{
+  "Run MindStudio workflows and get AI results.": "MindStudio ワークフローを実行し、AI の結果を取得します。",
+  "Your MindStudio API key (Bearer token).": "MindStudio APIキー(ベアラートークン)。",
+  "Run Workflow": "ワークフローを実行",
+  "Run a workflow from your MindStudio app and start a thread.": "MindStudioアプリからワークフローを実行し、スレッドを開始します。",
+  "App ID": "アプリ ID",
+  "Workflow": "ワークフロー",
+  "Variables": "変数",
+  "Callback URL": "Callback URL",
+  "Include Billing Cost": "請求費用を含める",
+  "MindStudio app ID to run.": "MindStudioアプリIDを実行します。",
+  "Workflow name to run (without the .flow extension).": "実行するワークフロー名 (.flow 拡張子なし)。",
+  "Key-value variables passed to the app.": "アプリに渡されるキー値変数。",
+  "URL to receive the execution result asynchronously.": "実行結果を非同期で受け取るURL。",
+  "Return the billing cost in the response.": "返信に請求コストを返します。"
+}

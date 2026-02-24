@@ -1,39 +1,47 @@
-import { resolve } from 'path'
+import { copyFile } from 'node:fs/promises'
+import { join, resolve } from 'path'
 import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import { FSWatcher, watch } from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
-import { devPiecesInstaller } from './dev-pieces-installer'
 import { devPiecesState } from './dev-pieces-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
-async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLogger): Promise<void> {
-    if (pieceNames.length === 0) return
+async function buildPieces(piecesInfo: PieceInfo[], io: Server, log: FastifyBaseLogger): Promise<void> {
+    if (piecesInfo.length === 0) return
 
-    const projectNames = pieceNames.map(name => `pieces-${name}`)
-
-    for (const projectName of projectNames) {
-        if (!/^[A-Za-z0-9-]+$/.test(projectName)) {
-            throw new Error(`Piece package name contains invalid character: ${projectName}`)
+    for (const piece of piecesInfo) {
+        if (!/^[A-Za-z0-9-]+$/.test(piece.pieceName)) {
+            throw new Error(`Piece package name contains invalid character: ${piece.pieceName}`)
         }
     }
 
-    const projectList = projectNames.join(',')
-    log.info(chalk.blue.bold(`🤌 Building ${projectNames.length} piece(s): ${projectList}... 🤌`))
+    const pieceFilters = piecesInfo.map(p => `--filter=@activepieces/piece-${p.pieceName}`).join(' ')
+    const sharedFilters = '--filter=@activepieces/pieces-framework --filter=@activepieces/pieces-common --filter=@activepieces/shared'
+    const filterArgs = `${sharedFilters} ${pieceFilters} --force`
+    log.info(chalk.blue.bold(`🤌 Building ${piecesInfo.length} piece(s): ${piecesInfo.map(p => p.pieceName).join(',')}... 🤌`))
 
     let lock: ApLock | undefined
     try {
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
         const startTime = performance.now()
-        await spawnWithKill({ cmd: `npx nx run-many --batch -t build --projects=${projectList}`, printOutput: true })
+        await spawnWithKill({ cmd: `npx turbo run build ${filterArgs}`, printOutput: true })
         const endTime = performance.now()
         const buildTime = (endTime - startTime) / 1000
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
+
+        for (const piece of piecesInfo) {
+            await copyPackageJsonToDist(piece.pieceDirectory)
+            const distPath = await filePiecesUtils(log).findDistPiecePathByPackageName(piece.packageName)
+            if (distPath) {
+                filePiecesUtils(log).clearPieceModuleCache(distPath)
+            }
+        }
 
         devPiecesState.incrementGeneration()
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
@@ -53,36 +61,38 @@ async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLog
     }
 }
 
-export async function devPiecesBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
+export async function devPiecesBuilder(app: FastifyInstance, io: Server, piecesNames: string[]): Promise<void> {
     const watchers: FSWatcher[] = []
 
-    const resolvedInfos = await Promise.all(packages.map(async (packageName) => {
-        const pieceDirectory = await filePiecesUtils(app.log).findSourcePiecePathByPieceName(packageName)
+    const resolvedInfos = await Promise.all(piecesNames.map(async (pieceName) => {
+        const pieceDirectory = await filePiecesUtils(app.log).findSourcePiecePathByPieceName(pieceName)
         if (isNil(pieceDirectory)) {
-            app.log.info(chalk.yellow(`Piece directory not found for package: ${packageName}`))
+            app.log.info(chalk.yellow(`Piece directory not found for package: ${pieceName}`))
             return null
         }
-        const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
-        return { packageName, pieceDirectory, packageJsonName }
+        const packageName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
+        return { pieceName, pieceDirectory, packageName }
     }))
-    const pieceInfos = resolvedInfos.filter((info) => info !== null)
+    const pieceInfos: PieceInfo[] = resolvedInfos.filter((info) => info !== null)
 
-    await buildPieces(pieceInfos.map(p => p.packageName), io, app.log)
+    await buildPieces(pieceInfos, io, app.log)
 
-    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
-    for (const { packageJsonName } of pieceInfos) {
-        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
-    }
+    for (const pieceInfo of pieceInfos) {
+        app.log.info(chalk.blue(`Starting watch for package: ${pieceInfo.packageName}`))
+        app.log.info(chalk.yellow(`Found piece directory: ${pieceInfo.pieceDirectory}`))
 
-    for (const { packageName, pieceDirectory } of pieceInfos) {
-        app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
-        app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
-
-        const debouncedBuild = debounce(() => {
-            buildPieces([packageName], io, app.log).catch(app.log.error)
+        const debouncedBuild = debounce((): void => {
+            void (async (): Promise<void> => {
+                try {
+                    await buildPieces([pieceInfo], io, app.log)
+                }
+                catch (error) {
+                    app.log.error(error)
+                }
+            })()
         }, 2000)
 
-        const watcher = watch(resolve(pieceDirectory), {
+        const watcher = watch(resolve(pieceInfo.pieceDirectory), {
             ignored: [/^\./, /node_modules/, /dist/],
             persistent: true,
             ignoreInitial: true,
@@ -103,4 +113,17 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
     app.addHook('onClose', async () => {
         await Promise.all(watchers.map(watcher => watcher.close().catch(app.log.error)))
     })
+}
+
+async function copyPackageJsonToDist(sourceDir: string): Promise<void> {
+    const piecesRoot = resolve('packages', 'pieces')
+    const relativePath = sourceDir.substring(sourceDir.indexOf(piecesRoot) + piecesRoot.length)
+    const distDir = join('dist', 'packages', 'pieces', relativePath)
+    await copyFile(join(sourceDir, 'package.json'), join(distDir, 'package.json'))
+}
+
+type PieceInfo = {
+    packageName: string
+    pieceName: string
+    pieceDirectory: string
 }

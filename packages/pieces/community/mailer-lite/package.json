@@ -1,7 +1,14 @@
 {
   "name": "@activepieces/piece-mailer-lite",
-  "version": "0.6.0",
+  "version": "0.6.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@mailerlite/mailerlite-nodejs": "1.1.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -154,6 +154,26 @@ export const createTrigger = <
         params.sampleData,
         TriggerTestStrategy.TEST_FUNCTION,
       )
+    case TriggerStrategy.MANUAL:
+      return new ITrigger(
+        params.name,
+        params.displayName,
+        params.description,
+        params.requireAuth ?? true,
+        params.props,
+        params.type,
+        { strategy: WebhookHandshakeStrategy.NONE },
+        async () => ({ status: 200 }),
+        { strategy: WebhookRenewStrategy.NONE },
+        (async () => Promise.resolve()),
+        params.onEnable,
+        params.onDisable,
+        params.onStart ?? (async () => Promise.resolve()),
+        params.run,
+        params.test ?? (() => Promise.resolve([params.sampleData])),
+        params.sampleData,
+        TriggerTestStrategy.TEST_FUNCTION,
+      )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
         params.name,

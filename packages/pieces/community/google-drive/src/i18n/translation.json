@@ -65,6 +65,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The name of the new folder": "The name of the new folder",
   "Determines if folders from Team Drives should be included in the results.": "Determines if folders from Team Drives should be included in the results.",
   "The name of the new text file": "The name of the new text file",

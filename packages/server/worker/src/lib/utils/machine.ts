@@ -1,7 +1,7 @@
 import { apVersionUtil, environmentVariables, exceptionHandler, networkUtils, systemUsage, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineProcessManager } from '../compute/process/engine-process-manager'
+import { sandboxPool } from '../compute/sandbox/sandbox-pool'
 
 let settings: WorkerSettingsResponse | undefined
 let workerToken: string | undefined
@@ -13,7 +13,7 @@ export const workerMachine = {
         assertNotNullOrUndefined(workerToken, 'Worker token is not set')
         return workerToken
     },
-    async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
+    async getSystemInfo(_log: FastifyBaseLogger): Promise<WorkerMachineHealthcheckRequest> {
         const { totalRamInBytes, ramUsage } = await systemUsage.getContainerMemoryUsage()
         const cpuUsage = systemUsage.getCpuUsage()
         const ip = (await networkUtils.getPublicIp()).ip
@@ -46,14 +46,14 @@ export const workerMachine = {
                 version: await apVersionUtil.getCurrentRelease(),
             },
             workerId,
-            totalSandboxes: engineProcessManager.getTotalSandboxes(),
-            freeSandboxes: engineProcessManager.getFreeSandboxes(),
+            totalSandboxes: sandboxPool.getTotalSandboxes(),
+            freeSandboxes: sandboxPool.getFreeSandboxes(),
         }
     },
     isDedicatedWorker: () => {
-        return !isNil(workerMachine.getSettings().PLATFORM_ID_FOR_DEDICATED_WORKER)
+        return !isNil(settings?.PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
-    init: async (_settings: WorkerSettingsResponse, _workerToken: string, log: FastifyBaseLogger) => {
+    init: async (_settings: WorkerSettingsResponse, _workerToken: string, _log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
             ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),
@@ -62,17 +62,7 @@ export const workerMachine = {
 
         workerToken = _workerToken
 
-        const memoryLimit = Math.floor(Number(settings.SANDBOX_MEMORY_LIMIT) / 1024)
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
-        engineProcessManager.init(settings.WORKER_CONCURRENCY, {
-            env: getEnvironmentVariables(),
-            resourceLimits: {
-                maxOldGenerationSizeMb: memoryLimit,
-                maxYoungGenerationSizeMb: memoryLimit,
-                stackSizeMb: memoryLimit,
-            },
-            execArgv: [],
-        }, log)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)
     },
     hasSettings: () => {
@@ -143,17 +133,3 @@ function appendSlashAndApi(url: string): string {
     return `${url}${slash}api/`
 }
 
-function getEnvironmentVariables(): Record<string, string | undefined> {
-    const allowedEnvVariables = workerMachine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
-    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
-    return {
-        ...propagatedEnvVars,
-        NODE_OPTIONS: '--enable-source-maps',
-        AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
-        AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
-        AP_DEV_PIECES: workerMachine.getSettings().DEV_PIECES.join(','),
-        AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
-        AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
-        AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
-    }
-}

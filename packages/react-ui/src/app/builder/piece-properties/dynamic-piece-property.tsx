@@ -1,3 +1,9 @@
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
+import {
+  AUTHENTICATION_PROPERTY_NAME,
+  isNil,
+  PropertySettings,
+} from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import React, { useState, useRef, useContext } from 'react';
 import { useFormContext, UseFormReturn, useWatch } from 'react-hook-form';
@@ -8,12 +14,6 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
-import {
-  AUTHENTICATION_PROPERTY_NAME,
-  isNil,
-  PropertySettings,
-} from '@activepieces/shared';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
@@ -139,7 +139,7 @@ const DynamicPropertiesImplementation = React.memo(
             const defaultValue = formUtils.getDefaultValueForProperties({
               props: response.options,
               existingInput: currentValue ?? {},
-              propertySettings: undefined,
+              propertySettings: props.propertySettings ?? {},
             });
             setPropertyMap(response.options);
             const schemaWithoutDropdownOptions =
@@ -159,7 +159,6 @@ const DynamicPropertiesImplementation = React.memo(
                 form,
               );
             }
-
             form.setValue(
               prependPrefixToPropertyName({
                 propertyName: props.propertyName,

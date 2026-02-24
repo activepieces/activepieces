@@ -1,3 +1,4 @@
+import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { FileX } from 'lucide-react';
@@ -13,7 +14,6 @@ import {
   createApTableStore,
 } from '@/features/tables/lib/store/ap-tables-client-state';
 import { cn } from '@/lib/utils';
-import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
 
 import { fieldsApi } from '../lib/fields-api';
 import { recordsApi } from '../lib/records-api';
@@ -155,4 +155,9 @@ export function useTableState<T>(selector: (state: TableState) => T) {
     throw new Error('Table context not found');
   }
   return useStore(tableStore, selector);
+}
+
+export function useOptionalTableStore() {
+  const tableStore = useContext(TableContext);
+  return tableStore ?? null;
 }

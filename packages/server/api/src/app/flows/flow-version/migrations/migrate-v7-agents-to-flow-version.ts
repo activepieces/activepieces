@@ -91,11 +91,10 @@ export const moveAgentsToFlowVerion: Migration = {
                     pieceVersion: '0.3.0',
                     input: {
                         [AgentPieceProps.PROMPT]: `${agent?.systemPrompt}, ${prompt}`,
-                        [AgentPieceProps.AI_MODEL]: 'openai-gpt-4o',
+                        'model': 'openai-gpt-4o',
                         [AgentPieceProps.MAX_STEPS]: agent?.maxSteps,
                         [AgentPieceProps.STRUCTURED_OUTPUT]: typeof agent?.outputFields === 'string' ? JSON.parse(agent?.outputFields as string || '[]') : [],
-                        [AgentPieceProps.AGENT_TOOLS]: tools,
-                    },
+                        [AgentPieceProps.AGENT_TOOLS]: tools                    },
                 }
             }
             return step

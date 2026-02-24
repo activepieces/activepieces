@@ -8,7 +8,9 @@ import { setupServer } from '../../../../src/app/server'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-let sendOtpSpy: jest.Mock
+import { Mock } from 'vitest'
+
+let sendOtpSpy: Mock
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
@@ -16,15 +18,16 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-    sendOtpSpy = jest.fn()
-    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
+    sendOtpSpy = vi.fn()
+    vi.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
         sendOtp: sendOtpSpy,
-        sendInvitation: jest.fn(),
-        sendIssueCreatedNotification: jest.fn(),
-        sendQuotaAlert: jest.fn(),
-        sendReminderJobHandler: jest.fn(),
-        sendExceedFailureThresholdAlert: jest.fn(),
-        sendBadgeAwardedEmail: jest.fn(),
+        sendInvitation: vi.fn(),
+        sendIssueCreatedNotification: vi.fn(),
+        sendQuotaAlert: vi.fn(),
+        sendReminderJobHandler: vi.fn(),
+        sendExceedFailureThresholdAlert: vi.fn(),
+        sendBadgeAwardedEmail: vi.fn(),
+        sendProjectMemberAdded: vi.fn(),
     }))
 
 })

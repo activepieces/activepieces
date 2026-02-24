@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   ListTriggerEventsRequest,
   SaveTriggerEventRequest,
@@ -6,6 +5,8 @@ import {
   TestTriggerRequestBody,
   TriggerEventWithPayload,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const triggerEventsApi = {
   test(request: TestTriggerRequestBody) {
@@ -23,9 +24,6 @@ export const triggerEventsApi = {
     );
   },
   saveTriggerMockdata(request: SaveTriggerEventRequest) {
-    return api.post<TriggerEventWithPayload>(`/v1/trigger-events`, {
-      flowId: request.flowId,
-      mockData: request.mockData,
-    });
+    return api.post<TriggerEventWithPayload>(`/v1/trigger-events`, request);
   },
 };

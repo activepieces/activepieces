@@ -43,6 +43,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The name or title of the opportunity.": "The name or title of the opportunity.",
   "Select the team": "Select the team",
   "Select the workspace": "Select the workspace",

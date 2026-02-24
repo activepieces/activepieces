@@ -1,5 +1,3 @@
-import { t } from 'i18next';
-
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -17,10 +15,12 @@ import {
   StepOutput,
   StepRunResponse,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import {
   PieceStepMetadata,
   PrimitiveStepMetadata,
+  StepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
 } from '../../../lib/types';
 
@@ -32,25 +32,25 @@ export const CORE_STEP_METADATA: Record<
 > = {
   [FlowActionType.CODE]: {
     displayName: t('Code'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/code.svg',
     description: t('Powerful Node.js & TypeScript code with npm'),
     type: FlowActionType.CODE as const,
   },
   [FlowActionType.LOOP_ON_ITEMS]: {
     displayName: t('Loop on Items'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/loop.svg',
     description: 'Iterate over a list of items',
     type: FlowActionType.LOOP_ON_ITEMS as const,
   },
   [FlowActionType.ROUTER]: {
     displayName: t('Router'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
     description: t('Split your flow into branches depending on condition(s)'),
     type: FlowActionType.ROUTER as const,
   },
   [FlowTriggerType.EMPTY]: {
     displayName: t('Empty Trigger'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
+    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
     description: t('Empty Trigger'),
     type: FlowTriggerType.EMPTY as const,
   },
@@ -166,6 +166,31 @@ export const stepUtils = {
       : undefined;
   },
 };
+
+export function extractPieceNamesAndCoreMetadata(
+  steps: ReturnType<typeof flowStructureUtil.getAllSteps>,
+  excludeCore: boolean,
+): { pieceNames: string[]; coreMetadata: StepMetadata[] } {
+  const pieceNamesSet = new Set<string>();
+  const coreMetadata: StepMetadata[] = [];
+
+  for (const step of steps) {
+    if (
+      step.type === FlowActionType.PIECE ||
+      step.type === FlowTriggerType.PIECE
+    ) {
+      pieceNamesSet.add(step.settings.pieceName);
+    } else if (!excludeCore) {
+      const coreMeta =
+        CORE_STEP_METADATA[step.type as keyof typeof CORE_STEP_METADATA];
+      if (coreMeta) {
+        coreMetadata.push(coreMeta);
+      }
+    }
+  }
+
+  return { pieceNames: Array.from(pieceNamesSet), coreMetadata };
+}
 
 function mapErrorHandlingOptions(
   piece: PieceMetadataModel,

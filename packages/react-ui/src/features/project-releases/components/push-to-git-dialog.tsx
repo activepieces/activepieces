@@ -1,3 +1,14 @@
+import {
+  GitPushOperationType,
+  PushGitRepoRequest,
+  PushFlowsGitRepoRequest,
+  PushTablesGitRepoRequest,
+} from '@activepieces/ee-shared';
+import {
+  assertNotNullOrUndefined,
+  PopulatedFlow,
+  Table,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -24,18 +35,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  GitBranchType,
-  GitPushOperationType,
-  PushGitRepoRequest,
-  PushFlowsGitRepoRequest,
-  PushTablesGitRepoRequest,
-} from '@activepieces/ee-shared';
-import {
-  assertNotNullOrUndefined,
-  PopulatedFlow,
-  Table,
-} from '@activepieces/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
@@ -55,6 +54,7 @@ type PushToGitDialogProps =
 const PushToGitDialog = (props: PushToGitDialogProps) => {
   const [open, setOpen] = React.useState(false);
 
+  const showPushToGit = gitSyncHooks.useShowPushToGit();
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
@@ -109,7 +109,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
     },
   });
 
-  if (!gitSync || gitSync.branchType !== GitBranchType.DEVELOPMENT) {
+  if (!showPushToGit) {
     return null;
   }
   return (

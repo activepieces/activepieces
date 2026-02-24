@@ -1,7 +1,14 @@
 {
   "name": "@activepieces/piece-supabase",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@supabase/supabase-js": "2.49.9"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -17,10 +17,12 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
   "Timeout (in seconds)": "Tempo limite (em segundos)",
+  "Follow redirects": "Seguir redirecionamentos",
   "Name of the dataset to create": "Nome do conjunto de dados a criar",
   "The mode of the dataset": "O modo do conjunto de dados",
   "Define the tables and their columns for the dataset (JSON format)": "Define as tabelas e suas colunas para o conjunto de dados (formato JSON)",
@@ -29,7 +31,7 @@
   "JSON object containing the rows to add to the table. Each row must match your table schema.": "Objeto JSON contendo as linhas para adicionar à tabela. Cada linha deve corresponder ao esquema da tabela.",
   "Skip refreshing the dataset after pushing data (only applies to Push and PushStreaming modes)": "Pular atualização do conjunto de dados após enviar dados (aplica-se somente aos modos Push e PushStreaming)",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "Push": "Enviar",
   "Streaming": "Transmitindo",
   "PushStreaming": "Transmissão",
@@ -38,5 +40,9 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "JSON": "JSON",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }

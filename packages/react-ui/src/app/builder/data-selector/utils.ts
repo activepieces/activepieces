@@ -4,7 +4,10 @@ import {
   FlowAction,
   FlowActionType,
   FlowTrigger,
+  FlowTriggerType,
 } from '@activepieces/shared';
+
+import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 
 import {
   DataSelectorTreeNode,
@@ -314,7 +317,13 @@ function traverseStep(
   zipArraysOfProperties: boolean,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-  const stepNeedsTesting = isNil(step.settings.sampleData?.lastTestDate);
+  const stepNeedsTesting =
+    isNil(step.settings.sampleData?.lastTestDate) &&
+    (step.type !== FlowTriggerType.PIECE ||
+      !pieceSelectorUtils.isManualTrigger({
+        pieceName: step.settings.pieceName,
+        triggerName: step.settings.triggerName ?? '',
+      }));
   if (stepNeedsTesting) {
     return buildTestStepNode(displayName, step.name);
   }

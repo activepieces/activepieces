@@ -1,3 +1,8 @@
+import {
+  ApFlagId,
+  FlowActionType,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,11 +15,6 @@ import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  ApFlagId,
-  FlowActionType,
-  TelemetryEventName,
-} from '@activepieces/shared';
 
 import { usePieceSearchContext } from '../../../../features/pieces/lib/piece-search-context';
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -29,12 +29,13 @@ type AIPieceActionsListProps = {
 };
 
 const ACTION_ICON_MAP: Record<string, string> = {
-  run_agent: 'https://cdn.activepieces.com/pieces/agent.png',
-  generateImage: 'https://cdn.activepieces.com/pieces/image-ai.svg',
-  askAi: 'https://cdn.activepieces.com/pieces/text-ai.svg',
-  summarizeText: 'https://cdn.activepieces.com/pieces/text-ai.svg',
-  classifyText: 'https://cdn.activepieces.com/pieces/text-ai.svg',
-  extractStructuredData: 'https://cdn.activepieces.com/pieces/ai-utility.svg',
+  run_agent: 'https://cdn.activepieces.com/pieces/new-core/agent.svg',
+  generateImage: 'https://cdn.activepieces.com/pieces/new-core/image-ai.svg',
+  askAi: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',
+  summarizeText: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',
+  classifyText: 'https://cdn.activepieces.com/pieces/new-core/text-ai.svg',
+  extractStructuredData:
+    'https://cdn.activepieces.com/pieces/new-core/utility-ai.svg',
 };
 
 export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
@@ -63,7 +64,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
           const actionIcon =
             item.type === FlowActionType.PIECE
               ? ACTION_ICON_MAP[item.actionOrTrigger.name]
-              : 'https://cdn.activepieces.com/pieces/image-ai.svg';
+              : 'https://cdn.activepieces.com/pieces/new-core/image-ai.svg';
           return (
             <AIActionItem
               key={index}

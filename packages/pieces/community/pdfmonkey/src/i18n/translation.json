@@ -22,6 +22,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Data to use for the Document generation.": "Data to use for the Document generation.",
   "Meta-Data to attach to the Document.": "Meta-Data to attach to the Document.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",

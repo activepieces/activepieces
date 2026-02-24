@@ -57,6 +57,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The ID of the record.": "The ID of the record.",
   "The ID of the record to which you want to upload the file.": "The ID of the record to which you want to upload the file.",
   "The file to be uploaded, which can be provided either as a public file URL or in Base64 encoded format.": "The file to be uploaded, which can be provided either as a public file URL or in Base64 encoded format.",

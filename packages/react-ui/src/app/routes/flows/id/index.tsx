@@ -1,3 +1,4 @@
+import { isNil, PopulatedFlow } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
@@ -12,7 +13,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { isNil, PopulatedFlow } from '@activepieces/shared';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
@@ -34,7 +34,6 @@ const FlowBuilderPage = () => {
 
   const { data: sampleDataInput, isLoading: isSampleDataInputLoading } =
     sampleDataHooks.useSampleDataInputForFlow(flow?.version, flow?.projectId);
-
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (
       <div className="bg-background flex h-full w-full items-center justify-center ">

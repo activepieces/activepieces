@@ -51,7 +51,7 @@ const GetAIProviderConfig = {
 
 const ListModels = {
     config: {
-        security: securityAccess.engine(),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.ENGINE]),
     },
     schema: {
         params: Type.Object({

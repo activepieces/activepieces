@@ -21,6 +21,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Email address for the users account": "Email address for the users account",
   "Password for the new user account": "Password for the new user account",
   "The subscription ID from your website": "The subscription ID from your website",

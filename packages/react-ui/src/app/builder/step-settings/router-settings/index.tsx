@@ -1,9 +1,3 @@
-import { useReactFlow } from '@xyflow/react';
-import { t } from 'i18next';
-import { Split } from 'lucide-react';
-import { memo, useEffect } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
-
 import {
   FlowActionType,
   FlowOperationRequest,
@@ -14,6 +8,11 @@ import {
   RouterAction,
   RouterExecutionType,
 } from '@activepieces/shared';
+import { useReactFlow } from '@xyflow/react';
+import { t } from 'i18next';
+import { Split } from 'lucide-react';
+import { memo, useEffect } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { FormField, FormItem } from '../../../../components/ui/form';
 import { Label } from '../../../../components/ui/label';
@@ -171,7 +170,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       )}
 
       {isNil(selectedBranchIndex) && (
-        <div className="mt-4">
+        <div>
           <div className="flex gap-2 mb-2 items-center">
             <Split className="w-4 h-4 rotate-180"></Split>
             <Label>{t('Branches')}</Label>

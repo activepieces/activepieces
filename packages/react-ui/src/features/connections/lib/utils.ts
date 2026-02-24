@@ -1,9 +1,3 @@
-import { t } from 'i18next';
-import { CheckIcon, UnplugIcon, XIcon } from 'lucide-react';
-
-import { formUtils } from '@/features/pieces/lib/form-utils';
-import { authenticationSession } from '@/lib/authentication-session';
-import { OAuth2App } from '@/lib/oauth2-utils';
 import {
   CustomAuthProps,
   OAuth2Props,
@@ -22,6 +16,12 @@ import {
   AppConnectionStatus,
   OAuth2GrantType,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+import { CheckIcon, UnplugIcon, XIcon } from 'lucide-react';
+
+import { formUtils } from '@/features/pieces/lib/form-utils';
+import { authenticationSession } from '@/lib/authentication-session';
+import { OAuth2App } from '@/lib/oauth2-utils';
 
 import { appConnectionsApi } from './api/app-connections';
 import { globalConnectionsApi } from './api/global-connections';
@@ -190,7 +190,10 @@ export const newConnectionUtils = {
                 type: AppConnectionType.OAUTH2,
                 client_id: '',
                 redirect_url: redirectUrl,
-                code: '',
+                code:
+                  grantType === OAuth2GrantType.CLIENT_CREDENTIALS
+                    ? 'FAKE_CODE'
+                    : '',
                 scope: auth.scope.join(' '),
                 authorization_method: auth.authorizationMethod,
                 props: formUtils.getDefaultValueForProperties({

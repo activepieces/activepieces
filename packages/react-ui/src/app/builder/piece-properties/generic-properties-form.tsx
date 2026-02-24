@@ -1,7 +1,3 @@
-import React from 'react';
-import { useFormContext } from 'react-hook-form';
-
-import { FormField } from '@/components/ui/form';
 import {
   OAuth2Props,
   PiecePropertyMap,
@@ -12,6 +8,11 @@ import {
   PropertyExecutionType,
   PropertySettings,
 } from '@activepieces/shared';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
+
+import { FormField } from '@/components/ui/form';
+import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import {
   selectGenericFormComponentForProperty,
@@ -32,7 +33,7 @@ export const GenericPropertiesForm = React.memo(
     const form = useFormContext();
     return (
       Object.keys(props).length > 0 && (
-        <div className="flex flex-col gap-4 w-full">
+        <div className={cn('flex flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
           {Object.entries(props).map(([propertyName]) => {
             const dynamicInputModeToggled =
               propertySettings?.[propertyName]?.type ===

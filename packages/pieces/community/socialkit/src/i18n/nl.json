@@ -16,10 +16,12 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "The URL of the YouTube video you want to get details from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "De URL van de YouTube-video waarvan u meer informatie wilt krijgen. (bijv. https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to get the transcript from. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "De URL van de YouTube-video waar de transcript vandaan moet komen (bijv. https://www.youtube.com/watch?v=VIDEO_ID)",
   "The URL of the YouTube video to summarize. (e.g., https://www.youtube.com/watch?v=VIDEO_ID)": "De URL van de YouTube-video naar samenvatting. (bijv. https://www.youtube.com/watch?v=VIDEO_ID)",
@@ -27,7 +29,7 @@
   "The number of comments to retrieve (default is 10, maximum is 100).": "Het aantal op te halen reacties (standaard is 10, maximum is 100).",
   "The sorting order for the comments.": "De sorteervolgorde van de commentaren.",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "Newest": "Nieuwste",
   "Top": "Bovenkant",
   "GET": "KRIJG",
@@ -35,5 +37,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }

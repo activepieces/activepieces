@@ -18,11 +18,13 @@ export const smtpAuth = PieceAuth.CustomAuth({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      required: true,
+      description: 'Leave blank if your mail relay does not require authentication.',
+      required: false,
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      required: true,
+      description: 'Leave blank if your mail relay does not require authentication.',
+      required: false,
     }),
     port: Property.StaticDropdown({
       displayName: 'Port',
@@ -84,7 +86,7 @@ export const smtp = createPiece({
   displayName: 'SMTP',
   description: 'Send emails using Simple Mail Transfer Protocol',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/smtp.svg',
   categories: [PieceCategory.CORE],
   authors: [
     'tahboubali',

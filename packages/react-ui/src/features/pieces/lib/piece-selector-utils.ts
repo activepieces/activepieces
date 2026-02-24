@@ -1,12 +1,3 @@
-import { Value } from '@sinclair/typebox/value';
-import { useRef } from 'react';
-
-import {
-  PieceSelectorItem,
-  PieceSelectorOperation,
-  PieceSelectorPieceItem,
-  PieceStepMetadataWithSuggestions,
-} from '@/lib/types';
 import { piecePropertiesUtils } from '@activepieces/pieces-framework';
 import {
   FlowAction,
@@ -28,7 +19,17 @@ import {
   DEFAULT_SAMPLE_DATA_SETTINGS,
   FlowVersion,
   FlowOperationType,
+  isManualPieceTrigger,
 } from '@activepieces/shared';
+import { Value } from '@sinclair/typebox/value';
+import { useRef } from 'react';
+
+import {
+  PieceSelectorItem,
+  PieceSelectorOperation,
+  PieceSelectorPieceItem,
+  PieceStepMetadataWithSuggestions,
+} from '@/lib/types';
 
 import { formUtils } from './form-utils';
 const defaultCode = `export const code = async (inputs) => {
@@ -356,6 +357,7 @@ const isChatTrigger = (pieceName: string, triggerName: string) => {
     triggerName === 'chat_submission'
   );
 };
+
 const getStepNameFromOperationType = (
   operation: PieceSelectorOperation,
   flowVersion: FlowVersion,
@@ -376,4 +378,5 @@ export const pieceSelectorUtils = {
   isChatTrigger,
   removeHiddenActions,
   getStepNameFromOperationType,
+  isManualTrigger: isManualPieceTrigger,
 };

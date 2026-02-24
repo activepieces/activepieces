@@ -1,0 +1,13 @@
+{
+  "Run SQL queries on an in-memory DuckDB database.": "Starten Sie SQL-Abfragen auf einer DuckDB-Datenbank.",
+  "Create and Query DB": "DB erstellen und abfragen",
+  "Create DB from data and run query": "DB aus Daten erstellen und Abfrage ausführen",
+  "Markdown": "Markdown",
+  "Tables": "Tabellen",
+  "Query": "Abfrage",
+  "Arguments": "Argumente",
+  "\n      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**": "\n      **HINWEIS** Fügen Sie dynamische Eingaben direkt in den Abfrage-String ein. Verwenden Sie stattdessen $1, $2, $3 und fügen Sie sie in Args für parametrierte Abfragen hinzu, um **SQL-Injektion zu verhindern.**",
+  "List of tables to create in the database": "Liste der Tabellen, die in der Datenbank erstellt werden sollen",
+  "Please use $1, $2, etc. for parameterized queries to avoid SQL injection.": "Bitte verwenden Sie $1, $2 etc. für parametrierte Abfragen, um SQL-Einschleusung zu vermeiden.",
+  "Arguments to be used in the query": "Argumente, die in der Abfrage verwendet werden sollen"
+}

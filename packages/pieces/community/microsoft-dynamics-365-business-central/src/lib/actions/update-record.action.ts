@@ -1,4 +1,4 @@
-import { businessCentralAuth } from '../../';
+import { businessCentralAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps, formatRecordFields } from '../common';
 import { makeClient } from '../common/client';

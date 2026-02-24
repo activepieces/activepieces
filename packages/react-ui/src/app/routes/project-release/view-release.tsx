@@ -1,3 +1,4 @@
+import { isNil, ProjectReleaseType } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
 import { t } from 'i18next';
@@ -19,7 +20,6 @@ import {
 } from '@/components/ui/tooltip';
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { isNil, ProjectReleaseType } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
 
@@ -84,28 +84,26 @@ const ViewRelease = () => {
           <div className="flex flex-col items-start gap-2 w-full">
             <div className="flex items-center gap-2 text-md justify-between w-full">
               <h1 className="text-3xl font-bold">{release?.name}</h1>
-              <div className="flex items-center justify-center">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <ApplyButton
-                      onSuccess={() => {
-                        navigate('/releases');
-                      }}
-                      variant="ghost"
-                      className="size-8 p-0"
-                      request={{
-                        projectId: authenticationSession.getProjectId()!,
-                        type: ProjectReleaseType.ROLLBACK,
-                        projectReleaseId: release?.id || '',
-                      }}
-                      defaultName={release?.name}
-                    >
-                      <Button disabled={isLoading}>{t('Rollback')}</Button>
-                    </ApplyButton>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
-                </Tooltip>
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ApplyButton
+                    onSuccess={() => {
+                      navigate('/releases');
+                    }}
+                    variant="ghost"
+                    className=" p-0"
+                    request={{
+                      projectId: authenticationSession.getProjectId()!,
+                      type: ProjectReleaseType.ROLLBACK,
+                      projectReleaseId: release?.id || '',
+                    }}
+                    defaultName={release?.name}
+                  >
+                    <Button disabled={isLoading}>{t('Rollback')}</Button>
+                  </ApplyButton>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
+              </Tooltip>
             </div>
             <p className="text-sm text-muted-foreground">
               {t('Created')}: {timeAgo}

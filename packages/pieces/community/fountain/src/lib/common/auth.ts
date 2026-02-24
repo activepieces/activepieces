@@ -1,4 +1,5 @@
-import { fountainAuth, API_BASE_URL_DEFAULT } from '../../';
+import { fountainAuth } from '../auth';
+import { API_BASE_URL_DEFAULT } from '../auth';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 export function getBaseUrl(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): string {

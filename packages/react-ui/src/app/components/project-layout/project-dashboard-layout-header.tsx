@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ChevronDown,
@@ -26,7 +27,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 
@@ -75,7 +75,7 @@ export const ProjectDashboardLayoutHeader = () => {
     {
       to: authenticationSession.appendProjectRoutePrefix('/todos'),
       label: t('Todos'),
-      show: platform.plan.todosEnabled,
+      show: !platform.plan.embeddingEnabled,
       icon: ListTodo,
       hasPermission: checkAccess(Permission.READ_TODOS),
     },

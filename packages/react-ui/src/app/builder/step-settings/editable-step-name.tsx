@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next'; // Import t directly from i18next
 import { Pencil } from 'lucide-react';
 import React from 'react';
 
 import EditableText from '@/components/ui/editable-text';
-import { isNil } from '@activepieces/shared';
 
 interface EditableStepNameProps {
   selectedBranchIndex: number | null;

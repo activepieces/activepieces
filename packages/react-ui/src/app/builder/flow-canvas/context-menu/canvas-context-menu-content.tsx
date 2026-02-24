@@ -1,3 +1,10 @@
+import {
+  FlowAction,
+  FlowActionType,
+  FlowOperationType,
+  flowStructureUtil,
+  StepLocationRelativeToParent,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowLeftRight,
@@ -11,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import {
+  ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuSub,
@@ -18,15 +26,9 @@ import {
   ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
 import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
-import {
-  FlowAction,
-  FlowActionType,
-  FlowOperationType,
-  flowStructureUtil,
-  StepLocationRelativeToParent,
-} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { CanvasShortcuts } from '../../shortcuts';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -35,11 +37,7 @@ import {
   toggleSkipSelectedNodes,
 } from '../utils/bulk-actions';
 
-import {
-  CanvasContextMenuProps,
-  CanvasShortcuts,
-  ContextMenuType,
-} from './canvas-context-menu';
+import { CanvasContextMenuProps, ContextMenuType } from './canvas-context-menu';
 
 const ShortcutWrapper = ({
   children,
@@ -128,7 +126,6 @@ export const CanvasContextMenuContent = ({
     !readonly &&
     contextMenuType === ContextMenuType.STEP &&
     !isTriggerTheOnlySelectedNode;
-
   const duplicateStep = () => {
     applyOperation({
       type: FlowOperationType.DUPLICATE_ACTION,
@@ -137,8 +134,22 @@ export const CanvasContextMenuContent = ({
       },
     });
   };
+  const showContextMenuContent =
+    showReplace ||
+    showCopy ||
+    showDuplicate ||
+    showSkip ||
+    showPasteAsFirstLoopAction ||
+    showPasteAsBranchChild ||
+    showPasteAfterCurrentStep ||
+    showPasteAfterLastStep ||
+    showDelete;
+  if (!showContextMenuContent) {
+    return null;
+  }
+
   return (
-    <>
+    <ContextMenuContent>
       {showReplace && (
         <ContextMenuItem
           disabled={disabled}
@@ -337,6 +348,6 @@ export const CanvasContextMenuContent = ({
           </>
         )}
       </>
-    </>
+    </ContextMenuContent>
   );
 };

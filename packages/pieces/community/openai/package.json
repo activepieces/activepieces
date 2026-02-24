@@ -1,8 +1,15 @@
 {
   "name": "@activepieces/piece-openai",
-  "version": "0.7.1",
+  "version": "0.7.5",
   "dependencies": {
-    "tiktoken": "1.0.11",
-    "openai": "4.67.1"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "openai": "4.67.1",
+    "tiktoken": "1.0.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { t } from 'i18next';
@@ -26,7 +27,6 @@ import {
   oauthAppsMutations,
   oauthAppsQueries,
 } from '@/features/connections/lib/oauth-apps-hooks';
-import { isNil } from '@activepieces/shared';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;

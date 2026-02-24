@@ -1,11 +1,13 @@
 import { isNil } from '@activepieces/shared'
+import { progressService } from './lib/services/progress.service'
 import { workerSocket } from './lib/worker-socket'
 
-const WORKER_ID = process.env.WORKER_ID
-process.title = `engine-${WORKER_ID}`
+const SANDBOX_ID = process.env.SANDBOX_ID
+process.title = `sandbox-${SANDBOX_ID}`
 
-if (!isNil(WORKER_ID)) {
-    workerSocket.init()
+if (!isNil(SANDBOX_ID)) {
+    workerSocket.init(SANDBOX_ID)
+    progressService.init()
 }
 
 process.on('uncaughtException', (error) => {

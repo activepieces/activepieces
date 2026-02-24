@@ -1,3 +1,4 @@
+import { Template } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogDescription, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
@@ -20,7 +21,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { Template } from '@activepieces/shared';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),
