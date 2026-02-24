@@ -53,7 +53,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    getSecret: async (request: GetSecretManagerSecretRequest & { platformId: string, providerId: SecretManagerProviderId }) => {
+    getSecret: async (request: GetSecretManagerSecretRequest & { platformId: string }) => {
         const provider = secretManagerProvider(log, request.providerId)
         const secretManager = await secretManagerRepository().findOneOrFail({
             where: { platformId: request.platformId, providerId: request.providerId },
@@ -69,15 +69,14 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return provider.getSecret({ path: request.path }, decryptedConfig) 
+        return provider.getSecret(request.request, decryptedConfig) 
     },
 
     async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
         const { providerId, keyWithoutBraces } = extractProviderId(key)
         try {
             return await this.getSecret({
-                ...({ providerId,
-                    request: await secretManagerProvider(log, providerId).resolve(keyWithoutBraces) } as GetSecretManagerSecretRequest),
+                ...await secretManagerProvider(log, providerId).resolve(keyWithoutBraces),
                 platformId,
             }) 
         }

@@ -1,6 +1,6 @@
 import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { FastifyBaseLogger } from 'fastify'
-import { awsProvider } from './aws-provider'
+import { AWS_PROVIDER_METADATA, awsProvider } from './aws-provider'
 import { CYBERARK_PROVIDER_METADATA, cyberarkConjurProvider } from './cyberark-conjur-provider'
 import { HASHICORP_PROVIDER_METADATA, hashicorpProvider } from './hashicorp-provider'
 
@@ -9,7 +9,7 @@ export type SecretManagerProvider<K extends SecretManagerProviderId> = {
     connect: (config: SecretManagerConfigFor<K>) => Promise<void>
     disconnect: () => Promise<void>
     getSecret: (params: GetSecretManagerSecretRequestFor<K>, config: SecretManagerConfigFor<K>) => Promise<string>
-    resolve: (key: string) => Promise<GetSecretManagerSecretRequestFor<K>>
+    resolve: (key: string) => Promise<Extract<GetSecretManagerSecretRequest, { providerId: K }>>
 
 }
 
@@ -37,6 +37,6 @@ export const secretManagerProvider = <K extends SecretManagerProviderId>(log: Fa
 
 export const secretManagerProvidersMetadata = (): SecretManagerProviderMetaData[] => [
     HASHICORP_PROVIDER_METADATA,
-    // AWS_PROVIDER_METADATA, // not shown in the UI yet
+    AWS_PROVIDER_METADATA,
     CYBERARK_PROVIDER_METADATA,
 ]
