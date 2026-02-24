@@ -1,4 +1,5 @@
 
+import { existsSync } from 'node:fs'
 import { readdir, stat } from 'node:fs/promises'
 import { resolve, join, relative } from 'node:path'
 import { cwd } from 'node:process'
@@ -127,6 +128,12 @@ function getChangedPiecesDistPaths(): string[] | null {
     }
     return changedPieces.split('\n').filter(Boolean).map(p => {
         return resolve(cwd(), 'dist', p)
+    }).filter(p => {
+        const exists = existsSync(join(p, 'package.json'))
+        if (!exists) {
+            console.info(`[getChangedPiecesDistPaths] skipping, no build output at ${p}`)
+        }
+        return exists
     })
 }
 
