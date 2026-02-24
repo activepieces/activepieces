@@ -62,17 +62,17 @@ jobs:
         run: cp .npmrc $HOME/.npmrc
 
       - name: publish shared package
-        run: npx turbo run build --filter=@activepieces/shared && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
+        run: npx turbo run build --filter=@activepieces/shared && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/shared
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-common package
-        run: npx turbo run build --filter=@activepieces/pieces-common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
+        run: npx turbo run build --filter=@activepieces/pieces-common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-framework package
-        run: npx turbo run build --filter=@activepieces/pieces-framework && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
+        run: npx turbo run build --filter=@activepieces/pieces-framework && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/community/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 

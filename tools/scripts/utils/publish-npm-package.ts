@@ -5,20 +5,17 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
 
-export const publishNxProject = async (path: string): Promise<void> => {
-  console.info(`[publishProject] path=${path}`)
-  assert(path, '[publishProject] parameter "path" is required')
-
+export const publishNpmPackage = async (path: string): Promise<void> => {
+  console.info(`[publishPackage] path=${path}`)
+  assert(path, '[publishPackage] parameter "path" is required')
   const packageAlreadyPublished = await packagePrePublishChecks(path);
-
   if (packageAlreadyPublished) {
     return;
   }
-
   const { version } = await readPackageJson(path)
 
   // Output path follows the convention: dist/{source-path}
-  const outputPath = `dist/${path}`
+  const outputPath = `dist`+ (path.startsWith('/')? path : `/${path}`)
 
   // Update version in dist package.json before publishing
   try {
@@ -37,7 +34,7 @@ export const publishNxProject = async (path: string): Promise<void> => {
 
 const main = async (): Promise<void> => {
   const path = argv[2]
-  await publishNxProject(path)
+  await publishNpmPackage(path)
 }
 
 /*
