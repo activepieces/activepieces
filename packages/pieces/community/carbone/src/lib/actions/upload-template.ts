@@ -59,13 +59,16 @@ export const uploadTemplateAction = createAction({
       description:
         'Category/folder to organize templates (e.g. "invoices", "contracts").',
     }),
-    tags: Property.Array(Property.ShortText({
-      displayName: 'Tag',
-      required: true,
-    }), {
+    tags: Property.Array({
       displayName: 'Tags (optional)',
       required: false,
       description: 'Tags to categorize the template (e.g. "v1", "2024").',
+      properties: {
+        tag: Property.ShortText({
+          displayName: 'Tag',
+          required: true,
+        })
+      }
     }),
   },
   async run(context) {

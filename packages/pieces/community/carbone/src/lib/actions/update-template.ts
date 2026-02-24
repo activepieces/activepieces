@@ -90,13 +90,16 @@ export const updateTemplateAction = createAction({
       description:
         'New category for the template.',
     }),
-    tags: Property.Array(Property.ShortText({
-      displayName: 'Tag',
-      required: true,
-    }), {
+    tags: Property.Array({
       displayName: 'Tags (optional)',
       required: false,
       description: 'Replace tags with a new list.',
+      properties: {
+        tag: Property.ShortText({
+          displayName: 'Tag',
+          required: true,
+        }),
+      }
     }),
     deployedAt: Property.ShortText({
       displayName: 'Deployed At (optional)',
@@ -117,12 +120,12 @@ export const updateTemplateAction = createAction({
 
     const body: Record<string, unknown> = {};
 
-    if (name !== undefined) body.name = name;
-    if (comment !== undefined) body.comment = comment;
-    if (category !== undefined) body.category = category;
-    if (tags !== undefined) body.tags = tags;
-    if (deployedAt !== undefined) body.deployedAt = Number(deployedAt);
-    if (expireAt !== undefined) body.expireAt = Number(expireAt);
+    if (name !== undefined) body['name'] = name;
+    if (comment !== undefined) body['comment'] = comment;
+    if (category !== undefined) body['category'] = category;
+    if (tags !== undefined) body['tags'] = tags;
+    if (deployedAt !== undefined) body['deployedAt'] = Number(deployedAt);
+    if (expireAt !== undefined) body['expireAt'] = Number(expireAt);
 
     const request: HttpRequest = {
       method: HttpMethod.PATCH,

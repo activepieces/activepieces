@@ -66,14 +66,14 @@ export const listTemplatesAction = createAction({
 
     const queryParams: Record<string, string> = {};
 
-    if (id) queryParams.id = id;
-    if (versionId) queryParams.versionId = versionId;
-    if (category) queryParams.category = category;
-    if (search) queryParams.search = search;
+    if (id) queryParams['id'] = id;
+    if (versionId) queryParams['versionId'] = versionId;
+    if (category) queryParams['category'] = category;
+    if (search) queryParams['search'] = search;
     if (includeVersions !== undefined)
-      queryParams.includeVersions = String(includeVersions);
-    if (limit) queryParams.limit = String(limit);
-    if (cursor) queryParams.cursor = cursor;
+      queryParams['includeVersions'] = String(includeVersions);
+    if (limit) queryParams['limit'] = String(limit);
+    if (cursor) queryParams['cursor'] = cursor;
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
