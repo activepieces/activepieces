@@ -193,98 +193,38 @@ async function getCachedOrFetch<T>(
 function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
     switch (message.type) {
         case PieceMetadataRefreshType.CREATE:
-            handleCreate(message.piece)
+            cache.set(CACHE_KEY.piece(message.piece.name, message.piece.version, message.piece.platformId), message.piece)
             break
         case PieceMetadataRefreshType.DELETE:
-            handleDelete(message.pieces)
+            for (const piece of message.pieces) {
+                cache.delete(CACHE_KEY.piece(piece.name, piece.version, undefined))
+            }
             break
-        case PieceMetadataRefreshType.UPDATE_USAGE:
-            handleUpdateUsage(message.piece)
+        case PieceMetadataRefreshType.UPDATE_USAGE: {
+            const { piece } = message
+            const key = CACHE_KEY.piece(piece.name, piece.version, piece.platformId)
+            const cached = cache.get(key) as PieceMetadataSchema | undefined
+            if (!isNil(cached)) {
+                cache.set(key, { ...cached, projectUsage: piece.projectUsage })
+            }
             break
-    }
-}
-
-function handleCreate(piece: PieceMetadataSchema): void {
-    const registryKey = CACHE_KEY.registry()
-    const cachedRegistry = cache.get(registryKey) as PieceRegistryEntry[] | undefined
-    if (!isNil(cachedRegistry)) {
-        const alreadyExists = cachedRegistry.some(e => e.name === piece.name && e.version === piece.version)
-        if (!alreadyExists) {
-            cache.set(registryKey, [...cachedRegistry, toRegistryEntry(piece)])
         }
     }
-    else {
-        invalidateAfterInflight(registryKey)
-    }
-
-    cache.set(CACHE_KEY.piece(piece.name, piece.version, piece.platformId), piece)
-
-    updateListEntries((list, locale) => {
-        const alreadyExists = list.some(e => e.name === piece.name && e.version === piece.version)
-        if (alreadyExists) {
-            return list
-        }
-        const translatedPiece = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
-        translatedPiece.i18n = undefined
-        return [...list, translatedPiece].sort(sortByNameAndVersionDesc)
-    })
+    invalidateAggregateCaches()
 }
 
-function handleDelete(pieces: { name: string, version: string }[]): void {
-    const toDelete = new Set(pieces.map(p => `${p.name}:${p.version}`))
-
-    const registryKey = CACHE_KEY.registry()
-    const cachedRegistry = cache.get(registryKey) as PieceRegistryEntry[] | undefined
-    if (!isNil(cachedRegistry)) {
-        cache.set(registryKey, cachedRegistry.filter(entry => !toDelete.has(`${entry.name}:${entry.version}`)))
+function invalidateAggregateCaches(): void {
+    invalidateKey(CACHE_KEY.registry())
+    for (const locale of Object.values(LocalesEnum)) {
+        invalidateKey(CACHE_KEY.list(locale as LocalesEnum))
     }
-    else {
-        invalidateAfterInflight(registryKey)
-    }
-
-    for (const piece of pieces) {
-        cache.delete(CACHE_KEY.piece(piece.name, piece.version, undefined))
-    }
-
-    updateListEntries((list) => list.filter(entry => !toDelete.has(`${entry.name}:${entry.version}`)))
 }
 
-function handleUpdateUsage(piece: { name: string, version: string, platformId?: string, projectUsage: number }): void {
-    const pieceKey = CACHE_KEY.piece(piece.name, piece.version, piece.platformId)
-    const cachedPiece = cache.get(pieceKey) as PieceMetadataSchema | undefined
-    if (!isNil(cachedPiece)) {
-        cache.set(pieceKey, { ...cachedPiece, projectUsage: piece.projectUsage })
-    }
-
-    updateListEntries((list) => list.map(e =>
-        e.name === piece.name && e.version === piece.version && e.platformId === piece.platformId
-            ? { ...e, projectUsage: piece.projectUsage }
-            : e,
-    ))
-}
-
-/**
- * If there's an in-flight DB fetch for a cache key, the result it stores will be stale
- * (it won't include changes from pub/sub messages that arrived during the fetch).
- * Chain a .then() to evict the stale entry so the next reader re-fetches from DB.
- */
-function invalidateAfterInflight(cacheKey: string): void {
+function invalidateKey(cacheKey: string): void {
+    cache.delete(cacheKey)
     const inFlight = inFlightQueries.get(cacheKey)
     if (!isNil(inFlight)) {
         void inFlight.then(() => cache.delete(cacheKey))
-    }
-}
-
-function updateListEntries(updater: (list: PieceMetadataSchema[], locale: LocalesEnum) => PieceMetadataSchema[]): void {
-    for (const locale of Object.values(LocalesEnum)) {
-        const cacheKey = CACHE_KEY.list(locale as LocalesEnum)
-        const cachedList = cache.get(cacheKey) as PieceMetadataSchema[] | undefined
-        if (!isNil(cachedList)) {
-            cache.set(cacheKey, updater(cachedList, locale as LocalesEnum))
-        }
-        else {
-            invalidateAfterInflight(cacheKey)
-        }
     }
 }
 
