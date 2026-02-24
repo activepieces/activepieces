@@ -1,3 +1,4 @@
+import { SecretManagerProviderMetaData } from '@activepieces/ee-shared';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
@@ -5,7 +6,6 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
-import { SecretManagerProviderMetaData } from '@activepieces/ee-shared';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
 

@@ -1,3 +1,8 @@
+import {
+  ConnectSecretManagerRequest,
+  SecretManagerProviderMetaData,
+} from '@activepieces/ee-shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -16,11 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { api } from '@/lib/api';
-import {
-  ConnectSecretManagerRequest,
-  SecretManagerProviderMetaData,
-} from '@activepieces/ee-shared';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 type ConnectSecretManagerDialogProps = {
   manager: SecretManagerProviderMetaData;

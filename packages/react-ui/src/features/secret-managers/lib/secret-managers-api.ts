@@ -1,10 +1,11 @@
-import { api } from '@/lib/api';
 import {
   ConnectSecretManagerRequest,
   DisconnectSecretManagerRequest,
   SecretManagerProviderMetaData,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const secretManagersApi = {
   list() {

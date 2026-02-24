@@ -1,13 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { toast } from 'sonner';
-
-import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ConnectSecretManagerRequest,
   DisconnectSecretManagerRequest,
   SecretManagerProviderMetaData,
 } from '@activepieces/ee-shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { toast } from 'sonner';
+
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { secretManagersApi } from './secret-managers-api';
 

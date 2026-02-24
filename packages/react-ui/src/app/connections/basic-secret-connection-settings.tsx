@@ -12,7 +12,6 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 
-
 import { SecretInput } from './secret-input';
 
 type BasicAuthConnectionSettingsProps = {

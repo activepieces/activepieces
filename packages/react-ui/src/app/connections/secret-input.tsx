@@ -1,3 +1,4 @@
+import { SecretManagerProviderId } from '@activepieces/ee-shared';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';
@@ -19,7 +20,6 @@ import {
 } from '@/components/ui/tooltip';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { cn } from '@/lib/utils';
-import { SecretManagerProviderId } from '@activepieces/ee-shared';
 
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
