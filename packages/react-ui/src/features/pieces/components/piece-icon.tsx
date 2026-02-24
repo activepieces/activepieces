@@ -43,7 +43,7 @@ const pieceIconVariantsWithPadding = cva('', {
       lg: 'p-2',
       md: 'p-1.75',
       sm: 'p-1.25',
-      xs: 'p-[5px]',
+      xs: 'p-1.25',
     },
   },
 });

@@ -262,9 +262,7 @@ export const AutomationsPage = () => {
         updateSearchParams={updateSearchParams}
         open={dialogs.isFolderDialogOpen}
         refetchFolders={() => invalidateAll()}
-        onOpenChange={(open) => {
-          dialogs.setIsFolderDialogOpen(open);
-        }}
+        onOpenChange={dialogs.setIsFolderDialogOpen}
       />
 
       <ImportFlowDialog

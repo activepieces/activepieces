@@ -8,11 +8,13 @@ interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
   border?: boolean;
+  roundedCorner?: boolean;
 }
 const ImageWithColorBackground = ({
   src,
   alt,
   fallback,
+  roundedCorner,
   ...props
 }: ImageWithColorBackgroundProps) => {
   const [hasError, setHasError] = useState(false);
@@ -39,6 +41,7 @@ const ImageWithColorBackground = ({
         'bg-background': backgroundColor === null,
         'border border-border/50 dark:bg-foreground/10':
           backgroundColor === null && props.border,
+        'rounded-lg': roundedCorner,
       })}
       style={
         backgroundColor

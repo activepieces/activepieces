@@ -22,7 +22,6 @@ import {
   DEFAULT_PAGE_SIZE,
   FOLDER_PAGE_SIZE,
   hasActiveFilters,
-  PARALLEL_FOLDER_THRESHOLD,
 } from '../lib/utils';
 
 export function useAutomationsData(filters: AutomationsFilters) {
@@ -89,9 +88,6 @@ export function useAutomationsData(filters: AutomationsFilters) {
     queryKey: ['all-folder-contents', projectId, folderIds],
     queryFn: async () => {
       const folders = foldersQuery.data!;
-      if (folders.length > PARALLEL_FOLDER_THRESHOLD) {
-        return new Map();
-      }
       const [folderFlowPages, folderTablePages] = await Promise.all([
         Promise.all(
           folders.map(({ id }) =>

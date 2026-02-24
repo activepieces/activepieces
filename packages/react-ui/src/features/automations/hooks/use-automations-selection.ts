@@ -1,10 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import {
-  SelectableItemType,
-  SelectedItemsMap,
-  TreeItem,
-} from '../lib/types';
+import { SelectableItemType, SelectedItemsMap, TreeItem } from '../lib/types';
 import { getItemKey } from '../lib/utils';
 
 export function useAutomationsSelection(treeItems: TreeItem[]) {
@@ -13,15 +9,14 @@ export function useAutomationsSelection(treeItems: TreeItem[]) {
   );
 
   const childrenByFolder = useMemo(() => {
-    const map = new Map<string, TreeItem[]>();
-    treeItems.forEach((item) => {
+    return treeItems.reduce((map, item) => {
       if (item.folderId && item.type !== 'load-more-folder') {
         const list = map.get(item.folderId) ?? [];
         list.push(item);
         map.set(item.folderId, list);
       }
-    });
-    return map;
+      return map;
+    }, new Map<string, TreeItem[]>());
   }, [treeItems]);
 
   const toggleItemSelection = useCallback(
@@ -46,7 +41,9 @@ export function useAutomationsSelection(treeItems: TreeItem[]) {
           if (next.has(key)) {
             next.delete(key);
             if (item.folderId) {
-              next.delete(getItemKey({ type: 'folder', id: item.folderId } as TreeItem));
+              next.delete(
+                getItemKey({ type: 'folder', id: item.folderId } as TreeItem),
+              );
             }
           } else {
             next.set(key, itemType);

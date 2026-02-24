@@ -4,8 +4,7 @@ import { AutomationsFilters, FolderContent, TreeItem } from './types';
 
 export const DEFAULT_PAGE_SIZE = 10;
 export const PAGE_SIZE_OPTIONS = [10, 20, 50];
-export const FOLDER_PAGE_SIZE = 10;
-export const PARALLEL_FOLDER_THRESHOLD = 50;
+export const FOLDER_PAGE_SIZE = 50;
 
 export function getUpdatedDate(
   item: PopulatedFlow | Table | FolderDto,

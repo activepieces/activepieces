@@ -287,9 +287,8 @@ export const tableService = {
             ...spreadIfDefined('name', request.name),
             ...spreadIfDefined('trigger', request.trigger),
             ...spreadIfDefined('status', request.status),
+            folderId: request.folderId,
         }
-
-        updateData.folderId = request.folderId
 
         await tableRepo().update({ id, projectId }, updateData)
         return this.getOneOrThrow({ projectId, id })

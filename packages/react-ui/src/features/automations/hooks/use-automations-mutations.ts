@@ -44,12 +44,16 @@ export function useAutomationsMutations(deps: MutationDeps) {
 
   const { mutateAsync: deleteItem } = useMutation({
     mutationFn: async (item: TreeItem) => {
-      if (item.type === 'flow') {
-        await flowsApi.delete(item.id);
-      } else if (item.type === 'table') {
-        await tablesApi.delete(item.id);
-      } else if (item.type === 'folder') {
-        await foldersApi.delete(item.id);
+      switch (item.type) {
+        case 'flow':
+          await flowsApi.delete(item.id);
+          break;
+        case 'table':
+          await tablesApi.delete(item.id);
+          break;
+        case 'folder':
+          await foldersApi.delete(item.id);
+          break;
       }
     },
     onSuccess: () => {
@@ -77,10 +81,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
     onError: () => toast.error(t('Failed to delete items')),
   });
 
-  const {
-    mutateAsync: bulkMoveTo,
-    isPending: isBulkMoving,
-  } = useMutation({
+  const { mutateAsync: bulkMoveTo, isPending: isBulkMoving } = useMutation({
     mutationFn: async ({
       selectedItems,
       targetFolderId,
@@ -213,9 +214,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
       }
 
       if (tableIds.length > 0) {
-        const tables = tableIds.map(
-          (id) => ({ id }) as Table,
-        );
+        const tables = tableIds.map((id) => ({ id } as Table));
         Promise.all(tables.map((tbl) => tablesApi.export(tbl.id)))
           .then((exported) => {
             tablesUtils.exportTables(exported);
@@ -247,8 +246,10 @@ export function useAutomationsMutations(deps: MutationDeps) {
     isCreatingTable,
     handleDeleteItem: deleteItem,
     handleBulkDelete: bulkDelete,
-    handleBulkMoveTo: (selectedItems: SelectedItemsMap, targetFolderId: string) =>
-      bulkMoveTo({ selectedItems, targetFolderId }),
+    handleBulkMoveTo: (
+      selectedItems: SelectedItemsMap,
+      targetFolderId: string,
+    ) => bulkMoveTo({ selectedItems, targetFolderId }),
     handleBulkExport,
     handleRename: (item: TreeItem, newName: string) =>
       rename({ item, newName }),
