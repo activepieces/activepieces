@@ -26,7 +26,7 @@ type TestActionComponentProps = {
 
 enum DialogType {
   NONE = 'NONE',
-  WEBHOOK = 'WEBHOOK'
+  WEBHOOK = 'WEBHOOK',
 }
 
 const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
@@ -142,7 +142,6 @@ const TestStepSectionImplementation = React.memo(
             currentStep={currentStep}
           />
         )}
-      
       </>
     );
   },
