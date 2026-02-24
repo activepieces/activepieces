@@ -1,0 +1,24 @@
+# This is a configuration file for Isolate
+
+# All sandboxes are created under this directory.
+# To avoid symlink attacks, this directory and all its ancestors
+# must be writeable only to root.
+box_root = /var/local/lib/isolate
+
+# Root of the control group hierarchy
+cg_root = /sys/fs/cgroup
+
+# If the following variable is defined, the per-box cgroups
+# are created as sub-groups of the named cgroup
+#cg_parent = boxes
+
+# Block of UIDs and GIDs reserved for sandboxes
+first_uid = 60000
+first_gid = 60000
+num_boxes = 1000
+
+# Per-box settings of the set of allowed CPUs and NUMA nodes
+# (see linux/Documentation/cgroups/cpusets.txt for precise syntax)
+
+#box0.cpus = 4-7
+#box0.mems = 1

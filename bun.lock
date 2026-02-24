@@ -6667,6 +6667,7 @@
       "name": "@activepieces/sandbox",
       "version": "0.0.1",
       "dependencies": {
+        "@activepieces/server-shared": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "fastify": "5.7.3",
         "nanoid": "3.3.8",

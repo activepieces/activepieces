@@ -1,11 +1,12 @@
+import path from 'path'
 import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-shared'
-import { createSandbox, createSandboxPool, createSandboxWebsocketServer, nsjailProcess, simpleProcess } from '@activepieces/sandbox'
+import { createSandbox, createSandboxPool, createSandboxWebsocketServer, isolateProcess, SandboxMount, simpleProcess } from '@activepieces/sandbox'
 import { ApEnvironment, ExecutionMode, WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'
 import { devPiecesState } from './cache/pieces/development/dev-pieces-state'
 import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
-import { ENGINE_PATH, GLOBAL_CODE_CACHE_PATH, workerCache } from './cache/worker-cache'
+import { ENGINE_PATH, GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH, workerCache } from './cache/worker-cache'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { createSandboxEventHandler } from './execution/sandbox-event-handlers'
 import { workerMachine } from './utils/machine'
@@ -23,29 +24,22 @@ export const sandboxPool = createSandboxPool((_factoryLog, sandboxId) => {
     const workerSettings = workerMachine.getSettings()
     const executionMode = workerSettings.EXECUTION_MODE as ExecutionMode
     const sandboxMemoryLimit = Math.floor(parseInt(workerSettings.SANDBOX_MEMORY_LIMIT) / 1024)
-    const allowedEnvVariables = workerSettings.SANDBOX_PROPAGATED_ENV_VARS
-    const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
+    const isIsolate = executionMode !== ExecutionMode.UNSANDBOXED && executionMode !== ExecutionMode.SANDBOX_CODE_ONLY
 
-    const processMaker = executionMode === ExecutionMode.UNSANDBOXED || executionMode === ExecutionMode.SANDBOX_CODE_ONLY
-        ? simpleProcess(ENGINE_PATH, GLOBAL_CODE_CACHE_PATH)
-        : nsjailProcess(log)
+    const processMaker = isIsolate
+        ? isolateProcess(log)
+        : simpleProcess(ENGINE_PATH, GLOBAL_CODE_CACHE_PATH)
 
     return createSandbox(log, sandboxId, {
-        env: {
-            ...propagatedEnvVars,
-            NODE_OPTIONS: '--enable-source-maps',
-            AP_PAUSED_FLOW_TIMEOUT_DAYS: workerSettings.PAUSED_FLOW_TIMEOUT_DAYS.toString(),
-            AP_EXECUTION_MODE: workerSettings.EXECUTION_MODE,
-            AP_DEV_PIECES: workerSettings.DEV_PIECES.join(','),
-            AP_MAX_FILE_SIZE_MB: workerSettings.MAX_FILE_SIZE_MB.toString(),
-            AP_MAX_FLOW_RUN_LOG_SIZE_MB: workerSettings.MAX_FLOW_RUN_LOG_SIZE_MB.toString(),
-            AP_FILE_STORAGE_LOCATION: workerSettings.FILE_STORAGE_LOCATION,
-            AP_S3_USE_SIGNED_URLS: workerSettings.S3_USE_SIGNED_URLS,
-        },
+        env: buildSandboxEnv(sandboxId, workerSettings),
         memoryLimitMb: sandboxMemoryLimit,
         cpuMsPerSec: 1000,
         timeLimitSeconds: 600,
         reusable: canReuseWorkers(),
+        ...(isIsolate ? {
+            command: [process.execPath, '/root/main.js'],
+            mounts: buildIsolateMounts(log, workerSettings),
+        } : {}),
     }, processMaker, sandboxWebsocketServer, createSandboxEventHandler(log))
 })
 
@@ -90,6 +84,60 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         await jobQueueWorker(log).close()
     },
 })
+
+function buildSandboxEnv(sandboxId: string, workerSettings: WorkerSettingsResponse): Record<string, string> {
+    const allowedEnvVariables = workerSettings.SANDBOX_PROPAGATED_ENV_VARS
+    const propagatedEnvVars: Record<string, string> = {}
+    for (const envVar of allowedEnvVariables) {
+        const value = process.env[envVar]
+        if (value !== undefined) {
+            propagatedEnvVars[envVar] = value
+        }
+    }
+    return {
+        ...propagatedEnvVars,
+        SANDBOX_ID: sandboxId,
+        HOME: '/tmp/',
+        NODE_OPTIONS: '--enable-source-maps',
+        AP_BASE_CODE_DIRECTORY: '/codes',
+        AP_PAUSED_FLOW_TIMEOUT_DAYS: workerSettings.PAUSED_FLOW_TIMEOUT_DAYS.toString(),
+        AP_EXECUTION_MODE: workerSettings.EXECUTION_MODE,
+        AP_DEV_PIECES: workerSettings.DEV_PIECES.join(','),
+        AP_MAX_FILE_SIZE_MB: workerSettings.MAX_FILE_SIZE_MB.toString(),
+        AP_MAX_FLOW_RUN_LOG_SIZE_MB: workerSettings.MAX_FLOW_RUN_LOG_SIZE_MB.toString(),
+        AP_FILE_STORAGE_LOCATION: workerSettings.FILE_STORAGE_LOCATION,
+        AP_S3_USE_SIGNED_URLS: workerSettings.S3_USE_SIGNED_URLS,
+    }
+}
+
+function buildIsolateMounts(log: FastifyBaseLogger, workerSettings: WorkerSettingsResponse): SandboxMount[] {
+    const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
+
+    const mounts: SandboxMount[] = [
+        { hostPath: etcDir, sandboxPath: '/etc/' },
+        { hostPath: path.resolve(GLOBAL_CACHE_COMMON_PATH), sandboxPath: '/root' },
+        { hostPath: path.resolve(GLOBAL_CODE_CACHE_PATH), sandboxPath: '/codes' },
+    ]
+
+    const platformId = workerSettings.PLATFORM_ID_FOR_DEDICATED_WORKER
+    if (platformId) {
+        const customPiecesPath = registryPieceManager(log).getCustomPiecesPath(platformId)
+        mounts.push(
+            { hostPath: path.resolve(customPiecesPath, 'node_modules'), sandboxPath: '/node_modules', optional: true },
+            { hostPath: path.resolve(customPiecesPath, 'pieces'), sandboxPath: '/pieces', optional: true },
+        )
+    }
+
+    if (workerSettings.DEV_PIECES.length > 0) {
+        const basePath = path.resolve(__dirname.split('/dist')[0])
+        mounts.push(
+            { hostPath: path.join(basePath, 'dist'), sandboxPath: path.join(basePath, 'dist'), optional: true },
+            { hostPath: path.join(basePath, 'node_modules'), sandboxPath: path.join(basePath, 'node_modules'), optional: true },
+        )
+    }
+
+    return mounts
+}
 
 function canReuseWorkers(): boolean {
     const settings = workerMachine.getSettings()

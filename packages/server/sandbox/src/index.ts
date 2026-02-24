@@ -1,5 +1,4 @@
-export { generateNsjailConfig } from './lib/nsjail/nsjail-config'
-export { nsjailProcess } from './lib/nsjail/nsjail-process'
+export { isolateProcess } from './lib/isolate/isolate-process'
 export { simpleProcess } from './lib/simple-process'
 export { createSandbox } from './lib/sandbox'
 export { createSandboxPool } from './lib/sandbox-pool'
