@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -16,7 +17,6 @@ import {
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { RightSideBarType } from '@/lib/types';
-import { Permission } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

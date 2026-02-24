@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { mycaseAuth } from '../../index';
+import { mycaseAuth } from '../auth';
 
 export const makeRequest = createAction({
   auth: mycaseAuth,

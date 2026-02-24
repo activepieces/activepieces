@@ -1,7 +1,3 @@
-import { t } from 'i18next';
-
-import { internalErrorToast } from '@/components/ui/sonner';
-import { api } from '@/lib/api';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -17,6 +13,10 @@ import {
   PackageType,
   PieceOptionRequest,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+
+import { internalErrorToast } from '@/components/ui/sonner';
+import { api } from '@/lib/api';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {
@@ -25,23 +25,10 @@ export const piecesApi = {
   get(
     request: GetPieceRequestParams & GetPieceRequestQuery,
   ): Promise<PieceMetadataModel> {
-    const req = api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
+    return api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
       version: request.version ?? undefined,
       locale: request.locale ?? undefined,
       projectId: request.projectId ?? undefined,
-    });
-    const latestVersion = api.get<PieceMetadataModel>(
-      `/v1/pieces/${request.name}`,
-      {
-        projectId: request.projectId ?? undefined,
-      },
-    );
-    return Promise.all([req, latestVersion]).then(([req, latestVersion]) => {
-      const latestVersionLogoUrl = latestVersion.logoUrl;
-      return {
-        ...req,
-        logoUrl: latestVersionLogoUrl,
-      };
     });
   },
   options<

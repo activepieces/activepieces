@@ -1,4 +1,10 @@
 import {
+  FlowOperationType,
+  StepLocationRelativeToParent,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
+import {
   DndContext,
   DragEndEvent,
   DragOverlay,
@@ -15,13 +21,6 @@ import { t } from 'i18next';
 import type { PointerEvent } from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
-
-import {
-  FlowOperationType,
-  StepLocationRelativeToParent,
-  flowStructureUtil,
-  isNil,
-} from '@activepieces/shared';
 
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
 import { NoteDragOverlayMode } from '../state/notes-state';

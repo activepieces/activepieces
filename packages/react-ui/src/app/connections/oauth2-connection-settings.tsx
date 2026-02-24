@@ -1,17 +1,3 @@
-import { t } from 'i18next';
-import { useFormContext, UseFormReturn } from 'react-hook-form';
-
-import { Button } from '@/components/ui/button';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { OAuth2App, oauth2Utils } from '@/lib/oauth2-utils';
 import {
   OAuth2Property,
   OAuth2Props,
@@ -28,6 +14,20 @@ import {
   UpsertPlatformOAuth2Request,
   isNil,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+import { useFormContext, UseFormReturn } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { OAuth2App, oauth2Utils } from '@/lib/oauth2-utils';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
 

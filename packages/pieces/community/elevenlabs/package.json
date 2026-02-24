@@ -2,6 +2,13 @@
   "name": "@activepieces/piece-elevenlabs",
   "version": "0.2.4",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@elevenlabs/elevenlabs-js": "2.4.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

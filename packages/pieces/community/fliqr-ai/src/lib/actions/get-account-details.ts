@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { fliqrAuth } from '../../index';
+import { fliqrAuth } from '../auth';
 import { fliqrConfig } from '../common/models';
 
 

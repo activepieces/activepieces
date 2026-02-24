@@ -11,7 +11,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../../index';
+import { meistertaskAuth } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
 
 const getToken = (auth: any): string => {

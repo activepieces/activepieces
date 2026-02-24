@@ -1,6 +1,3 @@
-import { nanoid } from 'nanoid';
-import { useSearchParams } from 'react-router-dom';
-
 import { OAuth2Property } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
@@ -9,6 +6,8 @@ import {
   OAuth2GrantType,
   ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared';
+import { nanoid } from 'nanoid';
+import { useSearchParams } from 'react-router-dom';
 
 import {
   FROM_QUERY_PARAM,

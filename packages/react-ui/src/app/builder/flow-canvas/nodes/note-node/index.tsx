@@ -1,3 +1,4 @@
+import { Note, NoteColorVariant } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
 import { Editor } from '@tiptap/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
@@ -12,7 +13,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Note, NoteColorVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasConsts } from '../../utils/consts';

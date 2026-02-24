@@ -1,3 +1,4 @@
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import {
   QueryClient,
   useMutation,
@@ -8,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
 

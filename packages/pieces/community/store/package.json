@@ -1,4 +1,13 @@
 {
   "name": "@activepieces/piece-store",
-  "version": "0.6.14"
+"version": "0.6.14",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
 }

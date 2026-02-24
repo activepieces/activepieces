@@ -1,3 +1,8 @@
+import {
+  FlowVersionTemplate,
+  TemplateTag as TemplateTagType,
+  Template,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -21,11 +26,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { templateUtils } from '@/features/flows/lib/template-parser';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
-import {
-  FlowVersionTemplate,
-  TemplateTag as TemplateTagType,
-  Template,
-} from '@activepieces/shared';
 
 const UpdateFlowTemplateSchema = Type.Object({
   displayName: Type.String({

@@ -1,6 +1,5 @@
-import React from 'react';
-
 import { FileResponseInterface } from '@activepieces/shared';
+import React from 'react';
 
 import { FileMessage } from './file-message';
 import { ImageMessage } from './image-message';

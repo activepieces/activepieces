@@ -1,4 +1,13 @@
 {
   "name": "@activepieces/piece-data-mapper",
-  "version": "0.3.15"
+"version": "0.3.15",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/data-mapper/",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
 }

@@ -1,3 +1,4 @@
+import { AgentOutputFieldType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AgentOutputFieldType } from '@activepieces/shared';
 
 import { FieldTypeIcon } from './field-type-icon';
 

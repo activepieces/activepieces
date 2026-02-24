@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   AppConnectionOwners,
   AppConnectionWithoutSensitiveData,
@@ -9,6 +8,8 @@ import {
   UpdateConnectionValueRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const appConnectionsApi = {
   list(

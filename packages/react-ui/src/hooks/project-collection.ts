@@ -1,3 +1,15 @@
+import {
+  CreatePlatformProjectRequest,
+  ListProjectRequestForPlatformQueryParams,
+  UpdateProjectPlatformRequest,
+} from '@activepieces/ee-shared';
+import {
+  isNil,
+  ProjectType,
+  ProjectWithLimits,
+  ProjectWithLimitsWithPlatform,
+  SeekPage,
+} from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import {
   createCollection,
@@ -13,18 +25,6 @@ import { useLocation } from 'react-router-dom';
 import { useEmbedding } from '@/components/embed-provider';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  CreatePlatformProjectRequest,
-  ListProjectRequestForPlatformQueryParams,
-  UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared';
-import {
-  isNil,
-  ProjectType,
-  ProjectWithLimits,
-  ProjectWithLimitsWithPlatform,
-  SeekPage,
-} from '@activepieces/shared';
 
 const collectionQueryClient = new QueryClient();
 
