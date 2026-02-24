@@ -19,10 +19,6 @@ export const HashicorpProviderConfigSchema = Type.Object({
 })
 export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchema>
 
-export const HashicorpGetSecretRequestSchema = Type.Object({
-    path: Type.String(),
-})
-export type HashicorpGetSecretRequest = Static<typeof HashicorpGetSecretRequestSchema>
 
 
 /**
@@ -35,10 +31,7 @@ export const AWSProviderConfigSchema = Type.Object({
 })
 export type AWSProviderConfig = Static<typeof AWSProviderConfigSchema>
 
-export const AWSGetSecretRequestSchema = Type.Object({
-    path: Type.String(),
-})
-export type AWSGetSecretRequest = Static<typeof AWSGetSecretRequestSchema>
+
 
 /**
  * Cyberark Conjur Provider Config
@@ -52,10 +45,7 @@ export const CyberarkConjurProviderConfigSchema = Type.Object({
 })
 export type CyberarkConjurProviderConfig = Static<typeof CyberarkConjurProviderConfigSchema>
 
-export const CyberarkConjurGetSecretRequestSchema = Type.Object({
-    secretKey: Type.String(),
-})
-export type CyberarkConjurGetSecretRequest = Static<typeof CyberarkConjurGetSecretRequestSchema>
+
 
 
 export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId', [
@@ -80,19 +70,11 @@ export const DisconnectSecretManagerRequestSchema = Type.Object({
 })
 export type DisconnectSecretManagerRequest = Static<typeof DisconnectSecretManagerRequestSchema>
 
-export const GetSecretManagerSecretRequestSchema = DiscriminatedUnion('providerId', [
-    Type.Object({
-        providerId: Type.Literal(SecretManagerProviderId.HASHICORP),
-        request: HashicorpGetSecretRequestSchema,
+export const GetSecretManagerSecretRequestSchema = Type.Object({
+    providerId: Type.Enum(SecretManagerProviderId),
+    request: Type.Object({
+        path: Type.String(),
     }),
-    Type.Object({
-        providerId: Type.Literal(SecretManagerProviderId.AWS),
-        request: AWSGetSecretRequestSchema,
-    }),
-    Type.Object({
-        providerId: Type.Literal(SecretManagerProviderId.CYBERARK),
-        request: CyberarkConjurGetSecretRequestSchema,
-    }),
-])
+})
 
 export type GetSecretManagerSecretRequest = Static<typeof GetSecretManagerSecretRequestSchema>
