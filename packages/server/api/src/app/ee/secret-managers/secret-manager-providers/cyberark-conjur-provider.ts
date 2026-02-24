@@ -31,7 +31,7 @@ export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             type: 'password',
         },
     },
-    getSecretParams: {
+    secretParams: {
         secretKey: {
             displayName: 'Secret key',
             placeholder: 'Your Conjur Secret Key',

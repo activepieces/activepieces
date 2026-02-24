@@ -80,10 +80,10 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       connectedOnly: true,
     });
 
-    const providerGetSecretParams = (providerId: SecretManagerProviderId) =>
+    const getSecretParamsForProvider = (providerId: SecretManagerProviderId) =>
       Object.entries(
         secretManagers?.find((provider) => provider.id === providerId)
-          ?.getSecretParams ?? {},
+          ?.secretParams ?? {},
       );
 
     const [showSecretManagerInput, setShowSecretInput] = useState(false);
@@ -100,7 +100,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       providerId: SecretManagerProviderId,
       fieldValues: Record<string, string>,
     ): string => {
-      const values = providerGetSecretParams(providerId).map(
+      const values = getSecretParamsForProvider(providerId).map(
         ([fieldKey]) => fieldValues[fieldKey] || '',
       );
       return `{{${providerId}:${values.join(':')}}}`;
@@ -122,7 +122,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       (newProvider: SecretManagerProviderId) => {
         setSelectedProvider(newProvider);
         const newFieldValues: Record<string, string> = {};
-        providerGetSecretParams(newProvider).forEach(([field]) => {
+        getSecretParamsForProvider(newProvider).forEach(([field]) => {
           newFieldValues[field] = '';
         });
         setFieldValues(newFieldValues);
@@ -150,7 +150,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     );
 
     const currentFields = useMemo(
-      () => providerGetSecretParams(selectedProvider) || [],
+      () => getSecretParamsForProvider(selectedProvider) || [],
       [selectedProvider, showSecretManagerInput],
     );
 

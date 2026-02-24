@@ -73,7 +73,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 
     async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
-        const { providerId, path } = extractProviderId(key)
+        const { providerId, path } = extractProviderIdAndPathFromKey(key)
         try {
             return await this.getSecret({
                 platformId,
@@ -160,7 +160,7 @@ const trimKeyBraces = (key: string) => {
  * key is {{providerId:secret-path}}
  * returns providerId and path
  */
-const extractProviderId = (key: string): {
+const extractProviderIdAndPathFromKey = (key: string): {
     providerId: SecretManagerProviderId
     path: string
 } => {
@@ -181,4 +181,5 @@ const extractProviderId = (key: string): {
         path,
     }
 }
+
 

@@ -31,7 +31,7 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             type: 'password',
         },
     },
-    getSecretParams: {
+    secretParams: {
         path: {
             displayName: 'Secret Path',
             placeholder: 'eg: secret/data/keys/my-key',

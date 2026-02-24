@@ -19,7 +19,7 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             type: 'password',
         },
     },
-    getSecretParams: {
+    secretParams: {
         path: {
             displayName: 'Secret Path',
             placeholder: 'secretPath',

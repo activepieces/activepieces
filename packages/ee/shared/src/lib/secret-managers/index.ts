@@ -41,19 +41,19 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.HASHICORP),
         fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema),
-        getSecretParams: Type.Record(Type.KeyOf(HashicorpGetSecretRequestSchema), SecretManagerFieldSchema),
+        secretParams: Type.Record(Type.KeyOf(HashicorpGetSecretRequestSchema), SecretManagerFieldSchema),
     }),
     Type.Object({
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.AWS),
         fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema),
-        getSecretParams: Type.Record(Type.KeyOf(AWSGetSecretRequestSchema), SecretManagerFieldSchema),
+        secretParams: Type.Record(Type.KeyOf(AWSGetSecretRequestSchema), SecretManagerFieldSchema),
     }),
     Type.Object({
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.CYBERARK),
         fields: Type.Record(Type.KeyOf(CyberarkConjurProviderConfigSchema), SecretManagerFieldSchema),
-        getSecretParams: Type.Record(Type.KeyOf(CyberarkConjurGetSecretRequestSchema), SecretManagerFieldSchema),
+        secretParams: Type.Record(Type.KeyOf(CyberarkConjurGetSecretRequestSchema), SecretManagerFieldSchema),
     }),
 ])
 
