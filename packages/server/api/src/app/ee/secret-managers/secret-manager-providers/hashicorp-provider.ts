@@ -93,14 +93,15 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         return Promise.resolve()
     },
     getSecret: async (request: GetSecretManagerSecretRequest, config: HashicorpProviderConfig) => {
+        await hashicorpProvider(log).validatePathFormat(request.path)
         const pathParts = request.path.split('/')
         const mountPath = pathParts.slice(0, -1).join('/')
         const secretKey = pathParts.slice(-1)[0]
         const token = await hashicorpProvider(log).checkConnection(config) as string
-        const url = removeEndingSlash(config.url)
-
+        const configUrl = removeEndingSlash(config.url)
+        const requestUrl = `${configUrl}/v1/${mountPath}`
         const response = await vaultApi({
-            url: `${url}/v1/${mountPath}`,
+            url: requestUrl,
             token,
             method: 'GET',
             namespace: config.namespace,
@@ -115,7 +116,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
                 params: {
                     message: error.message,
                     provider: SecretManagerProviderId.HASHICORP,
-                    request,
+                    request: { ...request, url: requestUrl },
                 },
             })
         })
@@ -137,28 +138,16 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         }
         return data[secretKey]
     },
-    resolve: async (key: string) => {
-        const splits = key.split(':')
-        if (splits.length < 2) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Wrong key format . should be providerName:mount/data/path/key',
-                },
-            })
-        }
-        const path = removeEndingSlash(splits[1])
+    validatePathFormat: async (key: string) => {
+        const path = removeEndingSlash(key)
         const pathParts = path.split('/')
-        if (pathParts.length < 3) {
+        if (pathParts.length < 3 ) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Wrong path format . should be mount/data/path/key',
+                    message: 'Wrong path format . should be mount/data/path/key. got ' + key,
                 },
             })
-        }
-        return {
-            path,
         }
     },
 })

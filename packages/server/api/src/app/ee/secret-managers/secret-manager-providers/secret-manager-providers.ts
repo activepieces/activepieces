@@ -9,7 +9,7 @@ export type SecretManagerProvider<K extends SecretManagerProviderId> = {
     connect: (config: SecretManagerConfigFor<K>) => Promise<void>
     disconnect: () => Promise<void>
     getSecret: (params: GetSecretManagerSecretRequest, config: SecretManagerConfigFor<K>) => Promise<string>
-    resolve: (key: string) => Promise<{ path: string }>
+    validatePathFormat: (path: string) => Promise<void>
 }
 
 export type SecretManagerConfigFor<K extends SecretManagerProviderId> =

@@ -42,9 +42,7 @@ export const awsProvider = (_log: FastifyBaseLogger): SecretManagerProvider<Secr
     getSecret: async (_request: GetSecretManagerSecretRequest, _config: AWSProviderConfig) => {
         return Promise.resolve('secret')
     },
-    resolve: async (key: string) => {
-        return {
-            path: key,
-        }
+    validatePathFormat: async (_: string) => {
+     
     },
 })

@@ -73,12 +73,12 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
     },
 
     async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
-        const { providerId, keyWithoutBraces } = extractProviderId(key)
+        const { providerId, path } = extractProviderId(key)
         try {
             return await this.getSecret({
                 platformId,
                 providerId,
-                path: keyWithoutBraces,
+                path,
             }) 
         }
         catch (error) {
@@ -157,16 +157,17 @@ const trimKeyBraces = (key: string) => {
 }
 
 /**
- * takes trimmed key in the format of providerId:secret-path
- * returns providerId
+ * key is {{providerId:secret-path}}
+ * returns providerId and path
  */
 const extractProviderId = (key: string): {
     providerId: SecretManagerProviderId
-    keyWithoutBraces: string
+    path: string
 } => {
     const keyWithoutBraces = trimKeyBraces(key)
     const splits = keyWithoutBraces.split(':')
     const providerId = splits[0]
+    const path = splits[1]
     if (!isEnumValue(SecretManagerProviderId, providerId)) {
         throw new ActivepiecesError({
             code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,
@@ -177,7 +178,7 @@ const extractProviderId = (key: string): {
     }
     return {
         providerId,
-        keyWithoutBraces,
+        path,
     }
 }
 

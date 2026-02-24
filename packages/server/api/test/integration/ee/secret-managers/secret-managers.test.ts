@@ -305,18 +305,11 @@ describe('Secret Managers API', () => {
         }),
         describe('HashiCorp Provider - Path Resolution', () => {
             it('should resolve valid path format', async () => {
-                const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key')
-                expect(result).toEqual({ path: 'secret/data/keys/my-key' })
+                await hashicorpProvider(mockLog).validatePathFormat('hashicorp:secret/data/keys/my-key')
             })
-
-            it('should remove trailing slash from path', async () => {
-                const result = await hashicorpProvider(mockLog).resolve('hashicorp:secret/data/keys/my-key/')
-                expect(result).toEqual({ path: 'secret/data/keys/my-key' })
-            })
-
             it('should throw error for path with less than 3 parts', async () => {
                 await expect(
-                    hashicorpProvider(mockLog).resolve('hashicorp:secret/key'),
+                    hashicorpProvider(mockLog).validatePathFormat('secret/key'),
                 ).rejects.toMatchObject({
                     error: expect.objectContaining({
                         code: ErrorCode.VALIDATION,
@@ -325,7 +318,7 @@ describe('Secret Managers API', () => {
             })
             it('should throw error for key without colon separator', async () => {
                 await expect(
-                    hashicorpProvider(mockLog).resolve('hashicorp'),
+                    hashicorpProvider(mockLog).validatePathFormat('hashicorp'),
                 ).rejects.toMatchObject({
                     error: expect.objectContaining({
                         code: ErrorCode.VALIDATION,

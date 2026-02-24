@@ -117,20 +117,8 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
         }
         return data
     },
-    resolve: async (key: string) => {
-        const splits = key.split(':')
-        if (splits.length < 2) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Wrong key format . should be providerName:secret-key',
-                },
-            })
-        }
-       
-        return {
-            path: splits[1],
-        }
+    validatePathFormat: async (_: string) => {
+      
     },
 })
 

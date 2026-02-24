@@ -2,7 +2,7 @@ import { t } from 'i18next';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -25,13 +25,18 @@ const SecretMangersPage = () => {
           title={t('Secret Managers')}
           description={t('Manage Secret Managers')}
         ></DashboardPageHeader>
-        {isLoading ? (
-          <Skeleton className="w-full h-10 flex flex-col gap-4" />
-        ) : (
-          secretManagerProviders?.map((provider) => (
-            <SecretManagerProviderCard key={provider.id} provider={provider} />
-          ))
-        )}
+        <div className="flex flex-col gap-4">
+          {isLoading ? (
+            <SkeletonList numberOfItems={3} className="w-full h-20" />
+          ) : (
+            secretManagerProviders?.map((provider) => (
+              <SecretManagerProviderCard
+                key={provider.id}
+                provider={provider}
+              />
+            ))
+          )}
+        </div>
       </div>
     </LockedFeatureGuard>
   );
