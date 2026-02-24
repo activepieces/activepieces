@@ -194,11 +194,13 @@ function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
     switch (message.type) {
         case PieceMetadataRefreshType.CREATE:
             cache.set(CACHE_KEY.piece(message.piece.name, message.piece.version, message.piece.platformId), message.piece)
+            invalidateAggregateCaches()
             break
         case PieceMetadataRefreshType.DELETE:
             for (const piece of message.pieces) {
                 cache.delete(CACHE_KEY.piece(piece.name, piece.version, undefined))
             }
+            invalidateAggregateCaches()
             break
         case PieceMetadataRefreshType.UPDATE_USAGE: {
             const { piece } = message
@@ -210,7 +212,6 @@ function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
             break
         }
     }
-    invalidateAggregateCaches()
 }
 
 function invalidateAggregateCaches(): void {
