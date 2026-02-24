@@ -4,10 +4,9 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "./dist",
+    "outDir": "../../../../dist/packages/pieces/community/mysendingbox",
     "declaration": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+  "include": ["src/**/*.ts"]
 }

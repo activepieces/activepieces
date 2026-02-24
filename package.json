@@ -17,6 +17,7 @@
     "db-migration": "npx turbo run db-migration --filter=server-api --",
     "check-migrations": "npx turbo run check-migrations --filter=server-api",
     "lint": "turbo run lint",
+    "lint-dev": "turbo run lint --filter='!@activepieces/piece-*' --force -- --fix",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
     "create-action": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts actions create",
