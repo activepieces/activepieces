@@ -18,7 +18,7 @@ export const publishNxProject = async (path: string): Promise<void> => {
   const { version } = await readPackageJson(path)
 
   // Output path follows the convention: dist/{source-path}
-  const outputPath = `dist/${path}`
+  const outputPath = `dist${path}`
 
   // Update version in dist package.json before publishing
   try {
