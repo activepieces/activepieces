@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-village",
-"version": "0.3.3",
+  "version": "0.3.3",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

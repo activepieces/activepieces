@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-salesforce",
-"version": "0.5.2",
+  "version": "0.5.2",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
@@ -9,6 +9,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
     "fast-xml-parser": "5.3.7"
   }
 }

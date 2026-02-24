@@ -5,7 +5,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "amqplib": "0.10.7"
+    "amqplib": "0.10.7",
+    "dayjs": "1.11.9"
   },
   "devDependencies": {
     "@types/amqplib": "0.10.7"

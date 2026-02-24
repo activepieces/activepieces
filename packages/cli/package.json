@@ -1,17 +1,26 @@
 {
-    "name": "@activepieces/cli",
-    "version": "1.0.1",
-    "bin": {
-        "pieces-cli":"../../dist/cli/src/index.js"
-    },
-    "scripts": {
-        "start": "ts-node src/index.ts",
-        "build": "tsc -p tsconfig.lib.json",
-        "lint": "eslint 'src/**/*.ts'"
-    },
-    "dependencies": {
-        "@activepieces/pieces-framework": "*",
-        "@activepieces/shared": "*"
-    }
+  "name": "@activepieces/cli",
+  "version": "1.0.1",
+  "bin": {
+    "pieces-cli": "../../dist/cli/src/index.js"
+  },
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/shared": "*",
+    "axios": "1.13.5",
+    "chalk": "4.1.2",
+    "commander": "11.1.0",
+    "dayjs": "1.11.9",
+    "dotenv": "17.2.3",
+    "form-data": "4.0.4",
+    "inquirer": "8.2.7",
+    "jsonwebtoken": "9.0.1",
+    "nanoid": "3.3.8"
+  }
 }
-  

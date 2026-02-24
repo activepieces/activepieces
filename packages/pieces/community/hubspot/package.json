@@ -5,7 +5,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@hubspot/api-client": "12.0.1"
+    "@hubspot/api-client": "12.0.1",
+    "dayjs": "1.11.9"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

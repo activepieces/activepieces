@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-schedule",
-"version": "0.1.17",
+  "version": "0.1.17",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

@@ -6,8 +6,10 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "basic-ftp": "5.0.5",
+    "dayjs": "1.11.9",
     "ssh2": "1.16.0",
-    "ssh2-sftp-client": "9.1.0"
+    "ssh2-sftp-client": "9.1.0",
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@types/ssh2": "1.15.5"

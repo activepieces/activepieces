@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-facebook-leads",
-"version": "0.3.3",
+  "version": "0.3.3",
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
   "scripts": {

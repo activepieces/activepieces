@@ -5,6 +5,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
     "imapflow": "1.0.200",
     "mailparser": "3.7.5"
   },

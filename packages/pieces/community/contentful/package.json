@@ -5,7 +5,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "contentful-management": "11.48.1"
+    "contentful-management": "11.48.1",
+    "zod": "4.1.13"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

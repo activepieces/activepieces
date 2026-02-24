@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-omnihr",
-"version": "0.0.6",
+  "version": "0.0.6",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

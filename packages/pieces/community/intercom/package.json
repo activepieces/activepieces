@@ -7,6 +7,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
     "intercom-client": "6.2.0",
     "string-strip-html": "8.5.0"
   },

@@ -5,7 +5,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@mailerlite/mailerlite-nodejs": "1.1.0"
+    "@mailerlite/mailerlite-nodejs": "1.1.0",
+    "dayjs": "1.11.9"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

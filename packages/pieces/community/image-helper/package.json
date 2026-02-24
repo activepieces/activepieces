@@ -6,7 +6,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "exifreader": "4.20.0",
-    "jimp": "^0.22.12"
+    "jimp": "^0.22.12",
+    "mime-types": "2.1.35"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

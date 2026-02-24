@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-captain-data",
-"version": "0.1.4",
+  "version": "0.1.4",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

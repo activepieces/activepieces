@@ -7,6 +7,7 @@
     "@activepieces/shared": "workspace:*",
     "@notionhq/client": "2.2.14",
     "@tryfabric/martian": "1.2.4",
+    "dayjs": "1.11.9",
     "notion-to-md": "3.1.1"
   },
   "overrides": {

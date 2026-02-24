@@ -8,6 +8,8 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
+    "form-data": "4.0.4"
   }
 }

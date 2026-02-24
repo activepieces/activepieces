@@ -14,5 +14,8 @@
     "@sinclair/typebox": "0.34.11",
     "ai": "^6.0.0",
     "semver": "7.6.0"
+  },
+  "devDependencies": {
+    "vitest": "3.0.8"
   }
 }

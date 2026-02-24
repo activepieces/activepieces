@@ -5,6 +5,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
     "googleapis": "129.0.0",
     "googleapis-common": "7.2.0"
   },

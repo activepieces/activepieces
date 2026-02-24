@@ -6,7 +6,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@azure/openai": "1.0.0-beta.11",
-    "tiktoken": "1.0.11"
+    "tiktoken": "1.0.11",
+    "zod": "4.1.13"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

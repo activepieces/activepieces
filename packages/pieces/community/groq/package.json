@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-groq",
-"version": "0.2.4",
+  "version": "0.2.4",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

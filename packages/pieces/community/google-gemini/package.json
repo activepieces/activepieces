@@ -7,7 +7,10 @@
     "@activepieces/shared": "workspace:*",
     "@google/genai": "1.29.0",
     "@google/generative-ai": "0.21.0",
-    "wav": "^1.0.2"
+    "mime-types": "2.1.35",
+    "nanoid": "3.3.8",
+    "wav": "^1.0.2",
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@types/wav": "^1.0.4"

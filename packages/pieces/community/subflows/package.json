@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-subflows",
-"version": "0.4.11",
+  "version": "0.4.11",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"

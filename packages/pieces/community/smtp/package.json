@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-smtp",
-"version": "0.3.12",
+  "version": "0.3.12",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
@@ -8,6 +8,8 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "mime-types": "2.1.35",
+    "nodemailer": "7.0.11"
   }
 }

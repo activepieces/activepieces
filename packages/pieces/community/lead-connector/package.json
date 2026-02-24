@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-lead-connector",
-"version": "0.2.4",
+  "version": "0.2.4",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
@@ -9,7 +9,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "jsonwebtoken": "9.0.1"
+    "jsonwebtoken": "9.0.1",
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "9.0.10"

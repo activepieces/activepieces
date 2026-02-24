@@ -5,6 +5,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "axios": "1.13.5",
     "docusign-esign": "8.1.0"
   },
   "scripts": {

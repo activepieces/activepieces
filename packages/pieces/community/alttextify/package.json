@@ -8,6 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "mime-types": "2.1.35",
     "tslib": "^2.3.0"
   },
   "scripts": {

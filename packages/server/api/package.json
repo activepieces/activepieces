@@ -6,9 +6,9 @@
   "dependencies": {
     "@activepieces/ee-shared": "workspace:*",
     "@activepieces/engine": "workspace:*",
+    "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/server-shared": "workspace:*",
-    "@activepieces/pieces-common": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.0",
     "@ai-sdk/azure": "^3.0.0",
@@ -62,9 +62,9 @@
     "bullmq-otel": "1.0.1",
     "content-disposition": "0.5.4",
     "dayjs": "1.11.9",
-    "dotenv": "17.2.3",
     "decompress": "4.2.1",
     "deep-equal": "2.2.2",
+    "dotenv": "17.2.3",
     "fastify": "5.7.3",
     "fastify-favicon": "5.0.0",
     "fastify-plugin": "5.0.1",
@@ -99,6 +99,11 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
+    "@activepieces/piece-facebook-leads": "workspace:*",
+    "@activepieces/piece-intercom": "workspace:*",
+    "@activepieces/piece-slack": "workspace:*",
+    "@activepieces/piece-square": "workspace:*",
+    "@faker-js/faker": "8.2.0",
     "@types/bcrypt": "5.0.0",
     "@types/content-disposition": "0.5.9",
     "@types/decompress": "4.2.4",
@@ -112,10 +117,8 @@
     "@types/qs": "6.9.7",
     "@types/semver": "7.5.6",
     "@types/tinycolor2": "1.4.5",
-    "@activepieces/piece-facebook-leads": "workspace:*",
-    "@activepieces/piece-intercom": "workspace:*",
-    "@activepieces/piece-slack": "workspace:*",
-    "@activepieces/piece-square": "workspace:*"
+    "vitest": "3.0.8",
+    "webpack-ignore-dynamic-require": "1.0.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.app.json",

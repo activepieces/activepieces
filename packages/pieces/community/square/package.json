@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-square",
-"version": "0.4.3",
+  "version": "0.4.3",
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
   "scripts": {

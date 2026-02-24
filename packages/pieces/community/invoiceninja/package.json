@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-invoiceninja",
-"version": "0.3.4",
+  "version": "0.3.4",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
@@ -8,6 +8,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "zod": "4.1.13"
   }
 }

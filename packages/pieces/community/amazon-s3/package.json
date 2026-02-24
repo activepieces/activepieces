@@ -5,7 +5,11 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "@aws-sdk/client-s3": "3.974.0",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "3.894.0",
+    "dayjs": "1.11.9",
+    "mime-types": "2.1.35",
     "openpgp": "^6.3.0"
   },
   "scripts": {

@@ -7,7 +7,10 @@
     "@activepieces/shared": "workspace:*",
     "@atlaskit/adf-schema": "50.4.0",
     "@atlaskit/editor-json-transformer": "8.27.2",
-    "@atlaskit/editor-markdown-transformer": "5.16.6"
+    "@atlaskit/editor-markdown-transformer": "5.16.6",
+    "dayjs": "1.11.9",
+    "form-data": "4.0.4",
+    "zod": "4.1.13"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
