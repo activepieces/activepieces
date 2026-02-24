@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
 import { execSync } from 'node:child_process'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
 
@@ -12,9 +12,13 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   // Output path follows the convention: dist/{source-path}
   const outputPath = `dist/${path}`
 
-  if (!existsSync(`${outputPath}/package.json`)) {
+  if (!existsSync(outputPath)) {
     console.info(`[publishPackage] skipping, no build output at ${outputPath}`)
     return
+  }
+
+  if (!existsSync(`${outputPath}/package.json`)) {
+    copyFileSync(`${path}/package.json`, `${outputPath}/package.json`)
   }
 
   const packageAlreadyPublished = await packagePrePublishChecks(path);
