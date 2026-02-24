@@ -41,16 +41,12 @@ export const sandboxWebsocketServer = {
                 log.debug({ sandboxId, event, payload }, '[WebSocket] Received message from sandbox')
                 const listener = listeners[sandboxId]
                 if (isNil(listener)) {
-                    const socketExists = !isNil(sockets[sandboxId])
-                    const socketConnected = sockets[sandboxId]?.connected ?? false
-                    log.error({ 
-                        sandboxId, 
-                        event, 
-                        socketExists,
-                        socketConnected,
+                    log.debug({
+                        sandboxId,
+                        event,
                         socketId: socket.id,
-                        hasCallback: !isNil(callback),
-                    }, '[WebSocket] Received message from sandbox after listener was removed')
+                    }, '[WebSocket] Received message from sandbox after listener was removed, ignoring')
+                    callback?.()
                     return
                 }
                 const promise = listener(event, payload)
