@@ -8,16 +8,14 @@ export type SecretManagerProvider<K extends SecretManagerProviderId> = {
     checkConnection: (config: SecretManagerConfigFor<K>) => Promise<unknown>
     connect: (config: SecretManagerConfigFor<K>) => Promise<void>
     disconnect: () => Promise<void>
-    getSecret: (params: GetSecretManagerSecretRequestFor<K>, config: SecretManagerConfigFor<K>) => Promise<string>
-    resolve: (key: string) => Promise<GetSecretManagerSecretRequestFor<K>>
-
+    getSecret: (params: GetSecretManagerSecretRequest, config: SecretManagerConfigFor<K>) => Promise<string>
+    resolve: (key: string) => Promise<{ path: string }>
 }
 
 export type SecretManagerConfigFor<K extends SecretManagerProviderId> =
   Extract<ConnectSecretManagerRequest, { providerId: K }>['config']
 
-export type GetSecretManagerSecretRequestFor<K extends SecretManagerProviderId> =
-  Extract<GetSecretManagerSecretRequest, { providerId: K }>['request']
+
 
 export type SecretManagerProvidersMap = {
     [K in SecretManagerProviderId]: SecretManagerProvider<K>

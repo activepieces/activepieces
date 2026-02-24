@@ -1,5 +1,5 @@
 import https from 'https'
-import { CyberarkConjurGetSecretRequest, CyberarkConjurProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { CyberarkConjurProviderConfig, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -32,7 +32,7 @@ export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         },
     },
     getSecretParams: {
-        secretKey: {
+        path: {
             displayName: 'Secret key',
             placeholder: 'Your Conjur Secret Key',
             type: 'text',
@@ -74,13 +74,13 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
     disconnect: async () => {
         return Promise.resolve()
     },
-    getSecret: async (request: CyberarkConjurGetSecretRequest, config: CyberarkConjurProviderConfig) => {
+    getSecret: async (request: GetSecretManagerSecretRequest, config: CyberarkConjurProviderConfig) => {
 
         const token = await cyberarkConjurProvider(log).checkConnection(config) as string
         const url = removeEndingSlash(config.url)
 
         const response = await conjurApi({
-            url: `${url}/secrets/${config.organizationAccountName}/variable/${encodeURIComponent(request.secretKey)}`,
+            url: `${url}/secrets/${config.organizationAccountName}/variable/${encodeURIComponent(request.path)}`,
             token,
             method: 'GET',
         }).catch((error) => {
@@ -129,7 +129,7 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
         }
        
         return {
-            secretKey: splits[1],
+            path: splits[1],
         }
     },
 })
