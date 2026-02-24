@@ -12,7 +12,8 @@
     "googleapis-common": "7.2.0",
     "lodash": "4.17.23",
     "nanoid": "3.3.8",
-    "zod": "4.1.13"
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

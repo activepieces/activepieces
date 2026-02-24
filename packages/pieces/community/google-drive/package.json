@@ -9,7 +9,8 @@
     "form-data": "4.0.4",
     "googleapis": "129.0.0",
     "googleapis-common": "7.2.0",
-    "mime-types": "2.1.35"
+    "mime-types": "2.1.35",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

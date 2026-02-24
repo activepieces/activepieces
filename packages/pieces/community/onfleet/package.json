@@ -6,7 +6,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@onfleet/node-onfleet": "1.3.3",
-    "dayjs": "1.11.9"
+    "dayjs": "1.11.9",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

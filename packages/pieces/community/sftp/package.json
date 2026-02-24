@@ -9,7 +9,8 @@
     "dayjs": "1.11.9",
     "ssh2": "1.16.0",
     "ssh2-sftp-client": "9.1.0",
-    "zod": "4.1.13"
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@types/ssh2": "1.15.5"

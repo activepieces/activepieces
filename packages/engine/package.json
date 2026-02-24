@@ -31,10 +31,12 @@
   },
   "devDependencies": {
     "@activepieces/piece-approval": "workspace:*",
-    "@types/node": "20.19.9",
     "@activepieces/piece-data-mapper": "workspace:*",
     "@activepieces/piece-http": "workspace:*",
     "@activepieces/piece-webhook": "workspace:*",
+    "@types/is-base64": "1.1.1",
+    "@types/mime-types": "2.1.1",
+    "@types/node": "20.19.9",
     "vitest": "3.0.8",
     "webpack-ignore-dynamic-require": "1.0.0"
   }

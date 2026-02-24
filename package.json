@@ -35,6 +35,7 @@
   },
   "private": true,
   "devDependencies": {
+    "axios": "1.13.5",
     "@commitlint/cli": "17.7.1",
     "@commitlint/config-conventional": "17.7.0",
     "@playwright/test": "1.54.1",
@@ -70,6 +71,7 @@
     "ts-loader": "9.5.1",
     "ts-node": "10.9.1",
     "tsconfig-paths": "4.2.0",
+    "tslib": "2.6.2",
     "tsx": "4.21.0",
     "turbo": "2.8.10",
     "typescript": "5.5.4",

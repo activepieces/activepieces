@@ -9,6 +9,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@segment/analytics-node": "2.2.0"
+    "@segment/analytics-node": "2.2.0",
+    "tslib": "2.6.2"
   }
 }

@@ -9,6 +9,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "stripe": "18.2.1"
+    "stripe": "18.2.1",
+    "tslib": "2.6.2"
   }
 }

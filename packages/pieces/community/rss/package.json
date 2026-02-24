@@ -7,7 +7,8 @@
     "@activepieces/shared": "workspace:*",
     "axios": "1.13.5",
     "dayjs": "1.11.9",
-    "feedparser": "2.2.10"
+    "feedparser": "2.2.10",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

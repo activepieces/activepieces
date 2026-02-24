@@ -9,6 +9,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "mime-types": "2.1.35"
+    "mime-types": "2.1.35",
+    "tslib": "2.6.2"
   }
 }

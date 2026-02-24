@@ -9,7 +9,8 @@
     "mime-types": "2.1.35",
     "openai": "4.67.1",
     "tiktoken": "1.0.11",
-    "zod": "4.1.13"
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

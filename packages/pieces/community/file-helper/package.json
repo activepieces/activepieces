@@ -6,7 +6,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@zip.js/zip.js": "^2.8.15",
-    "mime-types": "2.1.35"
+    "mime-types": "2.1.35",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

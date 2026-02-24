@@ -10,7 +10,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "form-data": "4.0.4",
-    "jsonwebtoken": "9.0.1"
+    "jsonwebtoken": "9.0.1",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "9.0.10"

@@ -10,7 +10,8 @@
     "@aws-sdk/s3-request-presigner": "3.894.0",
     "dayjs": "1.11.9",
     "mime-types": "2.1.35",
-    "openpgp": "^6.3.0"
+    "openpgp": "^6.3.0",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

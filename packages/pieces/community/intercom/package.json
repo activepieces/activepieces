@@ -9,7 +9,8 @@
     "@activepieces/shared": "workspace:*",
     "dayjs": "1.11.9",
     "intercom-client": "6.2.0",
-    "string-strip-html": "8.5.0"
+    "string-strip-html": "8.5.0",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
