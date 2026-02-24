@@ -11,5 +11,8 @@
     "@activepieces/shared": "workspace:*",
     "mime-types": "2.1.35",
     "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1"
   }
 }

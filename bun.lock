@@ -243,6 +243,9 @@
         "tslib": "^2.3.0",
         "zod": "4.1.13",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/aianswer": {
       "name": "@activepieces/piece-aianswer",
@@ -348,6 +351,9 @@
         "mime-types": "2.1.35",
         "tslib": "^2.3.0",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/amazon-bedrock": {
       "name": "@activepieces/piece-amazon-bedrock",
@@ -378,6 +384,9 @@
         "mime-types": "2.1.35",
         "openpgp": "^6.3.0",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/amazon-secrets-manager": {
@@ -1256,6 +1265,9 @@
         "tslib": "2.6.2",
         "zod": "4.1.13",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/clearout": {
       "name": "@activepieces/piece-clearout",
@@ -1404,6 +1416,9 @@
         "@activepieces/shared": "workspace:*",
         "mime-types": "2.1.35",
         "tslib": "^2.3.0",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/cognito-forms": {
@@ -1746,6 +1761,9 @@
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/deepl": {
       "name": "@activepieces/piece-deepl",
@@ -1995,6 +2013,9 @@
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/easy-peasy-ai": {
       "name": "@activepieces/piece-easy-peasy-ai",
@@ -2176,6 +2197,9 @@
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/fillout-forms": {
       "name": "@activepieces/piece-fillout-forms",
@@ -2334,6 +2358,9 @@
         "http-status-codes": "2.2.0",
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/formsite": {
@@ -2585,6 +2612,9 @@
         "nodemailer": "7.0.11",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/google-calendar": {
       "name": "@activepieces/piece-google-calendar",
@@ -2649,6 +2679,9 @@
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/google-forms": {
       "name": "@activepieces/piece-google-forms",
@@ -2679,6 +2712,7 @@
         "zod": "4.1.13",
       },
       "devDependencies": {
+        "@types/mime-types": "2.1.1",
         "@types/wav": "^1.0.4",
       },
     },
@@ -3091,6 +3125,9 @@
         "jimp": "^0.22.12",
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/image-router": {
@@ -3993,6 +4030,9 @@
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/microsoft-onenote": {
       "name": "@activepieces/piece-microsoft-onenote",
@@ -4332,6 +4372,9 @@
         "mime-types": "2.1.35",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/nocodb": {
       "name": "@activepieces/piece-nocodb",
@@ -4499,6 +4542,9 @@
         "tiktoken": "1.0.11",
         "tslib": "2.6.2",
         "zod": "4.1.13",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/openmic-ai": {
@@ -5691,6 +5737,9 @@
         "nodemailer": "7.0.11",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
+      },
     },
     "packages/pieces/community/snowflake": {
       "name": "@activepieces/piece-snowflake",
@@ -6251,6 +6300,9 @@
         "tslib": "2.6.2",
         "twitter-api-v2": "1.15.1",
         "zod": "4.1.13",
+      },
+      "devDependencies": {
+        "@types/mime-types": "2.1.1",
       },
     },
     "packages/pieces/community/typeform": {
