@@ -1,5 +1,6 @@
+import { SandboxSocketEventHandler } from '@activepieces/sandbox'
 import { pubsubFactory } from '@activepieces/server-shared'
-import { EmitTestStepProgressRequest, EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { EmitTestStepProgressRequest, EngineHttpResponse, EngineSocketEvent, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appSocket } from '../app-socket'
@@ -8,7 +9,31 @@ import { workerRedisConnections } from '../utils/worker-redis'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
-export const sandboxSockerHandler = (log: FastifyBaseLogger) => ({
+export function createSandboxEventHandler(log: FastifyBaseLogger): SandboxSocketEventHandler {
+    const handlers = sandboxEventHandlers(log)
+    return {
+        handle: async (_log, event, payload) => {
+            switch (event) {
+                case EngineSocketEvent.SEND_FLOW_RESPONSE:
+                    await handlers.sendFlowResponse(payload as SendFlowResponseRequest)
+                    break
+                case EngineSocketEvent.UPLOAD_RUN_LOG:
+                    await handlers.uploadRunLogs(payload as UploadRunLogsRequest)
+                    break
+                case EngineSocketEvent.UPDATE_RUN_PROGRESS:
+                    await handlers.updateRunProgress(payload as UpdateRunProgressRequest)
+                    break
+                case EngineSocketEvent.UPDATE_STEP_PROGRESS:
+                    await handlers.updateStepProgress(payload as UpdateStepProgressRequest)
+                    break
+                default:
+                    break
+            }
+        },
+    }
+}
+
+export const sandboxEventHandlers = (log: FastifyBaseLogger) => ({
     sendFlowResponse: async (request: SendFlowResponseRequest): Promise<void> => {
         const { workerHandlerId, httpRequestId, runResponse } = request
         await publishEngineResponse(log, {

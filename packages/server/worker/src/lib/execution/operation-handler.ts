@@ -13,8 +13,8 @@ import { executionFiles } from '../cache/execution-files'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
-import { Sandbox } from './sandbox/sandbox'
-import { sandboxPool } from './sandbox/sandbox-pool'
+import { Sandbox } from '@activepieces/sandbox'
+import { sandboxPool } from '../flow-worker'
 
 const tracer = trace.getTracer('engine-runner')
 

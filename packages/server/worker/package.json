@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/sandbox": "workspace:*",
     "@activepieces/server-shared": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "write-file-atomic": "5.0.1",

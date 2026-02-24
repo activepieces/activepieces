@@ -1,3 +1,16 @@
+### STAGE 0: Build nsjail from source ###
+FROM node:20.19-bullseye-slim AS nsjail-build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    autoconf bison flex gcc g++ git libprotobuf-dev libnl-route-3-dev \
+    libtool make pkg-config protobuf-compiler \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --branch 3.4 https://github.com/google/nsjail.git /nsjail \
+    && cd /nsjail \
+    && make clean \
+    && make
+
 FROM node:20.19-bullseye-slim AS base
 
 # Set environment variables early for better layer caching
@@ -23,8 +36,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         unzip \
         curl \
         ca-certificates \
-        libcap-dev && \
+        libcap-dev \
+        libprotobuf23 \
+        libnl-route-3-200 && \
     yarn config set python /usr/bin/python3
+
+COPY --from=nsjail-build /nsjail/nsjail /usr/bin/nsjail
 
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
@@ -85,7 +102,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Copy static configuration files first (better layer caching)
 COPY nginx.react.conf /etc/nginx/nginx.conf
-COPY --from=build /usr/src/app/packages/server/api/src/assets/default.cf /usr/local/etc/isolate
 COPY docker-entrypoint.sh .
 
 # Create all necessary directories in one layer

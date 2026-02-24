@@ -6664,6 +6664,22 @@
         "@types/tinycolor2": "1.4.5",
       },
     },
+    "packages/server/sandbox": {
+      "name": "@activepieces/sandbox",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/shared": "workspace:*",
+        "fastify": "5.7.3",
+        "nanoid": "3.3.8",
+        "socket.io": "4.8.1",
+        "tree-kill": "1.2.2",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "socket.io-client": "4.8.1",
+        "vitest": "3.0.8",
+      },
+    },
     "packages/server/shared": {
       "name": "@activepieces/server-shared",
       "version": "0.0.2",
@@ -6696,6 +6712,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/sandbox": "workspace:*",
         "@activepieces/server-shared": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "@opentelemetry/api": "1.9.0",
@@ -7993,6 +8010,8 @@
     "@activepieces/pieces-common": ["@activepieces/pieces-common@workspace:packages/pieces/community/common"],
 
     "@activepieces/pieces-framework": ["@activepieces/pieces-framework@workspace:packages/pieces/community/framework"],
+
+    "@activepieces/sandbox": ["@activepieces/sandbox@workspace:packages/server/sandbox"],
 
     "@activepieces/server-shared": ["@activepieces/server-shared@workspace:packages/server/shared"],
 
