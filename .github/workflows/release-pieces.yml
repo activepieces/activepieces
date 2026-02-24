@@ -8,9 +8,6 @@ on:
     paths:
       - 'packages/pieces/**'
       - 'packages/shared/**'
-  pull_request:
-    branches:
-      - main
 
 concurrency:
   group: release-pieces
@@ -76,22 +73,68 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: build packages
+      - name: Find changed pieces
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "scope=all" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only origin/main -- 'packages/pieces/**/package.json' \
+            | grep -v -E '(common|framework)/package.json$' \
+            | while read -r f; do dirname "$f"; done \
+            | sort -u)
+
+          if [ -z "$CHANGED" ]; then
+            echo "No piece package.json changes detected"
+            echo "scope=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "scope=changed" >> "$GITHUB_OUTPUT"
+
+          FILTERS=""
+          while IFS= read -r dir; do
+            [ -z "$dir" ] && continue
+            PKG_NAME=$(node -p "require('./$dir/package.json').name")
+            FILTERS="$FILTERS --filter=$PKG_NAME"
+          done <<< "$CHANGED"
+          echo "turbo_filter=$FILTERS" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "changed_dirs<<PIECES_EOF"
+            echo "$CHANGED"
+            echo "PIECES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Changed pieces:$FILTERS"
+
+      - name: Build all packages
+        if: steps.changed.outputs.scope == 'all'
         run: npx turbo run build
 
+      - name: Build changed pieces
+        if: steps.changed.outputs.scope == 'changed'
+        run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }}
+
       - name: publish pieces packages
+        if: steps.changed.outputs.scope != 'none'
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
 
       - name: Check available memory
         run: free -h
 
       - name: update pieces metadata
+        if: steps.changed.outputs.scope != 'none'
         run: npx ts-node -r tsconfig-paths/register -r ./tools/scripts/fix-dts-require.js -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/community/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
           NODE_OPTIONS: "--max-old-space-size=8192"
+          CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
 
       - name: Notify Discord on failure
         if: failure()

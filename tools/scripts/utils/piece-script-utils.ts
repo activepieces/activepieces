@@ -86,9 +86,13 @@ export const pieceMetadataExists = async (
 };
 
 export async function findNewPieces(): Promise<PieceMetadata[]> {
-    const paths = await findAllDistPaths()
+    const changedDistPaths = getChangedPiecesDistPaths()
+    const paths = changedDistPaths ?? await findAllDistPaths()
+
+    console.info(`[findNewPieces] scanning ${paths.length} dist paths${changedDistPaths ? ' (scoped to changed)' : ' (all)'}`)
+
     const changedPieces: PieceMetadata[] = []
-    
+
     // Adding batches because of memory limit when we have a lot of pieces
     const batchSize = 75
     for (let i = 0; i < paths.length; i += batchSize) {
@@ -108,12 +112,22 @@ export async function findNewPieces(): Promise<PieceMetadata[]> {
             }
             return null;
         }))
-        
+
         const validResults = batchResults.filter((piece): piece is PieceMetadata => piece !== null)
         changedPieces.push(...validResults)
     }
-    
+
     return changedPieces;
+}
+
+function getChangedPiecesDistPaths(): string[] | null {
+    const changedPieces = process.env['CHANGED_PIECES']
+    if (!changedPieces || changedPieces.trim() === '') {
+        return null
+    }
+    return changedPieces.split('\n').filter(Boolean).map(p => {
+        return resolve(cwd(), 'dist', p)
+    })
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {
