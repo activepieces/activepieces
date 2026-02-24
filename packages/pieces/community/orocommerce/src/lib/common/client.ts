@@ -47,6 +47,7 @@ export async function oroApiCall({
   auth,
   queryParams,
   body,
+  headers: extraHeaders,
 }: OroApiCallParams): Promise<HttpResponse<HttpMessageBody>> {
   try {
     return await httpClient.sendRequest({
@@ -54,6 +55,7 @@ export async function oroApiCall({
       url: `${auth.props.serverUrl}/${auth.props.adminPrefix}/api${resourceUri}`,
       headers: {
         'Content-Type': 'application/vnd.api+json',
+        ...extraHeaders,
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

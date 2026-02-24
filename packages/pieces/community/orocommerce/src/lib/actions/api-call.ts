@@ -27,6 +27,15 @@ export const apiCallAction = createAction({
         'Path relative to the API base, e.g. /orders, /orders/42, /invoices?filter[status]=open',
       required: true,
     }),
+    headers: Property.Json({
+      displayName: 'Headers',
+      description: 'Request headers as a JSON object. Defaults include Accept and X-Include for JSON:API.',
+      required: false,
+      defaultValue: {
+        'Accept': 'application/vnd.api+json',
+        'X-Include': 'noHateoas;totalCount',
+      },
+    }),
     queryParams: Property.Json({
       displayName: 'Query Parameters',
       description: 'Additional query parameters as a JSON object, e.g. {"filter[status]":"open","page[size]":"20"}',
@@ -42,7 +51,17 @@ export const apiCallAction = createAction({
   },
 
   async run(context) {
-    const { method, resourceUri, queryParams, body } = context.propsValue;
+    const { method, resourceUri, headers, queryParams, body } = context.propsValue;
+
+    // Build headers — strip empty/null values
+    const hdrs: Record<string, string> = {};
+    for (const [k, v] of Object.entries(
+      (headers as Record<string, unknown>) ?? {}
+    )) {
+      if (v != null && String(v).trim() !== '') {
+        hdrs[k] = String(v);
+      }
+    }
 
     // Build query params — strip empty/null values
     const qp: Record<string, string> = {};
@@ -63,6 +82,7 @@ export const apiCallAction = createAction({
       method: method as HttpMethod,
       resourceUri,
       auth: context.auth,
+      headers: Object.keys(hdrs).length > 0 ? hdrs : undefined,
       queryParams: Object.keys(qp).length > 0 ? qp : undefined,
       body: hasBody ? body : undefined,
     });
@@ -73,4 +93,3 @@ export const apiCallAction = createAction({
     };
   },
 });
-

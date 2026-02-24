@@ -22,6 +22,7 @@ export type OroApiCallParams = {
   auth: OroAuth;
   queryParams?: QueryParams;
   body?: HttpMessageBody;
+  headers?: Record<string, string>;
 };
 
 export interface OroJsonApiItem {
