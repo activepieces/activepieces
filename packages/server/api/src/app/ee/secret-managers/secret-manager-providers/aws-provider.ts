@@ -1,4 +1,4 @@
-import {  AWSProviderConfig, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { AWSGetSecretRequest, AWSProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider } from './secret-manager-providers'
 
@@ -39,12 +39,15 @@ export const awsProvider = (_log: FastifyBaseLogger): SecretManagerProvider<Secr
     disconnect: async () => {
         return Promise.resolve()
     },
-    getSecret: async (_request: GetSecretManagerSecretRequest, _config: AWSProviderConfig) => {
+    getSecret: async (_request: AWSGetSecretRequest, _config: AWSProviderConfig) => {
         return Promise.resolve('secret')
     },
     resolve: async (key: string) => {
         return {
-            path: key,
+            providerId: SecretManagerProviderId.AWS,
+            request: {
+                path: key,
+            },
         }
     },
 })
