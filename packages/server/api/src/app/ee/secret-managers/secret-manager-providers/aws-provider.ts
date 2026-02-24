@@ -44,7 +44,10 @@ export const awsProvider = (_log: FastifyBaseLogger): SecretManagerProvider<Secr
     },
     resolve: async (key: string) => {
         return {
-            path: key,
+            providerId: SecretManagerProviderId.AWS,
+            request: {
+                path: key,
+            },
         }
     },
 })

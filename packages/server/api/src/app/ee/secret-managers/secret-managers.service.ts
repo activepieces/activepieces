@@ -20,7 +20,6 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
             const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
             const isConnected = !isNil(decryptedConfig) && Boolean(await provider.checkConnection(decryptedConfig).catch(() => false))
-
             return {
                 ...metadata,
                 connected: isConnected,
@@ -54,7 +53,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    getSecret: async (request: GetSecretManagerSecretRequest & { platformId: string }) => {
+    getSecret: async (request: GetSecretManagerSecretRequest & { platformId: string, providerId: SecretManagerProviderId }) => {
         const provider = secretManagerProvider(log, request.providerId)
         const secretManager = await secretManagerRepository().findOneOrFail({
             where: { platformId: request.platformId, providerId: request.providerId },
@@ -66,11 +65,11 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 params: {
                     message: 'Secret manager configuration is not valid',
                     provider: request.providerId,
-                    request: request.request,
+                    request,
                 },
             })
         }
-        return provider.getSecret(request.request, decryptedConfig) 
+        return provider.getSecret({ path: request.path }, decryptedConfig) 
     },
 
     async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
@@ -79,9 +78,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             return await this.getSecret({
                 platformId,
                 providerId,
-                request: {
-                    path: keyWithoutBraces,
-                },
+                path: keyWithoutBraces,
             }) 
         }
         catch (error) {
