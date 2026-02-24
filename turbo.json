@@ -11,6 +11,32 @@
         "!src/**/*.spec.ts",
         "!src/**/*.test.ts",
         "!vitest.config.*"
+      ],
+      "cache": false
+    },
+    "react-ui#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../dist/packages/react-ui/**"],
+      "cache": false,
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "vite.config.*",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts"
+      ]
+    },
+    "server-api#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "cache": false,
+      "inputs": [
+        "src/**",
+        "tsconfig*.json",
+        "package.json",
+        "!src/**/*.spec.ts",
+        "!src/**/*.test.ts"
       ]
     },
     "@activepieces/engine#build": {
