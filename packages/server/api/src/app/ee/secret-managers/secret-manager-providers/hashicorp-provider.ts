@@ -1,4 +1,4 @@
-import { GetSecretManagerSecretRequest, HashicorpProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -92,7 +92,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
     disconnect: async () => {
         return Promise.resolve()
     },
-    getSecret: async (request: GetSecretManagerSecretRequest, config: HashicorpProviderConfig) => {
+    getSecret: async (request, config) => {
         await hashicorpProvider(log).validatePathFormat(request.path)
         const pathParts = request.path.split('/')
         const mountPath = pathParts.slice(0, -1).join('/')

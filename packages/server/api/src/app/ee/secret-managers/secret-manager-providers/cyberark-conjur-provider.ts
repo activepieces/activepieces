@@ -1,5 +1,5 @@
 import https from 'https'
-import { CyberarkConjurProviderConfig, GetSecretManagerSecretRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -32,7 +32,7 @@ export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         },
     },
     getSecretParams: {
-        path: {
+        secretKey: {
             displayName: 'Secret key',
             placeholder: 'Your Conjur Secret Key',
             type: 'text',
@@ -74,11 +74,10 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
     disconnect: async () => {
         return Promise.resolve()
     },
-    getSecret: async (request: GetSecretManagerSecretRequest, config: CyberarkConjurProviderConfig) => {
+    getSecret: async (request, config) => {
 
         const token = await cyberarkConjurProvider(log).checkConnection(config) as string
         const url = removeEndingSlash(config.url)
-
         const response = await conjurApi({
             url: `${url}/secrets/${config.organizationAccountName}/variable/${encodeURIComponent(request.path)}`,
             token,

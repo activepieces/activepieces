@@ -1,4 +1,4 @@
-import { ConnectSecretManagerRequest, GetSecretManagerSecretRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { ConnectSecretManagerRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
 import { ActivepiecesError, apId, ErrorCode, isEnumValue, isNil, isObject, isString, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -53,7 +53,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    getSecret: async (request: GetSecretManagerSecretRequest & { platformId: string, providerId: SecretManagerProviderId }) => {
+    getSecret: async (request: { path: string, platformId: string, providerId: SecretManagerProviderId }) => {
         const provider = secretManagerProvider(log, request.providerId)
         const secretManager = await secretManagerRepository().findOneOrFail({
             where: { platformId: request.platformId, providerId: request.providerId },
