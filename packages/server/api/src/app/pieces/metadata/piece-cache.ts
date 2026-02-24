@@ -11,8 +11,6 @@ import { filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loa
 
 const repo = repoFactory(PieceMetadataEntity)
 
-const ONE_HOUR_CACHE_TTL_MS = 60 * 60 * 1000
-
 let cache: LRU<unknown>
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
@@ -27,7 +25,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
-            cache = lru(cacheMaxSize, ONE_HOUR_CACHE_TTL_MS)
+            cache = lru(cacheMaxSize)
             log.info('[lruPieceCache] LRU piece cache initialized')
         },
 
