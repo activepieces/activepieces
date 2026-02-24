@@ -1,6 +1,6 @@
 
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { resolve, join, relative } from 'node:path'
 import { cwd } from 'node:process'
 import { extractPieceFromModule } from '@activepieces/shared'
 import * as semver from 'semver'
@@ -59,7 +59,7 @@ export function getCommunityPieceFolder(pieceName: string): string {
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
-    return paths
+    return paths.map(p => relative(cwd(), p))
 }
 
 export const pieceMetadataExists = async (

@@ -27,6 +27,7 @@ export const publishNxProject = async (path: string): Promise<void> => {
     writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))
   } catch (e) {
     console.error(`Error reading package.json file from build output at ${outputPath}`)
+    throw e
   }
 
   execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })

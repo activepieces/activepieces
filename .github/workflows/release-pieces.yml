@@ -8,6 +8,9 @@ on:
     paths:
       - 'packages/pieces/**'
       - 'packages/shared/**'
+  pull_request:
+    branches:
+      - main
 
 concurrency:
   group: release-pieces
