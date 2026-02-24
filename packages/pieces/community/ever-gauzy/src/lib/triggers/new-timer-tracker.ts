@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { gauzyAuth, gauzyWebhookCommon, GauzyWebhookInformation, TimeLogSourceEnum } from '../common';
+import { gauzyAuth, gauzyWebhookCommon, GauzyWebhookInformation, TimeLogSourceEnum, getTokenPayload, dynamicProps } from '../common';
 
 const triggerNameInStore = 'gauzy_new_time_track_trigger';
 
@@ -10,13 +10,8 @@ export const newTimeTrack = createTrigger({
     description: 'Triggers when a new time tracking entry is created in Gauzy',
     type: TriggerStrategy.WEBHOOK,
     props: {
-        tenantId: gauzyWebhookCommon.tenantId,
         organizationId: gauzyWebhookCommon.organizationId,
-        employeeId: Property.ShortText({
-            displayName: 'Employee ID',
-            required: false,
-            description: 'Filter time tracking events by employee ID (optional)',
-        }),
+        employeeId: dynamicProps.employees,
         includeDetails: Property.Checkbox({
             displayName: 'Include Details',
             required: false,
@@ -38,10 +33,12 @@ export const newTimeTrack = createTrigger({
         organizationId: 'sample-organization-id',
     },
     async onEnable(context) {
-        // Create the event filter based on props
+        const payload = getTokenPayload(context.auth);
+        const tenantId = payload['tenantId'] as string;
+
         const eventFilter: Record<string, unknown> = {
             organizationId: context.propsValue.organizationId,
-            tenantId: context.propsValue.tenantId,
+            tenantId,
         };
 
         if (context.propsValue.employeeId) {
@@ -51,7 +48,6 @@ export const newTimeTrack = createTrigger({
         const webhookId = await gauzyWebhookCommon.createWebhook(
             context.auth,
             context.webhookUrl,
-            context.propsValue.tenantId,
             (context.propsValue.organizationId as string) || '',
             ['timesheet.time-log.created'],
             eventFilter

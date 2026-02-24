@@ -2,6 +2,7 @@ import { OAuth2PropertyValue, PieceAuth, Property } from '@activepieces/pieces-f
 import { OAuth2GrantType } from '@activepieces/shared';
 
 export const GAUZY_BASE_URLS = {
+  localhost: 'http://localhost:3000',
   apidemo: 'https://apidemo.gauzy.co',
   api: 'https://api.gauzy.co',
 } as const;
@@ -21,6 +22,7 @@ export const gauzyAuth = PieceAuth.OAuth2({
       defaultValue: GAUZY_BASE_URLS.apidemo,
       options: {
         options: [
+          { label: 'Localhost', value: GAUZY_BASE_URLS.localhost },
           { label: 'Demo', value: GAUZY_BASE_URLS.apidemo },
           { label: 'Production', value: GAUZY_BASE_URLS.api },
         ],
@@ -29,11 +31,38 @@ export const gauzyAuth = PieceAuth.OAuth2({
   },
 });
 
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return {};
+  }
+  try {
+    const payload = Buffer.from(parts[1], 'base64').toString('utf-8');
+    return JSON.parse(payload);
+  } catch {
+    return {};
+  }
+}
+
+export function getTokenPayload(auth: OAuth2PropertyValue): Record<string, unknown> {
+  return decodeJwtPayload(auth.access_token);
+}
+
 export function getAuthHeaders(auth: OAuth2PropertyValue): Record<string, string> {
-  return {
-    Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${auth.access_token}`,
     'Content-Type': 'application/json',
   };
+
+  const payload = getTokenPayload(auth);
+  if (payload['tenantId']) {
+    headers['Tenant-Id'] = payload['tenantId'] as string;
+  }
+  if (payload['organizationId']) {
+    headers['Organization-Id'] = payload['organizationId'] as string;
+  }
+
+  return headers;
 }
 
 export function getBaseUrl(auth: OAuth2PropertyValue): string {

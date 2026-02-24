@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth, getAuthHeaders, getBaseUrl } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, getTokenPayload } from '../../common';
 
 export const updateTask = createAction({
     auth: gauzyAuth,
@@ -12,21 +12,6 @@ export const updateTask = createAction({
             displayName: 'Task ID',
             required: true,
             description: 'The ID of the task to update',
-        }),
-        tenant: Property.Object({
-            displayName: 'Tenant',
-            required: false,
-            description: 'Tenant information',
-        }),
-        tenantId: Property.ShortText({
-            displayName: 'Tenant ID',
-            required: false,
-            description: 'ID of the tenant',
-        }),
-        organization: Property.Object({
-            displayName: 'Organization',
-            required: false,
-            description: 'Organization information',
         }),
         organizationId: Property.ShortText({
             displayName: 'Organization ID',
@@ -168,9 +153,12 @@ export const updateTask = createAction({
         const baseUrl = getBaseUrl(context.auth);
         const headers = getAuthHeaders(context.auth);
 
+        const tokenPayload = getTokenPayload(context.auth);
         // Build the request body with only the provided values
-        const body: Record<string, unknown> = {};
-        
+        const body: Record<string, unknown> = {
+            tenantId: tokenPayload['tenantId'] as string,
+        };
+
         Object.entries(context.propsValue).forEach(([key, value]) => {
             if (key !== 'id' && value !== undefined && value !== null) {
                 // Handle special case for "public" property since it's a reserved keyword in JavaScript

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth, getAuthHeaders, getBaseUrl, dynamicProps } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, getTokenPayload, dynamicProps } from '../../common';
 
 export const createTask = createAction({
     auth: gauzyAuth,
@@ -9,11 +9,6 @@ export const createTask = createAction({
     description: 'Create a new task in Gauzy',
     props: {
         organizationId: dynamicProps.organizations,
-        tenantId: Property.ShortText({
-            displayName: 'Tenant ID',
-            required: true,
-            description: 'ID of the tenant',
-        }),
         title: Property.ShortText({
             displayName: 'Task Title',
             required: true,
@@ -72,9 +67,10 @@ export const createTask = createAction({
         const baseUrl = getBaseUrl(context.auth);
         const headers = getAuthHeaders(context.auth);
 
+        const payload = getTokenPayload(context.auth);
         // Build the request body with required fields
         const body: Record<string, unknown> = {
-            tenantId: context.propsValue.tenantId,
+            tenantId: payload['tenantId'] as string,
             organizationId: context.propsValue.organizationId,
             title: context.propsValue.title,
             public: context.propsValue.isPublic ?? true,

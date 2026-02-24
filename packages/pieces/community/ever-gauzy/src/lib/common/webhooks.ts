@@ -1,21 +1,16 @@
-import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getAuthHeaders, getBaseUrl } from './auth';
+import { getAuthHeaders, getBaseUrl, getTokenPayload } from './auth';
 import { dynamicProps } from './dynamic-props';
 
 export const gauzyWebhookCommon = {
   organizationId: dynamicProps.organizations,
 
-  tenantId: Property.ShortText({
-    displayName: 'Tenant ID',
-    required: true,
-    description: 'The ID of the tenant to monitor for events',
-  }),
-  
-  async createWebhook(auth: OAuth2PropertyValue, webhookUrl: string, organizationId: string, tenantId: string, events: string[], filter?: Record<string, unknown>) {
+  async createWebhook(auth: OAuth2PropertyValue, webhookUrl: string, organizationId: string, events: string[], filter?: Record<string, unknown>) {
     const baseUrl = getBaseUrl(auth);
     const headers = getAuthHeaders(auth);
+    const payload = getTokenPayload(auth);
+    const tenantId = payload['tenantId'] as string;
     
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

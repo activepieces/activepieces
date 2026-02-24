@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth, getAuthHeaders, getBaseUrl, TimeLogSourceEnum, TimeLogType, dynamicProps } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, getTokenPayload, TimeLogSourceEnum, TimeLogType, dynamicProps } from '../../common';
 
 interface StartTimerBody {
     tenantId: string;
@@ -21,11 +21,6 @@ export const startTimer = createAction({
     description: 'Start a new timer tracking in Gauzy',
     props: {
         organizationId: dynamicProps.organizations,
-        tenantId: Property.ShortText({
-            displayName: 'Tenant ID',
-            required: true,
-            description: 'ID of the tenant',
-        }),
         projectId: dynamicProps.projects,
         employeeId: dynamicProps.employees,
         teamId: dynamicProps.teams,
@@ -69,8 +64,9 @@ export const startTimer = createAction({
         const baseUrl = getBaseUrl(context.auth);
         const headers = getAuthHeaders(context.auth);
 
+        const payload = getTokenPayload(context.auth);
         const body: StartTimerBody = {
-            tenantId: context.propsValue.tenantId,
+            tenantId: payload['tenantId'] as string,
             organizationId: context.propsValue.organizationId,
             logType: context.propsValue.logType || TimeLogType.TRACKED,
             source: context.propsValue.source || TimeLogSourceEnum.WEB_TIMER,

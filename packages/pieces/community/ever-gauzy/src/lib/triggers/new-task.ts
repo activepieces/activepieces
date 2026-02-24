@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { gauzyAuth, gauzyWebhookCommon, GauzyWebhookInformation } from '../common';
+import { gauzyAuth, gauzyWebhookCommon, GauzyWebhookInformation, getTokenPayload } from '../common';
 
 const triggerNameInStore = 'gauzy_new_task_trigger';
 
@@ -10,7 +10,6 @@ export const newTask = createTrigger({
   description: 'Triggers when a new task is created in Gauzy',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    tenantId: gauzyWebhookCommon.tenantId,
     organizationId: gauzyWebhookCommon.organizationId,
     projectId: Property.ShortText({
       displayName: 'Project ID',
@@ -51,25 +50,25 @@ export const newTask = createTrigger({
     ],
   },
   async onEnable(context) {
-    // Create the event filter based on props
+    const payload = getTokenPayload(context.auth);
+    const tenantId = payload['tenantId'] as string;
 
     const eventFilter: Record<string, unknown> = {
       organizationId: context.propsValue.organizationId,
-      tenantId: context.propsValue.tenantId,
+      tenantId,
     };
-    
+
     if (context.propsValue.projectId) {
       eventFilter['projectId'] = context.propsValue.projectId;
     }
-    
+
     if (context.propsValue.status) {
       eventFilter['status'] = context.propsValue.status;
     }
-    
+
     const webhookId = await gauzyWebhookCommon.createWebhook(
       context.auth,
       context.webhookUrl,
-      context.propsValue.tenantId,
       (context.propsValue.organizationId as string) || '',
       ['task.created'],
       eventFilter

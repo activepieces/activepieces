@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth, getAuthHeaders, getBaseUrl, TimeLogSourceEnum } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, getTokenPayload, TimeLogSourceEnum } from '../../common';
 
 export const getTimerStatus = createAction({
     auth: gauzyAuth,
@@ -8,21 +8,6 @@ export const getTimerStatus = createAction({
     displayName: 'Get Timer Status',
     description: 'Retrieve the current status of timers',
     props: {
-        tenant: Property.Object({
-            displayName: 'Tenant',
-            required: false,
-            description: 'Tenant information',
-        }),
-        tenantId: Property.ShortText({
-            displayName: 'Tenant ID',
-            required: false,
-            description: 'ID of the tenant',
-        }),
-        organization: Property.Object({
-            displayName: 'Organization',
-            required: true,
-            description: 'Organization information',
-        }),
         organizationId: Property.ShortText({
             displayName: 'Organization ID',
             required: true,
@@ -100,21 +85,13 @@ export const getTimerStatus = createAction({
         const baseUrl = getBaseUrl(context.auth);
         const headers = getAuthHeaders(context.auth);
 
+        const tokenPayload = getTokenPayload(context.auth);
+
         // Build query parameters
         const queryParams = new URLSearchParams();
-        
-        if (context.propsValue.tenant) {
-            queryParams.append('tenant', JSON.stringify(context.propsValue.tenant));
-        }
-        
-        if (context.propsValue.tenantId) {
-            queryParams.append('tenantId', context.propsValue.tenantId);
-        }
-        
-        if (context.propsValue.organization) {
-            queryParams.append('organization', JSON.stringify(context.propsValue.organization));
-        }
-        
+
+        queryParams.append('tenantId', tokenPayload['tenantId'] as string);
+
         if (context.propsValue.organizationId) {
             queryParams.append('organizationId', context.propsValue.organizationId);
         }

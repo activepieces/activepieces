@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth, getAuthHeaders, getBaseUrl, TimeLogSourceEnum, TimeLogType } from '../../common';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, getTokenPayload, TimeLogSourceEnum, TimeLogType } from '../../common';
 
 export const stopTimer = createAction({
     auth: gauzyAuth,
@@ -8,21 +8,6 @@ export const stopTimer = createAction({
     displayName: 'Stop Timer',
     description: 'Stop a running timer',
     props: {
-        tenant: Property.Object({
-            displayName: 'Tenant',
-            required: false,
-            description: 'Tenant information',
-        }),
-        tenantId: Property.ShortText({
-            displayName: 'Tenant ID',
-            required: true,
-            description: 'ID of the tenant',
-        }),
-        organization: Property.Object({
-            displayName: 'Organization',
-            required: false,
-            description: 'Organization information',
-        }),
         organizationId: Property.ShortText({
             displayName: 'Organization ID',
             required: true,
@@ -99,10 +84,9 @@ export const stopTimer = createAction({
         const baseUrl = getBaseUrl(context.auth);
         const headers = getAuthHeaders(context.auth);
 
+        const payload = getTokenPayload(context.auth);
         const body = {
-            tenant: context.propsValue.tenant || {},
-            tenantId: context.propsValue.tenantId,
-            organization: context.propsValue.organization || {},
+            tenantId: payload['tenantId'] as string,
             organizationId: context.propsValue.organizationId,
             sentTo: context.propsValue.sentTo,
             logType: context.propsValue.logType || TimeLogType.TRACKED,

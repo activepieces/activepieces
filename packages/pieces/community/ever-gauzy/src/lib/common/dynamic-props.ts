@@ -1,9 +1,15 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gauzyAuth, getAuthHeaders, getBaseUrl } from './auth';
+import { gauzyAuth, getAuthHeaders, getBaseUrl, getTokenPayload } from './auth';
+
+function buildWhereParams(params: Record<string, string>): string {
+  return Object.entries(params)
+    .map(([key, value]) => `where[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`)
+    .join('&');
+}
 
 export const dynamicProps = {
-  // Organizations dropdown
+  // Organizations dropdown — auto-populated from the JWT token
   organizations: Property.Dropdown({
     displayName: 'Organization',
     required: true,
@@ -19,24 +25,48 @@ export const dynamicProps = {
       }
 
       try {
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string | undefined;
+        const organizationId = payload['organizationId'] as string | undefined;
+
+        if (!organizationId || !tenantId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Could not extract organization from token'
+          };
+        }
+
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
 
+        // Fetch the organization details to get its name
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/organization`,
+          url: `${baseUrl}/api/organization/${organizationId}`,
           headers,
         });
 
-        const organizations = Array.isArray(response.body) ? response.body : response.body.items || [];
+        const org = response.body;
 
         return {
-          options: organizations.map((org: any) => ({
-            label: org.name || org.officialName || `Organization ${org.id}`,
-            value: org.id,
-          })),
+          options: [{
+            label: org.name || org.officialName || `Organization ${organizationId}`,
+            value: organizationId,
+          }],
         };
       } catch (error) {
+        // Fallback: still show the org ID from the token even if the name fetch fails
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const organizationId = payload['organizationId'] as string | undefined;
+        if (organizationId) {
+          return {
+            options: [{
+              label: `Organization ${organizationId}`,
+              value: organizationId,
+            }],
+          };
+        }
         return {
           disabled: true,
           options: [],
@@ -64,10 +94,12 @@ export const dynamicProps = {
       try {
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/role`,
+          url: `${baseUrl}/api/role?${buildWhereParams({ tenantId })}`,
           headers,
         });
 
@@ -115,10 +147,12 @@ export const dynamicProps = {
       try {
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/organization-project?organizationId=${organizationId}`,
+          url: `${baseUrl}/api/organization-project?${buildWhereParams({ tenantId, organizationId: organizationId as string })}`,
           headers,
         });
 
@@ -166,10 +200,12 @@ export const dynamicProps = {
       try {
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/task-status?organizationId=${organizationId}`,
+          url: `${baseUrl}/api/task-status?${buildWhereParams({ tenantId, organizationId: organizationId as string })}`,
           headers,
         });
 
@@ -217,10 +253,12 @@ export const dynamicProps = {
       try {
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/task-priority?organizationId=${organizationId}`,
+          url: `${baseUrl}/api/task-priority?${buildWhereParams({ tenantId, organizationId: organizationId as string })}`,
           headers,
         });
 
@@ -268,10 +306,12 @@ export const dynamicProps = {
       try {
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/task-size?organizationId=${organizationId}`,
+          url: `${baseUrl}/api/task-size?${buildWhereParams({ tenantId, organizationId: organizationId as string })}`,
           headers,
         });
 
@@ -319,10 +359,12 @@ export const dynamicProps = {
       try {
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/employee?organizationId=${organizationId}`,
+          url: `${baseUrl}/api/employee?${buildWhereParams({ tenantId, organizationId: organizationId as string })}&relations[0]=user`,
           headers,
         });
 
@@ -370,10 +412,12 @@ export const dynamicProps = {
       try {
         const baseUrl = getBaseUrl(auth as OAuth2PropertyValue);
         const headers = getAuthHeaders(auth as OAuth2PropertyValue);
+        const payload = getTokenPayload(auth as OAuth2PropertyValue);
+        const tenantId = payload['tenantId'] as string;
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${baseUrl}/api/organization-team?organizationId=${organizationId}`,
+          url: `${baseUrl}/api/organization-team?${buildWhereParams({ tenantId, organizationId: organizationId as string })}`,
           headers,
         });
 

@@ -10,7 +10,6 @@ export const newEmployee = createTrigger({
   description: 'Triggers when a new employee is created in Gauzy',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    tenantId: gauzyWebhookCommon.tenantId,
     organizationId: gauzyWebhookCommon.organizationId,
     includeUserData: Property.Checkbox({
       displayName: 'Include User Data',
@@ -39,7 +38,6 @@ export const newEmployee = createTrigger({
     const webhookId = await gauzyWebhookCommon.createWebhook(
       context.auth,
       context.webhookUrl,
-      context.propsValue.tenantId,
       (context.propsValue.organizationId as string) || '',
       ['employee.created']
     );
