@@ -22,7 +22,7 @@ export const findContact = createAction({
 
     async run(context) {
         const { list_id, email_address } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth);
+        const client = new EmailOctopusClient(context.auth.secret_text);
 
         const contactId = createHash('md5')
             .update(email_address.toLowerCase())

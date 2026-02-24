@@ -15,6 +15,7 @@ export const createGeneralAudit = createAction({
       required: true,
     }),
     templateId: Property.DynamicProperties({
+      auth: wedofAuth,
       displayName: "Type du modèle d'audit",
       refreshers: ['certifInfo'],
       required: true,
@@ -131,7 +132,7 @@ export const createGeneralAudit = createAction({
           body: message,
           headers: {
             'Content-Type': 'application/json',
-            'X-Api-Key': context.auth as string,
+            'X-Api-Key': context.auth.secret_text,
           },
         })
       ).body;

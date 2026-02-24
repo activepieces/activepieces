@@ -1,14 +1,14 @@
-import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil, PlanName } from '@activepieces/shared'
+import { ApSubscriptionStatus, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { AppSystemProp, exceptionHandler, securityAccess } from '@activepieces/server-shared'
+import { isNil, PlanName } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
-import { platformUsageService } from '../platform-usage-service'
-import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
-import { stripeHelper } from './stripe-helper'
+import { platformAiCreditsService } from './platform-ai-credits.service'
+import { ACTIVE_FLOW_PRICE_ID, platformPlanService } from './platform-plan.service'
+import { StripeCheckoutType, stripeHelper } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -20,7 +20,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 const signature = request.headers['stripe-signature'] as string
 
                 const stripe = stripeHelper(request.log).getStripe()
-                if (isNil(stripe)) {
+                if (isNil(stripe)) { 
                     return await reply.status(StatusCodes.OK).send({ received: true })
                 }
 
@@ -32,16 +32,51 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 )
 
                 switch (webhook.type) {
+                    case 'checkout.session.completed': {
+                        const session = webhook.data.object
+                        if (isNil(session.metadata)) {
+                            break
+                        } 
+
+                        if (session.metadata.type === StripeCheckoutType.AI_CREDIT_PAYMENT) {
+                            const platformId = session.metadata.platformId as string
+                            const intent = await stripe.paymentIntents.retrieve(
+                                session.payment_intent as string,
+                            )
+                            const amountInCents = intent.amount
+                            const amountInUsd = amountInCents / 100
+
+                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(platformId, amountInUsd, StripeCheckoutType.AI_CREDIT_PAYMENT)
+                        }
+                        if (session.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
+                            const setupIntent = await stripe.setupIntents.retrieve(
+                                session.setup_intent as string,
+                            )
+
+                            const paymentMethodId = setupIntent.payment_method as string
+                            const platformId = session.metadata.platformId as string
+                            await platformAiCreditsService(request.log).handleAutoTopUpCheckoutSessionCompleted(platformId, paymentMethodId)
+                        }
+                        break
+                    }
+                    case 'invoice.paid': {
+                        const invoice = webhook.data.object
+                        if (isNil(invoice.metadata)) {
+                            break
+                        }
+                        if (invoice.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
+                            const platformId = invoice.metadata.platformId as string
+                            const amountInCents = invoice.amount_paid
+                            const amountInUsd = amountInCents / 100
+                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(platformId, amountInUsd, StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP)
+                        }
+                        break
+                    }
                     case 'customer.subscription.deleted': 
                     case 'customer.subscription.created':
                     case 'customer.subscription.updated': {
                         const subscription = webhook.data.object as Stripe.Subscription
                         const platformId = subscription.metadata.platformId as string
-
-                        const subscriptionStarted = webhook.type === 'customer.subscription.created'
-                        if (subscriptionStarted) {
-                            await addThresholdOnAiCreditsItem(stripe, subscription)
-                        }
 
                         const { startDate, endDate, cancelDate } = await stripeHelper(request.log).getSubscriptionCycleDates(subscription)
 
@@ -50,13 +85,11 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
                         const subscriptionEnded = webhook.type === 'customer.subscription.deleted'
                         if (subscriptionEnded) {
-                            await platformUsageService(request.log).resetPlatformUsage(platformId)
                             await platformPlanService(request.log).update({ 
                                 ...newLimits,
                                 platformId,
                                 plan: PlanName.STANDARD,
                                 stripeSubscriptionStatus: ApSubscriptionStatus.CANCELED,
-                                aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
                                 stripeSubscriptionId: undefined,
                                 stripeSubscriptionStartDate: undefined,
                                 stripeSubscriptionEndDate: undefined,
@@ -75,8 +108,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             plan: PlanName.STANDARD,
                             stripeSubscriptionId: subscription.id,
                             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
-                            aiCreditsOverageState: AiOverageState.ALLOWED_AND_ON,
-                            aiCreditsOverageLimit: 500,
                             stripeSubscriptionStartDate: startDate,
                             stripeSubscriptionEndDate: endDate,
                             stripeSubscriptionCancelDate: cancelDate,
@@ -103,15 +134,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
 const WebhookRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
         rawBody: true,
     },
-}
-
-async function addThresholdOnAiCreditsItem(stripe: Stripe, subscription: Stripe.Subscription): Promise<void> {
-    const subWithItems = subscription.items?.data?.length ? subscription : await stripe.subscriptions.retrieve(subscription.id, { expand: ['items.data'] })
-    const aiCreditsItem = subWithItems.items.data.find(item => AI_CREDIT_PRICE_ID === item.price?.id)
-
-    if (!aiCreditsItem) return
-    await stripe.subscriptionItems.update(aiCreditsItem.id, { billing_thresholds: { usage_gte: AI_CREDITS_USAGE_THRESHOLD } })
 }

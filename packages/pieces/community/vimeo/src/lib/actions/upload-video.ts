@@ -42,6 +42,7 @@ export const uploadVideo = createAction({
       },
     }),
     password: Property.DynamicProperties({
+      auth: vimeoAuth,
       displayName: 'Privacy',
       required: false,
       refreshers: ['privacy'],
@@ -73,6 +74,7 @@ export const uploadVideo = createAction({
       defaultValue: false,
     }),
     contentRating: Property.Dropdown({
+      auth: vimeoAuth,
       displayName: 'Content Rating',
       description: 'Content rating for the video',
       required: false,
@@ -94,6 +96,7 @@ export const uploadVideo = createAction({
     }),
     folderId: userFolderDropdown,
     language: Property.Dropdown({
+      auth: vimeoAuth,
       displayName: 'Language',
       description: 'Language code for the video',
       required: false,

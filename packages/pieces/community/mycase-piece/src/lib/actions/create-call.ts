@@ -19,6 +19,7 @@ export const createCall = createAction({
       required: true,
     }),
     call_for: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Call For',
       description: 'The staff member this call is associated with',
       required: true,
@@ -78,6 +79,7 @@ export const createCall = createAction({
       required: false,
     }),
     client: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Client',
       description: 'The existing client',
       required: false,
@@ -114,6 +116,7 @@ export const createCall = createAction({
       },
     }),
     lead: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Lead',
       description: 'The existing lead',
       required: false,

@@ -18,7 +18,7 @@ export const createGroupAction = createAction({
   async run(context) {
     const { board_id, group_name } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     return await client.createGroup({
       boardId: board_id as string,
       groupName: group_name as string,

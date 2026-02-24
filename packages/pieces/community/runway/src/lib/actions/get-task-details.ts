@@ -63,7 +63,7 @@ export const getTaskDetails = createAction({
 			taskId: z.string().uuid('Task ID must be a valid UUID format'),
 		});
 
-		const apiKey = auth as string;
+		const apiKey = auth.secret_text;
 		const client = new RunwayML({ apiKey });
 
 		let task;

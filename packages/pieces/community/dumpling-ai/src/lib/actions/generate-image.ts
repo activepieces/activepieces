@@ -97,7 +97,7 @@ export const generateImage = createAction({
 			url: 'https://app.dumplingai.com/api/v1/generate-ai-image',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

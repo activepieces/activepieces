@@ -98,6 +98,7 @@ export const updatedDealStageTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		stage_id: Property.Dropdown({
+			auth: pipedriveAuth,
 			displayName: 'Stage in Pipeline',
 			required: false,
 			refreshers: [],

@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { generateCashgramToken, validateAuthCredentials } from '../auth/cashgram-auth';
+import { cashfreePaymentsAuth, generateCashgramToken, validateAuthCredentials } from '../auth/cashgram-auth';
 
 export const deactivateCashgram = createAction({
+  auth: cashfreePaymentsAuth,
   name: 'deactivate-cashgram',
   displayName: 'Deactivate Cashgram',
   description: 'Deactivate a Cashgram to prevent further redemptions using Cashfree',
@@ -42,13 +43,7 @@ export const deactivateCashgram = createAction({
       
       clientId,
       clientSecret,
-      publicKey
-    } = context.auth as {
-     
-      clientId?: string;
-      clientSecret?: string;
-      publicKey?: string;
-    };
+    } = context.auth.props
 
 
 
@@ -56,7 +51,6 @@ export const deactivateCashgram = createAction({
     const validation = validateAuthCredentials('client_credentials', {
       clientId,
       clientSecret,
-      publicKey,
     });
 
     if (!validation.isValid) {
@@ -72,7 +66,6 @@ export const deactivateCashgram = createAction({
       {
         clientId: clientId!,
         clientSecret: clientSecret!,
-        publicKey: publicKey!,
       },
       environment as 'sandbox' | 'production'
     );

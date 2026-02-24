@@ -1,4 +1,5 @@
-import { PlatformId, ProjectId } from '@activepieces/shared'
+import { Flow, FlowId, FlowStatus, ProjectId } from '@activepieces/shared'
+import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -6,31 +7,39 @@ export enum SystemJobName {
     PIECES_SYNC = 'pieces-sync',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
     TRIAL_TRACKER = 'trial-tracker',
-    ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
-    AI_USAGE_REPORT = 'ai-usage-report',
+    DELETE_FLOW = 'delete-flow',
+    UPDATE_FLOW_STATUS = 'update-flow-status',
+    AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
 }
 
-type IssuesSummarySystemJobData = {
+type DeleteFlowDurableSystemJobData =  {
+    flow: Flow
+    preDeleteDone: boolean
+    dbDeleteDone: boolean
+}
+
+type UpdateFlowStatusDurableSystemJobData =  {
+    id: FlowId
     projectId: ProjectId
-    projectName: string
+    newStatus: FlowStatus
+    preUpdateDone: boolean
+}
+
+type AiCreditUpdateCheckSystemJobData = {
+    apiKeyHash: string
     platformId: string
 }
 
-type AiUsageReportSystemJobData = {
-    platformId: PlatformId
-    overage: string
-    idempotencyKey: string
-}
-
 type SystemJobDataMap = {
-    [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
-    [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
+    [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
+    [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
+    [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -58,10 +67,12 @@ export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
 type UpsertJobParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
+    customConfig?: JobsOptions
 }
 
 export type SystemJobSchedule = {
     init(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
+    getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
     close(): Promise<void>
 }

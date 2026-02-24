@@ -30,7 +30,7 @@ export const airtableAddCommentToRecordAction = createAction({
       propsValue;
 
     return await airtableCommon.addCommentToRecord({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId: baseId as string,
       tableId: tableId as string,
       recordId: recordId as string,

@@ -1,5 +1,5 @@
 import { pubsubFactory } from '@activepieces/server-shared'
-import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appSocket } from '../../app-socket'
@@ -26,7 +26,7 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
         })
     },
     updateRunProgress: async (request: UpdateRunProgressRequest): Promise<void> => {
-        const { runId, projectId, workerHandlerId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse, pauseMetadata } = request
+        const { runId, projectId, workerHandlerId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse, pauseMetadata, stepsCount } = request
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
@@ -47,6 +47,7 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
             projectId,
             tags,
             pauseMetadata,
+            stepsCount,
         })
 
         if (!isNil(stepNameToTest) && !isNil(stepResponse)) {
@@ -59,7 +60,17 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
             await appSocket(log).emitWithAck(wsEvent, { projectId, ...stepResponse })
         }
     },
+    updateStepProgress: async (request: UpdateStepProgressRequest): Promise<void> => {
+        const { projectId, stepResponse } = request
+        await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS, { projectId, ...stepResponse })
+
+    },
 })
+
+type UpdateStepProgressRequest = {
+    projectId: string
+    stepResponse: StepRunResponse
+}
 
 
 async function publishEngineResponse<T>(log: FastifyBaseLogger, request: PublishEngineResponseRequest<T>): Promise<void> {

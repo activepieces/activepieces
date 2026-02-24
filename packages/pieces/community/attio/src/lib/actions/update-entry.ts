@@ -22,7 +22,7 @@ export const updateEntryAction = createAction({
 		attributes: listFields(true),
 	},
 	async run(context) {
-		const accessToken = context.auth;
+		const accessToken = context.auth.secret_text;
 		const { listId, entryId } = context.propsValue;
 		const inputFields = context.propsValue.attributes ?? {};
 

@@ -32,7 +32,7 @@ export const magicalApi = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          'api-key': auth as string,
+          'api-key': auth.secret_text,
         };
       },
     }),

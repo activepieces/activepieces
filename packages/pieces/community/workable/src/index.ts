@@ -43,7 +43,7 @@ export const workable = createPiece({
       baseUrl: () => `https://workable.com/spi/v3/`,
       auth: workableAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         Accept: 'application/json'
       })
     })

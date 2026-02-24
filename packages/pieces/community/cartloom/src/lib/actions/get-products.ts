@@ -9,6 +9,6 @@ export const getProductsAction = createAction({
   description: 'Get a list of products from Cartloom',
   props: {},
   async run(context) {
-    return await getProducts(context.auth);
+    return await getProducts(context.auth.props);
   },
 });

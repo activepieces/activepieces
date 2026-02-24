@@ -20,7 +20,7 @@ export const createRow = createAction({
     },
     async run(context) {
         const { table_name, row_data, return_row } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const supabase = createClient(url, apiKey);
         

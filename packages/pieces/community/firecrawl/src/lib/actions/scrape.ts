@@ -38,7 +38,8 @@ export const scrape = createAction({
       description: 'Properties for actions that will be performed on the page.',
       required: false,
       refreshers: ['useActions'],
-      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+      auth: firecrawlAuth,
+      props: async (propsValue): Promise<InputPropertyMap> => {
         const useActions = propsValue['useActions'] as unknown as boolean;
         
         if (!useActions) {
@@ -74,6 +75,7 @@ export const scrape = createAction({
     }),
 
     formats: Property.Dropdown({
+      auth: firecrawlAuth,
       displayName: 'Output Format',
       description: 'Choose what format you want your output in.',
       required: true,
@@ -99,14 +101,15 @@ export const scrape = createAction({
       description: 'Prompt for extracting data.',
       required: false,
       refreshers: ['formats'],
-      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+      auth: firecrawlAuth,
+      props: async (propsValue): Promise<InputPropertyMap> => {
         const format = propsValue['formats'] as unknown as string;
 
         if (format !== 'json') {
           return {};
         }
 
-        return {
+        const map: InputPropertyMap = {
           prompt: Property.LongText({
             displayName: 'Extraction Prompt',
             description: 'Describe what information you want to extract.',
@@ -114,6 +117,7 @@ export const scrape = createAction({
             defaultValue: 'Extract the following data from the provided text.',
           }),
         };
+        return map;
       },
     }),
 
@@ -122,7 +126,8 @@ export const scrape = createAction({
       description: 'Data schema type.',
       required: false,
       refreshers: ['formats'],
-      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+      auth: firecrawlAuth,
+      props: async (propsValue): Promise<InputPropertyMap> => {
         const format = propsValue['formats'] as unknown as string;
 
         if (format !== 'json') {
@@ -150,8 +155,9 @@ export const scrape = createAction({
       displayName: 'Data Definition',
       required: false,
       refreshers: ['formats', 'extractMode'],
-      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
-        const mode = propsValue['extractMode']?.['mode'] as unknown as 'simple' | 'advanced';
+      auth: firecrawlAuth,
+      props: async (propsValue): Promise<InputPropertyMap> => {
+        const mode = (propsValue['extractMode'] as unknown as { mode: 'simple' | 'advanced' })?.mode;
         const format = propsValue['formats'] as unknown as string;
 
         if (format !== 'json') {

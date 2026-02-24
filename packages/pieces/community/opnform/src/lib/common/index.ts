@@ -8,6 +8,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
+import { opnformAuth } from '../../index';
 
 export const API_URL_DEFAULT = 'https://api.opnform.com';
 
@@ -32,11 +33,12 @@ type FormListResponse = {
   }[];
 };
 
-export const workspaceIdProp = Property.Dropdown<string>({
+export const workspaceIdProp = Property.Dropdown<string,true,typeof opnformAuth>({
   displayName: 'Workspace',
   description: 'Workspace Name',
   required: true,
   refreshers: [],
+  auth: opnformAuth,
   async options({ auth }) {
     if (!auth) {
       return {
@@ -72,11 +74,12 @@ export const workspaceIdProp = Property.Dropdown<string>({
   },
 });
 
-export const formIdProp = Property.Dropdown<string>({
+export const formIdProp = Property.Dropdown<string,true,typeof opnformAuth>({
   displayName: 'Form',
   description: 'Form Name',
   required: true,
   refreshers: ['workspaceId'],
+  auth: opnformAuth,
   async options({ auth, workspaceId }) {
     if (!auth) {
       return {

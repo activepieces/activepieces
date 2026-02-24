@@ -17,9 +17,9 @@ export const deleteRecordAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { tableId, recordId } = context.propsValue;
+		const { baseId, tableId, recordId } = context.propsValue;
 
 		const client = makeClient(context.auth);
-		return await client.deleteRecord(tableId, recordId, context.auth.version || 3);
+		return await client.deleteRecord(baseId, tableId, recordId, context.auth.props.version || 3);
 	},
 });

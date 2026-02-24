@@ -152,7 +152,7 @@ export const createVideoFromTemplateAction = createAction({
 		}
 
 		const response = await heygenApiCall({
-			apiKey: auth as string,
+			apiKey: auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/template/${templateId}/generate`,
 			body,

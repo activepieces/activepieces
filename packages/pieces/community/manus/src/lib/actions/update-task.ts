@@ -35,13 +35,14 @@ export const updateTask = createAction({
   description: 'Update a task\'s metadata such as title, sharing settings, and visibility in the task list',
   props: {
     taskId: Property.Dropdown({
+      auth: manusAuth,
       displayName: 'Task',
       description: 'Select the task to update',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getTasksDropdown(auth as string) };
+        return { disabled: false, options: await getTasksDropdown(auth.secret_text) };
       },
     }),
     title: Property.ShortText({
@@ -81,7 +82,7 @@ export const updateTask = createAction({
       headers: {
         'accept': 'application/json',
         'content-type': 'application/json',
-        'API_KEY': context.auth,
+        'API_KEY': context.auth.secret_text,
       },
       body,
     });

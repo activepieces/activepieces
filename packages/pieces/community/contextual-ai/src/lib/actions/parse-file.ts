@@ -61,7 +61,7 @@ export const parseFileAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const {
       file,
       parseMode,

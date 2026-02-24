@@ -19,33 +19,19 @@ export enum ColorName {
     DEEP_ORANGE = 'DEEP_ORANGE',
 }
 
-export const ListProjectRequestForUserQueryParams = Type.Object({
-    cursor: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Number()),
-    displayName: Type.Optional(Type.String()),
-})
-
-export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequestForUserQueryParams>
-
 export type ProjectId = ApId
 
 export enum PiecesFilterType {
     NONE = 'NONE',
     ALLOWED = 'ALLOWED',
 }
+    
+export enum ProjectType {
+    TEAM = 'TEAM',
+    PERSONAL = 'PERSONAL',
+}
 
-export const ProjectUsage = Type.Object({
-    aiCredits: Type.Number(),
-    nextLimitResetDate: Type.Number(),
-})
 
-export const SwitchProjectResponse = Type.Object({
-    token: Type.String(),
-})
-
-export type SwitchProjectResponse = Static<typeof SwitchProjectResponse>
-
-export type ProjectUsage = Static<typeof ProjectUsage>
 
 export type ProjectPlanId = string
 
@@ -56,7 +42,6 @@ export const ProjectPlan = Type.Object({
     name: Type.String(),
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
-    aiCredits: Nullable(Type.Number()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>
@@ -73,6 +58,7 @@ export const Project = Type.Object({
     displayName: Type.String(),
     platformId: ApId,
     maxConcurrentJobs: Nullable(Type.Number()),
+    type: Type.Enum(ProjectType),
     icon: ProjectIcon,
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
@@ -92,7 +78,6 @@ export type Project = Static<typeof Project>
 export const ProjectWithLimits = Type.Composite([
     Type.Omit(Project, ['deleted']),
     Type.Object({
-        usage: ProjectUsage,
         plan: ProjectPlan,
         analytics: projectAnalytics,
     }),

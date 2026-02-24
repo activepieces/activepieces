@@ -18,7 +18,6 @@ import {
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../ee/platform/platform-usage-service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
@@ -38,6 +37,7 @@ export const platformService = {
             const hasProjects = await projectService.userHasProjects({
                 platformId: user.platformId,
                 userId: user.id,
+                isPrivileged: userService.isUserPrivileged(user),
             })
             return hasProjects ? user.platformId : null
         }))
@@ -116,7 +116,6 @@ export const platformService = {
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
-            smtp: params.smtp,
         }
         if (!isNil(params.plan)) {
             await platformPlanService(system.globalLogger()).update({
@@ -182,7 +181,7 @@ async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> 
     if (edition === ApEdition.COMMUNITY) {
         return undefined
     }
-    return platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id)
+    return platformPlanService(system.globalLogger()).getUsage(platform.id)
 }
 
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
@@ -211,6 +210,9 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     plan?: Partial<PlatformPlanLimits>
+    logoIconUrl?: string
+    fullLogoUrl?: string
+    favIconUrl?: string
 }
 
 type ListPlatformsForIdentityParams = {

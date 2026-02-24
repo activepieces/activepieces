@@ -23,11 +23,11 @@ afterAll(async () => {
 describe('Project Role API', () => {
     describe('Create Project Role', () => {
         it('should create a new project role', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             
@@ -51,7 +51,7 @@ describe('Project Role API', () => {
         })
 
         it('should fail to create a new project role if user is not platform owner', async () => {
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -61,7 +61,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -83,11 +83,11 @@ describe('Project Role API', () => {
 
     describe('Get Project Role', () => {
         it('should get all project roles', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -103,7 +103,7 @@ describe('Project Role API', () => {
         })
 
         it('should able to get all project roles if user is not platform owner', async () => {
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -113,7 +113,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -131,11 +131,11 @@ describe('Project Role API', () => {
 
     describe('Update Project Role', () => {
         it('should update a project role', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -160,7 +160,7 @@ describe('Project Role API', () => {
         })
 
         it('should fail to update if user is not platform owner', async () => {
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -170,7 +170,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -197,11 +197,11 @@ describe('Project Role API', () => {
 
     describe('Delete Project Role', () => {
         it('should delete a project role', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -220,7 +220,7 @@ describe('Project Role API', () => {
         })
 
         it('should fail to delete a project role if user is not platform owner', async () => {
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -230,7 +230,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -249,11 +249,11 @@ describe('Project Role API', () => {
         })
 
         it('should fail to delete a project role if project role does not exist', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 

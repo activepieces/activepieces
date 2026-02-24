@@ -84,7 +84,7 @@ export const listMeetings = createAction({
   },
   async run({ auth, propsValue }) {
     const fathom = new Fathom({
-      security: { apiKeyAuth: auth },
+      security: { apiKeyAuth: auth.secret_text },
     });
 
     const request: Partial<ListMeetingsRequest> = {};

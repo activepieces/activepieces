@@ -10,6 +10,7 @@ export const updateContact = createAction({
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Contact',
             description: 'Select the contact to update',
             required: true,
@@ -23,7 +24,7 @@ export const updateContact = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/contacts.list',
                         body: {}

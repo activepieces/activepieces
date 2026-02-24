@@ -26,8 +26,8 @@ export const whatConvertsClient = {
       url: `${WHATCONVERTS_API_URL}/accounts`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
+        username: auth.props.api_token,
+        password: auth.props.api_secret,
       },
     };
     const response = await httpClient.sendRequest<AccountsResponse>(request);
@@ -43,8 +43,8 @@ export const whatConvertsClient = {
       url: `${WHATCONVERTS_API_URL}/accounts/${accountId}/profiles`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
+        username: auth.props. api_token,
+        password: auth.props.api_secret,
       },
     };
     const response = await httpClient.sendRequest<ProfilesResponse>(request);
@@ -61,8 +61,8 @@ export const whatConvertsClient = {
       url: `${WHATCONVERTS_API_URL}/leads`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
+        username: auth.props.api_token,
+        password: auth.props.api_secret,
       },
       body: params,
       headers: {
@@ -89,8 +89,8 @@ export const whatConvertsClient = {
       url: `${WHATCONVERTS_API_URL}/leads`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
+        username: auth.props.api_token,
+        password: auth.props.api_secret,
       },
       queryParams: queryParams,
     };
@@ -108,8 +108,8 @@ export const whatConvertsClient = {
       url: `${WHATCONVERTS_API_URL}/leads/${leadId}`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: auth.api_token,
-        password: auth.api_secret,
+        username: auth.props.api_token,
+        password: auth.props. api_secret,
       },
       body: params,
     };

@@ -337,7 +337,7 @@ export function DateTimePickerWithRange({
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary hover:!text-primary w-full"
+              className="text-primary hover:text-primary! w-full"
               onClick={() => {
                 setDate(undefined);
                 setTimeDate({ from: undefined, to: undefined });

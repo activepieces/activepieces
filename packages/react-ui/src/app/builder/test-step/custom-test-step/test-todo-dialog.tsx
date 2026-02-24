@@ -11,7 +11,7 @@ import {
   CreateAndWaitTodoResult,
 } from '@activepieces/shared';
 
-import { testStepHooks } from '../test-step-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 type TodoTestingDialogProps = {
   open: boolean;

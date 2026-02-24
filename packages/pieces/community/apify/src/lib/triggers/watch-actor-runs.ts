@@ -25,7 +25,7 @@ export const watchActorRunsTrigger = createTrigger({
     statuses: createStatusesProperty(),
   },
   async onEnable(context) {
-    const client = createApifyClient(context.auth.apikey);
+    const client = createApifyClient(context.auth.props.apikey);
     const actorId = context.propsValue.actorid;
     const statuses = context.propsValue.statuses as WebhookEventType[];
     const idempotencyKey = generateIdempotencyKey(actorId, statuses);
@@ -43,7 +43,7 @@ export const watchActorRunsTrigger = createTrigger({
   async onDisable(context) {
     const webhookId: string = (await context.store.get('_actor_webhook_id')) as string;
     if (webhookId) {
-      const client = createApifyClient(context.auth.apikey);
+      const client = createApifyClient(context.auth.props.apikey);
       await deleteWebhook(client, webhookId);
       await context.store.delete('_actor_webhook_id');
     }

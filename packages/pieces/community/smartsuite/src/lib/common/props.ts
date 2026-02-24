@@ -6,6 +6,7 @@ import { isNil } from '@activepieces/shared';
 
 export const smartsuiteCommon = {
 	solutionId: Property.Dropdown({
+		auth: smartsuiteAuth,
 		displayName: 'Solution',
 		required: true,
 		refreshers: [],
@@ -18,7 +19,7 @@ export const smartsuiteCommon = {
 				};
 			}
 
-			const { apiKey, accountId } = auth as PiecePropValueSchema<typeof smartsuiteAuth>;
+			const { apiKey, accountId } = auth.props;
 
 			try {
 				const response = await smartSuitePaginatedApiCall<{
@@ -54,6 +55,7 @@ export const smartsuiteCommon = {
 	}),
 
 	tableId: Property.Dropdown({
+		auth: smartsuiteAuth,
 		displayName: 'Table',
 		required: true,
 		refreshers: ['solutionId'],
@@ -68,7 +70,7 @@ export const smartsuiteCommon = {
 				};
 			}
 
-			const { apiKey, accountId } = auth as PiecePropValueSchema<typeof smartsuiteAuth>;
+			const { apiKey, accountId } = auth.props;
 
 			try {
 				const response = await smartSuitePaginatedApiCall<{
@@ -103,6 +105,7 @@ export const smartsuiteCommon = {
 		},
 	}),
 	tableFields: Property.DynamicProperties({
+		auth: smartsuiteAuth,
 		displayName: 'Fields',
 		required: true,
 		refreshers: ['solutionId', 'tableId'],
@@ -110,7 +113,7 @@ export const smartsuiteCommon = {
 			if (!auth || !solutionId || !tableId) {
 				return {};
 			}
-			const { apiKey, accountId } = auth as PiecePropValueSchema<typeof smartsuiteAuth>;
+			const { apiKey, accountId } = auth.props;
 
 			try {
 				const response = await smartSuiteApiCall<{

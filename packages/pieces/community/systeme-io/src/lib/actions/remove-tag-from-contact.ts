@@ -12,6 +12,7 @@ export const removeTagFromContact = createAction({
   props: {
     contactId: systemeIoProps.contactIdDropdown,
     tagId: Property.Dropdown({
+      auth: systemeIoAuth,
       displayName: 'Tag to Remove',
       description: 'Select a tag currently assigned to this contact',
       required: true,
@@ -36,7 +37,7 @@ export const removeTagFromContact = createAction({
         try {
           const contact = await systemeIoCommon.getContact({
             contactId: contactId as string,
-            auth: auth as string,
+            auth: auth.secret_text,
           });
 
           let contactTags: any[] = [];
@@ -77,7 +78,7 @@ export const removeTagFromContact = createAction({
     try {
       const contact = await systemeIoCommon.getContact({
         contactId: contactId as string,
-        auth: context.auth,
+        auth: context.auth.secret_text,
       });
 
       if (contact && typeof contact === 'object' && (contact as any).tags) {
@@ -94,7 +95,7 @@ export const removeTagFromContact = createAction({
     const response = await systemeIoCommon.apiCall({
       method: HttpMethod.DELETE,
       url: `/contacts/${contactId}/tags/${tagId}`,
-      auth: context.auth,
+      auth: context.auth.secret_text,
     });
 
     return {

@@ -43,14 +43,17 @@ export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectRelease
 
 export const DiffReleaseRequest = Type.Union([
     Type.Object({
+        projectId: Type.String(),
         type: Type.Literal(ProjectReleaseType.PROJECT),
         targetProjectId: Type.String(),
     }),
     Type.Object({
+        projectId: Type.String(),
         type: Type.Literal(ProjectReleaseType.ROLLBACK),
         projectReleaseId: Type.String(),
     }),
     Type.Object({
+        projectId: Type.String(),
         type: Type.Literal(ProjectReleaseType.GIT),
     }),
 ])
@@ -58,6 +61,7 @@ export const DiffReleaseRequest = Type.Union([
 export type DiffReleaseRequest = Static<typeof DiffReleaseRequest>
 
 export const ListProjectReleasesRequest = Type.Object({
+    projectId: Type.String(),
     cursor: Nullable(Type.String()),
     limit: Type.Optional(Type.Number({ default: 10 })),
 })

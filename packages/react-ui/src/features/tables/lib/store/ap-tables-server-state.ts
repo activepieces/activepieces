@@ -50,7 +50,7 @@ export const createServerState = (
     },
     createField: (field: CreateFieldRequest) => {
       addPromiseToQueue(async () => {
-        const serverField = await fieldsApi.create(field);
+        const serverField = await fieldsApi.create({ ...field });
         clonedFields.push(serverField);
       });
     },
@@ -96,6 +96,7 @@ export const createServerState = (
           (index) => clonedRecords[parseInt(index)].id,
         );
         await recordsApi.delete({
+          tableId: clonedTable.id,
           ids: recordIds,
         });
 

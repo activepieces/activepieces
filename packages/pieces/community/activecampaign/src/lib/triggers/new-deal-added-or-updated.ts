@@ -12,7 +12,7 @@ export const newDealAddedOrUpdatedTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		const res = await client.subscribeWebhook({
 			name: `Activepieces New Deal Hook`,
 			url: context.webhookUrl,
@@ -29,7 +29,7 @@ export const newDealAddedOrUpdatedTrigger = createTrigger({
 			'activecampaign_new_deal_added_or_updated',
 		);
 		if (webhook != null) {
-			const client = makeClient(context.auth);
+			const client = makeClient(context.auth.props);
 			await client.unsubscribeWebhook(webhook.webhook.id);
 		}
 	},

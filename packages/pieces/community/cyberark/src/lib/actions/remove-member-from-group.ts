@@ -15,7 +15,7 @@ export const removeMemberFromGroup = createAction({
     memberId: memberIdDropdown,
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     if (!context.propsValue.memberId) {
       return {

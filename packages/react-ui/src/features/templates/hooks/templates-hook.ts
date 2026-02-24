@@ -1,36 +1,94 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 
-import { FlowTemplate } from '@activepieces/shared';
+import { Template, TemplateType } from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 
-export const useTemplates = () => {
-  const [search, setSearch] = useState<string>('');
+export const templatesHooks = {
+  useTemplateCategories: () => {
+    return useQuery<string[], Error>({
+      queryKey: ['template', 'categories'],
+      queryFn: async () => {
+        const result = await templatesApi.getCategories();
+        return (result?.value ?? []) as string[];
+      },
+    });
+  },
 
-  const { data: templates, isLoading } = useQuery<FlowTemplate[], Error>({
-    queryKey: ['templates'],
-    queryFn: async () => {
-      const templates = await templatesApi.list();
-      return templates.data;
-    },
-    staleTime: 0,
-  });
+  useTemplate: (id: string) => {
+    return useQuery<Template, Error>({
+      queryKey: ['template', id],
+      queryFn: () => templatesApi.getTemplate(id),
+    });
+  },
 
-  const filteredTemplates = templates?.filter((template) => {
-    const templateName = template.name.toLowerCase();
-    const templateDescription = template.description.toLowerCase();
-    return (
-      templateName.includes(search.toLowerCase()) ||
-      templateDescription.includes(search.toLowerCase())
-    );
-  });
+  useAllOfficialTemplates: () => {
+    return useQuery<Template[], Error>({
+      queryKey: ['templates', 'all'],
+      queryFn: async () => {
+        const result = await templatesApi.list({
+          type: TemplateType.OFFICIAL,
+        });
+        return result.data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+  },
 
-  return {
-    templates,
-    filteredTemplates,
-    isLoading,
-    search,
-    setSearch,
-  };
+  useTemplates: (type?: TemplateType) => {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const search = searchParams.get('search') ?? '';
+    const category = searchParams.get('category') ?? undefined;
+
+    const [debouncedSearch] = useDebounce(search, 300);
+
+    const { data: templates, isLoading } = useQuery<Template[], Error>({
+      queryKey: ['templates', debouncedSearch, category],
+      queryFn: async () => {
+        const templates = await templatesApi.list({
+          type,
+          search: debouncedSearch || undefined,
+          category,
+        });
+        return templates.data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+
+    const setSearch = (newSearch: string) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (newSearch) {
+          params.set('search', newSearch);
+        } else {
+          params.delete('search');
+        }
+        return params;
+      });
+    };
+
+    const setCategory = (newCategory: string) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (newCategory && newCategory !== 'All') {
+          params.set('category', newCategory);
+        } else {
+          params.delete('category');
+        }
+        return params;
+      });
+    };
+
+    return {
+      templates,
+      isLoading,
+      search,
+      setSearch,
+      category: category || 'All',
+      setCategory,
+    };
+  },
 };

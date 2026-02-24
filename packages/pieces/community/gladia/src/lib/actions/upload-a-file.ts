@@ -22,7 +22,7 @@ export const uploadAFile = createAction({
     }),
   },
   async run(context: ActionContext<typeof gladiaAuth>) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
     const audioFile = context.propsValue['audio_file'];
 
     if (!audioFile) {

@@ -19,7 +19,7 @@ export const gladia = createPiece({
       baseUrl: () => `https://api.gladia.io/v2`,
       auth: gladiaAuth,
       authMapping: async (auth) => ({
-        'x-gladia-key': auth as string,
+        'x-gladia-key': auth.secret_text,
       }),
     }),
   ],

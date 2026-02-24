@@ -132,7 +132,7 @@ export const stripeSearchSubscriptions = createAction({
         method: HttpMethod.GET,
         url: `${stripeCommon.baseUrl}/subscriptions?${queryParams.toString()}`,
         headers: {
-          Authorization: 'Bearer ' + context.auth,
+          Authorization: 'Bearer ' + context.auth.secret_text,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
@@ -189,7 +189,7 @@ export const stripeSearchSubscriptions = createAction({
                 method: HttpMethod.GET,
                 url: `${stripeCommon.baseUrl}/customers/${subscription.customer}`,
                 headers: {
-                  Authorization: 'Bearer ' + context.auth,
+                  Authorization: 'Bearer ' + context.auth.secret_text,
                 },
               });
 

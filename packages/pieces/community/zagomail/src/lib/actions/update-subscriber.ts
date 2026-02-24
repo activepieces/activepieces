@@ -43,7 +43,7 @@ export const updateSubscriber = createAction({
     }
 
     return await zagoMailApiService.updateSubscriber(
-      auth,
+      auth.secret_text,
       listUId,
       subsriberUid,
       payload

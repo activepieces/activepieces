@@ -27,7 +27,7 @@ export const newSubscriberTrigger = createTrigger({
         data: Array<{ id: number; action: string; url: string }>;
       }>({
         method: HttpMethod.POST,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: '/v2/email-service/webhook',
         body: {
           url: context.webhookUrl,
@@ -56,7 +56,7 @@ export const newSubscriberTrigger = createTrigger({
       if (webhookId) {
         await sendpulseApiCall({
           method: HttpMethod.DELETE,
-          auth: context.auth,
+          auth: context.auth.props,
           resourceUri: `/v2/email-service/webhook/${webhookId}`,
         });
         

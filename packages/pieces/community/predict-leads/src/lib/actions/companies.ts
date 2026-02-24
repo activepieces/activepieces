@@ -33,7 +33,7 @@ export const findCompaniesAction = createAction({
     const min_max_sizes = context.propsValue.minMaxSizes;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {
@@ -68,7 +68,7 @@ export const findCompanyByDomainAction = createAction({
     const domain = context.propsValue.domain;
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+      context.auth
     );
 
     try {

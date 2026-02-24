@@ -32,7 +32,7 @@ export const bulkEmailVerification = createAction({
     const res = await verifyEmails(
       emailsToVerify,
       context.propsValue.taskName,
-      context.auth
+      context.auth.secret_text
     );
 
     return res.body;

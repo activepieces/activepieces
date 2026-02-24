@@ -1,5 +1,6 @@
 
-import {  FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
+import {  FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -12,7 +13,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/populated-flows', GetAllFlowsByProjectParams, async (request) => {
         return flowService(request.log).list({
-            projectId: request.principal.projectId,
+            projectIds: [request.principal.projectId],
             limit: request.query.limit ?? 1000000,
             cursorRequest: request.query.cursor ?? null,
             folderId: request.query.folderId,
@@ -43,7 +44,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetAllFlowsByProjectParams = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: securityAccess.engine(),
     },
     schema: {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
@@ -52,7 +53,7 @@ const GetAllFlowsByProjectParams = {
 
 const GetLockedVersionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: securityAccess.engine(),
     },
     schema: {
         querystring: GetFlowVersionForWorkerRequest,

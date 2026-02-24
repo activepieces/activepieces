@@ -1,13 +1,7 @@
-import { exec } from 'child_process'
-import fs from 'fs'
-import os from 'os'
-import { promisify } from 'util'
-import { apVersionUtil, environmentVariables, exceptionHandler, fileSystemUtils, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, networkUtils, systemUsage, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apId, assertNotNullOrUndefined, isNil, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineProcessManager } from '../compute/process/engine-process-manager'
-
-const execAsync = promisify(exec)
 
 let settings: WorkerSettingsResponse | undefined
 let workerToken: string | undefined
@@ -20,22 +14,18 @@ export const workerMachine = {
         return workerToken
     },
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
-        const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
-        const cpus = os.cpus()
-        const cpuUsage = cpus.reduce((acc, cpu) => {
-            const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
-            const idle = cpu.times.idle
-            return acc + (1 - idle / total)
-        }, 0) / cpus.length * 100
-
+        const { totalRamInBytes, ramUsage } = await systemUsage.getContainerMemoryUsage()
+        const cpuUsage = systemUsage.getCpuUsage()
         const ip = (await networkUtils.getPublicIp()).ip
-        const diskInfo = await getDiskInfo()
+        const diskInfo = await systemUsage.getDiskInfo()
+        const cpuCores = await systemUsage.getCpuCores()
 
         return {
             diskInfo,
             cpuUsagePercentage: cpuUsage,
             ramUsagePercentage: ramUsage,
             totalAvailableRamInBytes: totalRamInBytes,
+            totalCpuCores: cpuCores,
             ip,
             workerProps: {
                 ...spreadIfDefined('SANDBOX_PROPAGATED_ENV_VARS', settings?.SANDBOX_PROPAGATED_ENV_VARS?.join(',')),
@@ -152,74 +142,6 @@ function appendSlashAndApi(url: string): string {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
 }
-
-async function getContainerMemoryUsage() {
-    const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
-    const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
-
-    const memLimitExists = await fileSystemUtils.fileExists(memLimitPath)
-    const memUsageExists = await fileSystemUtils.fileExists(memUsagePath)
-
-    const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
-    const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.totalmem() - os.freemem()
-
-    return {
-        totalRamInBytes,
-        ramUsage: (usedRamInBytes / totalRamInBytes) * 100,
-    }
-}
-
-async function getDiskInfo(): Promise<MachineInformation['diskInfo']> {
-    const platform = os.platform()
-
-    try {
-        if (platform === 'win32') {
-            const { stdout } = await execAsync('wmic logicaldisk get size,freespace,caption')
-            const lines = stdout.trim().split('\n').slice(1)
-            let total = 0, free = 0
-
-            for (const line of lines) {
-                const [, freeSpace, size] = line.trim().split(/\s+/)
-                if (freeSpace && size) {
-                    total += parseInt(size)
-                    free += parseInt(freeSpace)
-                }
-            }
-
-            const used = total - free
-            return {
-                total,
-                free,
-                used,
-                percentage: (used / total) * 100,
-            }
-        }
-        else {
-            const { stdout } = await execAsync('df -k / | tail -1')
-            const [, blocks, used, available] = stdout.trim().split(/\s+/)
-
-            const totalBytes = parseInt(blocks) * 1024
-            const usedBytes = parseInt(used) * 1024
-            const freeBytes = parseInt(available) * 1024
-
-            return {
-                total: totalBytes,
-                free: freeBytes,
-                used: usedBytes,
-                percentage: (usedBytes / totalBytes) * 100,
-            }
-        }
-    }
-    catch (error) {
-        return {
-            total: 0,
-            free: 0,
-            used: 0,
-            percentage: 0,
-        }
-    }
-}
-
 
 function getEnvironmentVariables(): Record<string, string | undefined> {
     const allowedEnvVariables = workerMachine.getSettings().SANDBOX_PROPAGATED_ENV_VARS

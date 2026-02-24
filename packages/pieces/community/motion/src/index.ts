@@ -58,7 +58,7 @@ export const motion = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          'X-API-Key': auth as string,
+          'X-API-Key': auth.secret_text,
         };
       },
     }),

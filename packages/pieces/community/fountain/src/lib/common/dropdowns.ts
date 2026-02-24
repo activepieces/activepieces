@@ -1,13 +1,13 @@
-import { PiecePropValueSchema, DropdownOption } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, DropdownOption, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from './auth';
+import { getAuthHeaders, getApiUrl } from './auth';
 
-export async function getFunnelsDropdown(auth: PiecePropValueSchema<typeof fountainAuth>): Promise<DropdownOption<string>[]> {
+export async function getFunnelsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<DropdownOption<string>[]> {
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/funnels',
+      url: getApiUrl(auth, '/funnels'),
       headers: getAuthHeaders(auth),
       queryParams: { per_page: '100' },
     });
@@ -22,11 +22,11 @@ export async function getFunnelsDropdown(auth: PiecePropValueSchema<typeof fount
   }
 }
 
-export async function getLocationsDropdown(auth: PiecePropValueSchema<typeof fountainAuth>): Promise<DropdownOption<string>[]> {
+export async function getLocationsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<DropdownOption<string>[]> {
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/funnels',
+      url: getApiUrl(auth, '/funnels'),
       headers: getAuthHeaders(auth),
       queryParams: { per_page: '100' },
     });
@@ -49,11 +49,11 @@ export async function getLocationsDropdown(auth: PiecePropValueSchema<typeof fou
   }
 }
 
-export async function getUsersDropdown(auth: PiecePropValueSchema<typeof fountainAuth>): Promise<DropdownOption<string>[]> {
+export async function getUsersDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<DropdownOption<string>[]> {
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/funnels',
+      url: getApiUrl(auth, '/funnels'),
       headers: getAuthHeaders(auth),
       queryParams: { per_page: '100' },
     });
@@ -77,7 +77,7 @@ export async function getUsersDropdown(auth: PiecePropValueSchema<typeof fountai
 }
 
 export async function getStagesForFunnelDropdown(
-  auth: PiecePropValueSchema<typeof fountainAuth>,
+  auth: AppConnectionValueForAuthProperty<typeof fountainAuth>,
   funnelId?: string
 ): Promise<DropdownOption<string>[]> {
   if (!funnelId) {
@@ -87,7 +87,7 @@ export async function getStagesForFunnelDropdown(
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.fountain.com/v2/funnels/${funnelId}/stages`,
+      url: getApiUrl(auth, `/funnels/${funnelId}/stages`),
       headers: getAuthHeaders(auth),
     });
 
@@ -100,3 +100,4 @@ export async function getStagesForFunnelDropdown(
     return [];
   }
 }
+

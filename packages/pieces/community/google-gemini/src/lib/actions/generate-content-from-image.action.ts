@@ -30,6 +30,7 @@ export const generateContentFromImageAction = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      auth: googleGeminiAuth,
       required: true,
       description: 'The model which will generate the completion',
       refreshers: [],
@@ -46,13 +47,13 @@ export const generateContentFromImageAction = createAction({
       const imageBuffer = Buffer.from(propsValue.image.base64, 'base64');
       await fs.writeFile(tempFilePath, imageBuffer);
 
-      const fileManager = new GoogleAIFileManager(auth);
+      const fileManager = new GoogleAIFileManager(auth?.secret_text);
       const uploadResult = await fileManager.uploadFile(tempFilePath, {
         mimeType: `image/${propsValue.image.extension}`,
         displayName: propsValue.image.filename,
       });
 
-      const genAI = new GoogleGenerativeAI(auth);
+      const genAI = new GoogleGenerativeAI(auth.secret_text);
       const model = genAI.getGenerativeModel({ model: propsValue.model });
       const result = await model.generateContent([
         propsValue.prompt,

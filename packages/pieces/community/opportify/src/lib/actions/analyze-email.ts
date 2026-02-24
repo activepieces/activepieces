@@ -29,7 +29,7 @@ export const analyzeEmailAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.opportify.ai/insights/v1/email/analyze',
       headers: {
-        'x-opportify-token': context.auth,
+        'x-opportify-token': context.auth.secret_text,
       },
       body: {
         email,

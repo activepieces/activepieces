@@ -1,52 +1,55 @@
-import { DotsHorizontalIcon } from '@radix-ui/react-icons';
-import { UserPlus, UsersRound, Users, Settings } from 'lucide-react';
+import { t } from 'i18next';
+import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { BetaBadge } from '@/components/custom/beta-badge';
-import { useEmbedding } from '@/components/embed-provider';
+import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
-import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
+import { userHooks } from '@/hooks/user-hooks';
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+} from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
 
 export const ProjectDashboardPageHeader = ({
-  title,
   children,
   description,
-  beta = false,
 }: {
-  title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
-  beta?: boolean;
 }) => {
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
+  const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'team'
+    'general' | 'members' | 'alerts' | 'pieces' | 'environment'
   >('general');
-  const { embedState } = useEmbedding();
   const location = useLocation();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { checkAccess } = useAuthorization();
+  const { data: user } = userHooks.useCurrentUser();
   const userHasPermissionToReadProjectMembers = checkAccess(
     Permission.READ_PROJECT_MEMBER,
   );
@@ -55,125 +58,122 @@ export const ProjectDashboardPageHeader = ({
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
 
-  const isEmbedded = embedState.isEmbedded;
-
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
 
   const showProjectMembersIcons =
-    !isEmbedded &&
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    !isNil(projectMembers);
+    !isNil(projectMembers) &&
+    project.type === ProjectType.TEAM;
 
-  const showInviteUserButton = !isEmbedded && userHasPermissionToInviteUser;
-  const showSettingsButton = !isEmbedded;
+  const showInviteUserButton =
+    userHasPermissionToInviteUser && project.type === ProjectType.TEAM;
+
   const isProjectPage = location.pathname.includes('/projects/');
 
-  if (embedState.hidePageHeader) {
-    return null;
-  }
+  const hasGeneralSettings =
+    project.type === ProjectType.TEAM ||
+    (platform.plan.embeddingEnabled &&
+      user?.platformRole === PlatformRole.ADMIN);
+
+  const getFirstAvailableTab = ():
+    | 'general'
+    | 'members'
+    | 'alerts'
+    | 'pieces'
+    | 'environment' => {
+    if (hasGeneralSettings) return 'general';
+    if (
+      project.type === ProjectType.TEAM &&
+      showProjectMembersFlag &&
+      userHasPermissionToReadProjectMembers
+    )
+      return 'members';
+    return 'pieces';
+  };
+
+  const titleContent = (
+    <div className="flex items-center gap-2">
+      <ApProjectDisplay
+        title={getProjectName(project)}
+        maxLengthToNotShowTooltip={30}
+        titleClassName="text-base"
+        projectType={project.type}
+      />
+      {project.type === ProjectType.PERSONAL && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Lock className="w-4 h-4" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {t(
+                  'This is your private project. Only you can see and access it.',
+                )}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </div>
+  );
+
+  const rightContent = isProjectPage ? (
+    <div className="flex items-center gap-3">
+      {showProjectMembersIcons && (
+        <Button
+          variant="ghost"
+          className="gap-2"
+          aria-label={`View ${projectMembers?.length} team member${
+            projectMembers?.length !== 1 ? 's' : ''
+          }`}
+          onClick={() => {
+            setSettingsInitialTab('members');
+            setSettingsOpen(true);
+          }}
+        >
+          <UsersRound className="w-4 h-4" />
+          <span className="text-sm font-medium">{projectMembers?.length}</span>
+        </Button>
+      )}
+      {showInviteUserButton && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          onClick={() => setInviteOpen(true)}
+        >
+          <UserPlus className="w-4 h-4" />
+          <span className="text-sm font-medium">Invite</span>
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => {
+          setSettingsInitialTab(getFirstAvailableTab());
+          setSettingsOpen(true);
+        }}
+      >
+        <Settings className="w-4 h-4" />
+      </Button>
+    </div>
+  ) : (
+    children
+  );
+
   return (
-    <div className="flex items-center justify-between min-w-full py-3">
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-5 mr-2" />
-          <div>
-            <div className="flex items-center gap-2">
-              <ApProjectDisplay
-                title={title}
-                maxLengthToNotShowTooltip={30}
-                titleClassName="text-lg font-semibold"
-              />
-              {beta && (
-                <div className="flex items-center">
-                  <BetaBadge />
-                </div>
-              )}
-            </div>
-            {description && (
-              <span className="text-xs text-muted-foreground">
-                {description}
-              </span>
-            )}
-          </div>
-        </div>
-        {isProjectPage && (
-          <div className="flex items-center gap-3">
-            {showProjectMembersIcons && (
-              <div className="flex items-center gap-2 px-3 py-1.5 ">
-                <UsersRound className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {projectMembers?.length}
-                </span>
-              </div>
-            )}
-            {showInviteUserButton && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 shadow-sm"
-                onClick={() => setInviteOpen(true)}
-              >
-                <UserPlus className="w-4 h-4" />
-                <span className="text-sm font-medium">Invite</span>
-              </Button>
-            )}
-            {showSettingsButton && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shadow-sm px-2"
-                  >
-                    <DotsHorizontalIcon className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-semibold">
-                    <ApProjectDisplay
-                      title={project.displayName}
-                      maxLengthToNotShowTooltip={23}
-                      titleClassName="font-semibold"
-                    />
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {showInviteUserButton && (
-                    <DropdownMenuItem onClick={() => setInviteOpen(true)}>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Invite
-                    </DropdownMenuItem>
-                  )}
-                  {showProjectMembersIcons && (
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSettingsInitialTab('team');
-                        setSettingsOpen(true);
-                      }}
-                    >
-                      <Users className="w-4 h-4 mr-2" />
-                      Members
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSettingsInitialTab('general');
-                      setSettingsOpen(true);
-                    }}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        )}
-      </div>
-      {children}
+    <>
+      <PageHeader
+        title={titleContent}
+        description={description}
+        rightContent={rightContent}
+        className="min-w-full"
+      />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
         open={settingsOpen}
@@ -181,9 +181,8 @@ export const ProjectDashboardPageHeader = ({
         initialTab={settingsInitialTab}
         initialValues={{
           projectName: project?.displayName,
-          aiCredits: project?.plan?.aiCredits?.toString() ?? '',
         }}
       />
-    </div>
+    </>
   );
 };

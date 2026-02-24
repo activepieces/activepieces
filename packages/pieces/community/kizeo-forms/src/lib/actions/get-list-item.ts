@@ -26,7 +26,7 @@ export const getListItem = createAction({
         `public/v4/lists/${listId}/items/${itemId}?used-with-activepieces=`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
     });
     if (response.status === 200) {

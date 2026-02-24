@@ -43,7 +43,8 @@ export const searchUser = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
     const emailTerm = String(propsValue.email || '').toLowerCase();
 
     const params: any = {};

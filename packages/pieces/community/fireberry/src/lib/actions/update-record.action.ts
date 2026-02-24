@@ -5,6 +5,7 @@ import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
 const recordDropdown = Property.Dropdown({
+  auth: fireberryAuth,
   displayName: 'Record',
   required: true,
   refreshers: ['objectType'],
@@ -18,9 +19,8 @@ const recordDropdown = Property.Dropdown({
     }
 
     try {
-      const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
       const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-      const client = new FireberryClient(authStr);
+      const client = new FireberryClient(auth);
       
       const response = await client.request<{ 
         success: boolean; 
@@ -77,12 +77,12 @@ const updateFields = Property.DynamicProperties({
   displayName: 'Fields to Update',
   refreshers: ['objectType'],
   required: true,
+  auth: fireberryAuth,
   props: async ({ auth, objectType }) => {
     if (!auth || !objectType) return {};
     
-    const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
     const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-    const client = new FireberryClient(authStr);
+    const client = new FireberryClient(auth);
     
     try {
       const metadata = await client.getObjectFieldsMetadata(objectTypeStr);
@@ -242,7 +242,7 @@ export const updateRecordAction = createAction({
     fields: updateFields,
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, recordId, fields } = propsValue;
     
     if (!recordId) {
@@ -264,6 +264,6 @@ export const updateRecordAction = createAction({
     
     const recordToUpdate = { id: recordId, record: updateData };
     
-    return await client.batchUpdate(objectType, [recordToUpdate]);
+    return await client.batchUpdate(objectType as string, [recordToUpdate]);
   },
 }); 

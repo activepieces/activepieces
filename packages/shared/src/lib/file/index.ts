@@ -18,6 +18,8 @@ export enum FileType {
     TRIGGER_EVENT_FILE = 'TRIGGER_EVENT_FILE',
     PROJECT_RELEASE = 'PROJECT_RELEASE',
     FLOW_VERSION_BACKUP = 'FLOW_VERSION_BACKUP',
+
+    PLATFORM_ASSET = 'PLATFORM_ASSET',
 }
 export enum FileCompression {
     NONE = 'NONE',

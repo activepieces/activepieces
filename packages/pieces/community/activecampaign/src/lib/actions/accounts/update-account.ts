@@ -32,7 +32,7 @@ export const updateAccountAction = createAction({
 			updateAccountParams.fields?.push({ customFieldId: Number(key), fieldValue: value });
 		});
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		return await client.updateAccount(Number(accountId), updateAccountParams);
 	},
 });

@@ -19,7 +19,7 @@ export const getSingleResponse = createAction({
 		}),
 	},
 	async run(context) {
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const { formId, submissionId } = context.propsValue;
 

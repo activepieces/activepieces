@@ -37,6 +37,7 @@ export type ApErrorParams =
     | FlowNotFoundErrorParams
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
+    | FlowOperationInProgressErrorParams
     | FlowRunNotFoundErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -72,6 +73,7 @@ export type ApErrorParams =
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
     | AIProviderModelNotSupportedParams
+    | AIProviderNotSupportedParams
     | AIRequestNotSupportedParams
     | AICreditLimitExceededParams
     | SessionExpiredParams
@@ -284,6 +286,11 @@ ErrorCode.FLOW_OPERATION_INVALID,
 }
 >
 
+export type FlowOperationInProgressErrorParams = BaseErrorParams<
+ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
+    message: string
+}>
+
 export type FlowFormNotFoundError = BaseErrorParams<
 ErrorCode.FLOW_FORM_NOT_FOUND,
 {
@@ -403,6 +410,10 @@ export type AIProviderModelNotSupportedParams = BaseErrorParams<ErrorCode.AI_MOD
     model: string
 }>
 
+export type AIProviderNotSupportedParams = BaseErrorParams<ErrorCode.AI_PROVIDER_NOT_SUPPORTED, {
+    provider: string
+}>
+
 export type AIRequestNotSupportedParams = BaseErrorParams<ErrorCode.AI_REQUEST_NOT_SUPPORTED, {
     message: string
 }>
@@ -497,6 +508,7 @@ export enum ErrorCode {
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     AI_MODEL_NOT_SUPPORTED = 'AI_MODEL_NOT_SUPPORTED',
+    AI_PROVIDER_NOT_SUPPORTED = 'AI_PROVIDER_NOT_SUPPORTED',
     AI_REQUEST_NOT_SUPPORTED = 'AI_REQUEST_NOT_SUPPORTED',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
@@ -515,6 +527,7 @@ export enum ErrorCode {
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
+    FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',
@@ -556,3 +569,4 @@ export enum ErrorCode {
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
 }
+

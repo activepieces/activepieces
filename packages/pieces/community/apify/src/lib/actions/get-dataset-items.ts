@@ -6,12 +6,13 @@ export const getDatasetItems = createAction({
   name: 'getDatasetItems',
   auth: apifyAuth,
   displayName: 'Get Dataset Items',
-  description: 'Retrieves items from a dataset',
+  description: 'Retrieves items from a dataset.',
   props: {
     datasetId: Property.Dropdown({
+      auth: apifyAuth,
       required: true,
       refreshers: ['auth'],
-      displayName: 'Datasets',
+      displayName: 'Dataset',
       description: 'Select the dataset to get items from.',
       options: async (props) => {
         return createDropdownOptions(props['auth'], listDatasets);
@@ -20,7 +21,7 @@ export const getDatasetItems = createAction({
     offset: Property.Number({
       required: false,
       displayName: 'Offset',
-      description: 'Number of items to skip at the start of the dataset.',
+      description: 'Number of items that should be skipped at the start. The default value is `0`.',
       defaultValue: 0
     }),
     limit: Property.Number({
@@ -31,7 +32,7 @@ export const getDatasetItems = createAction({
     })
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const { datasetId, offset, limit } = context.propsValue;
 
     const client = createApifyClient(apifyToken);

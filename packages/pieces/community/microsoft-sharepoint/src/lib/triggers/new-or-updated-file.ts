@@ -4,7 +4,7 @@ import {
 	TriggerStrategy,
 	Property,
 	DropdownOption,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
@@ -18,7 +18,7 @@ type Props = {
 	folderId: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftSharePointAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePointAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const { siteId, driveId, folderId } = propsValue;
@@ -93,7 +93,8 @@ export const newOrUpdatedFileTrigger = createTrigger({
 		siteId: microsoftSharePointCommon.siteId,
 		driveId: microsoftSharePointCommon.driveId,
 		folderId: Property.Dropdown({
-			displayName: 'Folder to Monitor',
+			auth: microsoftSharePointAuth,
+			displayName: 'Folder to Monitor',	
 			description:
 				'The folder to watch for new or updated files. Select "Root Folder" for the top-level folder of the drive.',
 			required: true,
@@ -106,7 +107,7 @@ export const newOrUpdatedFileTrigger = createTrigger({
 						options: [],
 					};
 				}
-				const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>;
+				const authValue = auth 
 				const client = Client.initWithMiddleware({
 					authProvider: {
 						getAccessToken: () => Promise.resolve(authValue.access_token),

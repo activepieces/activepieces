@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { PlatformRole, UserStatus } from './user'
 
 export * from './user'
+export * from './badges'
 
 export const UpdateUserRequestBody = Type.Object({
     status: Type.Optional(Type.Enum(UserStatus)),

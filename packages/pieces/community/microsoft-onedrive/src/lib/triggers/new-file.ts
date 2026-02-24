@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
@@ -11,7 +11,7 @@ type Props = {
 	parentFolder?: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof oneDriveAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof oneDriveAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const client = Client.initWithMiddleware({

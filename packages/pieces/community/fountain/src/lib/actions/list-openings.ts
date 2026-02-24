@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
 import { getLocationsDropdown, getUsersDropdown } from '../common/dropdowns';
 
 export const fountainListOpenings = createAction({
@@ -15,14 +15,15 @@ export const fountainListOpenings = createAction({
       description: 'Filter to only active openings',
       required: false,
     }),
-    location_id: Property.Dropdown({
+    location_id: Property.Dropdown({  
       displayName: 'Location',
       description: 'Filter openings by location',
       required: false,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getLocationsDropdown(auth as any) };
+        return { disabled: false, options: await getLocationsDropdown(auth) };
       },
     }),
     is_hiring_funnel: Property.Checkbox({
@@ -45,9 +46,10 @@ export const fountainListOpenings = createAction({
       description: 'Filter openings by owner',
       required: false,
       refreshers: [],
-      options: async ({ auth }) => {
+      auth: fountainAuth,
+        options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getUsersDropdown(auth as any) };
+        return { disabled: false, options: await getUsersDropdown(auth) };
       },
     }),
     per_page: Property.Number({
@@ -76,7 +78,7 @@ export const fountainListOpenings = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/funnels',
+      url: getApiUrl(context.auth, '/funnels'),
       headers: getAuthHeaders(context.auth),
       queryParams,
     });

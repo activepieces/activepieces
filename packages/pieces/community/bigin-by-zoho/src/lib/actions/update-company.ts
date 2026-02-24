@@ -16,6 +16,7 @@ export const updateCompany = createAction({
     'Updates an existing Company and prepopulates its fields for editing.',
   props: {
     companyId: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Select Company',
       description: 'Choose a company to update',
       required: true,
@@ -26,7 +27,7 @@ export const updateCompany = createAction({
 
         const response = await biginApiService.fetchCompanies(
           context.auth.access_token,
-          (context.auth as any).api_domain
+          context.auth.data['api_domain']
         );
 
         return {
@@ -39,6 +40,7 @@ export const updateCompany = createAction({
     }),
     owner: usersDropdown,
     companyDetails: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Company Details',
       description: 'These fields will be prepopulated with company data',
       refreshers: ['companyId', 'auth'],
@@ -46,7 +48,8 @@ export const updateCompany = createAction({
       props: async ({ companyId, auth }: any): Promise<InputPropertyMap> => {
         if (!companyId) return {};
         const company = JSON.parse(companyId);
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const [fieldsResp, usersResp] = await Promise.all([
           biginApiService.fetchModuleFields(access_token, api_domain, 'Accounts'),

@@ -18,6 +18,7 @@ import {
     ProjectRole,
     SeekPage,
     UserId,
+    UserStatus,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -165,22 +166,33 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             name: params.role,
             platformId: params.platformId,
         })
-        const updateResult = await repo().update({
+
+        const projectMember = await repo().findOneBy({
             id: params.id,
-            projectId: params.projectId,
-        }, {
-            projectRoleId: projectRole.id,
         })
-        if (updateResult.affected === 0) {
+
+        if (
+            isNil(projectMember)
+            || projectMember.projectId !== params.projectId
+            || projectMember.platformId !== params.platformId
+        ) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'project_member', entityId: params.id, message: 'Project member not found' },
             })
         }
-        return repo().findOneByOrFail({
+
+        await repo().update({
             id: params.id,
             projectId: params.projectId,
+        }, {
+            projectRoleId: projectRole.id,
         })
+        return {
+            ...projectMember,
+            projectRoleId: projectRole.id,
+            updated: dayjs().toISOString(),
+        }
     },
     async getIdsOfProjects({
         userId,
@@ -201,6 +213,34 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         invitationId: ProjectMemberId,
     ): Promise<void> {
         await repo().delete({ projectId, id: invitationId })
+    },
+    async countTotalUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
+        if (projectIds.length === 0) return new Map()
+        
+        const result = await repo()
+            .createQueryBuilder('project_member')
+            .select('project_member.projectId', 'projectId')
+            .addSelect('COUNT(*)', 'count')
+            .where('project_member.projectId IN (:...projectIds)', { projectIds })
+            .groupBy('project_member.projectId')
+            .getRawMany()
+        
+        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
+    },
+    async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
+        if (projectIds.length === 0) return new Map()
+        
+        const result = await repo()
+            .createQueryBuilder('project_member')
+            .select('project_member.projectId', 'projectId')
+            .addSelect('COUNT(DISTINCT user.id)', 'count')
+            .leftJoin('user', 'user', '"user"."id" = "project_member"."userId"')
+            .where('project_member.projectId IN (:...projectIds)', { projectIds })
+            .andWhere('user.status = :activeStatus', { activeStatus: UserStatus.ACTIVE })
+            .groupBy('project_member.projectId')
+            .getRawMany()
+        
+        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
 })
 

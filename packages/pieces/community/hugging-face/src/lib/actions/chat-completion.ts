@@ -39,6 +39,7 @@ export const chatCompletion = createAction({
       defaultValue: 'faq',
     }),
     model: Property.Dropdown({
+      auth: huggingFaceAuth,  
       displayName: 'Chat Model',
       description: 'Select the best model for your use case',
       required: true,
@@ -436,7 +437,7 @@ export const chatCompletion = createAction({
         maxTokens = 200;
     }
 
-    const hf = new InferenceClient(context.auth as string);
+    const hf = new InferenceClient(context.auth.secret_text);
 
     const args: ChatCompletionInput = {
       model: model,

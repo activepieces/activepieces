@@ -15,7 +15,7 @@ export const createDatastoreAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const { name } = propsValue;
 
     const client = new ContextualAI({

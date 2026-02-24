@@ -39,11 +39,11 @@ export const uploadFile = createAction({
 
 			// Create FormData for multipart/form-data upload
 			const formData = new FormData();
-			const blob = new Blob([file.data], { type: mimeType });
+			const blob = new Blob([file.data as unknown as ArrayBuffer], { type: mimeType });
 			formData.append('file', blob, file.filename);
 
 			const response = await makeRequest(
-				auth,
+				auth.secret_text,
 				HttpMethod.POST,
 				path,
 				formData,

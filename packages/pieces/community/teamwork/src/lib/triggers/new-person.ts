@@ -11,7 +11,7 @@ export const newPerson = createTrigger({
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const res = await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+		const res = await teamworkRequest(context.auth, {
 			method: HttpMethod.POST,
 			path: '/webhooks.json',
 			body: {
@@ -27,7 +27,7 @@ export const newPerson = createTrigger({
 	async onDisable(context) {
 		const webhookId = await context.store.get('webhookId');
 		if (webhookId) {
-			await teamworkRequest(context.auth as PiecePropValueSchema<typeof teamworkAuth>, {
+			await teamworkRequest(context.auth, {
 				method: HttpMethod.DELETE,
 				path: `/webhooks/${webhookId}.json`,
 			});

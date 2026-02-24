@@ -5,7 +5,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-    OAuth2PropertyValue,
+    AppConnectionValueForAuthProperty,
     TriggerStrategy,
     createTrigger,
 } from '@activepieces/pieces-framework';
@@ -48,7 +48,7 @@ export const newFieldHistoryEvent = createTrigger({
 });
 
 
-const polling: Polling<OAuth2PropertyValue, { object: string | undefined }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, { object: string | undefined }> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue, lastFetchEpochMS }) => {
         const { object } = propsValue;

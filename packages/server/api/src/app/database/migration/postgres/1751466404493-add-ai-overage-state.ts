@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddAiOverageState1751466404493 implements MigrationInterface {
     name = 'AddAiOverageState1751466404493'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
                 RENAME COLUMN "aiCreditsOverageEnabled" TO "aiCreditsOverageState"
@@ -18,6 +23,9 @@ export class AddAiOverageState1751466404493 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsOverageState"
         `)

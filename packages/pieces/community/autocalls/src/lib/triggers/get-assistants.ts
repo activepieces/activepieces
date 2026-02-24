@@ -1,16 +1,16 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { autocallsAuth, baseApiUrl } from '../..';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<any>, { start?: string; end?: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof autocallsAuth>, { start?: string; end?: string }> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: baseApiUrl + 'api/user/assistants',
       headers: {
-        Authorization: 'Bearer ' + auth,
+        Authorization: 'Bearer ' + auth.secret_text,
       },
     });
 

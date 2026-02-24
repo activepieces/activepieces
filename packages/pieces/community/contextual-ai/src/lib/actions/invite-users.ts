@@ -27,7 +27,7 @@ export const inviteUsersAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const { users, tenantShortName } = propsValue;
 
     const client = new ContextualAI({

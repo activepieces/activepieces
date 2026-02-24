@@ -5,6 +5,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import Ajv from 'ajv';
 import mime from 'mime-types';
+import { modelOptions } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
   auth: claudeAuth,
@@ -20,18 +21,7 @@ export const extractStructuredDataAction = createAction({
       defaultValue: 'claude-3-haiku-20240307',
       options: {
         disabled: false,
-        options: [
-          { value: 'claude-sonnet-4-5-20250929', label: 'Claude 4.5 Sonnet' },
-          { value: 'claude-haiku-4-5-20251001', label: 'Claude 4.5 Haiku' },
-          { value: 'claude-opus-4-1-20250805', label: 'Claude 4.1 Opus' },
-          { value: 'claude-sonnet-4-20250514', label: 'Claude 4 Sonnet' },
-          { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
-          { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
-          { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
-          { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
-          { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
-          { value: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet' },
-        ],
+        options: modelOptions,
       },
     }),
     text: Property.LongText({
@@ -63,7 +53,8 @@ export const extractStructuredDataAction = createAction({
         ],
       },
     }),
-    schema: Property.DynamicProperties({
+    schema: Property.DynamicProperties({  
+      auth: claudeAuth,
       displayName: 'Data Definition',
       required: true,
       refreshers: ['mode'],
@@ -193,7 +184,7 @@ export const extractStructuredDataAction = createAction({
     }
 
     const anthropic = new Anthropic({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
     });
 
     const messages: Anthropic.Messages.MessageParam[] = [

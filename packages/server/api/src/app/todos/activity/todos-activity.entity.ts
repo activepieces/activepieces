@@ -3,7 +3,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 export type TodoActivitySchema = TodoActivity & {
@@ -24,7 +23,7 @@ export const TodoActivityEntity = new EntitySchema<TodoActivitySchema>({
             nullable: true,
         },
         content: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
     },

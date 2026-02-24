@@ -33,7 +33,7 @@ export const heygen = createPiece({
       baseUrl: () => BASE_URL_V1,
       authMapping: async (auth) => {
         return {
-          'X-Api-Key': auth as string,
+            'X-Api-Key': auth.secret_text,
         };
       },
     }),

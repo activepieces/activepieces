@@ -1,6 +1,7 @@
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { GmailRequests } from './data';
 import { GmailLabel } from './models';
+import { gmailAuth } from '../..';
 
 export const GmailProps = {
   from: Property.ShortText({
@@ -41,7 +42,8 @@ export const GmailProps = {
       ],
     },
   }),
-  label: Property.Dropdown<GmailLabel>({
+  label: Property.Dropdown<GmailLabel, false, typeof gmailAuth>({
+    auth: gmailAuth,
     displayName: 'Label',
     description:
       'Optional filteration, leave unselected to filter based on the email label',
@@ -57,9 +59,7 @@ export const GmailProps = {
         };
       }
 
-      const response = await GmailRequests.getLabels(
-        auth as OAuth2PropertyValue
-      );
+      const response = await GmailRequests.getLabels(auth);
 
       return {
         disabled: false,

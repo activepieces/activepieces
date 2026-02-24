@@ -14,7 +14,8 @@ export const sendEmail = createAction({
   description: 'Sends an email.',
   props: {
     ...createCommonProps(),
-    content_type: Property.Dropdown<'text' | 'html'>({
+    content_type: Property.Dropdown<'text' | 'html',true,typeof mailerooAuth>({
+      auth: mailerooAuth,
       displayName: 'Content Type',
       refreshers: [],
       required: true,
@@ -46,7 +47,7 @@ export const sendEmail = createAction({
       formData.append('html', content);
     }
 
-    const res = await sendFormData('send', formData, context.auth.apiKey);
+    const res = await sendFormData('send', formData, context.auth.props.apiKey);
 
     return res.body;
   },

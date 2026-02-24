@@ -1,11 +1,7 @@
-import Document from '@tiptap/extension-document';
-import HardBreak from '@tiptap/extension-hard-break';
-import History from '@tiptap/extension-history';
-import Mention, { MentionNodeAttrs } from '@tiptap/extension-mention';
-import Paragraph from '@tiptap/extension-paragraph';
-import Placeholder from '@tiptap/extension-placeholder';
-import Text from '@tiptap/extension-text';
+import { MentionNodeAttrs, Mention } from '@tiptap/extension-mention';
+import { Placeholder } from '@tiptap/extension-placeholder';
 import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 
 import './tip-tap.css';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
@@ -23,18 +19,17 @@ type TextInputWithMentionsProps = {
   placeholder?: string;
   disabled?: boolean;
 };
+
 const extensions = (placeholder?: string) => {
   return [
-    Document,
-    History,
-    HardBreak,
+    StarterKit.configure({
+      heading: {
+        levels: [1, 2, 3, 4, 5, 6],
+      },
+    }),
     Placeholder.configure({
       placeholder,
     }),
-    Paragraph.configure({
-      HTMLAttributes: {},
-    }),
-    Text,
     Mention.configure({
       suggestion: {
         char: '',
@@ -96,6 +91,7 @@ export const TextInputWithMentions = ({
     );
     editor?.chain().focus().insertContent(mentionNode).run();
   };
+
   const editor = useEditor({
     editable: !disabled,
     extensions: extensions(placeholder),
@@ -111,7 +107,7 @@ export const TextInputWithMentions = ({
       attributes: {
         class: cn(
           className ??
-            ' w-full rounded-sm border shadow-sm border-input bg-background px-3 min-h-9 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
+            'w-full bg-background px-3 py-2 text-sm rounded-sm ring-offset-background  min-h-9 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
           textMentionUtils.inputWithMentionsCssClass,
           {
             'cursor-not-allowed opacity-50': disabled,
@@ -132,5 +128,13 @@ export const TextInputWithMentions = ({
     },
   });
 
-  return <EditorContent editor={editor} />;
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <div className="w-full border rounded-sm">
+      <EditorContent editor={editor} />
+    </div>
+  );
 };

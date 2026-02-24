@@ -1,9 +1,11 @@
 import {
+    AppConnectionType,
     DefaultProjectRole,
     PackageType,
     PlatformRole,
     PrincipalType,
     ProjectRole,
+    UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -57,27 +59,28 @@ describe('AppConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
             })
 
-            const mockUpsertAppConnectionRequest = {
+            const mockUpsertAppConnectionRequest: UpsertAppConnectionRequestBody = {
                 externalId: 'test-app-connection-with-metadata',
                 displayName: 'Test Connection with Metadata',
                 pieceName: mockPieceMetadata.name,
                 projectId: mockProject.id,
-                type: 'SECRET_TEXT',
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
                 metadata: {
                     foo: 'bar',
                 },
+                pieceVersion: mockPieceMetadata.version,
             }
-
+   
             // act
             const response = await app?.inject({
                 method: 'POST',
@@ -92,7 +95,7 @@ describe('AppConnection API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
             expect(responseBody.metadata).toEqual(mockUpsertAppConnectionRequest.metadata)
-
+            expect(responseBody.pieceVersion).toEqual(mockPieceMetadata.version)
             // Verify connection can be updated with new metadata
             const updateResponse = await app?.inject({
                 method: 'POST',
@@ -150,22 +153,23 @@ describe('AppConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
             })
 
-            const mockUpsertAppConnectionRequest = {
+            const mockUpsertAppConnectionRequest: UpsertAppConnectionRequestBody = {
                 externalId: 'test-app-connection',
                 displayName: 'test-app-connection',
                 pieceName: mockPieceMetadata.name,
                 projectId: mockProject.id,
-                type: 'SECRET_TEXT',
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: mockPieceMetadata.version,
             }
 
             // act
@@ -213,22 +217,23 @@ describe('AppConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
             })
 
-            const mockUpsertAppConnectionRequest = {
+            const mockUpsertAppConnectionRequest: UpsertAppConnectionRequestBody = {
                 externalId: 'test-app-connection',
                 displayName: 'test-app-connection',
                 pieceName: mockPieceMetadata.name,
                 projectId: mockProject.id,
-                type: 'SECRET_TEXT',
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: mockPieceMetadata.version,
             }
 
             // act
@@ -279,7 +284,7 @@ describe('AppConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

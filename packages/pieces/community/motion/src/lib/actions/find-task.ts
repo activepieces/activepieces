@@ -67,7 +67,7 @@ export const findTask = createAction({
         method: HttpMethod.GET,
         url: `${BASE_URL}/tasks`,
         headers: {
-          'X-API-Key': context.auth as string,
+          'X-API-Key': context.auth.secret_text,
         },
         queryParams: qs,
       });

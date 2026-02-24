@@ -24,6 +24,7 @@ export const updateRow = createAction({
             }
         }),
         filter_column: Property.Dropdown({
+            auth: supabaseAuth,
             displayName: 'Filter Column',
             description: 'Select the column to filter on',
             required: true,
@@ -38,7 +39,7 @@ export const updateRow = createAction({
                 }
                 
                 try {
-                    const { url, apiKey } = auth as { url: string; apiKey: string };
+                    const { url, apiKey } = auth.props;
                     const supabase = createClient(url, apiKey);
                     
                     try {
@@ -138,7 +139,7 @@ export const updateRow = createAction({
             count_updated, 
             return_updated 
         } = context.propsValue;
-        const { url, apiKey } = context.auth;
+        const { url, apiKey } = context.auth.props;
 
         const supabase = createClient(url, apiKey);
         

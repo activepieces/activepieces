@@ -91,6 +91,7 @@ export const RunsMetadataUpsertData = Type.Composite([
         'flowId',
         'flowVersionId',
         'environment',
+        'triggeredBy',
         'startTime',
         'finishTime',
         'status',
@@ -102,6 +103,7 @@ export const RunsMetadataUpsertData = Type.Composite([
         'failParentOnFailure',
         'logsFileId',
         'updated',
+        'stepsCount',
     ])),
     Type.Object({
         requestId: Type.Optional(Type.String()),

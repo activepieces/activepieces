@@ -137,7 +137,7 @@ async function listTablesByExternalIds(projectId: string, externalIds: string[])
 
 function listFlowsByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<FlowState[]> {
     return flowService(log).list({
-        projectId,
+        projectIds: [projectId],
         limit: 10000,
         cursorRequest: null,
         folderId: undefined,

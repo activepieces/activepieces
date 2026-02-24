@@ -17,7 +17,7 @@ export const airtableDeleteRecordAction = createAction({
     const { base: baseId, tableId, recordId } = context.propsValue;
 
     return await airtableCommon.deleteRecord({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId: baseId as string,
       tableId: tableId as string,
       recordId: recordId as string,

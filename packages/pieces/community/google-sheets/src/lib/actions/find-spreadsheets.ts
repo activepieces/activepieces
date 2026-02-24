@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from '@activepieces/pieces-common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp } from '../common/props';
+import { getAccessToken } from '../common/common';
 
 export const findSpreadsheets = createAction({
   name: 'find_spreadsheets',
@@ -51,7 +52,7 @@ export const findSpreadsheets = createAction({
         },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
 
       }

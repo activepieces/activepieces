@@ -1,9 +1,11 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient } from './index';
+import { pandadocAuth, pandadocClient } from './index';
 
 // Documents dropdown
 export const documentDropdown = Property.Dropdown({
+  auth: pandadocAuth,
+
   displayName: 'Document',
   description: 'Select a document from your PandaDoc workspace',
   required: true,
@@ -26,7 +28,7 @@ export const documentDropdown = Property.Dropdown({
           date_created: string;
         }>;
       }>(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/documents?count=100&order_by=date_created'
       );
@@ -52,6 +54,8 @@ export const documentDropdown = Property.Dropdown({
 
 // Templates dropdown
 export const templateDropdown = Property.Dropdown({
+  auth: pandadocAuth,
+
   displayName: 'Template',
   description: 'Select a template from your PandaDoc workspace',
   required: true,
@@ -72,7 +76,7 @@ export const templateDropdown = Property.Dropdown({
           name: string;
           date_created: string;
         }>;
-      }>(auth as string, HttpMethod.GET, '/templates?count=100');
+      }>(auth.secret_text, HttpMethod.GET, '/templates?count=100');
 
       const options = response.results.map((template) => ({
         label: template.name,
@@ -97,6 +101,7 @@ export const templateFields = Property.DynamicProperties({
   displayName: 'Template Fields',
   refreshers: ['template_uuid'],
   required: false,
+  auth: pandadocAuth,
   props: async ({ auth, template_uuid }) => {
     if (!auth || !template_uuid) return {};
 
@@ -127,6 +132,7 @@ export const templateFields = Property.DynamicProperties({
 
 // Folders dropdown
 export const folderDropdown = Property.Dropdown({
+  auth: pandadocAuth,
   displayName: 'Folder',
   description: 'Select a folder from your PandaDoc workspace',
   required: false,
@@ -147,7 +153,7 @@ export const folderDropdown = Property.Dropdown({
           name: string;
           date_created: string;
         }>;
-      }>(auth as string, HttpMethod.GET, '/documents/folders?count=100');
+      }>(auth.secret_text, HttpMethod.GET, '/documents/folders?count=100');
 
       const options = response.results.map((folder) => ({
         label: `${folder.name} - ${folder.uuid.substring(0, 8)}...`,
@@ -170,6 +176,7 @@ export const folderDropdown = Property.Dropdown({
 
 // Contacts dropdown
 export const contactDropdown = Property.Dropdown({
+  auth: pandadocAuth,
   displayName: 'Contact',
   description: 'Select a contact from your PandaDoc workspace',
   required: false,
@@ -191,7 +198,7 @@ export const contactDropdown = Property.Dropdown({
           last_name: string | null;
           email: string | null;
         }>;
-      }>(auth as string, HttpMethod.GET, '/contacts?count=100');
+      }>(auth.secret_text, HttpMethod.GET, '/contacts?count=100');
 
       const options = response.results.map((contact) => {
         const name =
@@ -220,6 +227,7 @@ export const contactDropdown = Property.Dropdown({
 
 // Forms dropdown
 export const formDropdown = Property.Dropdown({
+  auth: pandadocAuth,
   displayName: 'Form',
   description: 'Select a form from your PandaDoc workspace',
   required: false,
@@ -240,7 +248,7 @@ export const formDropdown = Property.Dropdown({
           name: string;
           status: string;
         }>;
-      }>(auth as string, HttpMethod.GET, '/forms?count=100');
+      }>(auth.secret_text, HttpMethod.GET, '/forms?count=100');
 
       const options = response.results.map((form) => ({
         label: `${form.name} (${form.status}) - ${form.id.substring(0, 8)}...`,
@@ -263,6 +271,7 @@ export const formDropdown = Property.Dropdown({
 
 // Members dropdown
 export const memberDropdown = Property.Dropdown({
+  auth: pandadocAuth,
   displayName: 'Member',
   description: 'Select a workspace member',
   required: false,
@@ -286,7 +295,7 @@ export const memberDropdown = Property.Dropdown({
           role: string;
           is_active: boolean;
         }>;
-      }>(auth as string, HttpMethod.GET, '/members');
+      }>(auth.secret_text, HttpMethod.GET, '/members');
 
       const options = response.results
         .filter((member) => member.is_active)
@@ -316,6 +325,7 @@ export const memberDropdown = Property.Dropdown({
 
 // Document attachments dropdown (dependent on document selection)
 export const documentAttachmentDropdown = Property.Dropdown({
+  auth: pandadocAuth,
   displayName: 'Attachment',
   description: 'Select an attachment from the document',
   required: true,
@@ -345,7 +355,7 @@ export const documentAttachmentDropdown = Property.Dropdown({
           date_created: string;
         }>
       >(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/documents/${document_id}/attachments`
       );

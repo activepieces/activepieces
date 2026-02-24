@@ -1,6 +1,5 @@
 import {
   DynamicPropsValue,
-  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -28,7 +27,7 @@ export const createRowAction = createAction({
     const formattedTableFields: DynamicPropsValue = {};
 
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof baserowAuth>
+      context.auth.props
     );
     const tableSchema = await client.listTableFields(table_id);
 

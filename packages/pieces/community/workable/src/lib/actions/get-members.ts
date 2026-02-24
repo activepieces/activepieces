@@ -43,7 +43,7 @@ export const getMembers = createAction({
     const email = context.propsValue['email'];
     const name = context.propsValue['name'];
 
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
 
     const queryParams: Record<string, any> = {};
 

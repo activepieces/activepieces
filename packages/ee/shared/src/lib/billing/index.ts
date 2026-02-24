@@ -1,4 +1,4 @@
-import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, isNil, Nullable, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
@@ -25,18 +25,6 @@ export const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
 } as const
 
-
-export const SetAiCreditsOverageLimitParamsSchema = Type.Object({
-    limit: Type.Number({ minimum: 10 }),
-})
-
-export type SetAiCreditsOverageLimitParams = Static<typeof SetAiCreditsOverageLimitParamsSchema>
-
-export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
-    state: Type.Enum(AiOverageState),
-})
-export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
-
 export const UpdateActiveFlowsAddonParamsSchema = Type.Object({
     newActiveFlowsLimit: Type.Number(),
 })
@@ -47,6 +35,24 @@ export const CreateCheckoutSessionParamsSchema = Type.Object({
 })
 export type CreateSubscriptionParams = Static<typeof CreateCheckoutSessionParamsSchema>
 
+export const CreateAICreditCheckoutSessionParamsSchema = Type.Object({
+    aiCredits: Type.Number(),
+})
+export type CreateAICreditCheckoutSessionParamsSchema = Static<typeof CreateAICreditCheckoutSessionParamsSchema>
+
+export const UpdateAICreditsAutoTopUpParamsSchema = Type.Union([
+    Type.Object({
+        state: Type.Literal(AiCreditsAutoTopUpState.ENABLED),
+        minThreshold: Type.Number(),
+        creditsToAdd: Type.Number(),
+        maxMonthlyLimit: Nullable(Type.Number()),
+    }),
+    Type.Object({
+        state: Type.Literal(AiCreditsAutoTopUpState.DISABLED),
+    }),
+])
+export type UpdateAICreditsAutoTopUpParamsSchema = Static<typeof UpdateAICreditsAutoTopUpParamsSchema>
+
 export enum PRICE_NAMES {
     AI_CREDITS = 'ai-credit',
     ACTIVE_FLOWS = 'active-flow',
@@ -54,7 +60,7 @@ export enum PRICE_NAMES {
 
 export const PRICE_ID_MAP = {
     [PRICE_NAMES.AI_CREDITS]: {
-        dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
+        dev: 'price_1SfgNxKTWXpWeD7hmDBG4YMZ',
         prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
     },
     [PRICE_NAMES.ACTIVE_FLOWS]: {
@@ -66,11 +72,9 @@ export const PRICE_ID_MAP = {
 export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'standard',
     includedAiCredits: 200,
-    aiCreditsOverageLimit: undefined,
-    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     activeFlowsLimit: 10,
     projectsLimit: 1,
-
+    aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     agentsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
@@ -79,13 +83,13 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     globalConnectionsEnabled: false,
     customRolesEnabled: false,
     environmentsEnabled: false,
-    analyticsEnabled: false,
+    analyticsEnabled: true,
     showPoweredBy: false,
     auditLogEnabled: false,
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
+    teamProjectsLimit: TeamProjectsLimit.ONE,
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
@@ -101,16 +105,14 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     todosEnabled: true,
     agentsEnabled: true,
     includedAiCredits: 0,
-    aiCreditsOverageLimit: undefined,
-    aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
     environmentsEnabled: false,
-    analyticsEnabled: false,
+    analyticsEnabled: true,
     showPoweredBy: false,
     auditLogEnabled: false,
     managePiecesEnabled: false,
     manageTemplatesEnabled: false,
     customAppearanceEnabled: false,
-    manageProjectsEnabled: false,
+    teamProjectsLimit: TeamProjectsLimit.NONE,
     projectRolesEnabled: false,
     customDomainsEnabled: false,
     apiKeysEnabled: false,
@@ -118,6 +120,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
+    aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
 }
 
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({

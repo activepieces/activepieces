@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -13,11 +13,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
 
-
-export enum DatabaseType {
-    POSTGRES = 'POSTGRES',
-    SQLITE3 = 'SQLITE3',
-}
 
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
@@ -37,8 +32,9 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
+    [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: 'false',
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
@@ -53,13 +49,11 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.STANDALONE,
-    [AppSystemProp.TEMPLATES_SOURCE_URL]:
-        'https://cloud.activepieces.com/api/v1/flow-templates',
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
-    [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
-    [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
+    [AppSystemProp.MAX_RECORDS_PER_TABLE]: '10000',
+    [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',

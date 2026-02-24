@@ -124,13 +124,13 @@ export const instabase = createPiece({
     createConversationAction,
     converseWithDocumentAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { apiRoot: string }).apiRoot,
+      baseUrl: (auth) => auth ? auth.props.apiRoot : '',
       auth: instabaseAuth,
       authMapping: async (auth) => {
         const headers: Record<string, string> = {
-          'Authorization': `Bearer ${(auth as { apiToken: string }).apiToken}`,
+          'Authorization': `Bearer ${auth.props.apiToken}`,
         };
-        const ibContext = (auth as { ibContext?: string }).ibContext;
+        const ibContext = auth.props.ibContext;
         if (ibContext) {
           headers['IB-Context'] = ibContext;
         }

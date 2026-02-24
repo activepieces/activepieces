@@ -32,7 +32,7 @@ export const videoGenerationFailed = createTrigger({
         method: HttpMethod.POST,
         url: 'https://api.jogg.ai/v1/webhook/endpoint',
         headers: {
-          'x-api-key': context.auth,
+          'x-api-key': context.auth.secret_text,
           'Content-Type': 'application/json',
         },
         body: {
@@ -89,7 +89,7 @@ export const videoGenerationFailed = createTrigger({
           method: HttpMethod.DELETE,
           url: `https://api.jogg.ai/v1/webhook/endpoint/${webhookInfo.endpoint_id}`,
           headers: {
-            'x-api-key': context.auth,
+            'x-api-key': context.auth.secret_text,
           },
         });
       }

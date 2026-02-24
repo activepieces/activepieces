@@ -22,7 +22,7 @@ export const stripeSearchCustomer = createAction({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/customers/search',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {

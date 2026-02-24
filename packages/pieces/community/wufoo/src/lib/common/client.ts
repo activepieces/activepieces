@@ -5,11 +5,10 @@ import {
   HttpMessageBody,
   QueryParams,
 } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { wufooAuth } from '../..';
 
-export type WufooAuthProps = {
-  apiKey: string;
-  subdomain: string;
-};
+export type WufooAuthProps = AppConnectionValueForAuthProperty<typeof wufooAuth>;
 
 export type WufooApiCallParams = {
   method: HttpMethod;
@@ -26,7 +25,7 @@ export async function wufooApiCall<T extends HttpMessageBody>({
   body,
   auth,
 }: WufooApiCallParams): Promise<T> {
-  const { apiKey, subdomain } = auth;
+  const { apiKey, subdomain } = auth.props;
 
   if (!apiKey || !subdomain) {
     throw new Error('Wufoo API key and subdomain are required for authentication');

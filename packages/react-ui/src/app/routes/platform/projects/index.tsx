@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Lock, Package, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -11,142 +11,37 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  CURSOR_QUERY_PARAM,
   DataTable,
-  LIMIT_QUERY_PARAM,
   RowDataWithActions,
   BulkAction,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { projectApi } from '@/lib/project-api';
+import { projectCollectionUtils } from '@/hooks/project-collection';
+import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import { isNil, ProjectWithLimits } from '@activepieces/shared';
+import {
+  ProjectType,
+  ProjectWithLimits,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 
+import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';
-
-const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
-  {
-    accessorKey: 'displayName',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} />
-    ),
-    cell: ({ row }) => {
-      const locked = row.original.plan.locked;
-
-      return (
-        <div className="text-left flex items-center justify-start ">
-          {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
-          {row.original.displayName}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'ai-tokens',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
-          {!isNil(row.original.plan.aiCredits)
-            ? formatUtils.formatNumber(row.original.plan.aiCredits)
-            : '-'}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'users',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Active Users')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {row.original.analytics.activeUsers} /{' '}
-          {row.original.analytics.totalUsers}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'flows',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Active Flows')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {row.original.analytics.activeFlows} /{' '}
-          {row.original.analytics.totalFlows}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'createdAt',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'externalId',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('External ID')} />
-    ),
-    cell: ({ row }) => {
-      const displayValue =
-        isNil(row.original.externalId) || row.original.externalId?.length === 0
-          ? '-'
-          : row.original.externalId;
-      return <div className="text-left">{displayValue}</div>;
-    },
-  },
-];
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
-  const isEnabled = platform.plan.manageProjectsEnabled;
-  const { data: currentProject } = projectHooks.useCurrentProject();
-
-  const [searchParams] = useSearchParams();
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['projects', searchParams.toString()],
-    staleTime: 0,
-    queryFn: () => {
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM);
-      const displayName = searchParams.get('displayName') ?? undefined;
-      return projectApi.list({
-        cursor: cursor ?? undefined,
-        limit: limit ? parseInt(limit) : undefined,
-        displayName,
-      });
-    },
-  });
+  const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
+  const { project: currentProject } =
+    projectCollectionUtils.useCurrentProject();
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { data: allProjects } = projectCollectionUtils.useAll();
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -154,25 +49,28 @@ export default function ProjectsPage() {
     useState<any>(null);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => projectApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {},
-  });
+  const columns = useMemo(
+    () => projectsTableColumns({ platform, currentUserId: currentUser?.id }),
+    [platform, currentUser?.id],
+  );
 
   const columnsWithCheckbox: ColumnDef<
     RowDataWithActions<ProjectWithLimits>
   >[] = [
     {
       id: 'select',
+      accessorKey: 'select',
+      size: 40,
+      minSize: 40,
+      maxSize: 40,
       header: ({ table }) => {
         const selectableRows = table
           .getRowModel()
-          .rows.filter((row) => row.original.id !== currentProject?.id);
+          .rows.filter(
+            (row) =>
+              row.original.id !== currentProject?.id &&
+              row.original.type !== ProjectType.PERSONAL,
+          );
         const allSelectableSelected =
           selectableRows.length > 0 &&
           selectableRows.every((row) => row.getIsSelected());
@@ -214,6 +112,8 @@ export default function ProjectsPage() {
       },
       cell: ({ row }) => {
         const isCurrentProject = row.original.id === currentProject?.id;
+        const isPersonalProject = row.original.type === ProjectType.PERSONAL;
+        const isDisabled = isCurrentProject || isPersonalProject;
         const isChecked = selectedRows.some(
           (selectedRow) => selectedRow.id === row.original.id,
         );
@@ -221,12 +121,12 @@ export default function ProjectsPage() {
         return (
           <Tooltip>
             <TooltipTrigger>
-              <div className={isCurrentProject ? 'cursor-not-allowed' : ''}>
+              <div className={isDisabled ? 'cursor-not-allowed' : ''}>
                 <Checkbox
                   checked={isChecked}
-                  disabled={isCurrentProject}
+                  disabled={isDisabled}
                   onCheckedChange={(value) => {
-                    if (isCurrentProject) return;
+                    if (isDisabled) return;
 
                     const isChecked = !!value;
                     let newSelectedRows = [...selectedRows];
@@ -248,17 +148,18 @@ export default function ProjectsPage() {
                 />
               </div>
             </TooltipTrigger>
-            {isCurrentProject && (
+            {isDisabled && (
               <TooltipContent side="right">
-                {t(
-                  'Cannot delete active project, switch to another project first',
-                )}
+                {isCurrentProject
+                  ? t(
+                      'Cannot delete active project, switch to another project first',
+                    )
+                  : t('Personal projects cannot be deleted')}
               </TooltipContent>
             )}
           </Tooltip>
         );
       },
-      accessorKey: 'select',
     },
     ...columns,
   ];
@@ -268,7 +169,9 @@ export default function ProjectsPage() {
       {
         render: (_, resetSelection) => {
           const canDeleteAny = selectedRows.some(
-            (row) => row.id !== currentProject?.id,
+            (row) =>
+              row.id !== currentProject?.id &&
+              row.type !== ProjectType.PERSONAL,
           );
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -280,17 +183,18 @@ export default function ProjectsPage() {
                 entityName={t('Projects')}
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
-                    (row) => row.id !== currentProject?.id,
+                    (row) =>
+                      row.id !== currentProject?.id &&
+                      row.type !== ProjectType.PERSONAL,
                   );
-                  await bulkDeleteMutation.mutateAsync(
+                  projectCollectionUtils.delete(
                     deletableProjects.map((row) => row.id),
                   );
                   resetSelection();
                   setSelectedRows([]);
                 }}
                 onError={(error) => {
-                  toast({
-                    title: t('Error'),
+                  toast.error(t('Error'), {
                     description: errorToastMessage(error),
                     duration: 3000,
                   });
@@ -313,7 +217,7 @@ export default function ProjectsPage() {
         },
       },
     ],
-    [selectedRows, currentProject, bulkDeleteMutation],
+    [selectedRows, currentProject],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {
@@ -345,7 +249,6 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
-                    aiCredits: row.plan?.aiCredits?.toString() ?? '',
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);
@@ -376,7 +279,7 @@ export default function ProjectsPage() {
           title={t('Projects')}
           description={t('Manage your automation projects')}
         >
-          <NewProjectDialog onCreate={() => refetch()}>
+          <NewProjectDialog>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
@@ -393,7 +296,7 @@ export default function ProjectsPage() {
           )}
           emptyStateIcon={<Package className="size-14" />}
           onRowClick={async (project) => {
-            await setCurrentProject(queryClient, project);
+            await projectCollectionUtils.setCurrentProject(project.id);
             navigate('/');
           }}
           filters={[
@@ -403,10 +306,24 @@ export default function ProjectsPage() {
               accessorKey: 'displayName',
               icon: CheckIcon,
             },
+            {
+              type: 'select',
+              title: t('Type'),
+              accessorKey: 'type',
+              options: Object.values(ProjectType).map((type) => {
+                return {
+                  label:
+                    formatUtils.convertEnumToHumanReadable(type) + ' Project',
+                  value: type,
+                };
+              }),
+              icon: CheckIcon,
+            },
           ]}
           columns={columnsWithCheckbox}
-          page={data}
-          isLoading={isLoading}
+          page={{ data: allProjects, next: null, previous: null }}
+          isLoading={false}
+          clientPagination={true}
           bulkActions={bulkActions}
           actions={actions}
         />
@@ -414,7 +331,6 @@ export default function ProjectsPage() {
           open={editDialogOpen}
           onClose={() => {
             setEditDialogOpen(false);
-            refetch();
           }}
           initialValues={editDialogInitialValues}
           projectId={editDialogProjectId}

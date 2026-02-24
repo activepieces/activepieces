@@ -68,13 +68,13 @@ export const copper = createPiece({
       auth: CopperAuth,
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
-        const authValue = auth as PiecePropValueSchema<typeof CopperAuth>;
+        
         return {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          'X-PW-AccessToken': authValue.apiKey,
+          'X-PW-AccessToken': auth.props.apiKey,
           'X-PW-Application': 'developer_api',
-          'X-PW-UserEmail': authValue.email,
+          'X-PW-UserEmail': auth.props.email,
         };
       },
     }),

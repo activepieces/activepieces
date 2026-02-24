@@ -21,7 +21,7 @@ export const stockMarketDataSearch = createAction({
       method: HttpMethod.POST,
       url: `${dappierCommon.baseUrl}/app/aimodel/am_01j749h8pbf7ns8r1bq9s2evrh`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
       body: {

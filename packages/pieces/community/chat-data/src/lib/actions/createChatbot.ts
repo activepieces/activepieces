@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ChatDataClient } from '../common/client';
-import { CreateChatbotDto } from '../common/types';
+import { chatDataAuth, CreateChatbotDto } from '../common/types';
 
 export const createChatbot = createAction({
+  auth: chatDataAuth,
   name: 'create_chatbot',
   displayName: 'Create Chatbot',
   description:
@@ -97,7 +98,7 @@ export const createChatbot = createAction({
     }),
   },
   async run(context) {
-    const client = new ChatDataClient(context.auth as string);
+    const client = new ChatDataClient(context.auth.secret_text);
 
     const payload = CreateChatbotDto.parse({
       chatbotName: context.propsValue.chatbotName,

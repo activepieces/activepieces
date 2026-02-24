@@ -64,6 +64,7 @@ export const createContact = createAction({
       },
     }),
     dynamicContactFields: Property.DynamicProperties({
+      auth: systemeIoAuth,
       displayName: 'Contact Fields',
       description: 'Set contact fields from your Systeme.io account',
       required: false,
@@ -75,7 +76,7 @@ export const createContact = createAction({
 
         try {
           const response = await systemeIoCommon.getContactFields({
-            auth: auth as unknown as string,
+            auth: auth.secret_text,
           });
 
           let fields: any[] = [];
@@ -121,6 +122,7 @@ export const createContact = createAction({
       },
     }),
     existingTags: Property.MultiSelectDropdown({
+      auth: systemeIoAuth,
       displayName: 'Existing Tags',
       description: 'Select existing tags to assign',
       required: false,
@@ -138,7 +140,7 @@ export const createContact = createAction({
 
         try {
           const response = await systemeIoCommon.getTags({
-            auth: auth as string,
+            auth: auth.secret_text,
           });
 
           let tags: any[] = [];
@@ -239,7 +241,7 @@ export const createContact = createAction({
       method: HttpMethod.POST,
       url: '/contacts',
       body: contactData,
-      auth: context.auth,
+      auth: context.auth.secret_text,
     });
 
     const tagResults = [];
@@ -253,7 +255,7 @@ export const createContact = createAction({
             body: {
               tagId: tagId,
             },
-            auth: context.auth,
+            auth: context.auth.secret_text,
           });
           
           tagResults.push({
@@ -281,7 +283,7 @@ export const createContact = createAction({
             body: {
               name: tagName.trim(),
             },
-            auth: context.auth,
+            auth: context.auth.secret_text,
           });
 
           if (tagResponse.id) {
@@ -291,7 +293,7 @@ export const createContact = createAction({
               body: {
                 tagId: tagResponse.id,
               },
-              auth: context.auth,
+              auth: context.auth.secret_text,
             });
 
             tagResults.push({

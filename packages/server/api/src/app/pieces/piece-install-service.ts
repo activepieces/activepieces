@@ -1,20 +1,16 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
-    ApEdition,
     EngineResponseStatus,
     ErrorCode,
     ExecuteExtractPieceMetadata,
-    ExecutionMode,
     FileCompression,
     FileId,
     FileType,
     isNil,
     PackageType,
     PiecePackage,
-    PieceScope,
     PieceType,
     PlatformId,
     ProjectId,
@@ -24,7 +20,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
 import { fileService } from '../file/file.service'
 import { pubsub } from '../helper/pubsub'
-import { system } from '../helper/system/system'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/local-piece-cache'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
@@ -35,7 +30,6 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
         projectId: string | undefined,
         params: AddPieceRequestBody,
     ): Promise<PieceMetadataModel> {
-        assertInstallProjectEnabled(params.scope)
         try {
             const piecePackage = await savePiecePackage(platformId, projectId, params, log)
             const pieceInformation = await extractPieceInformation({
@@ -78,24 +72,6 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const assertInstallProjectEnabled = (scope: PieceScope): void => {
-    if (scope === PieceScope.PROJECT) {
-        const sandboxMode = system.getOrThrow(AppSystemProp.EXECUTION_MODE)
-        const edition = system.getEdition()
-        if (
-            sandboxMode === ExecutionMode.UNSANDBOXED &&
-            [ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)
-        ) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message:
-                        'Project pieces are not supported in this edition with unsandboxed execution mode',
-                },
-            })
-        }
-    }
-}
 
 async function savePiecePackage(platformId: string | undefined, projectId: string | undefined, params: AddPieceRequestBody, log: FastifyBaseLogger): Promise<PiecePackage> {
 

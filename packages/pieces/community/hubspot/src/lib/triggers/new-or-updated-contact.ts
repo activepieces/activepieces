@@ -13,10 +13,8 @@ import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
 
-const polling: Polling<
-	PiecePropValueSchema<typeof hubspotAuth>,
-	{ additionalPropertiesToRetrieve?: string[] | string }
-> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ additionalPropertiesToRetrieve?: string[] | string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });

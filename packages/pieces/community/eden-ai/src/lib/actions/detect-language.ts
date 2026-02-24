@@ -3,6 +3,7 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
+import { edenAiAuth } from '../..';
 
 const LANGUAGE_DETECTION_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -36,11 +37,13 @@ function normalizeLanguageDetectionResponse(provider: string, response: any) {
 }
 
 export const detectLanguageAction = createAction({
+  auth: edenAiAuth,
   name: 'detect_language',
   displayName: 'Detect Language of Text',
   description: 'Detect the language used in a text using Eden AI. Supports multiple providers and models.',
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for language detection.',
       required: true,
@@ -58,6 +61,7 @@ export const detectLanguageAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -105,7 +109,7 @@ export const detectLanguageAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/translation/language_detection',
         body,

@@ -8,7 +8,7 @@ export const scrapeSingleUrl = createAction({
   name: 'scrapeSingleUrl',
   auth: apifyAuth,
   displayName: 'Scrape Single URL',
-  description: 'Scrape a single URL using the Apify Website Content Crawler Actor.',
+  description: 'Scrape a single URL using the Apify Website Content Crawler Actor and get its content as markdown and HTML.',
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -44,7 +44,7 @@ export const scrapeSingleUrl = createAction({
     }),
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const { crawlerType, url } = context.propsValue;
     const client = createApifyClient(apifyToken);
 
@@ -74,13 +74,12 @@ export const scrapeSingleUrl = createAction({
       // Fetch dataset items if available
       if (run.defaultDatasetId) {
         const result = await client.dataset(run.defaultDatasetId).listItems();
+        const firstResultItem = result.items[0];
 
         return {
-          url: url,
-          crawlerType: crawlerType,
-          runId: run.id,
-          status: run.status,
-          items: result.items
+          url: firstResultItem['url'] ?? url,
+          markdown: firstResultItem['markdown'] ?? '',
+          html: firstResultItem['html'] ?? '',
         };
       }
 

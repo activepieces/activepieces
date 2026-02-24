@@ -25,7 +25,7 @@ export const addAnnotationAction = createAction({
     }),
   },
   async run(context) {
-    return await addAnnotation(context.auth, {
+    return await addAnnotation(context.auth.props, {
       note: context.propsValue.note,
       date: context.propsValue.date,
       starred: context.propsValue.starred ? '1' : '0',

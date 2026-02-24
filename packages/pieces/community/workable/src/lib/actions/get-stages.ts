@@ -19,7 +19,7 @@ export const getStages = createAction({
     // Action logic here
     const shortcode = context.propsValue.shortcode;
 
-    const accessToken = context.auth;
+    const accessToken = context.auth.secret_text;
     const account = await getAccountSubdomain(accessToken);
 
     const response = await httpClient.sendRequest({

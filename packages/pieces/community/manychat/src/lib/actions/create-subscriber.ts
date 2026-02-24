@@ -73,7 +73,7 @@ export const createSubscriberAction = createAction({
 			url: `${BASE_URL}/subscriber/createSubscriber`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			body: {
 				first_name,

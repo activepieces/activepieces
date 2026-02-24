@@ -1,6 +1,7 @@
 import { inspect } from 'util'
 import {
     emitWithAck,
+    EngineGenericError,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -12,7 +13,6 @@ import {
     isNil,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
-import { EngineGenericError } from './helper/execution-errors'
 import { execute } from './operations'
 import { utils } from './utils'
 
@@ -42,7 +42,7 @@ export const workerSocket = {
             reconnection: true,
         })
 
-        // Redirect console.log/error to socket
+        // Redirect console.log/error/warn to socket
         const originalLog = console.log
         console.log = function (...args): void {
             const engineStdout: EngineStdout = {
@@ -50,6 +50,15 @@ export const workerSocket = {
             }
             socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
             originalLog.apply(console, args)
+        }
+
+        const originalWarn = console.warn
+        console.warn = function (...args): void {
+            const engineStdout: EngineStdout = {
+                message: args.join(' ') + '\n',
+            }
+            socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
+            originalWarn.apply(console, args)
         }
 
         const originalError = console.error
@@ -75,9 +84,9 @@ export const workerSocket = {
                 const engineError: EngineResponse = {
                     response: undefined,
                     status: EngineResponseStatus.INTERNAL_ERROR,
-                    error: utils.formatError(resultError),
+                    error: utils.formatExecutionError(resultError),
                 }
-                console.error('Error handling operation:', engineError)
+                console.error(utils.formatExecutionError(resultError))
                 await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, engineError)
             }
         })
@@ -107,4 +116,3 @@ export const workerSocket = {
         })
     },
 }
-

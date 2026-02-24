@@ -51,7 +51,7 @@ export const odometerTrigger = createTrigger({
 	},
 
 	async onEnable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { vehicleTokenIds, operator, odometerValue, coolDownPeriod, verificationToken } =
 			context.propsValue;
@@ -102,7 +102,7 @@ export const odometerTrigger = createTrigger({
 		}
 	},
 	async onDisable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const dimo = new DimoClient({
 			clientId,
 			apiKey,

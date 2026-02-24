@@ -9,6 +9,7 @@ export const getRecordingSummary = createAction({
   auth: fathomAuth,
   props: {
     recording_id: Property.Dropdown({
+      auth: fathomAuth,
       displayName: 'Meeting Recording',
       description: 'Select the meeting recording to get the summary for',
       required: true,
@@ -24,7 +25,7 @@ export const getRecordingSummary = createAction({
 
         try {
           const fathom = new Fathom({
-            security: { apiKeyAuth: auth as string },
+            security: { apiKeyAuth: auth.secret_text },
           });
 
           const meetingsIterator = await fathom.listMeetings();
@@ -63,7 +64,7 @@ export const getRecordingSummary = createAction({
   },
   async run({ auth, propsValue }) {
     const fathom = new Fathom({
-      security: { apiKeyAuth: auth },
+      security: { apiKeyAuth: auth.secret_text },
     });
 
     const request = {

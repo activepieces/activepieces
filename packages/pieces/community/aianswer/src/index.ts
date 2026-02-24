@@ -64,7 +64,7 @@ export const aianswer = createPiece({
       baseUrl: () => aiAnswerConfig.baseUrl,
       auth: aiAnswerAuth,
       authMapping: async (auth) => ({
-        [aiAnswerConfig.accessTokenHeaderKey]: `${auth}`,
+        [aiAnswerConfig.accessTokenHeaderKey]: `${auth.secret_text}`,
       }),
     }),
   ],

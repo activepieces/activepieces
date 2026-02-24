@@ -147,7 +147,7 @@ activepieces:
   # ============================================================================
   
   telemetryEnabled: true
-  templatesSourceUrl: "https://cloud.activepieces.com/api/v1/flow-templates"
+  templatesSourceUrl: "https://cloud.activepieces.com/api/v1/templates"
   flowWorkerConcurrency: ""
   scheduledWorkerConcurrency: ""
   triggerDefaultPollInterval: ""

@@ -1,4 +1,5 @@
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
@@ -19,7 +20,7 @@ import {
 
 const ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
-const polling: Polling<PiecePropValueSchema<typeof todoistAuth>, { project_id?: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof todoistAuth>, { project_id?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const lastUpdatedTime =

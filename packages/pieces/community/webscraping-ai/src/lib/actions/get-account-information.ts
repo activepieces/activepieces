@@ -8,6 +8,6 @@ export const getAccountInformation = createAction({
   description: 'Get account usage information including remaining API credits and concurrent requests.',
   props: {},
   async run({ auth: apiKey }) {
-    return await webscrapingAiCommon.getAccountInformation({ apiKey });
+    return await webscrapingAiCommon.getAccountInformation({ apiKey:apiKey.secret_text });
   },
 });

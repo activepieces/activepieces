@@ -1,5 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { folkClient } from './client';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const folkAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -8,7 +9,10 @@ export const folkAuth = PieceAuth.SecretText({
   required: true,
   validate: async ({ auth }) => {
     try {
-      await folkClient.testConnection(auth as string);
+      await folkClient.testConnection({
+        secret_text: auth,
+        type: AppConnectionType.SECRET_TEXT,
+      });
 
       return {
         valid: true,

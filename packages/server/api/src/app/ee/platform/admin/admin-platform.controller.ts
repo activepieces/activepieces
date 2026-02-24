@@ -1,6 +1,6 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { AdminRetryRunsRequestBody, ALL_PRINCIPAL_TYPES, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
@@ -19,7 +19,7 @@ async function checkCertainKeyPreHandler(
 ): Promise<void> {
 
     const key = req.headers[API_KEY_HEADER] as string | undefined
-    if (key === API_KEY || isNil(API_KEY)) {
+    if (key !== API_KEY || isNil(API_KEY)) {
         await res.status(StatusCodes.FORBIDDEN).send({ message: 'Forbidden' })
         throw new Error('Forbidden')
     }
@@ -53,6 +53,10 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         return res.status(StatusCodes.OK).send()
     })
 
+    app.post('/platforms/increase-ai-credits', IncreaseAICreditsForPlatformRequest, async (req, res) => {
+        await adminPlatformService(req.log).increaseAiCredits(req.body)
+        return res.status(StatusCodes.OK).send()
+    })
 
     app.post('/platforms/dedicated-workers', ConfigureDedicatedWorkersRequest, async (req, res) => {
         await dedicatedWorkers(req.log).updateWorkerConfig({
@@ -74,7 +78,7 @@ const ConfigureDedicatedWorkersRequest = {
         }),
     },
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
 }
 
@@ -84,7 +88,7 @@ const AdminRetryRunsRequest = {
         body: AdminRetryRunsRequestBody,
     },
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
 }
 
@@ -93,7 +97,16 @@ const ApplyLicenseKeyByEmailRequest = {
         body: ApplyLicenseKeyByEmailRequestBody,
     },
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
+    },
+}
+
+const IncreaseAICreditsForPlatformRequest = {
+    schema: {
+        body: IncreaseAICreditsForPlatformRequestBody,
+    },
+    config: {
+        security: securityAccess.public(),
     },
 }
 
@@ -137,6 +150,6 @@ const CreatePieceRequest = {
         }),
     },
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
 }

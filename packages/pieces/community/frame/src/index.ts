@@ -34,7 +34,7 @@ export const frame = createPiece({
       baseUrl: () => 'https://api.frame.io/v2',
       auth: frameAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

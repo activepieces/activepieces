@@ -17,7 +17,7 @@ export const createRecord = createAction({
   },
   async run(context) {
     const { appId, tableId, fields } = context.propsValue;
-    const client = new QuickbaseClient(context.auth.realmHostname, context.auth.userToken);
+    const client = new QuickbaseClient(context.auth.props.realmHostname, context.auth.props.userToken);
 
     const tableFields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
     

@@ -29,7 +29,7 @@ export const searchCustomerAddress = createAction({
       params.append('name:in', `${context.propsValue.name}`);
 
     return await bigCommerceApiService.fetchCustomerAddresses({
-      auth: context.auth,
+      auth: context.auth.props,
       queryString: params.toString(),
     });
   },

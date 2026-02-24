@@ -2,6 +2,7 @@ import { DialogTitle } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import { Mail } from 'lucide-react';
 
+import { UserBadges } from '@/components/custom/user-badges';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
+import { UserWithBadges } from '@activepieces/shared';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
@@ -28,7 +30,7 @@ export function AccountSettingsDialog({
   const { data: user } = userHooks.useCurrentUser();
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-full max-h-[90vh] h-fit pb-4 flex flex-col px-5">
+      <DialogContent className="max-w-2xl w-full max-h-[90vh] pb-4 flex flex-col px-5">
         <DialogHeader>
           <DialogTitle className="font-semibold">
             {t('Account Settings')}
@@ -54,6 +56,8 @@ export function AccountSettingsDialog({
                 </div>
               </div>
             </div>
+
+            <UserBadges user={user as UserWithBadges | null} />
 
             <Separator />
 

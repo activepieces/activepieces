@@ -19,8 +19,8 @@ export const deleteRecord = createAction({
 
 		try {
 			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.apiKey,
-				accountId: auth.accountId,
+				apiKey: auth.props.apiKey,
+				accountId: auth.props.accountId,
 				method: HttpMethod.DELETE,
 				resourceUri: `/applications/${tableId}/records/${recordId}/`,
 			});

@@ -149,7 +149,7 @@ export const findSubscriber = createAction({
     const endpoint = `/Contacts?${queryParams.join('&')}`;
 
     try {
-      const response = await makeRequest(auth, HttpMethod.GET, endpoint);
+      const response = await makeRequest(auth.secret_text, HttpMethod.GET, endpoint);
       
       if (!response) {
         return {

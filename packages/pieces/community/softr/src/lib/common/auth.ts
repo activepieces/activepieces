@@ -1,6 +1,7 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from './client';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const SoftrAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -9,7 +10,10 @@ export const SoftrAuth = PieceAuth.SecretText({
   validate: async ({ auth }) => {
     if (auth) {
       try {
-        await makeRequest(auth as string, HttpMethod.GET, '/databases');
+        await makeRequest({
+          secret_text: auth,
+          type: AppConnectionType.SECRET_TEXT,
+        }, HttpMethod.GET, '/databases');
         return {
           valid: true,
         };

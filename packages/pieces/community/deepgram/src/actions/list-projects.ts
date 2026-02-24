@@ -14,7 +14,7 @@ export const listProjectsAction = createAction({
       method: HttpMethod.GET,
       url: BASE_URL + '/projects',
       headers: {
-        Authorization: `Token ${context.auth}`,
+        Authorization: `Token ${context.auth.secret_text}`,
       },
     });
 

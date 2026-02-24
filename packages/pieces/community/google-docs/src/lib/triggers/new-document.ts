@@ -1,6 +1,7 @@
 import { googleDocsAuth } from '../../index';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
@@ -14,10 +15,10 @@ type Props = {
 	folderId?: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof googleDocsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const authValue = auth as PiecePropValueSchema<typeof googleDocsAuth>;
+		const authValue = auth;
 		const folderId = propsValue.folderId;
 
 		const q = ["mimeType='application/vnd.google-apps.document'", 'trashed = false'];

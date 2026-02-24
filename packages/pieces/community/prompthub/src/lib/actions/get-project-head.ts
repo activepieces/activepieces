@@ -2,15 +2,17 @@ import { propsValidation } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { PromptHubClient } from '../common/client';
 import { getProjectHeadProps, getProjectHeadSchema, sanitizeVariables } from '../common/props';
+import { prompthubAuth } from '../..';
 
 export const getProjectHead = createAction({
   name: 'get_project_head',
   displayName: 'Get Project Head',
   description: 'Get the production-ready version of a PromptHub project (typically the last commit on master/main branch). Useful for integrating prompts into your application.',
   props: getProjectHeadProps,
+  auth: prompthubAuth,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, getProjectHeadSchema);
-    const client = new PromptHubClient(auth as string);
+    const client = new PromptHubClient(auth.secret_text);
     const q: Record<string, any> = {};
     
     if (propsValue['branch']) {

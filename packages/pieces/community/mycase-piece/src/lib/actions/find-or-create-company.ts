@@ -69,7 +69,7 @@ export const findOrCreateCompany = createAction({
       required: false,
     }),
     cases: Property.MultiSelectDropdown({
-      displayName: 'Cases',
+  auth: mycaseAuth,      displayName: 'Cases',
       description: 'Cases to associate with the company (used only when creating)',
       required: false,
       refreshers: [],
@@ -105,7 +105,7 @@ export const findOrCreateCompany = createAction({
       },
     }),
     clients: Property.MultiSelectDropdown({
-      displayName: 'Clients',
+  auth: mycaseAuth,      displayName: 'Clients',
       description: 'Clients to associate with the company (used only when creating)',
       required: false,
       refreshers: [],

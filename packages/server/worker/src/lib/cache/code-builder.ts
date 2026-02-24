@@ -123,7 +123,7 @@ function isPackagesAllowed(): boolean {
         case ExecutionMode.SANDBOX_CODE_ONLY:
             return false
         case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
-            return true
+        case ExecutionMode.UNSANDBOXED:
         case ExecutionMode.SANDBOX_PROCESS:
             return true
         default:

@@ -14,7 +14,7 @@ const insertPieceMetadata = async (
   const body = JSON.stringify(pieceMetadata);
 
   const headers = {
-    [HttpHeader.API_KEY]: AP_CLOUD_API_KEY,
+    ['api-key']: AP_CLOUD_API_KEY,
     [HttpHeader.CONTENT_TYPE]: 'application/json'
   };
 

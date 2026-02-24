@@ -69,7 +69,10 @@ export function ApTableStateProvider({
     error: fieldsError,
   } = useQuery({
     queryKey: ['fields', tableId],
-    queryFn: () => fieldsApi.list(tableId!),
+    queryFn: () =>
+      fieldsApi.list({
+        tableId: tableId!,
+      }),
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,

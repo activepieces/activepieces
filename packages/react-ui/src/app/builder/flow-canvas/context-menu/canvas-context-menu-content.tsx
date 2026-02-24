@@ -33,7 +33,7 @@ import {
   getLastLocationAsPasteLocation,
   pasteNodes,
   toggleSkipSelectedNodes,
-} from '../bulk-actions';
+} from '../utils/bulk-actions';
 
 import {
   CanvasContextMenuProps,
@@ -49,7 +49,7 @@ const ShortcutWrapper = ({
   shortcut: ShortcutProps;
 }) => {
   return (
-    <div className="flex items-center justify-between gap-4 flex-grow">
+    <div className="flex items-center justify-between gap-4 grow">
       <div className="flex gap-2 items-center">{children}</div>
       <Shortcut {...shortcut} className="text-end" />
     </div>
@@ -110,6 +110,7 @@ export const CanvasContextMenuContent = ({
     selectedNodes.length === 1 &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
+
   const showCopy =
     !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
   const showDuplicate =

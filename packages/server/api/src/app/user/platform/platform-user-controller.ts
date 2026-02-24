@@ -1,7 +1,7 @@
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ApId,
     assertNotNullOrUndefined,
-    EndpointScope,
     ListUsersRequestBody,
     PrincipalType,
     SeekPage,
@@ -70,8 +70,7 @@ const ListUsersRequest = {
         [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -84,10 +83,12 @@ const UpdateUserRequest = {
         response: {
             [StatusCodes.OK]: UserWithMetaInformation,
         },
+        tags: ['users'],
+        description: 'Update user',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -98,7 +99,6 @@ const DeleteUserRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }

@@ -28,7 +28,6 @@ export const capsuleCrmCreateTrigger = ({
     props: {},
     type: TriggerStrategy.WEBHOOK,
     sampleData: sampleData,
-
     async onEnable(context) {
       const hook = await capsuleCrmClient.subscribeRestHook(context.auth, {
         targetUrl: context.webhookUrl,

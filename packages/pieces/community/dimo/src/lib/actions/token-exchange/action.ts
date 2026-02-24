@@ -16,7 +16,7 @@ const tokenExchangeApiAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId } = context.propsValue;
 
 		const dimo = new DimoClient({

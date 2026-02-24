@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fetchUserGroups, fetchContacts, fetchTags, WEALTHBOX_API_BASE, handleApiError, DOCUMENT_TYPES } from '../common';
+import { wealthboxAuth } from '../..';
 
 export const createNote = createAction({
   name: 'create_note',
+  auth: wealthboxAuth,
   displayName: 'Create Note',
   description: 'Adds a note linked to a contact. Log call summaries against client records.',
   props: {
@@ -14,6 +16,7 @@ export const createNote = createAction({
     }),
 
     contact_id: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Contact',
       description: 'Select the contact to link this note to',
       required: true,
@@ -22,7 +25,7 @@ export const createNote = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const contacts = await fetchContacts(auth as string, { active: true, order: 'recent' });
+          const contacts = await fetchContacts(auth.secret_text, { active: true, order: 'recent' });
           return {
             options: contacts.map((contact: any) => ({
               label: contact.name || `${contact.first_name} ${contact.last_name}`.trim() || `Contact ${contact.id}`,
@@ -39,6 +42,7 @@ export const createNote = createAction({
     }),
 
     visible_to: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Visible To',
       description: 'Select who can view this note',
       required: false,
@@ -47,7 +51,7 @@ export const createNote = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const userGroups = await fetchUserGroups(auth as string);
+          const userGroups = await fetchUserGroups(auth.secret_text);
           return {
             options: userGroups.map((group: any) => ({
               label: group.name,
@@ -64,6 +68,7 @@ export const createNote = createAction({
     }),
 
     tags: Property.DynamicProperties({
+      auth: wealthboxAuth,
       displayName: 'Tags',
       description: 'Select tags to associate with this note',
       required: false,
@@ -87,7 +92,7 @@ export const createNote = createAction({
         }
 
         try {
-          const tags = await fetchTags(auth as unknown as string, DOCUMENT_TYPES.CONTACT_NOTE);
+          const tags = await fetchTags(auth.secret_text, DOCUMENT_TYPES.CONTACT_NOTE);
           const tagOptions = tags.map((tag: any) => ({
             label: tag.name,
             value: tag.name
@@ -145,7 +150,7 @@ export const createNote = createAction({
     };
 
     try {
-      const contacts = await fetchContacts(auth as string, { active: true });
+      const contacts = await fetchContacts(auth.secret_text, { active: true });
       const selectedContact = contacts.find((contact: any) => contact.id === propsValue.contact_id);
       if (selectedContact) {
         linkedToResource.name = selectedContact.name || `${selectedContact.first_name} ${selectedContact.last_name}`.trim();
@@ -173,7 +178,7 @@ export const createNote = createAction({
         method: HttpMethod.POST,
         url: `${WEALTHBOX_API_BASE}/notes`,
         headers: {
-          'ACCESS_TOKEN': auth as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Content-Type': 'application/json'
         },
         body: requestBody

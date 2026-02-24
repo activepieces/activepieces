@@ -10,6 +10,7 @@ export const appendNote = createAction({
 	description: 'Append content to the end of an existing note.',
 	props: {
 		notebook_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook containing the page to append to.',
 			required: true,
@@ -26,6 +27,7 @@ export const appendNote = createAction({
 			},
 		}),
 		section_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Section',
 			description: 'The section containing the page to append to.',
 			required: true,
@@ -49,6 +51,7 @@ export const appendNote = createAction({
 			},
 		}),
 		page_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Page',
 			description: 'The page to append content to.',
 			required: true,

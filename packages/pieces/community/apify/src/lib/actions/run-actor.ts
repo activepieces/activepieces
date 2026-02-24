@@ -1,24 +1,24 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
-import { 
-  createApifyClient, 
-  createBuildProperty, 
-  createRunOptions, 
-  handleRunResult, 
-  createActorSourceProperty, 
-  createActorIdProperty, 
-  createActorInputProperty, 
-  createMemoryProperty, 
-  createTimeoutProperty, 
-  createWaitForFinishProperty, 
-  RunType 
+import {
+  createApifyClient,
+  createBuildProperty,
+  createRunOptions,
+  handleRun,
+  createActorSourceProperty,
+  createActorIdProperty,
+  createActorInputProperty,
+  createMemoryProperty,
+  createTimeoutProperty,
+  createWaitForFinishProperty,
+  RunType
 } from '../common';
 
 export const runActor = createAction({
   name: 'runActor',
   auth: apifyAuth,
   displayName: 'Run Actor',
-  description: 'Starts an Apify Actor run.',
+  description: 'Runs an Actor and returns all associated details.',
   props: {
     actorSource: createActorSourceProperty(),
     actorid: createActorIdProperty(),
@@ -29,15 +29,21 @@ export const runActor = createAction({
     waitForFinish: createWaitForFinishProperty(RunType.ACTOR)
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const { input, actorid, timeout, build, memory, waitForFinish } = context.propsValue;
     const body = input['body'];
 
     const client = createApifyClient(apifyToken);
 
     const runOptions = createRunOptions({ timeout, memory, build });
-    const run = await client.actor(actorid).call(body, runOptions);
+    const resourceClient = client.actor(actorid);
 
-    return handleRunResult(run, waitForFinish || false, client);
+    return handleRun({
+      resourceClient,
+      body,
+      runOptions,
+      waitForFinish: waitForFinish || false,
+      client
+    });
   },
 });

@@ -5,6 +5,7 @@ import {
   OAuth2Props,
   Property,
 } from '@activepieces/pieces-framework';
+import { intercomAuth } from '../../index';
 
 export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
   const client = new IntercomClient({
@@ -16,7 +17,8 @@ export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
 
 export const commonProps = {
   admins: <R extends boolean>(options: { displayName: string; required: R }) =>
-    Property.Dropdown<string, R>({
+    Property.Dropdown<string, R, typeof intercomAuth>({
+      auth: intercomAuth,
       displayName: options.displayName,
       required: options.required,
       options: async ({ auth }) => {
@@ -50,7 +52,8 @@ export const commonProps = {
     displayName: string;
     required: R;
   }) =>
-    Property.Dropdown<string, R>({
+    Property.Dropdown<string, R, typeof intercomAuth>({
+      auth: intercomAuth,
       displayName: options.displayName,
       required: options.required,
       options: async ({ auth }) => {
@@ -61,7 +64,7 @@ export const commonProps = {
             placeholder: 'Please connect your account first',
           };
         }
-        const client = intercomClient(auth as OAuth2PropertyValue);
+        const client = intercomClient(auth);
         const contactsResponse = await client.contacts.list({});
 
         return {

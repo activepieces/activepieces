@@ -256,7 +256,7 @@ export const SearchableSelect = <T,>({
                             option.label
                           )}
                           <Check
-                            className={cn('flex-shrink-0 w-4 h-4', {
+                            className={cn('shrink-0 w-4 h-4', {
                               hidden: selectedOption?.value !== option.value,
                             })}
                           />

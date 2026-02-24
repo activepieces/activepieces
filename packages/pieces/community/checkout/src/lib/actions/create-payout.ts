@@ -370,7 +370,7 @@ export const createPayoutAction = createAction({
       metadata,
     } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     // Build the request body
     const body: Record<string, any> = {
@@ -557,7 +557,7 @@ export const createPayoutAction = createAction({
         method: HttpMethod.POST,
         url: `${baseUrl}/payments`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

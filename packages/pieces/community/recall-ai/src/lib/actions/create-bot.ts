@@ -124,8 +124,8 @@ export const createBot = createAction({
     // }
 
     const response = await makeRequest(
-      context.auth.server as string,
-      context.auth.api_key as string,
+      context.auth.props.server,
+      context.auth.props.api_key,
       HttpMethod.POST,
       '/bot/',
       body

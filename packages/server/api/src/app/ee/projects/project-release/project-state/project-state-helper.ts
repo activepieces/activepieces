@@ -44,7 +44,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         })
 
         if (!isNil(updatedFlow.publishedVersionId)) {
-            await flowService(log).updateStatus({
+            await flowService(log).addUpdateStatusJob({
                 id: updatedFlow.id,
                 projectId,
                 newStatus: newFlow.status,

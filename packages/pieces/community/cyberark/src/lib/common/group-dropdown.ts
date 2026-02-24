@@ -1,8 +1,10 @@
 import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getAuthToken, CyberArkAuth } from './auth-helper';
+import { cyberarkAuth } from '../..';
 
 export const groupIdDropdown = Property.Dropdown({
+  auth: cyberarkAuth,
   displayName: 'Group',
   description: 'Select a group from the Vault',
   required: true,
@@ -17,7 +19,7 @@ export const groupIdDropdown = Property.Dropdown({
     }
 
     try {
-      const authData = await getAuthToken(auth as CyberArkAuth);
+      const authData = await getAuthToken(auth);
 
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,

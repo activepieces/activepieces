@@ -20,6 +20,7 @@ export const translateAudio = createAction({
 			description: 'The model to use for translation.',
 			refreshers: [],
 			defaultValue: 'whisper-large-v3',
+			auth: groqAuth,
 			options: async ({ auth }) => {
 				if (!auth) {
 					return {
@@ -34,7 +35,7 @@ export const translateAudio = createAction({
 						method: HttpMethod.GET,
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,
-							token: auth as string,
+							token: auth.secret_text
 						},
 					});
 					// Filter for whisper models only
@@ -92,7 +93,7 @@ export const translateAudio = createAction({
 
 		// Create form data
 		const formData = new FormData();
-		formData.append('file', new Blob([file.data]), file.filename);
+		formData.append('file', new Blob([file.data] as unknown as BlobPart[]), file.filename);
 		formData.append('model', model);
 
 		if (prompt) formData.append('prompt', prompt);
@@ -105,7 +106,7 @@ export const translateAudio = createAction({
 			url: 'https://api.groq.com/openai/v1/audio/translations',
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text
 			},
 			headers: {
 				'Content-Type': 'multipart/form-data',

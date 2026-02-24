@@ -2,7 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,8 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-import { toast } from './ui/use-toast';
 
 interface ConfirmationDeleteDialogProps {
   title: string;
@@ -28,6 +28,7 @@ interface ConfirmationDeleteDialogProps {
   onOpenChange?: (open: boolean) => void;
   showToast?: boolean;
   onError?: (error: Error) => void;
+  warning?: React.ReactNode | string;
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -42,6 +43,7 @@ export const ConfirmationDeleteDialog = ({
   open,
   onError,
   onOpenChange,
+  warning,
 }: ConfirmationDeleteDialogProps) => {
   const [isControlled] = useState(
     open !== undefined && onOpenChange !== undefined,
@@ -53,9 +55,7 @@ export const ConfirmationDeleteDialog = ({
     onSuccess: () => {
       handleClose();
       if (showToast) {
-        toast({
-          title: t('Removed {entityName}', { entityName }),
-        });
+        toast.success(t('Removed {entityName}', { entityName }));
       }
     },
     onError,
@@ -83,6 +83,12 @@ export const ConfirmationDeleteDialog = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="pt-2">{message}</DialogDescription>
         </DialogHeader>
+        {warning && (
+          <Alert variant="warning">
+            <TriangleAlert className="h-4 w-4" />
+            <AlertDescription>{warning}</AlertDescription>
+          </Alert>
+        )}
         <DialogFooter className="mt-4">
           <Button
             variant="outline"

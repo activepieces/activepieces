@@ -20,7 +20,7 @@ export const removeTagFromContactAction = createAction({
   },
   async run(context) {
     const { email, tagname } = context.propsValue;
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth.secret_text);
     return await client.removeTagFromContact(email, tagname);
   },
 });

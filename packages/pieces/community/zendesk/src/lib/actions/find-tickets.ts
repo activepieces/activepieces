@@ -5,6 +5,8 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { zendeskAuth } from '../..';
+import { isEmpty } from '@activepieces/shared';
+import dayjs from 'dayjs'
 
 type AuthProps = {
   email: string;
@@ -35,6 +37,47 @@ export const findTicketsAction = createAction({
           { label: 'Search by Subject/Content', value: 'content' },
           { label: 'Custom Query', value: 'custom' },
         ],
+      },
+    }),
+    timeFilter: Property.Array({
+      displayName: 'Date Time Filter',
+      required: false,
+      properties: {
+        field: Property.StaticDropdown({
+          displayName: 'Date Field',
+          description: 'Date field to apply filter on',
+          required: true,
+          options: {
+            disabled: false,
+            options: [
+              {
+                label: 'Created At',
+                value: 'created',
+              },
+              { label: 'Updated At', value: 'updated' },
+              { label: 'Solved At', value: 'solved' },
+              { label: 'Due Date', value: 'due_date' },
+            ],
+          },
+        }),
+        operator: Property.StaticDropdown({
+          displayName: 'Operator',
+          required: true,
+          options: {
+            disabled: false,
+            options: [
+              { label: 'Equals', value: ':' },
+              { label: 'Greater Than', value: '>' },
+              { label: 'Less Than', value: '<' },
+              { label: 'Greater Than Equals To', value: '>=' },
+              { label: 'Less Than Equals To', value: '<=' },
+            ],
+          },
+        }),
+        fieldValue: Property.DateTime({
+          displayName: 'Date Field Value',
+          required: true,
+        }),
       },
     }),
     ticket_id: Property.ShortText({
@@ -108,7 +151,8 @@ export const findTicketsAction = createAction({
     }),
     custom_query: Property.LongText({
       displayName: 'Custom Query',
-      description: 'Custom search query using Zendesk search syntax (e.g., "type:ticket status:open priority:high")',
+      description:
+        'Custom search query using Zendesk search syntax (e.g., "type:ticket status:open priority:high")',
       required: false,
     }),
     sort_by: Property.StaticDropdown({
@@ -141,7 +185,7 @@ export const findTicketsAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       search_type,
       ticket_id,
@@ -156,15 +200,18 @@ export const findTicketsAction = createAction({
       sort_by,
       sort_order,
     } = propsValue;
+    const dateTimeFilterProp =
+      (propsValue.timeFilter as Array<DateTimeFilterProp>) ?? [];
 
     let query = 'type:ticket';
-    
+
+    // https://support.zendesk.com/hc/en-us/articles/4408886879258-Zendesk-Support-search-reference
     switch (search_type) {
       case 'id':
         if (!ticket_id) {
           throw new Error('Ticket ID is required when searching by ID.');
         }
-        query += ` id:${ticket_id}`;
+        query += ` ${ticket_id}`;
         break;
       case 'status':
         if (!status) {
@@ -192,13 +239,17 @@ export const findTicketsAction = createAction({
         break;
       case 'requester':
         if (!requester_email) {
-          throw new Error('Requester email is required when searching by requester.');
+          throw new Error(
+            'Requester email is required when searching by requester.'
+          );
         }
         query += ` requester:${requester_email}`;
         break;
       case 'assignee':
         if (!assignee_email) {
-          throw new Error('Assignee email is required when searching by assignee.');
+          throw new Error(
+            'Assignee email is required when searching by assignee.'
+          );
         }
         query += ` assignee:${assignee_email}`;
         break;
@@ -218,25 +269,32 @@ export const findTicketsAction = createAction({
         throw new Error('Invalid search type selected.');
     }
 
+    if(!isEmpty(dateTimeFilterProp))
+    {
+      query+=  `  ${dateTimeFilterProp.map(c => `${c.field}${c.operator}${dayjs(c.fieldValue).format("YYYY-MM-DD")}`).join(" ")}`
+    }
+
     const searchParams = new URLSearchParams();
     searchParams.append('query', query);
-    
+
     if (sort_by && sort_by !== 'relevance') {
       searchParams.append('sort_by', sort_by);
     }
-    
+
     if (sort_order) {
       searchParams.append('sort_order', sort_order);
     }
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.subdomain}.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
+        url: `https://${
+          authentication.props.subdomain
+        }.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
       });
 
@@ -248,7 +306,9 @@ export const findTicketsAction = createAction({
         facets?: unknown;
       };
 
-      const tickets = responseBody.results.filter(result => result.result_type === 'ticket');
+      const tickets = responseBody.results.filter(
+        (result) => result.result_type === 'ticket'
+      );
 
       return {
         success: true,
@@ -272,19 +332,19 @@ export const findTicketsAction = createAction({
           'Invalid search query. Please check your search parameters and try again.'
         );
       }
-      
+
       if (errorMessage.includes('401') || errorMessage.includes('403')) {
         throw new Error(
           'Authentication failed or insufficient permissions. Please check your API credentials and permissions to search tickets.'
         );
       }
-      
+
       if (errorMessage.includes('422')) {
         throw new Error(
           'Search query validation error. Please check your search syntax and parameters.'
         );
       }
-      
+
       if (errorMessage.includes('429')) {
         throw new Error(
           'Rate limit exceeded. Please wait a moment before trying again.'
@@ -295,3 +355,9 @@ export const findTicketsAction = createAction({
     }
   },
 });
+
+type DateTimeFilterProp = {
+  field: string;
+  operator: string;
+  fieldValue: string;
+};

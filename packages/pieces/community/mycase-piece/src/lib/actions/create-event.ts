@@ -24,7 +24,7 @@ export const createEvent = createAction({
       required: true,
     }),
     staff: Property.MultiSelectDropdown({
-      displayName: 'Staff',
+  auth: mycaseAuth,      displayName: 'Staff',
       description: 'Staff members to associate with this event',
       required: true,
       refreshers: [],
@@ -63,7 +63,7 @@ export const createEvent = createAction({
       },
     }),
     required_staff: Property.MultiSelectDropdown({
-      displayName: 'Required Staff',
+  auth: mycaseAuth,      displayName: 'Required Staff',
       description: 'Staff members who are required to attend (all others are optional)',
       required: false,
       refreshers: ['staff'],
@@ -123,6 +123,7 @@ export const createEvent = createAction({
       defaultValue: false,
     }),
     location: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Location',
       description: 'The location associated with this event',
       required: false,
@@ -159,6 +160,7 @@ export const createEvent = createAction({
       },
     }),
     case: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case',
       description: 'The case associated with this event',
       required: false,

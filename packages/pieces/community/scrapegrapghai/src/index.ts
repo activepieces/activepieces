@@ -59,7 +59,7 @@ export const scrapegraphai = createPiece({
       baseUrl: () => 'https://api.scrapegraphai.com/v1',
       auth: scrapegraphaiAuth,
       authMapping: async (auth) => ({
-        'SGAI-APIKEY': `${auth}`,
+        'SGAI-APIKEY': `${auth.secret_text}`,
       }),
     }),
   ],

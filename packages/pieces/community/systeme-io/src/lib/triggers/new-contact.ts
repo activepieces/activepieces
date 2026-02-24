@@ -54,7 +54,7 @@ export const newContact = createTrigger({
         const response = await systemeIoCommon.createWebhook({
             eventType: 'CONTACT_CREATED',
             webhookUrl: context.webhookUrl,
-            auth: context.auth,
+            auth: context.auth.secret_text,
             secret: secret,
         });
         
@@ -66,7 +66,7 @@ export const newContact = createTrigger({
         if (webhookId) {
             await systemeIoCommon.deleteWebhook({
                 webhookId,
-                auth: context.auth,
+                auth: context.auth.secret_text,
             });
             await context.store.put('new_contact_webhook_id', null);
             await context.store.put('new_contact_webhook_secret', null);

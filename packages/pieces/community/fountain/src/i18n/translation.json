@@ -1,6 +1,10 @@
 {
   "Automate your complete HR hiring and onboarding workflow. Manage applicants, job openings, interview scheduling, and track progress through hiring stages with real-time webhooks.": "Automate your complete HR hiring and onboarding workflow. Manage applicants, job openings, interview scheduling, and track progress through hiring stages with real-time webhooks.",
+  "API Key": "API Key",
+  "Base URL": "Base URL",
   "Enter your Fountain API key from Profile > Manage API Keys or Settings > Integrations & API Keys": "Enter your Fountain API key from Profile > Manage API Keys or Settings > Integrations & API Keys",
+  "The base URL for your Fountain API (default: https://api.fountain.com). For example: us-2.fountain.com/api/v2": "The base URL for your Fountain API (default: https://api.fountain.com). For example: us-2.fountain.com/api/v2",
+  "Enter your Fountain API key and base URL": "Enter your Fountain API key and base URL",
   "Create Applicant": "Create Applicant",
   "Delete Applicant": "Delete Applicant",
   "Get Applicant Details": "Get Applicant Details",
@@ -48,7 +52,6 @@
   "Applicant's complete phone number": "Applicant's complete phone number",
   "Apply additional duplicate applicant blocking rules specified in company duplicate settings": "Apply additional duplicate applicant blocking rules specified in company duplicate settings",
   "The applicant to delete (shows 50 most recent applicants)": "The applicant to delete (shows 50 most recent applicants)",
-  "The applicant to retrieve details for (shows 50 most recent applicants)": "The applicant to retrieve details for (shows 50 most recent applicants)",
   "The applicant to get interview sessions for (shows 50 most recent applicants)": "The applicant to get interview sessions for (shows 50 most recent applicants)",
   "The opening to retrieve details for": "The opening to retrieve details for",
   "The opening that contains the stage": "The opening that contains the stage",

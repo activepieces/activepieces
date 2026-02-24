@@ -55,7 +55,7 @@ export const updatedSubscriberTrigger = createTrigger({
     try {
       const currentSubscribers = await sendpulseApiCall<any[]>({
         method: HttpMethod.GET,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: `/addressbooks/${mailingListId}/emails`,
       });
 

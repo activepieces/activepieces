@@ -1,3 +1,4 @@
+
 * {
     --rdg-row-selected-background-color: none !important;
     --rdg-row-selected-hover-background-color: none !important;
@@ -45,7 +46,7 @@ div[role="gridcell"]:focus-within {
 .grid-wrapper {
   /* Base scrollbar styles */
   ::-webkit-scrollbar {
-    @apply w-2.5 h-2.5;
+    @apply w-[10px] h-[10px];
   }
 
   /* Track */
@@ -65,7 +66,7 @@ div[role="gridcell"]:focus-within {
 
   /* Handle */
   ::-webkit-scrollbar-thumb {
-    @apply relative flex-1 rounded-full bg-border;
+    /* @apply relative flex-1 rounded-full bg-border; */
     @apply touch-none select-none transition-colors;
   }
 }

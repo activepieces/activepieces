@@ -12,12 +12,18 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
     return {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
             const { flowVersion, projectId, simulate } = params
+            log.info({
+                flowVersion,
+                projectId,
+                simulate,
+            }, '[triggerSourceService#enable] Enabling trigger source')
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
             await triggerSourceRepo().softDelete({
                 flowId: flowVersion.flowId,
                 projectId,
                 simulate,
             })
+            log.info('[triggerSourceService#enable] Soft deleted trigger source')
             const triggerSourceWithouSchedule: Omit<TriggerSource, 'created' | 'updated' | 'schedule'> = {
                 id: apId(),
                 type: pieceTrigger.type,
@@ -38,6 +44,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 pieceTrigger,
                 simulate,
             })
+            log.info('[triggerSourceService#enable] Enabled flow trigger side effect')
             return triggerSourceRepo().save({
                 ...triggerSource,
                 schedule: scheduleOptions,
@@ -101,6 +108,11 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
         },
         async disable(params: DisableTriggerParams): Promise<void> {
             const { projectId, flowId, simulate } = params
+            log.info({
+                flowId,
+                projectId,
+                simulate,
+            }, '[triggerSourceService#disable] Disabling trigger source')
             const triggerSource = await triggerSourceRepo().findOneBy({
                 flowId,
                 projectId,
@@ -121,11 +133,13 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                     simulate,
                     ignoreError: params.ignoreError,
                 })
+                log.info('[triggerSourceService#disable] Disabled flow trigger side effect')
             }
             await triggerSourceRepo().softDelete({
                 id: triggerSource.id,
                 projectId,
             })
+            log.info('[triggerSourceService#disable] Soft deleted trigger source')
         },
     }
 }

@@ -17,7 +17,7 @@ export const deleteNoteAction = createAction({
   },
   async run(context) {
     const { note_id } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const result = await makeRequest(
       apiKey,

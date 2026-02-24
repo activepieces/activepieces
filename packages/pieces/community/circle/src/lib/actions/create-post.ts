@@ -166,7 +166,7 @@ export const createPost = createAction({
             url: `${BASE_URL}/posts`,
             body: payload,
             headers: {
-                "Authorization": `Bearer ${context.auth}`,
+                "Authorization": `Bearer ${context.auth.secret_text}`,
                 "Content-Type": "application/json"
             }
         });

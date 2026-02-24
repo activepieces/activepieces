@@ -23,16 +23,21 @@ export const slackSendMessageAction = createAction({
     channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The text of your message',
-      required: true,
+      description: 'The text of your message. When using Block Kit blocks, this is used as a fallback for notifications.',
+      required: false,
     }),
+    sendAsBot:Property.Checkbox({
+      displayName:'Send as a bot?',
+      required:true,
+      defaultValue:true
+    }),
+    threadTs,
     username,
     profilePicture,
     file: Property.File({
       displayName: 'Attachment',
       required: false,
     }),
-    threadTs,
     replyBroadcast: Property.Checkbox({
       displayName: 'Broadcast reply to channel',
       description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
@@ -49,13 +54,23 @@ export const slackSendMessageAction = createAction({
     blocks,
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
+    const { text, channel,sendAsBot, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
     
-    const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
+    const token = sendAsBot ?context.auth.access_token :context.auth.data?.authed_user?.access_token ;
+    
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
 
-    if(blocks && Array.isArray(blocks)) { 
+    const blockList: (KnownBlock | Block)[] = [];
+
+
+    if (text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      blockList.push({ type: 'section', text: { type: 'mrkdwn', text } });
+    }
+
+    if(blocks && Array.isArray(blocks) && blocks.length > 0) { 
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
     }
 
@@ -70,13 +85,13 @@ export const slackSendMessageAction = createAction({
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       username,
       profilePicture,
       conversationId: channel,
       threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
-      blocks: blockList,
+      blocks: blockList.length > 0 ? blockList : undefined,
       replyBroadcast,
       unfurlLinks,
     });

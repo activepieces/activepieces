@@ -6,7 +6,7 @@ export class HttpError extends Error {
 
   constructor(private readonly requestBody: unknown, err: AxiosError) {
     const status = err?.response?.status || 500;
-    const responseBody = err?.response?.data;
+    const responseBody = Buffer.isBuffer(err?.response?.data) ? err?.response?.data.toString() : err?.response?.data;
 
     super(
       JSON.stringify({

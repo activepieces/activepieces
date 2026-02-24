@@ -53,7 +53,7 @@ export const getConversation = createAction({
       url: `${BASE_URL}/v1/conversation`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       body: {
         ChannelId: channelId,

@@ -1,5 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
-import { timelinesAiCommon } from '.';
+import { timelinesAiAuth, timelinesAiCommon } from '.';
 
 export const chatDropdown = ({
   description = 'Select the chat to send the message to',
@@ -9,6 +9,7 @@ export const chatDropdown = ({
   required?: boolean;
 }) =>
   Property.Dropdown({
+   auth: timelinesAiAuth,
     displayName: 'Chat',
     description: description,
     required,
@@ -23,7 +24,9 @@ export const chatDropdown = ({
         };
       }
       const response = await timelinesAiCommon.getChats({
-        apiKey: apiKey as string,
+        apiKey:   apiKey,
+
+
         name: searchValue,
       });
       const { chats } = response.data;
@@ -38,6 +41,7 @@ export const chatDropdown = ({
 
 export const whatsappAccountDropdown = ({ required = true }) =>
   Property.Dropdown({
+   auth: timelinesAiAuth,
     displayName: 'WhatsApp Account',
     description: 'Select the WhatsApp account',
     required,
@@ -51,7 +55,9 @@ export const whatsappAccountDropdown = ({ required = true }) =>
         };
       }
       const response = await timelinesAiCommon.listWhatsappAccounts({
-        apiKey: apiKey as string,
+        apiKey:   apiKey,
+
+
       });
       const accounts = response.data;
       return {
@@ -65,6 +71,7 @@ export const whatsappAccountDropdown = ({ required = true }) =>
 
 export const fileDropdown = ({ required = true }) =>
   Property.Dropdown({
+   auth: timelinesAiAuth,
     displayName: 'Uploaded File',
     description: 'Select the uploaded file',
     required,
@@ -78,7 +85,9 @@ export const fileDropdown = ({ required = true }) =>
         };
       }
       const response = await timelinesAiCommon.listUploadedFiles({
-        apiKey: apiKey as string,
+        apiKey:   apiKey,
+
+
       });
       const files = response.data;
       return {

@@ -10,6 +10,7 @@ type SendpulseVariable = {
 };
 
 const variableDropdown = Property.Dropdown({
+  auth: sendpulseAuth,
   displayName: 'Variable Name',
   description: 'Select variable to update',
   required: true,
@@ -88,7 +89,7 @@ export const changeVariableForSubscriberAction = createAction({
     let variableType: string | null = null;
     try {
       const variables = await sendpulseApiCall<SendpulseVariable[]>({
-        auth: context.auth,
+        auth: context.auth.props,
         method: HttpMethod.GET,
         resourceUri: `/addressbooks/${mailingListId}/variables`,
       });
@@ -127,7 +128,7 @@ export const changeVariableForSubscriberAction = createAction({
     try {
       const result = await sendpulseApiCall<{ result: boolean }>({
         method: HttpMethod.POST,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: `/addressbooks/${mailingListId}/emails/variable`,
         body,
       });

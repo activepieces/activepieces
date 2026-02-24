@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -18,7 +19,7 @@ const getToken = (auth: any): string => {
 };
 
 const newProjectPolling: Polling<
-  PiecePropValueSchema<typeof meistertaskAuth>,
+  AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

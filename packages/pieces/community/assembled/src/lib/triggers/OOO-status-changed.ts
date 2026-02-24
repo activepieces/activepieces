@@ -1,8 +1,10 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const timeOffStatusChanged = createTrigger({
+  auth: assembledAuth,
   name: 'OOO_status_changed',
   displayName: 'OOO Status Changed',
   description: 'Triggers on approval/rejection of OOO.',
@@ -25,17 +27,17 @@ export const timeOffStatusChanged = createTrigger({
       activity_type_id: '<uuid>'
     }
   },
-  async onEnable(context: any) {
+  async onEnable(context) {
     await context.store.put('lastStatusCheck', Math.floor(Date.now() / 1000));
   },
   async onDisable() {
     // No cleanup needed
   },
-  async run(context: any) {
+  async run(context) {
     const lastCheck = await context.store.get('lastStatusCheck') || Math.floor(Date.now() / 1000) - 86400; // 24 hours ago in Unix timestamp
     
     const response = await assembledCommon.makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       `/time_off/updates?updated_since=${lastCheck}&type=approve`
     );

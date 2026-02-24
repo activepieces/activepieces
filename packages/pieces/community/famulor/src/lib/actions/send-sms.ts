@@ -13,7 +13,7 @@ export const sendSms = createAction({
     await propsValidation.validateZod(propsValue, famulorCommon.sendSmsSchema);
 
     return await famulorCommon.sendSms({
-      auth: auth as string,
+      auth: auth.secret_text,
       from: propsValue.from as number,
       to: propsValue.to!,
       bodysuit: propsValue.bodysuit!,

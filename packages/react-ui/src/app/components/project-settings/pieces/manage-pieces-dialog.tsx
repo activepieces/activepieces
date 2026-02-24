@@ -1,6 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,13 +16,12 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { PiecesFilterType } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../../components/custom/multi-select-piece-property';
 import { piecesHooks } from '../../../../features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '../../../../lib/authentication-session';
-import { projectApi } from '../../../../lib/project-api';
 
 type ManagePiecesDialogProps = {
   onSuccess: () => void;
@@ -53,28 +51,8 @@ export const ManagePiecesDialog = React.memo(
       },
     });
 
-    const { toast } = useToast();
     const { pieces: allPieces, isLoading: isLoadingAllPieces } =
       piecesHooks.usePieces({ searchQuery: '', includeHidden: true });
-
-    const { mutate, isPending } = useMutation({
-      mutationFn: () => {
-        return projectApi.update(authenticationSession.getProjectId()!, {
-          plan: {
-            piecesFilterType: PiecesFilterType.ALLOWED,
-            pieces: form.getValues().pieces,
-          },
-        });
-      },
-      onSuccess: () => {
-        onSuccess();
-        toast({
-          title: t('Success'),
-          description: t('Pieces list updated'),
-        });
-        setOpen(false);
-      },
-    });
 
     return (
       <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
@@ -93,10 +71,7 @@ export const ManagePiecesDialog = React.memo(
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form
-              className="flex flex-col gap-4 mb-4"
-              onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
-            >
+            <form className="flex flex-col gap-4 mb-4">
               <FormField
                 name="pieces"
                 render={({ field }) => (
@@ -134,12 +109,24 @@ export const ManagePiecesDialog = React.memo(
               {t('Cancel')}
             </Button>
             <Button
-              disabled={isPending}
-              loading={isPending}
+              disabled={false}
+              loading={false}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                form.handleSubmit(() => mutate())(e);
+                onSuccess();
+                setOpen(false);
+                form.handleSubmit(() => {
+                  projectCollectionUtils.update(
+                    authenticationSession.getProjectId()!,
+                    {
+                      plan: {
+                        piecesFilterType: PiecesFilterType.ALLOWED,
+                        pieces: form.getValues().pieces,
+                      },
+                    },
+                  );
+                })(e);
               }}
             >
               {t('Save')}

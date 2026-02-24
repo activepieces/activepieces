@@ -5,6 +5,7 @@ import { objectTypeDropdown } from '../common/props';
 import { FireberryClient } from '../common/client';
 
 const recordsToDeleteDropdown = Property.MultiSelectDropdown({
+  auth: fireberryAuth,
   displayName: 'Records to Delete',
   required: true,
   refreshers: ['objectType'],
@@ -18,9 +19,8 @@ const recordsToDeleteDropdown = Property.MultiSelectDropdown({
     }
 
     try {
-      const authStr = typeof auth === 'string' ? auth : (auth as { value: string })?.value;
       const objectTypeStr = typeof objectType === 'string' ? objectType : (objectType as { value: string })?.value;
-      const client = new FireberryClient(authStr);
+      const client = new FireberryClient(auth);
       
       const response = await client.request<{ 
         success: boolean; 
@@ -88,7 +88,7 @@ export const deleteRecordAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new FireberryClient(auth as string);
+    const client = new FireberryClient(auth);
     const { objectType, recordIds, confirmDeletion } = propsValue;
     
     if (!confirmDeletion) {
@@ -103,7 +103,7 @@ export const deleteRecordAction = createAction({
       throw new Error('Maximum 20 records can be deleted at once');
     }
     
-    const result = await client.batchDelete(objectType, recordIds);
+    const result = await client.batchDelete(objectType as string, recordIds);
     
     return {
       success: true,

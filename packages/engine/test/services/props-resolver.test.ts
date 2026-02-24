@@ -1,4 +1,4 @@
-import { ApFile, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
 import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
@@ -9,6 +9,7 @@ const propsResolverService = createPropsResolver({
     projectId: 'PROJECT_ID',
     engineToken: 'WORKER_TOKEN',
     apiUrl: 'http://127.0.0.1:3000',
+    contextVersion: LATEST_CONTEXT_VERSION,
 })
 
 const executionState = FlowExecutorContext.empty()
@@ -563,6 +564,7 @@ describe('Props resolver', () => {
         }
         const props = {
             dynamicProp: Property.DynamicProperties({
+                auth: undefined,
                 displayName: 'Dynamic Property',
                 required: true,
                 props: async () => {

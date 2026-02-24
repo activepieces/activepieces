@@ -20,7 +20,7 @@ export const getServiceAccountAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/org/service-accounts/${propsValue.token}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

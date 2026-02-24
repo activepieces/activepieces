@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -14,13 +15,13 @@ import { shippoAuth } from '../auth';
 import { ShippoClient } from '../client';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof shippoAuth>,
+  AppConnectionValueForAuthProperty<typeof shippoAuth>,
   { test_mode?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const client = new ShippoClient({
-      apiToken: auth,
+      apiToken: auth.secret_text,
     });
 
     const result = await client.listShippingLabels({

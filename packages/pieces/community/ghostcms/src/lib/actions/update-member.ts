@@ -50,10 +50,10 @@ export const updateMember = createAction({
       data.newsletters = context.propsValue.newsletters;
 
     const response = await httpClient.sendRequest({
-      url: `${context.auth.baseUrl}/ghost/api/admin/members/${context.propsValue.member}`,
+      url: `${context.auth.props.baseUrl}/ghost/api/admin/members/${context.propsValue.member}`,
       method: HttpMethod.PUT,
       headers: {
-        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.apiKey)}`,
+        Authorization: `Ghost ${common.jwtFromApiKey(context.auth.props.apiKey)}`,
       },
       body: {
         members: [data],

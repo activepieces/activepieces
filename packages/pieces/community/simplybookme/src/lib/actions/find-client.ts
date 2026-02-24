@@ -19,7 +19,7 @@ export const findClient = createAction({
     })
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const { searchString, limit } = context.propsValue;
 
     const params = [

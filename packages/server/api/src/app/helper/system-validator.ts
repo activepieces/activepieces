@@ -1,10 +1,12 @@
-import { AppSystemProp, ContainerType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { inspect } from 'util'
+import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { packageManager, registryPieceManager } from 'server-worker'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
-import { DatabaseType, system } from './system/system'
+import { system } from './system/system'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -71,6 +73,7 @@ const systemPropValidators: {
     [WorkerSystemProp.PRE_WARM_CACHE]: booleanValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
+    [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
@@ -126,20 +129,20 @@ const systemPropValidators: {
     [AppSystemProp.SMTP_SENDER_NAME]: stringValidator,
     [AppSystemProp.SMTP_USERNAME]: stringValidator,
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
-    [AppSystemProp.TEMPLATES_SOURCE_URL]: stringValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
     [AppSystemProp.FIREBASE_ADMIN_CREDENTIALS]: stringValidator,
     [AppSystemProp.FIREBASE_HASH_PARAMETERS]: stringValidator,
     [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
-    [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.PM2_ENABLED]: booleanValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
+    [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
 
     // AppSystemProp
     [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
@@ -196,12 +199,14 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION
+    
     if (environment !== ApEnvironment.TESTING && fileStorageLocation === FileLocation.S3) {
         try {
             await s3Helper(log).validateS3Configuration()
         }
         catch (error: unknown) {
             throw new Error(JSON.stringify({
+                error: inspect(error),
                 message: 'S3 validation failed. Check your configuration and credentials.',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview#configure-s3-optional',
             }))
@@ -259,4 +264,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
             }))
         }
     }
+
+    await packageManager(log).validate()
+    await registryPieceManager(log).validate()
 }

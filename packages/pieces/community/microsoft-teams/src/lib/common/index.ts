@@ -6,6 +6,7 @@ import { microsoftTeamsAuth } from '../../';
 
 export const microsoftTeamsCommon = {
 	teamId: Property.Dropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Team ID',
 		refreshers: [],
 		required: true,
@@ -46,6 +47,7 @@ export const microsoftTeamsCommon = {
 		},
 	}),
 	channelId: Property.Dropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Channel ID',
 		refreshers: ['teamId'],
 		required: true,
@@ -86,6 +88,7 @@ export const microsoftTeamsCommon = {
 		},
 	}),
 	memberId:(isRequired=false) =>Property.Dropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Member',
 		refreshers: ['teamId'],
 		required: isRequired,
@@ -124,6 +127,7 @@ export const microsoftTeamsCommon = {
 		},
 	}),
 	memberIds:(isRequired=false) =>Property.MultiSelectDropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Member',
 		refreshers: ['teamId'],
 		required: isRequired,
@@ -162,6 +166,7 @@ export const microsoftTeamsCommon = {
 		},
 	}),
 	chatId: Property.Dropdown({
+		auth: microsoftTeamsAuth,
 		displayName: 'Chat ID',
 		refreshers: [],
 		required: true,
@@ -194,7 +199,7 @@ export const microsoftTeamsCommon = {
 							.map((member: ConversationMember) => member.displayName)
 							.join(',');
 					options.push({
-						label: `(${CHAT_TYPE[chat.chatType!]} Chat) ${chatName || '(no title)'}`,
+						label: `(${CHAT_TYPE[chat.chatType! as keyof typeof CHAT_TYPE]} Chat) ${chatName || '(no title)'}`,
 						value: chat.id!,
 					});
 				}

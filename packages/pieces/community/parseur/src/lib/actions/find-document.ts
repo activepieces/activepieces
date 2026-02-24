@@ -21,7 +21,7 @@ export const findDocument = createAction({
       throw new Error('Parser ID is required');
     }
     return await parseurCommon.listDocuments({
-      apiKey,
+      apiKey:apiKey.secret_text,
       parserId,
       search,
     });

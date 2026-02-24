@@ -4,9 +4,9 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
-import { areSheetIdsValid } from '../common/common';
+import { areSheetIdsValid, getAccessToken } from '../common/common';
 
 export const exportSheetAction = createAction({
   name: 'export_sheet',
@@ -53,7 +53,7 @@ export const exportSheetAction = createAction({
         url: exportUrl,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.access_token,
+          token: await getAccessToken(auth),
         },
         responseType: 'arraybuffer',
       });

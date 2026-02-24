@@ -12,7 +12,7 @@ export const mistralAuth = PieceAuth.SecretText({
 				url: 'https://api.mistral.ai/v1/models',
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth as string,
+					token: auth
 				},
 			});
 			return { valid: true };

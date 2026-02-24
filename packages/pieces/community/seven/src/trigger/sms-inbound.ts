@@ -51,7 +51,7 @@ export const smsInbound = createTrigger({
         target_url: context.webhookUrl
       },
       method: HttpMethod.POST
-    }, 'hooks', context.auth as string);
+    }, 'hooks', context.auth.secret_text);
 
     if (!body.success) return;
 
@@ -69,7 +69,7 @@ export const smsInbound = createTrigger({
         id: info.webhookId
       },
       method: HttpMethod.POST
-    }, 'hooks', context.auth as string);
+    }, 'hooks', context.auth.secret_text);
 
     if (!body.success) return;
 

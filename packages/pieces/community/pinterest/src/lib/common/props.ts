@@ -5,8 +5,10 @@ import {
 } from '@activepieces/pieces-framework';
 import { makeRequest } from '.';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { pinterestAuth } from './auth';
 
 export const boardIdDropdown = Property.Dropdown({
+  auth: pinterestAuth,
   displayName: 'Board Id',
   required: true,
   refreshers: ['ad_account_id'],
@@ -54,6 +56,7 @@ export const boardIdDropdown = Property.Dropdown({
 });
 
 export const pinIdDropdown = Property.Dropdown({
+  auth: pinterestAuth,
   displayName: 'pin Id',
   required: true,
   refreshers: ['auth'],
@@ -90,6 +93,7 @@ export const pinIdDropdown = Property.Dropdown({
 });
 
 export const adAccountIdDropdown = Property.Dropdown({
+  auth: pinterestAuth,
   displayName: 'Ad account Id',
   required: false,
   refreshers: ['auth'],
@@ -132,6 +136,7 @@ export const adAccountIdDropdown = Property.Dropdown({
 });
 
 export const boardSectionIdDropdown = Property.Dropdown({
+  auth: pinterestAuth,
   displayName: 'Board Section Id',
   required: false,
   refreshers: ['auth', 'board_id'],
@@ -182,6 +187,7 @@ export const boardSectionIdDropdown = Property.Dropdown({
 });
 
 export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
+  auth: pinterestAuth,
   displayName: 'Product Tags',
   description: 'Select one or more options',
   required: false,

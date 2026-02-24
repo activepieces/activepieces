@@ -20,6 +20,7 @@ export const sendMessageAction = createAction({
 			defaultValue: 'email',
 		}),
 		email_required_fields: Property.DynamicProperties({
+			auth: intercomAuth,
 			displayName: 'Email Required Fields',
 			required: true,
 			refreshers: ['message_type'],

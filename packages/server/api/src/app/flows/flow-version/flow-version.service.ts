@@ -59,7 +59,6 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             )
             if (stepTypeIsPiece) {
                 const pieceMetadata = await pieceMetadataService(log).getOrThrow({
-                    projectId,
                     platformId,
                     name: step.settings.pieceName,
                     version: step.settings.pieceVersion,
@@ -152,11 +151,6 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 log,
             )
         }
-
-        await flowVersionSideEffects(log).postApplyOperation({
-            flowVersion: mutatedFlowVersion,
-            operation: userOperation,
-        })
 
         mutatedFlowVersion.updated = dayjs().toISOString()
         if (userId) {
@@ -362,12 +356,8 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    const preparedOperation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
+    const preparedOperation = await flowVersionValidationUtil(log).prepareRequest({ platformId, request: operation })
     const updatedFlowVersion = flowOperations.apply(flowVersion, preparedOperation)
-    await flowVersionSideEffects(log).postApplyOperation({
-        flowVersion: updatedFlowVersion,
-        operation: preparedOperation,
-    })
     return updatedFlowVersion
 }
 

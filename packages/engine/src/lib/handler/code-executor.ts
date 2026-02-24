@@ -1,10 +1,10 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { CodeAction, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
+import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
-import { EngineGenericError } from '../helper/execution-errors'
 import { progressService } from '../services/progress.service'
 import { utils } from '../utils'
 import { ActionHandler, BaseExecutor } from './base-executor'
@@ -24,8 +24,8 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const stepStartTime = performance.now()
-    const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<Record<string, unknown>>({
+    const stepStartTime = performance.now() 
+    const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
     })
@@ -55,7 +55,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             inputs: resolvedInput,
         })
     
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime))
+        return executionState.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(performance.now() - stepStartTime)).incrementStepsExecuted()
     }))
 
     if (executionStateError) {

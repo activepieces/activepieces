@@ -30,6 +30,7 @@ export const rescheduleAppointment = createAction({
     }),
     booking_id: bookingIdDropdown,
     service_id: Property.Dropdown({
+      auth: zohoBookingsAuth,
       displayName: 'Service (Optional)',
       description: 'Select service to filter staff options',
       required: false,
@@ -66,6 +67,7 @@ export const rescheduleAppointment = createAction({
       },
     }),
     staff_id: Property.Dropdown({
+      auth: zohoBookingsAuth,
       displayName: 'Staff',
       description:
         'Select the staff to reschedule to (use this OR group_id OR start_time)',
@@ -118,7 +120,7 @@ export const rescheduleAppointment = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
 
     // Validate props using Zod schema
     await propsValidation.validateZod(

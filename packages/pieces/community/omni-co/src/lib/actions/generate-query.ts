@@ -76,7 +76,7 @@ export const generateQuery = createAction({
     }
 
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/ai/generate-query',
       body

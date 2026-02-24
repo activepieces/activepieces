@@ -31,7 +31,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    await databaseConnection().getRepository('piece_metadata').delete({})
+    await databaseConnection().getRepository('piece_metadata').createQueryBuilder().delete().execute()
 })
 
 afterAll(async () => {
@@ -111,7 +111,7 @@ describe('Piece Metadata API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -120,7 +120,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/@activepieces/a',
+                url: `/v1/pieces/@activepieces/a?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -245,7 +245,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -255,7 +255,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -474,7 +474,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -484,7 +484,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -537,7 +537,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -547,7 +547,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -600,7 +600,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -610,7 +610,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

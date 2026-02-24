@@ -12,7 +12,7 @@ export const customGraphql = createAction({
     variables: Property.Object({ displayName: 'Parameters', required: false }),
   },
   async run({ auth, propsValue }) {
-    const client = assembledCommon.makeClient(auth as string);
+    const client = assembledCommon.makeClient(auth.secret_text);
     const result = await client.rawRequest(
       propsValue.query,
       propsValue.variables

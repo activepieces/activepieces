@@ -30,7 +30,7 @@ describe('Platform API', () => {
     describe('update platform endpoint', () => {
         it('patches a platform by id', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
                 },
@@ -40,25 +40,14 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             const requestBody: UpdatePlatformRequestBody = {
                 name: 'updated name',
                 primaryColor: 'updated primary color',
-                logoIconUrl: 'updated logo icon url',
-                fullLogoUrl: 'updated full logo url',
-                favIconUrl: 'updated fav icon url',
                 filteredPieceNames: ['updated filtered piece names'],
                 filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
-                smtp: {
-                    host: 'updated smtp host',
-                    port: 123,
-                    user: 'updated smtp user',
-                    password: 'updated smtp password',
-                    senderName: 'updated smtp sender name',
-                    senderEmail: 'updated smtp sender email',
-                },
                 enforceAllowedAuthDomains: true,
                 allowedAuthDomains: ['yahoo.com'],
                 cloudAuthEnabled: false,
@@ -91,9 +80,6 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(requestBody.emailAuthEnabled)
             expect(responseBody.name).toBe('updated name')
             expect(responseBody.primaryColor).toBe('updated primary color')
-            expect(responseBody.logoIconUrl).toBe('updated logo icon url')
-            expect(responseBody.fullLogoUrl).toBe('updated full logo url')
-            expect(responseBody.favIconUrl).toBe('updated fav icon url')
             expect(responseBody.filteredPieceNames).toStrictEqual([
                 'updated filtered piece names',
             ])
@@ -101,11 +87,55 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
             expect(responseBody.cloudAuthEnabled).toBe(false)
-        })
+        }),
+
+        it('updates the platform logo icons', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                
+                platform: { id: mockPlatform.id },
+            })
+            const formData = new FormData()
+            formData.append('logoIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('fullLogo', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('favIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('name', 'updated name')
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: formData,
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.id).toBe(mockPlatform.id)
+            expect(responseBody.created).toBeDefined()
+            expect(responseBody.updated).toBeDefined()
+            expect(responseBody.name).toBe('updated name')
+
+            const baseUrl = 'http://localhost:4200/api/v1/platforms/assets'
+            expect(responseBody.logoIconUrl.startsWith(baseUrl)).toBeTruthy()
+            expect(responseBody.fullLogoUrl.startsWith(baseUrl)).toBeTruthy()
+            expect(responseBody.favIconUrl.startsWith(baseUrl)).toBeTruthy()
+        }),
 
         it('fails if user is not owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -117,7 +147,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -142,16 +172,8 @@ describe('Platform API', () => {
     describe('get platform endpoint', () => {
         it('Always Returns non-sensitive information for platform', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 platform: {
-                    smtp: {
-                        host: faker.internet.password(),
-                        port: 123,
-                        user: faker.internet.password(),
-                        password: faker.internet.password(),
-                        senderEmail: faker.internet.password(),
-                        senderName: faker.internet.password(),
-                    },
                     federatedAuthProviders: {
                         google: {
                             clientId: faker.internet.password(),
@@ -168,7 +190,7 @@ describe('Platform API', () => {
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -188,11 +210,10 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(20)
+            expect(Object.keys(responseBody).length).toBe(19)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
-            expect(responseBody.smtp).toStrictEqual({})
             expect(responseBody.federatedAuthProviders.google).toStrictEqual({
                 clientId: mockPlatform.federatedAuthProviders?.google?.clientId,
             })
@@ -205,13 +226,12 @@ describe('Platform API', () => {
 
 
         it('Fails if user is not a platform member', async () => {
-            const { mockOwner: mockOwner1, mockPlatform: mockPlatform1, mockProject: mockProject1 } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockOwner1, mockPlatform: mockPlatform1 } = await mockAndSaveBasicSetup()
             const { mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup()
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner1.id,
-                projectId: mockProject1.id,
                 platform: {
                     id: mockPlatform1.id,
                 },
@@ -252,7 +272,6 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: firstAccount.mockOwner.id,
-                projectId: firstAccount.mockProject.id,
                 platform: { id: firstAccount.mockPlatform.id },
             })
             // act
@@ -273,7 +292,7 @@ describe('Platform API', () => {
         }),
         it('fails if platform is not eligible for deletion', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
                     plan: PlanName.ENTERPRISE,
                 },
@@ -281,7 +300,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             // act
@@ -298,7 +317,7 @@ describe('Platform API', () => {
         }),
         it('fails if user is not owner', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
                     plan: PlanName.STANDARD,
                 },
@@ -313,7 +332,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -350,7 +369,6 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: firstAccount.mockOwner.id,
-                projectId: firstAccount.mockProject.id,
                 platform: { id: firstAccount.mockPlatform.id },
             })
             // act
@@ -370,11 +388,11 @@ describe('Platform API', () => {
     describe('get platform endpoint', () => {
         it('fails if user is not part of the platform', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             // act
@@ -391,7 +409,7 @@ describe('Platform API', () => {
     }),
     it('succeeds if user is part of the platform and is not admin', async () => {
         // arrange
-        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        const { mockPlatform } = await mockAndSaveBasicSetup()
         const { mockUser } = await mockBasicUser({
             user: {
                 platformId: mockPlatform.id,
@@ -402,7 +420,7 @@ describe('Platform API', () => {
         const testToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockUser.id,
-            projectId: mockProject.id,
+            
             platform: { id: mockPlatform.id },
         })
         // act

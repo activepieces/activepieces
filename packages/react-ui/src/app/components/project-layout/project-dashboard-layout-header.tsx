@@ -11,7 +11,6 @@ import {
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
@@ -34,7 +33,7 @@ import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 import { ProjectDashboardLayoutHeaderTab } from '.';
 
 export const ProjectDashboardLayoutHeader = () => {
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const { embedState } = useEmbedding();
@@ -74,13 +73,6 @@ export const ProjectDashboardLayoutHeader = () => {
       show: true,
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/mcps'),
-      label: t('MCP'),
-      show: platform.plan.mcpsEnabled,
-      hasPermission: checkAccess(Permission.READ_MCP),
-      icon: McpSvg,
-    },
-    {
       to: authenticationSession.appendProjectRoutePrefix('/todos'),
       label: t('Todos'),
       show: platform.plan.todosEnabled,
@@ -109,13 +101,13 @@ export const ProjectDashboardLayoutHeader = () => {
       );
       return matchedItem || null;
     });
-
+  const shownItemsUnderMoreDropdown = moreItems.filter(
+    (item) => item.to !== pinnedItem?.to && item.show && item.hasPermission,
+  );
   return (
-    <div className="flex flex-col px-4 gap-1">
-      {!isEmbedded && (
-        <ProjectDashboardPageHeader title={project?.displayName} />
-      )}
-      <Tabs>
+    <div className="flex flex-col gap-1">
+      {!isEmbedded && <ProjectDashboardPageHeader />}
+      <Tabs className="px-4">
         {!embedState.hideSideNav && (
           <TabsList variant="outline">
             {flowsLink.show && flowsLink.hasPermission && (
@@ -191,12 +183,12 @@ export const ProjectDashboardLayoutHeader = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 {(() => {
-                  const filteredMoreItems = moreItems.filter(
-                    (item) => item.to !== pinnedItem?.to,
-                  );
-                  const activeItem = filteredMoreItems.find((item) =>
+                  const activeItem = shownItemsUnderMoreDropdown.find((item) =>
                     location.pathname.includes(item.to),
                   );
+                  if (shownItemsUnderMoreDropdown.length === 0) {
+                    return null;
+                  }
 
                   if (activeItem) {
                     return (
@@ -226,29 +218,22 @@ export const ProjectDashboardLayoutHeader = () => {
                 })()}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
-                {moreItems
-                  .filter(
-                    (item) =>
-                      item.show &&
-                      item.hasPermission !== false &&
-                      item.to !== pinnedItem?.to,
-                  )
-                  .map((item) => {
-                    return (
-                      <DropdownMenuItem
-                        key={item.to}
-                        onClick={() => {
-                          setPinnedItem(item);
-                          navigate(item.to);
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <item.icon className={cn('size-4')} />
-                          <span>{item.label}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                {shownItemsUnderMoreDropdown.map((item) => {
+                  return (
+                    <DropdownMenuItem
+                      key={item.to}
+                      onClick={() => {
+                        setPinnedItem(item);
+                        navigate(item.to);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <item.icon className={cn('size-4')} />
+                        <span>{item.label}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
           </TabsList>

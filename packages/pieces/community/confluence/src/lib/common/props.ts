@@ -10,6 +10,7 @@ import {
 import { parseStringPromise } from 'xml2js';
 
 export const spaceIdProp = Property.Dropdown({
+	auth: confluenceAuth,
 	displayName: 'Space',
 	refreshers: [],
 	required: true,
@@ -22,11 +23,10 @@ export const spaceIdProp = Property.Dropdown({
 			};
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof confluenceAuth>;
 		const spaces = await confluencePaginatedApiCall<{ id: string; name: string }>({
-			domain: authValue.confluenceDomain,
-			username: authValue.username,
-			password: authValue.password,
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
 			version: 'v2',
 			method: HttpMethod.GET,
 			resourceUri: '/spaces',
@@ -48,6 +48,7 @@ export const spaceIdProp = Property.Dropdown({
 
 export const templateIdProp = Property.Dropdown({
 	displayName: 'Template',
+	auth: confluenceAuth,
 	refreshers: ['spaceId'],
 	required: true,
 	options: async ({ auth, spaceId }) => {
@@ -59,21 +60,19 @@ export const templateIdProp = Property.Dropdown({
 			};
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof confluenceAuth>;
-
 		const space = await confluenceApiCall<{ id: string; name: string; key: string }>({
-			domain: authValue.confluenceDomain,
-			username: authValue.username,
-			password: authValue.password,
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
 			method: HttpMethod.GET,
 			version: 'v2',
 			resourceUri: `/spaces/${spaceId}`,
 		});
 
 		const templates = await confluencePaginatedApiCall<{ templateId: string; name: string }>({
-			domain: authValue.confluenceDomain,
-			username: authValue.username,
-			password: authValue.password,
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
 			version: 'v1',
 			method: HttpMethod.GET,
 			resourceUri: `/template/page`,
@@ -95,7 +94,8 @@ export const templateIdProp = Property.Dropdown({
 });
 
 export const folderIdProp = Property.Dropdown({
-	displayName:'Parent Folder',
+		displayName:'Parent Folder',
+	auth: confluenceAuth,
 	refreshers:['spaceId'],
 	required:false,
 	options:async ({auth,spaceId})=>{
@@ -107,21 +107,19 @@ export const folderIdProp = Property.Dropdown({
 			};
 		}
 
-		const authValue = auth as PiecePropValueSchema<typeof confluenceAuth>;
-
 		const space = await confluenceApiCall<{ id: string; name: string; key: string,homepageId:string }>({
-			domain: authValue.confluenceDomain,
-			username: authValue.username,
-			password: authValue.password,
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
 			method: HttpMethod.GET,
 			version: 'v2',
 			resourceUri: `/spaces/${spaceId}`,
 		});
 
 		const folders = await confluencePaginatedApiCall<{id:string,title:string}>({
-			domain:authValue.confluenceDomain,
-			username:authValue.username,
-			password:authValue.password,
+			domain:auth.props.confluenceDomain,
+			username:auth.props.username,
+			password:auth.props.password,
 			version:'v1',
 			method:HttpMethod.GET,
 			resourceUri:`/content/${space.homepageId}/descendant/folder`,
@@ -143,20 +141,19 @@ export const folderIdProp = Property.Dropdown({
 
 export const templateVariablesProp = Property.DynamicProperties({
 	displayName: 'Template Variables',
+	auth: confluenceAuth,
 	refreshers: ['templateId'],
 	required: true,
 	props: async ({ auth, templateId }) => {
 		if (!auth) return {};
 		if (!templateId) return {};
 
-		const authValue = auth as PiecePropValueSchema<typeof confluenceAuth>;
-
 		const props: DynamicPropsValue = {};
 
 		const response = await confluenceApiCall<{ body: { storage: { value: string } } }>({
-			domain: authValue.confluenceDomain,
-			username: authValue.username,
-			password: authValue.password,
+			domain: auth.props.confluenceDomain,
+			username: auth.props.username,
+			password: auth.props.password,
 			method: HttpMethod.GET,
 			version: 'v1',
 			resourceUri: `/template/${templateId}`,

@@ -62,7 +62,7 @@ describe('Enterprise User API', () => {
 
         it('Failed if own other platform', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockOwner: mockOwner2, mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -75,7 +75,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockOwner2.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform2.id,
                 },
@@ -98,7 +98,7 @@ describe('Enterprise User API', () => {
 
         it('Fail if not admin', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -110,7 +110,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -169,7 +169,7 @@ describe('Enterprise User API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetupWithApiKey()
+            const { mockPlatform } = await mockAndSaveBasicSetupWithApiKey()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -180,7 +180,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -201,7 +201,7 @@ describe('Enterprise User API', () => {
 
         it('Allows platform owner to delete user', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetupWithApiKey()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetupWithApiKey()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -212,7 +212,7 @@ describe('Enterprise User API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

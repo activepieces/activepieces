@@ -1,15 +1,11 @@
 import { api } from '@/lib/api';
 import {
-  ListAICreditsUsageRequest,
-  ListAICreditsUsageResponse,
-} from '@activepieces/common-ai';
-import {
-  ToggleAiCreditsOverageEnabledParams,
-  SetAiCreditsOverageLimitParams,
   UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
+  CreateAICreditCheckoutSessionParamsSchema,
+  UpdateAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/ee-shared';
-import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
@@ -30,21 +26,18 @@ export const platformBillingApi = {
       params,
     );
   },
-  setAiCreditsOverageLimit(params: SetAiCreditsOverageLimitParams) {
-    return api.post<PlatformPlan>(
-      '/v1/platform-billing/set-ai-credits-overage-limit',
+  createAICreditCheckoutSession(
+    params: CreateAICreditCheckoutSessionParamsSchema,
+  ) {
+    return api.post<{ stripeCheckoutUrl: string }>(
+      '/v1/platform-billing/ai-credits/create-checkout-session',
       params,
     );
   },
-  toggleAiCreditsOverageEnabled(params: ToggleAiCreditsOverageEnabledParams) {
-    return api.post<PlatformPlan>(
-      '/v1/platform-billing/update-ai-overage-state',
+  updateAutoTopUp(params: UpdateAICreditsAutoTopUpParamsSchema) {
+    return api.post<{ stripeCheckoutUrl?: string }>(
+      '/v1/platform-billing/ai-credits/auto-topup',
       params,
     );
-  },
-  listAiCreditsUsage(
-    params: ListAICreditsUsageRequest,
-  ): Promise<ListAICreditsUsageResponse> {
-    return api.get('/v1/platform-billing/ai-credits-usage', params);
   },
 };

@@ -52,7 +52,7 @@ export const TodoTextarea = ({
   return (
     <div className="flex flex-col gap-2 mt-4">
       <div className="flex gap-4">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {currentUser && (
             <UserAvatar
               size={32}
@@ -66,13 +66,13 @@ export const TodoTextarea = ({
             <div className="flex items-center gap-2 h-8 font-bold">{title}</div>
           )}
           <div className="relative mt-1">
-            <div className="h-[155px] w-full p-[1px] rounded-lg border border-input-border">
+            <div className="h-[155px] w-full p-px rounded-lg border border-input-border">
               <div
                 className={cn(
                   'relative rounded-md bg-background w-full h-full flex flex-col justify-between',
                 )}
               >
-                <ScrollArea className="w-full flex-grow overflow-auto">
+                <ScrollArea className="w-full grow overflow-auto">
                   <div className="p-2 pb-0">
                     <Textarea
                       className="w-full bg-background border-none resize-none overflow-hidden"
@@ -88,7 +88,6 @@ export const TodoTextarea = ({
                 </ScrollArea>
                 <div className="flex justify-end mx-2 mb-3">
                   <Button
-                    variant="secondary"
                     size="icon"
                     onClick={handleSubmit}
                     loading={isSubmitting}

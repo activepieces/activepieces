@@ -63,7 +63,7 @@ export const docsbotCommon = {
       method: HttpMethod.POST,
       url: docsbotCommon.endpoints.askQuestion({ teamId, botId }),
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey.secret_text}`,
       },
       body: { ...chatParams },
     });
@@ -82,7 +82,7 @@ export const docsbotCommon = {
         botId: botId,
       }),
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey.secret_text}`,
       },
       body: { ...sourceParams },
     });
@@ -97,7 +97,7 @@ export const docsbotCommon = {
       method: HttpMethod.POST,
       url: docsbotCommon.endpoints.createBot(teamId),
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey.secret_text}`,
       },
       body: { ...botParams },
     });
@@ -116,7 +116,7 @@ export const docsbotCommon = {
         botId,
       }) + `?fileName=${encodeURIComponent(fileName)}`,
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey.secret_text}`,
       },
     });
     return response.body;
@@ -140,7 +140,7 @@ export const docsbotCommon = {
       method: HttpMethod.GET,
       url: docsbotCommon.endpoints.listBots(teamId),
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey.secret_text}`,
       },
     });
     return resonse.body;

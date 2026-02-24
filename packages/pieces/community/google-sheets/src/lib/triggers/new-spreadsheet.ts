@@ -1,24 +1,23 @@
-import { createTrigger,PiecePropValueSchema,TriggerStrategy } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../../index';
+import { AppConnectionValueForAuthProperty, createTrigger,PiecePropValueSchema,TriggerStrategy } from '@activepieces/pieces-framework';
+import { googleSheetsAuth } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
 import { google, drive_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { includeTeamDrivesProp } from '../common/props';
+import { createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
 type Props = {
     includeTeamDrives?: boolean;
 };
-const polling: Polling<PiecePropValueSchema<typeof googleSheetsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof googleSheetsAuth>, Props> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth, propsValue, lastFetchEpochMS }) {
-        const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
+        const authValue = auth as GoogleSheetsAuthValue;
         const q = ["mimeType='application/vnd.google-apps.spreadsheet'",'trashed = false'];
         if (lastFetchEpochMS) {
             q.push(`createdTime > '${dayjs(lastFetchEpochMS).toISOString()}'`);
         }
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(authValue);
+        const authClient = await createGoogleClient(authValue);
         const drive = google.drive({ version: 'v3', auth: authClient });
         let nextPageToken;
         const items = [];

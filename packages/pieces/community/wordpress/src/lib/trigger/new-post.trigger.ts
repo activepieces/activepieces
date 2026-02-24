@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
@@ -154,12 +155,12 @@ export const wordpressNewPost = createTrigger({
 });
 
 const polling: Polling<
-  PiecePropValueSchema<typeof wordpressAuth>,
+  AppConnectionValueForAuthProperty<typeof wordpressAuth>,
   { authors: string | undefined }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const items = await getPosts(auth, propsValue.authors!, lastFetchEpochMS);
+    const items = await getPosts(auth.props, propsValue.authors!, lastFetchEpochMS);
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.date).valueOf(),
       data: item,

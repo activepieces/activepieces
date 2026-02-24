@@ -27,7 +27,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const filter: ProjectListFilter = {
       customers_id: propsValue.customer_id_filter,
       active: propsValue.active_filter,

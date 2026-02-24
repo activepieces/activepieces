@@ -32,12 +32,12 @@ export function sendShopifyRequest(data: {
   auth: ShopifyAuth;
 }): Promise<HttpResponse<HttpMessageBody>> {
   return httpClient.sendRequest({
-    url: `${getBaseUrl(data.auth.shopName)}${data.url}`,
+    url: `${getBaseUrl(data.auth.props.shopName)}${data.url}`,
     method: data.method,
     body: data.body,
     queryParams: data.queryParams,
     headers: {
-      'X-Shopify-Access-Token': data.auth.adminToken,
+      'X-Shopify-Access-Token': data.auth.props.adminToken,
     },
   });
 }

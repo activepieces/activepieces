@@ -7,6 +7,7 @@ import { findBotAction } from "./lib/actions/find-bot";
 import { findConversationAction } from "./lib/actions/find-conversation";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { codyClient } from "./lib/common/client";
+import { AppConnectionType } from "@activepieces/shared";
 
 // Define the authentication property using PieceAuth.SecretText
 // This will create a secure text input field in the UI for the user's API key.
@@ -17,7 +18,10 @@ export const codyAuth = PieceAuth.SecretText({
     validate: async ({ auth }) => {
         if (auth) {
             try {
-                await codyClient.listBots(auth);
+                await codyClient.listBots({
+                    secret_text: auth,
+                    type: AppConnectionType.SECRET_TEXT,
+                });
                 return {
                     valid: true,
                 }

@@ -13,16 +13,18 @@ import {
   isNil,
   StepRunResponse,
   PopulatedTodo,
+  AgentResult,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
+import { defaultAgentOutput, isRunAgent } from './agent-test-step';
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { testStepHooks } from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { testStepHooks } from './utils/test-step-hooks';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
@@ -71,6 +73,9 @@ const TestStepSectionImplementation = React.memo(
     });
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
+    const [liveAgentResult, setLiveAgentResult] = useState<
+      AgentResult | undefined
+    >(undefined);
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         mutationKey,
@@ -86,7 +91,7 @@ const TestStepSectionImplementation = React.memo(
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const handleTodoCreateTask = async () => {
+    const handleTodoTest = async () => {
       setActiveDialog(DialogType.TODO_CREATE_TASK);
       testAction({
         type: 'todoAction',
@@ -107,10 +112,27 @@ const TestStepSectionImplementation = React.memo(
         },
       });
     };
+    const handleAgentTest = async () => {
+      testAction({
+        type: 'agentAction',
+        onProgress: async (progress: StepRunResponse) => {
+          const outputProgress = progress.output;
+          if (!isNil(outputProgress)) {
+            setLiveAgentResult(outputProgress as AgentResult);
+          }
+        },
+        onFinish: () => {
+          setLiveAgentResult(undefined);
+        },
+      });
+    };
 
     const onTestButtonClick = async () => {
       if (isTodoCreateTask(currentStep)) {
-        handleTodoCreateTask();
+        handleTodoTest();
+      } else if (isRunAgent(currentStep)) {
+        setLiveAgentResult(defaultAgentOutput);
+        handleAgentTest();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
       } else {
@@ -119,7 +141,6 @@ const TestStepSectionImplementation = React.memo(
     };
 
     const handleCloseDialog = () => {
-      console.log('handleCloseDialog');
       setActiveDialog(DialogType.NONE);
       setTodo(null);
       abortControllerRef.current.abort();
@@ -132,7 +153,7 @@ const TestStepSectionImplementation = React.memo(
     return (
       <>
         {!sampleDataExists && (
-          <div className="flex-grow flex justify-center items-center w-full h-full">
+          <div className="grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip invalid={!currentStep.valid}>
               <Button
                 variant="outline"
@@ -151,8 +172,9 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            currentStep={currentStep}
             isValid={currentStep.valid}
+            currentStep={currentStep}
+            agentResult={liveAgentResult}
             isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}

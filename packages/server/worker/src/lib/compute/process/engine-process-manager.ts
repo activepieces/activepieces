@@ -5,6 +5,7 @@ import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import treeKill from 'tree-kill'
+import { devPiecesState } from '../../cache/pieces/development/dev-pieces-state'
 import { workerMachine } from '../../utils/machine'
 import { engineRunnerSocket } from '../engine-runner-socket'
 import { engineSocketHandlers } from './engine-socket-handlers'
@@ -22,6 +23,7 @@ export type WorkerResult = {
 let processes: (ChildProcess | undefined)[] = []
 let availableProcessIndexes: number[] = []
 let processIds: string[] = []
+let workerGenerations: number[] = []
 let options: EngineProcessOptions
 let lock: ApSemaphore
 let engineSocketServer: ReturnType<typeof engineRunnerSocket>
@@ -39,11 +41,13 @@ export const engineProcessManager = {
         lock = new ApSemaphore(_maxWorkers)
         engineSocketServer = engineRunnerSocket(log)
         processIds = []
+        workerGenerations = []
         // Create the initial workers
         for (let i = 0; i < _maxWorkers; i++) {
             processes.push(undefined)
             availableProcessIndexes.push(i)
             processIds.push(nanoid())
+            workerGenerations.push(-1)
         }
         initialized = true
     },
@@ -70,13 +74,19 @@ export const engineProcessManager = {
             assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
             const workerIsDisconnected = isNil(processes[workerIndex]) || !engineSocketServer.isConnected(processIds[workerIndex])
-            const workerIsDead = workerIsDisconnected || !isWorkerReusable()
+            const workerIsDead = workerIsDisconnected || shouldRecreateWorker(workerGenerations[workerIndex])
+            if (!workerIsDead) {
+                log.info({
+                    workerIndex,
+                    generation: workerGenerations[workerIndex],
+                }, 'Reusing existing worker (generation still valid)')
+            }
             if (workerIsDead) {
                 await tracer.startActiveSpan('engineProcessManager.provisionWorker', {
                     attributes: {
                         'worker.index': workerIndex,
                         'worker.isDisconnected': workerIsDisconnected,
-                        'worker.isReusable': isWorkerReusable(),
+                        'worker.isReusable': canReuseWorkers(),
                     },
                 }, async (span) => {
                     try {
@@ -87,6 +97,7 @@ export const engineProcessManager = {
                         if (!isNil(processes[workerIndex])) {
                             await forceTerminate(processes[workerIndex], log)
                             processIds[workerIndex] = nanoid()
+                            workerGenerations[workerIndex] = -1
                         }
 
                         const workerId = processIds[workerIndex]
@@ -105,8 +116,9 @@ export const engineProcessManager = {
                                     platformId: operation.platformId,
                                     flowVersionId: getFlowVersionId(operation, operationType),
                                     options,
-                                    reusable: isWorkerReusable(),
+                                    reusable: canReuseWorkers(),
                                 })
+                                workerGenerations[workerIndex] = devPiecesState.getGeneration()
                                 const processCreationTime = Math.floor(performance.now() - startTime)
                                 createSpan.setAttribute('worker.processCreationTimeMs', processCreationTime)
                             }
@@ -313,12 +325,13 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             if (!isNil(timeoutWorker)) {
                 clearTimeout(timeoutWorker)
             }
-            if (!isWorkerReusable()) {
+            if (shouldRecreateWorker(workerGenerations[workerIndex])) {
                 if (!isNil(processes[workerIndex])) {
                     await forceTerminate(processes[workerIndex], log)
                 }
                 processes[workerIndex] = undefined
                 processIds[workerIndex] = nanoid()
+                workerGenerations[workerIndex] = -1
             }
             log.debug({
                 workerIndex,
@@ -335,7 +348,6 @@ function getFlowVersionId(operation: EngineOperation, type: EngineOperationType)
             return (operation as ExecutePropsOptions).flowVersion?.id
         case EngineOperationType.EXECUTE_TRIGGER_HOOK:
             return (operation as ExecuteTriggerOperation<TriggerHookType>).flowVersion.id
-        case EngineOperationType.EXECUTE_TOOL:
         case EngineOperationType.EXTRACT_PIECE_METADATA:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:
             return undefined
@@ -365,17 +377,25 @@ async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger
     })
 }
 
-
-function isWorkerReusable(): boolean {
+function canReuseWorkers(): boolean {
     const settings = workerMachine.getSettings()
-    const isDev = settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT
-    if (isDev) {
-        return false
-    }
-    const isDedicated = workerMachine.isDedicatedWorker()
-    if (isDedicated) {
+
+    if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
         return true
     }
-    const trustedEnvironment = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED].includes(settings.EXECUTION_MODE as ExecutionMode)
-    return trustedEnvironment
+    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
+    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
+        return true
+    }
+    if (workerMachine.isDedicatedWorker()) {
+        return true
+    }
+    return false
+}
+
+function shouldRecreateWorker(workerGeneration: number): boolean {
+    if (devPiecesState.isWorkerGenerationStale(workerGeneration)) {
+        return true
+    }
+    return !canReuseWorkers()
 }

@@ -1,6 +1,6 @@
 import { PlatformId, ProjectRole } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ARRAY_COLUMN_TYPE, BaseColumnSchemaPart, isPostgres } from '../../../database/database-common'
+import { BaseColumnSchemaPart } from '../../../database/database-common'
 
 export type ProjectRoleSchema = ProjectRole & {
     name: string
@@ -17,8 +17,8 @@ export const ProjectRoleEntity = new EntitySchema<ProjectRoleSchema>({
             nullable: false,
         },
         permissions: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
             nullable: false,
         },
         platformId: {

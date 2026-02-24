@@ -5,12 +5,12 @@
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.20.2",
-    "@activepieces/shared": "0.26.0",
+    "@activepieces/pieces-framework": "0.23.0",
+    "@activepieces/shared": "0.30.4",
     "tslib": "2.6.2",
     "pino": "10.1.0",
     "@hyperdx/node-opentelemetry": "0.8.2",
-    "axios": "1.8.3",
+    "axios": "1.13.1",
     "axios-retry": "4.4.1",
     "dayjs": "1.11.9",
     "@sentry/node": "7.120.0",
@@ -25,6 +25,7 @@
     "redis-memory-server": "0.13.0",
     "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",
-    "tree-kill": "1.2.2"
+    "tree-kill": "1.2.2",
+    "typeorm": "0.3.26"
   }
 }

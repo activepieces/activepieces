@@ -1,10 +1,11 @@
 import {
     createTrigger,
     TriggerStrategy,
-    PiecePropValueSchema
+    PiecePropValueSchema,
+    AppConnectionValueForAuthProperty
 } from '@activepieces/pieces-framework';
 import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
+import { zendeskSellAuth } from '../common/auth';
 import { callZendeskApi } from '../common/client';
 
 interface ZendeskLeadItem {
@@ -21,13 +22,13 @@ interface ZendeskLead {
     updated_at: string;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof zendeskSellAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
 		const response = await callZendeskApi<{ items: ZendeskLeadItem[] }>(
 			HttpMethod.GET,
 			'v2/leads',
-			auth as ZendeskSellAuthValue,
+			auth,
 			undefined,
 			{
 				sort_by: 'updated_at:desc',

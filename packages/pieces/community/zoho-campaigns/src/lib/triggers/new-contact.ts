@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   StaticPropsValue,
@@ -13,13 +14,14 @@ import dayjs from 'dayjs';
 import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof zohoCampaignsAuth>,
+  AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
   StaticPropsValue<any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const { access_token: accessToken, location } = auth as any;
-    const { listkey, status = 'active', sort = 'desc' } = propsValue;
+    const location = auth.props?.['location'] as string || 'zoho.com';
+    const accessToken = auth.access_token;
+    const { listkey } = propsValue;
 
     if (!listkey) {
       throw new Error('Mailing list is required');
@@ -29,8 +31,7 @@ const polling: Polling<
       accessToken,
       location,
       listkey,
-      status,
-      sort,
+      sort:'desc',
     });
 
     return items.map((item) => ({
@@ -53,7 +54,7 @@ export const newContact = createTrigger({
     phone: '+1-555-123-4567',
     companyname: 'Acme Corp',
     zuid: '12345678',
-    added_time: '1699123456789'
+    added_time: '1699123456789',
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

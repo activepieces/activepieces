@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, AgentPieceProps, AgentToolType, AI_PIECE_NAME, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,7 +7,7 @@ import { executionFiles } from '../cache/execution-files'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
-import { CodeArtifact, EngineHelperActionResult, EngineHelperExtractPieceInformation, EngineHelperFlowResult, EngineHelperPropResult, EngineHelperResponse, EngineHelperResult, EngineHelperTriggerResult, EngineHelperValidateAuthResult } from './engine-runner-types'
+import { CodeArtifact, EngineHelperExtractPieceInformation, EngineHelperFlowResult, EngineHelperPropResult, EngineHelperResponse, EngineHelperResult, EngineHelperTriggerResult, EngineHelperValidateAuthResult } from './engine-runner-types'
 import { engineProcessManager } from './process/engine-process-manager'
 
 const tracer = trace.getTracer('engine-runner')
@@ -126,27 +126,6 @@ export const engineRunner = (log: FastifyBaseLogger) => ({
         }
         return execute(log, input, EngineOperationType.EXECUTE_PROPERTY, operation.timeoutInSeconds)
     },
-    async excuteTool(engineToken: string, operation: Omit<ExecuteToolOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
-        log.debug({ operation }, '[threadEngineRunner#excuteTool]')
-
-        const toolPiece = await pieceWorkerCache(log).getPiece({
-            engineToken,
-            pieceName: operation.pieceName,
-            pieceVersion: operation.pieceVersion,
-            platformId: operation.platformId,
-        })
-        await executionFiles(log).provision({
-            pieces: [toolPiece],
-            codeSteps: [],
-        })
-        const input: ExecuteToolOperation = {
-            ...operation,
-            publicApiUrl: workerMachine.getPublicApiUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
-            engineToken,
-        }
-        return execute(log, input, EngineOperationType.EXECUTE_TOOL, operation.timeoutInSeconds)
-    },
     async shutdownAllWorkers(): Promise<void> {
         await engineProcessManager.shutdown()
     },
@@ -164,21 +143,36 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
             const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
             const pieceSteps = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE)
             span.setAttribute('sandbox.pieceStepsCount', pieceSteps.length)
-            
-            const pieces = pieceSteps.map(async (step) => {
+
+            const flowPieces = pieceSteps.map((step) => {
                 const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
-                return pieceWorkerCache(log).getPiece({
+                const pieces = [ pieceWorkerCache(log).getPiece({
                     engineToken,
                     pieceName,
                     pieceVersion,
                     platformId,
-                })
+                })]
+                if (pieceName === AI_PIECE_NAME) {
+                    const agentTools = step.settings.input?.[AgentPieceProps.AGENT_TOOLS]
+                    for (const tool of agentTools ?? []) {
+                        if (tool.type === AgentToolType.PIECE) {
+                            pieces.push(pieceWorkerCache(log).getPiece({
+                                engineToken,
+                                platformId: tool.platformId,
+                                pieceName: tool.pieceMetadata.pieceName,
+                                pieceVersion: tool.pieceMetadata.pieceVersion,
+                            }),
+                            )
+                        }
+                    }
+                }
+                return pieces
             })
+
             const codeSteps = getCodePieces(flowVersion)
             span.setAttribute('sandbox.codeStepsCount', codeSteps.length)
-            
             await executionFiles(log).provision({
-                pieces: await Promise.all(pieces),
+                pieces: await Promise.all(flowPieces.flat()),
                 codeSteps,
             })
         }

@@ -21,10 +21,10 @@ export const createProject = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: `${auth.baseApiUrl}/projects`,
+      url: `${auth.props.baseApiUrl}/projects`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.apiKey,
+        token: auth.props.apiKey,
       },
       body: {
         displayName: propsValue['display_name'],

@@ -75,7 +75,7 @@ export const sendPromptToChatbotAction = createAction({
 	async run(context) {
 		const { chatbotId, message, temperature, model, conversationId } = context.propsValue;
 
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const payload: Record<string, any> = {
 			chatbotId,

@@ -27,7 +27,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.updateService(propsValue.service_id as number, {
       name: propsValue.name,
       number: emptyToNull(propsValue.number),

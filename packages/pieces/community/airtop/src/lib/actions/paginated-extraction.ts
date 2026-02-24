@@ -160,7 +160,7 @@ export const paginatedExtractionAction = createAction({
 		}
 
 		const response = await airtopApiCall({
-			apiKey: auth,
+			apiKey: auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/paginated-extraction`,
 			body,

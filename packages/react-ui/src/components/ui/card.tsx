@@ -6,13 +6,18 @@ import { cn } from '@/lib/utils';
 const cardVariants = cva('rounded-lg border bg-background text-foreground', {
   variants: {
     variant: {
-      default: ' shadow-sm',
+      default: ' shadow-xs',
       interactive:
         'cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between',
+    },
+    isSelected: {
+      true: 'border-gray-400',
+      false: '',
     },
   },
   defaultVariants: {
     variant: 'default',
+    isSelected: false,
   },
 });
 
@@ -21,10 +26,10 @@ interface CardProps
     VariantProps<typeof cardVariants> {}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, ...props }, ref) => (
+  ({ className, variant, isSelected, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(cardVariants({ variant }), className)}
+      className={cn(cardVariants({ variant, isSelected }), className)}
       {...props}
     />
   ),

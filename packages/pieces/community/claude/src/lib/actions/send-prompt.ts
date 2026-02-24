@@ -9,7 +9,7 @@ import { claudeAuth } from '../..';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
-import { billingIssueMessage, unauthorizedMessage } from '../common/common';
+import { billingIssueMessage, modelOptions, unauthorizedMessage } from '../common/common';
 const DEFAULT_TOKENS_FOR_THINKING_MODE = 1024;
 export const askClaude = createAction({
   auth: claudeAuth,
@@ -25,18 +25,7 @@ export const askClaude = createAction({
       defaultValue: 'claude-3-haiku-20240307',
       options: {
         disabled: false,
-        options: [
-          { value: 'claude-sonnet-4-5-20250929', label: 'Claude 4.5 Sonnet' },
-          { value: 'claude-haiku-4-5-20251001', label: 'Claude 4.5 Haiku' },
-          { value: 'claude-opus-4-1-20250805', label: 'Claude 4.1 Opus' },
-          { value: 'claude-sonnet-4-20250514', label: 'Claude 4 Sonnet' },
-          { value: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet' },
-          { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
-          { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
-          { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
-          { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
-          { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
-        ],
+        options: modelOptions,
       },
     }),
     systemPrompt: Property.LongText({
@@ -79,6 +68,7 @@ export const askClaude = createAction({
         'Uses claude 3.7 sonnet enhanced reasoning capabilities for complex tasks.',
     }),
     thinkingModeParams: Property.DynamicProperties({
+      auth: claudeAuth,
       displayName: '',
       refreshers: ['thinkingMode'],
       required: false,
@@ -105,7 +95,7 @@ export const askClaude = createAction({
     });
 
     const anthropic = new Anthropic({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     let billingIssue = false;
     let unauthorized = false;

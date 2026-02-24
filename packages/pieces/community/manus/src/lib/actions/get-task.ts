@@ -35,13 +35,14 @@ export const getTask = createAction({
   description: 'Retrieve detailed information about a specific task by its ID',
   props: {
     taskId: Property.Dropdown({
+      auth: manusAuth,
       displayName: 'Task',
       description: 'Select the task to retrieve details for',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getTasksDropdown(auth as string) };
+        return { disabled: false, options: await getTasksDropdown(auth.secret_text) };
       },
     }),
   },
@@ -51,7 +52,7 @@ export const getTask = createAction({
       url: `https://api.manus.ai/v1/tasks/${context.propsValue['taskId']}`,
       headers: {
         'accept': 'application/json',
-        'API_KEY': context.auth,
+        'API_KEY': context.auth.secret_text,
       },
     });
 

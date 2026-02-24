@@ -23,7 +23,8 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
       "dependsOn": [
         "^build",
@@ -40,7 +41,7 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/intercom",
-        "command": "bun install --no-save --silent"
+        "command": "bun install --no-save --verbose"
       },
       "dependsOn": [
         "^build"

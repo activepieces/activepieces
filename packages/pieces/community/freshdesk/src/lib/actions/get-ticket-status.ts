@@ -19,7 +19,7 @@ export const getTicketStatus = createAction({
   },
 
   async run(context) {
-    const FDapiToken = context.auth.access_token;
+    const FDapiToken = context.auth.props.access_token;
     const FDticketID = context.propsValue.ticketid;
 
     const headers = {
@@ -28,7 +28,7 @@ export const getTicketStatus = createAction({
     };
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v2/tickets/${FDticketID}`;
     const httprequestdata = {
       method: HttpMethod.GET,

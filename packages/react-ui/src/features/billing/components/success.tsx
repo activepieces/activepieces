@@ -52,6 +52,22 @@ export const Success = () => {
           title: t('Success!'),
           description: t('Subscription created successfully'),
         };
+      case 'ai-credit-auto-topup':
+        return {
+          icon: Check,
+          iconBg: 'bg-primary/10',
+          iconColor: 'text-primary',
+          title: t('Success!'),
+          description: t('AI credit auto topup enabled successfully'),
+        };
+      case 'ai-credit-payment':
+        return {
+          icon: Check,
+          iconBg: 'bg-primary/10',
+          iconColor: 'text-primary',
+          title: t('Success!'),
+          description: t('AI credits purchased successfully'),
+        };
       default:
         return {
           icon: Check,

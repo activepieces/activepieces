@@ -1,7 +1,7 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -293,8 +293,40 @@ import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postg
 import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
 import { AddIconToProject1763377380235 } from './migration/postgres/1763377380235-AddIconToProject'
 import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
-
 import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
+import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
+import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
+import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
+import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
+import { CreateTemplateTable1764777773932 } from './migration/postgres/1764777773932-CreateTemplateTable'
+import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
+import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
+import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
+import { RemovePlatformSMTP1764945141702 } from './migration/postgres/1764945141702-RemovePlatformSMTP'
+import { AddPersonalProjectsForAllUsers1765107860778 } from './migration/postgres/1765107860778-AddPersonalProjectsForAllUsers'
+import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
+import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308234291-MigrateSqliteToPglite'
+import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
+import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
+import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
+import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
+import { AddDisplayNameToAiProviders1765757655723 } from './migration/postgres/1765757655723-add-display-name-to-ai-providers'
+import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
+import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
+import { DropLegacyTables1766015156683 } from './migration/postgres/1766015156683-DropLegacyTables'
+import { RecreateMcpToolTable1766072572000 } from './migration/postgres/1766072572000-RecreateMcpToolTable'
+import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/postgres/1766094015801-removeOpenRounterKeysFromPlatformPlan'
+import { AddPlatformAiCreditsPaymentTable1766186963979 } from './migration/postgres/1766186963979-addPlatformAiCreditsPaymentTable'
+import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
+import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1766375959255-PlatformIdAndProviderUnique'
+import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migration/postgres/1767016169819-AddMaxAutoTopUpCreditsMonthlyToPlatformPlan'
+import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
+import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
+import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { MigrateOldTemplateCategoriesToDynamicOne1767624311536 } from './migration/postgres/1767624311536-MigrateOldTemplateCategoriesToDynamicOne'
+import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
+import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
+import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -306,8 +338,8 @@ const getSslConfig = (): boolean | TlsOptions => {
     return false
 }
 
-const getMigrations = (): (new () => MigrationInterface)[] => {
-    const commonMigration = [
+export const getMigrations = (): (new () => MigrationInterface)[] => {
+    const migrations = [
         FlowAndFileProjectId1674788714498,
         initializeSchema1676238396411,
         encryptCredentials1676505294811,
@@ -501,130 +533,150 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFailedStepAndDurationToRunPostgres1762886424449,
         RemoveDurationAndAddArchivedAtIdxPostgres1763378445659,
         AddIconToProject1763377380235,
+        AddProjectType1763644863137,
+        AddFlowOperationStatusField1764079041445,
+        AddTemplates1685538145476,
+        AddPinnedAndBlogUrlToTemplates1686133672743,
+        AddPinnedOrder1686154285890,
+        AddProjectIdToTemplate1688083336934,
+        FlowTemplateAddUserIdAndImageUrl1694379223109,
+        AddFeaturedDescriptionAndFlagToTemplates1694604120205,
+        AddProjectMembers1689177797092,
+        ProjectMemberRelations1694381968985,
+        AddPlatform1697717995884,
+        AddCustomDomain1698077078271,
+        AddSigningKey1698602417745,
+        AddDisplayNameToSigningKey1698698190965,
+        AddOAuth2AppEntiity1699221414907,
+        AddFilteredPiecesToPlatform1699281870038,
+        AddSmtpAndPrivacyUrlToPlatform1699491705906,
+        AddOtpEntity1700396157624,
+        AddPlatformDefaultLanguage1700406308445,
+        MakeStripeSubscriptionNullable1685053959806,
+        AddBillingParameters1688739844617,
+        AddTasksPerDays1689336533370,
+        RemoveCalculatedMetrics1689806173642,
+        ModifyBilling1694902537045,
+        RemoveUnusedFieldsinBilling1700132368636,
+        AddDatasourcesLimit1695916063833,
+        MakeStripeCustomerIdNullable1700751925992,
+        AddStateToOtp1701084418793,
+        ModifyProjectMembersAndRemoveUserId1701647565290,
+        AddApiKeys1701716639135,
+        AddEmbeddingFeatureToPlatform1701794452891,
+        AddPlatformIdToFlowTemplates1703411318826,
+        AddAuthOptionsToPlatform1704667304953,
+        AddEnableEmailAuthToPlatform1704797979825,
+        AddGitRepoMigrationPostgres1704503804056,
+        AddGitSyncEnabledToPlatform1704636362533,
+        AddAuditEvents1707614902283,
+        CreateActivityTable1708515756040,
+        AddLengthLimitsToActivity1708529586342,
+        AddShowActivityLogToPlatform1708861032399,
+        MakePlatformNotNullable1705969874745,
+        AddSlugToGitRepo1709151540095,
+        DropUnusedPlatformIndex1709500873378,
+        MigrateWebhookTemplate1709581196564,
+        AddPlatformForeignKeyToProjectPostgres1709566642531,
+        MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258,
+        AddMappingStateToGit1709753080714,
+        CascadeProjectDeleteToActivity1710720610670,
+        AddBranchTypeToGit1711073772867,
+        PiecesProjectLimits1712279318440,
+
+        // Cloud Only Migrations, before unifing the migrations.
+        ChangeToJsonToKeepKeysOrder1685991260335,
+        AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
+        RemoveUniqueonAppNameAppCredentials1705586178452,
+        CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
+        // Enterprise Only Migrations, before unifing the migrations.
+        MigrateEeUsersToOldestPlatform1701261357197,
+        UnifyEnterpriseWithCloud1714249840058,
+        // Cloud Only Entities, But we need to run them for Enterprise as well.
+        AddAppSumo1688943462327,
+        AddReferral1690459469381,
+        AddUserEmailToReferral1709500213947,
+        AddProjectBilling1708811745694,
+
+        // Community Only Migrations, before unifying all migrations.
+        AddPlatformToPostgres1709052740378,
+        SetNotNullOnPlatform1709505632771,
+
+        // New Migration After Unifying cloud and enterprise
+        ModifyProjectMembers1717961669938,
+        MigrateAuditEventSchema1723489038729,
+        AddAiTokensForProjectPlan1726446092010,
+        AddAuditLogIndicies1731711188507,
+        AddPlatformBilling1734971881345,
+        CreateProjectReleaseTable1734418823028,
+        RemoveUnusedProjectBillingFields1736607721367,
+        ProjectIdNullableInTemplate1741357285896,
+        UpdateNotifyStatusOnEmbedding1741963410825,
+        AddManualTaskCommentTable1742305104390,
+        AddMetadataFieldToFlowTemplates1744780800000,
+        AddLimitsOnPlatformPlan1747921788059,
+        AddPlanNameOnPlatformPlan1748549003744,
+        AddPlatformIdToAiUsage1750526457504,
+        AddBillingCycleDates1750704192423,
+        ReplaceTasksLimitWithIncludedTasks1750720173459,
+        RenameIncludedTasksToTasksLimit1750722071472,
+        AddPaymentMethodToPlatformPlan1751021111433,
+        AddAgentsLimitToPlatformPlan1749917984363,
+        AddAgentsEnabledToPlatformPlan1751309258332,
+        AddTrialFlagInPlatform1751394161203,
+        UpdateAiCredits1751404517528,
+        AddAiOverageState1751466404493,
+        AddLockedColumnToProjectPlan1751878623268,
+        AddMcpsEnabled1751989232042,
+        AddPlatformAnalyticsReportEntity1753091760355,
+        AddBillingCycle1754559781173,
+        EligibileForTrial1754852385518,
+        RemoveAgentLimitFromPlatfromPlanEntity1760607967671,
+        AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
+        RemoveEligibleForTrial1761588441492,
+        AddRunUsageForPlatformAnalyticsReport1761668284685,
+        RemoveUserSeatsLimitColumn1761762177701,
+        RemoveMcpAndTablesLimitsAndBillingCycles1762103191643,
+        RemoveUnusedPaymentMethodColoumn1762709208569,
+        AddLastUsedAtToApiKey1763378445660,
+        RenameManageProjectsToTeamProjectLimits1764100884963,
+        DropProjectIdFromPieceMetadata1764866386989,
+        UnifyCommunityWithEnterprise1764867709704,
+        AddMcpServer1764606838149,
+        RemovePlatformSMTP1764945141702,
+        AddOpenRouterKeyToPlatformPlan1765109187883,
+        AddPieceVersionToAppConnection1764841091811,
+        AddPersonalProjectsForAllUsers1765107860778,
+        MigrateSqliteToPglite1765308234291,
+        AddLastActiveToUser1765325909187,
+        AddStepsExecutedAndAICreditsToFlowRun1765461560795,
+        ChangeTeamsToPersonalInCommunity1765709274266,
+        AddMinutesSavedToFlowForAnalytics1765732721451,
+        AddDisplayNameToAiProviders1765757655723,
+        CreateTemplateTable1764777773932,
+        AddTemplateStatus1765894492098,
+        MigrateOldTemplatesToNewSchema1765993826655,
+        AddPlatformAiCreditsPaymentTable1766186963979,
+        RemoveOpenRounterKeysFromPlatformPlan1766094015801,
+        AddAuthConfigInAiProviders1766328841463,
+        DropLegacyTables1766015156683,
+        RecreateMcpToolTable1766072572000,
+        PlatformIdAndProviderUnique1766375959255,
+        AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819,
+        AnalyticsAndOwnerToFlowId1767127482383,
+        AddBadges1767141831647,
+        AddFlowOwnerIndex1767610587266,
+        AddTriggeredBy1767697998391,
+        UpdateCacheStructure1767904545112,
+        AddOutdatedToReport1767994436597,
+        MigrateOldTemplateCategoriesToDynamicOne1767624311536,
     ]
-
-    const edition = system.getEdition()
-    switch (edition) {
-        case ApEdition.CLOUD:
-        case ApEdition.ENTERPRISE:
-            commonMigration.push(
-                AddTemplates1685538145476,
-                AddPinnedAndBlogUrlToTemplates1686133672743,
-                AddPinnedOrder1686154285890,
-                AddProjectIdToTemplate1688083336934,
-                FlowTemplateAddUserIdAndImageUrl1694379223109,
-                AddFeaturedDescriptionAndFlagToTemplates1694604120205,
-                AddProjectMembers1689177797092,
-                ProjectMemberRelations1694381968985,
-                AddPlatform1697717995884,
-                AddCustomDomain1698077078271,
-                AddSigningKey1698602417745,
-                AddDisplayNameToSigningKey1698698190965,
-                AddOAuth2AppEntiity1699221414907,
-                AddFilteredPiecesToPlatform1699281870038,
-                AddSmtpAndPrivacyUrlToPlatform1699491705906,
-                AddOtpEntity1700396157624,
-                AddPlatformDefaultLanguage1700406308445,
-                MakeStripeSubscriptionNullable1685053959806,
-                AddBillingParameters1688739844617,
-                AddTasksPerDays1689336533370,
-                RemoveCalculatedMetrics1689806173642,
-                ModifyBilling1694902537045,
-                RemoveUnusedFieldsinBilling1700132368636,
-                AddDatasourcesLimit1695916063833,
-                MakeStripeCustomerIdNullable1700751925992,
-                AddStateToOtp1701084418793,
-                ModifyProjectMembersAndRemoveUserId1701647565290,
-                AddApiKeys1701716639135,
-                AddEmbeddingFeatureToPlatform1701794452891,
-                AddPlatformIdToFlowTemplates1703411318826,
-                AddAuthOptionsToPlatform1704667304953,
-                AddEnableEmailAuthToPlatform1704797979825,
-                AddGitRepoMigrationPostgres1704503804056,
-                AddGitSyncEnabledToPlatform1704636362533,
-                AddAuditEvents1707614902283,
-                CreateActivityTable1708515756040,
-                AddLengthLimitsToActivity1708529586342,
-                AddShowActivityLogToPlatform1708861032399,
-                MakePlatformNotNullable1705969874745,
-                AddSlugToGitRepo1709151540095,
-                DropUnusedPlatformIndex1709500873378,
-                MigrateWebhookTemplate1709581196564,
-                AddPlatformForeignKeyToProjectPostgres1709566642531,
-                MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258,
-                AddMappingStateToGit1709753080714,
-                CascadeProjectDeleteToActivity1710720610670,
-                AddBranchTypeToGit1711073772867,
-                PiecesProjectLimits1712279318440,
-
-                // Cloud Only Migrations, before unifing the migrations.
-                ChangeToJsonToKeepKeysOrder1685991260335,
-                AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
-                RemoveUniqueonAppNameAppCredentials1705586178452,
-                CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
-                // Enterprise Only Migrations, before unifing the migrations.
-                MigrateEeUsersToOldestPlatform1701261357197,
-                UnifyEnterpriseWithCloud1714249840058,
-                // Cloud Only Entities, But we need to run them for Enterprise as well.
-                AddAppSumo1688943462327,
-                AddReferral1690459469381,
-                AddUserEmailToReferral1709500213947,
-                AddProjectBilling1708811745694,
-
-                // New Migration After Unifying
-                ModifyProjectMembers1717961669938,
-                MigrateAuditEventSchema1723489038729,
-                AddAiTokensForProjectPlan1726446092010,
-                AddAuditLogIndicies1731711188507,
-                AddPlatformBilling1734971881345,
-                CreateProjectReleaseTable1734418823028,
-                RemoveUnusedProjectBillingFields1736607721367,
-                ProjectIdNullableInTemplate1741357285896,
-                UpdateNotifyStatusOnEmbedding1741963410825,
-                AddManualTaskCommentTable1742305104390,
-                AddMetadataFieldToFlowTemplates1744780800000,
-                AddLimitsOnPlatformPlan1747921788059,
-                AddPlanNameOnPlatformPlan1748549003744,
-                AddPlatformIdToAiUsage1750526457504,
-                AddBillingCycleDates1750704192423,
-                ReplaceTasksLimitWithIncludedTasks1750720173459,
-                RenameIncludedTasksToTasksLimit1750722071472,
-                AddPaymentMethodToPlatformPlan1751021111433,
-                AddAgentsLimitToPlatformPlan1749917984363,
-                AddAgentsEnabledToPlatformPlan1751309258332,
-                AddTrialFlagInPlatform1751394161203,
-                UpdateAiCredits1751404517528,
-                AddAiOverageState1751466404493,
-                AddLockedColumnToProjectPlan1751878623268,
-                AddMcpsEnabled1751989232042,
-                AddPlatformAnalyticsReportEntity1753091760355,
-                AddBillingCycle1754559781173,
-                EligibileForTrial1754852385518,
-                RemoveAgentLimitFromPlatfromPlanEntity1760607967671,
-                AddDedicatedWorkersToPlatformPlanPostgres1760998784106,
-                RemoveEligibleForTrial1761588441492,
-                AddRunUsageForPlatformAnalyticsReport1761668284685,
-                RemoveUserSeatsLimitColumn1761762177701,
-                RemoveMcpAndTablesLimitsAndBillingCycles1762103191643,
-                RemoveUnusedPaymentMethodColoumn1762709208569,
-                AddLastUsedAtToApiKey1763378445660,
-            )
-            break
-        case ApEdition.COMMUNITY:
-            commonMigration.push(
-                AddPlatformToPostgres1709052740378,
-                SetNotNullOnPlatform1709505632771,
-            )
-            break
-    }
-
-
-    return commonMigration
+    return migrations
 }
 
 
 export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig: MigrationConfig =  {
+    const migrationConfig: MigrationConfig = {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),

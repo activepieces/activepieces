@@ -3,12 +3,15 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Globe,
-  AppWindow,
   Tag,
   User,
   Replace,
   Trash2,
   Plus,
+  Clock,
+  Activity,
+  Workflow,
+  Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -21,7 +24,6 @@ import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -31,6 +33,8 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   Tooltip,
@@ -146,7 +150,7 @@ function AppConnectionsPage() {
       type: 'select',
       title: t('Pieces'),
       accessorKey: 'pieceName',
-      icon: AppWindow,
+      icon: Puzzle,
       options: pieceOptions,
     },
     {
@@ -169,82 +173,14 @@ function AppConnectionsPage() {
     unknown
   >[] = [
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          variant="secondary"
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original)
-                .filter((row) => row.scope !== AppConnectionScope.PLATFORM);
-
-              const newSelectedRows = [...allRows, ...selectedRows];
-
-              const uniqueRows = Array.from(
-                new Map(
-                  newSelectedRows.map((item) => [item.id, item]),
-                ).values(),
-              );
-
-              setSelectedRows(uniqueRows);
-            } else {
-              const filteredRows = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.id === row.id);
-              });
-              setSelectedRows(filteredRows);
-            }
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isPlatformConnection =
-          row.original.scope === AppConnectionScope.PLATFORM;
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <Checkbox
-            variant="secondary"
-            checked={isChecked}
-            disabled={isPlatformConnection}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
-      accessorKey: 'select',
-    },
-    {
       accessorKey: 'pieceName',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('App')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Piece')}
+          icon={Puzzle}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -256,8 +192,9 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'displayName',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
@@ -282,7 +219,7 @@ function AppConnectionsPage() {
               title={t('External ID')}
               text={row.original.externalId || ''}
             >
-              <div className="text-left">{row.original.displayName}</div>
+              <TruncatedColumnTextValue value={row.original.displayName} />
             </CopyTextTooltip>
           </div>
         );
@@ -290,8 +227,13 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'status',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Status')}
+          icon={Activity}
+        />
       ),
       cell: ({ row }) => {
         const status = row.original.status;
@@ -310,36 +252,37 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'updated',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Connected At')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Connected At')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.updated))}
+            <FormattedDate date={new Date(row.original.updated)} />
           </div>
         );
       },
     },
     {
       accessorKey: 'owner',
+      size: 180,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} />
+        <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
       ),
       cell: ({ row }) => {
         return (
           <div className="text-left">
             {row.original.owner && (
               <ApAvatar
-                type="user"
+                id={row.original.owner.id}
+                includeAvatar={true}
                 includeName={true}
                 size="small"
-                userEmail={row.original.owner.email}
-                fullName={
-                  row.original.owner.firstName +
-                  ' ' +
-                  row.original.owner.lastName
-                }
               />
             )}
             {!row.original.owner && <div className="text-left">-</div>}
@@ -349,8 +292,13 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'flowCount',
+      size: 80,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flows')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Flows')}
+          icon={Workflow}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -369,6 +317,7 @@ function AppConnectionsPage() {
     },
     {
       id: 'actions',
+      size: 100,
       cell: ({ row }) => {
         const isPlatformConnection =
           row.original.scope === AppConnectionScope.PLATFORM;
@@ -422,6 +371,13 @@ function AppConnectionsPage() {
                   message={t(
                     'Are you sure you want to delete these connections? This action cannot be undone.',
                   )}
+                  warning={
+                    <>
+                      {t('Any flows currently using these connections')}{' '}
+                      <strong>{t('will break immediately')}</strong>.{' '}
+                      {t('Please proceed with caution.')}
+                    </>
+                  }
                   mutationFn={async () => {
                     await deleteConnections(selectedRows.map((row) => row.id));
                     refetch();
@@ -506,6 +462,8 @@ function AppConnectionsPage() {
         page={filteredData}
         isLoading={connectionsLoading}
         filters={filters}
+        selectColumn={true}
+        onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
       />
     </div>

@@ -43,7 +43,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.createProject({
       name: propsValue.name,
       customers_id: propsValue.customer_id as number,

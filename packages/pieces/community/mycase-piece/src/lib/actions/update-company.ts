@@ -9,6 +9,7 @@ export const updateCompany = createAction({
   description: 'Updates an existing company in MyCase',
   props: {
     company_id: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Company',
       description: 'Select the company to update',
       required: true,
@@ -108,7 +109,7 @@ export const updateCompany = createAction({
       required: false
     }),
     cases: Property.MultiSelectDropdown({
-      displayName: 'Cases',
+  auth: mycaseAuth,      displayName: 'Cases',
       description: 'Cases to associate with the company',
       required: false,
       refreshers: [],
@@ -144,7 +145,7 @@ export const updateCompany = createAction({
       },
     }),
     clients: Property.MultiSelectDropdown({
-      displayName: 'Clients',
+  auth: mycaseAuth,      displayName: 'Clients',
       description: 'Clients to associate with the company',
       required: false,
       refreshers: [],

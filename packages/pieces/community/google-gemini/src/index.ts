@@ -68,7 +68,7 @@ export const googleGemini = createPiece({
       auth: googleGeminiAuth,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

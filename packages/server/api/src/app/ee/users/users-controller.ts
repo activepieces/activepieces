@@ -1,43 +1,27 @@
-import { assertNotNullOrUndefined, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { securityAccess } from '@activepieces/server-shared'
+import { ApId, PrincipalType, UserWithBadges } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { userService } from '../../user/user-service'
 
 export const usersController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/me', GetCurrentUserRequest, async (req): Promise<UserWithMetaInformationAndProject> => {
-        const userId = req.principal.id
-        assertNotNullOrUndefined(userId, 'userId')
-
-        const user = await userService.getOneOrFail({ id: userId })
-        const identity = await userIdentityService(app.log).getOneOrFail({ id: user.identityId })
-
-        return {
-            id: user.id,
-            platformRole: user.platformRole,
-            status: user.status,
-            externalId: user.externalId,
-            created: user.created,
-            updated: user.updated,
-            platformId: user.platformId,
-            firstName: identity.firstName,
-            lastName: identity.lastName,
-            email: identity.email,
-            trackEvents: identity.trackEvents,
-            newsLetter: identity.newsLetter,
-            verified: identity.verified,
-            projectId: req.principal.projectId,
-        }
+    app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithBadges> => {
+        const userId = req.params.id
+        const platformId = req.principal.platform.id
+        return userService.getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
     })
 }
 
-const GetCurrentUserRequest = {
+const GetUserByIdRequest = {
     schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
         response: {
-            [StatusCodes.OK]: UserWithMetaInformationAndProject,
+            [StatusCodes.OK]: UserWithBadges,
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }

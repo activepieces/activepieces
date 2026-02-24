@@ -73,7 +73,7 @@ const Switch = React.forwardRef<
     return (
       <SwitchPrimitives.Root
         className={cn(
-          'peer inline-flex shrink-0 cursor-pointer items-center border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
+          'peer inline-flex shrink-0 cursor-pointer items-center border-2 border-transparent transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
           colorClasses[color],
           variant === 'square' ? 'rounded-md' : 'rounded-full',
           sizeClasses[size],
@@ -86,7 +86,7 @@ const Switch = React.forwardRef<
       >
         <SwitchPrimitives.Thumb
           className={cn(
-            'pointer-events-none flex items-center justify-center bg-background shadow-lg ring-0 transition-transform data-[state=unchecked]:translate-x-0',
+            'pointer-events-none flex items-center justify-center bg-background dark:bg-foreground shadow-lg ring-0 transition-transform data-[state=unchecked]:translate-x-0',
             variant === 'square' ? 'rounded-sm' : 'rounded-full',
             thumbSizeClasses[size],
             // thumbColorClasses[color]

@@ -49,7 +49,7 @@ export const findOrCreateProduct = createAction({
     params.append('name', context.propsValue.name);
 
     const response = await bigCommerceApiService.fetchProducts({
-      auth: context.auth,
+      auth: context.auth.props,
       queryString: params.toString(),
     });
 
@@ -58,7 +58,7 @@ export const findOrCreateProduct = createAction({
     }
 
     const newProduct = await bigCommerceApiService.createProduct({
-      auth: context.auth,
+      auth: context.auth.props,
       payload: {
         name: context.propsValue.name,
         type: context.propsValue.type,

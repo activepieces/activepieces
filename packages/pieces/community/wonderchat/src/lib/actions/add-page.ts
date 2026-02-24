@@ -25,7 +25,7 @@ export const addPage = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const apiKey = auth;
+    const apiKey = auth.secret_text;
     const { chatbotId, urls, sessionCookie } = propsValue;
     
     const requestbody: any = {

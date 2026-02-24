@@ -4,12 +4,15 @@ import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
 import { PieceCategory } from '@activepieces/shared';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
-import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 
 export const claudeAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description: SUPPORTED_AI_PROVIDERS.find(p => p.provider === 'anthropic')?.markdown,
+  description: `Follow these instructions to get your Claude API Key:
+
+1. Visit the following website: https://console.anthropic.com/settings/keys.
+2. Once on the website, locate and click on the option to obtain your Claude API Key.
+`,
 });
 
 export const claude = createPiece({
@@ -27,7 +30,7 @@ export const claude = createPiece({
       baseUrl: () => baseUrl,
       authMapping: async (auth) => {
         return {
-          'x-api-key': `${auth}`,
+          'x-api-key': `${auth.secret_text}`,
         };
       },
     }),

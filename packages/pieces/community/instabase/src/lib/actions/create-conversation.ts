@@ -149,17 +149,17 @@ export const createConversationAction = createAction({
     });
 
     const headers: Record<string, string> = {
-      'Authorization': `Bearer ${(auth as { apiToken: string }).apiToken}`,
+      'Authorization': `Bearer ${auth.props.apiToken}`,
     };
 
-    const ibContext = (auth as { ibContext?: string }).ibContext;
+    const ibContext = auth.props.ibContext;
     if (ibContext) {
       headers['IB-Context'] = ibContext;
     }
 
     const response = await httpClient.sendRequest<CreateConversationResponse>({
       method: HttpMethod.POST,
-      url: `${(auth as { apiRoot: string }).apiRoot}/v2/conversations`,
+      url: `${auth.props.apiRoot}/v2/conversations`,
       headers: {
         ...headers,
         ...formData.getHeaders(),

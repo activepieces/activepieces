@@ -13,7 +13,7 @@ export const ChatAidAuth = PieceAuth.SecretText({
     if (auth) {
       try {
         await makeRequest(
-          auth as string,
+          auth,
           HttpMethod.GET,
           '/external/sources/custom',
           {}

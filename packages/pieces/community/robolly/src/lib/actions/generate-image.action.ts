@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property, createAction } from "@activepieces/pieces-framework";
+import { robollyAuth } from "../..";
 
 export  const generateImage = createAction({
     description: 'Generate an image using Robolly',
     displayName: 'Generate Image',
     name: 'generate_image',
+    auth: robollyAuth,
     props: {
         template_id: Property.Dropdown({
+            auth: robollyAuth,
             displayName: 'Template',
             required: true,
             description: 'Select your template. (If you want to use Template ID. Click on the "(x)" above this field. Template ID can be found by opening a template and going to “Render”. Being there copy the template ID from the top right.)',
@@ -25,7 +28,7 @@ export  const generateImage = createAction({
                         method: HttpMethod.GET,
                         url: `https://api.robolly.com/v1/templates`,
                         headers: {
-                            'Authorization': `Bearer ${auth}`
+                            'Authorization': `Bearer ${auth.secret_text}`
                         }
                     });
 
@@ -70,6 +73,7 @@ export  const generateImage = createAction({
             }
         }),
         fields: Property.DynamicProperties({
+            auth: robollyAuth,
             displayName: 'Values',
             description: 'The values to apply to the fields in the template.',
             required: true,
@@ -84,7 +88,7 @@ export  const generateImage = createAction({
                         method: HttpMethod.GET,
                         url: `https://api.robolly.com/v1/templates/${template_id}/accepted-modifications`,
                         headers: {
-                            'Authorization': `Bearer ${auth}`
+                            'Authorization': `Bearer ${auth.secret_text}`
                         }
                     });
 
@@ -130,7 +134,7 @@ export  const generateImage = createAction({
             queryParams: queryParams,
             url: `https://api.robolly.com/templates/${propsValue.template_id}/render/${propsValue.format}`,
             headers: {
-                'Authorization': `Bearer ${auth}`
+                'Authorization': `Bearer ${auth.secret_text}`
             },
             body: propsValue.modifications
         });

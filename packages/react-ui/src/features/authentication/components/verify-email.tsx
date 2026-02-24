@@ -7,8 +7,8 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Card } from '@/components/ui/card';
 import { FullLogo } from '@/components/ui/full-logo';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
@@ -42,7 +42,7 @@ const VerifyEmail = () => {
         setTimeout(() => navigate('/sign-in'), 5000);
       } else {
         console.error(error);
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
         setTimeout(() => navigate('/sign-in'), 5000);
       }
     },
@@ -62,7 +62,7 @@ const VerifyEmail = () => {
     <div className="mx-auto h-screen w-screen flex flex-col items-center justify-center gap-2">
       <FullLogo />
 
-      <Card className="w-[28rem] rounded-sm drop-shadow-xl p-4">
+      <Card className="w-md rounded-sm drop-shadow-xl p-4">
         <div className="gap-2 w-full flex flex-col">
           <div className="gap-4 w-full flex flex-row items-center justify-center">
             {!isPending && !isExpired && (

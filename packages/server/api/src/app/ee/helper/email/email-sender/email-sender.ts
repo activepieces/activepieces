@@ -46,16 +46,16 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
-type IssuesSummaryTemplateData = BaseEmailTemplateData<'issues-summary', {
-    issuesUrl: string
-    issues: string
-    issuesCount: string
-    projectName: string
-}>
-
 type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
     flowName: string
     projectName: string
+}>
+
+type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
+    badgeTitle: string
+    badgeDescription: string
+    badgeImageUrl: string
+    firstName: string
 }>
 
 export type EmailTemplateData =
@@ -63,8 +63,8 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | IssuesSummaryTemplateData
   | TriggerFailureThresholdTemplateData
+  | BadgeAwardedTemplateData
 
 type SendArgs = {
     emails: string[]

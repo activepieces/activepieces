@@ -8,10 +8,15 @@ import { ShortcutProps } from '@/components/ui/shortcut';
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
 export type CanvasShortcutsProps = Record<
-  'Paste' | 'Delete' | 'Copy' | 'Skip',
+  'Minimap' | 'Paste' | 'Delete' | 'Copy' | 'Skip',
   ShortcutProps
 >;
 export const CanvasShortcuts: CanvasShortcutsProps = {
+  Minimap: {
+    withCtrl: true,
+    withShift: false,
+    shortcutKey: 'm',
+  },
   Paste: {
     withCtrl: true,
     withShift: false,

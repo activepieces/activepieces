@@ -1,9 +1,9 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { PredictLeadsAuth } from '../..';
 import { PredictLeadsClient } from './client';
 
-export function makeClient(auth: PiecePropValueSchema<typeof PredictLeadsAuth>) {
-	const client = new PredictLeadsClient(auth.apiKey, auth.apiToken);
+export function makeClient(auth: AppConnectionValueForAuthProperty<typeof PredictLeadsAuth>) {
+	const client = new PredictLeadsClient(auth.props.apiKey, auth.props.apiToken);
 	return client;
 }
 

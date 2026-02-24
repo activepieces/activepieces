@@ -19,11 +19,12 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { drupalAuth } from '../../';
 
-type DrupalAuthType = PiecePropValueSchema<typeof drupalAuth>;
+export type DrupalAuthType = AppConnectionValueForAuthProperty<typeof drupalAuth>;
 
 export interface JsonApiResource {
   type: string;
@@ -48,7 +49,7 @@ export async function makeJsonApiRequest<T = JsonApiResponse>(
   method: HttpMethod = HttpMethod.GET,
   body?: any
 ) {
-  const { website_url, username, password } = auth;
+  const { website_url, username, password } = auth.props;
 
   const headers: Record<string, string> = {
     'Accept': 'application/vnd.api+json',
@@ -267,7 +268,7 @@ export const jsonApi = {
    * @example jsonApi.get(auth, '/jsonapi/node/node--article/12345')
    */
   async get(auth: DrupalAuthType, resourcePath: string) {
-    const url = `${auth.website_url.replace(/\/+$/, '')}${resourcePath}`;
+    const url = `${auth.props.website_url.replace(/\/+$/, '')}${resourcePath}`;
     const result = await makeJsonApiRequest(auth, url, HttpMethod.GET);
 
     if (result.status === 200) {
@@ -296,7 +297,7 @@ export const jsonApi = {
   }) {
     const allEntities: any[] = [];
     const query = options ? buildQueryParams(options) : '';
-    let url: string | null = `${auth.website_url.replace(/\/+$/, '')}${collectionPath}${query}`;
+    let url: string | null = `${auth.props.website_url.replace(/\/+$/, '')}${collectionPath}${query}`;
 
     do {
       const result = await makeJsonApiRequest(auth, url, HttpMethod.GET);
@@ -347,7 +348,7 @@ export const jsonApi = {
    * @example jsonApi.create(auth, '/jsonapi/node/node--article', jsonApiFormattedData)
    */
   async create(auth: DrupalAuthType, collectionPath: string, jsonApiData: JsonApiResponse) {
-    const url = `${auth.website_url.replace(/\/+$/, '')}${collectionPath}`;
+    const url = `${auth.props.website_url.replace(/\/+$/, '')}${collectionPath}`;
     const result = await makeJsonApiRequest(auth, url, HttpMethod.POST, jsonApiData);
 
     if (result.status === 201 || result.status === 200) {
@@ -368,7 +369,7 @@ export const jsonApi = {
    * @example jsonApi.update(auth, '/jsonapi/node/node--article/12345', jsonApiFormattedData)
    */
   async update(auth: DrupalAuthType, resourcePath: string, jsonApiData: JsonApiResponse) {
-    const url = `${auth.website_url.replace(/\/+$/, '')}${resourcePath}`;
+    const url = `${auth.props.website_url.replace(/\/+$/, '')}${resourcePath}`;
     const result = await makeJsonApiRequest(auth, url, HttpMethod.PATCH, jsonApiData);
 
     if (result.status === 200) {
@@ -391,7 +392,7 @@ export const jsonApi = {
    * @example jsonApi.delete(auth, '/jsonapi/node/node--article/12345')
    */
   async delete(auth: DrupalAuthType, resourcePath: string) {
-    const url = `${auth.website_url.replace(/\/+$/, '')}${resourcePath}`;
+    const url = `${auth.props.website_url.replace(/\/+$/, '')}${resourcePath}`;
     const result = await makeJsonApiRequest(auth, url, HttpMethod.DELETE);
 
     if (result.status === 204 || result.status === 200) {

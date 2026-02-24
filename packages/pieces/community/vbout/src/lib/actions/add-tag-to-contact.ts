@@ -19,7 +19,7 @@ export const addTagToContactAction = createAction({
   },
   async run(context) {
     const { email, tagname } = context.propsValue;
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth.secret_text);
     return await client.addTagToContact({
       email: email,
       tagname: tagname as string[],

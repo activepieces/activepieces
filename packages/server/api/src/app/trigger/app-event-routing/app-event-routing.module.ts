@@ -2,13 +2,13 @@ import { facebookLeads } from '@activepieces/piece-facebook-leads'
 import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
-import { Piece } from '@activepieces/pieces-framework'
+import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
     rejectedPromiseHandler,
+    securityAccess,
 } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
@@ -30,7 +30,7 @@ import { JobType } from '../../workers/queue/queue-manager'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
 
-const appWebhooks: Record<string, Piece> = {
+const appWebhooks: Record<string, Piece<PieceAuthProperty | undefined>> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
@@ -55,7 +55,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
         {
             config: {
                 rawBody: true,
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
         },
         async (

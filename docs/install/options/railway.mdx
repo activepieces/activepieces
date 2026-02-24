@@ -43,13 +43,13 @@ Railway allows you to configure Activepieces through environment variables. You 
 #### Execution Mode
 
 Configure the execution mode for security and performance:
-See the [Workers & Sandboxing](/docs/install/architecture/workers) documentation for details on each mode.
+See the [Workers & Sandboxing](/install/architecture/workers) documentation for details on each mode.
 
 #### Other Important Variables
 
 - `AP_TELEMETRY_ENABLED`: Enable/disable telemetry (default: `false`)
 
-For a complete list of all available environment variables, see the [Environment Variables](/docs/install/configuration/environment-variables) documentation.
+For a complete list of all available environment variables, see the [Environment Variables](/install/configuration/environment-variables) documentation.
 
 ## Custom Domain Setup
 
@@ -61,13 +61,13 @@ Railway supports custom domains with automatic SSL:
 4. Update `AP_FRONTEND_URL` environment variable to match your custom domain
 5. Railway will automatically provision SSL certificates
 
-For more details on SSL configuration, see the [Setup SSL](/docs/install/configuration/setup-ssl) guide.
+For more details on SSL configuration, see the [Setup SSL](/install/guides/setup-ssl) guide.
 
 ## Production Considerations
 
 Before deploying to production, review these important points:
 
-- [ ] Review [Security Practices](/docs/security/practices) documentation
+- [ ] Review [Security Practices](/admin-guide/security/practices) documentation
 - [ ] Configure `AP_WORKER_CONCURRENCY` based on your workload and hardware resources
 - [ ] Ensure PostgreSQL backups are configured in Railway
 - [ ] Consider database scaling options in Railway
@@ -86,7 +86,7 @@ To upgrade to a new version of Activepieces on Railway:
 4. Railway will pull the latest Activepieces image and redeploy
 
 <Warning>
-Before upgrading, review the [Breaking Changes](/docs/about/breaking-changes) documentation to ensure compatibility with your flows and configuration.
+Before upgrading, review the [Breaking Changes](/install/configuration/breaking-changes) documentation to ensure compatibility with your flows and configuration.
 </Warning>
 
 ## Next Steps
@@ -94,15 +94,15 @@ Before upgrading, review the [Breaking Changes](/docs/about/breaking-changes) do
 After deploying Activepieces on Railway:
 
 1. **Access your instance** using the Railway-provided URL
-2. **Create your first flow** - see [Building Flows](/docs/flows/building-flows)
-3. **Configure webhooks** - see [Setup App Webhooks](/docs/install/configuration/setup-app-webhooks)
+2. **Create your first flow** - see [Building Flows](/flows/building-flows)
+3. **Configure webhooks** - see [Setup App Webhooks](/install/guides/setup-app-webhooks)
 4. **Explore pieces** - browse available integrations in the piece library
 
 ## Additional Resources
 
-- [Troubleshooting](/docs/install/configuration/troubleshooting): Troubleshooting guide
-- [Configuration Guide](/docs/install/configuration/overview): Comprehensive configuration documentation
-- [Environment Variables](/docs/install/configuration/environment-variables): Complete list of configuration options
-- [Architecture Overview](/docs/install/architecture/overview): Understand Activepieces architecture
+- [Troubleshooting](/install/troubleshooting/websocket-issues): Troubleshooting guide
+- [Configuration Guide](/install/configuration/overview): Comprehensive configuration documentation
+- [Environment Variables](/install/configuration/environment-variables): Complete list of configuration options
+- [Architecture Overview](/install/architecture/overview): Understand Activepieces architecture
 - [Railway Documentation](https://docs.railway.app/): Official Railway platform documentation
 

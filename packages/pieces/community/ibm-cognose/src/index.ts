@@ -61,7 +61,7 @@ Enter your Cognos Analytics credentials:
     }
 
     try {
-      const client = new CognosClient(auth as any);
+      const client = new CognosClient(auth);
       await client.createSession();
       return {
         valid: true
@@ -98,7 +98,7 @@ export const ibmCognose = createPiece({
       auth: ibmCognoseAuth,
       authMapping: async (auth: any) => {
         try {
-          const client = new CognosClient(auth);
+          const client = new CognosClient(auth.props);
           await client.createSession();
           
           if (client['sessionCookies']) {

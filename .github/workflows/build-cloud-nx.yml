@@ -78,7 +78,7 @@ jobs:
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
         run: npx nx run-many --target=build -c production --projects="pieces-*"
       
-      - name: Run all tests in parallel
+      - name: Run all tests and migration check in parallel
         run: |
           set -euo pipefail
           pids=()
@@ -93,6 +93,9 @@ jobs:
           pids+=($!)
 
           npx nx run server-api:test-cloud &
+          pids+=($!)
+
+          npx nx run server-api:check-migrations &
           pids+=($!)
 
           status=0

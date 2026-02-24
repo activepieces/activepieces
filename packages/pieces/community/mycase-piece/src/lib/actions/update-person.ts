@@ -9,6 +9,7 @@ export const updatePerson = createAction({
   description: 'Updates an existing individual client (person) in MyCase',
   props: {
     client_id: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Client',
       description: 'Select the client to update',
       required: true,
@@ -125,6 +126,7 @@ export const updatePerson = createAction({
       required: false,
     }),
     people_group: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'People Group',
       description: 'The people group to associate with this client',
       required: false,
@@ -161,7 +163,7 @@ export const updatePerson = createAction({
       },
     }),
     cases: Property.MultiSelectDropdown({
-      displayName: 'Cases',
+  auth: mycaseAuth,      displayName: 'Cases',
       description: 'Cases to associate with this client',
       required: false,
       refreshers: [],

@@ -5,7 +5,7 @@ import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceAction
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, FlowTrigger, PieceTrigger } from '../triggers/trigger'
+import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -44,6 +44,8 @@ export enum FlowOperationType {
     UPDATE_METADATA = 'UPDATE_METADATA',
     MOVE_BRANCH = 'MOVE_BRANCH',
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
+    UPDATE_MINUTES_SAVED = 'UPDATE_MINUTES_SAVED',
+    UPDATE_OWNER = 'UPDATE_OWNER',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -174,6 +176,16 @@ export const UpdateMetadataRequest = Type.Object({
     metadata: Nullable(Metadata),
 })
 export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
+
+export const UpdateMinutesSavedRequest = Type.Object({
+    timeSavedPerRun: Nullable(Type.Number()),
+})
+export type UpdateMinutesSavedRequest = Static<typeof UpdateMinutesSavedRequest>
+
+export const UpdateOwnerRequest = Type.Object({
+    ownerId: Type.String(),
+})
+export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
 
 export const FlowOperationRequest = Type.Union([
     Type.Object(
@@ -350,6 +362,24 @@ export const FlowOperationRequest = Type.Union([
             request: SaveSampleDataRequest,
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_MINUTES_SAVED),
+            request: UpdateMinutesSavedRequest,
+        },
+        {
+            title: 'Update Minutes Saved',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_OWNER),
+            request: UpdateOwnerRequest,
+        },
+        {
+            title: 'Update Owner',
+        },
+    ),
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
@@ -438,7 +468,10 @@ export const flowOperations = {
             default:
                 break
         }
-        clonedVersion.valid = flowStructureUtil.getAllSteps(clonedVersion.trigger).every((step) => step.valid)
+        clonedVersion.valid = flowStructureUtil.getAllSteps(clonedVersion.trigger).every((step) => {
+            const isSkipped = step.type != FlowTriggerType.EMPTY && step.type != FlowTriggerType.PIECE && step.skip
+            return step.valid || isSkipped
+        })
         return clonedVersion
     },
 }

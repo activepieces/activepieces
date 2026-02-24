@@ -9,8 +9,18 @@ export const Solution = Type.Object({
 export type Solution = Static<typeof Solution>
 
 export const ExportRequestBody = Type.Object({
+    projectId: Type.String(),
     name: Type.String(),
     description: Type.Optional(Type.String()),
 })
 
 export type ExportRequestBody = Static<typeof ExportRequestBody>
+
+export const SolutionRequestBody = Type.Composite([
+    Solution, 
+    Type.Object({
+        projectId: Type.String(),
+    }),
+])
+
+export type SolutionRequestBody = Static<typeof SolutionRequestBody>

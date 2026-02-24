@@ -5,8 +5,8 @@ import {
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
@@ -22,10 +22,7 @@ export const platformHooks = {
         await platformApi.deleteAccount();
       },
       onSuccess: () => {
-        toast({
-          title: t('Success'),
-          description: t('Account deleted successfully'),
-        });
+        toast.success(t('Account deleted successfully'));
         navigate('/sign-in');
       },
     });
@@ -65,17 +62,10 @@ export const platformHooks = {
         queryClient.invalidateQueries({
           queryKey: flagsHooks.queryKey,
         });
-        toast({
-          title: t('Success'),
-          description: t('License activated successfully!'),
-        });
+        toast.success(t('License activated successfully!'));
       },
       onError: () => {
-        toast({
-          title: t('Error'),
-          description: t('Activation failed, invalid license key'),
-          variant: 'destructive',
-        });
+        toast.error(t('Activation failed, invalid license key'));
       },
     });
   },

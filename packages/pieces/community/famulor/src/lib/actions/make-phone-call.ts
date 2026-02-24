@@ -13,7 +13,7 @@ export const makePhoneCall = createAction({
     await propsValidation.validateZod(propsValue, famulorCommon.makePhoneCallSchema);
 
     return await famulorCommon.makePhoneCall({
-      auth: auth as string,
+      auth: auth.secret_text,
       assistant_id: propsValue.assistant_id as number,
       phone_number: propsValue.phone_number!,
       variable: propsValue.variable,

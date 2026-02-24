@@ -1,12 +1,12 @@
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema } from '@activepieces/pieces-framework';
 
 import { moxieCRMAuth } from '../../';
 import { MoxieCRMClient } from './client';
 
 export async function makeClient(
-  auth: PiecePropValueSchema<typeof moxieCRMAuth>
+  auth: AppConnectionValueForAuthProperty<typeof moxieCRMAuth>
 ): Promise<MoxieCRMClient> {
-  const client = new MoxieCRMClient(auth.baseUrl, auth.apiKey);
+  const client = new MoxieCRMClient(auth.props.baseUrl, auth.props.apiKey);
   return client;
 }
 

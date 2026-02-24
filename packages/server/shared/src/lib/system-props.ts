@@ -12,6 +12,7 @@ let cachedVersion: string | undefined
 
 export enum AppSystemProp {
     API_KEY = 'API_KEY',
+    TEMPLATES_API_KEY = 'TEMPLATES_API_KEY',
     API_RATE_LIMIT_AUTHN_ENABLED = 'API_RATE_LIMIT_AUTHN_ENABLED',
     API_RATE_LIMIT_AUTHN_MAX = 'API_RATE_LIMIT_AUTHN_MAX',
     API_RATE_LIMIT_AUTHN_WINDOW = 'API_RATE_LIMIT_AUTHN_WINDOW',
@@ -19,7 +20,6 @@ export enum AppSystemProp {
     APPSUMO_TOKEN = 'APPSUMO_TOKEN',
     CLIENT_REAL_IP_HEADER = 'CLIENT_REAL_IP_HEADER',
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',
-    CLOUD_PLATFORM_ID = 'CLOUD_PLATFORM_ID',
     CLOUDFLARE_API_BASE = 'CLOUDFLARE_API_BASE',
     CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',
     CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
@@ -43,6 +43,7 @@ export enum AppSystemProp {
     INTERNAL_URL = 'INTERNAL_URL',
     ISSUE_ARCHIVE_DAYS = 'ISSUE_ARCHIVE_DAYS',
     JWT_SECRET = 'JWT_SECRET',
+    LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'LOAD_TRANSLATIONS_FOR_DEV_PIECES',
     LOG_LEVEL = 'LOG_LEVEL',
     LOG_PRETTY = 'LOG_PRETTY',
     LOKI_PASSWORD = 'LOKI_PASSWORD',
@@ -106,11 +107,11 @@ export enum AppSystemProp {
     STRIPE_SECRET_KEY = 'STRIPE_SECRET_KEY',
     STRIPE_WEBHOOK_SECRET = 'STRIPE_WEBHOOK_SECRET',
     TELEMETRY_ENABLED = 'TELEMETRY_ENABLED',
-    TEMPLATES_SOURCE_URL = 'TEMPLATES_SOURCE_URL',
     TRIGGER_DEFAULT_POLL_INTERVAL = 'TRIGGER_DEFAULT_POLL_INTERVAL',
     TRIGGER_HOOKS_TIMEOUT_SECONDS = 'TRIGGER_HOOKS_TIMEOUT_SECONDS',
     TRIGGER_TIMEOUT_SECONDS = 'TRIGGER_TIMEOUT_SECONDS',
     WEBHOOK_TIMEOUT_SECONDS = 'WEBHOOK_TIMEOUT_SECONDS',
+    OPENROUTER_PROVISION_KEY = 'OPENROUTER_PROVISION_KEY',
 }
 
 export enum ContainerType {
@@ -139,6 +140,10 @@ export const environmentVariables = {
     getNumberEnvironment: (prop: WorkerSystemProp | AppSystemProp): number | undefined => {
         const value = environmentVariables.getEnvironment(prop)
         return value ? parseInt(value) : undefined
+    },
+    getBooleanEnvironment: (prop: WorkerSystemProp | AppSystemProp): boolean | undefined => {
+        const value = environmentVariables.getEnvironment(prop)
+        return value ? value === 'true' : undefined
     },
     getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
         const environmnetVariables = environmentMigrations.migrate()

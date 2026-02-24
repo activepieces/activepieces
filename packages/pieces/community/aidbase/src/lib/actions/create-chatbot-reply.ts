@@ -26,10 +26,10 @@ export const createChatbotReply = createAction({
   },
 
   async run(context) {
-    const { auth: apiKey, propsValue } = context;
+    const { auth: apiKey, propsValue } = context; 
     const { chatbot_id, message, session_id } = propsValue;
 
-    return await aidbaseClient.createChatbotReply(apiKey, chatbot_id, {
+    return await aidbaseClient.createChatbotReply(apiKey.secret_text, chatbot_id, {
       message,
       session_id,
     });

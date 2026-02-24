@@ -55,7 +55,7 @@ export const findOrCreateCustomersAddress = createAction({
     params.append('customer_id:in', context.propsValue.customer_id as string);
 
     const response = await bigCommerceApiService.fetchCustomerAddresses({
-      auth: context.auth,
+      auth: context.auth.props,
       queryString: params.toString(),
     });
 
@@ -73,7 +73,7 @@ export const findOrCreateCustomersAddress = createAction({
     }
 
     const newAddress = await bigCommerceApiService.createCustomerAddress({
-      auth: context.auth,
+      auth: context.auth.props,
       payload: [
         {
           customer_id: context.propsValue.customer_id,
