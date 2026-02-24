@@ -4171,6 +4171,15 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/mysendingbox": {
+      "name": "@activepieces/piece-mysendingbox",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+      },
+    },
     "packages/pieces/community/mysql": {
       "name": "@activepieces/piece-mysql",
       "version": "0.2.3",
@@ -7500,6 +7509,8 @@
     "@activepieces/piece-murf-api": ["@activepieces/piece-murf-api@workspace:packages/pieces/community/murf-api"],
 
     "@activepieces/piece-mycase-piece": ["@activepieces/piece-mycase-piece@workspace:packages/pieces/community/mycase-piece"],
+
+    "@activepieces/piece-mysendingbox": ["@activepieces/piece-mysendingbox@workspace:packages/pieces/community/mysendingbox"],
 
     "@activepieces/piece-mysql": ["@activepieces/piece-mysql@workspace:packages/pieces/community/mysql"],
 
