@@ -48,6 +48,7 @@ import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
+import SecretMangersPage from '../routes/platform/security/secret-managers';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { PlatformTemplatesPage } from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
@@ -424,6 +425,16 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="API Keys">
           <ApiKeysPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/security/secret-managers',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Secret managers">
+          <SecretMangersPage />
         </PageTitle>
       </PlatformLayout>
     ),

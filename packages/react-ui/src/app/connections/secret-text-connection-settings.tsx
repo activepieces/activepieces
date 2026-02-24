@@ -10,14 +10,16 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+
+import { SecretInput } from './secret-input';
 
 type SecretTextConnectionSettingsProps = {
   authProperty: SecretTextProperty<boolean>;
+  isGlobalConnection: boolean;
 };
 
 const SecretTextConnectionSettings = React.memo(
-  ({ authProperty }: SecretTextConnectionSettingsProps) => {
+  ({ authProperty, isGlobalConnection }: SecretTextConnectionSettingsProps) => {
     const formSchema = Type.Object({
       request: UpsertSecretTextRequest,
     });
@@ -29,10 +31,14 @@ const SecretTextConnectionSettings = React.memo(
         name="request.value.secret_text"
         control={form.control}
         render={({ field }) => (
-          <FormItem className="flex flex-col">
+          <FormItem className="flex flex-col gap-2">
             <FormLabel>{authProperty.displayName}</FormLabel>
             <FormControl>
-              <Input {...field} type="password" />
+              <SecretInput
+                {...field}
+                type="password"
+                allowTogglingSecretManagerMode={isGlobalConnection}
+              />
             </FormControl>
           </FormItem>
         )}
