@@ -1,4 +1,14 @@
 {
   "name": "@activepieces/piece-firecrawl",
-  "version": "0.3.5"
+"version": "0.3.5",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "ajv": "8.12.0"
+  }
 }

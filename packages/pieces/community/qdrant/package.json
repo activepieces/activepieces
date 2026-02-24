@@ -2,6 +2,13 @@
   "name": "@activepieces/piece-qdrant",
   "version": "0.3.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@qdrant/js-client-rest": "1.7.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

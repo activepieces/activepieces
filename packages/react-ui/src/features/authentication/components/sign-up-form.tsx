@@ -1,3 +1,12 @@
+import { OtpType } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  AuthenticationResponse,
+  ErrorCode,
+  isNil,
+  SignUpRequest,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
@@ -28,15 +37,6 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
-import { OtpType } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  AuthenticationResponse,
-  ErrorCode,
-  isNil,
-  SignUpRequest,
-} from '@activepieces/shared';
 
 import { passwordValidation } from '../lib/password-validation-utils';
 

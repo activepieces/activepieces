@@ -1,3 +1,8 @@
+import {
+  ApFlagId,
+  FlowActionType,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,11 +15,6 @@ import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  ApFlagId,
-  FlowActionType,
-  TelemetryEventName,
-} from '@activepieces/shared';
 
 import { usePieceSearchContext } from '../../../../features/pieces/lib/piece-search-context';
 import { useBuilderStateContext } from '../../builder-hooks';

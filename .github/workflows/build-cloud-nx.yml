@@ -5,9 +5,7 @@ on:
 permissions:
   actions: read
   contents: read
-  
-env:
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
 
 jobs:
   main:
@@ -17,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -26,20 +24,24 @@ jobs:
         with:
           bun-version: latest
 
-   
       - run: bun install
 
-      - run: npx nx reset 
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.2.1
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
 
-      - uses: nrwl/nx-set-shas@v4
-
-      - name: List all nx targets
-        run: npx nx show projects --all
-      
       - name: Get changed files
         id: changed-files
         run: echo "files=$(git diff --name-only HEAD origin/main | tr '\n' ' ')" >> $GITHUB_OUTPUT
-      
+
       - name: Check if framework or common pieces are changed
         id: check-framework-common
         run: |
@@ -49,53 +51,70 @@ jobs:
           else
             echo "framework_or_common_changed=false" >> $GITHUB_OUTPUT
           fi
-      
-      - name: Extract pieces projects from changed files
+
+      - name: Extract pieces package names from changed files
         id: extract-pieces
         run: |
-          PIECES=$(echo "${{ steps.changed-files.outputs.files }}" | grep -o "packages/pieces/[^/]*/[^/]*/" | awk -F'/' '{print "pieces-" $4}' | sort -u | tr '\n' ',' | sed 's/,$//')
-          echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
+          PIECES=$(echo "${{ steps.changed-files.outputs.files }}" | grep -o "packages/pieces/community/[^/]*" | awk -F'/' '{print $4}' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$PIECES" ]; then
+            FILTERS=$(echo "$PIECES" | tr ',' '\n' | sed 's/.*/{&}/' | tr '\n' ',' | sed 's/,$//')
+            echo "pieces_filters=$FILTERS" >> $GITHUB_OUTPUT
+          else
+            echo "pieces_filters=" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Lint affected projects excluding pieces
-        run: npx nx affected --target=lint --exclude="pieces-*"
-      
+      - name: Lint core projects
+        run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=server-api --filter=react-ui --filter=@activepieces/server-shared --filter=server-worker --filter=@activepieces/ee-shared --filter=ee-embed-sdk
+
       - name: Lint changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-      
+        if: steps.extract-pieces.outputs.pieces_filters != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
+        run: |
+          IFS=',' read -ra PIECES <<< "${{ steps.extract-pieces.outputs.pieces_filters }}"
+          FILTER_ARGS=""
+          for piece in "${PIECES[@]}"; do
+            FILTER_ARGS="$FILTER_ARGS --filter=./packages/pieces/community/${piece}"
+          done
+          npx turbo run lint $FILTER_ARGS
+
       - name: Lint all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx nx run-many --target=lint --projects="pieces-*"
-        
-      - name: Build affected projects excluding pieces
-        run: npx nx affected --target=build -c production --exclude="pieces-*"
-    
+        run: npx turbo run lint --filter='./packages/pieces/community/*'
+
+      - name: Build core projects
+        run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine
+
       - name: Build changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
-        run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}"
-      
+        if: steps.extract-pieces.outputs.pieces_filters != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
+        run: |
+          IFS=',' read -ra PIECES <<< "${{ steps.extract-pieces.outputs.pieces_filters }}"
+          FILTER_ARGS=""
+          for piece in "${PIECES[@]}"; do
+            FILTER_ARGS="$FILTER_ARGS --filter=./packages/pieces/community/${piece}"
+          done
+          npx turbo run build $FILTER_ARGS
+
       - name: Build all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx nx run-many --target=build -c production --projects="pieces-*"
-      
+        run: npx turbo run build --filter='./packages/pieces/community/*'
+
       - name: Run all tests and migration check in parallel
         run: |
           set -euo pipefail
           pids=()
 
-          npx nx run-many --target=test --projects=engine,shared &
+          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared &
           pids+=($!)
 
-          npx nx run server-api:test-ce &
+          npx turbo run test-ce --filter=server-api &
           pids+=($!)
 
-          npx nx run server-api:test-ee &
+          npx turbo run test-ee --filter=server-api &
           pids+=($!)
 
-          npx nx run server-api:test-cloud &
+          npx turbo run test-cloud --filter=server-api &
           pids+=($!)
 
-          npx nx run server-api:check-migrations &
+          npx turbo run check-migrations --filter=server-api &
           pids+=($!)
 
           status=0

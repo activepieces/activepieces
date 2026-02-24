@@ -1,5 +1,6 @@
 'use client';
 
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
@@ -13,7 +14,6 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/utils';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type TimeSavedChartProps = {
   report?: PlatformAnalyticsReport;

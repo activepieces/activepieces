@@ -1,4 +1,13 @@
 {
   "name": "@activepieces/piece-surveymonkey",
-  "version": "0.1.5"
+  "version": "0.1.5",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
 }

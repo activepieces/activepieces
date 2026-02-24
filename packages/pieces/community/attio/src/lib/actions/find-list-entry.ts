@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { attioPaginatedApiCall } from '../common/client';
 import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 

@@ -23,13 +23,7 @@ import { githubUpdateIssueAction } from './lib/actions/update-issue';
 import { githubFindBranchAction } from './lib/actions/find-branch';
 import { githubFindIssueAction } from './lib/actions/find-issue';
 import { githubFindUserAction } from './lib/actions/find-user';
-
-export const githubAuth = PieceAuth.OAuth2({
-  required: true,
-  authUrl: 'https://github.com/login/oauth/authorize',
-  tokenUrl: 'https://github.com/login/oauth/access_token',
-  scope: ['admin:repo_hook', 'admin:org', 'repo'],
-});
+import { githubAuth } from './lib/auth';
 
 export const github = createPiece({
   displayName: 'GitHub',

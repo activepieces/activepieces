@@ -1,4 +1,13 @@
 {
   "name": "@activepieces/piece-delay",
-  "version": "0.3.26"
+"version": "0.3.26",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
 }

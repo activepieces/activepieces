@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { linkaAuth } from '../../';
+import { linkaAuth } from '../auth';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrUpdateContactExtended = createAction({

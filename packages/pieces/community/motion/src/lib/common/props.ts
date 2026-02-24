@@ -4,7 +4,7 @@ import {
   HttpMethod,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { motionAuth } from '../..';
+import { motionAuth } from '../auth';
 
 export const BASE_URL = 'https://api.usemotion.com/v1';
 

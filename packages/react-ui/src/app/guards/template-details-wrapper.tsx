@@ -1,3 +1,4 @@
+import { TemplateType, isNil } from '@activepieces/shared';
 import { Navigate, useParams, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
@@ -8,7 +9,6 @@ import { ShareTemplate } from '@/features/templates/components/share-template';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
-import { TemplateType, isNil } from '@activepieces/shared';
 
 const TemplateDetailsWrapper = () => {
   const { templateId } = useParams<{ templateId: string }>();

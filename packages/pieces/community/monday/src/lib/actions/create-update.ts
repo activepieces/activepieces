@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
+import { mondayAuth } from '../auth';
 import { makeClient } from '../common';
 
 export const createUpdateAction = createAction({

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { peekshotAuth } from '../../index';
+import { peekshotAuth } from '../auth';
 import { projectId } from '../common/props';
 import {
   CreateScreenshotResponse,

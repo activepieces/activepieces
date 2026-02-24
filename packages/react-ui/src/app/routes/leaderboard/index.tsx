@@ -1,3 +1,4 @@
+import { AnalyticsTimePeriod } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Calendar, Download, RefreshCcwIcon } from 'lucide-react';
 import { useContext, useMemo, useState } from 'react';
@@ -25,7 +26,6 @@ import {
   RefreshAnalyticsProvider,
 } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { downloadFile, formatUtils } from '@/lib/utils';
-import { AnalyticsTimePeriod } from '@activepieces/shared';
 
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 import { UsersLeaderboard, UserStats } from './users-leaderboard';

@@ -1,3 +1,8 @@
+import {
+  ProjectType,
+  ProjectWithLimits,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
@@ -25,11 +30,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils, validationUtils } from '@/lib/utils';
-import {
-  ProjectType,
-  ProjectWithLimits,
-  TeamProjectsLimit,
-} from '@activepieces/shared';
 
 import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';

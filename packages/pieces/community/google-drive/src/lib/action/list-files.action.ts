@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import querystring from 'querystring';
 import { common } from '../common';

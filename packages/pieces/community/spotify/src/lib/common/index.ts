@@ -34,6 +34,9 @@ export const spotifyCommon = {
       'playlist-modify-private',
       'playlist-modify-public',
       'user-library-read',
+      'user-library-modify',
+      'user-follow-read',
+      'user-follow-modify',
     ],
   }),
   device_id: (required = true) =>

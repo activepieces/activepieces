@@ -9,6 +9,7 @@
   "Password": "Password",
   "Port": "ポート",
   "Require TLS?": "TLSが必要ですか？",
+  "Leave blank if your mail relay does not require authentication.": "メールリレーに認証が必要ない場合は空白のままにしてください。",
   "Send Email": "メール送信",
   "Send an email using a custom SMTP server.": "カスタムSMTPサーバーを使用してメールを送信します。",
   "From Email": "差出人メールアドレス",

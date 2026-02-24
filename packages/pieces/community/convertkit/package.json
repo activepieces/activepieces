@@ -1,4 +1,13 @@
 {
   "name": "@activepieces/piece-convertkit",
-  "version": "0.3.3"
+"version": "0.3.3",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*"
+  }
 }

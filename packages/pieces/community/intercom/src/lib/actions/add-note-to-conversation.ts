@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../..';
+import { intercomAuth } from '../auth';
 import { commonProps, intercomClient } from '../common';
 import { conversationIdProp } from '../common/props';
 

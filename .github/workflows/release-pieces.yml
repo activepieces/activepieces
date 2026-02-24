@@ -13,9 +13,6 @@ concurrency:
   group: release-pieces
   cancel-in-progress: false
 
-env:
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-  
 jobs:
   Release-Pieces:
     if: github.repository == 'activepieces/activepieces'
@@ -46,35 +43,43 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.2.1
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 2w
+          max-size: 20gb
+
       - name: copy project .npmrc to user level
         run: cp .npmrc $HOME/.npmrc
 
       - name: publish shared package
-        run: npx nx run-many --target=build --projects=shared && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
+        run: npx turbo run build --filter=@activepieces/shared && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
 
       - name: publish pieces-common package
-        run: npx nx run-many --target=build --projects=pieces-common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
+        run: npx turbo run build --filter=@activepieces/pieces-common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
 
       - name: publish pieces-framework package
-        run: npx nx run-many --target=build --projects=pieces-framework && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
+        run: npx turbo run build --filter=@activepieces/pieces-framework && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-
       - name: build packages
-        run: npx nx run-many --target=build
+        run: npx turbo run build
 
       - name: publish pieces packages
         run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
 
       - name: Check available memory
         run: free -h

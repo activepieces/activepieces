@@ -20,7 +20,7 @@ type MultiSelectPiecePropertyProps = {
     label: string;
   }[];
   onChange: (value: unknown[] | null) => void;
-  initialValues?: unknown[];
+  initialValues?: unknown;
   disabled?: boolean;
   showDeselect?: boolean;
   showRefresh?: boolean;
@@ -60,16 +60,17 @@ const MultiSelectPieceProperty = ({
       return option.label?.toLowerCase()?.includes(searchTerm?.toLowerCase());
     });
 
-  const selectedIndicies = initialValues
-    ? initialValues
-        .map((value) =>
-          [...cachedOptions, ...options].findIndex((option) =>
-            deepEqual(option.value, value),
-          ),
-        )
-        .filter((index) => index > -1)
-        .map((index) => String(index))
-    : [];
+  const selectedIndicies =
+    initialValues && Array.isArray(initialValues)
+      ? initialValues
+          .map((value) =>
+            [...cachedOptions, ...options].findIndex((option) =>
+              deepEqual(option.value, value),
+            ),
+          )
+          .filter((index) => index > -1)
+          .map((index) => String(index))
+      : [];
   const sendChanges = (indicides: string[]) => {
     const newSelectedIndicies = indicides.filter(
       (index) => index !== undefined,

@@ -18,6 +18,7 @@ import { discordDeleteGuildRole } from './lib/actions/delete-guild-role';
 import { discordBanGuildMember } from './lib/actions/ban-a-guild-member';
 import { newMember } from './lib/triggers/new-member';
 import { sendMessageWithBot } from './lib/actions/send-message-with-bot'
+import { discordAuth } from './lib/auth';
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -26,12 +27,6 @@ To obtain a token, follow these steps:
 3. Click on Bot
 4. Copy the token
 `;
-
-export const discordAuth = PieceAuth.SecretText({
-  displayName: 'Bot Token',
-  description: markdown,
-  required: true,
-});
 
 export const discord = createPiece({
   displayName: 'Discord',
