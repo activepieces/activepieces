@@ -76,9 +76,9 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         const { providerId, keyWithoutBraces } = extractProviderId(key)
         try {
             return await this.getSecret({
+                ...({ providerId,
+                    request: await secretManagerProvider(log, providerId).resolve(keyWithoutBraces) } as GetSecretManagerSecretRequest),
                 platformId,
-                providerId,
-                path: keyWithoutBraces,
             }) 
         }
         catch (error) {
