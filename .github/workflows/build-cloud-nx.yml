@@ -72,13 +72,13 @@ jobs:
           IFS=',' read -ra PIECES <<< "${{ steps.extract-pieces.outputs.pieces_filters }}"
           FILTER_ARGS=""
           for piece in "${PIECES[@]}"; do
-            FILTER_ARGS="$FILTER_ARGS --filter=./packages/pieces/community/${piece}"
+            FILTER_ARGS="$FILTER_ARGS --filter=@activepieces/piece-${piece}"
           done
           npx turbo run lint $FILTER_ARGS
 
       - name: Lint all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx turbo run lint --filter='./packages/pieces/community/*'
+        run: npx turbo run lint --filter='@activepieces/piece-*'
 
       - name: Build core projects
         run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine
@@ -89,13 +89,13 @@ jobs:
           IFS=',' read -ra PIECES <<< "${{ steps.extract-pieces.outputs.pieces_filters }}"
           FILTER_ARGS=""
           for piece in "${PIECES[@]}"; do
-            FILTER_ARGS="$FILTER_ARGS --filter=./packages/pieces/community/${piece}"
+            FILTER_ARGS="$FILTER_ARGS --filter=@activepieces/piece-${piece}"
           done
           npx turbo run build $FILTER_ARGS
 
       - name: Build all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx turbo run build --filter='./packages/pieces/community/*'
+        run: npx turbo run build --filter='@activepieces/piece-*'
 
       - name: Run all tests and migration check in parallel
         run: |
