@@ -3,9 +3,7 @@ FROM node:20.19-bullseye-slim AS base
 # Set environment variables early for better layer caching
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8 \
-    NX_DAEMON=false \
-    NX_NO_CLOUD=true
+    LC_ALL=en_US.UTF-8
 
 # Install all system dependencies in a single layer with cache mounts
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -34,7 +32,7 @@ RUN export ARCH=$(uname -m) && \
     elif [ "$ARCH" = "aarch64" ]; then \
       curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
     fi
-    
+
 RUN unzip bun.zip \
     && mv bun-*/bun /usr/local/bin/bun \
     && chmod +x /usr/local/bin/bun \
@@ -48,7 +46,8 @@ RUN --mount=type=cache,target=/root/.npm \
     node-gyp \
     npm@9.9.3 \
     pm2@6.0.10 \
-    typescript@4.9.4
+    typescript@4.9.4 \
+    tsx
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
@@ -59,23 +58,19 @@ FROM base AS build
 
 WORKDIR /usr/src/app
 
-# Copy only dependency files first for better layer caching
+# Copy dependency files and workspace package.json files for resolution
 COPY .npmrc package.json bun.lock ./
+COPY packages/ ./packages/
 
 # Install all dependencies with frozen lockfile
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
 
-# Copy source code after dependency installation
+# Copy remaining source code (turbo config, etc.)
 COPY . .
 
-# Build both projects (already has NX_NO_CLOUD from base stage)
-RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production --parallel=2 --skip-nx-cache
-
-# Install production dependencies only for the backend API
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    cd dist/packages/server/api && \
-    bun install --production --frozen-lockfile
+# Build frontend and engine (server runs from source via tsx)
+RUN npx turbo run build --filter=react-ui --filter=@activepieces/engine
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -95,17 +90,25 @@ COPY docker-entrypoint.sh .
 
 # Create all necessary directories in one layer
 RUN mkdir -p \
-    /usr/src/app/dist/packages/server \
-    /usr/src/app/dist/packages/engine \
-    /usr/src/app/dist/packages/shared && \
+    /usr/src/app/dist/packages/engine && \
     chmod +x docker-entrypoint.sh
 
-# Copy built artifacts from build stage
+# Copy root config files needed for tsx/tsconfig resolution
+COPY --from=build /usr/src/app/package.json ./
+COPY --from=build /usr/src/app/.npmrc ./
+COPY --from=build /usr/src/app/bun.lock ./
+COPY --from=build /usr/src/app/tsconfig.base.json ./
 COPY --from=build /usr/src/app/LICENSE .
-COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
-COPY --from=build /usr/src/app/dist/packages/server/ ./dist/packages/server/
-COPY --from=build /usr/src/app/dist/packages/shared/ ./dist/packages/shared/
+
+# Copy source code and workspace packages
 COPY --from=build /usr/src/app/packages ./packages
+
+# Copy built engine
+COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
+
+# Install production dependencies (creates workspace links)
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --production --frozen-lockfile
 
 # Copy frontend files to Nginx document root
 COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/

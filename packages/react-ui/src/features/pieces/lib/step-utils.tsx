@@ -1,5 +1,3 @@
-import { t } from 'i18next';
-
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -17,10 +15,12 @@ import {
   StepOutput,
   StepRunResponse,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import {
   PieceStepMetadata,
   PrimitiveStepMetadata,
+  StepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
 } from '../../../lib/types';
 
@@ -153,6 +153,31 @@ export const stepUtils = {
       : undefined;
   },
 };
+
+export function extractPieceNamesAndCoreMetadata(
+  steps: ReturnType<typeof flowStructureUtil.getAllSteps>,
+  excludeCore: boolean,
+): { pieceNames: string[]; coreMetadata: StepMetadata[] } {
+  const pieceNamesSet = new Set<string>();
+  const coreMetadata: StepMetadata[] = [];
+
+  for (const step of steps) {
+    if (
+      step.type === FlowActionType.PIECE ||
+      step.type === FlowTriggerType.PIECE
+    ) {
+      pieceNamesSet.add(step.settings.pieceName);
+    } else if (!excludeCore) {
+      const coreMeta =
+        CORE_STEP_METADATA[step.type as keyof typeof CORE_STEP_METADATA];
+      if (coreMeta) {
+        coreMetadata.push(coreMeta);
+      }
+    }
+  }
+
+  return { pieceNames: Array.from(pieceNamesSet), coreMetadata };
+}
 
 function mapErrorHandlingOptions(
   piece: PieceMetadataModel,

@@ -1,3 +1,4 @@
+import { AnalyticsTimePeriod } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Calendar, Folder, RefreshCcwIcon } from 'lucide-react';
@@ -24,7 +25,6 @@ import {
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { AnalyticsTimePeriod } from '@activepieces/shared';
 
 import { FlowsDetails } from './details';
 import { Summary } from './summary';

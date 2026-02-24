@@ -1,7 +1,7 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { Property } from "@activepieces/pieces-framework";
 import { baseUrlv0 } from "./common";
-import { straicoAuth } from "../..";
+import { straicoAuth } from '../auth';
 
 export const agentIdDropdown =(displayName:string, desc:string)=> Property.Dropdown({
   auth: straicoAuth,

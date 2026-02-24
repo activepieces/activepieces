@@ -1,3 +1,9 @@
+import {
+  FlowActionType,
+  isNil,
+  FlowTriggerType,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { MoveLeft } from 'lucide-react';
 import React from 'react';
@@ -12,12 +18,6 @@ import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  FlowActionType,
-  isNil,
-  FlowTriggerType,
-  TelemetryEventName,
-} from '@activepieces/shared';
 
 import { usePieceSearchContext } from '../../../features/pieces/lib/piece-search-context';
 import { useBuilderStateContext } from '../builder-hooks';

@@ -18,14 +18,14 @@ describe('runWithExponentialBackoff', () => {
         },
     })
     const constants = generateMockEngineConstants()
-    const requestFunction = jest.fn()
+    const requestFunction = vi.fn()
 
     beforeEach(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
     })
 
     afterAll(() => {
-        jest.clearAllMocks()
+        vi.clearAllMocks()
     })
 
     it('should return resultExecutionState when verdict is not FAILED', async () => {

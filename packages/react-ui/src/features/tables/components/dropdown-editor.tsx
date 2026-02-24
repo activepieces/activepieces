@@ -1,8 +1,8 @@
+import { FieldType, StaticDropdownEmptyOption } from '@activepieces/shared';
 import { useRef } from 'react';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { cn } from '@/lib/utils';
-import { FieldType, StaticDropdownEmptyOption } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { useCellContext } from './cell-context';

@@ -1,8 +1,8 @@
-import { endClient, sftpAuth } from '../../index';
+import { sftpAuth } from '../auth';
+import { endClient, getClient, getProtocolBackwardCompatibility } from '../common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
-import { getClient, getProtocolBackwardCompatibility } from '../..';
 import { MarkdownVariant } from '@activepieces/shared';
 import { getSftpError } from './common';
 

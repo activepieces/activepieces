@@ -5,7 +5,8 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { stableDiffusionAuth, StableDiffusionAuthType } from '../../index';
+import { stableDiffusionAuth } from '../auth';
+import { StableDiffusionAuthType } from '../../index';
 import { kebabCase } from '@activepieces/shared';
 
 export const textToImage = createAction({

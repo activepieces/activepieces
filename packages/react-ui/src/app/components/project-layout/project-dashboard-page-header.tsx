@@ -1,3 +1,11 @@
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+  UserStatus,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
@@ -23,14 +31,6 @@ import {
   projectCollectionUtils,
 } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
-import {
-  ApFlagId,
-  isNil,
-  Permission,
-  PlatformRole,
-  ProjectType,
-  UserStatus,
-} from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';

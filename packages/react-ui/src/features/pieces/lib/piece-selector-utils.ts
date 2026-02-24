@@ -1,12 +1,3 @@
-import { Value } from '@sinclair/typebox/value';
-import { useRef } from 'react';
-
-import {
-  PieceSelectorItem,
-  PieceSelectorOperation,
-  PieceSelectorPieceItem,
-  PieceStepMetadataWithSuggestions,
-} from '@/lib/types';
 import { piecePropertiesUtils } from '@activepieces/pieces-framework';
 import {
   FlowAction,
@@ -30,6 +21,15 @@ import {
   FlowOperationType,
   isManualPieceTrigger,
 } from '@activepieces/shared';
+import { Value } from '@sinclair/typebox/value';
+import { useRef } from 'react';
+
+import {
+  PieceSelectorItem,
+  PieceSelectorOperation,
+  PieceSelectorPieceItem,
+  PieceStepMetadataWithSuggestions,
+} from '@/lib/types';
 
 import { formUtils } from './form-utils';
 const defaultCode = `export const code = async (inputs) => {

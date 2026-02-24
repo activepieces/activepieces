@@ -1,3 +1,4 @@
+import { Tag } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -15,7 +16,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
-import { Tag } from '@activepieces/shared';
 
 type CreateTagDialogProps = {
   onTagCreated: (tag: Tag) => void;

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { LANGUAGE_OPTIONS } from '../constants/languages';
 import { SerpApiClient } from '../services/serp-api-client';

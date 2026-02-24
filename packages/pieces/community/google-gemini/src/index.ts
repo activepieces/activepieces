@@ -10,6 +10,7 @@ import { generateContentFromImageAction } from './lib/actions/generate-content-f
 import { generateContentAction } from './lib/actions/generate-content.action';
 import { textToSpeechAction } from './lib/actions/text-to-speech.action';
 import { generateContentWithFileSearchAction } from './lib/actions/generate-content-with-file-search';
+import { googleGeminiAuth } from './lib/auth';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -17,35 +18,6 @@ Follow these instructions to get your API Key:
 2. Once on the website, locate and click on the option to obtain your API Key.
 Please note this piece uses a API in the beta phase that may change at any time.
 `;
-
-export const googleGeminiAuth = PieceAuth.SecretText({
-  description: markdownDescription,
-  displayName: 'API Key',
-  required: true,
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest<{
-        data: { id: string }[];
-      }>({
-        url:
-          'https://generativelanguage.googleapis.com/v1beta/models?key=' +
-          auth.auth,
-        method: HttpMethod.GET,
-      });
-      return {
-        valid: true,
-      };
-    } catch (e: any) {
-      const extraErrorInfo = e.response?.body?.error?.message
-        ? `${e.response?.body?.error?.message} status:${e.response?.body?.error?.code}`
-        : e;
-      return {
-        valid: false,
-        error: `${extraErrorInfo}`,
-      };
-    }
-  },
-});
 
 export const googleGemini = createPiece({
   displayName: 'Google Gemini',

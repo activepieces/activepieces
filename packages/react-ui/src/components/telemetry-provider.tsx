@@ -1,3 +1,9 @@
+import {
+  ApFlagId,
+  isNil,
+  TelemetryEvent,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import posthog from 'posthog-js';
 import React, { useEffect, useState, useRef } from 'react';
@@ -5,12 +11,6 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import {
-  ApFlagId,
-  isNil,
-  TelemetryEvent,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
 
 interface TelemetryProviderProps {
   children: React.ReactNode;

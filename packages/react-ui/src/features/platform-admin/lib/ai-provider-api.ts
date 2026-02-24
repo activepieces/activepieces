@@ -1,10 +1,11 @@
-import { api } from '@/lib/api';
 import {
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const aiProviderApi = {
   list() {

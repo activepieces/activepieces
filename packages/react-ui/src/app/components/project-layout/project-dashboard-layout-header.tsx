@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { History, Link2, Package, Table2, Workflow } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';

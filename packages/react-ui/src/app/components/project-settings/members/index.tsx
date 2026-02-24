@@ -1,3 +1,9 @@
+import {
+  InvitationType,
+  Permission,
+  PlatformRole,
+  UserStatus,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Users } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -11,12 +17,6 @@ import { userInvitationsHooks } from '@/features/members/lib/user-invitations-ho
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  InvitationType,
-  Permission,
-  PlatformRole,
-  UserStatus,
-} from '@activepieces/shared';
 
 import { membersTableColumns, MemberRowData } from './columns';
 

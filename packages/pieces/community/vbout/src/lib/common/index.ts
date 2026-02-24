@@ -5,7 +5,7 @@ import {
   SocialMediaChannelValues,
   SocialMediaProfile,
 } from './models';
-import { vboutAuth } from '../..';
+import { vboutAuth } from '../auth';
 export function makeClient(apiKey: string): VboutClient {
   return new VboutClient(apiKey);
 }
