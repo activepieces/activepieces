@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-onedrive",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {

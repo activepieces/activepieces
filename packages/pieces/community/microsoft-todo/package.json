@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-todo",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
