@@ -1,4 +1,4 @@
-import { copyFile } from 'node:fs/promises'
+import { access, copyFile, cp } from 'node:fs/promises'
 import { join, resolve } from 'path'
 import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
@@ -37,6 +37,7 @@ async function buildPieces(piecesInfo: PieceInfo[], io: Server, log: FastifyBase
 
         for (const piece of piecesInfo) {
             await copyPackageJsonToDist(piece.pieceDirectory)
+            await copyI18nToDist(piece.pieceDirectory)
             const distPath = await filePiecesUtils(log).findDistPiecePathByPackageName(piece.packageName)
             if (distPath) {
                 filePiecesUtils(log).clearPieceModuleCache(distPath)
@@ -116,10 +117,25 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, piecesN
 }
 
 async function copyPackageJsonToDist(sourceDir: string): Promise<void> {
+    const distDir = getDistDir(sourceDir)
+    await copyFile(join(sourceDir, 'package.json'), join(distDir, 'package.json'))
+}
+
+async function copyI18nToDist(sourceDir: string): Promise<void> {
+    const i18nSrc = join(sourceDir, 'src', 'i18n')
+    const exists = await access(i18nSrc).then(() => true).catch(() => false)
+    if (!exists) {
+        return
+    }
+    const distDir = getDistDir(sourceDir)
+    const i18nDest = join(distDir, 'src', 'i18n')
+    await cp(i18nSrc, i18nDest, { recursive: true })
+}
+
+function getDistDir(sourceDir: string): string {
     const piecesRoot = resolve('packages', 'pieces')
     const relativePath = sourceDir.substring(sourceDir.indexOf(piecesRoot) + piecesRoot.length)
-    const distDir = join('dist', 'packages', 'pieces', relativePath)
-    await copyFile(join(sourceDir, 'package.json'), join(distDir, 'package.json'))
+    return join('dist', 'packages', 'pieces', relativePath)
 }
 
 type PieceInfo = {

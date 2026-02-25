@@ -1,0 +1,67 @@
+---
+title: 'Migrate from Nx to Turbo'
+icon: 'rotate'
+---
+
+If you have an existing fork with custom pieces built using the **old Nx-based build system**, you need to migrate them to the new **Turbo-based build system**. This guide explains what changed and provides a migration script.
+
+## What Changed
+
+The Activepieces monorepo replaced [Nx](https://nx.dev) with [Turbo](https://turbo.build) as its build orchestrator. For pieces, this means:
+
+| | **Old (Nx)** | **New (Turbo)** |
+|---|---|---|
+| Build config | `project.json` per piece | `package.json` scripts |
+| Build command | `nx build pieces-{name}` | `turbo run build --filter=@activepieces/piece-{name}` |
+| Output directory | `dist/out-tsc` (shared) | `dist/packages/pieces/{category}/{name}` (per piece) |
+| Task runner | Nx executor (`@nx/js:tsc`) | Direct `tsc -p tsconfig.lib.json` |
+| Dependencies | Inferred by Nx graph | Workspace protocol (`workspace:*`) in `package.json` |
+
+### Files affected per piece
+
+- **`project.json`** — Deleted (no longer needed)
+- **`package.json`** — Added `build` and `lint` scripts, added workspace dependencies
+- **`tsconfig.lib.json`** — Updated `outDir`, added `rootDir`, `baseUrl`, `paths`
+
+## Automatic Migration
+
+Run the migration script to update all custom pieces at once:
+
+```bash
+npx ts-node tools/scripts/migrate-custom-piece-to-turbo.ts
+```
+
+This scans `packages/pieces/custom/` and applies all necessary changes.
+
+### Migrate a specific piece
+
+You can also pass a path to migrate a single piece:
+
+```bash
+npx ts-node tools/scripts/migrate-custom-piece-to-turbo.ts packages/pieces/custom/my-piece
+```
+
+### What the script does
+
+For each piece, the script:
+
+1. **Updates `package.json`** — adds `build` and `lint` scripts, ensures `@activepieces/pieces-framework`, `@activepieces/shared`, and `tslib` are listed as dependencies
+2. **Updates `tsconfig.lib.json`** — sets `outDir` to the correct per-piece output path, adds `rootDir`, `baseUrl`, `paths`, and `declaration` settings
+3. **Creates `tsconfig.json`** if missing — extends the root `tsconfig.base.json`
+4. **Deletes `project.json`** — removes Nx configuration
+
+## Verify the Migration
+
+After migrating, build your piece to verify everything works:
+
+```bash
+npx turbo run build --filter=@activepieces/piece-your-piece --force
+```
+
+Or use the CLI:
+
+```bash
+npm run build-piece your-piece
+```
+
+The build output should appear in `dist/packages/pieces/custom/your-piece/`.

@@ -6,10 +6,14 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "promise-mysql": "5.2.0",
-    "sqlstring": "2.3.3"
+    "sqlstring": "2.3.3",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/sqlstring": "2.3.2"
   }
 }
