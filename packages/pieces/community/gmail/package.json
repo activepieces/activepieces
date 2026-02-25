@@ -1,8 +1,8 @@
 {
   "name": "@activepieces/piece-gmail",
   "version": "0.11.4",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

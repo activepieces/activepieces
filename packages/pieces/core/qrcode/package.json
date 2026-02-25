@@ -1,8 +1,8 @@
 {
   "name": "@activepieces/piece-qrcode",
   "version": "0.0.12",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
     "vitest": "3.0.8"

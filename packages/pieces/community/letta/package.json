@@ -2,8 +2,8 @@
   "name": "@activepieces/piece-letta",
   "version": "0.1.4",
   "type": "commonjs",
-  "main": "./src/index.js",
-  "types": "./src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
