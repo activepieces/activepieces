@@ -49,7 +49,7 @@ describe('sandbox integration', () => {
             reusable: false,
         }, processMaker, wsServer, createNoOpEventHandler())
 
-        await sandbox.start({ flowVersionId: undefined, platformId: 'test' })
+        await sandbox.start({ flowVersionId: undefined, platformId: 'test', mounts: [] })
 
         expect(wsServer.isConnected('test-start')).toBe(true)
 
@@ -66,7 +66,7 @@ describe('sandbox integration', () => {
             reusable: false,
         }, processMaker, wsServer, createNoOpEventHandler())
 
-        await sandbox.start({ flowVersionId: undefined, platformId: 'test' })
+        await sandbox.start({ flowVersionId: undefined, platformId: 'test', mounts: [] })
 
         const result = await sandbox.execute(
             EngineOperationType.EXECUTE_FLOW,
@@ -114,7 +114,7 @@ describe('sandbox integration', () => {
             reusable: false,
         }, processMaker, wsServer, eventHandler)
 
-        await sandbox.start({ flowVersionId: undefined, platformId: 'test' })
+        await sandbox.start({ flowVersionId: undefined, platformId: 'test', mounts: [] })
 
         const result = await sandbox.execute(
             EngineOperationType.EXECUTE_FLOW,
@@ -137,7 +137,7 @@ describe('sandbox integration', () => {
             reusable: false,
         }, processMaker, wsServer, createNoOpEventHandler())
 
-        await sandbox.start({ flowVersionId: undefined, platformId: 'test' })
+        await sandbox.start({ flowVersionId: undefined, platformId: 'test', mounts: [] })
 
         await expect(sandbox.execute(
             EngineOperationType.EXECUTE_FLOW,
@@ -160,7 +160,7 @@ describe('sandbox integration', () => {
             reusable: false,
         }, processMaker, wsServer, createNoOpEventHandler())
 
-        await sandbox.start({ flowVersionId: undefined, platformId: 'test' })
+        await sandbox.start({ flowVersionId: undefined, platformId: 'test', mounts: [] })
         await sandbox.shutdown()
         await sandbox.shutdown() // should not throw
     })
