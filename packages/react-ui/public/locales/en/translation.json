@@ -1396,5 +1396,6 @@
   "License activated successfully!": "License activated successfully!",
   "Activation failed, invalid license key": "Activation failed, invalid license key",
   "Today": "Today",
-  "Yesterday": "Yesterday"
+  "Yesterday": "Yesterday",
+  "Configure credentials for {managerName} secret manager.": "Configure credentials for {managerName} secret manager."
 }

@@ -178,6 +178,9 @@ async function findInNodeModules(packageName: string): Promise<string | null> {
 }
 
 async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
+    if (isTestMode()) {
+        return findInNodeModules(packageName)
+    }
     const distResult = await findInDistFolder(packageName)
     if (distResult) {
         return distResult

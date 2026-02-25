@@ -15,6 +15,7 @@ export const INTERNAL_ERROR_MESSAGE =
   'An unexpected error occurred. Please try again in a moment.';
 
 export function internalErrorToast() {
+  console.error('internalErrorToast', INTERNAL_ERROR_MESSAGE);
   toast.error('Something went wrong', {
     description: INTERNAL_ERROR_MESSAGE,
     duration: 3000,
