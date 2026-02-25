@@ -14,7 +14,7 @@ export function createSandbox(
     let childProcess: ChildProcess | null = null
     return {
         id: sandboxId,
-        start: async ({ flowVersionId, platformId }) => {
+        start: async ({ flowVersionId, platformId, mounts }) => {
             const ready = websocketServer.isConnected(sandboxId) && !isNil(childProcess)
             if (ready) {
                 return
@@ -28,7 +28,7 @@ export function createSandbox(
             childProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
-                mounts: options.mounts ?? [],
+                mounts,
                 env: options.env,
                 resourceLimits: {
                     memoryBytes: options.memoryLimitMb * 1024 * 1024,

@@ -12,7 +12,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../cache/code-builder'
 import { executionFiles } from '../cache/execution-files'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
-import { sandboxPool } from '../flow-worker'
+import { buildSandboxMounts, sandboxPool } from '../flow-worker'
 import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 
@@ -207,7 +207,11 @@ async function executeSingleTask<Result extends OperationResult>(log: FastifyBas
         let sandbox: Sandbox | undefined
         try {
             sandbox = await sandboxPool.allocate(log)
-            await sandbox.start({ flowVersionId: getFlowVersionId(operation, operationType), platformId: operation.platformId })
+            await sandbox.start({
+                flowVersionId: getFlowVersionId(operation, operationType),
+                platformId: operation.platformId,
+                mounts: buildSandboxMounts(log, operation.platformId),
+            })
 
             const { engine, stdError, stdOut } = await sandbox.execute(operationType, operation, { timeoutInSeconds })
             span.setAttribute('engine.responseStatus', engine.status)

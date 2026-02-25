@@ -38,7 +38,6 @@ export const sandboxPool = createSandboxPool((_factoryLog, sandboxId) => {
         reusable: canReuseWorkers(),
         ...(isIsolate ? {
             command: [process.execPath, '/root/main.js'],
-            mounts: buildIsolateMounts(log, workerSettings),
         } : {}),
     }, processMaker, sandboxWebsocketServer, createSandboxEventHandler(log))
 })
@@ -110,7 +109,14 @@ function buildSandboxEnv(sandboxId: string, workerSettings: WorkerSettingsRespon
     }
 }
 
-function buildIsolateMounts(log: FastifyBaseLogger, workerSettings: WorkerSettingsResponse): SandboxMount[] {
+export function buildSandboxMounts(log: FastifyBaseLogger, platformId: string): SandboxMount[] {
+    const workerSettings = workerMachine.getSettings()
+    const executionMode = workerSettings.EXECUTION_MODE as ExecutionMode
+    const isIsolate = executionMode !== ExecutionMode.UNSANDBOXED && executionMode !== ExecutionMode.SANDBOX_CODE_ONLY
+    if (!isIsolate) {
+        return []
+    }
+
     const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
 
     const mounts: SandboxMount[] = [
@@ -119,14 +125,11 @@ function buildIsolateMounts(log: FastifyBaseLogger, workerSettings: WorkerSettin
         { hostPath: path.resolve(GLOBAL_CODE_CACHE_PATH), sandboxPath: '/codes' },
     ]
 
-    const platformId = workerSettings.PLATFORM_ID_FOR_DEDICATED_WORKER
-    if (platformId) {
-        const customPiecesPath = registryPieceManager(log).getCustomPiecesPath(platformId)
-        mounts.push(
-            { hostPath: path.resolve(customPiecesPath, 'node_modules'), sandboxPath: '/node_modules', optional: true },
-            { hostPath: path.resolve(customPiecesPath, 'pieces'), sandboxPath: '/pieces', optional: true },
-        )
-    }
+    const customPiecesPath = registryPieceManager(log).getCustomPiecesPath(platformId)
+    mounts.push(
+        { hostPath: path.resolve(customPiecesPath, 'node_modules'), sandboxPath: '/node_modules', optional: true },
+        { hostPath: path.resolve(customPiecesPath, 'pieces'), sandboxPath: '/pieces', optional: true },
+    )
 
     if (workerSettings.DEV_PIECES.length > 0) {
         const basePath = path.resolve(__dirname.split('/dist')[0])
