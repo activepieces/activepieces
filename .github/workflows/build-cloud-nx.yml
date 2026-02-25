@@ -158,30 +158,11 @@ jobs:
           max-age: 3w
           max-size: 20gb
 
-      - name: Run all tests and migration check in parallel
+      - name: Run all tests and migration check
         run: |
           set -euo pipefail
-          pids=()
-
-          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared &
-          pids+=($!)
-
-          npx turbo run test-ce --filter=server-api &
-          pids+=($!)
-
-          npx turbo run test-ee --filter=server-api &
-          pids+=($!)
-
-          npx turbo run test-cloud --filter=server-api &
-          pids+=($!)
-
-          npx turbo run check-migrations --filter=server-api &
-          pids+=($!)
-
-          status=0
-          for pid in "${pids[@]}"; do
-            if ! wait "$pid"; then
-              status=1
-            fi
-          done
-          exit $status
+          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared
+          npx turbo run test-ce --filter=server-api
+          npx turbo run test-ee --filter=server-api
+          npx turbo run test-cloud --filter=server-api
+          npx turbo run check-migrations --filter=server-api
