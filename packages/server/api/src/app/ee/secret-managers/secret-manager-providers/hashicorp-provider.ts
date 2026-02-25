@@ -140,7 +140,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
     },
 })
 
-function validatePathFormat(key: string) {
+export async function validatePathFormat(key: string) {
     const path = removeEndingSlash(key)
     const pathParts = path.split('/')
     if (pathParts.length < 3 ) {

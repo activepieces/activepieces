@@ -7,7 +7,7 @@ import { MockInstance } from 'vitest'
 import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { hashicorpProvider } from '../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
+import { hashicorpProvider, validatePathFormat } from '../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
@@ -305,11 +305,11 @@ describe('Secret Managers API', () => {
         }),
         describe('HashiCorp Provider - Path Resolution', () => {
             it('should resolve valid path format', async () => {
-                await hashicorpProvider(mockLog).validatePathFormat('hashicorp:secret/data/keys/my-key')
+                await validatePathFormat('hashicorp:secret/data/keys/my-key')
             })
             it('should throw error for path with less than 3 parts', async () => {
                 await expect(
-                    hashicorpProvider(mockLog).validatePathFormat('secret/key'),
+                    validatePathFormat('secret/key'),
                 ).rejects.toMatchObject({
                     error: expect.objectContaining({
                         code: ErrorCode.VALIDATION,
@@ -318,7 +318,7 @@ describe('Secret Managers API', () => {
             })
             it('should throw error for key without colon separator', async () => {
                 await expect(
-                    hashicorpProvider(mockLog).validatePathFormat('hashicorp'),
+                    validatePathFormat('hashicorp'),
                 ).rejects.toMatchObject({
                     error: expect.objectContaining({
                         code: ErrorCode.VALIDATION,

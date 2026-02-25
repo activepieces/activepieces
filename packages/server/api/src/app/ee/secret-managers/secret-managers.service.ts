@@ -3,6 +3,7 @@ import { ActivepiecesError, apId, ErrorCode, isEnumValue, isNil, isObject, isStr
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
+import { secretManagerCache } from './secret-manager-cache'
 import { secretManagerProvider, secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { SecretManagerEntity } from './secret-manager.entity'
 
@@ -16,19 +17,37 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             },
         })
         const providers = await Promise.all(secretManagerProvidersMetadata().map(async (metadata) => {
-            const provider = secretManagerProvider(log, metadata.id)
             const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
             const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
-            const isConnected = !isNil(decryptedConfig) && Boolean(await provider.checkConnection(decryptedConfig).catch(() => false))
+        
             return {
                 ...metadata,
-                connected: isConnected,
+                connected: await secretManagersService(log).checkConnection(decryptedConfig, metadata.id, platformId),
             }
         }))
         return {
             data: providers,
             next: null,
             previous: null,
+        }
+    },
+    checkConnection: async (config: SecretManagerConfig | undefined, providerId: SecretManagerProviderId, platformId: string) => {
+        if (isNil(config)) {
+            return false
+        }
+        else {
+            const cached = secretManagerCache.getCheck(platformId, providerId)
+            if (cached !== undefined) {
+                return cached
+            }
+            else {
+                const provider = secretManagerProvider(log, providerId)
+                const connected = Boolean(await provider.checkConnection(config).catch(() => false))
+                if (connected) {
+                    secretManagerCache.setCheck(platformId, providerId, true)
+                }
+                return connected
+            }
         }
     },
     connect: async (request: ConnectSecretManagerRequest & { platformId: string }) => {
@@ -43,6 +62,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 { platformId: request.platformId, providerId: request.providerId },
                 { auth: encryptedConfig },
             )
+            secretManagerCache.clearByPlatform(request.platformId)
             return
         }
         await secretManagerRepository().save({
@@ -51,6 +71,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             providerId: request.providerId,
             auth: encryptedConfig,
         })
+        secretManagerCache.clearByPlatform(request.platformId)
     },
 
     getSecret: async (request: { path: string, platformId: string, providerId: SecretManagerProviderId }) => {
@@ -69,7 +90,13 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return provider.getSecret(request, decryptedConfig) 
+        const cached = secretManagerCache.getSecret(request.platformId, request.providerId, request.path)
+        if (cached !== undefined) {
+            return cached
+        }
+        const secret = await provider.getSecret(request, decryptedConfig)
+        secretManagerCache.setSecret(request.platformId, request.providerId, request.path, secret)
+        return secret
     },
 
     async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
@@ -119,6 +146,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             platformId,
             providerId,
         })
+        secretManagerCache.clearByPlatform(platformId)
     },
 })
 

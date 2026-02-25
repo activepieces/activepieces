@@ -1,10 +1,15 @@
 import { SecretManagerProviderMetaData } from '@activepieces/ee-shared';
 import { t } from 'i18next';
-import { Pencil, Trash } from 'lucide-react';
+import { Pencil, RefreshCcw, Trash } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
@@ -16,8 +21,10 @@ type SecretManagerProviderCardProps = {
 const SecretManagerProviderCard = ({
   provider,
 }: SecretManagerProviderCardProps) => {
-  const { mutate: disconnect, isPending } =
+  const { mutate: disconnect, isPending: isDisconnecting } =
     secretManagersHooks.useDisconnectSecretManager();
+  const { mutate: clearCache, isPending: isClearingCache } =
+    secretManagersHooks.useClearCache();
 
   return (
     <Card className="w-full flex justify-between items-center px-4 py-4">
@@ -39,18 +46,33 @@ const SecretManagerProviderCard = ({
           </Button>
         </ConnectSecretManagerDialog>
         {provider.connected && (
-          <ConfirmationDeleteDialog
-            title={t('Disconnect Secret Manager')}
-            message={t(
-              'Are you sure you want to disconnect this secret manager?',
-            )}
-            entityName={provider.name}
-            mutationFn={async () => disconnect({ providerId: provider.id })}
-          >
-            <Button variant={'ghost'} size={'sm'} loading={isPending}>
-              <Trash className="size-4 text-destructive" />
-            </Button>
-          </ConfirmationDeleteDialog>
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={'ghost'}
+                  size={'sm'}
+                  loading={isClearingCache}
+                  onClick={() => clearCache()}
+                >
+                  <RefreshCcw className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('Clear Cache')}</TooltipContent>
+            </Tooltip>
+            <ConfirmationDeleteDialog
+              title={t('Disconnect Secret Manager')}
+              message={t(
+                'Are you sure you want to disconnect this secret manager?',
+              )}
+              entityName={provider.name}
+              mutationFn={async () => disconnect({ providerId: provider.id })}
+            >
+              <Button variant={'ghost'} size={'sm'} loading={isDisconnecting}>
+                <Trash className="size-4 text-destructive" />
+              </Button>
+            </ConfirmationDeleteDialog>
+          </>
         )}
       </div>
     </Card>

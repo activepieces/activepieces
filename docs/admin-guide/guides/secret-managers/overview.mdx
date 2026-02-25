@@ -50,7 +50,23 @@ When you use a secret manager in a connection:
 - The global connection stores a reference to the secret (not the actual credential)
 - When the flow runs, Activepieces authenticates with your secret manager and retrieves the secret
 - Secrets are fetched on-demand and never stored in Activepieces
-- If the secret is updated in your secret manager, flows will automatically use the new value
+- If the secret is updated in your secret manager, flows will use the new value after the cache expires (up to 1 hour), or immediately after clearing the cache
+
+## Caching
+
+Connection checks and retrieved secrets are cached in memory for **1 hour** to reduce latency and provider API load.
+
+To force a refresh (e.g. after rotating credentials or updating secrets), platform admins can clear the cache in the secret managers setup page
+
+![Clear secret manager cache](/resources/screenshots/clear-secret-manager-cache.png)
+
+or by calling the endpoint
+
+```
+curl --request DELETE \
+  --url https://<domain>/api/v1/secret-managers/cache \
+  --header 'Authorization: Bearer <token>'
+```
 
 ## Security Considerations
 

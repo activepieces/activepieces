@@ -19,4 +19,7 @@ export const secretManagersApi = {
   disconnect(request: DisconnectSecretManagerRequest) {
     return api.delete<void>('/v1/secret-managers/disconnect', request);
   },
+  clearCache() {
+    return api.delete<void>('/v1/secret-managers/cache');
+  },
 };

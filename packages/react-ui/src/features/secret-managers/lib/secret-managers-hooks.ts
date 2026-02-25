@@ -58,4 +58,14 @@ export const secretManagersHooks = {
       },
     });
   },
+  useClearCache: () => {
+    const queryClient = useQueryClient();
+    return useMutation<void, Error, void>({
+      mutationFn: secretManagersApi.clearCache,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
+        toast.success(t('Cache cleared successfully'));
+      },
+    });
+  },
 };

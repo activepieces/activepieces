@@ -80,7 +80,9 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       connectedOnly: true,
     });
 
-    const getSecretParamsForProvider = (providerId: SecretManagerProviderId | null) =>
+    const getSecretParamsForProvider = (
+      providerId: SecretManagerProviderId | null,
+    ) =>
       Object.entries(
         secretManagers?.find((provider) => provider.id === providerId)
           ?.secretParams ?? {},
@@ -90,13 +92,13 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
 
     const [selectedProvider, setSelectedProvider] =
       useState<SecretManagerProviderId | null>(null);
-      
+
     useEffect(() => {
       if (secretManagers && secretManagers.length > 0) {
         setSelectedProvider(secretManagers[0].id);
       }
     }, [secretManagers]);
-    
+
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
     const buildSecretValue = (
