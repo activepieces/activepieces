@@ -225,7 +225,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.1.12",
+      "version": "0.1.14",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7329,7 +7329,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.37.0",
+      "version": "0.38.1",
       "dependencies": {
         "@sinclair/typebox": "0.34.11",
         "deepmerge-ts": "7.1.0",
