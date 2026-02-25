@@ -1,5 +1,5 @@
-import { PostHog } from 'posthog-node'
 import { FastifyBaseLogger } from 'fastify'
+import { PostHog } from 'posthog-node'
 
 let posthogClient: PostHog | undefined
 
