@@ -11,6 +11,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useContext, useMemo, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
@@ -42,8 +43,15 @@ import {
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
 } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { userApi } from '@/lib/user-api';
 import { downloadFile, formatUtils } from '@/lib/utils';
-import { AnalyticsTimePeriod } from '@activepieces/shared';
+import {
+  AnalyticsTimePeriod,
+  ColorName,
+  UserWithBadges,
+} from '@activepieces/shared';
+
+import { projectCollectionUtils } from '@/hooks/project-collection';
 
 import {
   convertToMinutes,
@@ -64,12 +72,32 @@ export default function LeaderboardPage() {
     platformAnalyticsHooks.useUsersLeaderboard(timePeriod);
   const { data: projectsLeaderboardData, isLoading: isProjectsLoading } =
     platformAnalyticsHooks.useProjectLeaderboard(timePeriod);
+  const { data: allProjects } = projectCollectionUtils.useAllPlatformProjects();
+
+  const projectIconMap = useMemo(() => {
+    const map = new Map<string, ColorName>();
+    allProjects?.forEach((p) => {
+      if (p.icon) {
+        map.set(p.id, p.icon.color);
+      }
+    });
+    return map;
+  }, [allProjects]);
   const [activeTab, setActiveTab] = useState('creators');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [appliedTimeSavedMin, setAppliedTimeSavedMin] = useState('');
-  const [appliedTimeSavedMax, setAppliedTimeSavedMax] = useState('');
-  const [appliedTimeUnit, setAppliedTimeUnit] = useState<TimeUnit>('Sec');
+  type TimeSavedFilter = { min: string; max: string; unit: TimeUnit };
+  const emptyFilter: TimeSavedFilter = { min: '', max: '', unit: 'Sec' };
+  const [peopleTimeSaved, setPeopleTimeSaved] =
+    useState<TimeSavedFilter>(emptyFilter);
+  const [projectsTimeSaved, setProjectsTimeSaved] =
+    useState<TimeSavedFilter>(emptyFilter);
+
+  const appliedFilter =
+    activeTab === 'creators' ? peopleTimeSaved : projectsTimeSaved;
+  const setAppliedFilter =
+    activeTab === 'creators' ? setPeopleTimeSaved : setProjectsTimeSaved;
+
   const [draftTimeSavedMin, setDraftTimeSavedMin] = useState('');
   const [draftTimeSavedMax, setDraftTimeSavedMax] = useState('');
   const [draftTimeUnit, setDraftTimeUnit] = useState<TimeUnit>('Sec');
@@ -78,6 +106,30 @@ export default function LeaderboardPage() {
   const { mutate: refreshAnalytics } =
     platformAnalyticsHooks.useRefreshAnalytics();
   const { isRefreshing } = useContext(RefreshAnalyticsContext);
+
+  const userIds = useMemo(
+    () => usersLeaderboardData?.map((u) => u.userId) ?? [],
+    [usersLeaderboardData],
+  );
+
+  const badgeQueries = useQueries({
+    queries: userIds.map((userId) => ({
+      queryKey: ['user-badges', userId],
+      queryFn: () => userApi.getUserById(userId),
+      staleTime: 5 * 60 * 1000,
+      enabled: userIds.length > 0,
+    })),
+  });
+
+  const badgesMap = useMemo(() => {
+    const map = new Map<string, UserWithBadges['badges']>();
+    badgeQueries.forEach((q) => {
+      if (q.data) {
+        map.set(q.data.id, q.data.badges);
+      }
+    });
+    return map;
+  }, [badgeQueries]);
 
   const isLoading = isAnalyticsLoading || isUsersLoading || isProjectsLoading;
 
@@ -88,26 +140,33 @@ export default function LeaderboardPage() {
 
   const handleTimeSavedPopoverOpen = (open: boolean) => {
     if (open) {
-      setDraftTimeSavedMin(appliedTimeSavedMin);
-      setDraftTimeSavedMax(appliedTimeSavedMax);
-      setDraftTimeUnit(appliedTimeUnit);
+      setDraftTimeSavedMin(appliedFilter.min);
+      setDraftTimeSavedMax(appliedFilter.max);
+      setDraftTimeUnit(appliedFilter.unit);
     }
     setTimeSavedPopoverOpen(open);
   };
 
   const applyTimeSavedFilter = () => {
-    setAppliedTimeSavedMin(draftTimeSavedMin);
-    setAppliedTimeSavedMax(draftTimeSavedMax);
-    setAppliedTimeUnit(draftTimeUnit);
+    setAppliedFilter({
+      min: draftTimeSavedMin,
+      max: draftTimeSavedMax,
+      unit: draftTimeUnit,
+    });
+    setTimeSavedPopoverOpen(false);
+  };
+
+  const clearTimeSavedFilter = () => {
+    setAppliedFilter(emptyFilter);
     setTimeSavedPopoverOpen(false);
   };
 
   const timeSavedLabel = useMemo(() => {
-    if (!appliedTimeSavedMin && !appliedTimeSavedMax) return null;
-    const min = appliedTimeSavedMin || '0';
-    const max = appliedTimeSavedMax || '∞';
-    return `${min} – ${max} ${appliedTimeUnit}`;
-  }, [appliedTimeSavedMin, appliedTimeSavedMax, appliedTimeUnit]);
+    if (!appliedFilter.min && !appliedFilter.max) return null;
+    const min = appliedFilter.min || '0';
+    const max = appliedFilter.max || '∞';
+    return `${min} – ${max} ${appliedFilter.unit}`;
+  }, [appliedFilter]);
 
   const peopleData = useMemo((): UserStats[] => {
     if (isLoading || !analyticsData?.users || !usersLeaderboardData) {
@@ -116,22 +175,22 @@ export default function LeaderboardPage() {
 
     const userMap = new Map(analyticsData.users.map((user) => [user.id, user]));
 
-    return usersLeaderboardData
-      .map((item) => {
-        const user = userMap.get(item.userId);
-        if (!user) return null;
+    return usersLeaderboardData.reduce<UserStats[]>((acc, item) => {
+      const user = userMap.get(item.userId);
+      if (!user) return acc;
 
-        return {
-          id: item.userId,
-          visibleId: item.userId,
-          userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
-          userEmail: user.email,
-          flowCount: item.flowCount ?? 0,
-          minutesSaved: item.minutesSaved ?? 0,
-        };
-      })
-      .filter((item): item is UserStats => item !== null);
-  }, [analyticsData?.users, usersLeaderboardData, isLoading]);
+      acc.push({
+        id: item.userId,
+        visibleId: item.userId,
+        userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
+        userEmail: user.email,
+        flowCount: item.flowCount ?? 0,
+        minutesSaved: item.minutesSaved ?? 0,
+        badges: badgesMap.get(item.userId),
+      });
+      return acc;
+    }, []);
+  }, [analyticsData?.users, usersLeaderboardData, isLoading, badgesMap]);
 
   const projectsData = useMemo((): ProjectStats[] => {
     if (isLoading || !projectsLeaderboardData) {
@@ -144,8 +203,9 @@ export default function LeaderboardPage() {
       projectName: item.projectName,
       flowCount: item.flowCount ?? 0,
       minutesSaved: item.minutesSaved ?? 0,
+      iconColor: projectIconMap.get(item.projectId),
     }));
-  }, [projectsLeaderboardData, isLoading]);
+  }, [projectsLeaderboardData, isLoading, projectIconMap]);
 
   const filteredPeopleData = useMemo(() => {
     let data = peopleData;
@@ -159,32 +219,30 @@ export default function LeaderboardPage() {
       );
     }
 
-    const minValue = appliedTimeSavedMin
-      ? parseFloat(appliedTimeSavedMin)
+    const minValue = peopleTimeSaved.min
+      ? parseFloat(peopleTimeSaved.min)
       : null;
-    const maxValue = appliedTimeSavedMax
-      ? parseFloat(appliedTimeSavedMax)
+    const maxValue = peopleTimeSaved.max
+      ? parseFloat(peopleTimeSaved.max)
       : null;
 
     if (minValue !== null) {
       data = data.filter(
-        (p) => p.minutesSaved >= convertToMinutes(minValue, appliedTimeUnit),
+        (p) =>
+          p.minutesSaved >=
+          convertToMinutes(minValue, peopleTimeSaved.unit),
       );
     }
     if (maxValue !== null) {
       data = data.filter(
-        (p) => p.minutesSaved <= convertToMinutes(maxValue, appliedTimeUnit),
+        (p) =>
+          p.minutesSaved <=
+          convertToMinutes(maxValue, peopleTimeSaved.unit),
       );
     }
 
     return data;
-  }, [
-    peopleData,
-    searchQuery,
-    appliedTimeSavedMin,
-    appliedTimeSavedMax,
-    appliedTimeUnit,
-  ]);
+  }, [peopleData, searchQuery, peopleTimeSaved]);
 
   const filteredProjectsData = useMemo(() => {
     let data = projectsData;
@@ -194,32 +252,30 @@ export default function LeaderboardPage() {
       data = data.filter((p) => p.projectName.toLowerCase().includes(q));
     }
 
-    const minValue = appliedTimeSavedMin
-      ? parseFloat(appliedTimeSavedMin)
+    const minValue = projectsTimeSaved.min
+      ? parseFloat(projectsTimeSaved.min)
       : null;
-    const maxValue = appliedTimeSavedMax
-      ? parseFloat(appliedTimeSavedMax)
+    const maxValue = projectsTimeSaved.max
+      ? parseFloat(projectsTimeSaved.max)
       : null;
 
     if (minValue !== null) {
       data = data.filter(
-        (p) => p.minutesSaved >= convertToMinutes(minValue, appliedTimeUnit),
+        (p) =>
+          p.minutesSaved >=
+          convertToMinutes(minValue, projectsTimeSaved.unit),
       );
     }
     if (maxValue !== null) {
       data = data.filter(
-        (p) => p.minutesSaved <= convertToMinutes(maxValue, appliedTimeUnit),
+        (p) =>
+          p.minutesSaved <=
+          convertToMinutes(maxValue, projectsTimeSaved.unit),
       );
     }
 
     return data;
-  }, [
-    projectsData,
-    searchQuery,
-    appliedTimeSavedMin,
-    appliedTimeSavedMax,
-    appliedTimeUnit,
-  ]);
+  }, [projectsData, searchQuery, projectsTimeSaved]);
 
   const handleDownload = () => {
     if (activeTab === 'creators') {
@@ -460,6 +516,16 @@ export default function LeaderboardPage() {
                   </div>
                 </PopoverContent>
               </Popover>
+              {timeSavedLabel && (
+                <Button
+                  variant="link"
+                  onClick={clearTimeSavedFilter}
+                  size="sm"
+                  className="text-muted-foreground px-1"
+                >
+                  {t('Clear')}
+                </Button>
+              )}
             </div>
             <Button
               variant="outline"

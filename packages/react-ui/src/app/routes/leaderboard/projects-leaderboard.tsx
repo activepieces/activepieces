@@ -1,13 +1,14 @@
-'use client';
-
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, LayoutGrid, Medal, Rocket, Workflow } from 'lucide-react';
+import { Rocket } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
+import { ColorName, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+
 import { FirstIcon } from './icons/1st-icon';
 import { SecondIcon } from './icons/2nd-icon';
 import { ThirdIcon } from './icons/3rd-icon';
@@ -18,6 +19,7 @@ export type ProjectStats = {
   projectName: string;
   flowCount: number;
   minutesSaved: number;
+  iconColor?: ColorName;
 };
 
 type ProjectsLeaderboardProps = {
@@ -25,14 +27,14 @@ type ProjectsLeaderboardProps = {
   isLoading?: boolean;
 };
 
-const getRankIcon = (index: number) => {
+export const getRankIcon = (index: number) => {
   if (index === 0) return <FirstIcon className="size-6" />;
   if (index === 1) return <SecondIcon className="size-6" />;
   if (index === 2) return <ThirdIcon className="size-6" />;
   return null;
 };
 
-const getRankText = (index: number) => {
+export const getRankText = (index: number) => {
   return [0, 1, 2].includes(index) ? null : `#${index + 1}`;
 };
 
@@ -54,7 +56,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
       );
     },
     enableSorting: false,
-    size: 20,
+    size: 60,
   },
   {
     accessorKey: 'projectName',
@@ -64,11 +66,25 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
         title={t('Projects')}
       />
     ),
-    cell: ({ row }) => (
-      <div className="flex items-center gap-3">
-        <p className="h-8 flex items-center">{row.original.projectName}</p>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const palette = row.original.iconColor
+        ? PROJECT_COLOR_PALETTE[row.original.iconColor]
+        : PROJECT_COLOR_PALETTE[ColorName.BLUE];
+      return (
+        <div className="flex items-center gap-2">
+          <Avatar
+            className="size-6 text-xs font-medium flex items-center justify-center rounded-sm shrink-0"
+            style={{
+              backgroundColor: palette.color,
+              color: palette.textColor,
+            }}
+          >
+            {row.original.projectName.charAt(0).toUpperCase()}
+          </Avatar>
+          <p className="h-8 flex items-center">{row.original.projectName}</p>
+        </div>
+      );
+    },
     enableSorting: false,
   },
   {
@@ -101,6 +117,11 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   },
 ];
 
+const getRowClassName = (_row: RowDataWithActions<ProjectStats>, index: number) => {
+  if (index < 3) return 'bg-primary/5';
+  return '';
+};
+
 export function ProjectsLeaderboard({
   data,
   isLoading,
@@ -117,6 +138,7 @@ export function ProjectsLeaderboard({
       }}
       isLoading={isLoading ?? false}
       clientPagination={true}
+      getRowClassName={getRowClassName}
       emptyStateTextTitle={t('No projects on the board yet')}
       emptyStateTextDescription={t(
         'Projects will rank here as flows are created and time is saved',

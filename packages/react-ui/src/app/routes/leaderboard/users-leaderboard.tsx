@@ -6,12 +6,20 @@ import { Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
+import { BADGES, UserWithBadges } from '@activepieces/shared';
+
 import { FirstIcon } from './icons/1st-icon';
 import { SecondIcon } from './icons/2nd-icon';
 import { ThirdIcon } from './icons/3rd-icon';
+import { getRankIcon, getRankText } from './projects-leaderboard';
 
 export type UserStats = {
   id: string;
@@ -20,6 +28,7 @@ export type UserStats = {
   userEmail: string;
   flowCount: number;
   minutesSaved: number;
+  badges?: UserWithBadges['badges'];
 };
 
 type UsersLeaderboardProps = {
@@ -27,15 +36,32 @@ type UsersLeaderboardProps = {
   isLoading?: boolean;
 };
 
-const getRankIcon = (index: number) => {
-  if (index === 0) return <FirstIcon className="size-6" />;
-  if (index === 1) return <SecondIcon className="size-6" />;
-  if (index === 2) return <ThirdIcon className="size-6" />;
-  return null;
-};
+const BadgesCell = ({ badges }: { badges?: UserWithBadges['badges'] }) => {
+  if (!badges || badges.length === 0) return <span className="text-muted-foreground">-</span>;
 
-const getRankText = (index: number) => {
-  return [0, 1, 2].includes(index) ? null : `#${index + 1}`;
+  return (
+    <div className="flex items-center gap-0.5">
+      {badges.map((badge) => {
+        const badgeInfo = BADGES[badge.name as keyof typeof BADGES];
+        if (!badgeInfo) return null;
+        return (
+          <Tooltip key={badge.name}>
+            <TooltipTrigger asChild>
+              <img
+                src={badgeInfo.imageUrl}
+                alt={badgeInfo.title}
+                className="h-8 w-8 object-cover rounded-md"
+              />
+            </TooltipTrigger>
+            <TooltipContent className="text-left">
+              <p className="font-semibold">{badgeInfo.title}</p>
+              <p className="text-xs">{badgeInfo.description}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
 };
 
 const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
@@ -56,7 +82,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       );
     },
     enableSorting: false,
-    size: 20,
+    size: 60,
   },
   {
     accessorKey: 'userName',
@@ -103,7 +129,20 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
     ),
     enableSorting: false,
   },
+  {
+    accessorKey: 'badges',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Badges')} />
+    ),
+    cell: ({ row }) => <BadgesCell badges={row.original.badges} />,
+    enableSorting: false,
+  },
 ];
+
+const getRowClassName = (_row: RowDataWithActions<UserStats>, index: number) => {
+  if (index < 3) return 'bg-primary/5 hover:bg-primary/5';
+  return '';
+};
 
 export function UsersLeaderboard({ data, isLoading }: UsersLeaderboardProps) {
   const columns = useMemo(() => createColumns(), []);
@@ -118,6 +157,7 @@ export function UsersLeaderboard({ data, isLoading }: UsersLeaderboardProps) {
       }}
       isLoading={isLoading ?? false}
       clientPagination={true}
+      getRowClassName={getRowClassName}
       emptyStateTextTitle={t('No automation heroes yet')}
       emptyStateTextDescription={t(
         'Once your team starts building flows, their achievements will shine here',

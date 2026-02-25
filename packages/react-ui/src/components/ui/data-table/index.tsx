@@ -85,6 +85,7 @@ interface DataTableProps<
   selectColumn?: boolean;
   initialSorting?: SortingState;
   clientPagination?: boolean;
+  getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -119,6 +120,7 @@ export function DataTable<
   selectColumn = false,
   initialSorting = [],
   clientPagination = false,
+  getRowClassName,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -362,11 +364,15 @@ export function DataTable<
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row, rowIndex) => (
                 <TableRow
-                  className={cn('cursor-pointer', {
-                    'hover:bg-background cursor-default': isNil(onRowClick),
-                  })}
+                  className={cn(
+                    'cursor-pointer',
+                    {
+                      'hover:bg-background cursor-default': isNil(onRowClick),
+                    },
+                    getRowClassName?.(row.original, rowIndex),
+                  )}
                   onClick={(e) => {
                     // Check if the clicked cell is not clickable
                     const clickedCellIndex = (e.target as HTMLElement).closest(
