@@ -143,9 +143,17 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 }
 
 async function findAllDistPaths(): Promise<string[]> {
-    const baseDir = resolve(cwd(), 'dist', 'packages')
-    const piecesBuildOutputPath = resolve(baseDir, 'pieces')
-    return await traverseFolder(piecesBuildOutputPath)
+    const sourcePiecesPath = resolve(cwd(), 'packages', 'pieces')
+    const sourceFolders = await traverseFolder(sourcePiecesPath)
+    const distPaths: string[] = []
+    for (const folder of sourceFolders) {
+        const distPath = join(folder, 'dist')
+        const distPackageJson = join(distPath, 'package.json')
+        if (existsSync(distPackageJson)) {
+            distPaths.push(distPath)
+        }
+    }
+    return distPaths
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
