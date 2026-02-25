@@ -180,9 +180,25 @@ async function findInNodeModules(packageName: string): Promise<string | null> {
 async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
     const distResult = await findInDistFolder(packageName)
     if (distResult) {
+        await ensureNodeModulesSymlink(distResult)
         return distResult
     }
     return findInNodeModules(packageName)
+}
+
+async function ensureNodeModulesSymlink(distIndexPath: string): Promise<void> {
+    const pieceDistDir = path.resolve(distIndexPath, '..', '..')
+    const distNodeModules = path.join(pieceDistDir, 'node_modules')
+    if (await utils.folderExists(distNodeModules)) {
+        return
+    }
+    const distPiecesRoot = path.resolve('dist', 'packages', 'pieces')
+    const sourcePiecesRoot = path.resolve('packages', 'pieces')
+    const relativePiecePath = path.relative(distPiecesRoot, pieceDistDir)
+    const sourceNodeModules = path.join(sourcePiecesRoot, relativePiecePath, 'node_modules')
+    if (await utils.folderExists(sourceNodeModules)) {
+        await fs.symlink(path.resolve(sourceNodeModules), distNodeModules)
+    }
 }
 
 async function traverseAllParentFoldersToFindPiece(packageName: string): Promise<string | null> {
