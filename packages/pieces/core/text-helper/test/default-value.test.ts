@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { defaultValue } from '../src/lib/actions/default-value';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 

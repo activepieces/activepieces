@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { concat } from '../src/lib/actions/concat';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 

@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { find } from '../src/lib/actions/find';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 

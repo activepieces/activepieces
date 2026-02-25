@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { markdownToHTML } from '../src/lib/actions/markdown-to-html';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 

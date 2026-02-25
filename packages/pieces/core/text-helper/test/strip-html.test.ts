@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { stripHtmlContent } from '../src/lib/actions/strip-html';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 
