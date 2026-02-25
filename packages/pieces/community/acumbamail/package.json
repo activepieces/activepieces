@@ -1,4 +1,15 @@
 {
   "name": "@activepieces/piece-acumbamail",
-  "version": "0.2.2"
+  "version": "0.2.3",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "form-data": "4.0.4",
+    "tslib": "2.6.2"
+  }
 }

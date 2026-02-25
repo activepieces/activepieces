@@ -1,3 +1,8 @@
+import {
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -42,11 +47,6 @@ import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import {
-  AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-} from '@activepieces/shared';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [

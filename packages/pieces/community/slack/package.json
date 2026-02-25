@@ -1,8 +1,19 @@
 {
   "name": "@activepieces/piece-slack",
-  "version": "0.12.2",
+  "version": "0.12.3",
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@slack/web-api": "7.9.0",
-    "slackify-markdown": "4.4.0"
+    "slackify-markdown": "4.4.0",
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

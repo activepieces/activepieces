@@ -1,4 +1,4 @@
-import { motionAuth } from '../../index';
+import { motionAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   BASE_URL,

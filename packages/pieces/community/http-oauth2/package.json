@@ -1,7 +1,17 @@
 {
   "name": "@activepieces/piece-http-oauth2",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "dependencies": {
-    "https-proxy-agent": "7.0.4"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "axios": "1.13.5",
+    "form-data": "4.0.4",
+    "https-proxy-agent": "7.0.4",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

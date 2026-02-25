@@ -1,7 +1,16 @@
 {
   "name": "@activepieces/piece-graphql",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "dependencies": {
-    "https-proxy-agent": "7.0.4"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "axios": "1.13.5",
+    "https-proxy-agent": "7.0.4",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

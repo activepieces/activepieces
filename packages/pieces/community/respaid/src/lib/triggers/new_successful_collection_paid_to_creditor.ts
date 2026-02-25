@@ -1,6 +1,6 @@
 
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { respaidAuth } from '../../index';
+import { respaidAuth } from '../auth';
 import { respaidTriggersCommon } from '../common';
 
 interface NewPaidTriggerPayload {

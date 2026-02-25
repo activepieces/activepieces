@@ -1,8 +1,23 @@
 {
   "name": "@activepieces/piece-sftp",
-  "version": "0.4.10",
+  "version": "0.5.0",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "basic-ftp": "5.0.5",
-    "ssh2-sftp-client": "9.1.0"
+    "dayjs": "1.11.9",
+    "ssh2": "1.16.0",
+    "ssh2-sftp-client": "9.1.0",
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/ssh2": "1.15.5",
+    "@types/ssh2-sftp-client": "9.0.6"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

@@ -9,7 +9,7 @@ import {
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { generatebannersAuth } from '../../';
+import { generatebannersAuth } from '../auth';
 
 export const renderTemplate = createAction({
   auth: generatebannersAuth,

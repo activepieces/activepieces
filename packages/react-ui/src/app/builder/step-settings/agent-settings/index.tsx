@@ -1,10 +1,3 @@
-import { useFormContext } from 'react-hook-form';
-
-import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
-import { FormField } from '@/components/ui/form';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AIModelSelector } from '@/features/agents/ai-model';
-import { AgentStructuredOutput } from '@/features/agents/structured-output';
 import {
   AgentPieceProps,
   AgentProviderModel,
@@ -12,6 +5,13 @@ import {
   PieceAction,
   PieceActionSettings,
 } from '@activepieces/shared';
+import { useFormContext } from 'react-hook-form';
+
+import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
+import { FormField } from '@/components/ui/form';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AIModelSelector } from '@/features/agents/ai-model';
+import { AgentStructuredOutput } from '@/features/agents/structured-output';
 
 import {
   selectGenericFormComponentForProperty,

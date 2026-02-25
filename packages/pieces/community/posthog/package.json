@@ -1,4 +1,14 @@
 {
   "name": "@activepieces/piece-posthog",
-  "version": "0.4.3"
+  "version": "0.4.4",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "tslib": "2.6.2"
+  }
 }

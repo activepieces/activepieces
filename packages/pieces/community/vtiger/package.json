@@ -1,7 +1,19 @@
 {
   "name": "@activepieces/piece-vtiger",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "dependencies": {
-    "crypto-js": "4.2.0"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "crypto-js": "4.2.0",
+    "dayjs": "1.11.9",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "4.2.2"
   }
 }

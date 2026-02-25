@@ -1,3 +1,9 @@
+import {
+  AIProviderName,
+  AIProviderModelType,
+  CreateAIProviderRequest,
+  ProviderModelConfig,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Plus,
@@ -25,12 +31,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  AIProviderName,
-  AIProviderModelType,
-  CreateAIProviderRequest,
-  ProviderModelConfig,
-} from '@activepieces/shared';
 
 import { ModelFormPopover } from './model-form-popover';
 

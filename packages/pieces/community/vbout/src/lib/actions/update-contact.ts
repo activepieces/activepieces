@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
+import { vboutAuth } from '../auth';
 import { makeClient, vboutCommon } from '../common';
 
 export const updateContactAction = createAction({

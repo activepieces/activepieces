@@ -4,7 +4,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { activePieceAuth } from '../auth';
 
 export const listProject = createAction({
   name: 'list_project',

@@ -1,3 +1,4 @@
+import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -19,7 +20,6 @@ import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
 

@@ -2,7 +2,7 @@ import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property } from
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { getNotebooksDropdown, getSectionsByNotebookDropdown } from '../common';
-import { oneNoteAuth } from '../../index';
+import { oneNoteAuth } from '../auth';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 

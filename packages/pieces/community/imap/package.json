@@ -1,8 +1,20 @@
 {
   "name": "@activepieces/piece-imap",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
     "imapflow": "1.0.200",
-    "mailparser": "3.7.5"
+    "mailparser": "3.7.5",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/mailparser": "3.4.6"
   }
 }

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { smartsheetAuth } from '../../index';
+import { smartsheetAuth } from '../auth';
 import { smartsheetCommon, addRowToSmartsheet } from '../common';
 
 export const addRowToSheet = createAction({

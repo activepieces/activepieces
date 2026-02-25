@@ -1,3 +1,4 @@
+import { flowStructureUtil, isNil } from '@activepieces/shared';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
 import { History } from '@tiptap/extension-history';
@@ -11,7 +12,6 @@ import StarterKit from '@tiptap/starter-kit';
 import { inputClass } from '@/components/ui/input';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
-import { flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 

@@ -1,11 +1,11 @@
-import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
-import React from 'react';
-
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   FlowProjectOperationType,
   FlowProjectOperation,
 } from '@activepieces/shared';
+import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
+import React from 'react';
+
+import { Checkbox } from '@/components/ui/checkbox';
 
 const renderDiffInfo = (flowName: string, icon: React.ReactNode) => (
   <div className="flex items-center justify-between text-sm hover:bg-accent/20 rounded-md py-1">

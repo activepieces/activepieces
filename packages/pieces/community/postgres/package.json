@@ -1,8 +1,21 @@
 {
   "name": "@activepieces/piece-postgres",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
     "pg": "8.11.3",
-    "pg-format": "1.0.4"
+    "pg-format": "1.0.4",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/pg": "8.16.0",
+    "@types/pg-format": "1.0.5"
   }
 }

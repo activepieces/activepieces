@@ -1,4 +1,4 @@
-import { googleDocsAuth } from '../..';
+import { googleDocsAuth } from '../auth';
 import {
 	createAction,
 	DynamicPropsValue,

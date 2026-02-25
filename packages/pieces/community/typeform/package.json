@@ -1,4 +1,15 @@
 {
   "name": "@activepieces/piece-typeform",
-  "version": "0.4.2"
+  "version": "0.4.3",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "nanoid": "3.3.8",
+    "tslib": "2.6.2"
+  }
 }

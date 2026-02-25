@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core';
 import { Handle, Position } from '@xyflow/react';
 import { Plus } from 'lucide-react';
@@ -6,7 +7,6 @@ import React, { useId, useState } from 'react';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';

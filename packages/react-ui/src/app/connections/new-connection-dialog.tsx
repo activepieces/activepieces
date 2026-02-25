@@ -1,3 +1,5 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import React, { useState } from 'react';
@@ -14,8 +16,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
 

@@ -1,12 +1,11 @@
-import { ColumnDef } from '@tanstack/react-table';
-import { t } from 'i18next';
-import { User } from 'lucide-react';
-
 import {
   AppConnectionOwners,
   UserWithMetaInformation,
   validateIndexBound,
 } from '@activepieces/shared';
+import { ColumnDef } from '@tanstack/react-table';
+import { t } from 'i18next';
+import { User } from 'lucide-react';
 
 import { ApAvatar } from '../components/custom/ap-avatar';
 import { useEmbedding } from '../components/embed-provider';

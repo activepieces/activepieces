@@ -1,4 +1,15 @@
 {
   "name": "@activepieces/piece-webhook",
-  "version": "0.1.28"
+  "version": "0.1.29",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/webhook/",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "http-status-codes": "2.2.0",
+    "tslib": "2.6.2"
+  }
 }
