@@ -52,12 +52,12 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-common package
-        run: npx turbo run build --filter=@activepieces/pieces-common --force && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/community/common
+        run: npx turbo run build --filter=@activepieces/pieces-common --force && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-framework package
-        run: npx turbo run build --filter=@activepieces/pieces-framework --force && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/community/framework
+        run: npx turbo run build --filter=@activepieces/pieces-framework --force && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-npm-package.ts packages/pieces/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -105,7 +105,7 @@ jobs:
 
       - name: update pieces metadata
         if: steps.changed.outputs.has_changes == 'true'
-        run: npx ts-node -r tsconfig-paths/register -r ./tools/scripts/fix-dts-require.js -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/community/framework
+        run: npx ts-node -r tsconfig-paths/register -r ./tools/scripts/fix-dts-require.js -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
           NODE_OPTIONS: "--max-old-space-size=8192"
