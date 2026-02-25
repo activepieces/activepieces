@@ -21,6 +21,8 @@ import { useEffectOnce } from 'react-use';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogClose,
@@ -80,6 +82,7 @@ function CreateOrEditConnectionSection({
   const form = useForm<{
     request: UpsertAppConnectionRequestBody & {
       projectIds: string[];
+      preSelectForNewProjects: boolean;
     };
   }>({
     defaultValues: {
@@ -94,6 +97,7 @@ function CreateOrEditConnectionSection({
           redirectUrl: redirectUrl ?? '',
         }),
         projectIds: reconnectConnection?.projectIds ?? [],
+        preSelectForNewProjects: false,
         pieceVersion: piece.version,
       },
     },
@@ -174,13 +178,32 @@ function CreateOrEditConnectionSection({
                 )}
               ></FormField>
             )}
-            {isGlobalConnection && (
+            {isGlobalConnection && isNil(reconnectConnection) && (
               <div className="my-4 flex flex-col gap-4">
                 <AssignConnectionToProjectsControl
                   control={form.control}
                   name="request.projectIds"
                 />
-                {isGlobalConnection && isNil(reconnectConnection) && (
+                <FormField
+                  control={form.control}
+                  name="request.preSelectForNewProjects"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3">
+                      <Checkbox
+                        id="preSelectForNewProjects"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <Label
+                        htmlFor="preSelectForNewProjects"
+                        className="cursor-pointer"
+                      >
+                        {t('Include by default in new projects')}
+                      </Label>
+                    </FormItem>
+                  )}
+                />
+                {isNil(reconnectConnection) && (
                   <div>
                     <FormField
                       control={form.control}

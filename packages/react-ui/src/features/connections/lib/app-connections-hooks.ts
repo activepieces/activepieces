@@ -53,6 +53,7 @@ type UseUpsertAppConnectionProps = {
   form: UseFormReturn<{
     request: UpsertAppConnectionRequestBody & {
       projectIds: string[];
+      preSelectForNewProjects: boolean;
     };
   }>;
   setOpen: (

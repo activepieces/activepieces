@@ -24,6 +24,7 @@ export const CreatePlatformProjectRequest = Type.Object({
     externalId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
     maxConcurrentJobs: Nullable(Type.Number()),
+    globalConnectionIds: Type.Optional(Type.Array(Type.String())),
 })
 
 export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>

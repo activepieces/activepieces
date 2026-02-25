@@ -61,6 +61,11 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         pieceVersion: {
             type: String,
         },
+        preSelectForNewProjects: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
     },
     indices: [
         {

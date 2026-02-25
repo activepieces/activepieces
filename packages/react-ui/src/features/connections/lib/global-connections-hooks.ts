@@ -21,6 +21,7 @@ type UseGlobalConnectionsProps = {
   extraKeys: any[];
   staleTime?: number;
   gcTime?: number;
+  enabled?: boolean;
 };
 
 export const globalConnectionsQueries = {
@@ -29,11 +30,13 @@ export const globalConnectionsQueries = {
     extraKeys,
     staleTime,
     gcTime,
+    enabled = true,
   }: UseGlobalConnectionsProps) =>
     useQuery({
       queryKey: ['globalConnections', ...extraKeys],
       staleTime,
       gcTime,
+      enabled,
       queryFn: () => {
         return globalConnectionsApi.list(request);
       },
@@ -59,6 +62,7 @@ export const globalConnectionsMutations = {
     editConnectionForm: UseFormReturn<{
       displayName: string;
       projectIds: string[];
+      preSelectForNewProjects: boolean;
     }>,
   ) =>
     useMutation<
@@ -68,6 +72,7 @@ export const globalConnectionsMutations = {
         connectionId: string;
         displayName: string;
         projectIds: string[];
+        preSelectForNewProjects: boolean;
         currentName: string;
       }
     >({
@@ -75,6 +80,7 @@ export const globalConnectionsMutations = {
         connectionId,
         displayName,
         projectIds,
+        preSelectForNewProjects,
         currentName,
       }) => {
         if (
@@ -89,6 +95,7 @@ export const globalConnectionsMutations = {
         return globalConnectionsApi.update(connectionId, {
           displayName,
           projectIds,
+          preSelectForNewProjects,
         });
       },
       onSuccess: () => {

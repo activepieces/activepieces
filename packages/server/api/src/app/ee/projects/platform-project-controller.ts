@@ -6,6 +6,7 @@ import {
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    AppConnectionScope,
     assertNotNullOrUndefined,
     ErrorCode,
     Permission,
@@ -23,11 +24,13 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformProjectService } from './platform-project-service'
 import { projectLimitsService } from './project-plan/project-plan.service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 
 const DEFAULT_LIMIT_SIZE = 50
 
@@ -44,8 +47,8 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         assertNotNullOrUndefined(platformId, 'platformId')
         await assertMaximumNumberOfProjectsReachedByEdition(platformId)
 
+        const platformPlan = await platformPlanService(request.log).getOrCreateForPlatform(platformId)
         const platform = await platformService.getOneOrThrow(platformId)
-
         const project = await projectService.create({
             ownerId: platform.ownerId,
             displayName: request.body.displayName,
@@ -60,6 +63,15 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             pieces: [],
             piecesFilterType: PiecesFilterType.NONE,
         }, project.id)
+
+        if (platformPlan.globalConnectionsEnabled) {
+            await appConnectionService(request.log).assignToProject({
+                platformId,
+                projectId: project.id,
+                connectionIds: request.body.globalConnectionIds ?? [],
+            })
+        }
+
         const projectWithUsage =
             await platformProjectService(request.log).getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
@@ -131,6 +143,8 @@ async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, plat
     })
     return user.platformRole === PlatformRole.ADMIN
 }
+
+
 
 
 async function assertProjectToDeleteIsNotPersonalProject(projectId: string): Promise<void> {

@@ -6,6 +6,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,6 +20,8 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 
 type NewProjectDialogProps = {
@@ -31,6 +34,16 @@ export const NewProjectDialog = ({
   onCreate,
 }: NewProjectDialogProps) => {
   const [open, setOpen] = useState(false);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
+
+  const { data: globalConnectionsPage, isLoading: isLoadingConnections } =
+    globalConnectionsQueries.useGlobalConnections({
+      request: { limit: 9999 },
+      extraKeys: ['new-project-dialog'],
+      enabled: globalConnectionsEnabled,
+    });
+
   const form = useForm<CreatePlatformProjectRequest>({
     resolver: typeboxResolver(
       Type.Object({
@@ -40,6 +53,9 @@ export const NewProjectDialog = ({
         }),
       }),
     ),
+    defaultValues: {
+      globalConnectionIds: [],
+    },
   });
 
   const { mutate, isPending } = projectCollectionUtils.useCreateProject(
@@ -53,8 +69,22 @@ export const NewProjectDialog = ({
     },
   );
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      const autoSelectedIds =
+        globalConnectionsPage?.data
+          .filter((c) => c.preSelectForNewProjects)
+          .map((c) => c.id) ?? [];
+      form.reset({
+        displayName: '',
+        globalConnectionIds: autoSelectedIds,
+      });
+    }
+    setOpen(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -82,6 +112,32 @@ export const NewProjectDialog = ({
                 </FormItem>
               )}
             />
+            {globalConnectionsEnabled && (
+              <FormField
+                name="globalConnectionIds"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-2">
+                    <Label>{t('Global Connections')}</Label>
+                    <MultiSelectPieceProperty
+                      placeholder={t('Select global connections')}
+                      options={
+                        globalConnectionsPage?.data.map((connection) => ({
+                          value: connection.id,
+                          label: connection.displayName,
+                        })) ?? []
+                      }
+                      loading={isLoadingConnections}
+                      onChange={(value) => {
+                        field.onChange(value ?? []);
+                      }}
+                      initialValues={field.value ?? []}
+                      showDeselect={(field.value ?? []).length > 0}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}

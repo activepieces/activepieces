@@ -61,7 +61,7 @@ export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
-        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata } = params
+        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata, preSelectForNewProjects } = params
         const pieceVersion = params.pieceVersion ?? ( await pieceMetadataService(log).getOrThrow({
             name: pieceName,
             platformId,
@@ -101,6 +101,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds,
             platformId,
             ...spreadIfDefined('metadata', metadata),
+            ...spreadIfDefined('preSelectForNewProjects', preSelectForNewProjects),
             pieceVersion,
         }
 
@@ -132,6 +133,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
             ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('preSelectForNewProjects', request.preSelectForNewProjects),
         })
 
         const updatedConnection = await appConnectionsRepo().findOneByOrFail(filter)
@@ -350,6 +352,26 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds: ArrayContains([projectId]),
         })
     },
+    async assignToProject({ platformId, projectId, connectionIds }: AssignToProjectParams): Promise<void> {
+        if (connectionIds.length === 0) {
+            return
+        }
+        await appConnectionsRepo()
+            .createQueryBuilder()
+            .update()
+            .set({
+                projectIds: () => 'array_append("projectIds", :projectId)',
+            })
+            .where({
+                id: In(connectionIds),
+                platformId,
+                scope: AppConnectionScope.PLATFORM,
+            })
+            .andWhere('NOT ("projectIds" @> ARRAY[:projectId]::varchar[])')
+            .setParameter('projectId', projectId)
+            .execute()
+    },
+
     async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
         const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
             firstName: user.identity.firstName,
@@ -626,6 +648,7 @@ type UpsertParams = {
     pieceName: string
     metadata?: Metadata
     pieceVersion?: string
+    preSelectForNewProjects?: boolean
 }
 
 
@@ -680,6 +703,7 @@ type UpdateParams = {
         displayName: string
         projectIds: ProjectId[] | null
         metadata?: Metadata
+        preSelectForNewProjects?: boolean
     }
 }
 
@@ -696,4 +720,10 @@ type ReplaceParams = {
     projectId: ProjectId
     platformId: string
     userId: UserId
+}
+
+type AssignToProjectParams = {
+    platformId: string
+    projectId: string
+    connectionIds: string[]
 }

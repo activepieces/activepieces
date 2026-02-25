@@ -37,6 +37,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PLATFORM,
             pieceVersion: request.body.pieceVersion,
+            preSelectForNewProjects: request.body.preSelectForNewProjects,
         })
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
@@ -58,6 +59,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             request: {
                 displayName: request.body.displayName,
                 projectIds: request.body.projectIds ?? null,
+                preSelectForNewProjects: request.body.preSelectForNewProjects,
             },
         })
     })

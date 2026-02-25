@@ -187,6 +187,7 @@ const GlobalConnectionsTable = () => {
               connectionId={row.original.id}
               currentName={row.original.displayName}
               projectIds={row.original.projectIds}
+              preSelectForNewProjects={row.original.preSelectForNewProjects ?? false}
               userHasPermissionToEdit={true}
               onEdit={() => {
                 refetchGlobalConnections();
