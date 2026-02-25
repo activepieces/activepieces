@@ -16,10 +16,12 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/showdown": "2.0.6",
-    "@types/turndown": "5.0.6"
+    "@types/turndown": "5.0.6",
+    "vitest": "3.0.8"
   }
 }
