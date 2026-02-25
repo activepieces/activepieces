@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
 import { PopulatedFlow } from '../flows/flow'
@@ -32,3 +33,11 @@ export const UpdateMcpServerRequest = Type.Object({
 })
 
 export type UpdateMcpServerRequest = Static<typeof UpdateMcpServerRequest>
+
+/** Tool definition for MCP: inputSchema is a raw Zod shape (same as MCP expects). */
+export type McpToolDefinition = {
+    title: string
+    description: string
+    inputSchema: Record<string, z.ZodTypeAny>
+    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
+}
