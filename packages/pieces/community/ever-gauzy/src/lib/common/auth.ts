@@ -2,7 +2,6 @@ import { OAuth2PropertyValue, PieceAuth, Property } from '@activepieces/pieces-f
 import { OAuth2GrantType } from '@activepieces/shared';
 
 export const GAUZY_BASE_URLS = {
-  localhost: 'http://localhost:3000',
   apidemo: 'https://apidemo.gauzy.co',
   api: 'https://api.gauzy.co',
 } as const;
@@ -22,7 +21,6 @@ export const gauzyAuth = PieceAuth.OAuth2({
       defaultValue: GAUZY_BASE_URLS.apidemo,
       options: {
         options: [
-          { label: 'Localhost', value: GAUZY_BASE_URLS.localhost },
           { label: 'Demo', value: GAUZY_BASE_URLS.apidemo },
           { label: 'Production', value: GAUZY_BASE_URLS.api },
         ],
