@@ -41,6 +41,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '25',
+    [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: '25',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',

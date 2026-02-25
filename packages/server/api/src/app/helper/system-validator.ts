@@ -58,6 +58,7 @@ const systemPropValidators: {
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
+    [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: numberValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
