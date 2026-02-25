@@ -8,7 +8,54 @@ permissions:
 
 
 jobs:
-  main:
+  lint:
+    runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.2.1
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
+
+      - name: Check if framework or common pieces are changed
+        id: check-framework-common
+        run: |
+          CHANGED_FILES="$(git diff --name-only HEAD origin/main | tr '\n' ' ')"
+          if echo "$CHANGED_FILES" | grep -q "community/framework\|community/common"; then
+            echo "framework_or_common_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "framework_or_common_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Lint core projects
+        run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=server-api --filter=react-ui --filter=@activepieces/server-shared --filter=server-worker --filter=@activepieces/ee-shared --filter=ee-embed-sdk
+
+      - name: Lint all pieces projects
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
+        run: npx turbo run lint --filter='@activepieces/piece-*'
+
+  build:
     runs-on: ubuntu-latest
     if: github.repository == 'activepieces/activepieces'
     steps:
@@ -63,14 +110,6 @@ jobs:
             echo "pieces_filters=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Lint core projects
-        run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=server-api --filter=react-ui --filter=@activepieces/server-shared --filter=server-worker --filter=@activepieces/ee-shared --filter=ee-embed-sdk
-
-
-      - name: Lint all pieces projects
-        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
-        run: npx turbo run lint --filter='@activepieces/piece-*'
-
       - name: Build core projects
         run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine
 
@@ -87,6 +126,37 @@ jobs:
       - name: Build all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
         run: npx turbo run build --filter='@activepieces/piece-*'
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.repository == 'activepieces/activepieces'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.2.1
+        with:
+          provider: s3
+          s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          s3-region: auto
+          s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
+          max-age: 3w
+          max-size: 20gb
 
       - name: Run all tests and migration check in parallel
         run: |
