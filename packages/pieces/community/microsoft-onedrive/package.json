@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-onedrive",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
