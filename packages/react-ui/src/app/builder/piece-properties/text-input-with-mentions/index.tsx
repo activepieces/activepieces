@@ -1,4 +1,5 @@
 import { flowStructureUtil, isNil } from '@activepieces/shared';
+import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
 import { History } from '@tiptap/extension-history';
@@ -26,13 +27,13 @@ type TextInputWithMentionsProps = {
   enableMarkdown?: boolean;
 };
 
-const extensions = ({
+function getExtensions({
   enableMarkdown,
   placeholder,
 }: {
   placeholder?: string;
   enableMarkdown?: boolean;
-}) => {
+}): Extensions {
   const baseExtensions = [
     Placeholder.configure({
       placeholder: placeholder,
@@ -58,7 +59,7 @@ const extensions = ({
           levels: [1, 2, 3],
         },
       }),
-    ];
+    ] as Extensions;
   }
 
   return [
@@ -70,8 +71,8 @@ const extensions = ({
     Paragraph.configure({
       HTMLAttributes: {},
     }),
-  ];
-};
+  ] as Extensions;
+}
 
 function convertToText(value: unknown): string {
   if (isNil(value)) {
@@ -124,7 +125,7 @@ export const TextInputWithMentions = ({
 
   const editor = useEditor({
     editable: !disabled,
-    extensions: extensions({ placeholder, enableMarkdown }),
+    extensions: getExtensions({ placeholder, enableMarkdown }),
     content: {
       type: 'doc',
       content: textMentionUtils.convertTextToTipTapJsonContent(
