@@ -2,9 +2,8 @@
   "name": "@activepieces/pieces-framework",
   "version": "0.25.4",
   "type": "commonjs",
-  "main": "./dist/src/index.js",
-  "types": "./src/index.ts",
-  "files": ["dist"],
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'",
