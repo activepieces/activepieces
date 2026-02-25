@@ -19,6 +19,19 @@ import {
   SelectGenericFormComponentForPropertyParams,
 } from './properties-utils';
 
+// Helper function to construct property path with proper quoting for special characters
+const constructPropertyPath = (prefix: string, propertyName: string): string => {
+  if (prefix.length === 0) {
+    return propertyName;
+  }
+  // If property name contains brackets, dots, or other special chars, use bracket notation with quotes
+  if (/[\[\]\.]/.test(propertyName)) {
+    return `${prefix}['${propertyName}']`;
+  }
+  // Otherwise use dot notation
+  return `${prefix}.${propertyName}`;
+};
+
 export const GenericPropertiesForm = React.memo(
   ({
     markdownVariables,
@@ -41,11 +54,7 @@ export const GenericPropertiesForm = React.memo(
             return (
               <FormField
                 key={propertyName}
-                name={
-                  prefixValue.length > 0
-                    ? `${prefixValue}.${propertyName}`
-                    : propertyName
-                }
+                name={constructPropertyPath(prefixValue, propertyName)}
                 control={form.control}
                 render={({ field }) =>
                   selectGenericFormComponentForProperty({
@@ -60,10 +69,7 @@ export const GenericPropertiesForm = React.memo(
                       },
                     },
                     propertyName,
-                    inputName:
-                      prefixValue.length > 0
-                        ? `${prefixValue}.${propertyName}`
-                        : propertyName,
+                    inputName: constructPropertyPath(prefixValue, propertyName),
                     property: props[propertyName],
                     allowDynamicValues: !isNil(propertySettings),
                     markdownVariables: markdownVariables ?? {},
