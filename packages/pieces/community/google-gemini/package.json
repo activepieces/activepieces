@@ -1,6 +1,8 @@
 {
   "name": "@activepieces/piece-google-gemini",
   "version": "0.1.4",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
@@ -18,7 +20,7 @@
     "@types/mime-types": "2.1.1"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

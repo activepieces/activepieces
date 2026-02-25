@@ -1,6 +1,8 @@
 {
   "name": "@activepieces/piece-todos",
   "version": "0.0.17",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "type": "commonjs",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
@@ -9,7 +11,7 @@
     "tslib": "^2.3.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }
