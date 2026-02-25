@@ -1456,6 +1456,9 @@
       "@activepieces/piece-logrocket": [
         "packages/pieces/community/logrocket/src/index.ts"
       ],
+      "@activepieces/piece-logsnag": [
+        "packages/pieces/community/logsnag/src/index.ts"
+      ],
       "@activepieces/piece-couchbase": [
         "packages/pieces/community/couchbase/src/index.ts"
       ],
@@ -1817,9 +1820,6 @@
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
       ],
-      "@activepieces/piece-logsnag": [
-        "packages/pieces/custom/logsnag/src/index.ts"
-      ]
     },
     "resolveJsonModule": true
   },
