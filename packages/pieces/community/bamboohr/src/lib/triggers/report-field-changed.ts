@@ -227,7 +227,11 @@ export const reportFieldChanged = createTrigger({
         const lastFieldValue = lastKnownState[employeeId];
 
         currentState[employeeId] = currentFieldValue;
-        if (!isNil(lastFieldValue) && lastFieldValue !== currentFieldValue) {
+        if (
+          !isNil(lastFieldValue) &&
+          lastFieldValue !== '' &&
+          lastFieldValue !== currentFieldValue
+        ) {
           changes.push({
             employeeId,
             employeeName:
