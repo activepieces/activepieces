@@ -4,6 +4,7 @@
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./src/index.ts",
+  "files": ["dist"],
   "dependencies": {
     "@sinclair/typebox": "0.34.11",
     "deepmerge-ts": "7.1.0",
