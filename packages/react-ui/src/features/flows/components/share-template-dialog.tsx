@@ -71,7 +71,9 @@ const ShareTemplateDialog: React.FC<{
       return flowTemplate;
     },
     onSuccess: (data) => {
-      openNewIndow(`/templates/${data.id}`);
+      // FIX: Use window.location.origin to keep template on same domain
+      // instead of openNewIndow which might use different domain
+      window.open(`${window.location.origin}/templates/${data.id}`, '_blank', 'noopener noreferrer');
       setIsShareDialogOpen(false);
     },
   });
