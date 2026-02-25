@@ -1,9 +1,11 @@
 {
   "name": "@activepieces/piece-assemblyai",
   "version": "1.1.4",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "scripts": {
     "generate": "tsx ./scripts/generateFromSpec.ts",
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {

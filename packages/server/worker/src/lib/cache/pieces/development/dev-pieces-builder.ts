@@ -133,9 +133,7 @@ async function copyI18nToDist(sourceDir: string): Promise<void> {
 }
 
 function getDistDir(sourceDir: string): string {
-    const piecesRoot = resolve('packages', 'pieces')
-    const relativePath = sourceDir.substring(sourceDir.indexOf(piecesRoot) + piecesRoot.length)
-    return join('dist', 'packages', 'pieces', relativePath)
+    return join(sourceDir, 'dist')
 }
 
 type PieceInfo = {

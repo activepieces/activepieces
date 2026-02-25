@@ -90,13 +90,10 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   console.info(`[publishPackage] path=${path}`)
   assert(path, '[publishPackage] parameter "path" is required')
 
-  // Check local dist first ({path}/dist), then global dist (dist/{path})
-  const localDistPath = `${path}/dist`
-  const globalDistPath = `dist/${path}`
-  const outputPath = existsSync(`${localDistPath}/package.json`) ? localDistPath : globalDistPath
+  const outputPath = `${path}/dist`
 
   if (!existsSync(`${outputPath}/package.json`)) {
-    console.info(`[publishPackage] skipping, no build output at ${localDistPath} or ${globalDistPath}`)
+    console.info(`[publishPackage] skipping, no build output at ${outputPath}`)
     return
   }
 
@@ -110,6 +107,8 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   const versionMap = buildWorkspaceVersionMap()
   const json = JSON.parse(readFileSync(`${outputPath}/package.json`).toString())
   json.version = version
+  json.main = './src/index.js'
+  json.types = './src/index.d.ts'
   json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
   json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
   json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)

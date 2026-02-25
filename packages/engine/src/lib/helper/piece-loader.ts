@@ -117,8 +117,8 @@ export const pieceLoader = {
     },
 
     getPiecePath: async ({ packageName, devPieces }: GetPiecePathParams): Promise<string> => {
-        const piecePath = devPieces.includes(getPieceNameFromAlias(packageName)) 
-            ? await loadPieceFromDistFolder(packageName) 
+        const piecePath = devPieces.includes(getPieceNameFromAlias(packageName))
+            ? await findInDistFolder(packageName)
             : await traverseAllParentFoldersToFindPiece(packageName)
         if (isNil(piecePath)) {
             throw new EngineGenericError('PieceNotFoundError', `Piece not found for package: ${packageName}`)
@@ -128,78 +128,54 @@ export const pieceLoader = {
 }
 
 async function findInDistFolder(packageName: string): Promise<string | null> {
-    const distPath = path.resolve('dist/packages/pieces')
-    if (!await utils.folderExists(distPath)) {
+    const sourcePiecesPath = path.resolve('packages/pieces')
+    if (!await utils.folderExists(sourcePiecesPath)) {
         return null
     }
-    const entries = (await utils.walk(distPath)).filter((entry) => entry.name === 'package.json')
-    for (const entry of entries) {
-        const { data: packageJsonPath } = await utils.tryCatchAndThrowOnEngineError((async () => {
-            const packageJsonPath = entry.path
-            const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8')
-            const packageJson = JSON.parse(packageJsonContent)
+    const distPackageJsonPaths = await findDistPackageJsonFiles(sourcePiecesPath)
+    for (const packageJsonPath of distPackageJsonPaths) {
+        const { data: result } = await utils.tryCatchAndThrowOnEngineError(async () => {
+            const content = await fs.readFile(packageJsonPath, 'utf-8')
+            const packageJson = JSON.parse(content)
             if (packageJson.name === packageName) {
                 return path.join(path.dirname(packageJsonPath), 'src', 'index.js')
             }
             return null
-        }))
-        if (packageJsonPath) {
-            return packageJsonPath
+        })
+        if (result) {
+            return result
         }
     }
     return null
 }
 
-async function findInNodeModules(packageName: string): Promise<string | null> {
-    let currentDir = __dirname
-    const rootDir = path.parse(currentDir).root
-    const maxIterations = currentDir.split(path.sep).length
-    for (let i = 0; i < maxIterations; i++) {
-        const pkgDir = path.join(currentDir, 'node_modules', packageName)
-        if (await utils.folderExists(pkgDir)) {
-            const jsPath = path.join(pkgDir, 'src', 'index.js')
-            if (await utils.folderExists(jsPath)) {
-                return jsPath
+async function findDistPackageJsonFiles(dirPath: string): Promise<string[]> {
+    const results: string[] = []
+    const ignoredDirs = ['node_modules', '.turbo', 'framework', 'common']
+
+    async function scanDir(currentPath: string): Promise<void> {
+        const items = await fs.readdir(currentPath, { withFileTypes: true })
+        for (const item of items) {
+            if (!item.isDirectory() || ignoredDirs.includes(item.name)) {
+                continue
             }
-            if (isTestMode()) {
-                const tsPath = path.join(pkgDir, 'src', 'index.ts')
-                if (await utils.folderExists(tsPath)) {
-                    return tsPath
+            const fullPath = path.join(currentPath, item.name)
+            if (item.name === 'dist') {
+                const pkgJson = path.join(fullPath, 'package.json')
+                if (await utils.folderExists(pkgJson)) {
+                    results.push(pkgJson)
                 }
             }
+            else {
+                await scanDir(fullPath)
+            }
         }
-        const parentDir = path.dirname(currentDir)
-        if (parentDir === currentDir || currentDir === rootDir) {
-            break
-        }
-        currentDir = parentDir
     }
-    return null
+
+    await scanDir(dirPath)
+    return results
 }
 
-async function loadPieceFromDistFolder(packageName: string): Promise<string | null> {
-    const distResult = await findInDistFolder(packageName)
-    if (distResult) {
-        await ensureNodeModulesSymlink(distResult)
-        return distResult
-    }
-    return findInNodeModules(packageName)
-}
-
-async function ensureNodeModulesSymlink(distIndexPath: string): Promise<void> {
-    const pieceDistDir = path.resolve(distIndexPath, '..', '..')
-    const distNodeModules = path.join(pieceDistDir, 'node_modules')
-    if (await utils.folderExists(distNodeModules)) {
-        return
-    }
-    const distPiecesRoot = path.resolve('dist', 'packages', 'pieces')
-    const sourcePiecesRoot = path.resolve('packages', 'pieces')
-    const relativePiecePath = path.relative(distPiecesRoot, pieceDistDir)
-    const sourceNodeModules = path.join(sourcePiecesRoot, relativePiecePath, 'node_modules')
-    if (await utils.folderExists(sourceNodeModules)) {
-        await fs.symlink(path.resolve(sourceNodeModules), distNodeModules)
-    }
-}
 
 async function traverseAllParentFoldersToFindPiece(packageName: string): Promise<string | null> {
     const rootDir = path.parse(__dirname).root
@@ -219,10 +195,6 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
         currentDir = parentDir
     }
     return null
-}
-
-function isTestMode(): boolean {
-    return process.env['AP_TEST_MODE'] === 'true'
 }
 
 type GetPiecePathParams = {
