@@ -7,7 +7,7 @@ import { SecretManagerProvider } from './secret-manager-providers'
 export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     id: SecretManagerProviderId.AWS,
     name: 'AWS Secrets Manager',
-    logo: 'https://cdn.activepieces.com/pieces/aws.png',
+    logo: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
     fields: {
         accessKey: {
             displayName: 'Access Key',
