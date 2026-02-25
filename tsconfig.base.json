@@ -1816,6 +1816,9 @@
       ],
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
+      ],
+      "@activepieces/piece-carbone": [
+        "packages/pieces/community/carbone/src/index.ts"
       ]
     },
     "resolveJsonModule": true
