@@ -8,7 +8,9 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@slack/web-api": "7.9.0",
-    "slackify-markdown": "4.4.0"
+    "slackify-markdown": "4.4.0",
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

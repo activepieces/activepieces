@@ -5,7 +5,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@aws-sdk/client-sns": "3.726.1"
+    "@aws-sdk/client-sns": "3.726.1",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
