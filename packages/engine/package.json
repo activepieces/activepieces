@@ -3,7 +3,7 @@
   "version": "0.7.0",
   "type": "commonjs",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
+    "build": "node esbuild.config.mjs",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
@@ -30,14 +30,9 @@
     "zod": "4.1.13"
   },
   "devDependencies": {
-    "@activepieces/piece-approval": "workspace:*",
-    "@activepieces/piece-data-mapper": "workspace:*",
-    "@activepieces/piece-http": "workspace:*",
-    "@activepieces/piece-webhook": "workspace:*",
     "@types/is-base64": "1.1.1",
     "@types/mime-types": "2.1.1",
     "@types/node": "20.19.9",
-    "vitest": "3.0.8",
-    "webpack-ignore-dynamic-require": "1.0.0"
+    "vitest": "3.0.8"
   }
 }

@@ -72,7 +72,7 @@ jobs:
         run: npx turbo run lint --filter='@activepieces/piece-*'
 
       - name: Build core projects
-        run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine
+        run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine --filter=@activepieces/piece-http --filter=@activepieces/piece-data-mapper --filter=@activepieces/piece-approval --filter=@activepieces/piece-webhook
 
       - name: Build changed pieces projects
         if: steps.extract-pieces.outputs.pieces_filters != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
