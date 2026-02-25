@@ -1,7 +1,7 @@
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { useContext, useMemo } from 'react';
 
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 export type FlowDetailRow = PlatformAnalyticsReport['flows'][number] & {
   id: string;
@@ -12,8 +12,9 @@ export type FlowDetailRow = PlatformAnalyticsReport['flows'][number] & {
 export type Owner = { id: string; name: string };
 
 export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
-  const { timeSavedPerRunOverrides, setTimeSavedPerRunOverride } =
-    useContext(RefreshAnalyticsContext);
+  const { timeSavedPerRunOverrides, setTimeSavedPerRunOverride } = useContext(
+    RefreshAnalyticsContext,
+  );
 
   const runsMap = useMemo(() => {
     if (!report) return new Map<string, number>();

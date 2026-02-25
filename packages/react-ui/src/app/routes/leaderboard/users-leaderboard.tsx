@@ -1,20 +1,20 @@
 'use client';
 
+import { BADGES, UserWithBadges } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { BADGES, UserWithBadges } from '@activepieces/shared';
 
 import { FirstIcon } from './icons/1st-icon';
 import { SecondIcon } from './icons/2nd-icon';
@@ -37,7 +37,8 @@ type UsersLeaderboardProps = {
 };
 
 const BadgesCell = ({ badges }: { badges?: UserWithBadges['badges'] }) => {
-  if (!badges || badges.length === 0) return <span className="text-muted-foreground">-</span>;
+  if (!badges || badges.length === 0)
+    return <span className="text-muted-foreground">-</span>;
 
   return (
     <div className="flex items-center gap-0.5">
@@ -104,10 +105,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
   {
     accessorKey: 'flowCount',
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Active Flows')}
-      />
+      <DataTableColumnHeader column={column} title={t('Active Flows')} />
     ),
     cell: ({ row }) => (
       <div className="text-left">{row.original.flowCount}</div>
@@ -117,10 +115,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
   {
     accessorKey: 'minutesSaved',
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Time Saved')}
-      />
+      <DataTableColumnHeader column={column} title={t('Time Saved')} />
     ),
     cell: ({ row }) => (
       <div className="text-left">
@@ -139,7 +134,10 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
   },
 ];
 
-const getRowClassName = (_row: RowDataWithActions<UserStats>, index: number) => {
+const getRowClassName = (
+  _row: RowDataWithActions<UserStats>,
+  index: number,
+) => {
   if (index < 3) return 'bg-primary/5 hover:bg-primary/5';
   return '';
 };

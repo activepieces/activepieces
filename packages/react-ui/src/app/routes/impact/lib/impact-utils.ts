@@ -81,7 +81,9 @@ export const exportFlowDetailsCsv = (
   const rows = flows
     .map(
       (f) =>
-        `"${f.flowName}","${f.ownerId ?? ''}",${f.timeSavedPerRun ?? 0},${f.minutesSaved},"${f.projectName}"`,
+        `"${f.flowName}","${f.ownerId ?? ''}",${f.timeSavedPerRun ?? 0},${
+          f.minutesSaved
+        },"${f.projectName}"`,
     )
     .join('\n');
   downloadFile({

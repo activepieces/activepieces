@@ -1,3 +1,4 @@
+import { ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
@@ -10,7 +11,6 @@ import {
 } from '@/components/ui/popover';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { cn } from '@/lib/utils';
-import { ProjectWithLimits } from '@activepieces/shared';
 
 const ITEM_HEIGHT = 36;
 const MAX_DROPDOWN_HEIGHT = 300;

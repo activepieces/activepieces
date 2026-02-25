@@ -1,3 +1,4 @@
+import { ColorName, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Rocket } from 'lucide-react';
@@ -7,7 +8,6 @@ import { Avatar } from '@/components/ui/avatar';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { ColorName, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 
 import { FirstIcon } from './icons/1st-icon';
 import { SecondIcon } from './icons/2nd-icon';
@@ -61,10 +61,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   {
     accessorKey: 'projectName',
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Projects')}
-      />
+      <DataTableColumnHeader column={column} title={t('Projects')} />
     ),
     cell: ({ row }) => {
       const palette = row.original.iconColor
@@ -90,10 +87,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   {
     accessorKey: 'flowCount',
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Active Flows')}
-      />
+      <DataTableColumnHeader column={column} title={t('Active Flows')} />
     ),
     cell: ({ row }) => (
       <div className="text-left">{row.original.flowCount}</div>
@@ -103,10 +97,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   {
     accessorKey: 'minutesSaved',
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('Time Saved')}
-      />
+      <DataTableColumnHeader column={column} title={t('Time Saved')} />
     ),
     cell: ({ row }) => (
       <div className="text-left">
@@ -117,7 +108,10 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   },
 ];
 
-const getRowClassName = (_row: RowDataWithActions<ProjectStats>, index: number) => {
+const getRowClassName = (
+  _row: RowDataWithActions<ProjectStats>,
+  index: number,
+) => {
   if (index < 3) return 'bg-primary/5';
   return '';
 };

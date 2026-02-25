@@ -171,7 +171,9 @@ export function FlowsDetails({
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            <span>{formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}</span>
+            <span>
+              {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
+            </span>
           </div>
         ),
       },

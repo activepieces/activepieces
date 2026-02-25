@@ -1,3 +1,9 @@
+import {
+  AnalyticsTimePeriod,
+  ColorName,
+  UserWithBadges,
+} from '@activepieces/shared';
+import { useQueries } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
@@ -11,7 +17,6 @@ import {
   Users,
 } from 'lucide-react';
 import { useContext, useMemo, useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
 
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
@@ -42,15 +47,9 @@ import {
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
 } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userApi } from '@/lib/user-api';
 import { downloadFile, formatUtils } from '@/lib/utils';
-import {
-  AnalyticsTimePeriod,
-  ColorName,
-  UserWithBadges,
-} from '@activepieces/shared';
-
-import { projectCollectionUtils } from '@/hooks/project-collection';
 
 import {
   convertToSeconds,
@@ -228,15 +227,13 @@ export default function LeaderboardPage() {
     if (minValue !== null) {
       data = data.filter(
         (p) =>
-          p.minutesSaved >=
-          convertToSeconds(minValue, peopleTimeSaved.unit),
+          p.minutesSaved >= convertToSeconds(minValue, peopleTimeSaved.unit),
       );
     }
     if (maxValue !== null) {
       data = data.filter(
         (p) =>
-          p.minutesSaved <=
-          convertToSeconds(maxValue, peopleTimeSaved.unit),
+          p.minutesSaved <= convertToSeconds(maxValue, peopleTimeSaved.unit),
       );
     }
 
@@ -261,15 +258,13 @@ export default function LeaderboardPage() {
     if (minValue !== null) {
       data = data.filter(
         (p) =>
-          p.minutesSaved >=
-          convertToSeconds(minValue, projectsTimeSaved.unit),
+          p.minutesSaved >= convertToSeconds(minValue, projectsTimeSaved.unit),
       );
     }
     if (maxValue !== null) {
       data = data.filter(
         (p) =>
-          p.minutesSaved <=
-          convertToSeconds(maxValue, projectsTimeSaved.unit),
+          p.minutesSaved <= convertToSeconds(maxValue, projectsTimeSaved.unit),
       );
     }
 
@@ -344,9 +339,7 @@ export default function LeaderboardPage() {
                   <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  {t(
-                    'See top performers by flows created and time saved',
-                  )}
+                  {t('See top performers by flows created and time saved')}
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -536,10 +529,7 @@ export default function LeaderboardPage() {
           </div>
 
           <TabsContent value="creators">
-            <UsersLeaderboard
-              data={filteredPeopleData}
-              isLoading={isLoading}
-            />
+            <UsersLeaderboard data={filteredPeopleData} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="projects">
