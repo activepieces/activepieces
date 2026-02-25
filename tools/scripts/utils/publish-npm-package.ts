@@ -90,11 +90,13 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   console.info(`[publishPackage] path=${path}`)
   assert(path, '[publishPackage] parameter "path" is required')
 
-  // Output path follows the convention: dist/{source-path}
-  const outputPath = `dist/${path}`
+  // Check local dist first ({path}/dist), then global dist (dist/{path})
+  const localDistPath = `${path}/dist`
+  const globalDistPath = `dist/${path}`
+  const outputPath = existsSync(`${localDistPath}/package.json`) ? localDistPath : globalDistPath
 
   if (!existsSync(`${outputPath}/package.json`)) {
-    console.info(`[publishPackage] skipping, no build output at ${outputPath}`)
+    console.info(`[publishPackage] skipping, no build output at ${localDistPath} or ${globalDistPath}`)
     return
   }
 
