@@ -80,20 +80,27 @@ export const googleDriveSearchFolder = createAction({
         break;
     }
 
-    const response = await drive.files.list({
-      q: finalQuery,
-      fields: 'files(id, name, mimeType, createdTime, modifiedTime)',
-      includeItemsFromAllDrives: context.propsValue.include_team_drives,
-      supportsAllDrives: true,
-    });
-    if (response.status !== 200) {
-      console.error(response);
-      throw new Error('Error searching for the file/folder');
-    }
+    const allFiles: any[] = [];
+    let pageToken: string | undefined = undefined;
+    do {
+      const listParams: Record<string, any> = {
+        q: finalQuery,
+        fields: 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)',
+        includeItemsFromAllDrives: context.propsValue.include_team_drives,
+        supportsAllDrives: true,
+      };
+      if (pageToken) listParams.pageToken = pageToken;
+      const response = await drive.files.list(listParams);
+      if (response.status !== 200) {
+        console.error(response);
+        throw new Error('Error searching for the file/folder');
+      }
+      allFiles.push(...(response.data.files ?? []));
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
 
-    const files = response.data.files ?? [];
-    if (files.length > 0) {
-      return files;
+    if (allFiles.length > 0) {
+      return allFiles;
     } else {
       console.log('Resource not found');
       return [];

@@ -39,7 +39,7 @@ async function getFilesRecursively(
 
   const params: Record<string, string> = {
     q: q,
-    fields: 'files(id,kind,mimeType,name,trashed,parents)',
+    fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
     supportsAllDrives: 'true',
     includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
   };
