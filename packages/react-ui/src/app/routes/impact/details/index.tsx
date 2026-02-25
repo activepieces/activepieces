@@ -37,7 +37,7 @@ import {
   ProjectWithLimits,
 } from '@activepieces/shared';
 
-import { exportFlowDetailsCsv, formatMinutes } from '../lib/impact-utils';
+import { exportFlowDetailsCsv } from '../lib/impact-utils';
 import { useDetailsFilters } from '../lib/use-details-filters';
 import {
   FlowDetailRow,
@@ -171,7 +171,7 @@ export function FlowsDetails({
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            <span>{formatMinutes(row.original.minutesSaved)}</span>
+            <span>{formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}</span>
           </div>
         ),
       },

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { convertToMinutes, TIME_UNITS, TimeUnit } from './impact-utils';
+import { convertToSeconds, TIME_UNITS, TimeUnit } from './impact-utils';
 import { FlowDetailRow, Owner } from './use-flow-details-data';
 
 export function useDetailsFilters(
@@ -117,13 +117,13 @@ export function useDetailsFilters(
 
     if (minValue !== null) {
       filtered = filtered.filter(
-        (f) => f.minutesSaved >= convertToMinutes(minValue, appliedTimeUnit),
+        (f) => f.minutesSaved >= convertToSeconds(minValue, appliedTimeUnit),
       );
     }
 
     if (maxValue !== null) {
       filtered = filtered.filter(
-        (f) => f.minutesSaved <= convertToMinutes(maxValue, appliedTimeUnit),
+        (f) => f.minutesSaved <= convertToSeconds(maxValue, appliedTimeUnit),
       );
     }
 

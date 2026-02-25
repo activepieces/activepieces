@@ -1,6 +1,9 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+
+dayjs.extend(duration);
 import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
@@ -119,12 +122,17 @@ export const formatUtils = {
       year: 'numeric',
     }).format(date);
   },
-  formatToHoursAndMinutes(minutes: number) {
-    if (minutes < 60) {
-      return `${formatUtils.formatNumber(minutes)} mins`;
-    }
-    const hours = Math.floor(minutes / 60);
-    return `${formatUtils.formatNumber(hours)} hours`;
+  formatToHoursAndMinutes(seconds: number) {
+    const d = dayjs.duration(Math.round(seconds), 'seconds');
+    const h = Math.floor(d.asHours());
+    const m = d.minutes();
+    const s = d.seconds();
+
+    if (h > 0 && m > 0) return `${h}h ${m}m`;
+    if (h > 0) return `${h}h`;
+    if (m > 0 && s > 0) return `${m}m ${s}s`;
+    if (m > 0) return `${m}m`;
+    return `${s}s`;
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();

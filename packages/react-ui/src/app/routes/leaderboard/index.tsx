@@ -13,7 +13,6 @@ import {
 import { useContext, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,7 +53,7 @@ import {
 import { projectCollectionUtils } from '@/hooks/project-collection';
 
 import {
-  convertToMinutes,
+  convertToSeconds,
   TIME_UNITS,
   TimeUnit,
 } from '../impact/lib/impact-utils';
@@ -230,14 +229,14 @@ export default function LeaderboardPage() {
       data = data.filter(
         (p) =>
           p.minutesSaved >=
-          convertToMinutes(minValue, peopleTimeSaved.unit),
+          convertToSeconds(minValue, peopleTimeSaved.unit),
       );
     }
     if (maxValue !== null) {
       data = data.filter(
         (p) =>
           p.minutesSaved <=
-          convertToMinutes(maxValue, peopleTimeSaved.unit),
+          convertToSeconds(maxValue, peopleTimeSaved.unit),
       );
     }
 
@@ -263,14 +262,14 @@ export default function LeaderboardPage() {
       data = data.filter(
         (p) =>
           p.minutesSaved >=
-          convertToMinutes(minValue, projectsTimeSaved.unit),
+          convertToSeconds(minValue, projectsTimeSaved.unit),
       );
     }
     if (maxValue !== null) {
       data = data.filter(
         (p) =>
           p.minutesSaved <=
-          convertToMinutes(maxValue, projectsTimeSaved.unit),
+          convertToSeconds(maxValue, projectsTimeSaved.unit),
       );
     }
 
@@ -334,17 +333,15 @@ export default function LeaderboardPage() {
   return (
     <RefreshAnalyticsProvider>
       <div className="flex flex-col gap-2 w-full">
-        <DashboardPageHeader
-          title={
-            <div className="flex items-center gap-3">
-              <ApSidebarToggle />
-              <Separator orientation="vertical" className="h-5 mr-2" />
-              <span>{t('Leaderboard')}</span>
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-3">
+            <ApSidebarToggle />
+            <Separator orientation="vertical" className="h-5" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg font-medium">{t('Leaderboard')}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span>
-                    <Info className="w-4 h-4 text-muted-foreground" />
-                  </span>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
                   {t(
@@ -353,8 +350,8 @@ export default function LeaderboardPage() {
                 </TooltipContent>
               </Tooltip>
             </div>
-          }
-        >
+          </div>
+
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
               <span>
@@ -412,11 +409,11 @@ export default function LeaderboardPage() {
               </SelectContent>
             </Select>
           </div>
-        </DashboardPageHeader>
+        </div>
 
         <Tabs
           defaultValue="creators"
-          className="w-full"
+          className="w-full mt-2"
           onValueChange={handleTabChange}
         >
           <TabsList variant="outline" className="border-b w-full">

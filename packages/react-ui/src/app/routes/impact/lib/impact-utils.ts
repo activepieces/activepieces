@@ -6,32 +6,24 @@ export type TimeUnit = 'Sec' | 'Min' | 'Hrs';
 
 export const TIME_UNITS: TimeUnit[] = ['Sec', 'Min', 'Hrs'];
 
-export const convertToMinutes = (value: number, unit: TimeUnit): number => {
+export const convertToSeconds = (value: number, unit: TimeUnit): number => {
   switch (unit) {
     case 'Sec':
-      return value / 60;
-    case 'Min':
       return value;
-    case 'Hrs':
+    case 'Min':
       return value * 60;
+    case 'Hrs':
+      return value * 3600;
   }
 };
 
-export const formatMinutes = (minutes: number): string => {
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (remainingMinutes === 0) return `${hours}h`;
-  return `${hours}h ${remainingMinutes}m`;
-};
-
-export const minutesToHMS = (
-  minutes: number | null | undefined,
+export const secondsToHMS = (
+  seconds: number | null | undefined,
 ): { hours: string; mins: string; secs: string } => {
-  if (minutes === null || minutes === undefined || minutes === 0) {
+  if (seconds === null || seconds === undefined || seconds === 0) {
     return { hours: '', mins: '', secs: '' };
   }
-  const totalSeconds = Math.round(minutes * 60);
+  const totalSeconds = Math.round(seconds);
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
@@ -42,7 +34,7 @@ export const minutesToHMS = (
   };
 };
 
-export const hmsToMinutes = (
+export const hmsToSeconds = (
   hours: string,
   mins: string,
   secs: string,
@@ -52,7 +44,7 @@ export const hmsToMinutes = (
   const s = secs === '' ? 0 : parseInt(secs, 10);
   if (isNaN(h) || isNaN(m) || isNaN(s)) return null;
   if (h === 0 && m === 0 && s === 0) return null;
-  return (h * 3600 + m * 60 + s) / 60;
+  return h * 3600 + m * 60 + s;
 };
 
 export const downloadChartAsPng = async (
@@ -85,7 +77,7 @@ export const exportFlowDetailsCsv = (
 ): void => {
   if (flows.length === 0) return;
   const header =
-    'Flow Name,Owner ID,Time Saved Per Run (minutes),Total Time Saved (minutes),Project Name\n';
+    'Flow Name,Owner ID,Time Saved Per Run (seconds),Total Time Saved (seconds),Project Name\n';
   const rows = flows
     .map(
       (f) =>

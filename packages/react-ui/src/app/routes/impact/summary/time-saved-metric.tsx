@@ -25,7 +25,7 @@ export const TimeSavedMetric = ({
   );
   const atLeastOneTimeSavedSet = flowsWithTimeSaved.length > 0;
 
-  const minutesSaved = atLeastOneTimeSavedSet
+  const totalSeconds = atLeastOneTimeSavedSet
     ? flowsWithTimeSaved.reduce((acc, flow) => {
         const totalRuns =
           report?.runs
@@ -34,7 +34,8 @@ export const TimeSavedMetric = ({
         return acc + (flow.timeSavedPerRun ?? 0) * totalRuns;
       }, 0)
     : 0;
-  const equivalentWorkdays = Math.round(minutesSaved / 8 / 60);
+  const totalMinutes = Math.round(totalSeconds / 60);
+  const equivalentWorkdays = Math.round(totalSeconds / 3600 / 8);
 
   if (isLoading) {
     return <MetricCardSkeleton />;
@@ -62,7 +63,7 @@ export const TimeSavedMetric = ({
     <MetricCard
       icon={Clock}
       title={t('Time Saved')}
-      value={formatUtils.formatToHoursAndMinutes(minutesSaved)}
+      value={`${formatUtils.formatNumber(totalMinutes)} mins`}
       description={t('Total time saved by automation')}
       subtitle={t('{days} workdays saved', {
         days: equivalentWorkdays.toLocaleString(),

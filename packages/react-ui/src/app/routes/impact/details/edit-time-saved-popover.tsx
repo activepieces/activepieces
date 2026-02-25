@@ -15,7 +15,7 @@ import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { FlowOperationType } from '@activepieces/shared';
 
-import { hmsToMinutes, minutesToHMS } from '../lib/impact-utils';
+import { hmsToSeconds, secondsToHMS } from '../lib/impact-utils';
 
 type EditTimeSavedPopoverProps = {
   flowId: string;
@@ -37,7 +37,7 @@ export function EditTimeSavedPopover({
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      const hms = minutesToHMS(currentValue);
+      const hms = secondsToHMS(currentValue);
       setHours(hms.hours);
       setMins(hms.mins);
       setSecs(hms.secs);
@@ -65,7 +65,7 @@ export function EditTimeSavedPopover({
   });
 
   const handleSave = () => {
-    mutate(hmsToMinutes(hours, mins, secs));
+    mutate(hmsToSeconds(hours, mins, secs));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
