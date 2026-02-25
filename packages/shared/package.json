@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.38.2",
+  "version": "0.38.3",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
