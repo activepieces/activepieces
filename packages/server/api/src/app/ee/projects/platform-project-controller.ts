@@ -6,7 +6,6 @@ import {
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    AppConnectionScope,
     assertNotNullOrUndefined,
     ErrorCode,
     Permission,
@@ -24,13 +23,13 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { platformProjectService } from './platform-project-service'
 import { projectLimitsService } from './project-plan/project-plan.service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 
 const DEFAULT_LIMIT_SIZE = 50
 

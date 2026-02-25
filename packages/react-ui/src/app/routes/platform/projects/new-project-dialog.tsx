@@ -1,11 +1,15 @@
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
-import { ProjectWithLimits } from '@activepieces/shared';
+import {
+  AppConnectionWithoutSensitiveData,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { DefaultTag } from '@/components/custom/default-tag';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,10 +33,7 @@ type NewProjectDialogProps = {
   onCreate?: (project: ProjectWithLimits) => void;
 };
 
-export const NewProjectDialog = ({
-  children,
-  onCreate,
-}: NewProjectDialogProps) => {
+export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const [open, setOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
@@ -44,6 +45,42 @@ export const NewProjectDialog = ({
       enabled: globalConnectionsEnabled,
     });
 
+  const globalConnections = globalConnectionsPage?.data ?? [];
+
+  return (
+    <Dialog key={open ? 'open' : 'closed'} open={open} onOpenChange={setOpen}>
+      <NewProjectDialogContent
+        setOpen={setOpen}
+        globalConnections={globalConnections}
+        globalConnectionsLoading={isLoadingConnections}
+        globalConnectionsEnabled={globalConnectionsEnabled}
+        onCreate={props.onCreate}
+      >
+        {props.children}
+      </NewProjectDialogContent>
+    </Dialog>
+  );
+};
+
+const NewProjectDialogContent = ({
+  onCreate,
+  children,
+  setOpen,
+  globalConnections,
+  globalConnectionsLoading,
+  globalConnectionsEnabled,
+}: NewProjectDialogProps & {
+  setOpen: (open: boolean) => void;
+  globalConnections: AppConnectionWithoutSensitiveData[];
+  globalConnectionsLoading: boolean;
+  globalConnectionsEnabled: boolean;
+}) => {
+  const preselectedConnections = globalConnections.filter(
+    (connection) => connection.preSelectForNewProjects,
+  );
+  const preselectedConnectionsIds = preselectedConnections.map(
+    (connection) => connection.id,
+  );
   const form = useForm<CreatePlatformProjectRequest>({
     resolver: typeboxResolver(
       Type.Object({
@@ -54,7 +91,7 @@ export const NewProjectDialog = ({
       }),
     ),
     defaultValues: {
-      globalConnectionIds: [],
+      globalConnectionIds: preselectedConnectionsIds,
     },
   });
 
@@ -69,22 +106,8 @@ export const NewProjectDialog = ({
     },
   );
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen) {
-      const autoSelectedIds =
-        globalConnectionsPage?.data
-          .filter((c) => c.preSelectForNewProjects)
-          .map((c) => c.id) ?? [];
-      form.reset({
-        displayName: '',
-        globalConnectionIds: autoSelectedIds,
-      });
-    }
-    setOpen(isOpen);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -121,14 +144,20 @@ export const NewProjectDialog = ({
                     <MultiSelectPieceProperty
                       placeholder={t('Select global connections')}
                       options={
-                        globalConnectionsPage?.data.map((connection) => ({
+                        globalConnections.map((connection) => ({
                           value: connection.id,
                           label: connection.displayName,
                         })) ?? []
                       }
-                      loading={isLoadingConnections}
+                      loading={globalConnectionsLoading}
                       onChange={(value) => {
                         field.onChange(value ?? []);
+                      }}
+                      itemExtraContent={(index) => {
+                        if (globalConnections[index].preSelectForNewProjects) {
+                          return <DefaultTag />;
+                        }
+                        return null;
                       }}
                       initialValues={field.value ?? []}
                       showDeselect={(field.value ?? []).length > 0}
@@ -169,6 +198,6 @@ export const NewProjectDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+    </>
   );
 };

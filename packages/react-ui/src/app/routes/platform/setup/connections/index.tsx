@@ -24,6 +24,7 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { DefaultTag } from '@/components/custom/default-tag';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -183,11 +184,14 @@ const GlobalConnectionsTable = () => {
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2 justify-end">
+            {row.original.preSelectForNewProjects && <DefaultTag />}
             <EditGlobalConnectionDialog
               connectionId={row.original.id}
               currentName={row.original.displayName}
               projectIds={row.original.projectIds}
-              preSelectForNewProjects={row.original.preSelectForNewProjects ?? false}
+              preSelectForNewProjects={
+                row.original.preSelectForNewProjects ?? false
+              }
               userHasPermissionToEdit={true}
               onEdit={() => {
                 refetchGlobalConnections();

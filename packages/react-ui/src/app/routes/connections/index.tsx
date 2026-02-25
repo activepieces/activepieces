@@ -315,7 +315,9 @@ function AppConnectionsPage() {
                   onEdit={() => {
                     refetch();
                   }}
-                  preSelectForNewProjects={row.original.preSelectForNewProjects ?? false}
+                  preSelectForNewProjects={
+                    row.original.preSelectForNewProjects ?? false
+                  }
                 />
               )}
               <ReconnectButtonDialog
