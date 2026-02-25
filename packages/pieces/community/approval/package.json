@@ -2,7 +2,7 @@
   "name": "@activepieces/piece-approval",
   "version": "0.1.18",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/approval/",
+    "build": "tsc -p tsconfig.lib.json && cp package.json ../../../../dist/packages/pieces/community/approval/ && ln -sf \"$(pwd)/node_modules\" ../../../../dist/packages/pieces/community/approval/node_modules",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
