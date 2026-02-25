@@ -126,7 +126,7 @@ function getChangedPiecesDistPaths(): string[] | null {
         return null
     }
     return changedPieces.split('\n').filter(Boolean).map(p => {
-        return resolve(cwd(), 'dist', p)
+        return resolve(cwd(), p, 'dist')
     }).filter(p => {
         const exists = existsSync(join(p, 'package.json'))
         if (!exists) {

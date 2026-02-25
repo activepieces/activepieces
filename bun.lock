@@ -4035,7 +4035,7 @@
     },
     "packages/pieces/community/microsoft-excel-365": {
       "name": "@activepieces/piece-microsoft-excel-365",
-      "version": "0.4.11",
+      "version": "0.4.12",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7329,7 +7329,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.38.3",
+      "version": "0.38.4",
       "dependencies": {
         "@sinclair/typebox": "0.34.11",
         "deepmerge-ts": "7.1.0",
