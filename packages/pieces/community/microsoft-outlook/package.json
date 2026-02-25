@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-outlook",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
