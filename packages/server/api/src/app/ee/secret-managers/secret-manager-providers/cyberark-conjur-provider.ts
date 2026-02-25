@@ -116,9 +116,6 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
         }
         return data
     },
-    validatePathFormat: async (_: string) => {
-      
-    },
 })
 
 const removeEndingSlash = (path: string) => {

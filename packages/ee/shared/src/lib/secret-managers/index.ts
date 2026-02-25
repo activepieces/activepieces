@@ -1,6 +1,6 @@
 import { BaseModelSchema, DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { AWSGetSecretRequestSchema, AWSProviderConfigSchema, CyberarkConjurGetSecretRequestSchema, CyberarkConjurProviderConfigSchema, HashicorpGetSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
+import { AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
 
 export * from './dto'
 
@@ -41,19 +41,19 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.HASHICORP),
         fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema),
-        secretParams: Type.Record(Type.KeyOf(HashicorpGetSecretRequestSchema), SecretManagerFieldSchema),
+        secretParams: Type.Record(Type.String(), SecretManagerFieldSchema),
     }),
     Type.Object({
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.AWS),
         fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema),
-        secretParams: Type.Record(Type.KeyOf(AWSGetSecretRequestSchema), SecretManagerFieldSchema),
+        secretParams: Type.Record(Type.String(), SecretManagerFieldSchema),
     }),
     Type.Object({
         ...SecretManagerProviderMetaDataBaseSchema.properties,
         id: Type.Literal(SecretManagerProviderId.CYBERARK),
         fields: Type.Record(Type.KeyOf(CyberarkConjurProviderConfigSchema), SecretManagerFieldSchema),
-        secretParams: Type.Record(Type.KeyOf(CyberarkConjurGetSecretRequestSchema), SecretManagerFieldSchema),
+        secretParams: Type.Record(Type.String(), SecretManagerFieldSchema),
     }),
 ])
 

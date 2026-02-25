@@ -85,6 +85,7 @@
                       "icon": "key",
                       "pages": [
                         "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/aws",
                         "admin-guide/guides/secret-managers/hashicorp",
                         "admin-guide/guides/secret-managers/cyberark-conjur"
                       ]

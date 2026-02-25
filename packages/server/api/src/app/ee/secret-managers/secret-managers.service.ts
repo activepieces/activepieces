@@ -167,7 +167,7 @@ const extractProviderIdAndPathFromKey = (key: string): {
     const keyWithoutBraces = trimKeyBraces(key)
     const splits = keyWithoutBraces.split(':')
     const providerId = splits[0]
-    const path = splits[1]
+    const path = splits.slice(1).join(':')
     if (!isEnumValue(SecretManagerProviderId, providerId)) {
         throw new ActivepiecesError({
             code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,

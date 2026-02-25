@@ -1,0 +1,72 @@
+---
+title: "AWS Secrets Manager"
+description: "Connect AWS Secrets Manager to Activepieces for centralized secret management"
+---
+
+AWS Secrets Manager helps you protect access to your applications, services, and IT resources. This integration uses **IAM user credentials** (Access Key + Secret Key) to authenticate directly with AWS Secrets Manager.
+
+## Prerequisites
+
+- An AWS account with permissions to create IAM users and policies
+- Permissions to create and manage secrets in AWS Secrets Manager
+
+## Step 1 — Create an IAM policy for Secrets Manager access
+
+Create an IAM policy that grants read access to the secrets Activepieces will retrieve.
+
+1. Open the [IAM console → Policies → Create policy](https://console.aws.amazon.com/iam/home#/policies$new?step=edit).
+2. Switch to the **JSON** tab and paste:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:ListSecrets",
+        "secretsmanager:DescribeSecret"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+<Tip>
+For production, scope `Resource` to the specific secret ARNs Activepieces needs instead of using `"*"`.
+</Tip>
+
+3. Click **Next**, name the policy (e.g. `ActivepiecesSecretsReadOnly`), and create it.
+
+## Step 2 — Create an IAM user and attach the policy
+
+1. Open the [IAM console → Users → Create user](https://console.aws.amazon.com/iam/home#/users$new).
+2. Enter a username (e.g. `activepieces-secrets-user`) and click **Next**.
+3. Select **Attach policies directly**, find and attach the policy created in Step 1, then click **Next** and **Create user**.
+4. Open the newly created user, go to the **Security credentials** tab, and click **Create access key**.
+5. Select **Application running outside AWS**, click **Next**, then **Create access key**.
+6. Copy the **Access Key** and **Secret Key** — you will need both in the next step.
+
+## Step 3 — Connect in Activepieces
+
+1. Go to **Platform Admin → Security → Secret Managers**.
+2. Select **AWS Secrets Manager** from the provider list.
+3. Enter the connection details:
+   - **Access Key** — the Access Key ID from Step 2 (e.g. `AKIAIOSFODNN7EXAMPLE`).
+   - **Secret Key** — the Secret Access Key from Step 2.
+   - **Region** — the AWS region where your secrets are stored (e.g. `us-east-1`).
+4. Click **Connect** to test and save the connection.
+
+## Using AWS Secrets Manager in connections
+
+When configuring a global connection that requires credentials:
+
+1. Click the **key icon** (🔑) next to the credential field.
+2. Select **AWS Secrets Manager** as the secret manager.
+3. Fill in:
+   - **Secret Name** — the friendly name of the secret in AWS Secrets Manager.
+   - **Secret Json key** — Key of row for the stored secret.
+
+Activepieces will use the configured credentials to retrieve the secret value and inject it into the connection at runtime.

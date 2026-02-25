@@ -93,7 +93,7 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         return Promise.resolve()
     },
     getSecret: async (request, config) => {
-        await hashicorpProvider(log).validatePathFormat(request.path)
+        await validatePathFormat(request.path)
         const pathParts = request.path.split('/')
         const mountPath = pathParts.slice(0, -1).join('/')
         const secretKey = pathParts.slice(-1)[0]
@@ -138,19 +138,20 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         }
         return data[secretKey]
     },
-    validatePathFormat: async (key: string) => {
-        const path = removeEndingSlash(key)
-        const pathParts = path.split('/')
-        if (pathParts.length < 3 ) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Wrong path format . should be mount/data/path/key. got ' + key,
-                },
-            })
-        }
-    },
 })
+
+function validatePathFormat(key: string) {
+    const path = removeEndingSlash(key)
+    const pathParts = path.split('/')
+    if (pathParts.length < 3 ) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Wrong path format . should be mount/data/path/key. got ' + key,
+            },
+        })
+    }
+}
 
 const removeEndingSlash = (path: string) => {
     return path.endsWith('/') ? path.slice(0, -1) : path
