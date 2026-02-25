@@ -1,5 +1,23 @@
 {
   "name": "@activepieces/pieces-framework",
-  "version": "0.25.3",
-  "type": "commonjs"
+  "version": "0.25.4",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@activepieces/shared": "workspace:*",
+    "@sinclair/typebox": "0.34.11",
+    "ai": "^6.0.0",
+    "semver": "7.6.0",
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/semver": "7.5.6",
+    "vitest": "3.0.8"
+  }
 }

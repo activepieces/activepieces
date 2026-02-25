@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import * as React from 'react';
 import { useRef, useState } from 'react';
@@ -5,7 +6,6 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ResizableTextareaProps, Textarea } from '@/components/ui/textarea';
 import { cn, useElementSize } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { FileInputPreview } from './file-input-preview';
 

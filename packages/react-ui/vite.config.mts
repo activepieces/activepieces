@@ -1,7 +1,7 @@
 /// <reference types='vitest' />
 import path from 'path';
 
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
@@ -21,7 +21,7 @@ export default defineConfig(({ command, mode }) => {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/packages/react-ui',
     server: {
-      // allowedHosts: ['your_exposed_localhost'],
+      // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:3000',
@@ -66,7 +66,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      nxViteTsPaths(),
+      tsconfigPaths(),
       customHtmlPlugin({
         title: AP_TITLE,
         icon: AP_FAVICON,

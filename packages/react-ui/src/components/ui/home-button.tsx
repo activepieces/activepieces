@@ -1,10 +1,10 @@
+import { ActivepiecesClientEventName } from 'ee-embed-sdk';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ActivepiecesClientEventName } from 'ee-embed-sdk';
 
 import { useEmbedding } from '../embed-provider';
 

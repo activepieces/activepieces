@@ -1,7 +1,20 @@
 {
   "name": "@activepieces/piece-rss",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "dependencies": {
-    "feedparser": "2.2.10"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "axios": "1.13.5",
+    "dayjs": "1.11.9",
+    "feedparser": "2.2.10",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/feedparser": "2.2.8"
   }
 }

@@ -1,7 +1,18 @@
 {
   "name": "@activepieces/piece-matrix",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "dependencies": {
-    "marked": "4.3.0"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "marked": "4.3.0",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/marked": "4.3.2"
   }
 }

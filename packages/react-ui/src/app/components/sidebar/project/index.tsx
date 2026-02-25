@@ -1,15 +1,15 @@
-import { User } from 'lucide-react';
-
-import { Avatar } from '@/components/ui/avatar';
-import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar-shadcn';
-import { getProjectName } from '@/hooks/project-collection';
-import { cn } from '@/lib/utils';
 import {
   isNil,
   PROJECT_COLOR_PALETTE,
   ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
+import { User } from 'lucide-react';
+
+import { Avatar } from '@/components/ui/avatar';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar-shadcn';
+import { getProjectName } from '@/hooks/project-collection';
+import { cn } from '@/lib/utils';
 
 const MAX_LENGTH_TO_NOT_SHOW_TOOLTIP = 28;
 

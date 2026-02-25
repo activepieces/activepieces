@@ -1,4 +1,15 @@
 {
   "name": "@activepieces/piece-circle",
-  "version": "0.1.3"
+  "version": "0.1.4",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
+    "tslib": "2.6.2"
+  }
 }

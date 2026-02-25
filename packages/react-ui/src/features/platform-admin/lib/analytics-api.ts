@@ -1,10 +1,11 @@
-import { api } from '@/lib/api';
 import {
   AnalyticsTimePeriod,
   PlatformAnalyticsReport,
   ProjectLeaderboardItem,
   UserLeaderboardItem,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const analyticsApi = {
   get(timePeriod?: AnalyticsTimePeriod): Promise<PlatformAnalyticsReport> {

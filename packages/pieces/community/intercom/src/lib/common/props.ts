@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { intercomClient } from '.';
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import {
 	DropdownOption,
 	DynamicPropsValue,

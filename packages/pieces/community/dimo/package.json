@@ -1,7 +1,15 @@
 {
   "name": "@activepieces/piece-dimo",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "dependencies": {
-    "ethers": "6.15.0"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "ethers": "6.15.0",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

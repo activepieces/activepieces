@@ -2,14 +2,14 @@ import nodemailer from 'nodemailer';
 
 export const smtpCommon = {
   constructConfig(auth: smtpAuthParams) {
+    const hasCredentials = auth.email && auth.password;
     return {
       host: auth.host,
       port: auth.port,
       requireTLS: auth.TLS,
-      auth: {
-        user: auth.email,
-        pass: auth.password,
-      },
+      ...(hasCredentials
+        ? { auth: { user: auth.email, pass: auth.password } }
+        : {}),
       connectionTimeout: 60000,
       secure: auth.port === 465,
     };
@@ -23,8 +23,8 @@ export const smtpCommon = {
 
 export type smtpAuthParams = {
   host: string;
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
   port: number;
   TLS: boolean;
 };

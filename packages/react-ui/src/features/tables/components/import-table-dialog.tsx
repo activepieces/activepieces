@@ -1,3 +1,4 @@
+import { ApFlagId, SharedTemplate, TableTemplate } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Import } from 'lucide-react';
@@ -31,7 +32,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ApFlagId, SharedTemplate, TableTemplate } from '@activepieces/shared';
 
 import { recordsApi } from '../lib/records-api';
 import { tableHooks } from '../lib/table-hooks';

@@ -1,4 +1,19 @@
 {
   "name": "@activepieces/piece-forms",
-  "version": "0.4.13"
+  "version": "0.4.14",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "http-status-codes": "2.2.0",
+    "mime-types": "2.1.35",
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1"
+  }
 }

@@ -1,3 +1,4 @@
+import path from 'path'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import axios from 'axios'
 import { environmentMigrations } from './env-migrations'
@@ -57,6 +58,7 @@ export enum AppSystemProp {
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
     OTEL_ENABLED = 'OTEL_ENABLED',
     PAUSED_FLOW_TIMEOUT_DAYS = 'PAUSED_FLOW_TIMEOUT_DAYS',
+    PIECES_CACHE_MAX_ENTRIES = 'PIECES_CACHE_MAX_ENTRIES',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     PM2_ENABLED = 'PM2_ENABLED',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',
@@ -161,9 +163,8 @@ export const environmentVariables = {
 
 export const apVersionUtil = {
     async getCurrentRelease(): Promise<string> {
-        // eslint-disable-next-line @nx/enforce-module-boundaries
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const packageJson = require('package.json')
+        const packageJson = require(path.resolve(process.cwd(), 'package.json'))
         return packageJson.version
     },
     async getLatestRelease(): Promise<string> {

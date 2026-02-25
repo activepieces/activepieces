@@ -1,3 +1,4 @@
+import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
@@ -18,7 +19,6 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 
 const RenameFlowSchema = Type.Object({
   displayName: Type.String(),

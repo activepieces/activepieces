@@ -1,3 +1,5 @@
+import { AgentToolType } from '@activepieces/shared';
+import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
 import { Accordion } from '@radix-ui/react-accordion';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
@@ -10,8 +12,6 @@ import { AgentMcpToolComponent } from '@/features/agents/agent-tools/componenets
 import { AgentPieceToolComponent } from '@/features/agents/agent-tools/componenets/piece-tool';
 import { AgentFlowToolDialog } from '@/features/agents/agent-tools/flow-tool-dialog';
 import { AgentMcpDialog } from '@/features/agents/agent-tools/mcp-tool-dialog';
-import { AgentToolType } from '@activepieces/shared';
-import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
 
 import { AgentPieceDialog } from './piece-tool-dialog';
 

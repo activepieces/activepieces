@@ -1,3 +1,4 @@
+import { AIProviderModelType, ProviderModelConfig } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -16,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AIProviderModelType, ProviderModelConfig } from '@activepieces/shared';
 
 type ModelFormPopoverProps = {
   initialData?: ProviderModelConfig;
@@ -42,6 +42,8 @@ const ModelFormPopover = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // so parent form doesn't submit
+    e.stopPropagation();
     onSubmit(model);
     if (!initialData) {
       setModel(defaultModel);

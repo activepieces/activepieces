@@ -1,8 +1,17 @@
 {
   "name": "@activepieces/piece-crypto",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "buffer": "6.0.3",
     "openpgp": "^6.2.0",
-    "buffer": "6.0.3"
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

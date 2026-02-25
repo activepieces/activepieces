@@ -1,3 +1,11 @@
+import {
+  FlowAction,
+  FlowActionType,
+  isNil,
+  FlowTrigger,
+  FlowTriggerType,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeftIcon, ChevronRightIcon, Info } from 'lucide-react';
 import React from 'react';
@@ -16,14 +24,6 @@ import {
   PieceStepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
 } from '@/lib/types';
-import {
-  FlowAction,
-  FlowActionType,
-  isNil,
-  FlowTrigger,
-  FlowTriggerType,
-  flowStructureUtil,
-} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

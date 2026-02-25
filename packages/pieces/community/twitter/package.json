@@ -1,7 +1,20 @@
 {
   "name": "@activepieces/piece-twitter",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "dependencies": {
-    "twitter-api-v2": "1.15.1"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "mime-types": "2.1.35",
+    "twitter-api-v2": "1.15.1",
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1"
   }
 }

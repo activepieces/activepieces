@@ -1,7 +1,18 @@
 {
   "name": "@activepieces/piece-mailchimp",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "dependencies": {
-    "@mailchimp/mailchimp_marketing": "3.0.80"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "@mailchimp/mailchimp_marketing": "3.0.80",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/mailchimp__mailchimp_marketing": "3.0.22"
   }
 }

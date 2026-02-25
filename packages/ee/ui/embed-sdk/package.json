@@ -3,5 +3,15 @@
   "version": "0.8.1",
   "type": "commonjs",
   "main": "./src/index.js",
-  "typings": "./src/index.d.ts"
+  "typings": "./src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9"
+  }
 }

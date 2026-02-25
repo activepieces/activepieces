@@ -1,11 +1,12 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
 import { exec } from '../utils/exec'
-import { readPackageJson, readProjectJson } from '../utils/files'
+import { readPackageJson } from '../utils/files'
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
 import { isNil } from '@activepieces/shared'
 import chalk from 'chalk'
 import path from 'node:path'
+import { publishNpmPackage } from '../utils/publish-npm-package'
 
 export const publishPiece = async (name: string): Promise<void> => {
   assert(name, '[publishPiece] parameter "name" is required')
@@ -16,24 +17,13 @@ export const publishPiece = async (name: string): Promise<void> => {
     console.error(chalk.red(`[publishPiece] can't find the directory with name ${name}`))
     return
   }
+
+  await exec(`turbo run build --filter=./packages/pieces/community/${name}`)
+
+  await publishNpmPackage(directory)
+
   const { version } = await readPackageJson(directory)
-  const { name: nxProjectName } = await readProjectJson(directory)
-
-  await exec(`npx nx build ${nxProjectName}`)
-
-  
-  const nxPublishProjectCommand = `
-    node tools/scripts/publish.mjs \
-      ${nxProjectName} \
-      ${version} \
-      latest
-  `
-
-
-  await exec(nxPublishProjectCommand)
-
   console.info(chalk.green.bold(`[publishPiece] success, name=${name}, version=${version}`))
-
 }
 
 const main = async (): Promise<void> => {

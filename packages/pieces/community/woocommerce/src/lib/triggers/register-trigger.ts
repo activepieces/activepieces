@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { wooAuth } from '../../';
+import { wooAuth } from '../auth';
 import { WebhookInformation, wooCommon } from '../common';
 import { isEmpty, WebhookHandshakeStrategy } from '@activepieces/shared';
 import {

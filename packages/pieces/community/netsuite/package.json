@@ -1,7 +1,15 @@
 {
   "name": "@activepieces/piece-netsuite",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "dependencies": {
-    "sql-formatter": "15.6.10"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "sql-formatter": "15.6.10",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

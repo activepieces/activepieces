@@ -12,7 +12,7 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2021", "dom"],
+    "lib": ["es2022", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -745,6 +745,9 @@
       ],
       "@activepieces/piece-murf-api": [
         "packages/pieces/community/murf-api/src/index.ts"
+      ],
+      "@activepieces/piece-mysendingbox": [
+        "packages/pieces/community/mysendingbox/src/index.ts"
       ],
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
@@ -1795,6 +1798,24 @@
       ],
       "@activepieces/piece-pdfcrowd": [
         "packages/pieces/community/pdfcrowd/src/index.ts"
+      ],
+      "@activepieces/piece-amazon-bedrock": [
+        "packages/pieces/community/amazon-bedrock/src/index.ts"
+      ],
+      "@activepieces/piece-brave-search": [
+        "packages/pieces/community/brave-search/src/index.ts"
+      ],
+      "@activepieces/piece-amazon-secrets-manager": [
+        "packages/pieces/community/amazon-secrets-manager/src/index.ts"
+      ],
+      "ai-gateway-provider/providers/anthropic": [
+        "node_modules/ai-gateway-provider/dist/providers/anthropic.d.ts"
+      ],
+      "ai-gateway-provider/providers/google": [
+        "node_modules/ai-gateway-provider/dist/providers/google.d.ts"
+      ],
+      "@activepieces/piece-validatedmails": [
+        "packages/pieces/community/validatedmails/src/index.ts"
       ]
     },
     "resolveJsonModule": true
