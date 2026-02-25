@@ -8,6 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "tslib": "^2.3.0"
   },
   "scripts": {

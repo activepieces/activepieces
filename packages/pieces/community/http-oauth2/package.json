@@ -5,7 +5,10 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "https-proxy-agent": "7.0.4"
+    "axios": "1.13.5",
+    "form-data": "4.0.4",
+    "https-proxy-agent": "7.0.4",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

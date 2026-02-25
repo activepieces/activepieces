@@ -15,6 +15,10 @@
     "axios-retry": "4.4.1",
     "form-data": "4.0.4",
     "mime-types": "2.1.35",
+    "tslib": "2.6.2",
     "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1"
   }
 }
