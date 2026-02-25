@@ -1,5 +1,5 @@
 {
-  "extends": ["../api/.eslintrc.json"],
+  "extends": ["../../../../.eslintrc.base.json"],
   "ignorePatterns": ["!**/*"],
   "overrides": [
     {
@@ -8,9 +8,6 @@
     },
     {
       "files": ["*.ts", "*.tsx"],
-      "parserOptions": {
-        "project": ["tsconfig.*?.json"]
-      },
       "rules": {}
     },
     {
