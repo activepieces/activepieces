@@ -1,0 +1,14 @@
+{
+  "name": "@activepieces/piece-canva",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "tslib": "2.6.2"
+  }
+}
