@@ -6941,6 +6941,7 @@
       "devDependencies": {
         "@types/showdown": "2.0.6",
         "@types/turndown": "5.0.6",
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/todos": {
