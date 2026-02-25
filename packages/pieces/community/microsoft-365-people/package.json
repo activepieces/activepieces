@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-365-people",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -10,6 +10,7 @@
     "@activepieces/shared": "workspace:*",
     "@microsoft/microsoft-graph-client": "3.0.7",
     "@microsoft/microsoft-graph-types": "2.40.0",
+    "dayjs": "1.11.9",
     "tslib": "^2.3.0"
   },
   "scripts": {

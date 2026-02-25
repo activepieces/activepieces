@@ -19,6 +19,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "assemblyai": "4.7.0"
+    "assemblyai": "4.7.0",
+    "tslib": "2.6.2"
   }
 }

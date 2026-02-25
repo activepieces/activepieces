@@ -121,7 +121,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         return pieces
     })
 
-    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync())
+    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
     app.post(
         '/options',

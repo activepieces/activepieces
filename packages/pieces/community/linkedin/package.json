@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-linkedin",
-"version": "0.2.4",
+  "version": "0.2.4",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
@@ -9,7 +9,9 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "jsonwebtoken": "9.0.1"
+    "form-data": "4.0.4",
+    "jsonwebtoken": "9.0.1",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "9.0.10"

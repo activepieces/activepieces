@@ -6,11 +6,14 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "jimp": "^0.22.12",
+    "nanoid": "3.3.8",
     "pdf-lib": "1.17.1",
-    "pdf-parse": "1.1.1"
+    "pdf-parse": "1.1.1",
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "@types/pdf-parse": "1.1.4"
+    "@types/pdf-parse": "1.1.4",
+    "vitest": "3.0.8"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

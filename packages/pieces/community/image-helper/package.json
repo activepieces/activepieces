@@ -6,10 +6,15 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "exifreader": "4.20.0",
-    "jimp": "^0.22.12"
+    "jimp": "^0.22.12",
+    "mime-types": "2.1.35",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1"
   }
 }

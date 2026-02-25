@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mcp",
-"version": "0.0.16",
+  "version": "0.0.16",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
     "lint": "eslint 'src/**/*.ts'"
@@ -8,6 +8,8 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "http-status-codes": "2.2.0",
+    "tslib": "2.6.2"
   }
 }

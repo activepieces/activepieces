@@ -124,13 +124,14 @@ export const runAgent = createAction({
       context.propsValue.structuredOutput.length > 0;
     const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
     const agentTools = context.propsValue.agentTools as AgentTool[];
-    const { mcpClients, tools } = await constructAgentTools({
+    const { mcpClients, tools, toolKeyToAgentTool } = await constructAgentTools({
       context,
       agentTools,
       model,
       outputBuilder,
       structuredOutput
     });
+    outputBuilder.setToolMap(toolKeyToAgentTool);
 
     const errors: { type: string; message: string; details?: unknown }[] = [];
 
@@ -169,7 +170,6 @@ export const runAgent = createAction({
                 toolName: chunk.toolName,
                 toolCallId: chunk.toolCallId,
                 input: chunk.input as Record<string, unknown>,
-                agentTools: agentTools,
               });
               break;
             }
@@ -241,10 +241,14 @@ export const runAgent = createAction({
       }
 
       if (!outputBuilder.hasTextContent()) {
-        const accumulatedText = await stream.text;
-        if (accumulatedText?.trim()) {
-          outputBuilder.addMarkdown(accumulatedText);
-          await context.output.update({ data: outputBuilder.build() });
+        try {
+          const accumulatedText = await stream.text;
+          if (accumulatedText?.trim()) {
+            outputBuilder.addMarkdown(accumulatedText);
+            await context.output.update({ data: outputBuilder.build() });
+          }
+        } catch {
+          // ignore
         }
       }
 
@@ -261,7 +265,14 @@ export const runAgent = createAction({
       }
 
     } catch (error) {
-      const errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
+      let errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
+      if (errors.length > 0) {
+        const collectedErrors = errors.map(e => {
+          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
+          return `${e.type}: ${e.message}${detail}`;
+        }).join('\n');
+        errorMessage += `\n\nCollected stream errors:\n${collectedErrors}`;
+      }
       outputBuilder.fail({ message: errorMessage });
       await context.output.update({ data: outputBuilder.build() });
       await Promise.all(mcpClients.map(async (client) => client.close()));

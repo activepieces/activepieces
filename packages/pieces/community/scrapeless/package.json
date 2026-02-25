@@ -8,7 +8,8 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "@scrapeless-ai/sdk": "1.5.1"
+    "@scrapeless-ai/sdk": "1.5.1",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

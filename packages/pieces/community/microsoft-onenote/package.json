@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-onenote",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -9,6 +9,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@microsoft/microsoft-graph-client": "3.0.7",
+    "dayjs": "1.11.9",
     "tslib": "^2.3.0"
   },
   "scripts": {

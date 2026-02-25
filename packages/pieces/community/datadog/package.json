@@ -9,7 +9,8 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@datadog/datadog-api-client": "^1.43.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "zod": "4.1.13"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

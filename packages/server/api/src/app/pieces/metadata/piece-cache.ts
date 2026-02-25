@@ -5,17 +5,29 @@ import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, sortByNameAndVersionDesc } from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
 
-const CACHE_TTL_MS = 5 * 60 * 1000
-
 let cache: LRU<unknown>
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
+
+export const PIECE_METADATA_REFRESH_CHANNEL = 'piece-metadata-refresh'
+
+export enum PieceMetadataRefreshType {
+    CREATE = 'CREATE',
+    DELETE = 'DELETE',
+    UPDATE_USAGE = 'UPDATE_USAGE',
+}
+
+export type PieceMetadataRefreshMessage =
+    | { type: PieceMetadataRefreshType.CREATE, piece: PieceMetadataSchema }
+    | { type: PieceMetadataRefreshType.DELETE, pieces: { name: string, version: string }[] }
+    | { type: PieceMetadataRefreshType.UPDATE_USAGE, piece: { name: string, version: string, platformId?: string, projectUsage: number } }
 
 const CACHE_KEY = {
     list: (locale: LocalesEnum): string => `list:${locale}`,
@@ -27,8 +39,15 @@ export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
-            cache = lru(cacheMaxSize, CACHE_TTL_MS)
+            cache = lru(cacheMaxSize)
             log.info('[lruPieceCache] LRU piece cache initialized')
+            if (!isTestingEnvironment) {
+                await pubsub.subscribe(PIECE_METADATA_REFRESH_CHANNEL, (message: string) => {
+                    const parsed = JSON.parse(message) as PieceMetadataRefreshMessage
+                    handleRefreshMessage(parsed)
+                    log.debug({ type: parsed.type }, '[lruPieceCache] Handled piece metadata refresh message')
+                })
+            }
         },
 
         async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
@@ -169,6 +188,45 @@ async function getCachedOrFetch<T>(
     inFlightQueries.set(cacheKey, queryPromise)
 
     return queryPromise
+}
+
+function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
+    switch (message.type) {
+        case PieceMetadataRefreshType.CREATE:
+            cache.set(CACHE_KEY.piece(message.piece.name, message.piece.version, message.piece.platformId), message.piece)
+            invalidateAggregateCaches()
+            break
+        case PieceMetadataRefreshType.DELETE:
+            for (const piece of message.pieces) {
+                cache.delete(CACHE_KEY.piece(piece.name, piece.version, undefined))
+            }
+            invalidateAggregateCaches()
+            break
+        case PieceMetadataRefreshType.UPDATE_USAGE: {
+            const { piece } = message
+            const key = CACHE_KEY.piece(piece.name, piece.version, piece.platformId)
+            const cached = cache.get(key) as PieceMetadataSchema | undefined
+            if (!isNil(cached)) {
+                cache.set(key, { ...cached, projectUsage: piece.projectUsage })
+            }
+            break
+        }
+    }
+}
+
+function invalidateAggregateCaches(): void {
+    invalidateKey(CACHE_KEY.registry())
+    for (const locale of Object.values(LocalesEnum)) {
+        invalidateKey(CACHE_KEY.list(locale as LocalesEnum))
+    }
+}
+
+function invalidateKey(cacheKey: string): void {
+    cache.delete(cacheKey)
+    const inFlight = inFlightQueries.get(cacheKey)
+    if (!isNil(inFlight)) {
+        void inFlight.then(() => cache.delete(cacheKey))
+    }
 }
 
 export type PieceRegistryEntry = {
