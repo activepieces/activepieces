@@ -107,7 +107,6 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   const versionMap = buildWorkspaceVersionMap()
   const json = JSON.parse(readFileSync(`${localDistPath}/package.json`).toString())
   json.version = version
-  json.files = ['dist']
   json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
   json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
   json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)
