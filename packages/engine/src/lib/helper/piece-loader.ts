@@ -185,7 +185,7 @@ async function traverseAllParentFoldersToFindPiece(packageName: string): Promise
         const piecePath = path.resolve(currentDir, 'pieces', packageName, 'node_modules', trimVersionFromAlias(packageName))
 
         if (await utils.folderExists(piecePath)) {
-            return piecePath
+            return path.join(piecePath, 'src', 'index.js')
         }
 
         const parentDir = path.dirname(currentDir)
