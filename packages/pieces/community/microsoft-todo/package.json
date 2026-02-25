@@ -1,12 +1,14 @@
 {
   "name": "@activepieces/piece-microsoft-todo",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@microsoft/microsoft-graph-client": "3.0.7",
-    "@microsoft/microsoft-graph-types": "2.40.0"
+    "@microsoft/microsoft-graph-types": "2.40.0",
+    "dayjs": "1.11.9",
+    "tslib": "2.6.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",

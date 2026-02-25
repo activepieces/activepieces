@@ -1,18 +1,25 @@
-import { publishNxProject } from '../utils/publish-nx-project'
+import { publishNpmPackage } from '../utils/publish-npm-package'
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
 import { chunk } from '../../../packages/shared/src/lib/common/utils/utils'
 
-const publishPiece = async (nxProjectPath: string): Promise<void> => {
-  console.info(`[publishPiece] nxProjectPath=${nxProjectPath}`)
-  await publishNxProject(nxProjectPath)
+function getChangedPiecePaths(): string[] | null {
+  const changedPieces = process.env['CHANGED_PIECES']
+  if (!changedPieces || changedPieces.trim() === '') {
+    return null
+  }
+  return changedPieces.split('\n').filter(Boolean)
 }
 
 const main = async () => {
-  const piecesSource = await findAllPiecesDirectoryInSource()
+  const changedPaths = getChangedPiecePaths()
+  const piecesSource = changedPaths ?? await findAllPiecesDirectoryInSource()
+
+  console.info(`[publishPieces] publishing ${piecesSource.length} pieces${changedPaths ? ' (scoped to changed)' : ' (all)'}`)
+
   const piecesSourceChunks = chunk(piecesSource, 30)
 
   for (const chunk of piecesSourceChunks) {
-    await Promise.all(chunk.map(publishPiece))
+    await Promise.all(chunk.map((path) => publishNpmPackage(path)))
     await new Promise(resolve => setTimeout(resolve, 5000))
   }
 }

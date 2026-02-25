@@ -46,8 +46,7 @@ RUN --mount=type=cache,target=/root/.npm \
     node-gyp \
     npm@9.9.3 \
     pm2@6.0.10 \
-    typescript@4.9.4 \
-    tsx
+    typescript@4.9.4
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
@@ -59,7 +58,7 @@ FROM base AS build
 WORKDIR /usr/src/app
 
 # Copy dependency files and workspace package.json files for resolution
-COPY .npmrc package.json bun.lock ./
+COPY .npmrc package.json bun.lock bunfig.toml ./
 COPY packages/ ./packages/
 
 # Install all dependencies with frozen lockfile
@@ -69,8 +68,8 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy remaining source code (turbo config, etc.)
 COPY . .
 
-# Build frontend and engine (server runs from source via tsx)
-RUN npx turbo run build --filter=react-ui --filter=@activepieces/engine
+# Build frontend, engine, and server API
+RUN npx turbo run build --filter=react-ui --filter=@activepieces/engine --filter=server-api
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -93,20 +92,20 @@ RUN mkdir -p \
     /usr/src/app/dist/packages/engine && \
     chmod +x docker-entrypoint.sh
 
-# Copy root config files needed for tsx/tsconfig resolution
+# Copy root config files needed for dependency resolution
 COPY --from=build /usr/src/app/package.json ./
 COPY --from=build /usr/src/app/.npmrc ./
 COPY --from=build /usr/src/app/bun.lock ./
-COPY --from=build /usr/src/app/tsconfig.base.json ./
+COPY --from=build /usr/src/app/bunfig.toml ./
 COPY --from=build /usr/src/app/LICENSE .
 
-# Copy source code and workspace packages
+# Copy workspace package.json files (needed for bun workspace resolution)
 COPY --from=build /usr/src/app/packages ./packages
 
 # Copy built engine
 COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
-# Install production dependencies (creates workspace links)
+# Install production dependencies
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --production --frozen-lockfile
 
