@@ -28,6 +28,7 @@ export default defineConfig({
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/community/framework/src/index.ts'),
       '@activepieces/pieces-common': path.resolve(__dirname, '../../../packages/pieces/community/common/src/index.ts'),
       '@activepieces/server-shared': path.resolve(__dirname, '../../../packages/server/shared/src/index.ts'),
+      '@activepieces/sandbox': path.resolve(__dirname, '../../../packages/server/sandbox/src/index.ts'),
     },
   },
 })
