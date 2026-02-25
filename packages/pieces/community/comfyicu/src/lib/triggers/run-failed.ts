@@ -1,4 +1,4 @@
-import { comfyIcuAuth } from '../../index';
+import { comfyIcuAuth } from '../auth';
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,

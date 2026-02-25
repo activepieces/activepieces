@@ -1,6 +1,6 @@
 import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { slackAuth } from '../auth';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 
 export const getChannelHistory = createAction({

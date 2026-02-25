@@ -1,8 +1,3 @@
-import { t } from 'i18next';
-import React, { useContext, useState } from 'react';
-
-import { Button } from '@/components/ui/button';
-import { Dot } from '@/components/ui/dot';
 import {
   FlowAction,
   FlowActionType,
@@ -11,6 +6,11 @@ import {
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+import React, { useContext, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Dot } from '@/components/ui/dot';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';

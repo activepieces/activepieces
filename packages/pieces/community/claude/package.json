@@ -1,8 +1,23 @@
 {
   "name": "@activepieces/piece-claude",
-  "version": "0.4.3",
+  "version": "0.4.4",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
     "@anthropic-ai/sdk": "0.39.0",
-    "ajv": "8.12.0"
+    "ajv": "8.12.0",
+    "mime-types": "2.1.35",
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1"
   }
 }

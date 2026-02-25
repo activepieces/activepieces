@@ -9,7 +9,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { chatlingAuth } from '../../index';
+import { chatlingAuth } from '../auth';
 import { chatbotIdDropdown } from '../common/props';
 import { makeRequest } from '../common';
 import dayjs from 'dayjs';

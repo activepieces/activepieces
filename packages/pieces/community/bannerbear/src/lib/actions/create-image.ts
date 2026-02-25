@@ -9,7 +9,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { bannerbearAuth } from '../../';
+import { bannerbearAuth } from '../auth';
 
 export const bannerbearCreateImageAction = createAction({
   auth: bannerbearAuth,

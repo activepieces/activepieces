@@ -1,3 +1,4 @@
+import { LocalesEnum, Permission } from '@activepieces/shared';
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
@@ -9,8 +10,6 @@ import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { useDebouncedCallback } from 'use-debounce';
-
-import { LocalesEnum, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
 
@@ -262,7 +261,7 @@ export const useElementSize = (ref: RefObject<HTMLElement>) => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [ref.current]);
+  }, [debouncedSetSize, ref]);
 
   return size;
 };

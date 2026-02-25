@@ -1,3 +1,7 @@
+import {
+  PlatformAnalyticsReport,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -32,10 +36,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatUtils } from '@/lib/utils';
-import {
-  PlatformAnalyticsReport,
-  ProjectWithLimits,
-} from '@activepieces/shared';
 
 import { exportFlowDetailsCsv } from '../lib/impact-utils';
 import { useDetailsFilters } from '../lib/use-details-filters';

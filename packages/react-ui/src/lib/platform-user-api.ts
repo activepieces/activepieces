@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   SeekPage,
   UpdateUserRequestBody,
@@ -6,6 +5,8 @@ import {
   UserWithMetaInformation,
   ListUsersRequestBody,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const platformUserApi = {
   list(request: ListUsersRequestBody) {

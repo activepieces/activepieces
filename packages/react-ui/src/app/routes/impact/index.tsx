@@ -1,3 +1,4 @@
+import { AnalyticsTimePeriod } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
@@ -30,7 +31,6 @@ import {
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { AnalyticsTimePeriod } from '@activepieces/shared';
 
 import { ProjectSelect } from './components/project-select';
 import { FlowsDetails } from './details';

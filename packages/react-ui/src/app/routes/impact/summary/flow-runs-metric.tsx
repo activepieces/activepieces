@@ -1,7 +1,6 @@
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Zap } from 'lucide-react';
-
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 import { MetricCard, MetricCardSkeleton } from './metric-card';
 

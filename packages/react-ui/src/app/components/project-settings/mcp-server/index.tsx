@@ -1,3 +1,4 @@
+import { McpServerStatus, FlowStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CheckCircle, CircleDot } from 'lucide-react';
 
@@ -12,7 +13,6 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Switch } from '@/components/ui/switch';
 import { authenticationSession } from '@/lib/authentication-session';
-import { McpServerStatus, FlowStatus } from '@activepieces/shared';
 
 import { McpCredentials } from './mcp-credentials';
 import { mcpHooks } from './utils/mcp-hooks';

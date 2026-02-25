@@ -1,3 +1,4 @@
+import { AgentMcpTool } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 
@@ -13,7 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AgentMcpTool } from '@activepieces/shared';
 
 import { useMcpToolDialogStore } from '../stores/mcp-tools';
 

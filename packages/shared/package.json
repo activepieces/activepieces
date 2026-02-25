@@ -1,5 +1,25 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.37.0",
-  "type": "commonjs"
+  "version": "0.38.4",
+  "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.11",
+    "deepmerge-ts": "7.1.0",
+    "nanoid": "3.3.8",
+    "semver": "7.6.0",
+    "socket.io-client": "4.8.1",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "@types/semver": "7.5.6",
+    "vitest": "3.0.8"
+  }
 }

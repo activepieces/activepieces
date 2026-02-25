@@ -1,3 +1,4 @@
+import { ErrorCode } from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -14,7 +15,6 @@ import {
   PROVIDER_NAME_QUERY_PARAM,
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
-import { ErrorCode } from '@activepieces/shared';
 
 const RedirectPage: React.FC = React.memo(() => {
   const location = useLocation();

@@ -4,7 +4,7 @@ import {
     TriggerStrategy,
     createTrigger,
 } from "@activepieces/pieces-framework";
-import { quickbooksAuth } from '../index';
+import { quickbooksAuth } from '../lib/auth';
 import { DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { quickbooksCommon, QuickbooksEntityResponse } from "../lib/common";
 import { QuickbooksCustomer } from '../lib/types';

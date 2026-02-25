@@ -7,8 +7,6 @@
  * You might need to authenticate with NPM before running this script.
  */
 
-import pkg from '@nx/devkit';
-const { readCachedProjectGraph } = pkg;
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
 import chalk from 'chalk';
@@ -19,6 +17,14 @@ function invariant(condition, message) {
     process.exit(1);
   }
 }
+
+// Known output paths for publishable packages
+const outputPaths = {
+  shared: 'packages/shared/dist',
+  engine: 'dist/packages/engine',
+  'pieces-framework': 'packages/pieces/framework/dist',
+  'pieces-common': 'packages/pieces/common/dist',
+};
 
 // Executing publish script: node path/to/publish.mjs {name} --version {version} --tag {tag}
 // Default "tag" to "next" so we won't publish the "latest" tag by accident.
@@ -31,18 +37,10 @@ invariant(
   `No version provided or version did not match Semantic Versioning, expected: #.#.#-tag.# or #.#.#, got ${version}.`
 );
 
-const graph = readCachedProjectGraph();
-const project = graph.nodes[name];
-
-invariant(
-  project,
-  `Could not find project "${name}" in the workspace. Is the project.json configured correctly?`
-);
-
-const outputPath = project.data?.targets?.build?.options?.outputPath;
+const outputPath = outputPaths[name];
 invariant(
   outputPath,
-  `Could not find "build.options.outputPath" of project "${name}". Is project.json configured  correctly?`
+  `Could not find output path for project "${name}". Known projects: ${Object.keys(outputPaths).join(', ')}`
 );
 
 process.chdir(outputPath);

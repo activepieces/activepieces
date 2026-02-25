@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { kommoAuth } from '../../index';
+import { kommoAuth } from '../auth';
 import { pipelineDropdown, statusDropdown, userDropdown, lossReasonDropdown, leadDropdown } from '../common/props';
 
 export const updateLeadAction = createAction({

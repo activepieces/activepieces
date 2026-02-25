@@ -1,4 +1,5 @@
 import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { ActiveFlowsMetric } from './active-flows-metric';
 import { ActiveUsersMetric } from './active-users-metric';

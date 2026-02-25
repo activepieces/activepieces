@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   CreateTableRequest,
   ExportTableResponse,
@@ -8,6 +7,8 @@ import {
   TableTemplate,
   UpdateTableRequest,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const tablesApi = {
   async list(request: ListTablesRequest): Promise<SeekPage<Table>> {

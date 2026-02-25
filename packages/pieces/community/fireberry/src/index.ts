@@ -5,12 +5,7 @@ import { updateRecordAction } from "./lib/actions/update-record.action";
 import { deleteRecordAction } from "./lib/actions/delete-record.action";
 import { findRecordAction } from "./lib/actions/find-record.action";
 import { recordCreatedOrUpdatedTrigger } from "./lib/triggers/record-created-updated.trigger";
-
-export const fireberryAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Enter your Fireberry API Key. You can generate it from your Fireberry account settings.',
-  required: true,
-});
+import { fireberryAuth } from './lib/auth';
 
 export const fireberry = createPiece({
   displayName: "Fireberry",

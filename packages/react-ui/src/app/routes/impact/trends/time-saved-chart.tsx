@@ -1,5 +1,6 @@
 'use client';
 
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Clock, Download } from 'lucide-react';
 import { useRef } from 'react';
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/utils';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 import { downloadChartAsPng } from '../lib/impact-utils';
 
