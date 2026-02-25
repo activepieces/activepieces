@@ -20,6 +20,7 @@ const SelectUtilButton = ({
           variant="ghost"
           className="opacity-50 shrink-0 h-6 w-6 rounded-xs"
           size={'icon'}
+          type="button"
           onClick={onClick}
         >
           <Icon className="w-4 h-4"></Icon>
