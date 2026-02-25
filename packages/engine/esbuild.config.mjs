@@ -18,8 +18,8 @@ await esbuild.build({
     sourcemap: true,
     alias: {
         '@activepieces/shared': path.resolve(__dirname, '../shared/src'),
-        '@activepieces/pieces-framework': path.resolve(__dirname, '../pieces/community/framework/src'),
-        '@activepieces/pieces-common': path.resolve(__dirname, '../pieces/community/common/src'),
+        '@activepieces/pieces-framework': path.resolve(__dirname, '../pieces/framework/src'),
+        '@activepieces/pieces-common': path.resolve(__dirname, '../pieces/common/src'),
     },
     external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
 })

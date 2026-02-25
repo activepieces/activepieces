@@ -1,0 +1,153 @@
+---
+title: 'Testing Pieces'
+icon: 'flask-vial'
+description: 'How to add unit tests to your pieces'
+---
+
+## Overview
+
+Pieces can be tested using [Vitest](https://vitest.dev/). The framework provides a `createMockActionContext` helper that creates a mock context for running action logic in tests without needing a live server.
+
+## Setup
+
+### 1. Add vitest to your piece
+
+Add `vitest` as a dev dependency in your piece's `package.json` and add a `test` script:
+
+```json
+{
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "3.0.8"
+  }
+}
+```
+
+### 2. Create a vitest config
+
+Create `vitest.config.ts` in your piece root. You need to configure aliases so vitest can resolve workspace packages from source:
+
+```typescript
+import path from 'path'
+import { defineConfig } from 'vitest/config'
+
+// Adjust the depth based on your piece location
+// For core pieces:   ../../../..
+// For community pieces: ../../../..
+const repoRoot = path.resolve(__dirname, '../../../..')
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+  },
+  resolve: {
+    alias: {
+      '@activepieces/shared': path.resolve(repoRoot, 'packages/shared/src/index.ts'),
+      '@activepieces/pieces-framework': path.resolve(repoRoot, 'packages/pieces/framework/src/index.ts'),
+      '@activepieces/pieces-common': path.resolve(repoRoot, 'packages/pieces/common/src/index.ts'),
+    },
+  },
+})
+```
+
+### 3. Create test files
+
+Create a `test/` directory in your piece root and add test files with the `.test.ts` extension.
+
+## Writing Tests
+
+### Using `createMockActionContext`
+
+The framework exports `createMockActionContext` which creates a fully mocked `ActionContext` with only `propsValue` required from you. All other context properties (store, connections, files, etc.) are stubbed with sensible defaults.
+
+```typescript
+import { createMockActionContext } from '@activepieces/pieces-framework';
+import { myAction } from '../src/lib/actions/my-action';
+
+describe('myAction', () => {
+  test('does something', async () => {
+    const ctx = createMockActionContext({
+      propsValue: {
+        inputField: 'test value',
+        optionalField: undefined,
+      },
+    });
+
+    const result = await myAction.run(ctx);
+
+    expect(result).toBe('expected output');
+  });
+});
+```
+
+### Testing error cases
+
+```typescript
+test('throws on invalid input', async () => {
+  const ctx = createMockActionContext({
+    propsValue: {
+      data: 'not-an-array',
+    },
+  });
+
+  await expect(myAction.run(ctx)).rejects.toThrow('Input must be an array');
+});
+```
+
+### Testing regex-based actions
+
+```typescript
+test('supports regex patterns', async () => {
+  const ctx = createMockActionContext({
+    propsValue: {
+      text: 'abc123def456',
+      searchValue: '\\d+',
+      replaceValue: '#',
+    },
+  });
+
+  const result = await myAction.run(ctx);
+  expect(result).toBe('abc#def#');
+});
+```
+
+## Running Tests
+
+```bash
+# Run tests for a specific piece
+npx turbo test --filter=@activepieces/piece-text-helper
+
+# Run tests directly from the piece directory
+cd packages/pieces/core/text-helper
+npx vitest run
+
+# Run tests in watch mode during development
+cd packages/pieces/core/text-helper
+npx vitest
+```
+
+## File Structure
+
+```
+packages/pieces/core/my-piece/
+├── src/
+│   ├── index.ts
+│   └── lib/actions/
+│       ├── my-action.ts
+│       └── another-action.ts
+├── test/
+│   ├── my-action.test.ts
+│   └── another-action.test.ts
+├── vitest.config.ts
+├── package.json
+└── tsconfig.lib.json     # already excludes *.test.ts files
+```
+
+<Note>
+The `tsconfig.lib.json` already excludes `*.test.ts` and `*.spec.ts` files from compilation, so your test files won't be included in the build output.
+</Note>
