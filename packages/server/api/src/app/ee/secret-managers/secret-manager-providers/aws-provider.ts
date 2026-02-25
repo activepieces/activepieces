@@ -83,7 +83,6 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
             const response = await client.send(new GetSecretValueCommand({
                 SecretId: secretName,
             }))
-            console.error('response', response)
 
             const secret = response.SecretString
             if (!secret) {
