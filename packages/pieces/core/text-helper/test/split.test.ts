@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { split } from '../src/lib/actions/split';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 

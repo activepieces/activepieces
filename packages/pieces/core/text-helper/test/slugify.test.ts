@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { slugifyAction } from '../src/lib/actions/slugify';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 

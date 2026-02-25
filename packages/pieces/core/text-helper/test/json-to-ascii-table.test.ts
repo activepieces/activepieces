@@ -1,3 +1,5 @@
+/// <reference types="vitest/globals" />
+
 import { jsonToAsciiTable } from '../src/lib/actions/json-to-ascii-table';
 import { createMockActionContext } from '@activepieces/pieces-framework';
 
