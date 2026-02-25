@@ -2,9 +2,15 @@
   "name": "@activepieces/ee-shared",
   "version": "0.0.11",
   "type": "commonjs",
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/shared": "workspace:*",
-    "@sinclair/typebox": "0.34.11"
+    "@sinclair/typebox": "0.34.11",
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
