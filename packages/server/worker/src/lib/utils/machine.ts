@@ -63,7 +63,7 @@ export const workerMachine = {
         workerToken = _workerToken
 
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
-        exceptionHandler.initializeSentry(settings.SENTRY_DSN)
+        exceptionHandler.initializePosthog(settings.POSTHOG_API_KEY)
     },
     hasSettings: () => {
         return !isNil(settings)

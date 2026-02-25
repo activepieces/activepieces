@@ -4,6 +4,15 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.79.0
+
+### What has changed?
+- **Cloud only**: Error tracking has been switched from Sentry to PostHog. The `AP_SENTRY_DSN` environment variable has been removed and replaced with `AP_POSTHOG_API_KEY`.
+
+### Do you need to take action?
+- This change only affects the cloud deployment. Self-hosted users do not need to take any action.
+- If you had `AP_SENTRY_DSN` set, replace it with `AP_POSTHOG_API_KEY` using your PostHog project API key.
+
 ## 0.78.1
 
 ### What has changed?

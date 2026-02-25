@@ -295,7 +295,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
             flagHooks.set(enterpriseFlagsHooks)
-            exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
+            exceptionHandler.initializePosthog(system.get(AppSystemProp.POSTHOG_API_KEY))
             break
         case ApEdition.ENTERPRISE:
             await platformAiCreditsService(app.log).init()

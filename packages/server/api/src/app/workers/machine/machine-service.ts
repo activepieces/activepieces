@@ -56,7 +56,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
                 SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
                 DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
-                SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
+                POSTHOG_API_KEY: system.get(AppSystemProp.POSTHOG_API_KEY),
                 LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
                 LOKI_URL: system.get(AppSystemProp.LOKI_URL),
                 LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),

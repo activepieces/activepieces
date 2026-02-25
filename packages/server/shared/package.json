@@ -12,7 +12,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@hyperdx/node-opentelemetry": "0.8.2",
-    "@sentry/node": "7.120.0",
+    "posthog-node": "5.25.0",
     "@sinclair/typebox": "0.34.11",
     "async-mutex": "0.4.0",
     "axios": "1.13.5",

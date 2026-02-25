@@ -67,7 +67,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
             (part as any).value = apFile
         },
     })
-    exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
+    exceptionHandler.initializePosthog(system.get(AppSystemProp.POSTHOG_API_KEY))
 
 
     await app.register(fastifyRawBody, {

@@ -86,7 +86,7 @@ export const WorkerSettingsResponse = Type.Object({
     SANDBOX_MEMORY_LIMIT: Type.String(),
     SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
     DEV_PIECES: Type.Array(Type.String()),
-    SENTRY_DSN: Type.Optional(Type.String()),
+    POSTHOG_API_KEY: Type.Optional(Type.String()),
     LOKI_PASSWORD: Type.Optional(Type.String()),
     LOKI_URL: Type.Optional(Type.String()),
     LOKI_USERNAME: Type.Optional(Type.String()),

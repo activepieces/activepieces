@@ -90,6 +90,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
         autocapture: false,
         capture_pageview: false,
+        disable_session_recording: true,
+        enable_recording_console_log: false,
         segment: (window as any).analytics,
         loaded: () => newAnalytics.page(),
       });
