@@ -80,9 +80,14 @@ jobs:
           IFS=',' read -ra PIECES <<< "${{ steps.extract-pieces.outputs.pieces_filters }}"
           FILTER_ARGS=""
           for piece in "${PIECES[@]}"; do
-            FILTER_ARGS="$FILTER_ARGS --filter=@activepieces/piece-${piece}"
+            piece_name=$(echo "$piece" | tr -d '{}')
+            if [ -f "packages/pieces/community/${piece_name}/package.json" ]; then
+              FILTER_ARGS="$FILTER_ARGS --filter=@activepieces/piece-${piece_name}"
+            fi
           done
-          npx turbo run build $FILTER_ARGS
+          if [ -n "$FILTER_ARGS" ]; then
+            npx turbo run build $FILTER_ARGS
+          fi
 
       - name: Build all pieces projects
         if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
