@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-microsoft-365-people",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -14,7 +14,7 @@
     "tslib": "^2.3.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

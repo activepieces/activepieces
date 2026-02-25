@@ -59,7 +59,7 @@ export default defineConfig(({ command, mode }) => {
         ),
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
-          '../../packages/pieces/community/framework/src',
+          '../../packages/pieces/framework/src',
         ),
       },
     },

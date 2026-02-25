@@ -1,0 +1,19 @@
+{
+  "name": "@activepieces/piece-http",
+  "version": "0.11.7",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "axios": "1.13.5",
+    "form-data": "4.0.4",
+    "https-proxy-agent": "7.0.4",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@activepieces/piece-crypto",
+  "version": "0.0.19",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "buffer": "6.0.3",
+    "openpgp": "^6.2.0",
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "3.0.8"
+  }
+}

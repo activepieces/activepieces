@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+<<<<<<<< HEAD:packages/server/sandbox/tsconfig.lib.json
+========
+    "baseUrl": ".",
+    "paths": {},
+>>>>>>>> origin/main:packages/pieces/core/graphql/tsconfig.lib.json
+    "outDir": "./dist",
+    "declaration": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {}
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
+}

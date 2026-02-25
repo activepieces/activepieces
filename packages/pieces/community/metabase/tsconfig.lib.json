@@ -5,7 +5,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../../dist/packages/pieces/community/metabase",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"]
   },

@@ -381,6 +381,9 @@
     "packages/ee/shared",
     "packages/ee/ui/embed-sdk",
     "packages/tests-e2e",
+    "packages/pieces/framework",
+    "packages/pieces/common",
+    "packages/pieces/core/*",
     "packages/pieces/community/*"
   ],
   "resolutions": {

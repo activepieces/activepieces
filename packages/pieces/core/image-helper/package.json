@@ -1,0 +1,24 @@
+{
+  "name": "@activepieces/piece-image-helper",
+  "version": "0.1.12",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "exifreader": "4.20.0",
+    "jimp": "^0.22.12",
+    "mime-types": "2.1.35",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/mime-types": "2.1.1",
+    "vitest": "3.0.8"
+  }
+}

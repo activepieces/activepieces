@@ -1,0 +1,22 @@
+{
+  "name": "@activepieces/piece-qrcode",
+  "version": "0.0.12",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "vitest": "3.0.8"
+  },
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "qrcode": "1.5.4",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  }
+}
