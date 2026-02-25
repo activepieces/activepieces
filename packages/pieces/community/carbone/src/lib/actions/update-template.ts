@@ -131,7 +131,7 @@ export const updateTemplateAction = createAction({
       method: HttpMethod.PATCH,
       url: `${CARBONE_API_URL}/template/${templateId}`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'carbone-version': CARBONE_VERSION,
         'Content-Type': 'application/json',
       },

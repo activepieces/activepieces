@@ -79,7 +79,7 @@ export const listTemplatesAction = createAction({
       method: HttpMethod.GET,
       url: `${CARBONE_API_URL}/templates`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'carbone-version': CARBONE_VERSION,
       },
       queryParams,

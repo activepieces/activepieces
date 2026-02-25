@@ -21,7 +21,7 @@ export const listTagsAction = createAction({
       method: HttpMethod.GET,
       url: `${CARBONE_API_URL}/templates/tags`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'carbone-version': CARBONE_VERSION,
       },
     };

@@ -169,7 +169,7 @@ export const renderDocumentAction = createAction({
       method: HttpMethod.POST,
       url: `${CARBONE_API_URL}/render/${templateId}?download=true`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'carbone-version': CARBONE_VERSION,
         'Content-Type': 'application/json',
       },

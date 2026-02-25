@@ -21,7 +21,7 @@ export const listCategoriesAction = createAction({
       method: HttpMethod.GET,
       url: `${CARBONE_API_URL}/templates/categories`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'carbone-version': CARBONE_VERSION,
       },
     };

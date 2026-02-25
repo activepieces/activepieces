@@ -79,7 +79,7 @@ export const deleteTemplateAction = createAction({
       method: HttpMethod.DELETE,
       url: `${CARBONE_API_URL}/template/${templateId}`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'carbone-version': CARBONE_VERSION,
       },
     };

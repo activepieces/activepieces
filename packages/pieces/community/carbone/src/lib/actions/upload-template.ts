@@ -142,7 +142,7 @@ export const uploadTemplateAction = createAction({
       method: HttpMethod.POST,
       url: `${CARBONE_API_URL}/template`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
         'carbone-version': CARBONE_VERSION,
         'Content-Type': `multipart/form-data; boundary=${boundary}`,
         'Content-Length': String(body.length),
