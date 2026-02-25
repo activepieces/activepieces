@@ -4,7 +4,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../dist/packages/ee/shared",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"]
   },
