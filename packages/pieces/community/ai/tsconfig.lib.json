@@ -11,7 +11,7 @@
         "./node_modules/ai-gateway-provider/dist/providers/google.d.ts"
       ]
     },
-    "outDir": "../../../../dist/packages/pieces/community/ai",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"]
   },

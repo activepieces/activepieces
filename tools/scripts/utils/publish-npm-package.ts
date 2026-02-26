@@ -90,8 +90,7 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   console.info(`[publishPackage] path=${path}`)
   assert(path, '[publishPackage] parameter "path" is required')
 
-  // Output path follows the convention: dist/{source-path}
-  const outputPath = `dist/${path}`
+  const outputPath = `${path}/dist`
 
   if (!existsSync(`${outputPath}/package.json`)) {
     console.info(`[publishPackage] skipping, no build output at ${outputPath}`)
@@ -108,6 +107,8 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   const versionMap = buildWorkspaceVersionMap()
   const json = JSON.parse(readFileSync(`${outputPath}/package.json`).toString())
   json.version = version
+  json.main = './src/index.js'
+  json.types = './src/index.d.ts'
   json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
   json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
   json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)
