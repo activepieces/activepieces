@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { coralogixAuth } from './lib/common/auth';
 import { sendLogs } from './lib/actions/send-logs';
 import { acknowledgeIncidents } from './lib/actions/acknowledge-incidents';
