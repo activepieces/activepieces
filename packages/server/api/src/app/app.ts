@@ -49,7 +49,6 @@ import { projectMemberModule } from './ee/projects/project-members/project-membe
 import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/projects/project-release/project-release.module'
 import { projectRoleModule } from './ee/projects/project-role/project-role.module'
-import { scimModule } from './ee/scim/scim-module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
@@ -280,7 +279,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
-            await app.register(scimModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -307,7 +305,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
-            await app.register(scimModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
