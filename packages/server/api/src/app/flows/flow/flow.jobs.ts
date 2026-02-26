@@ -11,28 +11,44 @@ import { flowService } from './flow.service'
 
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
-    deleteHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
+    deleteFlowHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
         const { flow, preDeleteDone, dbDeleteDone } = data
         const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
         assertNotNullOrUndefined(job, 'job is required')
-        if (!preDeleteDone) {
-            await flowSideEffects(log).preDelete({
-                flowToDelete: flow,
-            })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-            })
+
+        const flowExists = await flowRepo().existsBy({ id: flow.id })
+        if (!flowExists) {
+            log.info({ flowId: flow.id }, '[deleteFlowHandler] Flow already deleted, skipping')
+            return
         }
-        if (!dbDeleteDone) {
-            await flowRepo().delete({ id: flow.id })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-                dbDeleteDone: true,
+
+        const { error } = await tryCatch(async () => {
+            if (!preDeleteDone) {
+                await flowSideEffects(log).preDelete({
+                    flowToDelete: flow,
+                })
+                await job.updateData({
+                    ...data,
+                    preDeleteDone: true,
+                })
+            }
+            if (!dbDeleteDone) {
+                await flowRepo().delete({ id: flow.id })
+                await job.updateData({
+                    ...data,
+                    preDeleteDone: true,
+                    dbDeleteDone: true,
+                })
+            }
+            await flowExecutionCache(log).invalidate(flow.id)
+        })
+
+        if (error) {
+            await flowRepo().update(flow.id, {
+                operationStatus: FlowOperationStatus.NONE,
             })
+            throw error
         }
-        await flowExecutionCache(log).invalidate(flow.id)
     },
 
     updateStatusHandler: async (data: SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>) => {
