@@ -9,6 +9,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { Button } from '@/components/ui/button';
 import {
@@ -150,6 +151,7 @@ const EditProjectForm = ({
           });
         })}
       >
+        {globalConnectionsEnabled && <GlobalConnectionWarning />}
         <FormField
           name="displayName"
           render={({ field }) => (

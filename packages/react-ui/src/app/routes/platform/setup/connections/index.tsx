@@ -24,7 +24,7 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
-import { DefaultTag } from '@/components/custom/default-tag';
+import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {

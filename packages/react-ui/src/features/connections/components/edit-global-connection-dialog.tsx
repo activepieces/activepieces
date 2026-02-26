@@ -6,6 +6,7 @@ import { Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -114,6 +115,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
               )}
             >
               <div className="grid space-y-4">
+                <GlobalConnectionWarning />
                 <FormField
                   control={editConnectionForm.control}
                   name="displayName"

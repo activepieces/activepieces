@@ -10,7 +10,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { DefaultTag } from '@/components/custom/default-tag';
+import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { Button } from '@/components/ui/button';
 import {
