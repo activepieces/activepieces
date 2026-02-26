@@ -41,7 +41,7 @@ export const userService = {
             id: apId(),
             identityId: params.identityId,
             platformRole: params.platformRole,
-            status: params.isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE,
+            status: UserStatus.ACTIVE,
             externalId: params.externalId,
             platformId: params.platformId,
         }
@@ -298,7 +298,6 @@ type CreateParams = {
     platformId: string | null
     externalId?: string
     platformRole: PlatformRole
-    isActive?: boolean
 }
 type GetUsersByIdentityIdParams = {
     identityId: string

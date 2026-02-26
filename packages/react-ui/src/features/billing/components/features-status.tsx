@@ -69,10 +69,6 @@ const LICENSE_PROPS_MAP = {
     label: 'Event Streaming',
     description: 'Stream platform events to external destinations',
   },
-  scimEnabled: {
-    label: 'SCIM',
-    description: 'Synchronize user identities with your company directory',
-  },
 };
 
 export const FeatureStatus = ({
