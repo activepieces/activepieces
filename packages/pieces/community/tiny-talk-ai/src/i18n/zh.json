@@ -1,8 +1,8 @@
 {
   "You can obtain API key from [Dashboard Settings](https://dashboard.tinytalk.ai/).": "You can obtain API key from [Dashboard Settings](https://dashboard.tinytalk.ai/).",
-  "Ask Bot": "询问箱",
-  "Sends message to selected bot.": "向选中的机器人发送消息。",
+  "Ask Bot": "Ask Bot",
+  "Sends message to selected bot.": "Sends message to selected bot.",
   "Bot ID": "Bot ID",
-  "Question": "问",
-  "You can find this in your Bot Details page in the dashboard.": "您可以在仪表盘中的Bot详细信息页面中找到这个。"
+  "Question": "Question",
+  "You can find this in your Bot Details page in the dashboard.": "You can find this in your Bot Details page in the dashboard."
 }
