@@ -1,12 +1,11 @@
 import {
-    PieceAuth,
-    Property,
-    createPiece,
-    OAuth2PropertyValue,
+  PieceAuth,
+  Property,
+  createPiece,
+  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
 
 import { addContactToCampaign } from './lib/action/add-contact-to-campaign';
 import { addFileToRecord } from './lib/action/add-file-to-record';
@@ -34,7 +33,6 @@ import { updateRecord } from './lib/action/update-record';
 import { upsertByExternalId } from './lib/action/upsert-by-external-id';
 import { upsertByExternalIdBulk } from './lib/action/upsert-by-external-id-bulk';
 
-
 import { newCaseAttachment } from './lib/trigger/new-case-attachment';
 import { newContact } from './lib/trigger/new-contact';
 import { newFieldHistoryEvent } from './lib/trigger/new-field-history-event';
@@ -44,95 +42,97 @@ import { newOutboundMessage } from './lib/trigger/new-outbound-message';
 import { newRecord } from './lib/trigger/new-record';
 import { newUpdatedFile } from './lib/trigger/new-updated-file';
 import { exportReport } from './lib/action/export-report';
+import { newCaseCreatedTrigger } from './lib/trigger/new-case';
 
 export const salesforceAuth = PieceAuth.OAuth2({
-    props: {
-        environment: Property.StaticDropdown({
-            displayName: 'Environment',
-            description: 'Choose environment',
-            required: true,
-            options: {
-                options: [
-                    {
-                        label: 'Production',
-                        value: 'login',
-                    },
-                    {
-                        label: 'Development',
-                        value: 'test',
-                    },
-                ],
-            },
-            defaultValue: 'login',
-        }),
-    },
-    required: true,
-    description: 'Authenticate with Salesforce Production',
-    authUrl: 'https://{environment}.salesforce.com/services/oauth2/authorize',
-    tokenUrl: 'https://{environment}.salesforce.com/services/oauth2/token',
-    scope: ['refresh_token', 'full' ,'api'],
+  props: {
+    environment: Property.StaticDropdown({
+      displayName: 'Environment',
+      description: 'Choose environment',
+      required: true,
+      options: {
+        options: [
+          {
+            label: 'Production',
+            value: 'login',
+          },
+          {
+            label: 'Development',
+            value: 'test',
+          },
+        ],
+      },
+      defaultValue: 'login',
+    }),
+  },
+  required: true,
+  description: 'Authenticate with Salesforce Production',
+  authUrl: 'https://{environment}.salesforce.com/services/oauth2/authorize',
+  tokenUrl: 'https://{environment}.salesforce.com/services/oauth2/token',
+  scope: ['refresh_token', 'full', 'api'],
 });
 
 export const salesforce = createPiece({
-    displayName: 'Salesforce',
-    description: 'CRM software solutions and enterprise cloud computing',
-    minimumSupportedRelease: '0.30.0',
-    logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
-    authors: [
-        'HKudria',
-        'tanoggy',
-        'landonmoir',
-        'kishanprmr',
-        'khaledmashaly',
-        'abuaboud',
-        'Pranith124',
-        'sanket-a11y'
-    ],
-    categories: [PieceCategory.SALES_AND_CRM],
-    auth: salesforceAuth,
-    actions: [
-        addContactToCampaign,
-        addFileToRecord,
-        addLeadToCampaign,
-        createAttachment,
-        createCase,
-        createContact,
-        createLead,
-        createNote,
-        createOpportunity,
-        createRecord,
-        createTask,
-        deleteOpportunity,
-        deleteRecord,
-        exportReport,
-        findChildRecords,
-        findRecord,
-        findRecordsByQuery,
-        getRecordAttachments,
-        runQuery,
-        runReport,
-        sendEmail,
-        updateContact,
-        updateLead,
-        updateRecord,
-        upsertByExternalId,
-        upsertByExternalIdBulk,
-        createCustomApiCallAction({
-            baseUrl: (auth) => (auth as OAuth2PropertyValue).data['instance_url'],
-            auth: salesforceAuth,
-            authMapping: async (auth) => ({
-                Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-            }),
-        }),
-    ],
-    triggers: [
-        newCaseAttachment,
-        newContact,
-        newFieldHistoryEvent,
-        newLead,
-        newOrUpdatedRecord,
-        newOutboundMessage,
-        newRecord,
-        newUpdatedFile,
-    ],
+  displayName: 'Salesforce',
+  description: 'CRM software solutions and enterprise cloud computing',
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
+  authors: [
+    'HKudria',
+    'tanoggy',
+    'landonmoir',
+    'kishanprmr',
+    'khaledmashaly',
+    'abuaboud',
+    'Pranith124',
+    'sanket-a11y',
+  ],
+  categories: [PieceCategory.SALES_AND_CRM],
+  auth: salesforceAuth,
+  actions: [
+    addContactToCampaign,
+    addFileToRecord,
+    addLeadToCampaign,
+    createAttachment,
+    createCase,
+    createContact,
+    createLead,
+    createNote,
+    createOpportunity,
+    createRecord,
+    createTask,
+    deleteOpportunity,
+    deleteRecord,
+    exportReport,
+    findChildRecords,
+    findRecord,
+    findRecordsByQuery,
+    getRecordAttachments,
+    runQuery,
+    runReport,
+    sendEmail,
+    updateContact,
+    updateLead,
+    updateRecord,
+    upsertByExternalId,
+    upsertByExternalIdBulk,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as OAuth2PropertyValue).data['instance_url'],
+      auth: salesforceAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
+  triggers: [
+    newCaseAttachment,
+    newContact,
+    newFieldHistoryEvent,
+    newLead,
+    newOrUpdatedRecord,
+    newOutboundMessage,
+    newRecord,
+    newUpdatedFile,
+    newCaseCreatedTrigger,
+  ],
 });
