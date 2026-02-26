@@ -398,8 +398,6 @@ export const routesThatRequireProjectId = {
   singleConnection: '/connections/:connectionId',
   tables: '/tables',
   singleTable: '/tables/:tableId',
-  todos: '/todos',
-  singleTodo: '/todos/:todoId',
   settings: '/settings',
   releases: '/releases',
   singleRelease: '/releases/:releaseId',

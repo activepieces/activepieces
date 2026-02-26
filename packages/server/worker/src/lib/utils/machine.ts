@@ -1,7 +1,7 @@
 import { apVersionUtil, environmentVariables, exceptionHandler, networkUtils, systemUsage, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { sandboxPool } from '../compute/sandbox/sandbox-pool'
+import { sandboxPool } from '../flow-worker'
 
 let settings: WorkerSettingsResponse | undefined
 let workerToken: string | undefined

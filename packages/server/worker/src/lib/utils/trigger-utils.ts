@@ -16,7 +16,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { pieceWorkerCache } from '../cache/piece-worker-cache'
 
-import { operationHandler } from '../compute/operation-handler'
+import { operationHandler } from '../execution/operation-handler'
 import { workerMachine } from './machine'
 import { webhookUtils } from './webhook-utils'
 import { workerRedisConnections } from './worker-redis'

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/sandbox": "workspace:*",
     "@activepieces/server-shared": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@opentelemetry/api": "1.9.0",

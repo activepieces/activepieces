@@ -23,6 +23,7 @@ import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.enti
 import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
+import { SecretManagerEntity } from '../ee/secret-managers/secret-manager.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { EventDestinationEntity } from '../event-destinations/event-destinations.entity'
 import { FileEntity } from '../file/file.entity'
@@ -45,8 +46,6 @@ import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { TemplateEntity } from '../template/template.entity'
-import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
-import { TodoEntity } from '../todos/todo.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.entity'
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
@@ -74,6 +73,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FolderEntity,
         PieceMetadataEntity,
         PlatformEntity,
+        SecretManagerEntity,
         TagEntity,
         PieceTagEntity,
         AlertEntity,
@@ -86,9 +86,7 @@ function getEntities(): EntitySchema<unknown>[] {
         CellEntity,
         TableWebhookEntity,
         UserIdentityEntity,
-        TodoEntity,
         McpServerEntity,
-        TodoActivityEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise

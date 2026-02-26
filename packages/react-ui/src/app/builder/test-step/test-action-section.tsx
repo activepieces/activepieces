@@ -2,7 +2,6 @@ import {
   FlowAction,
   FlowActionType,
   Step,
-  TodoType,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -15,7 +14,6 @@ import { Dot } from '@/components/ui/dot';
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
@@ -29,16 +27,7 @@ type TestActionComponentProps = {
 enum DialogType {
   NONE = 'NONE',
   WEBHOOK = 'WEBHOOK',
-  TODO = 'TODO',
 }
-
-const isTodoCreateTask = (step: FlowAction) => {
-  return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-todos' &&
-    step.settings.actionName === 'createTodoAndWait'
-  );
-};
 
 const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
   return (
@@ -84,10 +73,7 @@ const TestStepSectionImplementation = React.memo(
       });
 
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-    const handleTodoTest = async () => {
-      setActiveDialog(DialogType.TODO);
-      testAction(undefined);
-    };
+
     const sampleDataExists =
       !isNil(lastTestDate) ||
       !isNil(errorMessage) ||
@@ -95,9 +81,6 @@ const TestStepSectionImplementation = React.memo(
     const onTestButtonClick = async () => {
       if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
-      } else if (isTodoCreateTask(currentStep)) {
-        setActiveDialog(DialogType.TODO);
-        handleTodoTest();
       } else {
         testAction(undefined);
       }
@@ -159,27 +142,6 @@ const TestStepSectionImplementation = React.memo(
             currentStep={currentStep}
           />
         )}
-        {activeDialog === DialogType.TODO &&
-          currentStep.type === FlowActionType.PIECE &&
-          sampleData &&
-          typeof sampleData === 'object' &&
-          'id' in sampleData && (
-            <TodoTestingDialog
-              open={true}
-              onOpenChange={(open) => {
-                if (!open) {
-                  handleCloseDialog();
-                }
-              }}
-              id={sampleData.id as string}
-              currentStep={currentStep}
-              type={
-                currentStep.settings.actionName === 'createTodoAndWait'
-                  ? TodoType.INTERNAL
-                  : TodoType.EXTERNAL
-              }
-            />
-          )}
       </>
     );
   },
