@@ -1,15 +1,7 @@
 {
   "name": "@activepieces/piece-google-drive",
-  "version": "0.6.5",
+  "version": "0.6.3",
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
-    "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*",
-    "googleapis": "129.0.0",
-    "googleapis-common": "7.2.0"
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
-    "lint": "eslint 'src/**/*.ts'"
+    "googleapis": "129.0.0"
   }
 }
