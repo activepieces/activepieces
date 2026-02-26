@@ -1135,9 +1135,7 @@
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
       ],
-      "@activepieces/piece-todos": [
-        "packages/pieces/core/todos/src/index.ts"
-      ],
+
       "@activepieces/piece-toggl-track": [
         "packages/pieces/community/toggl-track/src/index.ts"
       ],
