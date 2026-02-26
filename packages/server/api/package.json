@@ -125,7 +125,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.app.json",
-    "serve": "cd ../../.. && npx tsx --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
+    "serve": "cd ../../.. && npx tsx watch --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "npm run test-ce && npm run test-ee && npm run test-cloud",
     "test-unit": "vitest run test/unit --bail 1 --passWithNoTests=false",
