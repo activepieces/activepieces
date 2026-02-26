@@ -1,4 +1,4 @@
-import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/ee-shared'
+import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,

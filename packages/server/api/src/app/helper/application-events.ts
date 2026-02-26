@@ -1,4 +1,4 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
+import { ApplicationEvent } from '@activepieces/shared'
 import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { apId, isNil, PrincipalType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'

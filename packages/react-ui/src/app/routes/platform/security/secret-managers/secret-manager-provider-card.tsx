@@ -1,4 +1,4 @@
-import { SecretManagerProviderMetaData } from '@activepieces/ee-shared';
+import { SecretManagerProviderMetaData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 

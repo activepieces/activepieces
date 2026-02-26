@@ -2,7 +2,7 @@ import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
     PushGitRepoRequest,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { Permission, PrincipalType, SeekPage } from '@activepieces/shared'
 import {

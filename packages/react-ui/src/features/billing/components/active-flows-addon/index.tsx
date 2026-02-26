@@ -1,4 +1,4 @@
-import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/ee-shared';
+import { PRICE_PER_EXTRA_ACTIVE_FLOWS } from '@activepieces/shared';
 import {
   ApEdition,
   ApFlagId,

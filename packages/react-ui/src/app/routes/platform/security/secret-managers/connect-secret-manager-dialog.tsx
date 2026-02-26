@@ -1,7 +1,7 @@
 import {
   ConnectSecretManagerRequest,
   SecretManagerProviderMetaData,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';

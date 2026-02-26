@@ -1,4 +1,4 @@
-import { ConnectSecretManagerRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { ConnectSecretManagerRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { ActivepiecesError, apId, ErrorCode, isEnumValue, isNil, isObject, isString, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'

@@ -1,4 +1,4 @@
-import { SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { apAxios } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'

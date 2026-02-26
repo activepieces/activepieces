@@ -1,4 +1,4 @@
-import { GitRepo } from '@activepieces/ee-shared'
+import { GitRepo } from '@activepieces/shared'
 import { Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../../../database/database-common'

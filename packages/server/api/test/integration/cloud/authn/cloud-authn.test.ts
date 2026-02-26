@@ -1,7 +1,7 @@
 import {
     CustomDomain,
     OtpType,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import {
     DefaultProjectRole,
     InvitationStatus,

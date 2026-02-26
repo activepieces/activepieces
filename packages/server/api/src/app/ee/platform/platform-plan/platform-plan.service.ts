@@ -1,4 +1,4 @@
-import { isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
 import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
 import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'

@@ -2,7 +2,7 @@ import {
   ApiKeyResponseWithoutValue,
   ApiKeyResponseWithValue,
   CreateApiKeyRequest,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { SeekPage } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

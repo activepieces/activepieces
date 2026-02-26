@@ -1,4 +1,4 @@
-import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
+import { UpsertOAuth2AppRequest } from '@activepieces/shared'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'

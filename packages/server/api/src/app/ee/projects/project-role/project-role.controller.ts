@@ -1,4 +1,4 @@
-import { ApplicationEventName, ProjectMemberWithUser } from '@activepieces/ee-shared'
+import { ApplicationEventName, ProjectMemberWithUser } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'

@@ -1,7 +1,7 @@
 import {
     AddDomainRequest,
     ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
 import {

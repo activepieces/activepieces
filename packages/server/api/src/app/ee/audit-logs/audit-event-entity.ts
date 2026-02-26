@@ -1,4 +1,4 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
+import { ApplicationEvent } from '@activepieces/shared'
 import { Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../../database/database-common'

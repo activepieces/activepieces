@@ -3,7 +3,7 @@ import {
     ListProjectMembersRequestQuery,
     ProjectMemberWithUser,
     UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     Permission,

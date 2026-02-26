@@ -1,4 +1,4 @@
-import { Alert, AlertChannel } from '@activepieces/ee-shared';
+import { Alert, AlertChannel } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';

@@ -13,7 +13,7 @@ import {
     OtpType,
     ProjectMember,
     SigningKey,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
 import {

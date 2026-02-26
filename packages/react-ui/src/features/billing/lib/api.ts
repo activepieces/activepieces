@@ -3,7 +3,7 @@ import {
   CreateSubscriptionParams,
   CreateAICreditCheckoutSessionParamsSchema,
   UpdateAICreditsAutoTopUpParamsSchema,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

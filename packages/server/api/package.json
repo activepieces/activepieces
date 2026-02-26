@@ -4,7 +4,6 @@
   "private": true,
   "type": "commonjs",
   "dependencies": {
-    "@activepieces/ee-shared": "workspace:*",
     "@activepieces/engine": "workspace:*",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",

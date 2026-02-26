@@ -4,7 +4,7 @@ import {
     GitPushOperationType,
     GitRepo,
     PushGitRepoRequest,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import {
     ActivepiecesError,
     ApEdition,

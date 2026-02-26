@@ -1,4 +1,4 @@
-import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
+import { CreateOtpRequestBody, OtpType } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MailCheck } from 'lucide-react';

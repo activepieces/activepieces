@@ -1,4 +1,4 @@
-import { CreateOtpRequestBody } from '@activepieces/ee-shared'
+import { CreateOtpRequestBody } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'

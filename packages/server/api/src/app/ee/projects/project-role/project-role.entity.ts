@@ -1,4 +1,4 @@
-import { ProjectMember } from '@activepieces/ee-shared'
+import { ProjectMember } from '@activepieces/shared'
 import { PlatformId, ProjectRole } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart } from '../../../database/database-common'

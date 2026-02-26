@@ -1,4 +1,4 @@
-import { SecretManagerProviderId } from '@activepieces/ee-shared';
+import { SecretManagerProviderId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';

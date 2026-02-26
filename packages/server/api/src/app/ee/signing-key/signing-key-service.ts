@@ -1,4 +1,4 @@
-import { AddSigningKeyResponse, SigningKey, SigningKeyId } from '@activepieces/ee-shared'
+import { AddSigningKeyResponse, SigningKey, SigningKeyId } from '@activepieces/shared'
 import {
     ActivepiecesError,
     apId,

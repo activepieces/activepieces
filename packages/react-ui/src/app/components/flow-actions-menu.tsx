@@ -1,4 +1,4 @@
-import { GitBranchType } from '@activepieces/ee-shared';
+import { GitBranchType } from '@activepieces/shared';
 import {
   FlowOperationType,
   FlowVersion,

@@ -1,4 +1,4 @@
-import { EventDestination } from '@activepieces/ee-shared';
+import { EventDestination } from '@activepieces/shared';
 import { t } from 'i18next';
 import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';

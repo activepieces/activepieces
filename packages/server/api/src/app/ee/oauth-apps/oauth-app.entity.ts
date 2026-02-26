@@ -1,4 +1,4 @@
-import { OAuthApp } from '@activepieces/ee-shared'
+import { OAuthApp } from '@activepieces/shared'
 import { Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {

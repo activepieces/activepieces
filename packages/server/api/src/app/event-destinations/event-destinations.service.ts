@@ -6,7 +6,7 @@ import {
     EventDestinationScope,
     FlowCreatedEvent,
     UpdatePlatformEventDestinationRequestBody,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { WorkerSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'

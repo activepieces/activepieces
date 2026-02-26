@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus } from '@activepieces/ee-shared';
+import { ApSubscriptionStatus } from '@activepieces/shared';
 import {
   AiCreditsAutoTopUpState,
   ApEdition,

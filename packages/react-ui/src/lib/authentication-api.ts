@@ -3,7 +3,7 @@ import {
   GetCurrentProjectMemberRoleQuery,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import {
   AuthenticationResponse,
   ClaimTokenRequest,

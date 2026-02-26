@@ -1,6 +1,6 @@
 import {
     UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import {
     Cursor,
     isNil,

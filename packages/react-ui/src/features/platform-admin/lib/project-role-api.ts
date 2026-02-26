@@ -1,4 +1,4 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { ProjectMemberWithUser } from '@activepieces/shared';
 import {
   CreateProjectRoleRequestBody,
   UpdateProjectRoleRequestBody,

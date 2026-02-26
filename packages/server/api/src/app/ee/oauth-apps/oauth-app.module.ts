@@ -2,7 +2,7 @@ import {
     ListOAuth2AppRequest,
     OAuthApp,
     UpsertOAuth2AppRequest,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
 import {

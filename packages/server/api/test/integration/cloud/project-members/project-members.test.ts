@@ -1,7 +1,7 @@
 import {
     ApiKeyResponseWithValue,
     UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { DefaultProjectRole, Permission, Platform, PlatformRole, PrincipalType, Project, ProjectRole, RoleType, User } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

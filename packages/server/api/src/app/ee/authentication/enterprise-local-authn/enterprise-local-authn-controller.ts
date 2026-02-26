@@ -1,6 +1,6 @@
 import {
     ResetPasswordRequestBody,
-    VerifyEmailRequestBody } from '@activepieces/ee-shared'
+    VerifyEmailRequestBody } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'

@@ -1,4 +1,4 @@
-import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/ee-shared'
+import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'

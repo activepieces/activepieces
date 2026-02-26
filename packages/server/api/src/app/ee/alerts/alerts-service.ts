@@ -1,4 +1,4 @@
-import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
+import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/shared'
 import { apDayjsDuration } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, SeekPage } from '@activepieces/shared'
 

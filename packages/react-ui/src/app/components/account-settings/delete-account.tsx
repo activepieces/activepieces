@@ -1,4 +1,4 @@
-import { isCloudPlanButNotEnterprise } from '@activepieces/ee-shared';
+import { isCloudPlanButNotEnterprise } from '@activepieces/shared';
 import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';

@@ -1,6 +1,6 @@
 import {
     ApplicationEvent,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     Cursor,

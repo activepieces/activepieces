@@ -1,4 +1,4 @@
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 import {
   ApEdition,
   ApFlagId,

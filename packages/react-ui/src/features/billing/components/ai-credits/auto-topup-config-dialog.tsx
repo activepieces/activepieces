@@ -1,4 +1,4 @@
-import { UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared';
+import { UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared';
 import { AiCreditsAutoTopUpState } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';

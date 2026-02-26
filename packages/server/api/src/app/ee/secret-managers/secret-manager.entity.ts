@@ -1,4 +1,4 @@
-import { SecretManager } from '@activepieces/ee-shared'
+import { SecretManager } from '@activepieces/shared'
 import { Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {

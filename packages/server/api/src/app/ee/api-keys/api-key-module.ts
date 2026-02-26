@@ -1,7 +1,7 @@
 import {
     ApiKeyResponseWithoutValue,
     ApiKeyResponseWithValue,
-    CreateApiKeyRequest } from '@activepieces/ee-shared'
+    CreateApiKeyRequest } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { ApId, assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
 import {

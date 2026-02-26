@@ -1,4 +1,4 @@
-import { GetFlowTemplateRequestQuery } from '@activepieces/ee-shared';
+import { GetFlowTemplateRequestQuery } from '@activepieces/shared';
 import {
   CreateFlowRequest,
   ErrorCode,

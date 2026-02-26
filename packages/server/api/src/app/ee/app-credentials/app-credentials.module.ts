@@ -3,7 +3,7 @@ import {
     AppCredentialType,
     ListAppCredentialsRequest,
     UpsertAppCredentialRequest,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'

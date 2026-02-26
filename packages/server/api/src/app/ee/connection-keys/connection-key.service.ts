@@ -8,7 +8,7 @@ import {
     UpsertConnectionFromToken,
     UpsertOAuth2ConnectionFromToken,
     UpsertSigningKeyConnection,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import {
     ActivepiecesError, apId,
     AppConnectionScope,

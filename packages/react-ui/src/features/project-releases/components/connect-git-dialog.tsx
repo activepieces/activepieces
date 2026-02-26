@@ -2,7 +2,7 @@ import {
   ConfigureRepoRequest,
   GitBranchType,
   GitRepo,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';

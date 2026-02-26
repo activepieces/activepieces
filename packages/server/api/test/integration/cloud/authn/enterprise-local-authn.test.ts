@@ -1,4 +1,4 @@
-import { OtpState, OtpType } from '@activepieces/ee-shared'
+import { OtpState, OtpType } from '@activepieces/shared'
 import { UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'

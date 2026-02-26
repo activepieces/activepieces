@@ -1,4 +1,4 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { ProjectMemberWithUser } from '@activepieces/shared';
 import { ApFlagId, assertNotNullOrUndefined } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 

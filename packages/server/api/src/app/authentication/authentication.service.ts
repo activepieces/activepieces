@@ -1,4 +1,4 @@
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'

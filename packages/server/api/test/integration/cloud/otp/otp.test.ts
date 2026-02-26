@@ -1,4 +1,4 @@
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'

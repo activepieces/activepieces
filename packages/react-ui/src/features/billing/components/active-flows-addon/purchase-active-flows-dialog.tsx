@@ -1,7 +1,7 @@
 import {
   ApSubscriptionStatus,
   PRICE_PER_EXTRA_ACTIVE_FLOWS,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { PlatformPlan } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';

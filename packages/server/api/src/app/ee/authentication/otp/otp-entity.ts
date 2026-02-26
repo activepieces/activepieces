@@ -1,4 +1,4 @@
-import { OtpModel, OtpState, OtpType } from '@activepieces/ee-shared'
+import { OtpModel, OtpState, OtpType } from '@activepieces/shared'
 import { UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {

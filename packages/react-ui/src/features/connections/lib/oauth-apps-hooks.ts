@@ -1,4 +1,4 @@
-import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
+import { UpsertOAuth2AppRequest } from '@activepieces/shared';
 import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';

@@ -1,4 +1,4 @@
-import { SecretManagerProviderId } from '@activepieces/ee-shared'
+import { SecretManagerProviderId } from '@activepieces/shared'
 import { apAxios } from '@activepieces/server-shared'
 import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'

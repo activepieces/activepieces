@@ -2,7 +2,7 @@ import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
   UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import {
   isNil,
   ProjectType,

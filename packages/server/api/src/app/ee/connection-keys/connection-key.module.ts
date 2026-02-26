@@ -4,7 +4,7 @@ import {
     ListConnectionKeysRequest,
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'

@@ -1,4 +1,4 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
+import { ApplicationEvent } from '@activepieces/shared'
 import { apId, BADGES, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'

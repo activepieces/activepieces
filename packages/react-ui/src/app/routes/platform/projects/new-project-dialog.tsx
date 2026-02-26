@@ -1,4 +1,4 @@
-import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
+import { CreatePlatformProjectRequest } from '@activepieces/shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';

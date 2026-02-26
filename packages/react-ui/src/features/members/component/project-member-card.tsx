@@ -1,4 +1,4 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { ProjectMemberWithUser } from '@activepieces/shared';
 import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';

@@ -1,4 +1,4 @@
-import { ConnectionKey } from '@activepieces/ee-shared'
+import { ConnectionKey } from '@activepieces/shared'
 import { Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {

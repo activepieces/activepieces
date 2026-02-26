@@ -1,4 +1,4 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { ProjectMemberWithUser } from '@activepieces/shared';
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';

@@ -1,7 +1,7 @@
 import {
     ApiKey,
     ApiKeyResponseWithValue,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     ActivepiecesError,

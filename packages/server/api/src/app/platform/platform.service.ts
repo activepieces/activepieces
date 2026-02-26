@@ -1,4 +1,4 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { OPEN_SOURCE_PLAN } from '@activepieces/shared'
 import {
     ActivepiecesError,
     ApEdition,

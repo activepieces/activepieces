@@ -4,7 +4,7 @@ import {
     OtpType,
     ResetPasswordRequestBody,
     VerifyEmailRequestBody,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, isNil, UserId, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'

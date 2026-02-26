@@ -2,7 +2,7 @@ import {
     CustomDomain,
     CustomDomainStatus,
     ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'

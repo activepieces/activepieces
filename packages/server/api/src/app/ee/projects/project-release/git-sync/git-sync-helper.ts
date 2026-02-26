@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { GitRepo } from '@activepieces/ee-shared'
+import { GitRepo } from '@activepieces/shared'
 import { fileSystemUtils } from '@activepieces/server-shared'
 import { AppConnectionScope, ConnectionState, FlowState, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'

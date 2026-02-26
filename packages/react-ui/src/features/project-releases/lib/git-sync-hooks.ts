@@ -1,4 +1,4 @@
-import { GitBranchType } from '@activepieces/ee-shared';
+import { GitBranchType } from '@activepieces/shared';
 import { isNil, Permission } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 

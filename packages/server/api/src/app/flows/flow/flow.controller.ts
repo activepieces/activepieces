@@ -1,4 +1,4 @@
-import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
+import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,

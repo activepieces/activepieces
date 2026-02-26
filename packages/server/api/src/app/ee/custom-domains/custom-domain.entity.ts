@@ -1,7 +1,7 @@
 import {
     CustomDomain,
     CustomDomainStatus,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {

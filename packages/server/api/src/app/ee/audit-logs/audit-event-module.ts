@@ -1,4 +1,4 @@
-import { ListAuditEventsRequest } from '@activepieces/ee-shared'
+import { ListAuditEventsRequest } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'

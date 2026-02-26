@@ -1,4 +1,4 @@
-import { SigningKey } from '@activepieces/ee-shared';
+import { SigningKey } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';

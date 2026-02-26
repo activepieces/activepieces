@@ -1,4 +1,4 @@
-import { CreateOtpRequestBody, OtpType } from '@activepieces/ee-shared';
+import { CreateOtpRequestBody, OtpType } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';

@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
+import { ConfigureRepoRequest, GitRepo } from '@activepieces/shared'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'

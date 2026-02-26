@@ -378,7 +378,6 @@
     "packages/server/shared",
     "packages/server/worker",
     "packages/server/sandbox",
-    "packages/ee/shared",
     "packages/ee/ui/embed-sdk",
     "packages/tests-e2e",
     "packages/pieces/framework",

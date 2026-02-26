@@ -1,4 +1,4 @@
-import { ProjectPlanLimits } from '@activepieces/ee-shared'
+import { ProjectPlanLimits } from '@activepieces/shared'
 import {
     apId,
     isNil,

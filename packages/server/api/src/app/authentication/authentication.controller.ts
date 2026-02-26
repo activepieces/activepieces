@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName } from '@activepieces/shared'
 import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,

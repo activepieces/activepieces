@@ -1,4 +1,4 @@
-import { APPSUMO_PLAN, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
+import { APPSUMO_PLAN, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
 import { isNil, PlanName, PlatformPlanWithOnlyLimits, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'

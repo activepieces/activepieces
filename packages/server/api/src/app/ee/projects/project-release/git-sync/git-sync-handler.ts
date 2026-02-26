@@ -1,4 +1,4 @@
-import { PushFlowsGitRepoRequest, PushTablesGitRepoRequest } from '@activepieces/ee-shared'
+import { PushFlowsGitRepoRequest, PushTablesGitRepoRequest } from '@activepieces/shared'
 import {
     FlowState,
     FlowVersionState,

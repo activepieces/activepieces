@@ -1,4 +1,4 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
+import { ApplicationEvent } from '@activepieces/shared'
 import { BADGES } from '@activepieces/shared'
 
 export type BadgeCheckResult = {

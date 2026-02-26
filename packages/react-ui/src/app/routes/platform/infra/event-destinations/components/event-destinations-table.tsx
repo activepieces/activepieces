@@ -1,4 +1,4 @@
-import { EventDestination } from '@activepieces/ee-shared';
+import { EventDestination } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Globe } from 'lucide-react';

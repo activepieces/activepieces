@@ -2,7 +2,7 @@ import {
     ProjectMember,
     ProjectMemberId,
     ProjectMemberWithUser,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import {
     ActivepiecesError,
     ApEdition,

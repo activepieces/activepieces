@@ -1,7 +1,7 @@
 import {
   AddSigningKeyRequestBody,
   AddSigningKeyResponse,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';

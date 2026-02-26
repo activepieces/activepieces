@@ -1,4 +1,4 @@
-import { AWSGetSecretRequest, AWSProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { AWSGetSecretRequest, AWSProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider } from './secret-manager-providers'
 

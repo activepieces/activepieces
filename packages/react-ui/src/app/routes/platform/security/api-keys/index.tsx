@@ -1,4 +1,4 @@
-import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
+import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';

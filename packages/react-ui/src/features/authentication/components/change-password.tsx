@@ -1,4 +1,4 @@
-import { ResetPasswordRequestBody } from '@activepieces/ee-shared';
+import { ResetPasswordRequestBody } from '@activepieces/shared';
 import { Popover } from '@radix-ui/react-popover';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';

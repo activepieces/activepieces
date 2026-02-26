@@ -1,4 +1,4 @@
-import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
+import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,

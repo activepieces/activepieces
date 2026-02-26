@@ -1,6 +1,6 @@
 import {
     ApplicationEventName,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
 import {
     ClaimTokenRequest,
