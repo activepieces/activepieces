@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "../../../../dist/packages/ee/ui/embed-sdk",
+    "outDir": "../../../dist/packages/ee/embed-sdk",
     "declaration": true,
     "types": ["node"],
     "baseUrl": ".",

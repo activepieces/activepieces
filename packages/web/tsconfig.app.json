@@ -22,7 +22,7 @@
         "../../packages/pieces/common/src"
       ],
       "ee-embed-sdk": [
-        "../../packages/ee/ui/embed-sdk/src"
+        "../../packages/ee/embed-sdk/src"
       ],
       "@activepieces/piece-ai": [
         "../../packages/pieces/community/ai/src"

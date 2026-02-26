@@ -378,7 +378,7 @@
     "packages/server/common",
     "packages/server/worker",
     "packages/server/sandbox",
-    "packages/ee/ui/embed-sdk",
+    "packages/ee/embed-sdk",
     "packages/tests-e2e",
     "packages/pieces/framework",
     "packages/pieces/common",

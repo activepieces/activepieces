@@ -51,7 +51,7 @@ export default defineConfig(({ command, mode }) => {
         ),
         'ee-embed-sdk': path.resolve(
           __dirname,
-          '../../packages/ee/ui/embed-sdk/src',
+          '../../packages/ee/embed-sdk/src',
         ),
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
