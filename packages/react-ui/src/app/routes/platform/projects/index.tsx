@@ -25,6 +25,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
@@ -65,14 +66,19 @@ export default function ProjectsPage() {
   const [editDialogInitialValues, setEditDialogInitialValues] =
     useState<any>(null);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
-
-  const columns = useMemo(
-    () => projectsTableColumns({ platform, currentUserId: currentUser?.id }),
-    [platform, currentUser?.id],
-  );
+  const { data: allGlobalConnectionsPage } =
+    globalConnectionsQueries.useGlobalConnections({
+      request: { limit: 9999 },
+      extraKeys: [],
+    });
+  const columns = projectsTableColumns({
+    platform,
+    currentUserId: currentUser?.id,
+    allGlobalConnections: allGlobalConnectionsPage?.data ?? [],
+  });
 
   const columnsWithCheckbox: ColumnDef<
-    RowDataWithActions<ProjectWithLimits>
+    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
   >[] = [
     {
       id: 'select',
@@ -338,7 +344,17 @@ export default function ProjectsPage() {
             },
           ]}
           columns={columnsWithCheckbox}
-          page={{ data: allProjects, next: null, previous: null }}
+          page={{
+            data: allProjects.map((project) => ({
+              ...project,
+              globalConnectionsCount:
+                allGlobalConnectionsPage?.data?.filter((connection) =>
+                  connection.projectIds.includes(project.id),
+                ).length ?? 0,
+            })),
+            next: null,
+            previous: null,
+          }}
           isLoading={false}
           clientPagination={true}
           bulkActions={bulkActions}

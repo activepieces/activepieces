@@ -93,6 +93,25 @@ export const projectCollectionUtils = {
       },
     });
   },
+  useUpdateProject: (
+    onSuccess: () => void,
+    onError: (error: Error) => void,
+  ) => {
+    return useMutation({
+      mutationFn: ({
+        projectId,
+        request,
+      }: {
+        projectId: string;
+        request: UpdateProjectPlatformRequest;
+      }) => api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request),
+      onSuccess: (data) => {
+        projectCollection.utils.writeUpdate(data);
+        onSuccess();
+      },
+      onError,
+    });
+  },
   update: (projectId: string, request: UpdateProjectPlatformRequest) => {
     projectCollection.update(projectId, (draft) => {
       Object.assign(

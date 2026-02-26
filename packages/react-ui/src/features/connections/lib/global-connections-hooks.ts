@@ -8,6 +8,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { globalConnectionsApi } from './api/global-connections';
 import {
@@ -21,26 +22,31 @@ type UseGlobalConnectionsProps = {
   extraKeys: any[];
   staleTime?: number;
   gcTime?: number;
-  enabled?: boolean;
 };
 
+const GLOBAL_CONNECTIONS_QUERY_KEY = 'globalConnections';
 export const globalConnectionsQueries = {
+  getGlobalConnectionsQueryKey: (extraKeys: string[]) => [
+    GLOBAL_CONNECTIONS_QUERY_KEY,
+    ...extraKeys,
+  ],
   useGlobalConnections: ({
     request,
     extraKeys,
     staleTime,
     gcTime,
-    enabled = true,
-  }: UseGlobalConnectionsProps) =>
-    useQuery({
-      queryKey: ['globalConnections', ...extraKeys],
+  }: UseGlobalConnectionsProps) => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return useQuery({
+      queryKey: [GLOBAL_CONNECTIONS_QUERY_KEY, ...extraKeys],
       staleTime,
       gcTime,
-      enabled,
+      enabled: platform.plan.globalConnectionsEnabled,
       queryFn: () => {
         return globalConnectionsApi.list(request);
       },
-    }),
+    });
+  },
 };
 
 export const globalConnectionsMutations = {

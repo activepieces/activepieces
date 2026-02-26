@@ -329,10 +329,13 @@ const MultiSelectValue = React.forwardRef<
               <Badge
                 variant="outline"
                 key={value}
-                className={cn('pr-1.5 group/multi-select-badge rounded-full', {
-                  'cursor-pointer': !disabled,
-                  'cursor-not-allowed opacity-80': disabled,
-                })}
+                className={cn(
+                  'pr-1.5 items-center justify-center group/multi-select-badge rounded-full',
+                  {
+                    'cursor-pointer': !disabled,
+                    'cursor-not-allowed opacity-80': disabled,
+                  },
+                )}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

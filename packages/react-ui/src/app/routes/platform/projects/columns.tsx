@@ -3,10 +3,20 @@ import {
   PlatformWithoutSensitiveData,
   ProjectWithLimits,
   ProjectType,
+  AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Lock, User, Tag, Users, Workflow, Clock, Hash } from 'lucide-react';
+import {
+  Lock,
+  User,
+  Tag,
+  Users,
+  Workflow,
+  Clock,
+  Hash,
+  Link2,
+} from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -15,14 +25,18 @@ import { FormattedDate } from '@/components/ui/formatted-date';
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
   currentUserId?: string;
+  allGlobalConnections: AppConnectionWithoutSensitiveData[];
 };
 
 export const projectsTableColumns = ({
   platform,
+  allGlobalConnections,
 }: ProjectsTableColumnsProps): ColumnDef<
-  RowDataWithActions<ProjectWithLimits>
+  RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
 >[] => {
-  const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
+  const columns: ColumnDef<
+    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
+  >[] = [
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
@@ -96,6 +110,22 @@ export const projectsTableColumns = ({
             <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
+      },
+    },
+    {
+      accessorKey: 'globalConnectionsCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Global Connections')}
+          icon={Link2}
+        />
+      ),
+      cell: ({ row }) => {
+        const globalConnectionsForProject = allGlobalConnections.filter(
+          (connection) => connection.projectIds.includes(row.original.id),
+        ).length;
+        return <div className="text-left">{globalConnectionsForProject}</div>;
       },
     },
   ];

@@ -9,7 +9,6 @@ import {
     assertNotNullOrUndefined,
     ErrorCode,
     Permission,
-    PiecesFilterType,
     PlatformRole,
     Principal,
     PrincipalType,
@@ -23,18 +22,14 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { platformProjectService } from './platform-project-service'
-import { projectLimitsService } from './project-plan/project-plan.service'
 
 const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
-
 
     app.get('/:id', GetProjectRequest, async (request) => {
         return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
@@ -45,34 +40,14 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         await assertMaximumNumberOfProjectsReachedByEdition(platformId)
-
-        const platformPlan = await platformPlanService(request.log).getOrCreateForPlatform(platformId)
-        const platform = await platformService.getOneOrThrow(platformId)
-        const project = await projectService.create({
-            ownerId: platform.ownerId,
-            displayName: request.body.displayName,
+        const projectWithUsage = await platformProjectService(request.log).create({
             platformId,
+            displayName: request.body.displayName,
             externalId: request.body.externalId ?? undefined,
             metadata: request.body.metadata ?? undefined,
             maxConcurrentJobs: request.body.maxConcurrentJobs ?? undefined,
-            type: ProjectType.TEAM,
+            globalConnectionExternalIds: request.body.globalConnectionExternalIds ?? undefined,
         })
-        await projectLimitsService(request.log).upsert({
-            nickname: 'platform',
-            pieces: [],
-            piecesFilterType: PiecesFilterType.NONE,
-        }, project.id)
-
-        if (platformPlan.globalConnectionsEnabled) {
-            await appConnectionService(request.log).assignToProject({
-                platformId,
-                projectId: project.id,
-                connectionIds: request.body.globalConnectionIds ?? [],
-            })
-        }
-
-        const projectWithUsage =
-            await platformProjectService(request.log).getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 

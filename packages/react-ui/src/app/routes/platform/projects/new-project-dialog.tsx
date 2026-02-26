@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -23,6 +24,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -41,46 +43,49 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const { data: globalConnectionsPage, isLoading: isLoadingConnections } =
     globalConnectionsQueries.useGlobalConnections({
       request: { limit: 9999 },
-      extraKeys: ['new-project-dialog'],
-      enabled: globalConnectionsEnabled,
+      extraKeys: [],
     });
 
   const globalConnections = globalConnectionsPage?.data ?? [];
 
   return (
     <Dialog key={open ? 'open' : 'closed'} open={open} onOpenChange={setOpen}>
-      <NewProjectDialogContent
-        setOpen={setOpen}
-        globalConnections={globalConnections}
-        globalConnectionsLoading={isLoadingConnections}
-        globalConnectionsEnabled={globalConnectionsEnabled}
-        onCreate={props.onCreate}
-      >
-        {props.children}
-      </NewProjectDialogContent>
+      <DialogTrigger asChild>{props.children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('Create New Project')}</DialogTitle>
+        </DialogHeader>
+        {(!isLoadingConnections || !globalConnectionsEnabled) && (
+          <NewProjectForm
+            setOpen={setOpen}
+            globalConnections={globalConnections}
+            globalConnectionsEnabled={globalConnectionsEnabled}
+            onCreate={props.onCreate}
+          />
+        )}
+        {isLoadingConnections && (
+          <SkeletonList numberOfItems={3} className="h-10" />
+        )}
+      </DialogContent>
     </Dialog>
   );
 };
 
-const NewProjectDialogContent = ({
+const NewProjectForm = ({
   onCreate,
-  children,
   setOpen,
   globalConnections,
-  globalConnectionsLoading,
   globalConnectionsEnabled,
-}: NewProjectDialogProps & {
+}: Omit<NewProjectDialogProps, 'children'> & {
   setOpen: (open: boolean) => void;
   globalConnections: AppConnectionWithoutSensitiveData[];
-  globalConnectionsLoading: boolean;
   globalConnectionsEnabled: boolean;
 }) => {
-  const preselectedConnections = globalConnections.filter(
-    (connection) => connection.preSelectForNewProjects,
-  );
-  const preselectedConnectionsIds = preselectedConnections.map(
-    (connection) => connection.id,
-  );
+  const queryClient = useQueryClient();
+  const preselectedConnectionExternalIds = globalConnections
+    .filter((connection) => connection.preSelectForNewProjects)
+    .map((connection) => connection.externalId);
+
   const form = useForm<CreatePlatformProjectRequest>({
     resolver: typeboxResolver(
       Type.Object({
@@ -91,7 +96,7 @@ const NewProjectDialogContent = ({
       }),
     ),
     defaultValues: {
-      globalConnectionIds: preselectedConnectionsIds,
+      globalConnectionExternalIds: preselectedConnectionExternalIds,
     },
   });
 
@@ -99,6 +104,9 @@ const NewProjectDialogContent = ({
     (data) => {
       onCreate?.(data);
       setOpen(false);
+      queryClient.invalidateQueries({
+        queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
+      });
     },
     (error) => {
       console.error(error);
@@ -108,96 +116,88 @@ const NewProjectDialogContent = ({
 
   return (
     <>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Create New Project')}</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            className="grid space-y-4"
-            onSubmit={(e) =>
-              form.handleSubmit(() => mutate(form.getValues()))(e)
-            }
-          >
+      <Form {...form}>
+        <form
+          className="grid space-y-4"
+          onSubmit={(e) => form.handleSubmit(() => mutate(form.getValues()))(e)}
+        >
+          <FormField
+            name="displayName"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="displayName">{t('Project Name')}</Label>
+                <Input
+                  {...field}
+                  id="displayName"
+                  placeholder={t('Project Name')}
+                  className="rounded-sm"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {globalConnectionsEnabled && (
             <FormField
-              name="displayName"
+              name="globalConnectionExternalIds"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">{t('Project Name')}</Label>
-                  <Input
-                    {...field}
-                    id="displayName"
-                    placeholder={t('Project Name')}
-                    className="rounded-sm"
+                  <Label>{t('Global Connections')}</Label>
+                  <MultiSelectPieceProperty
+                    placeholder={t('Select global connections')}
+                    options={
+                      globalConnections.map((connection) => ({
+                        value: connection.externalId,
+                        label: connection.displayName,
+                      })) ?? []
+                    }
+                    loading={false}
+                    onChange={(value) => {
+                      field.onChange(value ?? []);
+                    }}
+                    itemExtraContent={(index) => {
+                      if (globalConnections[index].preSelectForNewProjects) {
+                        return <DefaultTag />;
+                      }
+                      return null;
+                    }}
+                    initialValues={field.value ?? []}
+                    showDeselect={(field.value ?? []).length > 0}
                   />
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {globalConnectionsEnabled && (
-              <FormField
-                name="globalConnectionIds"
-                render={({ field }) => (
-                  <FormItem className="grid space-y-2">
-                    <Label>{t('Global Connections')}</Label>
-                    <MultiSelectPieceProperty
-                      placeholder={t('Select global connections')}
-                      options={
-                        globalConnections.map((connection) => ({
-                          value: connection.id,
-                          label: connection.displayName,
-                        })) ?? []
-                      }
-                      loading={globalConnectionsLoading}
-                      onChange={(value) => {
-                        field.onChange(value ?? []);
-                      }}
-                      itemExtraContent={(index) => {
-                        if (globalConnections[index].preSelectForNewProjects) {
-                          return <DefaultTag />;
-                        }
-                        return null;
-                      }}
-                      initialValues={field.value ?? []}
-                      showDeselect={(field.value ?? []).length > 0}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-          </form>
-        </Form>
-        <DialogFooter>
-          <Button
-            variant={'outline'}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setOpen(false);
-            }}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            disabled={isPending}
-            loading={isPending}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              form.handleSubmit(() => mutate(form.getValues()))(e);
-            }}
-          >
-            {t('Save')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+          )}
+          {form?.formState?.errors?.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
+          )}
+        </form>
+      </Form>
+      <DialogFooter>
+        <Button
+          variant={'outline'}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpen(false);
+          }}
+        >
+          {t('Cancel')}
+        </Button>
+        <Button
+          disabled={isPending}
+          loading={isPending}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            form.handleSubmit(() => mutate(form.getValues()))(e);
+          }}
+        >
+          {t('Save')}
+        </Button>
+      </DialogFooter>
     </>
   );
 };
