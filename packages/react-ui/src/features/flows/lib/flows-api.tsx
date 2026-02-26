@@ -44,6 +44,7 @@ export const flowsApi = {
                 'Flow is being used by another user, please try again later.',
               ),
               duration: Infinity,
+              closeButton: true,
               action: {
                 label: t('Refresh'),
                 onClick: () => window.location.reload(),
