@@ -14,12 +14,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { formatUtils } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 
-import { FirstIcon } from './icons/1st-icon';
-import { SecondIcon } from './icons/2nd-icon';
-import { ThirdIcon } from './icons/3rd-icon';
-import { getRankIcon, getRankText } from './projects-leaderboard';
+import { RankCell } from './projects-leaderboard';
 
 export type UserStats = {
   id: string;
@@ -36,7 +33,13 @@ type UsersLeaderboardProps = {
   isLoading?: boolean;
 };
 
-const BadgesCell = ({ badges }: { badges?: UserWithBadges['badges'] }) => {
+const BadgesCell = ({
+  badges,
+  isTopRank,
+}: {
+  badges?: UserWithBadges['badges'];
+  isTopRank: boolean;
+}) => {
   if (!badges || badges.length === 0)
     return <span className="text-muted-foreground">-</span>;
 
@@ -51,7 +54,10 @@ const BadgesCell = ({ badges }: { badges?: UserWithBadges['badges'] }) => {
               <img
                 src={badgeInfo.imageUrl}
                 alt={badgeInfo.title}
-                className="h-8 w-8 object-cover rounded-md"
+                className={cn(
+                  'h-8 w-8 object-cover rounded-md transition-opacity',
+                  !isTopRank && 'opacity-30 group-hover/leaderrow:opacity-100',
+                )}
               />
             </TooltipTrigger>
             <TooltipContent className="text-left">
@@ -74,16 +80,10 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
     cell: ({ row, table }) => {
       const sortedRows = table.getSortedRowModel().rows;
       const index = sortedRows.findIndex((r) => r.id === row.id);
-      const rankIcon = getRankIcon(index);
-      return (
-        <div className="flex items-center gap-2 shrink-0">
-          {rankIcon && <div>{rankIcon}</div>}
-          <span className="text-sm text-foreground">{getRankText(index)}</span>
-        </div>
-      );
+      return <RankCell sortIndex={index} />;
     },
     enableSorting: false,
-    size: 60,
+    size: 45,
   },
   {
     accessorKey: 'userName',
@@ -129,7 +129,11 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Badges')} />
     ),
-    cell: ({ row }) => <BadgesCell badges={row.original.badges} />,
+    cell: ({ row, table }) => {
+      const sortedRows = table.getSortedRowModel().rows;
+      const index = sortedRows.findIndex((r) => r.id === row.id);
+      return <BadgesCell badges={row.original.badges} isTopRank={index < 3} />;
+    },
     enableSorting: false,
   },
 ];
@@ -138,8 +142,8 @@ const getRowClassName = (
   _row: RowDataWithActions<UserStats>,
   index: number,
 ) => {
-  if (index < 3) return 'bg-primary/5 hover:bg-primary/5';
-  return '';
+  if (index < 3) return 'group/leaderrow bg-primary/5 hover:bg-primary/10';
+  return 'group/leaderrow hover:bg-accent';
 };
 
 export function UsersLeaderboard({ data, isLoading }: UsersLeaderboardProps) {

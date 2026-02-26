@@ -38,6 +38,16 @@ export const getRankText = (index: number) => {
   return [0, 1, 2].includes(index) ? null : `#${index + 1}`;
 };
 
+export function RankCell({ sortIndex }: { sortIndex: number }) {
+  const icon = getRankIcon(sortIndex);
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      {icon && <div>{icon}</div>}
+      <span className="text-sm text-foreground">{getRankText(sortIndex)}</span>
+    </div>
+  );
+}
+
 const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   {
     accessorKey: 'rank',
@@ -47,16 +57,10 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
     cell: ({ row, table }) => {
       const sortedRows = table.getSortedRowModel().rows;
       const index = sortedRows.findIndex((r) => r.id === row.id);
-      const rankIcon = getRankIcon(index);
-      return (
-        <div className="flex items-center gap-2 shrink-0">
-          {rankIcon && <div>{rankIcon}</div>}
-          <span className="text-sm text-foreground">{getRankText(index)}</span>
-        </div>
-      );
+      return <RankCell sortIndex={index} />;
     },
     enableSorting: false,
-    size: 60,
+    size: 45,
   },
   {
     accessorKey: 'projectName',
@@ -112,8 +116,8 @@ const getRowClassName = (
   _row: RowDataWithActions<ProjectStats>,
   index: number,
 ) => {
-  if (index < 3) return 'bg-primary/5';
-  return '';
+  if (index < 3) return 'bg-primary/5 hover:bg-primary/10';
+  return 'hover:bg-accent';
 };
 
 export function ProjectsLeaderboard({

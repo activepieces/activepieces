@@ -15,13 +15,13 @@ import {
   LayoutGrid,
   RefreshCcw,
   Users,
+  X,
 } from 'lucide-react';
 import { useContext, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
@@ -51,6 +51,7 @@ import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userApi } from '@/lib/user-api';
 import { downloadFile, formatUtils } from '@/lib/utils';
 
+import { TimeSavedFilterContent } from '../impact/components/time-saved-filter-content';
 import {
   convertToSeconds,
   TIME_UNITS,
@@ -59,6 +60,40 @@ import {
 
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 import { UsersLeaderboard, UserStats } from './users-leaderboard';
+
+type TimeSavedFilter = {
+  min: string;
+  max: string;
+  unitMin: TimeUnit;
+  unitMax: TimeUnit;
+};
+
+const emptyFilter: TimeSavedFilter = {
+  min: '',
+  max: '',
+  unitMin: 'Sec',
+  unitMax: 'Sec',
+};
+
+function applyTimeSavedFilter<T extends { minutesSaved: number }>(
+  data: T[],
+  filter: TimeSavedFilter,
+): T[] {
+  let result = data;
+  const minValue = filter.min ? parseFloat(filter.min) : null;
+  const maxValue = filter.max ? parseFloat(filter.max) : null;
+  if (minValue !== null) {
+    result = result.filter(
+      (p) => p.minutesSaved >= convertToSeconds(minValue, filter.unitMin),
+    );
+  }
+  if (maxValue !== null) {
+    result = result.filter(
+      (p) => p.minutesSaved <= convertToSeconds(maxValue, filter.unitMax),
+    );
+  }
+  return result;
+}
 
 export default function LeaderboardPage() {
   const [timePeriod, setTimePeriod] = useState<AnalyticsTimePeriod>(
@@ -84,8 +119,6 @@ export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState('creators');
   const [searchQuery, setSearchQuery] = useState('');
 
-  type TimeSavedFilter = { min: string; max: string; unit: TimeUnit };
-  const emptyFilter: TimeSavedFilter = { min: '', max: '', unit: 'Sec' };
   const [peopleTimeSaved, setPeopleTimeSaved] =
     useState<TimeSavedFilter>(emptyFilter);
   const [projectsTimeSaved, setProjectsTimeSaved] =
@@ -98,7 +131,8 @@ export default function LeaderboardPage() {
 
   const [draftTimeSavedMin, setDraftTimeSavedMin] = useState('');
   const [draftTimeSavedMax, setDraftTimeSavedMax] = useState('');
-  const [draftTimeUnit, setDraftTimeUnit] = useState<TimeUnit>('Sec');
+  const [draftTimeUnitMin, setDraftTimeUnitMin] = useState<TimeUnit>('Sec');
+  const [draftTimeUnitMax, setDraftTimeUnitMax] = useState<TimeUnit>('Sec');
   const [timeSavedPopoverOpen, setTimeSavedPopoverOpen] = useState(false);
 
   const { mutate: refreshAnalytics } =
@@ -131,25 +165,32 @@ export default function LeaderboardPage() {
 
   const isLoading = isAnalyticsLoading || isUsersLoading || isProjectsLoading;
 
-  const cycleDraftTimeUnit = () => {
-    const idx = TIME_UNITS.indexOf(draftTimeUnit);
-    setDraftTimeUnit(TIME_UNITS[(idx + 1) % TIME_UNITS.length]);
+  const cycleDraftTimeUnitMin = () => {
+    const idx = TIME_UNITS.indexOf(draftTimeUnitMin);
+    setDraftTimeUnitMin(TIME_UNITS[(idx + 1) % TIME_UNITS.length]);
+  };
+
+  const cycleDraftTimeUnitMax = () => {
+    const idx = TIME_UNITS.indexOf(draftTimeUnitMax);
+    setDraftTimeUnitMax(TIME_UNITS[(idx + 1) % TIME_UNITS.length]);
   };
 
   const handleTimeSavedPopoverOpen = (open: boolean) => {
     if (open) {
       setDraftTimeSavedMin(appliedFilter.min);
       setDraftTimeSavedMax(appliedFilter.max);
-      setDraftTimeUnit(appliedFilter.unit);
+      setDraftTimeUnitMin(appliedFilter.unitMin);
+      setDraftTimeUnitMax(appliedFilter.unitMax);
     }
     setTimeSavedPopoverOpen(open);
   };
 
-  const applyTimeSavedFilter = () => {
+  const handleApplyFilter = () => {
     setAppliedFilter({
       min: draftTimeSavedMin,
       max: draftTimeSavedMax,
-      unit: draftTimeUnit,
+      unitMin: draftTimeUnitMin,
+      unitMax: draftTimeUnitMax,
     });
     setTimeSavedPopoverOpen(false);
   };
@@ -161,9 +202,13 @@ export default function LeaderboardPage() {
 
   const timeSavedLabel = useMemo(() => {
     if (!appliedFilter.min && !appliedFilter.max) return null;
-    const min = appliedFilter.min || '0';
-    const max = appliedFilter.max || '∞';
-    return `${min} – ${max} ${appliedFilter.unit}`;
+    const min = appliedFilter.min
+      ? `${appliedFilter.min} ${appliedFilter.unitMin}`
+      : '0';
+    const max = appliedFilter.max
+      ? `${appliedFilter.max} ${appliedFilter.unitMax}`
+      : '∞';
+    return `${min} – ${max}`;
   }, [appliedFilter]);
 
   const peopleData = useMemo((): UserStats[] => {
@@ -207,7 +252,6 @@ export default function LeaderboardPage() {
 
   const filteredPeopleData = useMemo(() => {
     let data = peopleData;
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       data = data.filter(
@@ -216,59 +260,16 @@ export default function LeaderboardPage() {
           p.userEmail.toLowerCase().includes(q),
       );
     }
-
-    const minValue = peopleTimeSaved.min
-      ? parseFloat(peopleTimeSaved.min)
-      : null;
-    const maxValue = peopleTimeSaved.max
-      ? parseFloat(peopleTimeSaved.max)
-      : null;
-
-    if (minValue !== null) {
-      data = data.filter(
-        (p) =>
-          p.minutesSaved >= convertToSeconds(minValue, peopleTimeSaved.unit),
-      );
-    }
-    if (maxValue !== null) {
-      data = data.filter(
-        (p) =>
-          p.minutesSaved <= convertToSeconds(maxValue, peopleTimeSaved.unit),
-      );
-    }
-
-    return data;
+    return applyTimeSavedFilter(data, peopleTimeSaved);
   }, [peopleData, searchQuery, peopleTimeSaved]);
 
   const filteredProjectsData = useMemo(() => {
     let data = projectsData;
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       data = data.filter((p) => p.projectName.toLowerCase().includes(q));
     }
-
-    const minValue = projectsTimeSaved.min
-      ? parseFloat(projectsTimeSaved.min)
-      : null;
-    const maxValue = projectsTimeSaved.max
-      ? parseFloat(projectsTimeSaved.max)
-      : null;
-
-    if (minValue !== null) {
-      data = data.filter(
-        (p) =>
-          p.minutesSaved >= convertToSeconds(minValue, projectsTimeSaved.unit),
-      );
-    }
-    if (maxValue !== null) {
-      data = data.filter(
-        (p) =>
-          p.minutesSaved <= convertToSeconds(maxValue, projectsTimeSaved.unit),
-      );
-    }
-
-    return data;
+    return applyTimeSavedFilter(data, projectsTimeSaved);
   }, [projectsData, searchQuery, projectsTimeSaved]);
 
   const handleDownload = () => {
@@ -359,7 +360,12 @@ export default function LeaderboardPage() {
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => refreshAnalytics()}
+                    onClick={() =>
+                      refreshAnalytics(undefined, {
+                        onSuccess: () =>
+                          toast.success(t('Data refreshed successfully')),
+                      })
+                    }
                     disabled={isRefreshing}
                   >
                     <RefreshCcw
@@ -452,80 +458,43 @@ export default function LeaderboardPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[200px] p-4" align="start">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <Label className="text-sm text-muted-foreground">
-                        {t('Minimum')}
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          min={0}
-                          placeholder="0"
-                          value={draftTimeSavedMin}
-                          onChange={(e) => setDraftTimeSavedMin(e.target.value)}
-                          className="pr-12"
-                        />
-                        <button
-                          type="button"
-                          onClick={cycleDraftTimeUnit}
-                          className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
-                        >
-                          {draftTimeUnit}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <Label className="text-sm text-muted-foreground">
-                        {t('Maximum')}
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          min={0}
-                          placeholder="∞"
-                          value={draftTimeSavedMax}
-                          onChange={(e) => setDraftTimeSavedMax(e.target.value)}
-                          className="pr-12"
-                        />
-                        <button
-                          type="button"
-                          onClick={cycleDraftTimeUnit}
-                          className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
-                        >
-                          {draftTimeUnit}
-                        </button>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={applyTimeSavedFilter}
-                      className="w-full mt-1"
-                    >
-                      {t('Apply')}
-                    </Button>
-                  </div>
+                  <TimeSavedFilterContent
+                    draftMin={draftTimeSavedMin}
+                    onMinChange={setDraftTimeSavedMin}
+                    unitMin={draftTimeUnitMin}
+                    onCycleUnitMin={cycleDraftTimeUnitMin}
+                    draftMax={draftTimeSavedMax}
+                    onMaxChange={setDraftTimeSavedMax}
+                    unitMax={draftTimeUnitMax}
+                    onCycleUnitMax={cycleDraftTimeUnitMax}
+                    onApply={handleApplyFilter}
+                  />
                 </PopoverContent>
               </Popover>
               {timeSavedLabel && (
-                <Button
-                  variant="link"
+                <button
                   onClick={clearTimeSavedFilter}
-                  size="sm"
-                  className="text-muted-foreground px-1"
+                  className="flex items-center gap-1 text-sm text-primary hover:underline"
                 >
+                  <X className="h-3.5 w-3.5" />
                   {t('Clear')}
-                </Button>
+                </button>
               )}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownload}
-              disabled={isDownloadDisabled}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {t('Download')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownload}
+                  disabled={isDownloadDisabled}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {t('Download')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('Download leaderboard data')}</TooltipContent>
+            </Tooltip>
           </div>
 
           <TabsContent value="creators">

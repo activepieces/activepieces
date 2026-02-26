@@ -28,7 +28,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
@@ -43,6 +42,7 @@ import {
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
 
+import { TimeSavedFilterContent } from '../components/time-saved-filter-content';
 import { exportFlowDetailsCsv } from '../lib/impact-utils';
 import { useDetailsFilters } from '../lib/use-details-filters';
 import {
@@ -262,7 +262,7 @@ export function FlowsDetails({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('Search flows')}
@@ -375,65 +375,18 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-4" align="start">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm text-muted-foreground">
-              {t('Minimum')}
-            </Label>
-            <div className="relative">
-              <Input
-                type="number"
-                min={0}
-                placeholder="0"
-                value={filters.draftTimeSavedMin}
-                onChange={(e) => filters.setDraftTimeSavedMin(e.target.value)}
-                className="pr-12"
-              />
-              <button
-                type="button"
-                onClick={filters.cycleDraftTimeUnitMin}
-                className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
-              >
-                {filters.draftTimeUnitMin}
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm text-muted-foreground">
-              {t('Maximum')}
-            </Label>
-            <div className="relative">
-              <Input
-                type="number"
-                min={0}
-                placeholder="∞"
-                value={filters.draftTimeSavedMax}
-                onChange={(e) => filters.setDraftTimeSavedMax(e.target.value)}
-                className="pr-12"
-              />
-              <button
-                type="button"
-                onClick={filters.cycleDraftTimeUnitMax}
-                className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
-              >
-                {filters.draftTimeUnitMax}
-              </button>
-            </div>
-          </div>
-          <Button
-            onClick={filters.applyTimeSavedFilter}
-            className="w-full mt-1"
-          >
-            {t('Apply')}
-          </Button>
-          <button
-            type="button"
-            onClick={filters.clearTimeSavedFilter}
-            className="w-full text-center text-sm text-primary hover:underline"
-          >
-            {t('Clear filter')}
-          </button>
-        </div>
+        <TimeSavedFilterContent
+          draftMin={filters.draftTimeSavedMin}
+          onMinChange={filters.setDraftTimeSavedMin}
+          unitMin={filters.draftTimeUnitMin}
+          onCycleUnitMin={filters.cycleDraftTimeUnitMin}
+          draftMax={filters.draftTimeSavedMax}
+          onMaxChange={filters.setDraftTimeSavedMax}
+          unitMax={filters.draftTimeUnitMax}
+          onCycleUnitMax={filters.cycleDraftTimeUnitMax}
+          onApply={filters.applyTimeSavedFilter}
+          onClear={filters.clearTimeSavedFilter}
+        />
       </PopoverContent>
     </Popover>
   );

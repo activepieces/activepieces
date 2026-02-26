@@ -150,7 +150,7 @@ export const ProjectRoleDialog = ({
       setIsOpen(false);
       onSave();
     },
-    onError: (error) => {
+    onError: () => {
       toast.error(t('Role name already exists'), {
         duration: 3000,
       });
