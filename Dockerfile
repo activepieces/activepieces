@@ -101,7 +101,7 @@ COPY docker-entrypoint.sh .
 
 # Create all necessary directories in one layer
 RUN mkdir -p \
-    /usr/src/app/dist/packages/server/engine && \
+    /usr/src/app/dist/packages/engine && \
     chmod +x docker-entrypoint.sh
 
 # Copy root config files needed for dependency resolution
@@ -115,7 +115,7 @@ COPY --from=build /usr/src/app/LICENSE .
 COPY --from=build /usr/src/app/packages ./packages
 
 # Copy built engine
-COPY --from=build /usr/src/app/dist/packages/server/engine/ ./dist/packages/server/engine/
+COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
 # Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
