@@ -19,12 +19,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-data \
         procps \
         locales \
-        locales-all \
         unzip \
         curl \
         ca-certificates \
         libcap-dev && \
-    yarn config set python /usr/bin/python3
+    yarn config set python /usr/bin/python3 && \
+    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8
 
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
@@ -71,6 +72,15 @@ COPY . .
 # Build frontend, engine, and server API
 RUN npx turbo run build --filter=react-ui --filter=@activepieces/engine --filter=server-api
 
+# Remove piece directories not needed at runtime (keeps only the 4 pieces server-api imports)
+RUN rm -rf packages/pieces/core packages/pieces/custom && \
+    find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
+      ! -name slack \
+      ! -name square \
+      ! -name facebook-leads \
+      ! -name intercom \
+      -exec rm -rf {} +
+
 ### STAGE 2: Run ###
 FROM base AS run
 
@@ -105,9 +115,9 @@ COPY --from=build /usr/src/app/packages ./packages
 # Copy built engine
 COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
-# Install production dependencies
+# Install production dependencies (remove lockfile first since pieces were trimmed from workspace)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --production --frozen-lockfile
+    rm -f bun.lock && bun install --production
 
 # Copy frontend files to Nginx document root
 COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
