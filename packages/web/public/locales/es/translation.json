@@ -1391,6 +1391,7 @@
   "Activation failed, invalid license key": "Falló la activación, clave de licencia no válida",
   "Today": "Hoy",
   "Yesterday": "Ayer",
+  "Configure credentials for {managerName} secret manager.": "Configurar credenciales para el administrador secreto de {managerName}.",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_one": "",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
   "{count} flows created successfully in a new folder_one": "",
