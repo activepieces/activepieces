@@ -2,8 +2,8 @@ import {
   ApplicationEvent,
   ApplicationEventName,
   summarizeApplicationEvent,
+  isNil,
 } from '@activepieces/shared';
-import { isNil } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {

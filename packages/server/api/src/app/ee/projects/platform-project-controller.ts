@@ -15,7 +15,7 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     TeamProjectsLimit,
     UpdateProjectPlatformRequest,
-    } from '@activepieces/shared'
+} from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'

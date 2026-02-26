@@ -1,5 +1,5 @@
-import { GitBranchType } from '@activepieces/shared';
 import {
+  GitBranchType,
   FlowVersionState,
   Permission,
   PopulatedFlow,

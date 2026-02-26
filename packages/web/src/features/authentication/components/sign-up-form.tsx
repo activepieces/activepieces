@@ -1,5 +1,5 @@
-import { OtpType } from '@activepieces/shared';
 import {
+  OtpType,
   ApEdition,
   ApFlagId,
   AuthenticationResponse,

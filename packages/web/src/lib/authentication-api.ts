@@ -3,8 +3,6 @@ import {
   GetCurrentProjectMemberRoleQuery,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
-} from '@activepieces/shared';
-import {
   AuthenticationResponse,
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
