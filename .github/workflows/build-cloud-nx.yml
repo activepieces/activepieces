@@ -46,7 +46,7 @@ jobs:
         id: check-framework-common
         run: |
           CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
-          if echo "$CHANGED_FILES" | grep -q "community/framework\|community/common"; then
+          if echo "$CHANGED_FILES" | grep -q "pieces/framework\|pieces/common"; then
             echo "framework_or_common_changed=true" >> $GITHUB_OUTPUT
           else
             echo "framework_or_common_changed=false" >> $GITHUB_OUTPUT
@@ -55,7 +55,7 @@ jobs:
       - name: Extract pieces package names from changed files
         id: extract-pieces
         run: |
-          PIECES=$(echo "${{ steps.changed-files.outputs.files }}" | grep -o "packages/pieces/community/[^/]*" | awk -F'/' '{print $4}' | sort -u | tr '\n' ',' | sed 's/,$//')
+          PIECES=$(echo "${{ steps.changed-files.outputs.files }}" | grep -oE "packages/pieces/(community|core)/[^/]+" | awk -F'/' '{print $NF}' | sort -u | tr '\n' ',' | sed 's/,$//')
           if [ -n "$PIECES" ]; then
             FILTERS=$(echo "$PIECES" | tr ',' '\n' | sed 's/.*/{&}/' | tr '\n' ',' | sed 's/,$//')
             echo "pieces_filters=$FILTERS" >> $GITHUB_OUTPUT
@@ -72,7 +72,7 @@ jobs:
         run: npx turbo run lint --filter='@activepieces/piece-*'
 
       - name: Build core projects
-        run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine
+        run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine --filter=@activepieces/piece-http --filter=@activepieces/piece-data-mapper --filter=@activepieces/piece-approval --filter=@activepieces/piece-webhook
 
       - name: Build changed pieces projects
         if: steps.extract-pieces.outputs.pieces_filters != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
@@ -81,7 +81,7 @@ jobs:
           FILTER_ARGS=""
           for piece in "${PIECES[@]}"; do
             piece_name=$(echo "$piece" | tr -d '{}')
-            if [ -f "packages/pieces/community/${piece_name}/package.json" ]; then
+            if [ -f "packages/pieces/community/${piece_name}/package.json" ] || [ -f "packages/pieces/core/${piece_name}/package.json" ]; then
               FILTER_ARGS="$FILTER_ARGS --filter=@activepieces/piece-${piece_name}"
             fi
           done
