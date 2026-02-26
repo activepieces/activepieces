@@ -1,9 +1,9 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.38.0",
+  "version": "0.38.4",
   "type": "commonjs",
   "main": "./dist/src/index.js",
-  "types": "./src/index.ts",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@sinclair/typebox": "0.34.11",
     "deepmerge-ts": "7.1.0",

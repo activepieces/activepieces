@@ -19,10 +19,10 @@
         "../../packages/ee/shared/src"  
       ],
       "@activepieces/pieces-framework": [
-        "../../packages/pieces/community/framework/src" 
+        "../../packages/pieces/framework/src"
       ],
       "@activepieces/pieces-common": [
-        "../../packages/pieces/community/common/src" 
+        "../../packages/pieces/common/src"
       ],
       "ee-embed-sdk": [
         "../../packages/ee/ui/embed-sdk/src"
