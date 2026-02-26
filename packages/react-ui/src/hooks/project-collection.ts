@@ -144,7 +144,7 @@ export const projectCollectionUtils = {
             ),
           )
           .orderBy(({ project }) => project.type, 'asc')
-          .orderBy(({ project }) => project.created, 'asc')
+          .orderBy(({ project }) => project.displayName, 'asc')
           .select(({ project }) => ({ ...project })),
       [currentUserId],
     );
@@ -180,7 +180,7 @@ export const projectCollectionUtils = {
 
         return query
           .orderBy(({ project }) => project.type, 'asc')
-          .orderBy(({ project }) => project.created, 'asc')
+          .orderBy(({ project }) => project.displayName, 'asc')
           .select(({ project }) => ({ ...project }));
       },
       [filters?.displayName, filters?.type?.join(',')],
