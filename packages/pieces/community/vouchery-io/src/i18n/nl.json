@@ -34,6 +34,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the campaign": "Selecteer de campagne",
   "The code for the voucher": "De code voor de waardebon",
   "The date and time when the voucher expires": "De datum en tijd wanneer de waardebon afloopt",
