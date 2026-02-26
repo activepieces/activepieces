@@ -10,6 +10,11 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { baseApiUrl } from './lib/common';
 import { campaignControl } from "./lib/actions/campaign-control";
 import { deleteLead } from "./lib/actions/delete-lead";
+import { getCurrentUser } from "./lib/actions/get-current-user";
+import { generateAiReply } from "./lib/actions/generate-ai-reply";
+import { createConversation } from "./lib/actions/create-conversation";
+import { getConversation } from "./lib/actions/get-conversation";
+import { sendMessage } from "./lib/actions/send-message";
 
 
 export const famulorAuth =  PieceAuth.SecretText({
@@ -55,7 +60,18 @@ export const famulor = createPiece({
   description: "AI-powered calling and SMS platform. Automate outbound campaigns, manage leads, and get real-time call analytics.",
   authors: ['bekservice', 'onyedikachi-david'],
   categories: [PieceCategory.SALES_AND_CRM],
-  actions: [addLead,sendSms,campaignControl,makePhoneCall,deleteLead],
+  actions: [
+    addLead,
+    sendSms,
+    campaignControl,
+    makePhoneCall,
+    deleteLead,
+    getCurrentUser,
+    generateAiReply,
+    createConversation,
+    getConversation,
+    sendMessage,
+  ],
   triggers: [phoneCallEnded,getAssistants,inboundCall],
 });
     
