@@ -3,7 +3,6 @@ import {
     ActivepiecesError,
     assertNotNullOrUndefined,
     CreatePlatformProjectRequest,
-
     ErrorCode,
     ListProjectRequestForPlatformQueryParams,
     Permission,

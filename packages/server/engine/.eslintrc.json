@@ -1,6 +1,6 @@
 {
   "extends": [
-    "../server/api/.eslintrc.json"
+    "../api/.eslintrc.json"
   ],
   "overrides": [
     {

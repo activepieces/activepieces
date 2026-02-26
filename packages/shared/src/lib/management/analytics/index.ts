@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { FlowStatus } from '../../automation/flows/flow'
+import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { UserWithMetaInformation } from '../../core/user'
 
 export enum AnalyticsTimePeriod {

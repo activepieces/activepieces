@@ -1,8 +1,8 @@
+import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../core/common/base-model'
 import { Metadata } from '../../core/common/metadata'
 import { SAFE_STRING_PATTERN } from '../../core/common/security'
 import { PiecesFilterType, ProjectIcon, ProjectType } from './project'
-import { Static, Type } from '@sinclair/typebox'
 
 export const UpdateProjectPlatformRequest = Type.Object({
     releasesEnabled: Type.Optional(Type.Boolean()),

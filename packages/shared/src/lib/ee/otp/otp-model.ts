@@ -1,6 +1,6 @@
+import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
-import { Static, Type } from '@sinclair/typebox'
 import { OtpType } from './otp-type'
 
 export type OtpId = ApId

@@ -1,13 +1,11 @@
-
+import { AppConnectionWithoutSensitiveData, CreatePlatformProjectRequest } from '@activepieces/shared';
+import { ProjectWithLimits } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { DefaultTag } from '@/components/custom/global-connection-utils';
-import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,8 +22,10 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useQueryClient } from '@tanstack/react-query';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { AppConnectionWithoutSensitiveData, CreatePlatformProjectRequest, ProjectWithLimits } from '@activepieces/shared';
+import { DefaultTag } from '@/components/custom/global-connection-utils';
+import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;

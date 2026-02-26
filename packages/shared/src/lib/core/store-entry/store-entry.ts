@@ -1,6 +1,6 @@
+import type { ProjectId } from '../../management/project/project'
 import type { BaseModel } from '../common/base-model'
 import type { ApId } from '../common/id-generator'
-import type { ProjectId } from '../../management/project/project'
 
 export type StoreEntryId = ApId
 

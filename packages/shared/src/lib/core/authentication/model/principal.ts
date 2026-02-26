@@ -1,6 +1,6 @@
-import type { ApId } from '../../common/id-generator'
 import type { PlatformId } from '../../../management/platform'
 import type { ProjectId } from '../../../management/project'
+import type { ApId } from '../../common/id-generator'
 import { PrincipalType } from './principal-type'
 
 export type WorkerPrincipal = {

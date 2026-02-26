@@ -1,5 +1,5 @@
-import { BaseModelSchema, DiscriminatedUnion } from '../../core/common/base-model'
 import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema, DiscriminatedUnion } from '../../core/common/base-model'
 import { AWSGetSecretRequestSchema, AWSProviderConfigSchema, CyberarkConjurGetSecretRequestSchema, CyberarkConjurProviderConfigSchema, HashicorpGetSecretRequestSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
 
 export * from './dto'
