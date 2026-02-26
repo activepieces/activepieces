@@ -64,6 +64,10 @@ type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
     firstName: string
 }>
 
+type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
+    loginLink: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | ProjectMemberAddedEmailTemplateData
@@ -72,6 +76,7 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
   | TriggerFailureThresholdTemplateData
   | BadgeAwardedTemplateData
+  | ScimUserWelcomeTemplateData
 
 type SendArgs = {
     emails: string[]
