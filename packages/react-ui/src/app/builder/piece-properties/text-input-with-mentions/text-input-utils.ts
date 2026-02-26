@@ -27,11 +27,22 @@ const incrementArrayIndexes = (text: string) => {
 };
 
 const keysWithinPath = (path: string) => {
-  return path
-    .split(/\.|\[|\]/)
-    .filter((key) => key && key.trim().length > 0)
-    .map(incrementArrayIndexes)
-    .map(removeQuotes);
+  // Match either:
+  // - Quoted strings (single or double quotes): ['key'] or ["key"]
+  // - Unquoted segments between dots or brackets
+  const regex = /\[?['"]([^'"]+)['"]\]?|([^\.\[\]]+)/g;
+  const keys: string[] = [];
+  let match;
+
+  while ((match = regex.exec(path)) !== null) {
+    // match[1] is quoted content, match[2] is unquoted content
+    const key = (match[1] || match[2]).trim();
+    if (key.length > 0) {
+      keys.push(key);
+    }
+  }
+
+  return keys.map(incrementArrayIndexes);
 };
 
 type ApMentionNodeAttrs = {
