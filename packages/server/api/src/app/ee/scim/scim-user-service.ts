@@ -1,5 +1,6 @@
 import {
     CreateScimUserRequest,
+    parseScimFilter,
     ReplaceScimUserRequest,
     SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA,
     SCIM_LIST_RESPONSE_SCHEMA,
@@ -8,12 +9,9 @@ import {
     ScimListResponse,
     ScimPatchRequest,
     ScimUserResource,
-    parseScimFilter,
 } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
-    assertNotNullOrUndefined,
-    DefaultProjectRole,
     InvitationStatus,
     InvitationType,
     isNil,
@@ -25,11 +23,8 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
-import { projectMemberService } from '../projects/project-members/project-member.service'
 
 export const scimUserService = (log: FastifyBaseLogger) => ({
     async create(params: {
@@ -68,7 +63,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                 trackEvents: false,
                 newsLetter: false,
                 provider: UserIdentityProvider.SAML,
-                verified: true,
+                verified: false,
             })
         }
 
@@ -83,24 +78,16 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        const user = await userService.create({
-            identityId: identity.id,
+        const user = await userService.getOrCreateWithProject({
+            identity,
             platformId,
-            externalId,
+        })
+
+        await userService.update({
+            id: user.id,
+            platformId,
+            status: active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
             platformRole,
-            isActive: active,
-        })
-
-        const defaultProject = await projectService.getOneByOwnerAndPlatform({ ownerId: 
-            (await platformService.getOneOrThrow(platformId)).ownerId,
-        platformId,
-        })
-        assertNotNullOrUndefined(defaultProject, 'Default project not found')
-
-        await projectMemberService(log).upsert({
-            userId: user.id,
-            projectId: defaultProject.id,
-            projectRoleName: DefaultProjectRole.VIEWER,
         })
 
         await userInvitationsService(log).create({
@@ -110,7 +97,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             projectId: null,
             projectRoleId: null,
             type: InvitationType.PLATFORM,
-            invitationExpirySeconds: 7 * 24 * 60 * 60,
+            invitationExpirySeconds: 30 * 24 * 60 * 60,
             status: InvitationStatus.PENDING,
         })
 

@@ -182,7 +182,7 @@ export class ScimError extends Error {
 
 export const parseScimFilter = (filter: string | undefined, field: string) => {
     if (isNil(filter)) {
-      return undefined
+        return undefined
     }
     const regex = new RegExp(`${field}\\s+eq\\s+"([^"]+)"`, 'i')
     const match = filter.match(regex)
@@ -190,4 +190,4 @@ export const parseScimFilter = (filter: string | undefined, field: string) => {
         return match[1].toLowerCase().trim()
     }
     return undefined
-  }
+}

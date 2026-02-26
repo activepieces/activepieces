@@ -1,5 +1,6 @@
 import {
     CreateScimGroupRequest,
+    parseScimFilter,
     ReplaceScimGroupRequest,
     SCIM_GROUP_SCHEMA,
     SCIM_LIST_RESPONSE_SCHEMA,
@@ -8,7 +9,6 @@ import {
     ScimGroupResource,
     ScimListResponse,
     ScimPatchRequest,
-    parseScimFilter,
 } from '@activepieces/ee-shared'
 import {
     DefaultProjectRole,

@@ -15,7 +15,7 @@ export const scimDiscoveryController: FastifyPluginAsyncTypebox = async (app) =>
     app.get('/ServiceProviderConfig', ServiceProviderConfigRequest, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send({
             schemas: [SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA],
-            documentationUri: 'https://www.activepieces.com/docs',
+            documentationUri: 'https://www.activepieces.com/docs/admin-guide/guides/scim/overview',
             patch: {
                 supported: true,
             },
