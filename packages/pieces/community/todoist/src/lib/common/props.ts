@@ -26,7 +26,6 @@ export const todoistProjectIdDropdown = (description: string) =>
 
 			const token = (auth as OAuth2PropertyValue).access_token;
 			const projects = await todoistRestClient.projects.list({ token });
-
 			if (projects.length === 0) {
 				return buildEmptyList({
 					placeholder: 'No projects found! Please create a project.',
