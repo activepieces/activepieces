@@ -1,9 +1,8 @@
+import { securityAccess } from '@activepieces/server-common'
 import {
     AddDomainRequest,
-    ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
+    assertNotNullOrUndefined,
+    ListCustomDomainsRequest, PrincipalType } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,

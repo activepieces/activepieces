@@ -3,7 +3,7 @@ import {
     distributedStoreFactory,
     redisConnectionFactory,
     RedisType,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import { workerMachine } from './machine'
 
 export const workerRedisConnections = redisConnectionFactory(() => {

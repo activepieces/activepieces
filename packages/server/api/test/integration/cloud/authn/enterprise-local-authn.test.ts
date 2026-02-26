@@ -1,5 +1,4 @@
-import { OtpState, OtpType } from '@activepieces/ee-shared'
-import { UserStatus } from '@activepieces/shared'
+import { OtpState, OtpType, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

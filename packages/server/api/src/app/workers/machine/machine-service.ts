@@ -1,4 +1,4 @@
-import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ExecutionMode,
     isNil,

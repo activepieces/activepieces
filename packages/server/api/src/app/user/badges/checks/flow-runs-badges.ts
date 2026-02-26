@@ -1,5 +1,4 @@
-import { ApplicationEvent, ApplicationEventName, FlowRunEvent } from '@activepieces/ee-shared'
-import { BADGES, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
+import { ApplicationEvent, ApplicationEventName, BADGES, FlowRunEvent, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
 export const flowRunsBadgesCheck: BadgeCheck = {

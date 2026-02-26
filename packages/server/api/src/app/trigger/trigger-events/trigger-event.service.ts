@@ -18,7 +18,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperTriggerResult, OperationResponse } from 'server-worker'
+import { EngineHelperTriggerResult, OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'

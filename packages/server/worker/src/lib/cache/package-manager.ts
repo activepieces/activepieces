@@ -4,7 +4,7 @@ import {
     execPromise,
     fileSystemUtils,
     spawnWithKill,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import { tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'

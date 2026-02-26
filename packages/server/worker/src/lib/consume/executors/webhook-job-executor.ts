@@ -1,4 +1,4 @@
-import { pinoLogging } from '@activepieces/server-shared'
+import { pinoLogging } from '@activepieces/server-common'
 import {
     ConsumeJobResponse,
     ConsumeJobResponseStatus,

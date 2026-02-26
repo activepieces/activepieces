@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-common'
 import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'

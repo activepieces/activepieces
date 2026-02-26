@@ -1,5 +1,5 @@
 
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import {
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
