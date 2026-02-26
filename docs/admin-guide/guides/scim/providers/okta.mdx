@@ -18,7 +18,7 @@ Before you start, make sure you have:
 
 <Steps>
   <Step title="Open your Okta app">
-    In Okta Admin Console, open your Activepieces application ( created in [SSO step](/admin-guide/guides/sso#saml-with-okta)).
+    In Okta Admin Console, open your Activepieces application (created in [SSO step](/admin-guide/guides/sso#saml-with-okta)).
 
   </Step>
   <Step title="Enable provisioning">
@@ -57,10 +57,10 @@ In **Provisioning -> To App -> Attribute Mappings**, map these fields:
 
 ## Platform role mapping
 
-By default, provisioned users will have `Member` role in the platform . In order to specify roles for users in Okta, follow these steps
+By default, provisioned users will have `Member` role in the platform. In order to specify roles for users in Okta, follow these steps:
 <Steps>
   <Step>
-    in Okta admin console Navigate to **Directory -> Profile Editor -> Your-Application User** 
+    In Okta admin console, navigate to **Directory -> Profile Editor -> Your-Application User**.
   </Step>
   <Step>
     Click **Add Attribute** and fill form with:
@@ -88,7 +88,7 @@ By default, provisioned users will have `Member` role in the platform . In order
   <Step>
 
     <Warning>
-      This step assumes that you already have a field in the Okta user profile that you can map to platformRole in your activepieces user profile, if you don't have one you can create a new field in **Directory -> Profile Editor -> User (default)**
+      This step assumes that you already have a field in the Okta user profile that you can map to platformRole in your Activepieces user profile. If you don't have one, you can create a new field in **Directory -> Profile Editor -> User (default)**.
     </Warning>
 
      - Back to your Activepieces application page in **Provisioning -> To App -> Attribute Mappings**
@@ -97,7 +97,7 @@ By default, provisioned users will have `Member` role in the platform . In order
      
      - Edit `platformRole` field
      
-     - Here you need to map the attribute value from your Okta user profile. if you already have a role field in the Okta user profile that matches exactly with platformRole value ( `ADMIN`, `MEMBER`, `OPERATOR` ) than you can select it directly with `Map from Okta Profile` option, otherwise you can you an [Expression](https://developer.okta.com/docs/reference/okta-expression-language/) to return one of the 3 roles based on other fields in the Okta user profile.
+     - Here you need to map the attribute value from your Okta user profile. If you already have a role field in the Okta user profile that matches exactly with a platformRole value (`ADMIN`, `MEMBER`, `OPERATOR`) then you can select it directly with `Map from Okta Profile` option, otherwise you can use an [Expression](https://developer.okta.com/docs/reference/okta-expression-language/) to return one of the 3 roles based on other fields in the Okta user profile.
 
      Here is an example of an expression:
 
@@ -116,18 +116,18 @@ By default, provisioned users will have `Member` role in the platform . In order
 
 ### Provision
 
-In Activepieces application page go to **Provisioning -> To App** and enable what actions you want to be applied to activepieces when change in Okta
+In the Activepieces application page, go to **Provisioning -> To App** and enable the actions you want to be applied to Activepieces when changes occur in Okta.
 
 ![Okta role expression example](/resources/screenshots/scim/okta/provision-actions.png)
 
 Now in the **Assignments** tab you can:
-- Choose to provision indivisule user or groups, note that groups in Okta will be projects in activepieces
+- Choose to provision individual users or groups. Note that groups in Okta will be projects in Activepieces.
 
-- In case you don't have groups and you want to provision your okta users at once you can assign the `Everyone` group 
+- In case you don't have groups and you want to provision your Okta users at once, you can assign the `Everyone` group.
 
-- When editing/creating users in an assigned group (including `Everyone`) they should be updated in activepieces
+- When editing/creating users in an assigned group (including `Everyone`), they should be updated in Activepieces.
 
-- To push groups to activepieces go to **Push groups** tab and click on push button, find the group and save.
+- To push groups to Activepieces, go to the **Push groups** tab and click on the push button, find the group and save.
 
 <Info>
   Default role for users in projects will be `Editor` role, right now there is no way to link the project role with Okta
@@ -138,18 +138,18 @@ Now in the **Assignments** tab you can:
 
 
 <Tip>
-  Created users in activepieces will recieve an email with an invitation link, when clicked they will be redirected to sign in with `SAML`
+  Created users in Activepieces will receive a welcome email. When clicked, they will be redirected to sign in with `SAML`.
 </Tip>
 
 
 ### Deprovision
 
-Users state switch to `INACTIVE` in Activepieces only when they are deactivated in Okta . suspension or deletion in Okta does not reflect in Activepieces because of Okta's design
+Users' state switches to `INACTIVE` in Activepieces only when they are deactivated in Okta. Suspension or deletion in Okta does not reflect in Activepieces because of Okta's design.
 
 For groups you can delete them in **Push groups** tab -> click on button in **Push Status** column -> Unlink pushed group -> Delete the group in target
 
 <Warning>
-  Deleting a group will delete the whole project in activepieces with it's flows and connections . users linked to that group won't be affected
+  Deleting a group will delete the whole project in Activepieces with its flows and connections. Users linked to that group won't be affected.
 </Warning>
 
 

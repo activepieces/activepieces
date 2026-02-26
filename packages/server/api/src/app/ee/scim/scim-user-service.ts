@@ -12,8 +12,6 @@ import {
 } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
-    InvitationStatus,
-    InvitationType,
     isNil,
     PlatformRole,
     User,
@@ -24,7 +22,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { userService } from '../../user/user-service'
-import { userInvitationsService } from '../../user-invitations/user-invitation.service'
+import { emailService } from '../helper/email/email-service'
 
 export const scimUserService = (log: FastifyBaseLogger) => ({
     async create(params: {
@@ -63,7 +61,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                 trackEvents: false,
                 newsLetter: false,
                 provider: UserIdentityProvider.SAML,
-                verified: false,
+                verified: true,
             })
         }
 
@@ -90,18 +88,12 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             platformRole,
         })
 
-        await userInvitationsService(log).create({
+        await emailService(log).sendScimUserWelcome({
             email,
             platformId,
-            platformRole,
-            projectId: null,
-            projectRoleId: null,
-            type: InvitationType.PLATFORM,
-            invitationExpirySeconds: 30 * 24 * 60 * 60,
-            status: InvitationStatus.PENDING,
         })
 
-        const finalUser = active ? user : await userService.getOrThrow({ id: user.id })
+        const finalUser = await userService.getOrThrow({ id: user.id })
         return toScimUserResource(finalUser, identity.email, identity.firstName, identity.lastName)
     },
 

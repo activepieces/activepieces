@@ -57,7 +57,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                         platformId: invitation.platformId,
                         platformRole: invitation.platformRole,
                     })
-                    await userIdentityService(log).verify(user.identityId)
                     break
                 }
                 case InvitationType.PROJECT: {
