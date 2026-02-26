@@ -93,6 +93,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     apiKeysEnabled: false,
     ssoEnabled: false,
     scimEnabled: false,
+    secretManagersEnabled: false,
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
@@ -115,6 +116,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     apiKeysEnabled: false,
     ssoEnabled: false,
     scimEnabled: false,
+    secretManagersEnabled: false,
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,

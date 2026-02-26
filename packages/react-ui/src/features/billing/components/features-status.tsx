@@ -73,6 +73,11 @@ const LICENSE_PROPS_MAP = {
     label: 'SCIM',
     description: 'Synchronize user identities with your company directory',
   },
+  secretManagersEnabled: {
+    label: 'Secret Managers',
+    description:
+      'Manage your secrets from a single and secure place to use in your connections',
+  },
 };
 
 export const FeatureStatus = ({

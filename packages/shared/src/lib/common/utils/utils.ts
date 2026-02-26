@@ -177,3 +177,10 @@ export function validateIndexBound({
 export function isManualPieceTrigger({ pieceName, triggerName }: { pieceName: string, triggerName: string }) {
     return pieceName === '@activepieces/piece-manual-trigger' && triggerName === 'manual_trigger'
 }
+
+export function isEnumValue<T extends { [key: string]: string | number }>(
+    enumObj: T,
+    value: string | number,
+): value is T[keyof T] {
+    return Object.values(enumObj).includes(value as T[keyof T])
+}

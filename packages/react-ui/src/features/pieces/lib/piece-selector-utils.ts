@@ -36,31 +36,11 @@ const defaultCode = `export const code = async (inputs) => {
   return true;
 };`;
 
-//can't remove this from search results, because it is used to add actions to the flow, check todo-dialog for more details
-const hiddenActions = [
-  {
-    pieceName: '@activepieces/piece-todos',
-    actionName: 'wait_for_approval',
-  },
-  {
-    pieceName: '@activepieces/piece-todos',
-    actionName: 'createTodoAndWait',
-  },
-];
-
 const removeHiddenActions = (
   pieceMetadata: PieceStepMetadataWithSuggestions,
 ) => {
   const actions = Object.values(pieceMetadata.suggestedActions ?? {});
-  const actionsWithoutHidden = Object.values(actions).filter(
-    (action) =>
-      !hiddenActions.some(
-        (hidden) =>
-          hidden.actionName === action.name &&
-          hidden.pieceName === pieceMetadata.pieceName,
-      ),
-  );
-  return actionsWithoutHidden;
+  return actions;
 };
 
 const isPieceActionOrTrigger = (

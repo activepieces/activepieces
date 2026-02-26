@@ -88,9 +88,18 @@
                      },
                      "admin-guide/guides/manage-oauth2",
                      "admin-guide/guides/setup-ai-providers",
-                     "admin-guide/guides/permissions",
-                     "admin-guide/guides/event-streaming",
-                     "admin-guide/guides/project-releases"
+                    {
+                      "group": "Secret Managers",
+                      "icon": "key",
+                      "pages": [
+                        "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/hashicorp",
+                        "admin-guide/guides/secret-managers/cyberark-conjur"
+                      ]
+                    },
+                    "admin-guide/guides/permissions",
+                    "admin-guide/guides/event-streaming",
+                    "admin-guide/guides/project-releases"
                   ]
                },
                {

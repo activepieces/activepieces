@@ -78,6 +78,7 @@ export const PlatformPlan = Type.Object({
     apiKeysEnabled: Type.Boolean(),
     ssoEnabled: Type.Boolean(),
     scimEnabled: Type.Boolean(),
+    secretManagersEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
     licenseExpiresAt: Type.Optional(Type.String()),
     stripeCustomerId: Type.Optional(Type.String()),

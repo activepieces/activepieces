@@ -48,6 +48,7 @@ import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
+import SecretMangersPage from '../routes/platform/security/secret-managers';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { PlatformTemplatesPage } from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
@@ -60,8 +61,6 @@ import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
 import { TemplatesPage } from '../routes/templates';
-import { TodosPage } from '../routes/todos';
-import { TodoTestingPage } from '../routes/todos/id';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
@@ -236,24 +235,6 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.todos,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Todos">
-          <TodosPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleTodo,
-    element: (
-      <PageTitle title="Todo Testing">
-        <TodoTestingPage />
-      </PageTitle>
-    ),
-  }),
-  ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.settings,
     element: (
       <ProjectDashboardLayout>
@@ -424,6 +405,16 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="API Keys">
           <ApiKeysPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/security/secret-managers',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Secret managers">
+          <SecretMangersPage />
         </PageTitle>
       </PlatformLayout>
     ),

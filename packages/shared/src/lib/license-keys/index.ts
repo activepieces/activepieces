@@ -31,6 +31,7 @@ export const LicenseKeyEntity = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     eventStreamingEnabled: Type.Boolean(),
+    secretManagersEnabled: Type.Boolean(),
 })
 
 

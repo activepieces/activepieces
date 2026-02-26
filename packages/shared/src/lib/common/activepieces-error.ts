@@ -95,6 +95,9 @@ export type ApErrorParams =
     | MachineNotConnectedParams
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
+    | SecretManagerConnectionFailedParams
+    | SecretManagerGetSecretFailedParams
+    | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
@@ -510,6 +513,21 @@ export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DO
     message: string
 }>
 
+export type SecretManagerConnectionFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_CONNECTION_FAILED, {
+    message: string
+    provider: string
+}>
+
+export type SecretManagerGetSecretFailedParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED, {
+    message: string
+    provider: string
+    request: Record<string, unknown>
+}>
+
+export type SecretManagerKeyNotSecretParams = BaseErrorParams<ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET, {
+    message: string
+}>
+
 export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS, {
     provider: string
     message: string
@@ -588,6 +606,9 @@ export enum ErrorCode {
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
     DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
     PIECE_SYNC_NOT_SUPPORTED = 'PIECE_SYNC_NOT_SUPPORTED',
+    SECRET_MANAGER_CONNECTION_FAILED = 'SECRET_MANAGER_CONNECTION_FAILED',
+    SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
+    SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
     INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
 }
 

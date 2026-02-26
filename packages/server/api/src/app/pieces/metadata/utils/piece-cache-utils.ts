@@ -6,28 +6,26 @@ import { system } from '../../../helper/system/system'
 import { PieceRegistryEntry } from '../piece-cache'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 
-export function sortByNameAndVersionDesc(a: PieceMetadataSchema, b: PieceMetadataSchema): number {
-    if (a.name !== b.name) {
-        return a.name.localeCompare(b.name)
-    }
-    const aValid = semVer.valid(a.version)
-    const bValid = semVer.valid(b.version)
+export function isNewerVersion(a: string, b: string): boolean {
+    const aValid = semVer.valid(a)
+    const bValid = semVer.valid(b)
     if (!aValid && !bValid) {
-        return b.version.localeCompare(a.version)
+        return a.localeCompare(b) > 0
     }
     if (!aValid) {
-        return 1
+        return false
     }
     if (!bValid) {
-        return -1
+        return true
     }
-    return semVer.rcompare(a.version, b.version)
+    return semVer.gt(a, b)
 }
 
 export function lastVersionOfEachPiece(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
     const seen = new Map<string, PieceMetadataSchema>()
     for (const piece of pieces) {
-        if (!seen.has(piece.name)) {
+        const existing = seen.get(piece.name)
+        if (isNil(existing) || isNewerVersion(piece.version, existing.version)) {
             seen.set(piece.name, piece)
         }
     }
