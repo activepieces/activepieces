@@ -1,6 +1,6 @@
-import { ApId } from '../../../core/common/id-generator'
-import { SignUpRequest } from '../../../core/authentication/dto/sign-up-request'
 import { Static, Type } from '@sinclair/typebox'
+import { SignUpRequest } from '../../../core/authentication/dto/sign-up-request'
+import { ApId } from '../../../core/common/id-generator'
 
 export const VerifyEmailRequestBody = Type.Object({
     identityId: ApId,

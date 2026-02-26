@@ -1,9 +1,9 @@
+import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
+import { UserWithMetaInformation } from '../../core/user/user'
 import { ProjectMetaData } from '../../management/project/project'
 import { ProjectRole } from '../../management/project-role/project-role'
-import { UserWithMetaInformation } from '../../core/user/user'
-import { Static, Type } from '@sinclair/typebox'
 
 export type ProjectMemberId = string
 

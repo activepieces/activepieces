@@ -1,6 +1,6 @@
-import { executionJournal } from '../../../src/lib/flow-run/execution/execution-journal'
-import { GenericStepOutput, StepOutput, StepOutputStatus } from '../../../src/lib/flow-run/execution/step-output'
-import { FlowActionType } from '../../../src/lib/flows/actions/action'
+import { executionJournal } from '../../../src/lib/automation/flow-run/execution/execution-journal'
+import { GenericStepOutput, StepOutput, StepOutputStatus } from '../../../src/lib/automation/flow-run/execution/step-output'
+import { FlowActionType } from '../../../src/lib/automation/flows/actions/action'
 
 describe('executionJournal.getPathToStep', () => {
     it('should return correct paths for each step in the flow', () => {

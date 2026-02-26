@@ -1,5 +1,5 @@
-import { BaseModelSchema } from '../../core/common/base-model'
 import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema } from '../../core/common/base-model'
 
 export const OAuthApp = Type.Object({
     ...BaseModelSchema,

@@ -1,5 +1,5 @@
-import { ApId } from '../../core/common/id-generator'
 import { Static, Type } from '@sinclair/typebox'
+import { ApId } from '../../core/common/id-generator'
 import { AlertChannel } from './alerts-dto'
 
 export const ListAlertsParams = Type.Object({

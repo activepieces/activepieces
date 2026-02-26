@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable, NullableEnum } from '../../core/common'
-import { ProjectRole } from '../project-role/project-role'
 import { PlatformRole } from '../../core/user/index'
+import { ProjectRole } from '../project-role/project-role'
 
 export enum InvitationType {
     PLATFORM = 'PLATFORM',

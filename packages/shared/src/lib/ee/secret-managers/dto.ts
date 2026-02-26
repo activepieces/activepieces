@@ -1,5 +1,5 @@
-import { DiscriminatedUnion } from '../../core/common/base-model'
 import { Static, Type } from '@sinclair/typebox'
+import { DiscriminatedUnion } from '../../core/common/base-model'
 
 export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',
