@@ -1,19 +1,17 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { isNil } from '../../../core/common'
-import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
-import { flowStructureUtil } from '../util/flow-structure-util'
-import { UpdateTriggerRequest } from '.'
+import { UpdateTriggerRequest } from './index'
 
 const triggerSchemaValidation = TypeCompiler.Compile(FlowTrigger)
 
-function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined): FlowTrigger {
+function createTrigger(name: string, request: UpdateTriggerRequest, existingSteps: string[]): FlowTrigger {
     const baseProperties = {
         displayName: request.displayName,
         name,
         valid: false,
-        nextAction,
+        steps: existingSteps,
     }
     let trigger: FlowTrigger
     switch (request.type) {
@@ -39,15 +37,12 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
     }
 }
 
-function _updateTrigger(flowVersion: FlowVersion, request: UpdateTriggerRequest): FlowVersion {
-    const trigger = flowStructureUtil.getStepOrThrow(request.name, flowVersion.trigger)
-    const updatedTrigger = createTrigger(request.name, request, trigger.nextAction)
-    return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.name === request.name) {
-            return updatedTrigger
-        }
-        return parentStep
-    })
+function update(flowVersion: FlowVersion, request: UpdateTriggerRequest): FlowVersion {
+    const existingSteps = flowVersion.trigger.steps ?? []
+    const updatedTrigger = createTrigger(request.name, request, existingSteps)
+    const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
+    clonedVersion.trigger = updatedTrigger
+    return clonedVersion
 }
 
-export { _updateTrigger }
+export const triggerOperations = { update }

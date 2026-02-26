@@ -37,7 +37,6 @@ export * from './lib/management/template'
 // automation
 export * from './lib/automation/flows/actions/action'
 export * from './lib/automation/flows/operations'
-export * from './lib/automation/flows/operations/paste-operations'
 export * from './lib/automation/flows/triggers/trigger'
 export * from './lib/automation/flows/triggers/trigger-events/trigger-events-dto'
 export * from './lib/automation/flows/triggers/trigger-events/trigger-event'

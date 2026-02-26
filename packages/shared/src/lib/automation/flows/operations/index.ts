@@ -1,28 +1,11 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema, SingleActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
-import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
 import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
-import { flowPieceUtil } from '../util/flow-piece-util'
-import { flowStructureUtil } from '../util/flow-structure-util'
-import { _addAction } from './add-action'
-import { _addBranch } from './add-branch'
-import { _getActionsForCopy } from './copy-action-operations'
-import { _deleteAction } from './delete-action'
-import { _deleteBranch } from './delete-branch'
-import { _duplicateBranch, _duplicateStep } from './duplicate-step'
-import { _importFlow } from './import-flow'
-import { _moveAction } from './move-action'
-import { _moveBranch } from './move-branch'
-import { notesOperations } from './notes-operations'
-import { _getOperationsForPaste } from './paste-operations'
-import { _skipAction } from './skip-action'
-import { _updateAction } from './update-action'
-import { _updateTrigger } from './update-trigger'
+import { EmptyTrigger, FlowTrigger, PieceTrigger } from '../triggers/trigger'
 
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
@@ -112,6 +95,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
     trigger: FlowTrigger,
+    steps: Type.Optional(Type.Array(SingleActionSchema)),
     schemaVersion: Nullable(Type.String()),
     notes: Nullable(Type.Array(Note)),
 })
@@ -421,113 +405,17 @@ export const FlowOperationRequest = Type.Union([
             title: 'Add Note',
         },
     ),
- 
+
 ])
 
 
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
 
-export const flowOperations = {
-    getActionsForCopy: _getActionsForCopy,
-    getOperationsForPaste: _getOperationsForPaste,
-    apply(flowVersion: FlowVersion, operation: FlowOperationRequest): FlowVersion {
-        let clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-        switch (operation.type) {
-            case FlowOperationType.MOVE_ACTION: {
-                const operations: FlowOperationRequest[] = _moveAction(clonedVersion, operation.request)
-                operations.forEach((operation) => {
-                    clonedVersion = flowOperations.apply(clonedVersion, operation)
-                })
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.CHANGE_NAME:
-                clonedVersion.displayName = operation.request.displayName
-                break
-            case FlowOperationType.DUPLICATE_BRANCH: {
-                const operations = _duplicateBranch(operation.request.stepName, operation.request.branchIndex, clonedVersion)
-                operations.forEach((operation) => {
-                    clonedVersion = flowOperations.apply(clonedVersion, operation)
-                })
-                break
-            }
-            case FlowOperationType.DUPLICATE_ACTION: {
-                const operations = _duplicateStep(operation.request.stepName, clonedVersion)
-                operations.forEach((operation) => {
-                    clonedVersion = flowOperations.apply(clonedVersion, operation)
-                })
-                break
-            }
-            case FlowOperationType.LOCK_FLOW:
-                clonedVersion.state = FlowVersionState.LOCKED
-                break
-            case FlowOperationType.ADD_ACTION: {
-                clonedVersion = _addAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.DELETE_ACTION: {
-                clonedVersion = _deleteAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.UPDATE_TRIGGER: {
-                clonedVersion = _updateTrigger(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.ADD_BRANCH: {
-                clonedVersion = _addBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.DELETE_BRANCH: {
-                clonedVersion = _deleteBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.UPDATE_ACTION: {
-                clonedVersion = _updateAction(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.IMPORT_FLOW: {
-                const operations = _importFlow(clonedVersion, operation.request)
-                operations.forEach((operation) => {
-                    clonedVersion = flowOperations.apply(clonedVersion, operation)
-                })
-                break
-            }
-            case FlowOperationType.SET_SKIP_ACTION: {
-                clonedVersion = _skipAction(clonedVersion, operation.request)
-                break
-            }
-            case FlowOperationType.MOVE_BRANCH: {
-                clonedVersion = _moveBranch(clonedVersion, operation.request)
-                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
-                break
-            }
-            case FlowOperationType.UPDATE_NOTE: {
-                clonedVersion = notesOperations.updateNote(clonedVersion, operation.request)
-                break
-            }
-            case FlowOperationType.DELETE_NOTE: {
-                clonedVersion = notesOperations.deleteNote(clonedVersion, operation.request)
-                break
-            }
-            case FlowOperationType.ADD_NOTE: {
-                clonedVersion = notesOperations.addNote(clonedVersion, operation.request)
-                break
-            }
-      
-            default:
-                break
-        }
-        clonedVersion.valid = flowStructureUtil.getAllSteps(clonedVersion.trigger).every((step) => {
-            const isSkipped = step.type != FlowTriggerType.EMPTY && step.type != FlowTriggerType.PIECE && step.skip
-            return step.valid || isSkipped
-        })
-        return clonedVersion
-    },
-}
+export { flowOperations } from './apply-operations'
+export { actionOperations, actionUtils } from './action-operations'
+export { branchOperations } from './branch-operations'
+export { triggerOperations } from './trigger-operations'
+export { noteOperations } from './note-operations'
+export { compositeOperations } from './composite-operations'
+export type { PasteLocation, InsideBranchPasteLocation, OutsideBranchPasteLocation } from './composite-operations'
