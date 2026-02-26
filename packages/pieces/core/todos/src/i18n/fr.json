@@ -6,7 +6,7 @@
   "Creates a todo for a user, requiring them to respond or take action.": "Crée une todo pour un utilisateur, lui demandant de réagir ou de prendre des mesures.",
   "Pauses the flow and wait for the approval from the user": "Met le flow en pause et attend l'approbation de l'utilisateur",
   "Creates a todo for a user and wait for their response or take action.": "Crée une todo pour un utilisateur et attend sa réponse ou prend des mesures.",
-  "Title": "Titre de la page",
+  "Title": "Titre",
   "Description": "Libellé",
   "Assignee": "Assignee",
   "Status Options": "Options de statut",
