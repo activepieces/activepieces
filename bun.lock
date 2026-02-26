@@ -342,7 +342,7 @@
     },
     "packages/cli": {
       "name": "@activepieces/cli",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "bin": {
         "pieces-cli": "../../dist/cli/src/index.js",
       },
@@ -1880,7 +1880,7 @@
     },
     "packages/pieces/community/datadog": {
       "name": "@activepieces/piece-datadog",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6165,7 +6165,7 @@
     },
     "packages/pieces/community/todoist": {
       "name": "@activepieces/piece-todoist",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7246,7 +7246,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.25.5",
+      "version": "0.25.6",
       "dependencies": {
         "@activepieces/shared": "workspace:*",
         "@sinclair/typebox": "0.34.11",
