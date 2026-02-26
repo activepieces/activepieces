@@ -27,7 +27,8 @@ export function sortByNameAndVersionDesc(a: PieceMetadataSchema, b: PieceMetadat
 export function lastVersionOfEachPiece(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
     const seen = new Map<string, PieceMetadataSchema>()
     for (const piece of pieces) {
-        if (!seen.has(piece.name)) {
+        const existing = seen.get(piece.name)
+        if (isNil(existing) || semVer.gt(piece.version, existing.version)) {
             seen.set(piece.name, piece)
         }
     }
