@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { projectService } from './project-service'
 

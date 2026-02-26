@@ -1,6 +1,6 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -334,6 +334,8 @@ import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres
 import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
 import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
 import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
+import { AddSecretManagersEntity1770717998442 } from './migration/postgres/1770717998442-AddSecretManagersEntity'
+import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167183104-AddSecretManagersFlag'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -684,6 +686,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTablesIntoTemplateEntity1768306510367,
         AddTemplateIdToFlowEntity1768829135202,
         RemoveOperatorRole1769613456917,
+        AddSecretManagersEntity1770717998442,
+        AddSecretManagersFlag1771167183104,
     ]
     return migrations
 }

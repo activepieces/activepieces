@@ -1,8 +1,5 @@
-import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ApId,
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
+import { ActivepiecesError, ApId, ApplicationEventName,
     CountFlowsRequest,
     CreateFlowRequest,
     ErrorCode,
@@ -12,6 +9,8 @@ import {
     flowStructureUtil,
     FlowTrigger,
     GetFlowQueryParamsRequest,
+    GetFlowTemplateRequestQuery,
+    GitPushOperationType,
     isNil,
     ListFlowsRequest,
     Permission,

@@ -1,5 +1,5 @@
 import path from 'path'
-import { AppSystemProp, environmentVariables } from '@activepieces/server-shared'
+import { AppSystemProp, environmentVariables } from '@activepieces/server-common'
 import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'

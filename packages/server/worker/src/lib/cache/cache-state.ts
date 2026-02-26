@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'

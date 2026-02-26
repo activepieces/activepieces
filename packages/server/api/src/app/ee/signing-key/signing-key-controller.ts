@@ -1,8 +1,7 @@
-import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
+import { securityAccess } from '@activepieces/server-common'
+import { ActivepiecesError, AddSigningKeyRequestBody,
     ApId,
+    ApplicationEventName,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
