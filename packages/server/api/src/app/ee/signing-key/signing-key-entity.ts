@@ -1,5 +1,4 @@
-import { KeyAlgorithm, SigningKey } from '@activepieces/shared'
-import { Platform } from '@activepieces/shared'
+import { KeyAlgorithm, Platform, SigningKey } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 

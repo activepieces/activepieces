@@ -1,15 +1,13 @@
 import {
     ApiKeyResponseWithValue,
-    UpdateProjectPlatformRequest,
-} from '@activepieces/shared'
-import {
     FlowStatus,
+
     Platform,
     PlatformRole,
     PrincipalType,
     Project,
-    User,
-} from '@activepieces/shared'
+    UpdateProjectPlatformRequest,
+    User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

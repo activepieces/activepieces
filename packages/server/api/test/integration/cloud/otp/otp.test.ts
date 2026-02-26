@@ -1,6 +1,7 @@
 import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { Mock } from 'vitest'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
@@ -8,7 +9,6 @@ import { setupServer } from '../../../../src/app/server'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-import { Mock } from 'vitest'
 
 let sendOtpSpy: Mock
 

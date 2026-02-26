@@ -1,10 +1,9 @@
-import { ApplicationEventName } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-common'
-import {
+import { ApId,
     apId,
-    ApId,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ApplicationEventName,
     ListGlobalConnectionsRequestQuery,
     PrincipalType,
     SeekPage,

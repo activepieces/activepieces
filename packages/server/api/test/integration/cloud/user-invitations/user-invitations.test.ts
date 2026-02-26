@@ -1,7 +1,6 @@
 import {
     ApiKeyResponseWithValue,
-} from '@activepieces/shared'
-import { DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectRole, ProjectType, SendUserInvitationRequest, User } from '@activepieces/shared'
+    DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectRole, ProjectType, SendUserInvitationRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

@@ -1,5 +1,4 @@
-import { AlertChannel } from '@activepieces/shared'
-import { UserIdentityProvider } from '@activepieces/shared'
+import { AlertChannel, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { ProjectHooks } from '../../project/project-hooks'

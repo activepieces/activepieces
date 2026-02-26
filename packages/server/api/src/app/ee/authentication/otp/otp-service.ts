@@ -1,9 +1,8 @@
 import {
+    apId,
     OtpModel,
     OtpState,
-    OtpType,
-} from '@activepieces/shared'
-import { apId, PlatformId } from '@activepieces/shared'
+    OtpType, PlatformId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'

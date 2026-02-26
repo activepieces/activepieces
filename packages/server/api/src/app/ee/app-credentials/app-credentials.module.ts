@@ -1,11 +1,10 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     AppCredential,
     AppCredentialType,
     ListAppCredentialsRequest,
-    UpsertAppCredentialRequest,
-} from '@activepieces/shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import { PrincipalType, SeekPage } from '@activepieces/shared'
+    PrincipalType,
+    SeekPage, UpsertAppCredentialRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

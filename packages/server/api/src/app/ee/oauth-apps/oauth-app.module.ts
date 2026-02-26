@@ -1,10 +1,9 @@
+import { securityAccess } from '@activepieces/server-common'
 import {
+    assertNotNullOrUndefined,
     ListOAuth2AppRequest,
     OAuthApp,
-    UpsertOAuth2AppRequest,
-} from '@activepieces/shared'
-import { securityAccess } from '@activepieces/server-common'
-import { assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
+    PrincipalType, SeekPage, UpsertOAuth2AppRequest } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Static,

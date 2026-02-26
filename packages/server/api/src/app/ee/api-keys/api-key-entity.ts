@@ -1,5 +1,4 @@
-import { ApiKey } from '@activepieces/shared'
-import { Platform } from '@activepieces/shared'
+import { ApiKey, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

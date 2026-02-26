@@ -1,5 +1,4 @@
-import { SecretManager } from '@activepieces/shared'
-import { Platform } from '@activepieces/shared'
+import { Platform, SecretManager } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

@@ -1,11 +1,10 @@
 import {
     CustomDomain,
-    OtpType,
-} from '@activepieces/shared'
-import {
     DefaultProjectRole,
+
     InvitationStatus,
     InvitationType,
+    OtpType,
     Platform,
     PlatformPlan,
     PlatformRole,
@@ -13,12 +12,12 @@ import {
     ProjectRole,
     ProjectType,
     User,
-    UserStatus,
-} from '@activepieces/shared'
+    UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { Mock } from 'vitest'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
@@ -40,7 +39,6 @@ import {
 } from '../../../helpers/mocks/authn'
 
 let app: FastifyInstance | null = null
-import { Mock } from 'vitest'
 
 let sendOtpSpy: Mock
 

@@ -1,8 +1,8 @@
 import {
   ApplicationEvent,
   ListAuditEventsRequest,
+  SeekPage,
 } from '@activepieces/shared';
-import { SeekPage } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 

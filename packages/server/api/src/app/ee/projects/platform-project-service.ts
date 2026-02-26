@@ -1,8 +1,6 @@
 import {
-    UpdateProjectPlatformRequest,
-} from '@activepieces/shared'
-import {
     Cursor,
+
     isNil,
     PlatformId,
     Project,
@@ -12,8 +10,8 @@ import {
     SeekPage,
     spreadIfDefined,
     TeamProjectsLimit,
-    UserId,
-} from '@activepieces/shared'
+    UpdateProjectPlatformRequest,
+    UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'

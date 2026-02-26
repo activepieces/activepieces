@@ -1,11 +1,10 @@
 import {
+    ActivepiecesError,
     ApplicationEvent,
     ApplicationEventName,
-    OtpType,
-    ResetPasswordRequestBody,
-    VerifyEmailRequestBody,
-} from '@activepieces/shared'
-import { ActivepiecesError, ErrorCode, isNil, UserId, UserIdentity } from '@activepieces/shared'
+    ErrorCode,
+    isNil,
+    OtpType, ResetPasswordRequestBody, UserId, UserIdentity, VerifyEmailRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { applicationEvents } from '../../../helper/application-events'

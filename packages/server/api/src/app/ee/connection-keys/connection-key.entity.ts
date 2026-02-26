@@ -1,5 +1,4 @@
-import { ConnectionKey } from '@activepieces/shared'
-import { Project } from '@activepieces/shared'
+import { ConnectionKey, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

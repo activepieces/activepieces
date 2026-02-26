@@ -1,11 +1,10 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/shared'
-import {
-    ActivepiecesError,
+import { ActivepiecesError,
     ApEdition,
     apId,
     ErrorCode,
     FilteredPieceBehavior,
     isNil,
+    OPEN_SOURCE_PLAN,
     Platform,
     PlatformId,
     PlatformPlanLimits,

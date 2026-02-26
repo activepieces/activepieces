@@ -1,7 +1,6 @@
-import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-common'
-import {
-    AuthenticationResponse,
+import { ApplicationEventName, AuthenticationResponse,
+    ManagedAuthnRequestBody,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { applicationEvents } from '../../helper/application-events'

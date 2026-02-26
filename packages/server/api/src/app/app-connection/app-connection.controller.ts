@@ -1,10 +1,9 @@
-import { ApplicationEventName } from '@activepieces/shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import {
-    ApId,
+import { ApId,
     AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ApplicationEventName,
     ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,

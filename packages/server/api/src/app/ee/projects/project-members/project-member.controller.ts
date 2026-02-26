@@ -1,16 +1,14 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     GetCurrentProjectMemberRoleQuery,
     ListProjectMembersRequestQuery,
-    ProjectMemberWithUser,
-    UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import {
     Permission,
     PrincipalType,
+
+    ProjectMemberWithUser,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+    UpdateProjectMemberRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'

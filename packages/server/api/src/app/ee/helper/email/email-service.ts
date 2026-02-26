@@ -1,5 +1,4 @@
-import { AlertChannel, OtpType } from '@activepieces/shared'
-import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { system } from '../../../helper/system/system'
