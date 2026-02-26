@@ -83,7 +83,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       return <RankCell sortIndex={index} />;
     },
     enableSorting: false,
-    size: 45,
+    size: 25,
   },
   {
     accessorKey: 'userName',

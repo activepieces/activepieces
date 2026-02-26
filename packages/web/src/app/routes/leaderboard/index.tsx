@@ -260,7 +260,9 @@ export default function LeaderboardPage() {
           p.userEmail.toLowerCase().includes(q),
       );
     }
-    return applyTimeSavedFilter(data, peopleTimeSaved);
+    return applyTimeSavedFilter(data, peopleTimeSaved).sort(
+      (a, b) => b.minutesSaved - a.minutesSaved,
+    );
   }, [peopleData, searchQuery, peopleTimeSaved]);
 
   const filteredProjectsData = useMemo(() => {

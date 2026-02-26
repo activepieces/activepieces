@@ -60,7 +60,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
       return <RankCell sortIndex={index} />;
     },
     enableSorting: false,
-    size: 45,
+    size: 20,
   },
   {
     accessorKey: 'projectName',

@@ -52,7 +52,7 @@ export const ApAvatar = ({
           className={cn('text-xs truncate', {
             'text-xss opacity-75': size === 'xsmall',
           })}
-        >{`${user.firstName}`}</span>
+        >{`${user.firstName} ${user.lastName}`.trim()}</span>
       )}
     </div>
   );
