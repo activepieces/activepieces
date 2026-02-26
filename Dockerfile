@@ -70,9 +70,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY . .
 
 # Build frontend, engine, and server API
-RUN npx turbo run build --filter=react-ui --filter=@activepieces/engine --filter=server-api
+RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api
 
-# Remove piece directories not needed at runtime (keeps only the 4 pieces server-api imports)
+# Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
 # Then regenerate bun.lock so it matches the trimmed workspace
 RUN rm -rf packages/pieces/core packages/pieces/custom && \
     find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
@@ -101,7 +101,7 @@ COPY docker-entrypoint.sh .
 
 # Create all necessary directories in one layer
 RUN mkdir -p \
-    /usr/src/app/dist/packages/engine && \
+    /usr/src/app/dist/packages/server/engine && \
     chmod +x docker-entrypoint.sh
 
 # Copy root config files needed for dependency resolution
@@ -115,14 +115,14 @@ COPY --from=build /usr/src/app/LICENSE .
 COPY --from=build /usr/src/app/packages ./packages
 
 # Copy built engine
-COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
+COPY --from=build /usr/src/app/dist/packages/server/engine/ ./dist/packages/server/engine/
 
 # Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --production
 
 # Copy frontend files to Nginx document root
-COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
+COPY --from=build /usr/src/app/dist/packages/web /usr/share/nginx/html/
 
 LABEL service=activepieces
 
