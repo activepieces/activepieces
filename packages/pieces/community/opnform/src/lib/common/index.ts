@@ -48,7 +48,7 @@ export const workspaceIdProp = Property.Dropdown<string,true,typeof opnformAuth>
       };
     }
 
-    const accessToken = (auth as any).apiKey;
+    const accessToken = auth.props.apiKey;
     const options: DropdownOption<string>[] = [];
 
     const request: HttpRequest = {
@@ -97,7 +97,7 @@ export const formIdProp = Property.Dropdown<string,true,typeof opnformAuth>({
       };
     }
 
-    const accessToken = (auth as any).apiKey;
+    const accessToken = auth.props.apiKey;
 
     const options: DropdownOption<string>[] = [];
     let hasMore = true;
@@ -139,7 +139,7 @@ export const formIdProp = Property.Dropdown<string,true,typeof opnformAuth>({
 
 export const opnformCommon = {
   getBaseUrl: (auth: any) => {
-    return auth.baseApiUrl || API_URL_DEFAULT;
+    return auth.props?.baseApiUrl || API_URL_DEFAULT;
   },
   validateAuth: async (auth: any) => {
     const response = await httpClient.sendRequest({
@@ -147,7 +147,7 @@ export const opnformCommon = {
       url: `${opnformCommon.getBaseUrl(auth)}/open/workspaces`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (auth as any).apiKey,
+        token: auth.props.apiKey,
       },
     });
     return response.status === 200;
@@ -163,7 +163,7 @@ export const opnformCommon = {
       url: `${opnformCommon.getBaseUrl(auth)}/open/forms/${formId}/integrations`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (auth as any).apiKey,
+        token: auth.props.apiKey,
       },
     });
     const integration = allIntegrations.body.find((integration: any) =>
@@ -193,7 +193,7 @@ export const opnformCommon = {
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (auth as any).apiKey,
+        token: auth.props.apiKey,
       },
       queryParams: {},
     };
@@ -235,7 +235,7 @@ export const opnformCommon = {
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: (auth as any).apiKey,
+        token: auth.props.apiKey,
       },
     };
     return await httpClient.sendRequest(request);
