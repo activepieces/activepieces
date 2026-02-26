@@ -127,6 +127,9 @@
   "New Label": "新しいラベル",
   "New Milestone": "新しいマイルストーン",
   "New Release": "新しいリリース",
+  "New Commit": "新しいコミット",
+  "New Review Request": "新しいレビューリクエスト",
+  "New Mention": "新規メンション",
   "Triggers when there is activity on a pull request.": "プルリクエストでアクティビティがある場合にトリガーします。",
   "Trigger when there is activity relating to repository stars.": "リポジトリ星に関連するアクティビティがある場合にトリガーします。",
   "Triggers when there is activity relating to an issue.": "問題に関連する活動がある場合にトリガーします。",
@@ -137,5 +140,8 @@
   "Triggers when a new collaborator is added to a repository.": "リポジトリに新しい共同編集者が追加されたときにトリガーされます。",
   "Triggers when a new label is created in a repository.": "リポジトリに新しいラベルが作成されたときにトリガーされます。",
   "Triggers when a new milestone is created.": "新しいマイルストーンが作成されたときにトリガーします。",
-  "Triggers when a new release is added.": "新しいリリースが追加されたときにトリガーします。"
+  "Triggers when a new release is added.": "新しいリリースが追加されたときにトリガーします。",
+  "Triggers when a new commit is pushed.": "新しいコミットがプッシュされたときにトリガーされます。",
+  "Triggers when you are requested to review a pull request.": "プルリクエストを確認するよう要求されたときにトリガーします。",
+  "Triggers when you are mentioned in a comment.": "コメントで言及されたときにトリガーします。"
 }
