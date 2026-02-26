@@ -1,4 +1,4 @@
-import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
+import { AppSystemProp, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ErrorCode,

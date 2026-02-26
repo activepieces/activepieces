@@ -2,16 +2,18 @@
   "name": "@activepieces/piece-intercom",
   "version": "0.6.4",
   "main": "./dist/src/index.js",
-  "typings": "./dist/src/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
     "intercom-client": "6.2.0",
-    "string-strip-html": "8.5.0"
+    "string-strip-html": "8.5.0",
+    "tslib": "2.6.2"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   }
 }

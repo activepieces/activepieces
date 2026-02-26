@@ -1,10 +1,9 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import {
+import { securityAccess } from '@activepieces/server-common'
+import { ApId,
     apId,
-    ApId,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ApplicationEventName,
     ListGlobalConnectionsRequestQuery,
     PrincipalType,
     SeekPage,

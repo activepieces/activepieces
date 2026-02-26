@@ -1,15 +1,21 @@
 {
   "name": "@activepieces/piece-mysql",
   "version": "0.2.3",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "promise-mysql": "5.2.0",
-    "sqlstring": "2.3.3"
+    "sqlstring": "2.3.3",
+    "tslib": "2.6.2"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
+  },
+  "devDependencies": {
+    "@types/sqlstring": "2.3.2"
   }
 }

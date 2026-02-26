@@ -30,8 +30,8 @@ const validatePackageName = async (packageName: string) => {
   }
 };
 
-const checkIfPieceExists = async (pieceName: string) => {
-  const piecePath = path.resolve('packages', 'pieces', 'community', pieceName);
+const checkIfPieceExists = async (pieceName: string, pieceType: string) => {
+  const piecePath = path.resolve('packages', 'pieces', pieceType, pieceName);
   try {
     await readdir(piecePath);
     console.log(chalk.red(`🚨 Piece already exists at ${piecePath}`));
@@ -64,8 +64,16 @@ const scaffoldPiece = async (
     name: packageName,
     version: '0.0.1',
     type: 'commonjs',
+    main: './dist/src/index.js',
+    types: './dist/src/index.d.ts',
+    dependencies: {
+      '@activepieces/pieces-common': 'workspace:*',
+      '@activepieces/pieces-framework': 'workspace:*',
+      '@activepieces/shared': 'workspace:*',
+      tslib: '2.6.2',
+    },
     scripts: {
-      build: 'tsc -p tsconfig.lib.json',
+      build: 'tsc -p tsconfig.lib.json && cp package.json dist/',
       lint: "eslint 'src/**/*.ts'",
     },
   };
@@ -88,9 +96,7 @@ const scaffoldPiece = async (
     },
     files: [],
     include: [],
-    references: [
-      { path: './tsconfig.lib.json' },
-    ],
+    references: [{ path: './tsconfig.lib.json' }],
   };
   await writeFile(
     path.join(baseDir, 'tsconfig.json'),
@@ -101,7 +107,10 @@ const scaffoldPiece = async (
   const tsconfigLib = {
     extends: './tsconfig.json',
     compilerOptions: {
-      outDir: `../../../../dist/packages/pieces/${pieceType}/${pieceName}`,
+      rootDir: '.',
+      baseUrl: '.',
+      paths: {},
+      outDir: './dist',
       declaration: true,
       types: ['node'],
     },
@@ -115,7 +124,7 @@ const scaffoldPiece = async (
 
   // Create .eslintrc.json
   const eslintConfig = {
-    extends: ['../../../../.eslintrc.base.json'],
+    extends: ['../../../../.eslintrc.json'],
     ignorePatterns: ['!**/*'],
     overrides: [
       { files: ['*.ts', '*.tsx', '*.js', '*.jsx'], rules: {} },
@@ -139,19 +148,19 @@ const scaffoldPiece = async (
     })
     .join('');
 
-  const indexTemplate = `
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+  const indexTemplate = `import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 
-    export const ${pieceNameCamelCase} = createPiece({
-      displayName: "${capitalizeFirstLetter(pieceName)}",
-      auth: PieceAuth.None(),
-      minimumSupportedRelease: '0.36.1',
-      logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
-      authors: [],
-      actions: [],
-      triggers: [],
-    });
-    `;
+export const ${pieceNameCamelCase} = createPiece({
+  displayName: '${capitalizeFirstLetter(pieceName)}',
+  description: '',
+  auth: PieceAuth.None(),
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/${pieceName}.png',
+  authors: [],
+  actions: [],
+  triggers: [],
+});
+`;
 
   await writeFile(path.join(srcDir, 'index.ts'), indexTemplate);
 };
@@ -163,7 +172,7 @@ export const createPiece = async (
 ) => {
   await validatePieceName(pieceName);
   await validatePackageName(packageName);
-  await checkIfPieceExists(pieceName);
+  await checkIfPieceExists(pieceName, pieceType);
   await scaffoldPiece(pieceName, packageName, pieceType);
   console.log(chalk.green('✨  Done!'));
   console.log(
@@ -186,8 +195,10 @@ export const createPieceCommand = new Command('create')
         type: 'input',
         name: 'packageName',
         message: 'Enter the package name:',
-        default: (answers: Record<string, string>) => `@activepieces/piece-${answers.pieceName}`,
-        when: (answers: Record<string, string>) => answers.pieceName !== undefined,
+        default: (answers: Record<string, string>) =>
+          `@activepieces/piece-${answers.pieceName}`,
+        when: (answers: Record<string, string>) =>
+          answers.pieceName !== undefined,
       },
       {
         type: 'list',
