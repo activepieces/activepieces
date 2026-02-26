@@ -15,6 +15,7 @@ export const LicenseKeyEntity = Type.Object({
     createdAt: Type.String(),
     key: Type.String(),
     ssoEnabled: Type.Boolean(),
+    scimEnabled: Type.Boolean(),
     environmentsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),

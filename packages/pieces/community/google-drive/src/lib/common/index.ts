@@ -103,15 +103,23 @@ export const common = {
         ).format()}'`
       );
     q.push(`trashed = false`);
-    const response = await drive.files.list({
-      q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
-      fields: 'files(id, name, mimeType, webViewLink, kind)',
-      orderBy: order ?? 'createdTime desc',
-      supportsAllDrives: true,
-      includeItemsFromAllDrives: search?.includeTeamDrive,
-    });    
+    const allFiles: any[] = [];
+    let pageToken: string | undefined = undefined;
+    do {
+      const listParams: Record<string, any> = {
+        q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
+        fields: 'nextPageToken, files(id, name, mimeType, webViewLink, kind, createdTime)',
+        orderBy: order ?? 'createdTime desc',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: search?.includeTeamDrive,
+      };
+      if (pageToken) listParams.pageToken = pageToken;
+      const response = await drive.files.list(listParams);
+      allFiles.push(...(response.data.files ?? []));
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
 
-    return response.data.files;
+    return allFiles;
   },
 
   async getFolders(
@@ -124,6 +132,11 @@ export const common = {
     },
     order?: string
   ) {
+    const authClient = new OAuth2Client();
+    authClient.setCredentials(auth);
+
+    const drive = google.drive({ version: 'v3', auth: authClient });
+
     const q: string[] = [`mimeType='application/vnd.google-apps.folder'`];
     if (search?.parent) q.push(`'${search.parent}' in parents`);
     if (search?.createdTime)
@@ -133,23 +146,22 @@ export const common = {
         ).format()}'`
       );
     q.push(`trashed = false`);
-    const response = await httpClient.sendRequest<{
-      files: { id: string; name: string }[];
-    }>({
-      method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files`,
-      queryParams: {
+    const allFolders: any[] = [];
+    let pageToken: string | undefined = undefined;
+    do {
+      const listParams: Record<string, any> = {
         q: q.join(' and '),
+        fields: 'nextPageToken, files(id, name)',
         orderBy: order ?? 'createdTime desc',
-        supportsAllDrives: 'true',
-        includeItemsFromAllDrives: search?.includeTeamDrive? 'true':'false',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
-    });
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: search?.includeTeamDrive,
+      };
+      if (pageToken) listParams.pageToken = pageToken;
+      const response = await drive.files.list(listParams);
+      allFolders.push(...(response.data.files ?? []));
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
 
-    return response.body.files;
+    return allFolders;
   },
 };
