@@ -3484,7 +3484,7 @@
     },
     "packages/pieces/community/logsnag": {
       "name": "@activepieces/piece-logsnag",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -6675,6 +6675,9 @@
         "tslib": "2.6.2",
         "zod": "4.1.13",
       },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
     },
     "packages/pieces/core/csv": {
       "name": "@activepieces/piece-csv",
@@ -6688,6 +6691,9 @@
         "safe-flat": "2.1.0",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
     },
     "packages/pieces/core/data-mapper": {
       "name": "@activepieces/piece-data-mapper",
@@ -6698,6 +6704,9 @@
         "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
       },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
     },
     "packages/pieces/core/data-summarizer": {
       "name": "@activepieces/piece-data-summarizer",
@@ -6707,6 +6716,9 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
         "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/date-helper": {
@@ -6719,6 +6731,9 @@
         "dayjs": "1.11.9",
         "tslib": "2.6.2",
         "zod": "4.1.13",
+      },
+      "devDependencies": {
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/delay": {
@@ -6746,6 +6761,7 @@
       },
       "devDependencies": {
         "@types/mime-types": "2.1.1",
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/forms": {
@@ -6802,6 +6818,7 @@
       },
       "devDependencies": {
         "@types/mime-types": "2.1.1",
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/manual-trigger": {
@@ -6824,6 +6841,9 @@
         "tslib": "2.6.2",
         "zod": "4.1.13",
       },
+      "devDependencies": {
+        "vitest": "3.0.8",
+      },
     },
     "packages/pieces/core/qrcode": {
       "name": "@activepieces/piece-qrcode",
@@ -6837,6 +6857,7 @@
       },
       "devDependencies": {
         "@types/qrcode": "^1.5.5",
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/core/schedule": {
@@ -6987,6 +7008,7 @@
       },
       "devDependencies": {
         "@types/json2xml": "0.1.4",
+        "vitest": "3.0.8",
       },
     },
     "packages/pieces/framework": {
