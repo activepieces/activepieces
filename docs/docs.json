@@ -259,7 +259,9 @@
                      "build-pieces/misc/build-piece",
                      "build-pieces/misc/publish-piece",
                      "build-pieces/misc/pieces-ci-cd",
+                     "build-pieces/misc/migrate-nx-to-turbo",
                      "build-pieces/misc/private-fork",
+                     "build-pieces/misc/testing-pieces",
                      "build-pieces/misc/dev-container",
                      "build-pieces/misc/codespaces"
                   ]

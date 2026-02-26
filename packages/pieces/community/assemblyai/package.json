@@ -1,9 +1,11 @@
 {
   "name": "@activepieces/piece-assemblyai",
   "version": "1.1.4",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
     "generate": "tsx ./scripts/generateFromSpec.ts",
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   },
   "devDependencies": {
@@ -19,6 +21,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "assemblyai": "4.7.0"
+    "assemblyai": "4.7.0",
+    "tslib": "2.6.2"
   }
 }
