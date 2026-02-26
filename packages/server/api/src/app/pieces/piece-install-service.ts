@@ -17,7 +17,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { OperationResponse } from 'server-worker'
+import { OperationResponse } from 'worker'
 import { fileService } from '../file/file.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { pieceMetadataService } from './metadata/piece-metadata-service'

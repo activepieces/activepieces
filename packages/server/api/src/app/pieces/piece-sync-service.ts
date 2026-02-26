@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-common'
 import { groupBy, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'

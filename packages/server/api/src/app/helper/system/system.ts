@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,

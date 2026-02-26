@@ -216,13 +216,12 @@ function processWorkspace(wsPath: string): { depsAdded: number; details: string 
 // ====== Step 1: Core workspaces ======
 const coreWorkspaces = [
   'packages/shared',
-  'packages/engine',
-  'packages/react-ui',
+  'packages/server/engine',
+  'packages/web',
   'packages/server/api',
-  'packages/server/shared',
+  'packages/server/common',
   'packages/server/worker',
-  'packages/ee/shared',
-  'packages/ee/ui/embed-sdk',
+  'packages/ee/embed-sdk',
   'packages/cli',
   'packages/tests-e2e',
 ];
