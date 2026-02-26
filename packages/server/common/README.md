@@ -1,7 +1,7 @@
-# server-shared
+# server-common
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `nx build server-shared` to build the library.
+Run `nx build server-common` to build the library.
