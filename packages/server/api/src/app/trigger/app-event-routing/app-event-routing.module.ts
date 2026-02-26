@@ -6,7 +6,7 @@ import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
     rejectedPromiseHandler,
     securityAccess,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,

@@ -1,4 +1,4 @@
-import { fileSystemUtils } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-common'
 import { getPieceNameFromAlias, PiecePackage, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../utils/machine'

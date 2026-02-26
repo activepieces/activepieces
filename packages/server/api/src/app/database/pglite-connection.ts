@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEdition, ApEnvironment, spreadIfDefined } from '@activepieces/shared'
 import { types } from '@electric-sql/pglite'
 import { DataSource } from 'typeorm'

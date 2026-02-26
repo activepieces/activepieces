@@ -14,9 +14,9 @@
       ],
       "cache": false
     },
-    "react-ui#build": {
+    "web#build": {
       "dependsOn": ["^build"],
-      "outputs": ["../../dist/packages/react-ui/**"],
+      "outputs": ["../../dist/packages/web/**"],
       "cache": false,
       "inputs": [
         "src/**",
@@ -27,7 +27,7 @@
         "!src/**/*.test.ts"
       ]
     },
-    "server-api#build": {
+    "api#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
       "cache": false,
@@ -41,7 +41,7 @@
     },
     "@activepieces/engine#build": {
       "dependsOn": [],
-      "outputs": ["../../dist/packages/engine/**"],
+      "outputs": ["../../../dist/packages/engine/**"],
       "cache": false,
       "inputs": [
         "src/**",

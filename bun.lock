@@ -364,19 +364,7 @@
         "@types/node": "20.19.9",
       },
     },
-    "packages/ee/shared": {
-      "name": "@activepieces/ee-shared",
-      "version": "0.0.11",
-      "dependencies": {
-        "@activepieces/shared": "workspace:*",
-        "@sinclair/typebox": "0.34.11",
-        "tslib": "2.6.2",
-      },
-      "devDependencies": {
-        "@types/node": "20.19.9",
-      },
-    },
-    "packages/ee/ui/embed-sdk": {
+    "packages/ee/embed-sdk": {
       "name": "ee-embed-sdk",
       "version": "0.8.1",
       "dependencies": {
@@ -384,38 +372,6 @@
       },
       "devDependencies": {
         "@types/node": "20.19.9",
-      },
-    },
-    "packages/engine": {
-      "name": "@activepieces/engine",
-      "version": "0.7.0",
-      "dependencies": {
-        "@activepieces/import-fresh-webpack": "3.3.0",
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "ai": "^6.0.0",
-        "async-mutex": "0.4.0",
-        "axios": "1.13.5",
-        "cron-validator": "1.3.1",
-        "dayjs": "1.11.9",
-        "fetch-retry": "6.0.0",
-        "http-status-codes": "2.2.0",
-        "is-base64": "1.1.0",
-        "isolated-vm": "5.0.1",
-        "mime-types": "2.1.35",
-        "nanoid": "3.3.8",
-        "priority-queue-typescript": "1.0.1",
-        "socket.io-client": "4.8.1",
-        "string-replace-async": "3.0.2",
-        "tslib": "2.6.2",
-        "zod": "4.1.13",
-      },
-      "devDependencies": {
-        "@types/is-base64": "1.1.1",
-        "@types/mime-types": "2.1.1",
-        "@types/node": "20.19.9",
-        "vitest": "3.0.8",
       },
     },
     "packages/pieces/common": {
@@ -7292,11 +7248,273 @@
         "vitest": "3.0.8",
       },
     },
-    "packages/react-ui": {
-      "name": "react-ui",
+    "packages/server/api": {
+      "name": "api",
       "version": "0.0.1",
       "dependencies": {
-        "@activepieces/ee-shared": "workspace:*",
+        "@activepieces/engine": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/server-common": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@ai-sdk/anthropic": "^3.0.0",
+        "@ai-sdk/azure": "^3.0.0",
+        "@ai-sdk/google": "^3.0.0",
+        "@ai-sdk/google-vertex": "^3.0.0",
+        "@ai-sdk/mcp": "1.0.11",
+        "@ai-sdk/openai": "^3.0.0",
+        "@ai-sdk/openai-compatible": "2.0.16",
+        "@ai-sdk/provider": "^3.0.0",
+        "@ai-sdk/replicate": "2.0.8",
+        "@authenio/samlify-node-xmllint": "2.0.0",
+        "@aws-sdk/client-s3": "3.974.0",
+        "@aws-sdk/s3-request-presigner": "3.894.0",
+        "@bull-board/api": "6.10.1",
+        "@bull-board/fastify": "6.10.1",
+        "@electric-sql/pglite": "0.3.14",
+        "@fastify/basic-auth": "6.2.0",
+        "@fastify/cors": "11.0.1",
+        "@fastify/formbody": "8.0.2",
+        "@fastify/http-proxy": "11.3.0",
+        "@fastify/multipart": "9.0.3",
+        "@fastify/otel": "0.9.3",
+        "@fastify/rate-limit": "10.3.0",
+        "@fastify/swagger": "9.5.1",
+        "@fastify/type-provider-typebox": "5.1.0",
+        "@modelcontextprotocol/sdk": "1.26.0",
+        "@openrouter/ai-sdk-provider": "2.1.1",
+        "@openrouter/sdk": "0.2.9",
+        "@opentelemetry/api": "1.9.0",
+        "@opentelemetry/api-logs": "0.206.0",
+        "@opentelemetry/auto-instrumentations-node": "0.65.0",
+        "@opentelemetry/exporter-metrics-otlp-http": "0.206.0",
+        "@opentelemetry/exporter-metrics-otlp-proto": "0.206.0",
+        "@opentelemetry/exporter-trace-otlp-http": "0.206.0",
+        "@opentelemetry/resources": "2.1.0",
+        "@opentelemetry/sdk-logs": "0.206.0",
+        "@opentelemetry/sdk-metrics": "2.1.0",
+        "@opentelemetry/sdk-node": "0.206.0",
+        "@opentelemetry/sdk-trace-base": "2.1.0",
+        "@opentelemetry/semantic-conventions": "1.37.0",
+        "@segment/analytics-next": "1.72.0",
+        "@segment/analytics-node": "2.2.0",
+        "@sinclair/typebox": "0.34.11",
+        "@socket.io/redis-adapter": "8.3.0",
+        "ai": "^6.0.0",
+        "ai-gateway-provider": "3.1.1",
+        "async-mutex": "0.4.0",
+        "axios": "1.13.5",
+        "bcrypt": "6.0.0",
+        "bullmq": "5.61.0",
+        "bullmq-otel": "1.0.1",
+        "content-disposition": "0.5.4",
+        "dayjs": "1.11.9",
+        "decompress": "4.2.1",
+        "deep-equal": "2.2.2",
+        "dotenv": "17.2.3",
+        "fastify": "5.7.3",
+        "fastify-favicon": "5.0.0",
+        "fastify-plugin": "5.0.1",
+        "fastify-raw-body": "5.0.0",
+        "fastify-socket": "5.1.2",
+        "fastify-xml-body-parser": "2.2.0",
+        "firebase-scrypt": "2.2.0",
+        "fuse.js": "7.0.0",
+        "http-status-codes": "2.2.0",
+        "ioredis": "5.4.1",
+        "jsonwebtoken": "9.0.1",
+        "jwks-rsa": "3.1.0",
+        "mime-types": "2.1.35",
+        "mustache": "4.2.0",
+        "nanoid": "3.3.8",
+        "node-cron": "3.0.3",
+        "nodemailer": "7.0.11",
+        "object-sizeof": "2.6.3",
+        "p-limit": "2.3.0",
+        "pg": "8.11.3",
+        "pino": "10.1.0",
+        "qs": "6.14.2",
+        "samlify": "2.10.0",
+        "semver": "7.6.0",
+        "simple-git": "3.21.0",
+        "socket.io": "4.8.1",
+        "sqlite3": "5.1.7",
+        "stripe": "18.2.1",
+        "tiny-lru": "11.4.7",
+        "tinycolor2": "1.6.0",
+        "tslib": "2.6.2",
+        "typeorm": "0.3.26",
+        "typeorm-pglite": "0.3.2",
+        "worker": "workspace:*",
+        "zod": "4.1.13",
+      },
+      "devDependencies": {
+        "@activepieces/piece-facebook-leads": "workspace:*",
+        "@activepieces/piece-intercom": "workspace:*",
+        "@activepieces/piece-slack": "workspace:*",
+        "@activepieces/piece-square": "workspace:*",
+        "@faker-js/faker": "8.2.0",
+        "@types/bcrypt": "5.0.0",
+        "@types/content-disposition": "0.5.9",
+        "@types/decompress": "4.2.4",
+        "@types/deep-equal": "1.0.1",
+        "@types/is-base64": "1.1.1",
+        "@types/jsonwebtoken": "9.0.10",
+        "@types/mime-types": "2.1.1",
+        "@types/mustache": "4.2.4",
+        "@types/node-cron": "3.0.11",
+        "@types/nodemailer": "6.4.9",
+        "@types/qs": "6.9.7",
+        "@types/semver": "7.5.6",
+        "@types/tinycolor2": "1.4.5",
+        "vitest": "3.0.8",
+        "webpack-ignore-dynamic-require": "1.0.0",
+      },
+    },
+    "packages/server/common": {
+      "name": "@activepieces/server-common",
+      "version": "0.0.2",
+      "dependencies": {
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@hyperdx/node-opentelemetry": "0.8.2",
+        "@sentry/node": "7.120.0",
+        "@sinclair/typebox": "0.34.11",
+        "async-mutex": "0.4.0",
+        "axios": "1.13.5",
+        "axios-retry": "4.4.1",
+        "bullmq": "5.61.0",
+        "bullmq-otel": "1.0.1",
+        "clear-module": "4.1.2",
+        "dayjs": "1.11.9",
+        "fastify": "5.7.3",
+        "ioredis": "5.4.1",
+        "pino": "10.1.0",
+        "pino-loki": "2.1.3",
+        "redis-memory-server": "0.15.0",
+        "redlock": "5.0.0-beta.2",
+        "tree-kill": "1.2.2",
+        "tslib": "2.6.2",
+        "typeorm": "0.3.26",
+      },
+      "devDependencies": {
+        "@types/node": "20.19.9",
+      },
+    },
+    "packages/server/engine": {
+      "name": "@activepieces/engine",
+      "version": "0.7.0",
+      "dependencies": {
+        "@activepieces/import-fresh-webpack": "3.3.0",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "ai": "^6.0.0",
+        "async-mutex": "0.4.0",
+        "axios": "1.13.5",
+        "cron-validator": "1.3.1",
+        "dayjs": "1.11.9",
+        "fetch-retry": "6.0.0",
+        "http-status-codes": "2.2.0",
+        "is-base64": "1.1.0",
+        "isolated-vm": "5.0.1",
+        "mime-types": "2.1.35",
+        "nanoid": "3.3.8",
+        "priority-queue-typescript": "1.0.1",
+        "socket.io-client": "4.8.1",
+        "string-replace-async": "3.0.2",
+        "tslib": "2.6.2",
+        "zod": "4.1.13",
+      },
+      "devDependencies": {
+        "@types/is-base64": "1.1.1",
+        "@types/mime-types": "2.1.1",
+        "@types/node": "20.19.9",
+        "vitest": "3.0.8",
+      },
+    },
+    "packages/server/sandbox": {
+      "name": "@activepieces/sandbox",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/server-common": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "fastify": "5.7.3",
+        "nanoid": "3.3.8",
+        "socket.io": "4.8.1",
+        "tree-kill": "1.2.2",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "socket.io-client": "4.8.1",
+        "vitest": "3.0.8",
+      },
+    },
+    "packages/server/worker": {
+      "name": "worker",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/sandbox": "workspace:*",
+        "@activepieces/server-common": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "@opentelemetry/api": "1.9.0",
+        "axios": "1.13.5",
+        "axios-retry": "4.4.1",
+        "bullmq": "5.61.0",
+        "bullmq-otel": "1.0.1",
+        "chalk": "4.1.2",
+        "chokidar": "4.0.3",
+        "dayjs": "1.11.9",
+        "fastify": "5.7.3",
+        "fetch-retry": "6.0.0",
+        "http-status-codes": "2.2.0",
+        "ioredis": "5.4.1",
+        "jsonwebtoken": "9.0.1",
+        "nanoid": "3.3.8",
+        "p-limit": "2.3.0",
+        "socket.io": "4.8.1",
+        "socket.io-client": "4.8.1",
+        "tree-kill": "1.2.2",
+        "tslib": "2.6.2",
+        "write-file-atomic": "5.0.1",
+      },
+      "devDependencies": {
+        "@activepieces/engine": "workspace:*",
+        "@types/jsonwebtoken": "9.0.10",
+        "@types/node": "20.19.9",
+        "@types/write-file-atomic": "4.0.3",
+      },
+    },
+    "packages/shared": {
+      "name": "@activepieces/shared",
+      "version": "0.38.4",
+      "dependencies": {
+        "@sinclair/typebox": "0.34.11",
+        "deepmerge-ts": "7.1.0",
+        "nanoid": "3.3.8",
+        "semver": "7.6.0",
+        "socket.io-client": "4.8.1",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "@types/node": "20.19.9",
+        "@types/semver": "7.5.6",
+        "vitest": "3.0.8",
+      },
+    },
+    "packages/tests-e2e": {
+      "name": "tests-e2e",
+      "version": "0.0.1",
+      "devDependencies": {
+        "@playwright/test": "1.54.1",
+        "checkly": "6.9.10",
+      },
+    },
+    "packages/web": {
+      "name": "web",
+      "version": "0.0.1",
+      "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@activepieces/shared": "workspace:*",
@@ -7432,238 +7650,6 @@
         "tailwindcss": "4.1.17",
       },
     },
-    "packages/server/api": {
-      "name": "server-api",
-      "version": "0.0.1",
-      "dependencies": {
-        "@activepieces/ee-shared": "workspace:*",
-        "@activepieces/engine": "workspace:*",
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/server-shared": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "@ai-sdk/anthropic": "^3.0.0",
-        "@ai-sdk/azure": "^3.0.0",
-        "@ai-sdk/google": "^3.0.0",
-        "@ai-sdk/google-vertex": "^3.0.0",
-        "@ai-sdk/mcp": "1.0.11",
-        "@ai-sdk/openai": "^3.0.0",
-        "@ai-sdk/openai-compatible": "2.0.16",
-        "@ai-sdk/provider": "^3.0.0",
-        "@ai-sdk/replicate": "2.0.8",
-        "@authenio/samlify-node-xmllint": "2.0.0",
-        "@aws-sdk/client-s3": "3.974.0",
-        "@aws-sdk/s3-request-presigner": "3.894.0",
-        "@bull-board/api": "6.10.1",
-        "@bull-board/fastify": "6.10.1",
-        "@electric-sql/pglite": "0.3.14",
-        "@fastify/basic-auth": "6.2.0",
-        "@fastify/cors": "11.0.1",
-        "@fastify/formbody": "8.0.2",
-        "@fastify/http-proxy": "11.3.0",
-        "@fastify/multipart": "9.0.3",
-        "@fastify/otel": "0.9.3",
-        "@fastify/rate-limit": "10.3.0",
-        "@fastify/swagger": "9.5.1",
-        "@fastify/type-provider-typebox": "5.1.0",
-        "@modelcontextprotocol/sdk": "1.26.0",
-        "@openrouter/ai-sdk-provider": "2.1.1",
-        "@openrouter/sdk": "0.2.9",
-        "@opentelemetry/api": "1.9.0",
-        "@opentelemetry/api-logs": "0.206.0",
-        "@opentelemetry/auto-instrumentations-node": "0.65.0",
-        "@opentelemetry/exporter-metrics-otlp-http": "0.206.0",
-        "@opentelemetry/exporter-metrics-otlp-proto": "0.206.0",
-        "@opentelemetry/exporter-trace-otlp-http": "0.206.0",
-        "@opentelemetry/resources": "2.1.0",
-        "@opentelemetry/sdk-logs": "0.206.0",
-        "@opentelemetry/sdk-metrics": "2.1.0",
-        "@opentelemetry/sdk-node": "0.206.0",
-        "@opentelemetry/sdk-trace-base": "2.1.0",
-        "@opentelemetry/semantic-conventions": "1.37.0",
-        "@segment/analytics-next": "1.72.0",
-        "@segment/analytics-node": "2.2.0",
-        "@sinclair/typebox": "0.34.11",
-        "@socket.io/redis-adapter": "8.3.0",
-        "ai": "^6.0.0",
-        "ai-gateway-provider": "3.1.1",
-        "async-mutex": "0.4.0",
-        "axios": "1.13.5",
-        "bcrypt": "6.0.0",
-        "bullmq": "5.61.0",
-        "bullmq-otel": "1.0.1",
-        "content-disposition": "0.5.4",
-        "dayjs": "1.11.9",
-        "decompress": "4.2.1",
-        "deep-equal": "2.2.2",
-        "dotenv": "17.2.3",
-        "fastify": "5.7.3",
-        "fastify-favicon": "5.0.0",
-        "fastify-plugin": "5.0.1",
-        "fastify-raw-body": "5.0.0",
-        "fastify-socket": "5.1.2",
-        "fastify-xml-body-parser": "2.2.0",
-        "firebase-scrypt": "2.2.0",
-        "fuse.js": "7.0.0",
-        "http-status-codes": "2.2.0",
-        "ioredis": "5.4.1",
-        "jsonwebtoken": "9.0.1",
-        "jwks-rsa": "3.1.0",
-        "mime-types": "2.1.35",
-        "mustache": "4.2.0",
-        "nanoid": "3.3.8",
-        "node-cron": "3.0.3",
-        "nodemailer": "7.0.11",
-        "object-sizeof": "2.6.3",
-        "p-limit": "2.3.0",
-        "pg": "8.11.3",
-        "pino": "10.1.0",
-        "qs": "6.14.2",
-        "samlify": "2.10.0",
-        "semver": "7.6.0",
-        "server-worker": "workspace:*",
-        "simple-git": "3.21.0",
-        "socket.io": "4.8.1",
-        "sqlite3": "5.1.7",
-        "stripe": "18.2.1",
-        "tiny-lru": "11.4.7",
-        "tinycolor2": "1.6.0",
-        "tslib": "2.6.2",
-        "typeorm": "0.3.26",
-        "typeorm-pglite": "0.3.2",
-        "zod": "4.1.13",
-      },
-      "devDependencies": {
-        "@activepieces/piece-facebook-leads": "workspace:*",
-        "@activepieces/piece-intercom": "workspace:*",
-        "@activepieces/piece-slack": "workspace:*",
-        "@activepieces/piece-square": "workspace:*",
-        "@faker-js/faker": "8.2.0",
-        "@types/bcrypt": "5.0.0",
-        "@types/content-disposition": "0.5.9",
-        "@types/decompress": "4.2.4",
-        "@types/deep-equal": "1.0.1",
-        "@types/is-base64": "1.1.1",
-        "@types/jsonwebtoken": "9.0.10",
-        "@types/mime-types": "2.1.1",
-        "@types/mustache": "4.2.4",
-        "@types/node-cron": "3.0.11",
-        "@types/nodemailer": "6.4.9",
-        "@types/qs": "6.9.7",
-        "@types/semver": "7.5.6",
-        "@types/tinycolor2": "1.4.5",
-        "vitest": "3.0.8",
-        "webpack-ignore-dynamic-require": "1.0.0",
-      },
-    },
-    "packages/server/sandbox": {
-      "name": "@activepieces/sandbox",
-      "version": "0.0.1",
-      "dependencies": {
-        "@activepieces/server-shared": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "fastify": "5.7.3",
-        "nanoid": "3.3.8",
-        "socket.io": "4.8.1",
-        "tree-kill": "1.2.2",
-        "tslib": "2.6.2",
-      },
-      "devDependencies": {
-        "socket.io-client": "4.8.1",
-        "vitest": "3.0.8",
-      },
-    },
-    "packages/server/shared": {
-      "name": "@activepieces/server-shared",
-      "version": "0.0.2",
-      "dependencies": {
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "@hyperdx/node-opentelemetry": "0.8.2",
-        "@sentry/node": "7.120.0",
-        "@sinclair/typebox": "0.34.11",
-        "async-mutex": "0.4.0",
-        "axios": "1.13.5",
-        "axios-retry": "4.4.1",
-        "bullmq": "5.61.0",
-        "bullmq-otel": "1.0.1",
-        "clear-module": "4.1.2",
-        "dayjs": "1.11.9",
-        "fastify": "5.7.3",
-        "ioredis": "5.4.1",
-        "pino": "10.1.0",
-        "pino-loki": "2.1.3",
-        "redis-memory-server": "0.15.0",
-        "redlock": "5.0.0-beta.2",
-        "tree-kill": "1.2.2",
-        "tslib": "2.6.2",
-        "typeorm": "0.3.26",
-      },
-      "devDependencies": {
-        "@types/node": "20.19.9",
-      },
-    },
-    "packages/server/worker": {
-      "name": "server-worker",
-      "version": "0.1.0",
-      "dependencies": {
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/sandbox": "workspace:*",
-        "@activepieces/server-shared": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "@opentelemetry/api": "1.9.0",
-        "axios": "1.13.5",
-        "axios-retry": "4.4.1",
-        "bullmq": "5.61.0",
-        "bullmq-otel": "1.0.1",
-        "chalk": "4.1.2",
-        "chokidar": "4.0.3",
-        "dayjs": "1.11.9",
-        "fastify": "5.7.3",
-        "fetch-retry": "6.0.0",
-        "http-status-codes": "2.2.0",
-        "ioredis": "5.4.1",
-        "jsonwebtoken": "9.0.1",
-        "nanoid": "3.3.8",
-        "p-limit": "2.3.0",
-        "socket.io": "4.8.1",
-        "socket.io-client": "4.8.1",
-        "tree-kill": "1.2.2",
-        "tslib": "2.6.2",
-        "write-file-atomic": "5.0.1",
-      },
-      "devDependencies": {
-        "@activepieces/engine": "workspace:*",
-        "@types/jsonwebtoken": "9.0.10",
-        "@types/node": "20.19.9",
-        "@types/write-file-atomic": "4.0.3",
-      },
-    },
-    "packages/shared": {
-      "name": "@activepieces/shared",
-      "version": "0.38.4",
-      "dependencies": {
-        "@sinclair/typebox": "0.34.11",
-        "deepmerge-ts": "7.1.0",
-        "nanoid": "3.3.8",
-        "semver": "7.6.0",
-        "socket.io-client": "4.8.1",
-        "tslib": "2.6.2",
-      },
-      "devDependencies": {
-        "@types/node": "20.19.9",
-        "@types/semver": "7.5.6",
-        "vitest": "3.0.8",
-      },
-    },
-    "packages/tests-e2e": {
-      "name": "tests-e2e",
-      "version": "0.0.1",
-      "devDependencies": {
-        "@playwright/test": "1.54.1",
-        "checkly": "6.9.10",
-      },
-    },
   },
   "overrides": {
     "rollup": "npm:@rollup/wasm-node",
@@ -7671,9 +7657,7 @@
   "packages": {
     "@activepieces/cli": ["@activepieces/cli@workspace:packages/cli"],
 
-    "@activepieces/ee-shared": ["@activepieces/ee-shared@workspace:packages/ee/shared"],
-
-    "@activepieces/engine": ["@activepieces/engine@workspace:packages/engine"],
+    "@activepieces/engine": ["@activepieces/engine@workspace:packages/server/engine"],
 
     "@activepieces/import-fresh-webpack": ["@activepieces/import-fresh-webpack@3.3.0", "", { "dependencies": { "parent-module": "^2.0.0", "resolve-from": "^5.0.0" } }, "sha512-lSNLON5thmhQfBt1Fw57wkux4MkMF+7GJszq8NaT+fsz2jKtWLIp156bOYgjGK/6y4AAp23RvXAlv4sPxmF3ow=="],
 
@@ -8783,7 +8767,6 @@
 
     "@activepieces/piece-todoist": ["@activepieces/piece-todoist@workspace:packages/pieces/community/todoist"],
 
-
     "@activepieces/piece-toggl-track": ["@activepieces/piece-toggl-track@workspace:packages/pieces/community/toggl-track"],
 
     "@activepieces/piece-totalcms": ["@activepieces/piece-totalcms@workspace:packages/pieces/community/totalcms"],
@@ -8924,7 +8907,7 @@
 
     "@activepieces/sandbox": ["@activepieces/sandbox@workspace:packages/server/sandbox"],
 
-    "@activepieces/server-shared": ["@activepieces/server-shared@workspace:packages/server/shared"],
+    "@activepieces/server-common": ["@activepieces/server-common@workspace:packages/server/common"],
 
     "@activepieces/shared": ["@activepieces/shared@workspace:packages/shared"],
 
@@ -10998,6 +10981,8 @@
 
     "anymatch": ["anymatch@3.1.3", "", { "dependencies": { "normalize-path": "^3.0.0", "picomatch": "^2.0.4" } }, "sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw=="],
 
+    "api": ["api@workspace:packages/server/api"],
+
     "app-root-path": ["app-root-path@3.1.0", "", {}, "sha512-biN3PwB2gUtjaYy/isrU3aNWI5w+fAfvHkSvCKeQGxhmYpwKFUxudR3Yya+KqVRHBmEDYh+/lTozYCFbmzX4nA=="],
 
     "aproba": ["aproba@2.1.0", "", {}, "sha512-tLIEcj5GuR2RSTnxNKdkK0dJ/GrC7P38sUkiDmDuHfsHmbagTFAxDVIBltoklXEVIQ/f14IL8IMJ5pn9Hez1Ew=="],
@@ -11670,7 +11655,7 @@
 
     "ed2curve": ["ed2curve@0.3.0", "", { "dependencies": { "tweetnacl": "1.x.x" } }, "sha512-8w2fmmq3hv9rCrcI7g9hms2pMunQr1JINfcjwR9tAyZqhtyaMN991lF/ZfHfr5tzZQ8c7y7aBgZbjfbd0fjFwQ=="],
 
-    "ee-embed-sdk": ["ee-embed-sdk@workspace:packages/ee/ui/embed-sdk"],
+    "ee-embed-sdk": ["ee-embed-sdk@workspace:packages/ee/embed-sdk"],
 
     "ee-first": ["ee-first@1.1.1", "", {}, "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow=="],
 
@@ -13464,8 +13449,6 @@
 
     "react-transition-group": ["react-transition-group@4.4.5", "", { "dependencies": { "@babel/runtime": "^7.5.5", "dom-helpers": "^5.0.1", "loose-envify": "^1.4.0", "prop-types": "^15.6.2" }, "peerDependencies": { "react": ">=16.6.0", "react-dom": ">=16.6.0" } }, "sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g=="],
 
-    "react-ui": ["react-ui@workspace:packages/react-ui"],
-
     "react-universal-interface": ["react-universal-interface@0.6.2", "", { "peerDependencies": { "react": "*", "tslib": "*" } }, "sha512-dg8yXdcQmvgR13RIlZbTRQOoUrDciFVoSBZILwjE2LFISxZZ8loVJKAkuzswl5js8BHda79bIb2b84ehU8IjXw=="],
 
     "react-use": ["react-use@17.5.1", "", { "dependencies": { "@types/js-cookie": "^2.2.6", "@xobotyi/scrollbar-width": "^1.9.5", "copy-to-clipboard": "^3.3.1", "fast-deep-equal": "^3.1.3", "fast-shallow-equal": "^1.0.0", "js-cookie": "^2.2.1", "nano-css": "^5.6.2", "react-universal-interface": "^0.6.2", "resize-observer-polyfill": "^1.5.1", "screenfull": "^5.1.0", "set-harmonic-interval": "^1.0.1", "throttle-debounce": "^3.0.1", "ts-easing": "^0.2.0", "tslib": "^2.1.0" }, "peerDependencies": { "react": "*", "react-dom": "*" } }, "sha512-LG/uPEVRflLWMwi3j/sZqR00nF6JGqTTDblkXK2nzXsIvij06hXl1V/MZIlwj1OKIQUtlh1l9jK8gLsRyCQxMg=="],
@@ -13663,10 +13646,6 @@
     "serialize-javascript": ["serialize-javascript@6.0.2", "", { "dependencies": { "randombytes": "^2.1.0" } }, "sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g=="],
 
     "serve-static": ["serve-static@2.2.1", "", { "dependencies": { "encodeurl": "^2.0.0", "escape-html": "^1.0.3", "parseurl": "^1.3.3", "send": "^1.2.0" } }, "sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw=="],
-
-    "server-api": ["server-api@workspace:packages/server/api"],
-
-    "server-worker": ["server-worker@workspace:packages/server/worker"],
 
     "set-blocking": ["set-blocking@2.0.0", "", {}, "sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw=="],
 
@@ -14248,6 +14227,8 @@
 
     "wcwidth": ["wcwidth@1.0.1", "", { "dependencies": { "defaults": "^1.0.3" } }, "sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg=="],
 
+    "web": ["web@workspace:packages/web"],
+
     "web-namespaces": ["web-namespaces@2.0.1", "", {}, "sha512-bKr1DkiNa2krS7qxNtdrtHAmzuYGFQLiQ13TsorsdT6ULTkPLKuu5+GsFpDlg6JFjUTwX2DyhMPG2be8uPrqsQ=="],
 
     "web-streams-polyfill": ["web-streams-polyfill@4.0.0-beta.3", "", {}, "sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug=="],
@@ -14305,6 +14286,8 @@
     "word-wrap": ["word-wrap@1.2.5", "", {}, "sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA=="],
 
     "wordwrap": ["wordwrap@1.0.0", "", {}, "sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q=="],
+
+    "worker": ["worker@workspace:packages/server/worker"],
 
     "worker-factory": ["worker-factory@7.0.48", "", { "dependencies": { "@babel/runtime": "^7.28.6", "fast-unique-numbers": "^9.0.26", "tslib": "^2.8.1" } }, "sha512-CGmBy3tJvpBPjUvb0t4PrpKubUsfkI1Ohg0/GGFU2RvA9j/tiVYwKU8O7yu7gH06YtzbeJLzdUR29lmZKn5pag=="],
 
@@ -15782,6 +15765,12 @@
 
     "anymatch/picomatch": ["picomatch@2.3.1", "", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
 
+    "api/@types/deep-equal": ["@types/deep-equal@1.0.1", "", {}, "sha512-mMUu4nWHLBlHtxXY17Fg6+ucS/MnndyOWyOe7MmwkoMYxvfQU2ajtRaEvqSUv+aVkMqH/C0NCI8UoVfRNQ10yg=="],
+
+    "api/@types/nodemailer": ["@types/nodemailer@6.4.9", "", { "dependencies": { "@types/node": "*" } }, "sha512-XYG8Gv+sHjaOtUpiuytahMy2mM3rectgroNbs6R3djZEKmPNiIJwe9KqOJBGzKKnNZNKvnuvmugBgpq3w/S0ig=="],
+
+    "api/@types/qs": ["@types/qs@6.9.7", "", {}, "sha512-FGa1F62FT09qcrueBA6qYTrJPVDzah9a+493+o2PCXsesWHIn27G98TsSMs3WPNbZIEj4+VJf6saSFpvD+3Zsw=="],
+
     "are-we-there-yet/readable-stream": ["readable-stream@3.6.2", "", { "dependencies": { "inherits": "^2.0.3", "string_decoder": "^1.1.1", "util-deprecate": "^1.0.1" } }, "sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA=="],
 
     "aria-hidden/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
@@ -16418,10 +16407,6 @@
 
     "react-transition-group/@babel/runtime": ["@babel/runtime@7.28.6", "", {}, "sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA=="],
 
-    "react-ui/@types/deep-equal": ["@types/deep-equal@1.0.1", "", {}, "sha512-mMUu4nWHLBlHtxXY17Fg6+ucS/MnndyOWyOe7MmwkoMYxvfQU2ajtRaEvqSUv+aVkMqH/C0NCI8UoVfRNQ10yg=="],
-
-    "react-ui/@types/qs": ["@types/qs@6.9.7", "", {}, "sha512-FGa1F62FT09qcrueBA6qYTrJPVDzah9a+493+o2PCXsesWHIn27G98TsSMs3WPNbZIEj4+VJf6saSFpvD+3Zsw=="],
-
     "react-use/js-cookie": ["js-cookie@2.2.1", "", {}, "sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ=="],
 
     "react-use/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
@@ -16483,12 +16468,6 @@
     "seek-bzip/commander": ["commander@2.20.3", "", {}, "sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ=="],
 
     "send/mime-types": ["mime-types@3.0.2", "", { "dependencies": { "mime-db": "^1.54.0" } }, "sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A=="],
-
-    "server-api/@types/deep-equal": ["@types/deep-equal@1.0.1", "", {}, "sha512-mMUu4nWHLBlHtxXY17Fg6+ucS/MnndyOWyOe7MmwkoMYxvfQU2ajtRaEvqSUv+aVkMqH/C0NCI8UoVfRNQ10yg=="],
-
-    "server-api/@types/nodemailer": ["@types/nodemailer@6.4.9", "", { "dependencies": { "@types/node": "*" } }, "sha512-XYG8Gv+sHjaOtUpiuytahMy2mM3rectgroNbs6R3djZEKmPNiIJwe9KqOJBGzKKnNZNKvnuvmugBgpq3w/S0ig=="],
-
-    "server-api/@types/qs": ["@types/qs@6.9.7", "", {}, "sha512-FGa1F62FT09qcrueBA6qYTrJPVDzah9a+493+o2PCXsesWHIn27G98TsSMs3WPNbZIEj4+VJf6saSFpvD+3Zsw=="],
 
     "showdown/commander": ["commander@9.5.0", "", {}, "sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ=="],
 
@@ -16645,6 +16624,10 @@
     "wav/debug": ["debug@2.6.9", "", { "dependencies": { "ms": "2.0.0" } }, "sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA=="],
 
     "wav/readable-stream": ["readable-stream@1.1.14", "", { "dependencies": { "core-util-is": "~1.0.0", "inherits": "~2.0.1", "isarray": "0.0.1", "string_decoder": "~0.10.x" } }, "sha512-+MeVjFf4L44XUkhM1eYbD8fyEsxcV81pqMSR5gblfcLCHfZvbrqy4/qYHE+/R5HoBUT11WV5O08Cr1n3YXkWVQ=="],
+
+    "web/@types/deep-equal": ["@types/deep-equal@1.0.1", "", {}, "sha512-mMUu4nWHLBlHtxXY17Fg6+ucS/MnndyOWyOe7MmwkoMYxvfQU2ajtRaEvqSUv+aVkMqH/C0NCI8UoVfRNQ10yg=="],
+
+    "web/@types/qs": ["@types/qs@6.9.7", "", {}, "sha512-FGa1F62FT09qcrueBA6qYTrJPVDzah9a+493+o2PCXsesWHIn27G98TsSMs3WPNbZIEj4+VJf6saSFpvD+3Zsw=="],
 
     "webpack/eslint-scope": ["eslint-scope@5.1.1", "", { "dependencies": { "esrecurse": "^4.3.0", "estraverse": "^4.1.1" } }, "sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw=="],
 
@@ -17392,6 +17375,8 @@
 
     "ai-gateway-provider/@ai-sdk/google-vertex/google-auth-library": ["google-auth-library@10.6.1", "", { "dependencies": { "base64-js": "^1.3.0", "ecdsa-sig-formatter": "^1.0.11", "gaxios": "7.1.3", "gcp-metadata": "8.1.2", "google-logging-utils": "1.1.3", "jws": "^4.0.0" } }, "sha512-5awwuLrzNol+pFDmKJd0dKtZ0fPLAtoA5p7YO4ODsDu6ONJUVqbYwvv8y2ZBO5MBNp9TJXigB19710kYpBPdtA=="],
 
+    "api/@types/nodemailer/@types/node": ["@types/node@22.7.5", "", { "dependencies": { "undici-types": "~6.19.2" } }, "sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ=="],
+
     "broccoli-output-wrapper/fs-extra/jsonfile": ["jsonfile@4.0.0", "", { "optionalDependencies": { "graceful-fs": "^4.1.6" } }, "sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg=="],
 
     "broccoli-output-wrapper/fs-extra/universalify": ["universalify@0.1.2", "", {}, "sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg=="],
@@ -17765,8 +17750,6 @@
     "secp256k1/elliptic/bn.js": ["bn.js@4.12.3", "", {}, "sha512-fGTi3gxV/23FTYdAoUtLYp6qySe2KE3teyZitipKNRuVYcBkoP/bB3guXN/XVKUe9mxCHXnc9C4ocyz8OmgN0g=="],
 
     "send/mime-types/mime-db": ["mime-db@1.54.0", "", {}, "sha512-aU5EJuIN2WDemCcAp2vFBfp/m4EAhWJnUNSSw0ixs7/kXbd6Pg64EmwJkNdFhB8aWt1sH2CTXrLxo/iAGV3oPQ=="],
-
-    "server-api/@types/nodemailer/@types/node": ["@types/node@22.7.5", "", { "dependencies": { "undici-types": "~6.19.2" } }, "sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ=="],
 
     "slackify-markdown/remark-gfm/mdast-util-gfm": ["mdast-util-gfm@0.1.2", "", { "dependencies": { "mdast-util-gfm-autolink-literal": "^0.1.0", "mdast-util-gfm-strikethrough": "^0.2.0", "mdast-util-gfm-table": "^0.1.0", "mdast-util-gfm-task-list-item": "^0.1.0", "mdast-util-to-markdown": "^0.6.1" } }, "sha512-NNkhDx/qYcuOWB7xHUGWZYVXvjPFFd6afg6/e2g+SV4r9q5XUcCbV4Wfa3DLYIiD+xAEZc6K4MGaE/m0KDcPwQ=="],
 
@@ -18228,6 +18211,8 @@
 
     "ai-gateway-provider/@ai-sdk/google-vertex/google-auth-library/jws": ["jws@4.0.1", "", { "dependencies": { "jwa": "^2.0.1", "safe-buffer": "^5.0.1" } }, "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA=="],
 
+    "api/@types/nodemailer/@types/node/undici-types": ["undici-types@6.19.8", "", {}, "sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw=="],
+
     "cacache/tar/minizlib/minipass": ["minipass@3.3.6", "", { "dependencies": { "yallist": "^4.0.0" } }, "sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw=="],
 
     "checkly/@typescript-eslint/typescript-estree/@typescript-eslint/visitor-keys/eslint-visitor-keys": ["eslint-visitor-keys@5.0.1", "", {}, "sha512-tD40eHxA35h0PEIZNeIjkHoDR4YjjJp34biM0mDvplBe//mB+IHCqHDGV7pxF+7MklTvighcCPPZC7ynWyjdTA=="],
@@ -18327,8 +18312,6 @@
     "qrcode/yargs/yargs-parser/camelcase": ["camelcase@5.3.1", "", {}, "sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg=="],
 
     "read-pkg-up/find-up/locate-path/p-locate": ["p-locate@4.1.0", "", { "dependencies": { "p-limit": "^2.2.0" } }, "sha512-R79ZZ/0wAxKGu3oYMlz8jy/kbhsNrS7SKZ7PxEHBgJ5+F2mtFW2fK2cOtBh1cHYkQsbzFV7I+EoRKe6Yt0oK7A=="],
-
-    "server-api/@types/nodemailer/@types/node/undici-types": ["undici-types@6.19.8", "", {}, "sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw=="],
 
     "slackify-markdown/remark-gfm/mdast-util-gfm/mdast-util-gfm-autolink-literal": ["mdast-util-gfm-autolink-literal@0.1.3", "", { "dependencies": { "ccount": "^1.0.0", "mdast-util-find-and-replace": "^1.1.0", "micromark": "^2.11.3" } }, "sha512-GjmLjWrXg1wqMIO9+ZsRik/s7PLwTaeCHVB7vRxUwLntZc8mzmTsLVr6HW1yLokcnhfURsn5zmSVdi3/xWWu1A=="],
 

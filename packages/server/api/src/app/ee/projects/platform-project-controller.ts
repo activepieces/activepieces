@@ -1,13 +1,11 @@
-import {
-    CreatePlatformProjectRequest,
-    ListProjectRequestForPlatformQueryParams,
-    UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
+    CreatePlatformProjectRequest,
+
     ErrorCode,
+    ListProjectRequestForPlatformQueryParams,
     Permission,
     PlatformRole,
     Principal,
@@ -17,7 +15,8 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     TeamProjectsLimit,
-} from '@activepieces/shared'
+    UpdateProjectPlatformRequest,
+    } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'

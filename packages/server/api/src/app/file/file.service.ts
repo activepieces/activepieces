@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,

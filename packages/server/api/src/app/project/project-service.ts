@@ -1,4 +1,4 @@
-import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
+import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApId,

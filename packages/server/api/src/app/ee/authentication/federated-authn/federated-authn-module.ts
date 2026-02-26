@@ -1,11 +1,9 @@
+import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import {
     ApplicationEventName,
-} from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
-import {
+
     ClaimTokenRequest,
-    ThirdPartyAuthnProviderEnum,
-} from '@activepieces/shared'
+    ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,

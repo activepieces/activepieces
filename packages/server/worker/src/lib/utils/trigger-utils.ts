@@ -1,5 +1,5 @@
 import { inspect } from 'util'
-import { triggerRunStats } from '@activepieces/server-shared'
+import { triggerRunStats } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     EngineResponseStatus,

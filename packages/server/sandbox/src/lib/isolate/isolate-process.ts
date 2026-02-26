@@ -1,7 +1,7 @@
 import { spawn } from 'child_process'
 import path from 'path'
 import { arch } from 'process'
-import { execPromise } from '@activepieces/server-shared'
+import { execPromise } from '@activepieces/server-common'
 import { CreateSandboxProcessParams, SandboxLogger, SandboxProcessMaker } from '../types'
 
 const getIsolateExecutableName = (): string => {
