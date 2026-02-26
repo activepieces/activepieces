@@ -86,6 +86,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             platformId,
             status: active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
             platformRole,
+            externalId,
         })
 
         await emailService(log).sendScimUserWelcome({

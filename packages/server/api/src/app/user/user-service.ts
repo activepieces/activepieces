@@ -37,11 +37,12 @@ export const userRepo = repoFactory(UserEntity)
 
 export const userService = {
     async create(params: CreateParams): Promise<User> {
+        const isActive = params.isActive ?? true
         const user: NewUser = {
             id: apId(),
             identityId: params.identityId,
             platformRole: params.platformRole,
-            status: params.isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE,
+            status: isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE,
             externalId: params.externalId,
             platformId: params.platformId,
         }

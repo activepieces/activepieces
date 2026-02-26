@@ -98,7 +98,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -121,7 +121,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -137,7 +137,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -145,7 +145,7 @@ describe('SCIM 2.0 API', () => {
 
             const getResponse = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Users/${userId}`,
+                url: `/v1/scim/v2/Users/${userId}`,
                 headers: { authorization: bearerToken },
             })
 
@@ -163,20 +163,20 @@ describe('SCIM 2.0 API', () => {
 
             await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser1,
             })
             await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser2,
             })
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
             })
 
@@ -195,14 +195,14 @@ describe('SCIM 2.0 API', () => {
 
             await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
 
             const response = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Users?filter=userName eq "${email}"`,
+                url: `/v1/scim/v2/Users?filter=userName eq "${email}"`,
                 headers: { authorization: bearerToken },
             })
 
@@ -218,7 +218,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -227,7 +227,7 @@ describe('SCIM 2.0 API', () => {
             // IdP sends PATCH to deactivate
             const patchResponse = await app?.inject({
                 method: 'PATCH',
-                url: `/scim/v2/Users/${userId}`,
+                url: `/v1/scim/v2/Users/${userId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
@@ -251,7 +251,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -259,7 +259,7 @@ describe('SCIM 2.0 API', () => {
 
             const patchResponse = await app?.inject({
                 method: 'PATCH',
-                url: `/scim/v2/Users/${userId}`,
+                url: `/v1/scim/v2/Users/${userId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
@@ -282,7 +282,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -301,7 +301,7 @@ describe('SCIM 2.0 API', () => {
 
             const putResponse = await app?.inject({
                 method: 'PUT',
-                url: `/scim/v2/Users/${userId}`,
+                url: `/v1/scim/v2/Users/${userId}`,
                 headers: { authorization: bearerToken },
                 body: updatedUser,
             })
@@ -318,7 +318,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -326,7 +326,7 @@ describe('SCIM 2.0 API', () => {
 
             const deleteResponse = await app?.inject({
                 method: 'DELETE',
-                url: `/scim/v2/Users/${userId}`,
+                url: `/v1/scim/v2/Users/${userId}`,
                 headers: { authorization: bearerToken },
             })
 
@@ -335,7 +335,7 @@ describe('SCIM 2.0 API', () => {
             // Verify user is now inactive
             const getResponse = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Users/${userId}`,
+                url: `/v1/scim/v2/Users/${userId}`,
                 headers: { authorization: bearerToken },
             })
             expect(getResponse?.json().active).toBe(false)
@@ -344,7 +344,7 @@ describe('SCIM 2.0 API', () => {
         it('should reject unauthenticated requests', async () => {
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
             })
 
             // Unauthenticated requests get UNKNOWN principal, which fails authorization as FORBIDDEN
@@ -364,7 +364,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: `Bearer ${userToken}` },
             })
 
@@ -381,7 +381,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: `Bearer ${mockApiKey.value}` },
             })
 
@@ -400,7 +400,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -431,7 +431,7 @@ describe('SCIM 2.0 API', () => {
 
             const user1Response = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: user1,
             })
@@ -439,7 +439,7 @@ describe('SCIM 2.0 API', () => {
 
             const user2Response = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: user2,
             })
@@ -455,7 +455,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -474,7 +474,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -482,7 +482,7 @@ describe('SCIM 2.0 API', () => {
 
             const getResponse = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
             })
 
@@ -498,20 +498,20 @@ describe('SCIM 2.0 API', () => {
 
             await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: mockIdpGroup(),
             })
             await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: mockIdpGroup(),
             })
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
             })
 
@@ -528,7 +528,7 @@ describe('SCIM 2.0 API', () => {
             const idpUser = mockIdpUser()
             const userResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -538,7 +538,7 @@ describe('SCIM 2.0 API', () => {
             const idpGroup = mockIdpGroup()
             const groupResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -547,7 +547,7 @@ describe('SCIM 2.0 API', () => {
             // IdP sends PATCH to add member
             const patchResponse = await app?.inject({
                 method: 'PATCH',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
@@ -574,7 +574,7 @@ describe('SCIM 2.0 API', () => {
             const idpUser = mockIdpUser()
             const userResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -583,7 +583,7 @@ describe('SCIM 2.0 API', () => {
             const idpGroup = mockIdpGroup({ members: [{ value: userId }] })
             const groupResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -592,7 +592,7 @@ describe('SCIM 2.0 API', () => {
             // IdP sends PATCH to remove member
             const patchResponse = await app?.inject({
                 method: 'PATCH',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
@@ -616,7 +616,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -625,7 +625,7 @@ describe('SCIM 2.0 API', () => {
             const newName = 'Renamed Engineering Team'
             const patchResponse = await app?.inject({
                 method: 'PATCH',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
@@ -650,7 +650,7 @@ describe('SCIM 2.0 API', () => {
             const idpUser = mockIdpUser()
             const userResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: idpUser,
             })
@@ -659,7 +659,7 @@ describe('SCIM 2.0 API', () => {
             const idpGroup = mockIdpGroup()
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -675,7 +675,7 @@ describe('SCIM 2.0 API', () => {
 
             const putResponse = await app?.inject({
                 method: 'PUT',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
                 body: replacedGroup,
             })
@@ -693,7 +693,7 @@ describe('SCIM 2.0 API', () => {
 
             const createResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: idpGroup,
             })
@@ -701,7 +701,7 @@ describe('SCIM 2.0 API', () => {
 
             const deleteResponse = await app?.inject({
                 method: 'DELETE',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
             })
 
@@ -710,7 +710,7 @@ describe('SCIM 2.0 API', () => {
             // Verify the project is soft-deleted (GET should 404)
             const getResponse = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
             })
             expect(getResponse?.statusCode).toBe(StatusCodes.NOT_FOUND)
@@ -726,7 +726,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/ServiceProviderConfig',
+                url: '/v1/scim/v2/ServiceProviderConfig',
                 headers: { authorization: bearerToken },
             })
 
@@ -743,7 +743,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/ResourceTypes',
+                url: '/v1/scim/v2/ResourceTypes',
                 headers: { authorization: bearerToken },
             })
 
@@ -758,7 +758,7 @@ describe('SCIM 2.0 API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/scim/v2/Schemas',
+                url: '/v1/scim/v2/Schemas',
                 headers: { authorization: bearerToken },
             })
 
@@ -794,7 +794,7 @@ describe('SCIM 2.0 API', () => {
 
             const aliceResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: engineerAlice,
             })
@@ -803,7 +803,7 @@ describe('SCIM 2.0 API', () => {
 
             const bobResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Users',
+                url: '/v1/scim/v2/Users',
                 headers: { authorization: bearerToken },
                 body: engineerBob,
             })
@@ -822,7 +822,7 @@ describe('SCIM 2.0 API', () => {
 
             const groupResponse = await app?.inject({
                 method: 'POST',
-                url: '/scim/v2/Groups',
+                url: '/v1/scim/v2/Groups',
                 headers: { authorization: bearerToken },
                 body: engineeringGroup,
             })
@@ -833,7 +833,7 @@ describe('SCIM 2.0 API', () => {
             // Step 3: IdP removes Bob from the group
             const removeBobResponse = await app?.inject({
                 method: 'PATCH',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
@@ -852,7 +852,7 @@ describe('SCIM 2.0 API', () => {
             // Step 4: IdP deactivates Bob (offboarding)
             const deactivateBobResponse = await app?.inject({
                 method: 'PATCH',
-                url: `/scim/v2/Users/${bobId}`,
+                url: `/v1/scim/v2/Users/${bobId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
@@ -870,21 +870,21 @@ describe('SCIM 2.0 API', () => {
             // Step 5: Verify final state
             const finalGroupResponse = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
             })
             expect(finalGroupResponse?.json().members).toHaveLength(1)
 
             const finalAliceResponse = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Users/${aliceId}`,
+                url: `/v1/scim/v2/Users/${aliceId}`,
                 headers: { authorization: bearerToken },
             })
             expect(finalAliceResponse?.json().active).toBe(true)
 
             const finalBobResponse = await app?.inject({
                 method: 'GET',
-                url: `/scim/v2/Users/${bobId}`,
+                url: `/v1/scim/v2/Users/${bobId}`,
                 headers: { authorization: bearerToken },
             })
             expect(finalBobResponse?.json().active).toBe(false)
@@ -898,9 +898,9 @@ describe('SCIM 2.0 API', () => {
             const user2 = mockIdpUser({ externalId: 'azure-user-2' })
             const user3 = mockIdpUser({ externalId: 'azure-user-3' })
 
-            const u1Res = await app?.inject({ method: 'POST', url: '/scim/v2/Users', headers: { authorization: bearerToken }, body: user1 })
-            const u2Res = await app?.inject({ method: 'POST', url: '/scim/v2/Users', headers: { authorization: bearerToken }, body: user2 })
-            const u3Res = await app?.inject({ method: 'POST', url: '/scim/v2/Users', headers: { authorization: bearerToken }, body: user3 })
+            const u1Res = await app?.inject({ method: 'POST', url: '/v1/scim/v2/Users', headers: { authorization: bearerToken }, body: user1 })
+            const u2Res = await app?.inject({ method: 'POST', url: '/v1/scim/v2/Users', headers: { authorization: bearerToken }, body: user2 })
+            const u3Res = await app?.inject({ method: 'POST', url: '/v1/scim/v2/Users', headers: { authorization: bearerToken }, body: user3 })
 
             const u1Id = u1Res?.json().id
             const u2Id = u2Res?.json().id
@@ -911,13 +911,13 @@ describe('SCIM 2.0 API', () => {
                 displayName: 'Sales Team',
                 members: [{ value: u1Id }, { value: u2Id }],
             })
-            const gRes = await app?.inject({ method: 'POST', url: '/scim/v2/Groups', headers: { authorization: bearerToken }, body: group })
+            const gRes = await app?.inject({ method: 'POST', url: '/v1/scim/v2/Groups', headers: { authorization: bearerToken }, body: group })
             const groupId = gRes?.json().id
 
             // Azure AD does a full PUT to replace membership: now user2 and user3
             const putResponse = await app?.inject({
                 method: 'PUT',
-                url: `/scim/v2/Groups/${groupId}`,
+                url: `/v1/scim/v2/Groups/${groupId}`,
                 headers: { authorization: bearerToken },
                 body: {
                     schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
