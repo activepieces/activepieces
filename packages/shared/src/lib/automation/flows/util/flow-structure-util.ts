@@ -1,6 +1,6 @@
 import { isNil } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
-import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, FlowBranch, LoopOnItemsAction, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
@@ -20,8 +20,8 @@ function isTrigger(type: FlowActionType | FlowTriggerType | undefined): type is 
     return Object.entries(FlowTriggerType).some(([, value]) => value === type)
 }
 
-function getActionOrThrow(name: string, flowRoot: Step): FlowAction {
-    const step = getStepOrThrow(name, flowRoot)
+function getActionOrThrow(name: string, flowVersion: FlowVersion): FlowAction {
+    const step = getStepOrThrow(name, flowVersion)
     if (!isAction(step.type)) {
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
@@ -33,25 +33,27 @@ function getActionOrThrow(name: string, flowRoot: Step): FlowAction {
     return step as FlowAction
 }
 
-function getTriggerOrThrow(name: string, flowRoot: Step): FlowTrigger {
-    const step = getStepOrThrow(name, flowRoot)
-    if (!isTrigger(step.type)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.STEP_NOT_FOUND,
-            params: {
-                stepName: name,
-            },
-        })
+function getTriggerOrThrow(name: string, flowVersion: FlowVersion): FlowTrigger {
+    if (flowVersion.trigger.name === name) {
+        return flowVersion.trigger
     }
-    return step as FlowTrigger
+    throw new ActivepiecesError({
+        code: ErrorCode.STEP_NOT_FOUND,
+        params: {
+            stepName: name,
+        },
+    })
 }
 
-function getStep(name: string, flowRoot: Step): Step | undefined {
-    return getAllSteps(flowRoot).find((step) => step.name === name)
+function getStep(name: string, flowVersion: FlowVersion): Step | undefined {
+    if (flowVersion.trigger.name === name) {
+        return flowVersion.trigger
+    }
+    return flowVersion.steps.find((step) => step.name === name)
 }
 
-function getStepOrThrow(name: string, flowRoot: Step): Step {
-    const step = getStep(name, flowRoot)
+function getStepOrThrow(name: string, flowVersion: FlowVersion): Step {
+    const step = getStep(name, flowVersion)
     if (isNil(step)) {
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
@@ -63,103 +65,100 @@ function getStepOrThrow(name: string, flowRoot: Step): Step {
     return step
 }
 
-function transferStep<T extends Step>(
-    step: Step,
-    transferFunction: (step: T) => T,
-): Step {
-    const updatedStep = transferFunction(step as T)
-    switch (updatedStep.type) {
-        case FlowActionType.LOOP_ON_ITEMS: {
-            const { firstLoopAction } = updatedStep
-            if (firstLoopAction) {
-                updatedStep.firstLoopAction = transferStep(
-                    firstLoopAction,
-                    transferFunction,
-                ) as FlowAction
-            }
-            break
-        }
-        case FlowActionType.ROUTER: {
-            const { children } = updatedStep
-            if (children) {
-                updatedStep.children = children.map((child) =>
-                    child ? (transferStep(child, transferFunction) as FlowAction) : null,
-                )
-            }
-            break
-        }
-        default:
-            break
-    }
-
-    if (updatedStep.nextAction) {
-        updatedStep.nextAction = transferStep(
-            updatedStep.nextAction,
-            transferFunction,
-        ) as FlowAction
-    }
-
-    return updatedStep
+function getAllSteps(flowVersion: FlowVersion): Step[] {
+    return [flowVersion.trigger, ...flowVersion.steps]
 }
 
-
-function transferFlow<T extends Step>(
+function transferFlow(
     flowVersion: FlowVersion,
-    transferFunction: (step: T) => T,
+    transferFunction: (step: Step) => Step,
 ): FlowVersion {
-    const clonedFlow = JSON.parse(JSON.stringify(flowVersion))
-    clonedFlow.trigger = transferStep(
-        clonedFlow.trigger,
-        transferFunction,
-    ) as FlowTrigger
+    const clonedFlow: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
+    clonedFlow.trigger = transferFunction(clonedFlow.trigger) as FlowTrigger
+    clonedFlow.steps = clonedFlow.steps.map((step) => transferFunction(step) as FlowAction)
     return clonedFlow
 }
 
-function getAllSteps(step: Step): Step[] {
-    const steps: Step[] = []
-    transferStep(step, (currentStep) => {
-        steps.push(currentStep)
-        return currentStep
-    })
-    return steps
-}
-
-
-const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined) => {
+const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined): FlowBranch => {
+    if (conditions) {
+        return {
+            conditions,
+            branchType: BranchExecutionType.CONDITION,
+            branchName,
+            steps: [],
+        }
+    }
     return {
-        conditions: conditions ?? [[emptyCondition]],
+        conditions: [[emptyCondition]],
         branchType: BranchExecutionType.CONDITION,
         branchName,
+        steps: [],
     }
 }
 
-function findPathToStep(trigger: FlowTrigger, targetStepName: string): StepWithIndex[] {
-    const steps = flowStructureUtil.getAllSteps(trigger).map((step, dfsIndex) => ({
-        ...step,
-        dfsIndex,
-    }))
-    return steps
-        .filter((step) => {
-            const steps = flowStructureUtil.getAllSteps(step)
-            return steps.some((s) => s.name === targetStepName)
-        })
-        .filter((step) => step.name !== targetStepName)
+function findPathToStep(flowVersion: FlowVersion, targetStepName: string): StepWithIndex[] {
+    const result: StepWithIndex[] = []
+    const allSteps = getAllSteps(flowVersion)
+
+    for (let i = 0; i < allSteps.length; i++) {
+        const step = allSteps[i]
+        if (isParentOf(step, targetStepName)) {
+            result.push({ ...step, dfsIndex: i })
+        }
+    }
+    return result
 }
 
-
-function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
-    return getAllSteps({
-        ...action,
-        nextAction: undefined,
-    })
+function isParentOf(step: Step, targetStepName: string): boolean {
+    if (step.name === targetStepName) {
+        return false
+    }
+    const stepRefs = getDirectChildRefs(step)
+    if (stepRefs.includes(targetStepName)) {
+        return true
+    }
+    return false
 }
 
-function isChildOf(parent: Step, childStepName: string): boolean {
+function getDirectChildRefs(step: Step): string[] {
+    if (isTrigger(step.type)) {
+        return (step as FlowTrigger).steps ?? []
+    }
+    switch (step.type) {
+        case FlowActionType.LOOP_ON_ITEMS: {
+            const loopAction = step as LoopOnItemsAction
+            return loopAction.children ?? []
+        }
+        case FlowActionType.ROUTER: {
+            const routerAction = step as RouterAction
+            return (routerAction.branches ?? []).flatMap((branch) => branch.steps)
+        }
+        default:
+            return []
+    }
+}
+
+function getAllChildSteps(action: LoopOnItemsAction | RouterAction, flowVersion: FlowVersion): Step[] {
+    const childNames = getDirectChildRefs(action)
+    const result: Step[] = []
+    for (const name of childNames) {
+        const step = getStep(name, flowVersion)
+        if (step) {
+            result.push(step)
+            if (step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.ROUTER) {
+                result.push(...getAllChildSteps(step as LoopOnItemsAction | RouterAction, flowVersion))
+            }
+        }
+    }
+    return result
+}
+
+function isChildOf(parent: Step, childStepName: string, flowVersion: FlowVersion): boolean {
     switch (parent.type) {
         case FlowActionType.ROUTER:
         case FlowActionType.LOOP_ON_ITEMS: {
-            const children = getAllChildSteps(parent)
-            return children.findIndex((c) => c.name === childStepName) > -1
+            const children = getAllChildSteps(parent as LoopOnItemsAction | RouterAction, flowVersion)
+            return children.some((c) => c.name === childStepName)
         }
         default:
             break
@@ -167,8 +166,8 @@ function isChildOf(parent: Step, childStepName: string): boolean {
     return false
 }
 
-const findUnusedNames = (source: FlowTrigger | string[], count = 1) => {
-    const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
+const findUnusedNames = (flowVersion: FlowVersion, count = 1) => {
+    const names = getAllSteps(flowVersion).map((f) => f.name)
     const unusedNames = []
     for (let i = 1; i <= count; i++) {
         const name = findUnusedName(names)
@@ -178,8 +177,8 @@ const findUnusedNames = (source: FlowTrigger | string[], count = 1) => {
     return unusedNames
 }
 
-const findUnusedName = (source: FlowTrigger | string[]) => {
-    const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
+const findUnusedName = (source: FlowVersion | string[]) => {
+    const names = Array.isArray(source) ? source : getAllSteps(source).map((f) => f.name)
     let index = 1
     let name = 'step_1'
     while (names.includes(name)) {
@@ -187,19 +186,6 @@ const findUnusedName = (source: FlowTrigger | string[]) => {
         name = 'step_' + index
     }
     return name
-}
-
-
-function getAllNextActionsWithoutChildren(start: Step): Step[] {
-    const actions: Step[] = []
-    let currentAction = start.nextAction
-
-    while (!isNil(currentAction)) {
-        actions.push(currentAction)
-        currentAction = currentAction.nextAction
-    }
-
-    return actions
 }
 
 
@@ -212,14 +198,14 @@ function extractConnectionIdsFromAuth(auth: string): string[] {
 }
 
 function extractAgentIds(flowVersion: FlowVersion): string[] {
-    const getExternalAgentId = (action: Step) => {
-        if (isAgentPiece(action) && 'agentId' in action.settings.input) {
-            return action.settings.input.agentId
-        }
-        return null
-    }
+    return getAllSteps(flowVersion).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+}
 
-    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+function getExternalAgentId(action: Step) {
+    if (isAgentPiece(action) && 'agentId' in action.settings.input) {
+        return action.settings.input.agentId
+    }
+    return null
 }
 
 function isAgentPiece(action: Step) {
@@ -233,8 +219,7 @@ function extractConnectionIds(flowVersion: FlowVersion): string[] {
         ? extractConnectionIdsFromAuth(flowVersion.trigger.settings.input.auth)
         : []
 
-    const stepAuthIds = flowStructureUtil
-        .getAllSteps(flowVersion.trigger)
+    const stepAuthIds = getAllSteps(flowVersion)
         .flatMap(step =>
             step.settings?.input?.auth
                 ? extractConnectionIdsFromAuth(step.settings.input.auth)
@@ -248,7 +233,6 @@ export const flowStructureUtil = {
     isTrigger,
     isAction,
     getAllSteps,
-    transferStep,
     transferFlow,
     getStepOrThrow,
     getActionOrThrow,
@@ -259,9 +243,9 @@ export const flowStructureUtil = {
     isChildOf,
     findUnusedName,
     findUnusedNames,
-    getAllNextActionsWithoutChildren,
     getAllChildSteps,
     extractConnectionIds,
     isAgentPiece,
     extractAgentIds,
+    getDirectChildRefs,
 }
