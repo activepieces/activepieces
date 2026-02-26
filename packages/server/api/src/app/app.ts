@@ -44,6 +44,7 @@ import { platformAiCreditsService } from './ee/platform/platform-plan/platform-a
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
+import { platformProjectBackgroundJobs } from './ee/projects/platform-project-jobs'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
 import { gitRepoModule } from './ee/projects/project-release/git-sync/git-sync.module'
@@ -215,8 +216,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(templateModule)
     await app.register(userBadgeModule)
     await app.register(platformAnalyticsModule)
-    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
     app.get(
         '/redirect',

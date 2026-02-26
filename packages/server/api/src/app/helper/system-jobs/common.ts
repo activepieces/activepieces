@@ -1,4 +1,4 @@
-import { Flow, FlowId, FlowStatus, ProjectId } from '@activepieces/shared'
+import { Flow, FlowId, FlowStatus, PlatformId, ProjectId } from '@activepieces/shared'
 import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
@@ -11,12 +11,12 @@ export enum SystemJobName {
     DELETE_FLOW = 'delete-flow',
     UPDATE_FLOW_STATUS = 'update-flow-status',
     AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
+    HARD_DELETE_PROJECT = 'hard-delete-project',
 }
 
 type DeleteFlowDurableSystemJobData =  {
     flow: Flow
     preDeleteDone: boolean
-    dbDeleteDone: boolean
 }
 
 type UpdateFlowStatusDurableSystemJobData =  {
@@ -31,6 +31,12 @@ type AiCreditUpdateCheckSystemJobData = {
     platformId: string
 }
 
+type HardDeleteProjectSystemJobData = {
+    projectId: ProjectId
+    platformId: PlatformId
+    preDeletedFlowIds: FlowId[]
+}
+
 type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
@@ -40,6 +46,7 @@ type SystemJobDataMap = {
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
     [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
+    [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

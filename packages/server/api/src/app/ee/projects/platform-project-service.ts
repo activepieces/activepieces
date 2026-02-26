@@ -1,6 +1,7 @@
 import {
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { apDayjs } from '@activepieces/server-shared'
 import {
     Cursor,
     isNil,
@@ -16,14 +17,13 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, ILike, In, IsNull } from 'typeorm'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
-import { transaction } from '../../core/db/transaction'
-import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
@@ -106,28 +106,27 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             type: ProjectType.PERSONAL,
         })
         if (!isNil(personalProject)) {
-            await this.hardDelete({ id: personalProject.id, platformId })
+            await this.markForDeletion({ id: personalProject.id, platformId })
         }
     },
 
-    async hardDelete({ id, platformId }: HardDeleteParams): Promise<void> {
-        await transaction(async (entityManager) => {
-            const allFlows = await flowRepo(entityManager).find({
-                where: {
+    async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
+        await projectRepo().softDelete({ id, platformId })
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.HARD_DELETE_PROJECT,
+                data: {
                     projectId: id,
+                    platformId,
+                    preDeletedFlowIds: [],
                 },
-                select: {
-                    id: true,
-                },
-            })
-            await Promise.all(allFlows.map((flow) => flowService(log).delete({ id: flow.id, projectId: id })))
-            await appConnectionService(log).deleteAllProjectConnections(id)
-            await projectRepo(entityManager).delete({
-                id,
-                platformId,
-            })
+                jobId: `hard-delete-project-${id}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs(),
+            },
         })
-
     },
 })
 
@@ -184,7 +183,7 @@ type UpdateParams = {
     platformId?: PlatformId
 }
 
-type HardDeleteParams = {
+type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
 }
