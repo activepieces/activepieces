@@ -1,3 +1,9 @@
+import {
+  BadgeAwarded,
+  BADGES,
+  ApFlagId,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 import confetti from 'canvas-confetti';
 import { Trophy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -6,12 +12,6 @@ import { toast } from 'sonner';
 import { useSocket } from '@/components/socket-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import {
-  BadgeAwarded,
-  BADGES,
-  ApFlagId,
-  WebsocketClientEvent,
-} from '@activepieces/shared';
 
 import { AccountSettingsDialog } from './account-settings';
 

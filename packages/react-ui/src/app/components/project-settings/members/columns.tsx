@@ -1,3 +1,9 @@
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import {
+  Permission,
+  UserInvitation,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -17,19 +23,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { RoleDropdown } from '@/features/members/component/role-selector';
+import { RoleSelector } from '@/features/members/component/role-selector';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/utils';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import {
-  Permission,
-  UserInvitation,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
 
 export type MemberRowData =
   | {
@@ -138,12 +138,15 @@ const RoleCell = ({
 
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateRole}>
-      <RoleDropdown
-        value={roleName}
-        onValueChange={handleValueChange}
-        disabled={!userHasPermissionToUpdateRole}
-        roles={roles}
-      />
+      <div className="w-[150px]">
+        <RoleSelector
+          type="project"
+          value={roleName}
+          onValueChange={handleValueChange}
+          disabled={!userHasPermissionToUpdateRole}
+          roles={roles}
+        />
+      </div>
     </PermissionNeededTooltip>
   );
 };

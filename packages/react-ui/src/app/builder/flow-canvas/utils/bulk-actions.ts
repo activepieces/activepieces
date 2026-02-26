@@ -1,6 +1,3 @@
-import { t } from 'i18next';
-import { toast } from 'sonner';
-
 import {
   FlowAction,
   flowOperations,
@@ -10,6 +7,8 @@ import {
   StepLocationRelativeToParent,
   PasteLocation,
 } from '@activepieces/shared';
+import { t } from 'i18next';
+import { toast } from 'sonner';
 
 import { BuilderState } from '../../builder-hooks';
 

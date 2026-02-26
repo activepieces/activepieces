@@ -1,3 +1,4 @@
+import { FlowActionType, flowStructureUtil, isNil } from '@activepieces/shared';
 import { CaretDownIcon, CaretUpIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -9,7 +10,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { FlowActionType, flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';

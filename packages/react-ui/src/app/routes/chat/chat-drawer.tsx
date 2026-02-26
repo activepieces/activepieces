@@ -1,3 +1,8 @@
+import {
+  FlowRun,
+  RunEnvironment,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 import { ArrowRight } from 'lucide-react';
 import { useRef } from 'react';
 
@@ -11,11 +16,6 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 import { ChatDrawerSource } from '@/lib/types';
-import {
-  FlowRun,
-  RunEnvironment,
-  WebsocketClientEvent,
-} from '@activepieces/shared';
 
 import { FlowChat } from './flow-chat';
 

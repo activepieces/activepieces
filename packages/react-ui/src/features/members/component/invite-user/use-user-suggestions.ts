@@ -1,3 +1,8 @@
+import {
+  InvitationStatus,
+  PlatformRole,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { useMemo } from 'react';
 
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
@@ -5,11 +10,6 @@ import { userInvitationsHooks } from '@/features/members/lib/user-invitations-ho
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
-import {
-  InvitationStatus,
-  PlatformRole,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
 
 import { EmailStatusType } from './types';
 

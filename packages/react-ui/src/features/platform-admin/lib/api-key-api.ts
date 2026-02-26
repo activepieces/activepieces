@@ -1,10 +1,11 @@
-import { api } from '@/lib/api';
 import {
   ApiKeyResponseWithoutValue,
   ApiKeyResponseWithValue,
   CreateApiKeyRequest,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const apiKeyApi = {
   list() {

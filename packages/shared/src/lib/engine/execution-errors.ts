@@ -8,7 +8,7 @@ export class ExecutionError extends Error {
 
     public type: ExecutionErrorType
 
-    constructor(name: string, message: string, type: ExecutionErrorType, public cause?: unknown) {
+    constructor(name: string, message: string, type: ExecutionErrorType, public override cause?: unknown) {
         super(message)
         this.name = name
         this.type = type
@@ -31,7 +31,7 @@ export class ConnectionNotFoundError extends ExecutionError {
 
 export class ConnectionLoadingError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
-        super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.ENGINE, cause)
+        super('ConnectionLoadingFailure', formatMessage(`Failed to load connection (${connectionName})`), ExecutionErrorType.USER, cause)
     }
 }
 

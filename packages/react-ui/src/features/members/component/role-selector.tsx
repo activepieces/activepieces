@@ -1,3 +1,4 @@
+import { PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import {
@@ -9,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PlatformRole } from '@activepieces/shared';
 
 type RoleConfig<T = string> = {
   value: T;
@@ -56,6 +56,7 @@ interface RoleSelectorProps {
   disabled?: boolean;
   placeholder?: string;
   roles?: Array<{ name: string }>;
+  showDescriptionInTrigger?: boolean;
 }
 
 export const RoleSelector = ({
@@ -65,6 +66,7 @@ export const RoleSelector = ({
   disabled = false,
   placeholder,
   roles = [],
+  showDescriptionInTrigger = false,
 }: RoleSelectorProps) => {
   const isPlatform = type === 'platform';
 
@@ -88,12 +90,16 @@ export const RoleSelector = ({
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger className="h-auto py-2">
         {selectedRole ? (
-          <div className="flex flex-col items-start gap-0.5 text-left w-full">
+          showDescriptionInTrigger ? (
+            <div className="flex flex-col items-start gap-0.5 text-left w-full">
+              <span className="font-normal">{selectedRole.label}</span>
+              <span className="text-xs text-muted-foreground font-normal whitespace-normal">
+                {selectedRole.description}
+              </span>
+            </div>
+          ) : (
             <span className="font-normal">{selectedRole.label}</span>
-            <span className="text-xs text-muted-foreground font-normal whitespace-normal">
-              {selectedRole.description}
-            </span>
-          </div>
+          )
         ) : (
           <SelectValue placeholder={placeholder || t('Select Role')} />
         )}

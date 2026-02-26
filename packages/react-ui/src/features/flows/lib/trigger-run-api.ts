@@ -1,7 +1,7 @@
+import { TriggerStatusReport } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
-import { TriggerStatusReport } from '@activepieces/shared';
 
 export const triggerRunApi = {
   getStatusReport: async (): Promise<TriggerStatusReport> => {

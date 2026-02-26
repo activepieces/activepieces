@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Copy, Download, Eye, EyeOff } from 'lucide-react';
 import React, { useLayoutEffect, useMemo } from 'react';
@@ -13,7 +14,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn, isStepFileUrl } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { Button } from './ui/button';
 

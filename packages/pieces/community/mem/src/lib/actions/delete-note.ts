@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { memAuth } from '../../index';
+import { memAuth } from '../auth';
 
 export const deleteNoteAction = createAction({
   auth: memAuth,

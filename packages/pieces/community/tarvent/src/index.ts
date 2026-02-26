@@ -4,6 +4,7 @@ import { AppConnectionType, PieceCategory } from "@activepieces/shared";
 import { makeClient } from "./lib/common";
 import { campaignSendFinishedTrigger, contactAddedTrigger, contactBouncedTrigger, contactClickedTrigger, contactGroupUpdatedTrigger, contactNoteAddedTrigger, contactOpenedTrigger, contactRepliedTrigger, contactStatusUpdatedTrigger, contactTagUpdatedTrigger, contactUnsubscribedTrigger, contactUpdatedTrigger, formSubmittedTrigger, pagePerformedTrigger, surveySubmittedTrigger, transactionCreatedTrigger, transactionSentTrigger } from "./lib/triggers";
 import { updateContactTags, sendCampaign, createAudienceGroup, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, generateCustomEvent, updateJourneyStatus, createSuppressionFilter, getAudiences, getAudienceGroups, getCampaigns, getContact, getCustomEvent, getJourney, createContact, createTransaction } from "./lib/actions";
+import { tarventAuth } from './lib/auth';
 
 const authGuide = `
 To obtain your Tarvent Account ID and API Key, follow these steps:
@@ -13,36 +14,6 @@ To obtain your Tarvent Account ID and API Key, follow these steps:
 3. **Create an API key** and copy it. Make sure to give it the correct permissions.
 4. The **Account ID** is available to copy at the top right
 `;
-
-export const tarventAuth = PieceAuth.CustomAuth({
-  required: true,
-  description: authGuide,
-  props: {
-    accountId: Property.ShortText({
-      displayName: 'Account ID',
-      required: true,
-    }),
-    apiKey: Property.ShortText({
-      displayName: 'API Key',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      const client = makeClient({
-        props:auth,
-        type: AppConnectionType.CUSTOM_AUTH,
-      });
-      await client.authenticate();
-      return { valid: true };
-    } catch (error) {
-      return {
-        valid: false,
-        error: 'Invalid API credentials',
-      };
-    }
-  },
-});
 
 export const tarvent = createPiece({
   displayName: "Tarvent",

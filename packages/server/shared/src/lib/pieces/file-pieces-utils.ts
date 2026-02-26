@@ -8,7 +8,6 @@ import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
 import { AppSystemProp, environmentVariables } from '../system-props'
 
-const DIST_PIECES_PATH = resolve(cwd(), 'dist', 'packages', 'pieces')
 const SOURCE_PIECES_PATH = resolve(cwd(), 'packages', 'pieces')
 
 export const filePiecesUtils = (log: FastifyBaseLogger) => ({
@@ -36,7 +35,7 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
     },
 
     findDistPiecePathByPackageName: async (packageName: string): Promise<string | null> => {
-        const paths = await findAllPiecesFolder(DIST_PIECES_PATH)
+        const paths = await findAllDistPiecesFolders(SOURCE_PIECES_PATH)
         for (const path of paths) {
             try {
                 const packageJsonName = await filePiecesUtils(log).getPackageNameFromFolderPath(path)
@@ -62,7 +61,8 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
 
     loadDistPiecesMetadata: async (piecesNames: string[]): Promise<PieceMetadata[]> => {
         try {
-            const paths = (await findAllPiecesFolder(DIST_PIECES_PATH)).filter(path => piecesNames.some(name => path.endsWith(sep + name)))
+            const devPieces = await findAllDistPiecesFolders(SOURCE_PIECES_PATH)
+            const paths = devPieces.filter(path => piecesNames.some(name => path.endsWith(sep + name + sep + 'dist')))
             const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
             return pieces.filter((p): p is PieceMetadata => p !== null)
         }
@@ -101,6 +101,24 @@ const findAllPiecesFolder = async (folderPath: string): Promise<string[]> => {
         }
     }
     return paths
+}
+
+const findAllDistPiecesFolders = async (sourcePiecesPath: string): Promise<string[]> => {
+    const sourceFolders = await findAllPiecesFolder(sourcePiecesPath)
+    const distFolders = []
+    for (const folder of sourceFolders) {
+        const distPath = join(folder, 'dist')
+        try {
+            const distStats = await stat(distPath)
+            if (distStats.isDirectory()) {
+                distFolders.push(distPath)
+            }
+        }
+        catch {
+            // dist folder doesn't exist for this piece, skip
+        }
+    }
+    return distFolders
 }
 
 const loadPieceFromFolder = async (

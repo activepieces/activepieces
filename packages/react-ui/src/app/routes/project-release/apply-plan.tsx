@@ -1,3 +1,8 @@
+import {
+  DiffReleaseRequest,
+  isNil,
+  ProjectReleaseType,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useState, ReactNode } from 'react';
 
@@ -7,11 +12,6 @@ import { ConnectGitDialog } from '@/features/project-releases/components/connect
 import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  DiffReleaseRequest,
-  isNil,
-  ProjectReleaseType,
-} from '@activepieces/shared';
 
 import { CreateReleaseDialog } from './create-release-dialog';
 

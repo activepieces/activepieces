@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   AppConnectionWithoutSensitiveData,
   ListGlobalConnectionsRequestQuery,
@@ -6,6 +5,8 @@ import {
   UpdateGlobalConnectionValueRequestBody,
   UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const globalConnectionsApi = {
   list(

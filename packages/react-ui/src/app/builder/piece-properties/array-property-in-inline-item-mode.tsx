@@ -1,9 +1,9 @@
+import { ArraySubProps } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 import React, { useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
-import { ArraySubProps } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { flowCanvasHooks } from '../flow-canvas/hooks';

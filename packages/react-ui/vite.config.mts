@@ -1,7 +1,7 @@
 /// <reference types='vitest' />
 import path from 'path';
 
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
@@ -59,14 +59,14 @@ export default defineConfig(({ command, mode }) => {
         ),
         '@activepieces/pieces-framework': path.resolve(
           __dirname,
-          '../../packages/pieces/community/framework/src',
+          '../../packages/pieces/framework/src',
         ),
       },
     },
     plugins: [
       react(),
       tailwindcss(),
-      nxViteTsPaths(),
+      tsconfigPaths(),
       customHtmlPlugin({
         title: AP_TITLE,
         icon: AP_FAVICON,

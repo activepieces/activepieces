@@ -1,3 +1,4 @@
+import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -25,7 +26,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 
 import { flowsApi } from '../lib/flows-api';
 
