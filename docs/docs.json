@@ -78,14 +78,6 @@
                      "admin-guide/guides/structure-projects",
                      "admin-guide/guides/manage-pieces",
                      "admin-guide/guides/sso",
-                     {
-                        "group": "SCIM",
-                        "icon": "users",
-                        "pages": [
-                           "admin-guide/guides/scim/overview",
-                           "admin-guide/guides/scim/providers/okta"
-                        ]
-                     },
                      "admin-guide/guides/manage-oauth2",
                      "admin-guide/guides/setup-ai-providers",
                      "admin-guide/guides/permissions",
