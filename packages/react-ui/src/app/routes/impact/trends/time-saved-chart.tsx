@@ -15,6 +15,11 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatUtils } from '@/lib/utils';
 
 import { downloadChartAsPng } from '../lib/impact-utils';
@@ -57,14 +62,19 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
               {t('Track how much time your automations are saving')}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 print:hidden"
-            onClick={() => downloadChartAsPng(chartRef, 'time-saved')}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 print:hidden"
+                onClick={() => downloadChartAsPng(chartRef, 'time-saved')}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('Download as PNG')}</TooltipContent>
+          </Tooltip>
         </div>
       </CardHeader>
       <CardContent className="pt-4">

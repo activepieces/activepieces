@@ -1,5 +1,7 @@
 import {
   PlatformAnalyticsReport,
+  PROJECT_COLOR_PALETTE,
+  ProjectType,
   ProjectWithLimits,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
@@ -11,13 +13,16 @@ import {
   Download,
   Filter,
   LayoutGrid,
+  Pencil,
   Plus,
   Search,
   Workflow,
+  X,
 } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -35,6 +40,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
 
 import { exportFlowDetailsCsv } from '../lib/impact-utils';
@@ -95,12 +101,15 @@ export function FlowsDetails({
           <DataTableColumnHeader column={column} title={t('Owner')} />
         ),
         cell: ({ row }) => (
-          <ApAvatar
-            id={row.original.ownerId ?? ''}
-            size="small"
-            includeAvatar={true}
-            includeName={true}
-          />
+          <div className="flex items-center gap-2">
+            <ApAvatar
+              id={row.original.ownerId ?? ''}
+              size="small"
+              includeAvatar={true}
+              includeName={false}
+            />
+            <OwnerFullName id={row.original.ownerId ?? ''} />
+          </div>
         ),
       },
       {
@@ -140,21 +149,34 @@ export function FlowsDetails({
             );
           }
 
+          if (hasValue) {
+            return (
+              <div className="group/cell flex items-center gap-1.5">
+                <span>{displayValue}</span>
+                <span className="inline-flex opacity-0 group-hover/cell:opacity-100 transition-opacity">
+                  <EditTimeSavedPopover
+                    flowId={row.original.flowId}
+                    currentValue={timeSavedPerRun}
+                  >
+                    <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-primary hover:bg-primary/10">
+                      <Pencil className="h-3 w-3" />
+                      <span>{t('Edit')}</span>
+                    </button>
+                  </EditTimeSavedPopover>
+                </span>
+              </div>
+            );
+          }
+
           return (
             <EditTimeSavedPopover
               flowId={row.original.flowId}
               currentValue={timeSavedPerRun}
             >
-              {hasValue ? (
-                <div className="flex items-center gap-1.5 cursor-pointer hover:text-primary">
-                  <span>{displayValue}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 cursor-pointer text-primary hover:underline">
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>{t('Add Estimated Time')}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 cursor-pointer text-primary hover:underline">
+                <Plus className="h-3.5 w-3.5" />
+                <span>{t('Add Estimated Time')}</span>
+              </div>
             </EditTimeSavedPopover>
           );
         },
@@ -189,23 +211,41 @@ export function FlowsDetails({
           const userHasAccess = !!project;
           const projectName = project?.displayName ?? row.original.projectName;
 
+          const projectAvatar =
+            project?.type === ProjectType.TEAM ? (
+              <Avatar
+                className="size-5 shrink-0 flex items-center justify-center rounded-[4px] text-xs font-bold"
+                style={{
+                  backgroundColor:
+                    PROJECT_COLOR_PALETTE[project.icon.color].color,
+                  color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
+                }}
+              >
+                <span className="scale-75">
+                  {projectName.charAt(0).toUpperCase()}
+                </span>
+              </Avatar>
+            ) : (
+              <LayoutGrid className="h-4 w-4 shrink-0" />
+            );
+
           if (userHasAccess) {
             return (
               <div
-                className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
+                className="flex items-center gap-1.5 text-foreground hover:underline cursor-pointer"
                 onClick={() =>
                   window.open(`/projects/${row.original.projectId}`, '_blank')
                 }
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
+                {projectAvatar}
                 {projectName}
               </div>
             );
           }
 
           return (
-            <div className="flex items-center gap-1 text-muted-foreground">
-              <LayoutGrid className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              {projectAvatar}
               {projectName}
             </div>
           );
@@ -228,8 +268,16 @@ export function FlowsDetails({
             placeholder={t('Search flows')}
             value={filters.searchQuery}
             onChange={(e) => filters.setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-9 pr-8"
           />
+          {filters.searchQuery && (
+            <button
+              onClick={() => filters.setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         <TimeSavedFilter filters={filters} />
@@ -238,26 +286,32 @@ export function FlowsDetails({
         {filters.hasActiveFilters && (
           <button
             onClick={filters.clearAllFilters}
-            className="text-sm text-primary hover:underline"
+            className="flex items-center gap-1 text-sm text-primary hover:underline"
           >
-            {t('Clear all')}
+            <X className="h-3.5 w-3.5" />
+            {t('Clear')}
           </button>
         )}
 
         <div className="flex-1" />
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => exportFlowDetailsCsv([...filters.filteredData])}
-          disabled={filters.filteredData.length === 0}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {t('Download')}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportFlowDetailsCsv([...filters.filteredData])}
+              disabled={filters.filteredData.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {t('Download')}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Download flows details')}</TooltipContent>
+        </Tooltip>
       </div>
 
-      {flowsMissingTimeSaved > 0 ? (
+      {flowsMissingTimeSaved > 0 && (
         <div className="flex items-start justify-between gap-3 p-4 rounded-lg border border-warning/50 bg-warning/10">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
@@ -271,19 +325,9 @@ export function FlowsDetails({
               <p className="text-sm text-muted-foreground">
                 {t('This will cause inaccurate analytics and unreliable data.')}
               </p>
-              <MyFlowsToggle
-                checked={filters.showMyFlowsOnly}
-                onCheckedChange={filters.setShowMyFlowsOnly}
-                className="mt-2"
-              />
             </div>
           </div>
         </div>
-      ) : (
-        <MyFlowsToggle
-          checked={filters.showMyFlowsOnly}
-          onCheckedChange={filters.setShowMyFlowsOnly}
-        />
       )}
 
       <DataTable
@@ -295,6 +339,7 @@ export function FlowsDetails({
         }}
         isLoading={isLoading}
         clientPagination={true}
+        initialSorting={[{ id: 'minutesSaved', desc: true }]}
         emptyStateTextTitle={t('No Flows Found')}
         emptyStateTextDescription={
           filters.searchQuery
@@ -346,10 +391,10 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
               />
               <button
                 type="button"
-                onClick={filters.cycleDraftTimeUnit}
+                onClick={filters.cycleDraftTimeUnitMin}
                 className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
               >
-                {filters.draftTimeUnit}
+                {filters.draftTimeUnitMin}
               </button>
             </div>
           </div>
@@ -368,10 +413,10 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
               />
               <button
                 type="button"
-                onClick={filters.cycleDraftTimeUnit}
+                onClick={filters.cycleDraftTimeUnitMax}
                 className="absolute bg-accent px-1.5 py-0.5 rounded-sm right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground cursor-pointer select-none"
               >
-                {filters.draftTimeUnit}
+                {filters.draftTimeUnitMax}
               </button>
             </div>
           </div>
@@ -381,6 +426,13 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
           >
             {t('Apply')}
           </Button>
+          <button
+            type="button"
+            onClick={filters.clearTimeSavedFilter}
+            className="w-full text-center text-sm text-primary hover:underline"
+          >
+            {t('Clear filter')}
+          </button>
         </div>
       </PopoverContent>
     </Popover>
@@ -404,10 +456,8 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
                   key={owner.id}
                   className="flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-xs font-medium"
                 >
-                  <ApAvatar id={owner.id} size="small" />
-                  <span className="max-w-[60px] truncate">
-                    {owner.name.split('@')[0]}
-                  </span>
+                  <ApAvatar id={owner.id} size="xsmall" hideHover={true} />
+                  <OwnerFullName id={owner.id} maxWidth="max-w-[80px]" />
                 </span>
               ))}
               {filters.selectedOwners.length > 2 && (
@@ -443,8 +493,8 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
                 checked={filters.selectedOwnerIds.includes(owner.id)}
                 className="pointer-events-none"
               />
-              <ApAvatar id={owner.id} size="small" />
-              <span className="truncate">{owner.name}</span>
+              <ApAvatar id={owner.id} size="small" hideHover={true} />
+              <OwnerFullName id={owner.id} />
             </div>
           ))}
           {filters.filteredOwners.length === 0 && (
@@ -468,25 +518,17 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
   );
 }
 
-function MyFlowsToggle({
-  checked,
-  onCheckedChange,
-  className,
+function OwnerFullName({
+  id,
+  maxWidth = 'max-w-[120px]',
 }: {
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  className?: string;
+  id: string;
+  maxWidth?: string;
 }) {
+  const { data: user } = userHooks.useUserById(id);
   return (
-    <div className={`flex items-center gap-2 shrink-0 ${className ?? ''}`}>
-      <Switch
-        id="my-flows-only"
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-      />
-      <Label htmlFor="my-flows-only" className="text-sm cursor-pointer">
-        {t('Display my flows only')}
-      </Label>
-    </div>
+    <span className={`truncate ${maxWidth}`}>
+      {user ? `${user.firstName} ${user.lastName}`.trim() : id}
+    </span>
   );
 }

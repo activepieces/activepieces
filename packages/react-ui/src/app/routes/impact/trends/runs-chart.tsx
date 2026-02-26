@@ -1,5 +1,3 @@
-'use client';
-
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, TrendingUp } from 'lucide-react';
@@ -15,6 +13,11 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { downloadChartAsPng } from '../lib/impact-utils';
 
@@ -54,14 +57,19 @@ export function RunsChart({ report }: RunsChartProps) {
               {t('Track your automation execution trends')}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 print:hidden"
-            onClick={() => downloadChartAsPng(chartRef, 'flow-runs')}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 print:hidden"
+                onClick={() => downloadChartAsPng(chartRef, 'flow-runs')}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('Download as PNG')}</TooltipContent>
+          </Tooltip>
         </div>
       </CardHeader>
       <CardContent className="pt-4">

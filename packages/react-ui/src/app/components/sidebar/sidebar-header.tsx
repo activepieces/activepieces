@@ -104,3 +104,17 @@ export const AppSidebarHeader = () => {
     </SidebarHeader>
   );
 };
+
+/*
+- donwload as png tooltip
+- proejct profile pic in the project selector
+- details table user show fullname and project icon
+- toast on time saved added
+- add edit to the button to edit estimated time
+- clear all button for everything and x inside seach for both pages
+- chagen premitive css for inputs in add estimated time 
+- apply filter taba3 user on the show my fflows
+- add toast on download button
+- chil om omha la hadak al banner
+
+*/

@@ -14,11 +14,13 @@ export function useDetailsFilters(
 
   const [appliedTimeSavedMin, setAppliedTimeSavedMin] = useState('');
   const [appliedTimeSavedMax, setAppliedTimeSavedMax] = useState('');
-  const [appliedTimeUnit, setAppliedTimeUnit] = useState<TimeUnit>('Sec');
+  const [appliedTimeUnitMin, setAppliedTimeUnitMin] = useState<TimeUnit>('Sec');
+  const [appliedTimeUnitMax, setAppliedTimeUnitMax] = useState<TimeUnit>('Sec');
 
   const [draftTimeSavedMin, setDraftTimeSavedMin] = useState('');
   const [draftTimeSavedMax, setDraftTimeSavedMax] = useState('');
-  const [draftTimeUnit, setDraftTimeUnit] = useState<TimeUnit>('Sec');
+  const [draftTimeUnitMin, setDraftTimeUnitMin] = useState<TimeUnit>('Sec');
+  const [draftTimeUnitMax, setDraftTimeUnitMax] = useState<TimeUnit>('Sec');
   const [timeSavedPopoverOpen, setTimeSavedPopoverOpen] = useState(false);
 
   const [selectedOwnerIds, setSelectedOwnerIds] = useState<string[]>([]);
@@ -27,16 +29,22 @@ export function useDetailsFilters(
 
   const currentUserId = authenticationSession.getCurrentUserId();
 
-  const cycleDraftTimeUnit = () => {
-    const idx = TIME_UNITS.indexOf(draftTimeUnit);
-    setDraftTimeUnit(TIME_UNITS[(idx + 1) % TIME_UNITS.length]);
+  const cycleDraftTimeUnitMin = () => {
+    const idx = TIME_UNITS.indexOf(draftTimeUnitMin);
+    setDraftTimeUnitMin(TIME_UNITS[(idx + 1) % TIME_UNITS.length]);
+  };
+
+  const cycleDraftTimeUnitMax = () => {
+    const idx = TIME_UNITS.indexOf(draftTimeUnitMax);
+    setDraftTimeUnitMax(TIME_UNITS[(idx + 1) % TIME_UNITS.length]);
   };
 
   const handleTimeSavedPopoverOpen = (open: boolean) => {
     if (open) {
       setDraftTimeSavedMin(appliedTimeSavedMin);
       setDraftTimeSavedMax(appliedTimeSavedMax);
-      setDraftTimeUnit(appliedTimeUnit);
+      setDraftTimeUnitMin(appliedTimeUnitMin);
+      setDraftTimeUnitMax(appliedTimeUnitMax);
     }
     setTimeSavedPopoverOpen(open);
   };
@@ -44,16 +52,38 @@ export function useDetailsFilters(
   const applyTimeSavedFilter = () => {
     setAppliedTimeSavedMin(draftTimeSavedMin);
     setAppliedTimeSavedMax(draftTimeSavedMax);
-    setAppliedTimeUnit(draftTimeUnit);
+    setAppliedTimeUnitMin(draftTimeUnitMin);
+    setAppliedTimeUnitMax(draftTimeUnitMax);
+    setTimeSavedPopoverOpen(false);
+  };
+
+  const clearTimeSavedFilter = () => {
+    setDraftTimeSavedMin('');
+    setDraftTimeSavedMax('');
+    setDraftTimeUnitMin('Sec');
+    setDraftTimeUnitMax('Sec');
+    setAppliedTimeSavedMin('');
+    setAppliedTimeSavedMax('');
+    setAppliedTimeUnitMin('Sec');
+    setAppliedTimeUnitMax('Sec');
     setTimeSavedPopoverOpen(false);
   };
 
   const timeSavedLabel = useMemo(() => {
     if (!appliedTimeSavedMin && !appliedTimeSavedMax) return null;
-    const min = appliedTimeSavedMin || '0';
-    const max = appliedTimeSavedMax || '∞';
-    return `${min} – ${max} ${appliedTimeUnit}`;
-  }, [appliedTimeSavedMin, appliedTimeSavedMax, appliedTimeUnit]);
+    const min = appliedTimeSavedMin
+      ? `${appliedTimeSavedMin} ${appliedTimeUnitMin}`
+      : '0';
+    const max = appliedTimeSavedMax
+      ? `${appliedTimeSavedMax} ${appliedTimeUnitMax}`
+      : '∞';
+    return `${min} – ${max}`;
+  }, [
+    appliedTimeSavedMin,
+    appliedTimeSavedMax,
+    appliedTimeUnitMin,
+    appliedTimeUnitMax,
+  ]);
 
   const toggleOwner = (ownerId: string) => {
     setSelectedOwnerIds((prev) =>
@@ -75,14 +105,17 @@ export function useDetailsFilters(
   );
 
   const hasActiveFilters =
+    searchQuery !== '' ||
     appliedTimeSavedMin !== '' ||
     appliedTimeSavedMax !== '' ||
     selectedOwnerIds.length > 0;
 
   const clearAllFilters = () => {
+    setSearchQuery('');
     setAppliedTimeSavedMin('');
     setAppliedTimeSavedMax('');
-    setAppliedTimeUnit('Sec');
+    setAppliedTimeUnitMin('Sec');
+    setAppliedTimeUnitMax('Sec');
     setSelectedOwnerIds([]);
   };
 
@@ -117,13 +150,13 @@ export function useDetailsFilters(
 
     if (minValue !== null) {
       filtered = filtered.filter(
-        (f) => f.minutesSaved >= convertToSeconds(minValue, appliedTimeUnit),
+        (f) => f.minutesSaved >= convertToSeconds(minValue, appliedTimeUnitMin),
       );
     }
 
     if (maxValue !== null) {
       filtered = filtered.filter(
-        (f) => f.minutesSaved <= convertToSeconds(maxValue, appliedTimeUnit),
+        (f) => f.minutesSaved <= convertToSeconds(maxValue, appliedTimeUnitMax),
       );
     }
 
@@ -136,7 +169,8 @@ export function useDetailsFilters(
     selectedOwnerIds,
     appliedTimeSavedMin,
     appliedTimeSavedMax,
-    appliedTimeUnit,
+    appliedTimeUnitMin,
+    appliedTimeUnitMax,
   ]);
 
   return {
@@ -149,11 +183,14 @@ export function useDetailsFilters(
     setDraftTimeSavedMin,
     draftTimeSavedMax,
     setDraftTimeSavedMax,
-    draftTimeUnit,
-    cycleDraftTimeUnit,
+    draftTimeUnitMin,
+    cycleDraftTimeUnitMin,
+    draftTimeUnitMax,
+    cycleDraftTimeUnitMax,
     timeSavedPopoverOpen,
     handleTimeSavedPopoverOpen,
     applyTimeSavedFilter,
+    clearTimeSavedFilter,
     timeSavedLabel,
 
     selectedOwnerIds,

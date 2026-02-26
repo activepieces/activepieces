@@ -5,6 +5,7 @@ import { Calendar, Info, LineChart, List, RefreshCcw } from 'lucide-react';
 import { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
+import { toast } from 'sonner';
 
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
@@ -121,7 +122,12 @@ export default function ImpactPage() {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  onClick={() => refreshAnalytics()}
+                  onClick={() =>
+                    refreshAnalytics(undefined, {
+                      onSuccess: () =>
+                        toast.success(t('Data refreshed successfully')),
+                    })
+                  }
                   disabled={isRefreshing}
                 >
                   <RefreshCcw

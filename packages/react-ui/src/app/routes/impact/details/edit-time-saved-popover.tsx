@@ -5,7 +5,6 @@ import { useContext, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -58,6 +57,17 @@ export function EditTimeSavedPopover({
       setTimeSavedPerRunOverride(flowId, timeSavedPerRun);
       setIsOpen(false);
     },
+    onSuccess: () => {
+      const isEdit =
+        previousValueRef.current !== null &&
+        previousValueRef.current !== undefined &&
+        previousValueRef.current > 0;
+      toast.success(
+        isEdit
+          ? t('Time saved updated successfully')
+          : t('Time saved added successfully'),
+      );
+    },
     onError: () => {
       setTimeSavedPerRunOverride(flowId, previousValueRef.current ?? null);
       toast.error(t('Failed to update time saved'));
@@ -92,44 +102,57 @@ export function EditTimeSavedPopover({
         <div className="flex flex-col gap-4">
           <div className="text-sm font-semibold">{t('Time Saved Per Run')}</div>
 
-          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder="hh"
-              value={hours}
-              onChange={(e) => handleInputChange(e.target.value, setHours, 99)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 text-center h-9 bg-background"
-              maxLength={2}
-              autoFocus
-            />
-            <span className="text-muted-foreground font-medium shrink-0">
-              :
-            </span>
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder="mm"
-              value={mins}
-              onChange={(e) => handleInputChange(e.target.value, setMins, 59)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 text-center h-9 bg-background"
-              maxLength={2}
-            />
-            <span className="text-muted-foreground font-medium shrink-0">
-              :
-            </span>
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder="ss"
-              value={secs}
-              onChange={(e) => handleInputChange(e.target.value, setSecs, 59)}
-              onKeyDown={handleKeyDown}
-              className="flex-1 text-center h-9 bg-background"
-              maxLength={2}
-            />
+          <div className="flex items-center rounded-md border border-input bg-background px-3 py-2 gap-1 focus-within:ring-1 focus-within:ring-ring">
+            <div className="flex flex-col items-center gap-0.5 flex-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="hh"
+                value={hours}
+                onChange={(e) =>
+                  handleInputChange(e.target.value, setHours, 99)
+                }
+                onKeyDown={handleKeyDown}
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                maxLength={2}
+                autoFocus
+              />
+              <span className="text-[10px] text-muted-foreground/60 leading-none">
+                {t('hh')}
+              </span>
+            </div>
+            <span className="text-muted-foreground font-medium pb-3">:</span>
+            <div className="flex flex-col items-center gap-0.5 flex-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="mm"
+                value={mins}
+                onChange={(e) => handleInputChange(e.target.value, setMins, 59)}
+                onKeyDown={handleKeyDown}
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                maxLength={2}
+              />
+              <span className="text-[10px] text-muted-foreground/60 leading-none">
+                {t('mm')}
+              </span>
+            </div>
+            <span className="text-muted-foreground font-medium pb-3">:</span>
+            <div className="flex flex-col items-center gap-0.5 flex-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="ss"
+                value={secs}
+                onChange={(e) => handleInputChange(e.target.value, setSecs, 59)}
+                onKeyDown={handleKeyDown}
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                maxLength={2}
+              />
+              <span className="text-[10px] text-muted-foreground/60 leading-none">
+                {t('ss')}
+              </span>
+            </div>
           </div>
 
           <p className="text-xs text-muted-foreground">
