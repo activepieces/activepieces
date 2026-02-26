@@ -63,7 +63,7 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
             onCreate={props.onCreate}
           />
         )}
-        {isLoadingConnections && (
+        {isLoadingConnections && globalConnectionsEnabled && (
           <SkeletonList numberOfItems={3} className="h-10" />
         )}
       </DialogContent>

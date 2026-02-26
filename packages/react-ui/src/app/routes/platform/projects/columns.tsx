@@ -24,13 +24,10 @@ import { FormattedDate } from '@/components/ui/formatted-date';
 
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
-  currentUserId?: string;
-  allGlobalConnections: AppConnectionWithoutSensitiveData[];
 };
 
 export const projectsTableColumns = ({
   platform,
-  allGlobalConnections,
 }: ProjectsTableColumnsProps): ColumnDef<
   RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
 >[] => {
@@ -112,22 +109,6 @@ export const projectsTableColumns = ({
         );
       },
     },
-    {
-      accessorKey: 'globalConnectionsCount',
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Global Connections')}
-          icon={Link2}
-        />
-      ),
-      cell: ({ row }) => {
-        const globalConnectionsForProject = allGlobalConnections.filter(
-          (connection) => connection.projectIds.includes(row.original.id),
-        ).length;
-        return <div className="text-left">{globalConnectionsForProject}</div>;
-      },
-    },
   ];
 
   if (platform.plan.embeddingEnabled) {
@@ -147,6 +128,23 @@ export const projectsTableColumns = ({
             ? '-'
             : row.original.externalId;
         return <div className="text-left truncate">{displayValue}</div>;
+      },
+    });
+  }
+  if (platform.plan.globalConnectionsEnabled) {
+    columns.push({
+      accessorKey: 'globalConnectionsCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Global Connections')}
+          icon={Link2}
+        />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">{row.original.globalConnectionsCount}</div>
+        );
       },
     });
   }

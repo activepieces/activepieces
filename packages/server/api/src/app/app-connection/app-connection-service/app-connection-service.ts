@@ -352,25 +352,6 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds: ArrayContains([projectId]),
         })
     },
-    async assignToProject({ platformId, projectId, connectionIds }: AssignToProjectParams): Promise<void> {
-        if (connectionIds.length === 0) {
-            return
-        }
-        await appConnectionsRepo()
-            .createQueryBuilder()
-            .update()
-            .set({
-                projectIds: () => 'array_append("projectIds", :projectId)',
-            })
-            .where({
-                id: In(connectionIds),
-                platformId,
-                scope: AppConnectionScope.PLATFORM,
-            })
-            .andWhere('NOT ("projectIds" @> ARRAY[:projectId]::varchar[])')
-            .setParameter('projectId', projectId)
-            .execute()
-    },
 
     async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
         const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
@@ -720,10 +701,4 @@ type ReplaceParams = {
     projectId: ProjectId
     platformId: string
     userId: UserId
-}
-
-type AssignToProjectParams = {
-    platformId: string
-    projectId: string
-    connectionIds: string[]
 }

@@ -71,11 +71,23 @@ export default function ProjectsPage() {
       request: { limit: 9999 },
       extraKeys: [],
     });
-  const columns = projectsTableColumns({
-    platform,
-    currentUserId: currentUser?.id,
-    allGlobalConnections: allGlobalConnectionsPage?.data ?? [],
-  });
+  const allProjectsWithGlobalConnectionsCount = useMemo(() => {
+    return allProjects.map((project) => ({
+      ...project,
+      globalConnectionsCount:
+        allGlobalConnectionsPage?.data?.filter((connection) =>
+          connection.projectIds.includes(project.id),
+        ).length ?? 0,
+    }));
+  }, [allProjects, allGlobalConnectionsPage?.data]);
+  const columns = useMemo(
+    () =>
+      projectsTableColumns({
+        platform,
+        currentUserId: currentUser?.id,
+      }),
+    [platform, currentUser?.id],
+  );
 
   const columnsWithCheckbox: ColumnDef<
     RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
@@ -345,13 +357,7 @@ export default function ProjectsPage() {
           ]}
           columns={columnsWithCheckbox}
           page={{
-            data: allProjects.map((project) => ({
-              ...project,
-              globalConnectionsCount:
-                allGlobalConnectionsPage?.data?.filter((connection) =>
-                  connection.projectIds.includes(project.id),
-                ).length ?? 0,
-            })),
+            data: allProjectsWithGlobalConnectionsCount,
             next: null,
             previous: null,
           }}

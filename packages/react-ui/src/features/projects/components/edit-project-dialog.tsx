@@ -43,7 +43,6 @@ interface EditProjectDialogProps {
     projectName?: string;
     externalId?: string;
   };
-  renameOnly?: boolean;
 }
 
 export function EditProjectDialog({

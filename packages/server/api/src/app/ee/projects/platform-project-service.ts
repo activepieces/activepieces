@@ -154,6 +154,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                             projectIds: () => 'array_append("projectIds", :projectId)',
                         })
                         .where({
+                            platformId: project.platformId,
                             externalId: In(globalConnectionsToAddProjectTo),
                             scope: AppConnectionScope.PLATFORM,
                         })
@@ -168,6 +169,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                             projectIds: () => 'array_remove("projectIds", :projectId)',
                         })
                         .where({
+                            platformId: project.platformId,
                             externalId: In(globalConnectionsToRemoveProjectFrom),
                             scope: AppConnectionScope.PLATFORM,
                         })
