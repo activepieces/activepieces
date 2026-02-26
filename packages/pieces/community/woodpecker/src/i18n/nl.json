@@ -46,6 +46,7 @@
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
   "Timeout (in seconds)": "Time-out (in seconden)",
+  "Follow redirects": "Volg omleidingen",
   "Select the campaign to add prospects to": "Selecteer de campagne om vooruitzichten toe te voegen aan",
   "Prospect email address": "E-mailadres prospect",
   "Tags starting with # separated by spaces (e.g. #VC #Startup)": "Tags die beginnen met # gescheiden door spaties (bijv. #VC #Startup)",
