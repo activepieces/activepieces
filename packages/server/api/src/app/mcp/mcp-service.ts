@@ -9,6 +9,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
 import { webhookService } from '../webhooks/webhook.service'
 import { McpServerEntity } from './mcp-entity'
+import { activepiecesTools } from './tools'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
@@ -117,6 +118,11 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                     }
                 })
             }
+            
+            const tools = activepiecesTools(mcp, log)
+            tools.forEach((tool) => {
+                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, (args: Record<string, unknown>) => tool.execute(args))
+            })
 
             return server
         },
