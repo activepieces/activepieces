@@ -1,5 +1,3 @@
-'use client';
-
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
 import { useRef } from 'react';

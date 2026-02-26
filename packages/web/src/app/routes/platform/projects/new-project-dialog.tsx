@@ -1,5 +1,7 @@
-import { CreatePlatformProjectRequest } from '@activepieces/shared';
-import { ProjectWithLimits } from '@activepieces/shared';
+import {
+  CreatePlatformProjectRequest,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
 import { t } from 'i18next';

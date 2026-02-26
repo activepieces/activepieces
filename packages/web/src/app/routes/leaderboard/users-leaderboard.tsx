@@ -1,5 +1,3 @@
-'use client';
-
 import { BADGES, UserWithBadges } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
