@@ -16,9 +16,7 @@ import {
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    ServicePrincipal,
     TeamProjectsLimit,
-    UserPrincipal,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -69,7 +67,11 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.projectId === project.id
-        const ownThePlatform = await isPlatformAdmin(request.principal as ServicePrincipal | UserPrincipal, project.platformId)
+        const ownThePlatform = await isPlatformAdmin({
+            platformId: request.principal.platform.id,
+            type: request.principal.type,
+            id: request.principal.id,
+        }, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -105,8 +107,12 @@ async function getUserId(principal: Principal): Promise<string> {
     return principal.id
 }
 
-async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, platformId: string): Promise<boolean> {
-    if (principal.platform.id !== platformId) {
+async function isPlatformAdmin(principal: {
+    platformId: string
+    type: PrincipalType
+    id: string
+}, projectPlatformId: string): Promise<boolean> {
+    if (principal.platformId !== projectPlatformId) {
         return false
     }
     if (principal.type === PrincipalType.SERVICE) {

@@ -29,7 +29,6 @@ import { globalConnectionsQueries } from '@/features/connections/lib/global-conn
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils, validationUtils } from '@/lib/utils';
 
 import { projectsTableColumns } from './columns';
@@ -42,7 +41,6 @@ export default function ProjectsPage() {
   const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
-  const { data: currentUser } = userHooks.useCurrentUser();
 
   const displayNameFilter = searchParams.get('displayName') || undefined;
   const typeFilter = searchParams.getAll('type');
@@ -84,9 +82,8 @@ export default function ProjectsPage() {
     () =>
       projectsTableColumns({
         platform,
-        currentUserId: currentUser?.id,
       }),
-    [platform, currentUser?.id],
+    [platform],
   );
 
   const columnsWithCheckbox: ColumnDef<
