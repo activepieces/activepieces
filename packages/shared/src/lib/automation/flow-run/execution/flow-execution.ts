@@ -1,6 +1,6 @@
 
 import { Static, Type } from '@sinclair/typebox'
-import { ProgressUpdateType } from '../../engine'
+import { ProgressUpdateType } from '../../engine/engine-operation'
 
 export enum FlowRunStatus {
     FAILED = 'FAILED',

@@ -1,8 +1,8 @@
-import { RunEnvironment } from '../../automation/flow-run/flow-run'
-import { FlowId } from '../../automation/flows/flow'
-import { McpId } from '../../automation/mcp/mcp'
-import { ProjectId } from '../../management/project/project'
-import { UserId } from '../user/user'
+import type { RunEnvironment } from '../../automation/flow-run/flow-run'
+import type { FlowId } from '../../automation/flows/flow'
+import type { McpId } from '../../automation/mcp/mcp'
+import type { ProjectId } from '../../management/project/project'
+import type { UserId } from '../user/user'
 
 type FlowCreated = {
     flowId: FlowId
