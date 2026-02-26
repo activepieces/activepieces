@@ -5932,7 +5932,7 @@
     },
     "packages/pieces/community/todoist": {
       "name": "@activepieces/piece-todoist",
-      "version": "0.4.5",
+      "version": "0.4.6",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
