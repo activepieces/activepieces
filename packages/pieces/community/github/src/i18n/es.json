@@ -127,6 +127,9 @@
   "New Label": "Nueva etiqueta",
   "New Milestone": "Nuevo hito",
   "New Release": "Nueva versión",
+  "New Commit": "Nuevo Commit",
+  "New Review Request": "Nueva solicitud de revisión",
+  "New Mention": "Nueva Mención",
   "Triggers when there is activity on a pull request.": "Dispara cuando hay actividad en una solicitud de extracción.",
   "Trigger when there is activity relating to repository stars.": "Activar cuando hay actividad relacionada con las estrellas del repositorio.",
   "Triggers when there is activity relating to an issue.": "Disparadores cuando hay actividad relacionada con un problema.",
@@ -137,5 +140,8 @@
   "Triggers when a new collaborator is added to a repository.": "Desencadena cuando un nuevo colaborador es añadido a un repositorio.",
   "Triggers when a new label is created in a repository.": "Desencadena cuando se crea una nueva etiqueta en un repositorio.",
   "Triggers when a new milestone is created.": "Dispara cuando se crea un nuevo hito.",
-  "Triggers when a new release is added.": "Se activa cuando se añade una nueva versión."
+  "Triggers when a new release is added.": "Se activa cuando se añade una nueva versión.",
+  "Triggers when a new commit is pushed.": "Dispara cuando se empuja un nuevo commit.",
+  "Triggers when you are requested to review a pull request.": "Disparadores cuando se le pide que revise una solicitud de extracción.",
+  "Triggers when you are mentioned in a comment.": "Dispara cuando te mencionan en un comentario."
 }
