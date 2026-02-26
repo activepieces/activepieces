@@ -41,7 +41,7 @@
     },
     "@activepieces/engine#build": {
       "dependsOn": [],
-      "outputs": ["../../dist/packages/engine/**"],
+      "outputs": ["../../../dist/packages/engine/**"],
       "cache": false,
       "inputs": [
         "src/**",
