@@ -15,7 +15,7 @@ const projectRepo = repoFactory(ProjectEntity)
 
 export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
     hardDeleteProjectHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PROJECT>) => {
-        const { projectId, platformId, cleanedUpFlowIds } = data
+        const { projectId, platformId, preDeletedFlowIds } = data
         const job = await systemJobsSchedule(log).getJob(`hard-delete-project-${projectId}`)
         assertNotNullOrUndefined(job, 'job is required')
 
@@ -24,13 +24,13 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
         })
 
         for (const flow of allFlows) {
-            if (cleanedUpFlowIds.includes(flow.id)) {
+            if (preDeletedFlowIds.includes(flow.id)) {
                 continue
             }
             await flowSideEffects(log).preDelete({ flowToDelete: flow })
             await job.updateData({
                 ...data,
-                cleanedUpFlowIds: [...cleanedUpFlowIds, flow.id],
+                preDeletedFlowIds: [...preDeletedFlowIds, flow.id],
             })
         }
 

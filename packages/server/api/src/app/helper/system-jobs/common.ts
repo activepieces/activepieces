@@ -34,7 +34,7 @@ type AiCreditUpdateCheckSystemJobData = {
 type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
     platformId: PlatformId
-    cleanedUpFlowIds: FlowId[]
+    preDeletedFlowIds: FlowId[]
 }
 
 type SystemJobDataMap = {
