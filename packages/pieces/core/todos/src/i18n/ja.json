@@ -7,7 +7,7 @@
   "Pauses the flow and wait for the approval from the user": "フローを一時停止し、ユーザーの承認を待つ",
   "Creates a todo for a user and wait for their response or take action.": "ユーザーの todo を作成し、応答を待ったりアクションを実行したりします。",
   "Title": "タイトル",
-  "Description": "説明",
+  "Description": "Description",
   "Assignee": "Assignee",
   "Status Options": "ステータスオプション",
   "Task ID": "Task ID",
