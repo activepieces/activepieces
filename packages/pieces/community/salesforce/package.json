@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-salesforce",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
