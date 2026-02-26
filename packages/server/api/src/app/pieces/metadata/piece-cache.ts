@@ -2,14 +2,13 @@ import { pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import semVer from 'semver'
 import { lru, LRU } from 'tiny-lru'
 import { In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
+import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -149,7 +148,7 @@ function pickLatestVersionIds(pieces: PieceKey[]): string[] {
     for (const piece of pieces) {
         const key = `${piece.name}:${piece.platformId ?? ''}`
         const existing = latest.get(key)
-        if (isNil(existing) || semVer.gt(piece.version, existing.version)) {
+        if (isNil(existing) || isNewerVersion(piece.version, existing.version)) {
             latest.set(key, piece)
         }
     }
