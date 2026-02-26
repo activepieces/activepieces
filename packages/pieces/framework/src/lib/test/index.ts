@@ -3,7 +3,7 @@ import { ActionContext } from '../context';
 import { InputPropertyMap, StaticPropsValue } from '../property';
 
 export function createMockActionContext<
-  Props extends InputPropertyMap,
+  Props extends InputPropertyMap
 >(params: {
   propsValue: StaticPropsValue<Props>;
 }): ActionContext<undefined, Props> {
@@ -14,13 +14,17 @@ export function createMockActionContext<
     store: {
       put: async <T>(key: string, value: T) => value,
       get: async () => null,
-      delete: async () => { return },
+      delete: async () => {
+        return;
+      },
     },
     connections: {
       get: async () => null,
     },
     tags: {
-      add: async () => { return },
+      add: async () => {
+        return;
+      },
     },
     server: {
       apiUrl: 'http://localhost:3000',
@@ -31,16 +35,24 @@ export function createMockActionContext<
       write: async () => 'test-file-url',
     },
     output: {
-      update: async () => { return },
+      update: async () => {
+        return;
+      },
     },
     agent: {
       tools: async () => ({}),
     },
     run: {
       id: 'test-run-id' as string,
-      stop: () => { return },
-      pause: () => { return },
-      respond: () => { return },
+      stop: () => {
+        return;
+      },
+      pause: () => {
+        return;
+      },
+      respond: () => {
+        return;
+      },
     },
     project: {
       id: 'test-project-id',
@@ -59,5 +71,5 @@ export function createMockActionContext<
       name: 'test-step',
     },
     generateResumeUrl: () => 'http://localhost:3000/resume',
-  } as ActionContext<undefined, Props>;
+  } as unknown as ActionContext<undefined, Props>;
 }
