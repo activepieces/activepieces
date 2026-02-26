@@ -121,9 +121,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             
             const tools = activepiecesTools(mcp, log)
             tools.forEach((tool) => {
-                const toolName = tool.title ?? apId()
-                const toolDescription = tool.description ?? ''
-                server.tool(toolName, toolDescription, tool.inputSchema, { title: toolName }, (args, _extra) => tool.execute(args))
+                server.registerTool(tool.title, { title: tool.title, description: tool.description, inputSchema: tool.inputSchema }, (args: Record<string, unknown>) => tool.execute(args))
             })
 
             return server

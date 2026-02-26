@@ -17,7 +17,7 @@ import { projectService } from '../../project/project-service'
 
 const updateActionValidator = TypeCompiler.Compile(UpdateActionRequest)
 
-export const apAddCodeStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_step',
         description: `Add a new step (code, piece, loop, or router) to a flow. Use ap_flow_structure to get valid parentStepName and insert locations. **Before adding a piece action you must call ap_list_pieces** to get available piece names, piece versions, and action names; use that output to build a valid action so the step is accepted. If the add fails due to invalid config, the error message will indicate what to fix so you can iterate.`,
