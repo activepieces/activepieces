@@ -135,7 +135,6 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
         'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
-        'scim-user-welcome': 'Welcome! Your account has been created',
     }
 
     return templateToSubject[templateName]
