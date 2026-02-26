@@ -14,7 +14,7 @@ import {
     ProjectMember,
     SigningKey,
 } from '@activepieces/ee-shared'
-import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
+import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
 import {
     AiCreditsAutoTopUpState,
@@ -75,6 +75,7 @@ import {
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderSchema } from '../../../src/app/ai/ai-provider-entity'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
@@ -82,6 +83,7 @@ import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oaut
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
+import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
@@ -250,6 +252,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
+        secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -786,6 +789,17 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
+}
+
+export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
+    const { mockPlatform } = await mockAndSaveBasicSetup()
+    const mockPieceMetadata = createMockPieceMetadata({
+        platformId: mockPlatform.id,
+        packageType: PackageType.REGISTRY,
+    })
+    await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+    pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
+    return mockPieceMetadata
 }
 
 type CreateMockPlatformWithOwnerParams = {
