@@ -85,6 +85,10 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             name: 'idx_todo_platform_id',
             columns: ['platformId'],
         },
+        {
+            name: 'idx_todo_run_id',
+            columns: ['runId'],
+        },
     ],
     relations: {
         platform: {

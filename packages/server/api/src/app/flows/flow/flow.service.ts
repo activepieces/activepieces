@@ -643,7 +643,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 data: {
                     flow,
                     preDeleteDone: false,
-                    dbDeleteDone: false,
                 },
                 jobId: `delete-flow-${flow.id}`,
             },

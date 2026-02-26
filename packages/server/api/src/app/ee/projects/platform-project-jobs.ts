@@ -4,6 +4,7 @@ import { ArrayContains } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
@@ -43,5 +44,7 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
                 platformId,
             })
         })
+
+        await flowExecutionCache(log).invalidate(...allFlows.map(flow => flow.id))
     },
 })

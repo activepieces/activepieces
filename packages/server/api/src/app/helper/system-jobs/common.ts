@@ -17,7 +17,6 @@ export enum SystemJobName {
 type DeleteFlowDurableSystemJobData =  {
     flow: Flow
     preDeleteDone: boolean
-    dbDeleteDone: boolean
 }
 
 type UpdateFlowStatusDurableSystemJobData =  {

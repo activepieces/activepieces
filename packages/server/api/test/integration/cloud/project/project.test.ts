@@ -423,7 +423,10 @@ describe('Project API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const deletedProject = await databaseConnection().getRepository('project').findOneBy({ id: mockProjectToDelete.id })
+            const deletedProject = await databaseConnection().getRepository('project').findOne({
+                where: { id: mockProjectToDelete.id },
+                withDeleted: true,
+            })
             expect(deletedProject?.deleted).not.toBeNull()
         })
 

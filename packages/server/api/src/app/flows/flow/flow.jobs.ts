@@ -12,7 +12,7 @@ import { flowService } from './flow.service'
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
     deleteFlowHandler: async (data: SystemJobData<SystemJobName.DELETE_FLOW>) => {
-        const { flow, preDeleteDone, dbDeleteDone } = data
+        const { flow, preDeleteDone } = data
         const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
         assertNotNullOrUndefined(job, 'job is required')
 
@@ -22,33 +22,17 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const { error } = await tryCatch(async () => {
-            if (!preDeleteDone) {
-                await flowSideEffects(log).preDelete({
-                    flowToDelete: flow,
-                })
-                await job.updateData({
-                    ...data,
-                    preDeleteDone: true,
-                })
-            }
-            if (!dbDeleteDone) {
-                await flowRepo().delete({ id: flow.id })
-                await job.updateData({
-                    ...data,
-                    preDeleteDone: true,
-                    dbDeleteDone: true,
-                })
-            }
-            await flowExecutionCache(log).invalidate(flow.id)
-        })
-
-        if (error) {
-            await flowRepo().update(flow.id, {
-                operationStatus: FlowOperationStatus.NONE,
+        if (!preDeleteDone) {
+            await flowSideEffects(log).preDelete({
+                flowToDelete: flow,
             })
-            throw error
+            await job.updateData({
+                ...data,
+                preDeleteDone: true,
+            })
         }
+        await flowRepo().delete({ id: flow.id })
+        await flowExecutionCache(log).invalidate(flow.id)
     },
 
     updateStatusHandler: async (data: SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>) => {
