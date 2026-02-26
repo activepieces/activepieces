@@ -19,10 +19,10 @@
   "Reply To": "Répondre à",
   "BCC": "Cci",
   "Subject": "Sujet",
-  "Body Type": "Type de Corps",
-  "Body": "Corps",
+  "Body Type": "Body Type",
+  "Body": "Body",
   "Custom Headers": "En-têtes personnalisés",
-  "Attachments": "Fichiers joints",
+  "Attachments": "Pièces jointes",
   "plain text": "texte brut",
   "html": "html"
 }
