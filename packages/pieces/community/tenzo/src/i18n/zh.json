@@ -1,0 +1,15 @@
+{
+  "Extract data and insights from the Tenzo platform for sales, forecasting, and analytics.": "从Tenzo平台提取出售、预测和分析的数据和见解。",
+  "New Daily Forecast": "新的每日预测",
+  "New Summary Payments": "新建汇总付款",
+  "New Summary Sales": "新的摘要销售",
+  "Triggers when there is a new daily forecast for a selected location.": "当选定位置有新的每日预报时触发。",
+  "Triggers when there is new daily sales and payments data.": "当有新的每日销售和支付数据时触发。",
+  "Triggers when there is new daily sales data.": "当有新的每日销售数据时触发。",
+  "Location": "地点",
+  "Area": "区域",
+  "Include Deleted": "包括已删除",
+  "Select the location to filter data": "选择要过滤数据的位置",
+  "Select the area to filter data": "选择要过滤数据的区域",
+  "Include data that has been deleted": "包含已被删除的数据"
+}
