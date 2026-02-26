@@ -42,6 +42,7 @@ async function getFilesRecursively(
     fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
     supportsAllDrives: 'true',
     includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+    pageSize: '1000',
   };
 
   let response = await httpClient.sendRequest({
