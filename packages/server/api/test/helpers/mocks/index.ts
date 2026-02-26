@@ -15,7 +15,7 @@ import {
     SigningKey,
 } from '@activepieces/shared'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-shared'
+import { apDayjs } from '@activepieces/server-common'
 import {
     AiCreditsAutoTopUpState,
     AIProvider,

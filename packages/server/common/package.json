@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/server-shared",
+  "name": "@activepieces/server-common",
   "version": "0.0.2",
   "type": "commonjs",
   "main": "./dist/src/index.js",

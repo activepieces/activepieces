@@ -7,7 +7,7 @@ import {
     FlowCreatedEvent,
     UpdatePlatformEventDestinationRequestBody,
 } from '@activepieces/shared'
-import { WorkerSystemProp } from '@activepieces/server-shared'
+import { WorkerSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'

@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { GitRepo } from '@activepieces/shared'
-import { fileSystemUtils } from '@activepieces/server-shared'
+import { fileSystemUtils } from '@activepieces/server-common'
 import { AppConnectionScope, ConnectionState, FlowState, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'

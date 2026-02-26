@@ -1,5 +1,5 @@
 import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApId,

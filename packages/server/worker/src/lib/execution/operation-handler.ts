@@ -5,7 +5,7 @@ import {
     PropertyType,
 } from '@activepieces/pieces-framework'
 import { Sandbox } from '@activepieces/sandbox'
-import { webhookSecretsUtils } from '@activepieces/server-shared'
+import { webhookSecretsUtils } from '@activepieces/server-common'
 import { AgentPieceProps, AgentToolType, AI_PIECE_NAME, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ExecuteActionResponse, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, parseToJsonIfPossible, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'

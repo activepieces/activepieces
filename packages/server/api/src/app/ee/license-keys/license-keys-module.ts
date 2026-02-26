@@ -1,4 +1,4 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-common'
 import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { SystemJobName } from '../../helper/system-jobs/common'

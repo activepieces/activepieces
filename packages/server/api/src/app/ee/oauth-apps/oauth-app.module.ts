@@ -3,7 +3,7 @@ import {
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/shared'
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,

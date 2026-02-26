@@ -1,7 +1,7 @@
 import {
     ApplicationEvent,
 } from '@activepieces/shared'
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-common'
 import {
     Cursor,
     isNil,

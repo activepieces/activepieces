@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { ConfigureRepoRequest, GitRepo } from '@activepieces/shared'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'

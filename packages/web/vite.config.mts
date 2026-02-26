@@ -19,7 +19,7 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     root: __dirname,
-    cacheDir: '../../node_modules/.vite/packages/react-ui',
+    cacheDir: '../../node_modules/.vite/packages/web',
     server: {
       // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
@@ -77,7 +77,7 @@ export default defineConfig(({ command, mode }) => {
     ],
 
     build: {
-      outDir: '../../dist/packages/react-ui',
+      outDir: '../../dist/packages/web',
       emptyOutDir: true,
       reportCompressedSize: true,
       commonjsOptions: {

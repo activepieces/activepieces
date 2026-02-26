@@ -4,7 +4,7 @@ import {
     ProjectMemberWithUser,
     UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     Permission,
     PrincipalType,

@@ -1,5 +1,5 @@
 import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/shared'
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApId,

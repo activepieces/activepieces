@@ -2,7 +2,7 @@ import {
     ApiKey,
     ApiKeyResponseWithValue,
 } from '@activepieces/shared'
-import { cryptoUtils } from '@activepieces/server-shared'
+import { cryptoUtils } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
