@@ -33,10 +33,11 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
         const template = await templateService(app.log).getOne({ id: request.params.id })
         if (!isNil(template)) {
-            return template
+            return migrateTemplateFlows(template)
         }
         if (edition !== ApEdition.CLOUD) {
-            return communityTemplates.getOrThrow(request.params.id)
+            const communityTemplate = await communityTemplates.getOrThrow(request.params.id)
+            return migrateTemplateFlows(communityTemplate)
         }
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -59,8 +60,11 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         const officialTemplates = await loadOfficialTemplatesOrReturnEmpty(app.log, request.query)
         const customTemplates = await loadCustomTemplatesOrReturnEmpty(app.log, request.query, request.principal)
 
+        const allTemplates = [...officialTemplates, ...customTemplates]
+        const migratedTemplates = await Promise.all(allTemplates.map(migrateTemplateFlows))
+
         return {
-            data: [...officialTemplates, ...customTemplates],
+            data: migratedTemplates,
             next: null,
             previous: null,
         }
@@ -236,4 +240,15 @@ async function loadCustomTemplatesOrReturnEmpty(
     }
     const customTemplates = await templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
     return customTemplates.data
+}
+
+async function migrateTemplateFlows(template: Template): Promise<Template> {
+    if (!template.flows || template.flows.length === 0) {
+        return template
+    }
+    const migratedFlows = await migrateFlowVersionTemplateList(template.flows)
+    return {
+        ...template,
+        flows: migratedFlows,
+    }
 }
