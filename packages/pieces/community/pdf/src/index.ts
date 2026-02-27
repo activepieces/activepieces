@@ -19,6 +19,7 @@ export const PDF = createPiece({
     'AbdulTheActivepiecer',
     'jmgb27',
     'danielpoonwj',
+    'bertrandong',
   ],
   actions: [
     extractText,
