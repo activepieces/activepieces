@@ -1,7 +1,7 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { applyFunctionToValuesSync, isNil, isString } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
-import { FlowAction, FlowActionType, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
+import { BranchExecutionType, FlowAction, FlowActionType, FlowBranch, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { AddActionRequest, DeleteActionRequest, SkipActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
@@ -26,7 +26,7 @@ function createAction(request: UpdateActionRequest): FlowAction {
                 ...baseProperties,
                 type: FlowActionType.ROUTER,
                 settings: request.settings,
-                branches: request.branches ?? [],
+                branches: getDefaultBranchesIfEmpty(request.branches),
             }
             break
         case FlowActionType.LOOP_ON_ITEMS:
@@ -350,6 +350,25 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
         }
     }
     return step
+}
+
+function getDefaultBranchesIfEmpty(branches: FlowBranch[] | undefined): FlowBranch[] {
+    if (branches && branches.length > 0) {
+        return branches
+    }
+    return [
+        {
+            branchType: BranchExecutionType.CONDITION,
+            branchName: 'Branch 1',
+            conditions: [[]],
+            steps: [],
+        },
+        {
+            branchType: BranchExecutionType.FALLBACK,
+            branchName: 'Otherwise',
+            steps: [],
+        },
+    ]
 }
 
 export const actionOperations = { add, remove, update, skip, createAction }

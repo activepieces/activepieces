@@ -86,15 +86,15 @@ describe('Flow API', () => {
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
             expect(responseBody?.operationStatus).toBeDefined()
             expect(responseBody?.templateId).toBeNull()
-            
-            expect(Object.keys(responseBody?.version)).toHaveLength(14)
+
+            expect(Object.keys(responseBody?.version)).toHaveLength(15)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
             expect(responseBody?.version?.updatedBy).toBeNull()
             expect(responseBody?.version?.flowId).toBe(responseBody?.id)
             expect(responseBody?.version?.displayName).toBe('test flow')
-            expect(Object.keys(responseBody?.version?.trigger)).toHaveLength(5)
+            expect(Object.keys(responseBody?.version?.trigger)).toHaveLength(6)
             expect(responseBody?.version?.trigger.type).toBe('EMPTY')
             expect(responseBody?.version?.trigger.name).toBe('trigger')
             expect(responseBody?.version?.trigger.settings).toMatchObject({})
@@ -163,6 +163,7 @@ describe('Flow API', () => {
                     valid: true,
                     name: 'trigger',
                     displayName: 'Schedule',
+                    steps: [],
                 },
             })
             await databaseConnection()
@@ -211,7 +212,7 @@ describe('Flow API', () => {
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('ENABLING')
-                expect(Object.keys(responseBody.version)).toHaveLength(14)
+                expect(Object.keys(responseBody.version)).toHaveLength(15)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
             }
         })
@@ -278,7 +279,7 @@ describe('Flow API', () => {
             expect(responseBody?.metadata).toBeNull()
             expect(responseBody?.operationStatus).toBe('DISABLING')
             expect(responseBody?.templateId).toBeNull()
-            expect(Object.keys(responseBody?.version)).toHaveLength(14)
+            expect(Object.keys(responseBody?.version)).toHaveLength(15)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -348,6 +349,7 @@ describe('Flow API', () => {
                     valid: true,
                     name: 'trigger',
                     displayName: 'Schedule',
+                    steps: [],
                 },
             })
             await databaseConnection()
@@ -390,7 +392,7 @@ describe('Flow API', () => {
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('DISABLING')
-                expect(Object.keys(responseBody.version)).toHaveLength(14)
+                expect(Object.keys(responseBody.version)).toHaveLength(15)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
                 expect(responseBody.version.state).toBe('LOCKED')
                 expect(responseBody.templateId).toBeNull()

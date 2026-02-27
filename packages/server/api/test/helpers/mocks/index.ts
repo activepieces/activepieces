@@ -513,6 +513,7 @@ export const createMockFlowVersion = (
         settings: {},
         valid: false,
         displayName: 'Select Trigger',
+        steps: [],
     } as const
 
     return {
@@ -523,6 +524,7 @@ export const createMockFlowVersion = (
         flowId: flowVersion?.flowId ?? apId(),
         agentIds: flowVersion?.agentIds ?? [],
         trigger: flowVersion?.trigger ?? emptyTrigger,
+        steps: flowVersion?.steps ?? [],
         connectionIds: flowVersion?.connectionIds ?? [],
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
