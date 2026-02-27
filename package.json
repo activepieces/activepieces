@@ -383,7 +383,8 @@
     "packages/pieces/framework",
     "packages/pieces/common",
     "packages/pieces/core/*",
-    "packages/pieces/community/*"
+    "packages/pieces/community/*",
+    "packages/pieces/custom/*"
   ],
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node"
