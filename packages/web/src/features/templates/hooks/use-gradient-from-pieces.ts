@@ -1,7 +1,7 @@
 import {
-  FlowTrigger,
+  FlowAction,
   FlowActionType,
-  flowStructureUtil,
+  FlowTrigger,
   PieceCategory,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
@@ -136,12 +136,12 @@ const buildGradientFromColors = (colors: string[]): string => {
 };
 
 export const useGradientFromPieces = (
-  trigger: FlowTrigger | undefined,
+  flowVersion: FlowVersionLike | undefined,
   excludeCore = false,
 ) => {
   const steps = useMemo(
-    () => (trigger ? flowStructureUtil.getAllSteps(trigger) : []),
-    [trigger],
+    () => (flowVersion ? [flowVersion.trigger, ...flowVersion.steps] : []),
+    [flowVersion],
   );
 
   const { pieceNames, coreMetadata } = useMemo(
@@ -220,4 +220,9 @@ export const useGradientFromPieces = (
   }, [colorQueries, logosToProcess.length]);
 
   return gradient;
+};
+
+type FlowVersionLike = {
+  trigger: FlowTrigger;
+  steps: FlowAction[];
 };

@@ -173,15 +173,16 @@ const StepSettingsContainer = () => {
               readonly={readonly}
               displayName={modifiedStep.displayName}
               branchName={
-                !isNil(selectedBranchIndex)
-                  ? modifiedStep.settings.branches?.[selectedBranchIndex]
+                !isNil(selectedBranchIndex) &&
+                modifiedStep.type === FlowActionType.ROUTER
+                  ? modifiedStep.branches?.[selectedBranchIndex]
                       ?.branchName
                   : undefined
               }
               setBranchName={(value) => {
                 if (!isNil(selectedBranchIndex)) {
                   form.setValue(
-                    `settings.branches[${selectedBranchIndex}].branchName`,
+                    `branches.${selectedBranchIndex}.branchName`,
                     value,
                     {
                       shouldValidate: true,

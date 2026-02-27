@@ -142,7 +142,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
         },
     }, async (span) => {
         try {
-            const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+            const steps = flowStructureUtil.getAllSteps(flowVersion)
             const pieceSteps = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE)
             span.setAttribute('sandbox.pieceStepsCount', pieceSteps.length)
 
@@ -185,7 +185,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
 }
 
 function getCodePieces(flowVersion: FlowVersion): CodeArtifact[] {
-    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+    const steps = flowStructureUtil.getAllSteps(flowVersion)
     return steps.filter((step) => step.type === FlowActionType.CODE).map((step) => {
         const codeAction = step as CodeAction
         return {

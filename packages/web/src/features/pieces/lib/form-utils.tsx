@@ -16,7 +16,7 @@ import {
   PieceTrigger,
   isNil,
   RouterActionSchema,
-  RouterBranchesSchema,
+  FlowBranchSchema,
   SampleDataSetting,
   RouterExecutionType,
   UpsertOAuth2Request,
@@ -285,7 +285,6 @@ export const formUtils = {
         ([_, value]) => value !== undefined,
       ),
     );
-    copiedStep.nextAction = null;
     return copiedStep;
   },
 
@@ -308,13 +307,13 @@ export const formUtils = {
         ]);
       case FlowActionType.ROUTER:
         return Type.Intersect([
-          Type.Omit(RouterActionSchema, ['settings']),
+          Type.Omit(RouterActionSchema, ['settings', 'branches']),
           Type.Object({
             settings: Type.Object({
-              branches: RouterBranchesSchema(true),
               executionType: Type.Enum(RouterExecutionType),
               sampleData: SampleDataSetting,
             }),
+            branches: Type.Array(FlowBranchSchema),
           }),
         ]);
       case FlowActionType.CODE:

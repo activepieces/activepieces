@@ -29,6 +29,7 @@ export const flowGenerator = {
 
 const flowVersionGenerator = {
     simpleActionAndTrigger(): Omit<FlowVersion, 'flowId'> {
+        const action = generateAction()
         return {
             id: apId(),
             displayName: faker.animal.dog(),
@@ -38,12 +39,15 @@ const flowVersionGenerator = {
             valid: true,
             trigger: {
                 ...randomizeTriggerMetadata(generateTrigger()),
-                nextAction: generateAction(),
+                steps: [action.name],
             },
+            steps: [action],
             state: FlowVersionState.DRAFT,
             connectionIds: [],
             agentIds: [],
             notes: [],
+            schemaVersion: null,
+            backupFiles: null,
         }
     },
 }
@@ -92,5 +96,6 @@ function generateTrigger(): FlowTrigger {
             propertySettings: {},
         },
         valid: true,
+        steps: [],
     }
 }

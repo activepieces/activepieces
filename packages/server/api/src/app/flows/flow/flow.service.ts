@@ -570,7 +570,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             name: flow.version.displayName,
             summary: '',
             description: '',
-            pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
+            pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version))),
             flows: [flow.version],
             tags: [],
             blogUrl: '',

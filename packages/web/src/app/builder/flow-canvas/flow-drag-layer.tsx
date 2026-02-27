@@ -87,7 +87,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     [reactFlow],
   );
   const draggedStep = activeDraggingStep
-    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion)
     : undefined;
   const handleDragStart = (e: DragStartEvent) => {
     if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_STEP_TAG) {
@@ -167,7 +167,7 @@ function handleStepDragEnd({
   'applyOperation' | 'activeDraggingStep' | 'flowVersion'
 >) {
   const draggedStep = activeDraggingStep
-    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion)
     : undefined;
   const isOverSomething =
     !isNil(e.over?.data?.current) &&
@@ -183,6 +183,7 @@ function handleStepDragEnd({
       const isPartOfInnerFlow = flowStructureUtil.isChildOf(
         draggedStep,
         droppedAtNodeData.parentStepName,
+        flowVersion,
       );
       if (isPartOfInnerFlow) {
         toast(t('Invalid Move'), {

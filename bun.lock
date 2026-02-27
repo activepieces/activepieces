@@ -7208,16 +7208,6 @@
         "vitest": "3.0.8",
       },
     },
-    "packages/pieces/core/todos": {
-      "name": "@activepieces/piece-todos",
-      "version": "0.0.17",
-      "dependencies": {
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "tslib": "^2.3.0",
-      },
-    },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
       "version": "0.1.29",
@@ -8777,8 +8767,6 @@
     "@activepieces/piece-tl-dv": ["@activepieces/piece-tl-dv@workspace:packages/pieces/community/tl-dv"],
 
     "@activepieces/piece-todoist": ["@activepieces/piece-todoist@workspace:packages/pieces/community/todoist"],
-
-    "@activepieces/piece-todos": ["@activepieces/piece-todos@workspace:packages/pieces/core/todos"],
 
     "@activepieces/piece-toggl-track": ["@activepieces/piece-toggl-track@workspace:packages/pieces/community/toggl-track"],
 
@@ -14875,8 +14863,6 @@
     "@activepieces/piece-tiny-talk-ai/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-tl-dv/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
-
-    "@activepieces/piece-todos/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-toggl-track/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 

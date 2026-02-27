@@ -1,7 +1,7 @@
 import semver from 'semver'
-import { FlowActionType } from '../actions/action'
+import { FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
-import { FlowTriggerType } from '../triggers/trigger'
+import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 
 export const flowPieceUtil = {
@@ -27,7 +27,7 @@ export const flowPieceUtil = {
         }
         return pieceVersion
     },
-    getUsedPieces(flowVersion: FlowVersion): string[] {
+    getUsedPieces(flowVersion: { trigger: FlowTrigger; steps: FlowAction[] }): string[] {
         return flowStructureUtil.getAllSteps(flowVersion)
             .filter((step) => step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE)
             .map((step) => step.settings.pieceName)

@@ -76,7 +76,7 @@ const BranchSingleCondition = ({
   const form = useFormContext<RouterAction>();
 
   const condition = form.getValues(
-    `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
+    `branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
   );
 
   const isTextCondition =
@@ -107,7 +107,7 @@ const BranchSingleCondition = ({
           })}
         >
           <FormField
-            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
+            name={`branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
             control={form.control}
             render={({ field }) => {
               return (
@@ -127,7 +127,7 @@ const BranchSingleCondition = ({
             }}
           />
           <FormField
-            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
+            name={`branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
             control={form.control}
             render={({ field }) => (
               <FormItem>
@@ -145,7 +145,7 @@ const BranchSingleCondition = ({
                       //TODO: fix this
                       //@ts-expect-ignore
                       form.setValue(
-                        `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
+                        `branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
                         '' as any,
                       );
                     }
@@ -159,7 +159,7 @@ const BranchSingleCondition = ({
           />
           {!isSingleValueCondition && (
             <FormField
-              name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
+              name={`branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
               control={form.control}
               render={({ field }) => (
                 <FormItem>
@@ -183,7 +183,7 @@ const BranchSingleCondition = ({
       <div className="flex justify-start items-center gap-2 mt-2">
         {isTextCondition && (
           <FormField
-            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.caseSensitive`}
+            name={`branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.caseSensitive`}
             control={form.control}
             render={({ field }) => (
               <FormItem>

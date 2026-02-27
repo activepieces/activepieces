@@ -46,9 +46,9 @@ const DataSelectorNodeContent = ({
   const [ripple, rippleEvent] = useApRipple();
   const step =
     node.data.type === 'value'
-      ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
+      ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion)
       : node.data.type === 'test'
-      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
+      ? flowStructureUtil.getStep(node.data.stepName, flowVersion)
       : undefined;
   const stepMetadata = step
     ? stepsHooks.useStepMetadata({ step }).stepMetadata

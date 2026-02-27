@@ -3,19 +3,19 @@ import {
     ApEdition,
     FlowAction,
     FlowActionType,
-    flowStructureUtil,
     FlowVersion,
     isNil,
     PieceAction,
 } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { Migration } from '.'
+import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 
 
 export const migrateV9AiPieces: Migration = {
     targetSchemaVersion: '9',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type !== FlowActionType.PIECE) {
                 return step
             }

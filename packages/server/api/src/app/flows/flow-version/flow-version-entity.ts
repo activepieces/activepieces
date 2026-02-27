@@ -26,6 +26,11 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        steps: {
+            type: 'jsonb',
+            nullable: false,
+            default: '[]',
+        },
         connectionIds: {
             type: String,
             array: true,

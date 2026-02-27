@@ -111,12 +111,11 @@ export const useHandleKeyPressOnCanvas = () => {
           e.preventDefault();
           canvasBulkActions.getActionsInClipboard().then((actions) => {
             if (actions.length > 0) {
-              const lastStep = [
-                flowVersion.trigger,
-                ...flowStructureUtil.getAllNextActionsWithoutChildren(
-                  flowVersion.trigger,
-                ),
-              ].at(-1)!.name;
+              const triggerSteps = flowVersion.trigger.steps;
+              const lastStep =
+                triggerSteps.length > 0
+                  ? triggerSteps[triggerSteps.length - 1]
+                  : flowVersion.trigger.name;
               const lastSelectedNode =
                 selectedNodes.length === 1 ? selectedNodes[0] : null;
               canvasBulkActions.pasteNodes(

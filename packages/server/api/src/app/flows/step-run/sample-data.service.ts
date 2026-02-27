@@ -24,7 +24,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 export const sampleDataService = (log: FastifyBaseLogger) => ({
     async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<Step> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(params.flowVersionId)
-        const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion.trigger)
+        const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion)
         const sampleDataFile = await saveSampleData(params, log)
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         return {
@@ -41,7 +41,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
-        const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
+        const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion)
         const fileType = params.type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
         const fileId = params.type === SampleDataFileType.OUTPUT ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
         if (isNil(fileId)) {
@@ -80,7 +80,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         }).andWhere('metadata->>\'flowId\' = :flowId', { flowId: params.flowId }).execute()
     },
     async getSampleDataForFlow(projectId: ProjectId, flowVersion: FlowVersion, type: SampleDataFileType): Promise<Record<string, unknown>> {
-        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const steps = flowStructureUtil.getAllSteps(flowVersion)
         const sampleDataPromises = steps.map(async (step) => {
             const data = await this.getOrReturnEmpty({
                 projectId,
@@ -103,7 +103,7 @@ export async function saveSampleData({
     type,
 }: SaveSampleDataParams, log: FastifyBaseLogger): Promise<SaveSampleDataResponse> {
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
-    const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
+    const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion)
     const fileType = type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
     const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step, fileType, log)
     const payloadWithStringifiedNullOrUndefined = isNil(payload) ? stringifyNullOrUndefined(payload) : payload

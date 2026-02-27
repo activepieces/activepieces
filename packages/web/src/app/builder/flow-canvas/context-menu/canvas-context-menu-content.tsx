@@ -3,6 +3,7 @@ import {
   FlowActionType,
   FlowOperationType,
   flowStructureUtil,
+  RouterAction,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -77,7 +78,7 @@ export const CanvasContextMenuContent = ({
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
-      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as FlowAction)
+      !!(flowStructureUtil.getStep(node, flowVersion) as FlowAction)
         ?.skip,
   );
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
@@ -86,7 +87,7 @@ export const CanvasContextMenuContent = ({
 
   const firstSelectedStep = flowStructureUtil.getStep(
     selectedNodes[0],
-    flowVersion.trigger,
+    flowVersion,
   );
   const showPasteAfterLastStep =
     !readonly && contextMenuType === ContextMenuType.CANVAS;
@@ -275,7 +276,8 @@ export const CanvasContextMenuContent = ({
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
               {firstSelectedStep &&
-                firstSelectedStep.settings.branches.map(
+                firstSelectedStep.type === FlowActionType.ROUTER &&
+                (firstSelectedStep.branches ?? []).map(
                   (branch, branchIndex) => (
                     <ContextMenuItem
                       key={branch.branchName}
@@ -298,13 +300,16 @@ export const CanvasContextMenuContent = ({
                 )}
               <ContextMenuItem
                 onClick={() => {
+                  const routerStep =
+                    firstSelectedStep as RouterAction;
+                  const branchCount =
+                    routerStep.branches?.length ?? 0;
                   applyOperation({
                     type: FlowOperationType.ADD_BRANCH,
                     request: {
                       stepName: firstSelectedStep.name,
-                      branchIndex:
-                        firstSelectedStep.settings.branches.length - 1,
-                      branchName: `Branch ${firstSelectedStep.settings.branches.length}`,
+                      branchIndex: branchCount - 1,
+                      branchName: `Branch ${branchCount}`,
                     },
                   });
                   pasteNodes(
@@ -313,8 +318,7 @@ export const CanvasContextMenuContent = ({
                       parentStepName: firstSelectedStep.name,
                       stepLocationRelativeToParent:
                         StepLocationRelativeToParent.INSIDE_BRANCH,
-                      branchIndex:
-                        firstSelectedStep.settings.branches.length - 1,
+                      branchIndex: branchCount - 1,
                     },
                     applyOperation,
                   );

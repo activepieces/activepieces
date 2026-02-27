@@ -1,7 +1,7 @@
 import {
-  FlowTrigger,
+  FlowAction,
   FlowActionType,
-  flowStructureUtil,
+  FlowTrigger,
   PieceCategory,
 } from '@activepieces/shared';
 import { cva } from 'class-variance-authority';
@@ -40,14 +40,14 @@ const extraIconVariants = cva(
 
 export function PieceIconList({
   maxNumberOfIconsToShow,
-  trigger,
+  flowVersion,
   size,
   className,
   circle = true,
   background,
   excludeCore = false,
 }: {
-  trigger: FlowTrigger;
+  flowVersion: FlowVersionLike;
   maxNumberOfIconsToShow: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   className?: string;
@@ -55,7 +55,7 @@ export function PieceIconList({
   background?: string;
   excludeCore?: boolean;
 }) {
-  const steps = flowStructureUtil.getAllSteps(trigger);
+  const steps = [flowVersion.trigger, ...flowVersion.steps];
 
   const { pieceNames, coreMetadata } = useMemo(
     () => extractPieceNamesAndCoreMetadata(steps, excludeCore),
@@ -134,3 +134,8 @@ export function PieceIconList({
     </div>
   );
 }
+
+type FlowVersionLike = {
+  trigger: FlowTrigger;
+  steps: FlowAction[];
+};

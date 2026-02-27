@@ -83,7 +83,7 @@ const PreviousOrNextButton = ({ isNext }: { isNext: boolean }) => {
   const [selectedStep, setSelectedStep, flowVersion] = useBuilderStateContext(
     (state) => [state.selectedStep, state.selectStepByName, state.flowVersion],
   );
-  const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger);
+  const allSteps = flowStructureUtil.getAllSteps(flowVersion);
   const currentStepIndex = allSteps.findIndex(
     (step) => step.name === selectedStep,
   );

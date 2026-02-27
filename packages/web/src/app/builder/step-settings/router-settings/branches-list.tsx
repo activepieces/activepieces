@@ -1,8 +1,8 @@
 import {
   RouterAction,
   BranchExecutionType,
+  FlowBranch,
   isNil,
-  RouterActionSettings,
 } from '@activepieces/shared';
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
@@ -59,7 +59,7 @@ export const BranchesList = ({
   const form = useFormContext<RouterAction>();
   return (
     <Sortable
-      value={step.settings.branches.map((branch, idx) => ({
+      value={(step.branches ?? []).map((branch, idx) => ({
         id: idx + 1,
         branch,
       }))}
@@ -67,7 +67,7 @@ export const BranchesList = ({
         moveBranch({ sourceIndex: activeIndex, targetIndex: overIndex });
       }}
     >
-      {step.settings.branches.map((branch, index) =>
+      {(step.branches ?? []).map((branch, index) =>
         branch.branchType === BranchExecutionType.FALLBACK ? (
           <React.Fragment key={index}></React.Fragment>
         ) : (
@@ -98,10 +98,10 @@ export const BranchesList = ({
                 branchNameChanged={(name) => {
                   branchNameChanged(index, name);
                 }}
-                showDeleteButton={step.settings.branches.length > 2}
+                showDeleteButton={(step.branches ?? []).length > 2}
               ></BranchListItem>
 
-              {index === step.settings.branches.length - 2 ? null : (
+              {index === (step.branches ?? []).length - 2 ? null : (
                 <Separator></Separator>
               )}
             </div>
@@ -113,7 +113,7 @@ export const BranchesList = ({
 };
 
 type BranchListItemProps = {
-  branch: RouterActionSettings['branches'][number];
+  branch: FlowBranch;
   branchIndex: number;
   readonly: boolean;
   onClick: () => void;

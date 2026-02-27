@@ -26,10 +26,7 @@ function createAction(request: UpdateActionRequest): FlowAction {
                 ...baseProperties,
                 type: FlowActionType.ROUTER,
                 settings: request.settings,
-                branches: request.branches ?? request.settings.branches?.map((b: { branchName: string, branchType: string, conditions?: unknown[][] }) => ({
-                    ...b,
-                    steps: [],
-                })) ?? [],
+                branches: request.branches ?? [],
             }
             break
         case FlowActionType.LOOP_ON_ITEMS:

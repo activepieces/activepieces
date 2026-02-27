@@ -49,18 +49,18 @@ const ApStepCanvasNode = React.memo(
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
-      !!flowStructureUtil.getStep(step.name, state.flowVersion.trigger)?.valid,
+      !!flowStructureUtil.getStep(step.name, state.flowVersion)?.valid,
       state.rightSidebar !== RightSideBarType.NONE,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
     const stepIndex = useMemo(() => {
-      const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
+      const steps = flowStructureUtil.getAllSteps(flowVersion);
       return steps.findIndex((s) => s.name === step.name) + 1;
     }, [step, flowVersion]);
     const isTrigger = flowStructureUtil.isTrigger(step.type);
-    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
+    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion);
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,

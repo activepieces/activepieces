@@ -65,7 +65,7 @@ function getStepOrThrow(name: string, flowVersion: FlowVersion): Step {
     return step
 }
 
-function getAllSteps(flowVersion: FlowVersion): Step[] {
+function getAllSteps(flowVersion: FlowVersionLike): Step[] {
     return [flowVersion.trigger, ...flowVersion.steps]
 }
 
@@ -248,4 +248,9 @@ export const flowStructureUtil = {
     isAgentPiece,
     extractAgentIds,
     getDirectChildRefs,
+}
+
+type FlowVersionLike = {
+    trigger: FlowTrigger
+    steps: FlowAction[]
 }

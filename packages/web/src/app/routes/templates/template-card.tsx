@@ -18,7 +18,7 @@ export const ExploreTemplateCard = ({
   const displayTags = template.tags.slice(0, 2);
   const hasFlows = template.flows && template.flows.length > 0;
   const gradient = useGradientFromPieces(
-    hasFlows ? template.flows![0]?.trigger : undefined,
+    hasFlows ? template.flows![0] : undefined,
   );
 
   return (
@@ -68,9 +68,9 @@ export const ExploreTemplateCard = ({
           background: gradient || 'transparent',
         }}
       >
-        {hasFlows && template.flows![0]?.trigger && (
+        {hasFlows && template.flows![0] && (
           <PieceIconList
-            trigger={template.flows![0]?.trigger}
+            flowVersion={template.flows![0]}
             maxNumberOfIconsToShow={4}
             size="md"
             className="flex gap-0.5"

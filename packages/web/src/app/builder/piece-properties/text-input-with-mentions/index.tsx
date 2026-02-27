@@ -96,7 +96,7 @@ export const TextInputWithMentions = ({
   enableMarkdown,
 }: TextInputWithMentionsProps) => {
   const steps = useBuilderStateContext((state) =>
-    flowStructureUtil.getAllSteps(state.flowVersion.trigger),
+    flowStructureUtil.getAllSteps(state.flowVersion),
   );
   const stepsMetadata = stepsHooks
     .useStepsMetadata(steps)

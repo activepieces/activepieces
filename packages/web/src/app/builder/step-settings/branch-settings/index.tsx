@@ -15,12 +15,12 @@ const BranchSettings = React.memo(
     const form = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
       control: form.control,
-      name: `settings.branches.${branchIndex}.conditions`,
+      name: `branches.${branchIndex}.conditions`,
     });
 
     const handleDelete = (groupIndex: number, conditionIndex: number) => {
       const conditions = form.getValues(
-        `settings.branches.${branchIndex}.conditions`,
+        `branches.${branchIndex}.conditions`,
       );
       const newConditionsGroup = [...conditions[groupIndex]];
       const isSingleGroup = conditions.length === 1;
@@ -38,7 +38,7 @@ const BranchSettings = React.memo(
 
     const handleAnd = (groupIndex: number) => {
       const conditions = form.getValues(
-        `settings.branches.${branchIndex}.conditions`,
+        `branches.${branchIndex}.conditions`,
       );
       conditions[groupIndex] = [...conditions[groupIndex], emptyCondition];
       update(groupIndex, conditions[groupIndex]);

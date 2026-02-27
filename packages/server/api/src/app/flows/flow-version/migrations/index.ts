@@ -7,6 +7,7 @@ import { migrateV12FixPieceVersion } from './migrate-v12-fix-piece-version'
 import { migrateV13AddNotes } from './migrate-v13-add-notes'
 import { migrateV14AgentProviderModel } from './migrate-v14-agent-provider-model'
 import { migrateV15AgentProviderModel } from './migrate-v15-agent-provider-model'
+import { migrateV17FlattenFlowStructure } from './migrate-v17-flatten-flow-structure'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
@@ -38,6 +39,7 @@ const migrations: Migration[] = [
     migrateV13AddNotes,
     migrateV14AgentProviderModel,
     migrateV15AgentProviderModel,
+    migrateV17FlattenFlowStructure,
 ] as const
 
 export const flowMigrations = {
@@ -63,6 +65,8 @@ export const migrateFlowVersionTemplate = async ({ trigger, schemaVersion, notes
         updatedBy: '',
         valid,
         trigger,
+        steps: [],
+        backupFiles: null,
         state: FlowVersionState.DRAFT,
         schemaVersion,
         notes: notes ?? [],

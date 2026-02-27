@@ -55,7 +55,7 @@ const BuilderPage = () => {
     state.removeAllStepTestsListeners,
     flowStructureUtil.getStep(
       state.selectedStep ?? '',
-      state.flowVersion.trigger,
+      state.flowVersion,
     ),
   ]);
   useEffect(() => {

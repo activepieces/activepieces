@@ -30,7 +30,7 @@ const BranchConditionGroup = React.memo(
     const form = useFormContext<RouterAction>();
     const { fields } = useFieldArray({
       control: form.control,
-      name: `settings.branches.${branchIndex}.conditions.${groupIndex}` as const,
+      name: `branches.${branchIndex}.conditions.${groupIndex}` as const,
     });
     return (
       <div className="flex flex-col gap-4">

@@ -53,7 +53,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
 
         const pieceVersion: Record<string, string> = {}
         const platformId = await projectService.getPlatformId(projectId)
-        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const steps = flowStructureUtil.getAllSteps(flowVersion)
         for (const step of steps) {
             const stepTypeIsPiece = [FlowActionType.PIECE, FlowTriggerType.PIECE].includes(
                 step.type,
@@ -313,7 +313,10 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 settings: {},
                 valid: false,
                 displayName: 'Select Trigger',
+                steps: [],
             },
+            steps: [],
+            backupFiles: null,
             schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
             connectionIds: [],
             agentIds: [],

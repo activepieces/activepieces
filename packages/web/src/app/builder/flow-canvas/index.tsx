@@ -145,7 +145,7 @@ export const FlowCanvas = React.memo(
         return;
       }
       const selectedSteps = selectedNodes
-        .map((node) => flowStructureUtil.getStep(node, flowVersion.trigger))
+        .map((node) => flowStructureUtil.getStep(node, flowVersion))
         .filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
@@ -153,13 +153,13 @@ export const FlowCanvas = React.memo(
           step.type === FlowActionType.ROUTER
         ) {
           const childrenNotSelected = flowStructureUtil
-            .getAllChildSteps(step)
+            .getAllChildSteps(step, flowVersion)
             .filter((c) => isNil(selectedNodes.find((n) => n === c.name)));
           selectedSteps.push(...childrenNotSelected);
         }
       });
       const step = selectedStep
-        ? flowStructureUtil.getStep(selectedStep, flowVersion.trigger)
+        ? flowStructureUtil.getStep(selectedStep, flowVersion)
         : null;
       if (selectedNodes.length === 0 && step) {
         selectedSteps.push(step);
@@ -255,17 +255,11 @@ FlowCanvas.displayName = 'FlowCanvas';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
-      return step.firstLoopAction ? step.firstLoopAction.name : '';
+      return (step.children ?? []).join('-');
     case FlowActionType.ROUTER:
-      return step.children.reduce((routerKey, child) => {
-        const childrenKey = child
-          ? flowStructureUtil
-              .getAllSteps(child)
-              .reduce(
-                (childKey, grandChild) => `${childKey}-${grandChild.name}`,
-                '',
-              )
-          : 'null';
+      return (step.branches ?? []).reduce((routerKey, branch) => {
+        const childrenKey =
+          branch.steps.length > 0 ? branch.steps.join('-') : 'null';
         return `${routerKey}-${childrenKey}`;
       }, '');
     case FlowActionType.CODE:
@@ -279,16 +273,16 @@ const createGraphKey = (
   selectedStep: string,
 ) => {
   const flowGraphKey = flowStructureUtil
-    .getAllSteps(flowVersion.trigger)
+    .getAllSteps(flowVersion)
     .reduce((acc, step) => {
       const branchesNames =
         step.type === FlowActionType.ROUTER
-          ? step.settings.branches.map((branch) => branch.branchName).join('-')
+          ? (step.branches ?? [])
+              .map((branch) => branch.branchName)
+              .join('-')
           : '0';
       const childrenKey = getChildrenKey(step);
       return `${acc}-${step.displayName}-${step.type}-${
-        step.nextAction ? step.nextAction.name : ''
-      }-${
         step.type === FlowActionType.PIECE ||
         step.type === FlowTriggerType.PIECE
           ? step.settings.pieceName

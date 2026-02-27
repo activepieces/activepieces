@@ -1,10 +1,11 @@
-import { flowStructureUtil, FlowVersion, PropertyExecutionType } from '@activepieces/shared'
+import { FlowVersion, PropertyExecutionType } from '@activepieces/shared'
 import { Migration } from '.'
+import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 
 export const migratePropertySettingsV6: Migration = {
     targetSchemaVersion: '6',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
             const input = step.settings?.input ?? {}
             const sampleDataFileId = step.settings?.inputUiInfo?.sampleDataFileId
             const sampleDataInputFileId = step.settings?.inputUiInfo?.sampleDataInputFileId

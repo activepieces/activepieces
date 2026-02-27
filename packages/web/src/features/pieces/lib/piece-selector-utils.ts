@@ -186,28 +186,29 @@ const getDefaultStepValues = ({
           type: FlowActionType.ROUTER,
           settings: overrideDefaultSettings ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-            branches: [
-              {
-                conditions: [
-                  [
-                    {
-                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                      firstValue: '',
-                      secondValue: '',
-                      caseSensitive: false,
-                    },
-                  ],
-                ],
-                branchType: BranchExecutionType.CONDITION,
-                branchName: 'Branch 1',
-              },
-              {
-                branchType: BranchExecutionType.FALLBACK,
-                branchName: 'Otherwise',
-              },
-            ],
           },
-          children: [null, null],
+          branches: [
+            {
+              conditions: [
+                [
+                  {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: '',
+                    secondValue: '',
+                    caseSensitive: false,
+                  },
+                ],
+              ],
+              branchType: BranchExecutionType.CONDITION,
+              branchName: 'Branch 1',
+              steps: [],
+            },
+            {
+              branchType: BranchExecutionType.FALLBACK,
+              branchName: 'Otherwise',
+              steps: [],
+            },
+          ],
         },
         common,
       );
@@ -346,7 +347,7 @@ const getStepNameFromOperationType = (
     case FlowOperationType.UPDATE_ACTION:
       return operation.stepName;
     case FlowOperationType.ADD_ACTION:
-      return flowStructureUtil.findUnusedName(flowVersion.trigger);
+      return flowStructureUtil.findUnusedName(flowVersion);
     case FlowOperationType.UPDATE_TRIGGER:
       return 'trigger';
   }
