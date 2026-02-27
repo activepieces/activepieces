@@ -1,7 +1,7 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { clickupCommon, listAccessibleCustomFields } from "../../common"
-import { clickupAuth } from "../../../";
+import { clickupAuth } from '../../auth';
 
 export const getClickupAccessibleCustomFields = createAction({
   auth: clickupAuth,

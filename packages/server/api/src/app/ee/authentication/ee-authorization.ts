@@ -8,7 +8,7 @@ import {
     ProjectType,
 } from '@activepieces/shared'
 import { FastifyRequest, onRequestAsyncHookHandler } from 'fastify'
-import { requestUtils } from '../../core/request/request-utils'
+import { getProjectIdFromRequest } from '../../core/security/v2/authz/authorization-middleware'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -84,7 +84,7 @@ export const projectMustBeTeamType: onRequestAsyncHookHandler =
         if (request.principal.type !== PrincipalType.USER && request.principal.type !== PrincipalType.SERVICE) {
             return
         }
-        const projectId = requestUtils.extractProjectId(request)
+        const projectId = await getProjectIdFromRequest(request)
 
         if (isNil(projectId)) {
             throw new ActivepiecesError({

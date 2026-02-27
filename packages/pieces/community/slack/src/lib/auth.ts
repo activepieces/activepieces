@@ -1,0 +1,38 @@
+import { PieceAuth } from '@activepieces/pieces-framework';
+
+export const slackAuth = PieceAuth.OAuth2({
+  description: '',
+  authUrl:
+    'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read,channels:write,groups:write,im:write,mpim:write,channels:write.invites,groups:write.invites,channels:history,groups:history,chat:write,users:read',
+  tokenUrl: 'https://slack.com/api/oauth.v2.access',
+  required: true,
+  scope: [
+    'channels:read',
+    'channels:manage',
+    'channels:history',
+    'chat:write',
+    'groups:read',
+    'groups:write',
+    'groups:history',
+    'reactions:read',
+    'mpim:read',
+    'mpim:write',
+    'mpim:history',
+    'im:write',
+    'im:read',
+    'im:history',
+    'users:read',
+    'files:write',
+    'files:read',
+    'users:read.email',
+    'reactions:write',
+    'usergroups:read',
+    'chat:write.customize',
+    'links:read',
+    'links:write',
+    'emoji:read',
+    'users.profile:read',
+    'channels:write.invites',
+    'groups:write.invites',
+  ],
+});

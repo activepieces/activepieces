@@ -6,7 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { googleContactsCommon } from '../common';
-import { googleContactsAuth } from '../../';
+import { googleContactsAuth } from '../auth';
 
 export const googleContactsAddContactAction = createAction({
   auth: googleContactsAuth,

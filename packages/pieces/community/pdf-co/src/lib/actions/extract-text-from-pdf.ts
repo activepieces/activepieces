@@ -1,6 +1,6 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
-import { pdfCoAuth } from "../../index";
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from "../common/props";
 
 interface PdfCoExtractTextSuccessResponse {

@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
-import { gmailAuth } from '../../';
+import { gmailAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { GmailProps } from '../common/props';

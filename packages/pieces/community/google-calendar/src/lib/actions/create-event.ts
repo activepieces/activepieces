@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleCalendarCommon } from '../common';
 import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { randomUUID } from 'crypto';

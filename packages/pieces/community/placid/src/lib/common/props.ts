@@ -1,6 +1,6 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { PlacidClient } from './client';
-import { placidAuth } from '../..';
+import { placidAuth } from '../auth';
 
 const createTemplateDropdown = (outputType?: 'image' | 'pdf' | 'video') =>
 	Property.Dropdown({

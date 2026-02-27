@@ -1,6 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 
 import { TodoTask } from '@microsoft/microsoft-graph-types';

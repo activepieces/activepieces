@@ -1,5 +1,5 @@
 import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { APITableAuth } from '../../';
+import { APITableAuth } from '../auth';
 import { AITableClient } from './client';
 import { AITableFieldType, AITableNumericFieldTypes } from './constants';
 

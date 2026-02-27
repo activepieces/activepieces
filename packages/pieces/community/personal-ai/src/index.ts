@@ -12,14 +12,9 @@ import { uploadFile } from './lib/actions/documents/upload-file';
 import { uploadUrl } from './lib/actions/documents/upload-url';
 import { updateDocument } from './lib/actions/documents/update-document';
 import { getDocument } from './lib/actions/documents/get-document';
+import { personalAiAuth } from './lib/auth';
 
 export const BASE_URL = 'https://api.personal.ai';
-
-export const personalAiAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'API Key for authentication',
-  required: true,
-})
 
 export const aiAssistant = createPiece({
   displayName: 'Personal AI',

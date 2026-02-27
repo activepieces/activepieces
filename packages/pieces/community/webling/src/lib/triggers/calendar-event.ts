@@ -9,7 +9,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { weblingAuth } from '../../index';
+import { weblingAuth } from '../auth';
 import { weblingCommon } from '../common';
 import { WeblingCalendarEvent } from '../common/types';
 import { getUpdatedOrNewEvents } from '../common/helpers';

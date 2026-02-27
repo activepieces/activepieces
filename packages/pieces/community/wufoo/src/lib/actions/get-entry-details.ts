@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { wufooApiCall } from '../common/client';
-import { wufooAuth } from '../../index';
+import { wufooAuth } from '../auth';
 import { formIdentifier } from '../common/props';
 
 export const getEntryDetailsAction = createAction({

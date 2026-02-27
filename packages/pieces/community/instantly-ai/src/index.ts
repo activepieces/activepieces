@@ -10,16 +10,11 @@ import { campaignStatusChangedTrigger } from './lib/triggers/campaign-status-cha
 import { newLeadAddedTrigger } from './lib/triggers/new-lead-added';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
+import { instantlyAiAuth } from './lib/auth';
 
 const markdownDescription = `
 You can obtain an API key from **Settings->Integrations->API Keys**.
 `;
-
-export const instantlyAiAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: markdownDescription,
-  required: true,
-})
 
 export const instantlyAi = createPiece({
   displayName: 'Instantly.ai',

@@ -3,9 +3,7 @@ FROM node:20.19-bullseye-slim AS base
 # Set environment variables early for better layer caching
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8 \
-    NX_DAEMON=false \
-    NX_NO_CLOUD=true
+    LC_ALL=en_US.UTF-8
 
 # Install all system dependencies in a single layer with cache mounts
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -21,12 +19,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-data \
         procps \
         locales \
-        locales-all \
         unzip \
         curl \
         ca-certificates \
         libcap-dev && \
-    yarn config set python /usr/bin/python3
+    yarn config set python /usr/bin/python3 && \
+    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8
 
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
@@ -34,7 +33,7 @@ RUN export ARCH=$(uname -m) && \
     elif [ "$ARCH" = "aarch64" ]; then \
       curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
     fi
-    
+
 RUN unzip bun.zip \
     && mv bun-*/bun /usr/local/bin/bun \
     && chmod +x /usr/local/bin/bun \
@@ -59,23 +58,30 @@ FROM base AS build
 
 WORKDIR /usr/src/app
 
-# Copy only dependency files first for better layer caching
-COPY .npmrc package.json bun.lock ./
+# Copy dependency files and workspace package.json files for resolution
+COPY .npmrc package.json bun.lock bunfig.toml ./
+COPY packages/ ./packages/
 
 # Install all dependencies with frozen lockfile
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
 
-# Copy source code after dependency installation
+# Copy remaining source code (turbo config, etc.)
 COPY . .
 
-# Build both projects (already has NX_NO_CLOUD from base stage)
-RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production --parallel=2 --skip-nx-cache
+# Build frontend, engine, and server API
+RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api
 
-# Install production dependencies only for the backend API
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    cd dist/packages/server/api && \
-    bun install --production --frozen-lockfile
+# Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
+# Then regenerate bun.lock so it matches the trimmed workspace
+RUN rm -rf packages/pieces/core packages/pieces/custom && \
+    find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
+      ! -name slack \
+      ! -name square \
+      ! -name facebook-leads \
+      ! -name intercom \
+      -exec rm -rf {} + && \
+    rm -f bun.lock && bun install
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -95,20 +101,28 @@ COPY docker-entrypoint.sh .
 
 # Create all necessary directories in one layer
 RUN mkdir -p \
-    /usr/src/app/dist/packages/server \
-    /usr/src/app/dist/packages/engine \
-    /usr/src/app/dist/packages/shared && \
+    /usr/src/app/dist/packages/engine && \
     chmod +x docker-entrypoint.sh
 
-# Copy built artifacts from build stage
+# Copy root config files needed for dependency resolution
+COPY --from=build /usr/src/app/package.json ./
+COPY --from=build /usr/src/app/.npmrc ./
+COPY --from=build /usr/src/app/bun.lock ./
+COPY --from=build /usr/src/app/bunfig.toml ./
 COPY --from=build /usr/src/app/LICENSE .
-COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
-COPY --from=build /usr/src/app/dist/packages/server/ ./dist/packages/server/
-COPY --from=build /usr/src/app/dist/packages/shared/ ./dist/packages/shared/
+
+# Copy workspace package.json files (needed for bun workspace resolution)
 COPY --from=build /usr/src/app/packages ./packages
 
+# Copy built engine
+COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
+
+# Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --production
+
 # Copy frontend files to Nginx document root
-COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
+COPY --from=build /usr/src/app/dist/packages/web /usr/share/nginx/html/
 
 LABEL service=activepieces
 

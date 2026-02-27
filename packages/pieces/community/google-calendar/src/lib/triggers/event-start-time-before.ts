@@ -7,7 +7,7 @@ import {
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleCalendarCommon } from '../common';
 import { GoogleCalendarEvent } from '../common/types';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../auth';
 import {
   DedupeStrategy,
   Polling,

@@ -8,17 +8,7 @@ import { readDocument } from './lib/actions/read-document.action';
 import { appendText } from './lib/actions/append-text';
 import { findDocumentAction } from './lib/actions/find-document';
 import { newDocumentTrigger } from './lib/triggers/new-document';
-
-export const googleDocsAuth = PieceAuth.OAuth2({
-	authUrl: 'https://accounts.google.com/o/oauth2/auth',
-	tokenUrl: 'https://oauth2.googleapis.com/token',
-	required: true,
-	scope: [
-		'https://www.googleapis.com/auth/documents',
-		'https://www.googleapis.com/auth/drive.readonly',
-		'https://www.googleapis.com/auth/drive',
-	],
-});
+import { googleDocsAuth } from './lib/auth';
 
 export const googleDocs = createPiece({
 	displayName: 'Google Docs',

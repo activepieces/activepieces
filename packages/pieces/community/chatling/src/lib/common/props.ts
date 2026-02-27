@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './index';
-import { chatlingAuth } from '../../index';
+import { chatlingAuth } from '../auth';
 
 export const chatbotIdDropdown = Property.Dropdown({
   auth: chatlingAuth,

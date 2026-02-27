@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { formIdDropdown, submissionIdDropdown } from '../common/props';
-import { filloutFormsAuth } from '../../index';
+import { filloutFormsAuth } from '../auth';
 
 export const getSingleResponse = createAction({
 	auth: filloutFormsAuth,

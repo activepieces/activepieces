@@ -1,7 +1,7 @@
-import { readdir, stat } from 'node:fs/promises'
+import { copyFile, readdir, stat } from 'node:fs/promises'
 import * as path from 'path'
 import { cwd } from 'node:process'
-import { readPackageJson, readProjectJson } from './files'
+import { readPackageJson } from './files'
 import { exec } from './exec'
 import axios from 'axios'
 import chalk from 'chalk'
@@ -48,11 +48,13 @@ export async function findPiece(pieceName: string): Promise<string | null> {
 }
 
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
-    const projectJson = await readProjectJson(pieceFolder);
+    const packageJson = await readPackageJson(pieceFolder);
 
-    await buildPackage(projectJson.name);
-     
+    await buildPackage(packageJson.name);
+
     const compiledPath = `dist/packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}`;
+
+    await copyFile(path.join(pieceFolder, 'package.json'), path.join(compiledPath, 'package.json'));
 
     const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
     const tarFileName = JSON.parse(stdout)[0].filename;
@@ -62,10 +64,10 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     };
 }
 
-export async function buildPackage(projectName:string) {
-    await exec(`npx nx build ${projectName} --skip-cache`);
+export async function buildPackage(packageName: string) {
+    await exec(`npx turbo run build --filter=${packageName} --force`);
     return {
-        outputFolder: `dist/packages/${projectName}`,
+        outputFolder: `dist/packages/${packageName}`,
     }
 }
 
@@ -76,10 +78,9 @@ export async function publishPieceFromFolder(
   apiKey: string,
   failOnError: boolean,}
 ) {
-    const projectJson = await readProjectJson(pieceFolder);
     const packageJson = await readPackageJson(pieceFolder);
 
-    await buildPackage(projectJson.name);
+    await buildPackage(packageJson.name);
 
     const { outputFile } = await buildPiece(pieceFolder);
     const formData = new FormData();

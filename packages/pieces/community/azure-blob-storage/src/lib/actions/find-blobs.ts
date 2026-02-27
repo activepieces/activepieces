@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { azureBlobStorageAuth } from '../../index';
+import { azureBlobStorageAuth } from '../auth';
 import { BlobServiceClient } from '@azure/storage-blob';
 import { containerProp } from '../common';
 

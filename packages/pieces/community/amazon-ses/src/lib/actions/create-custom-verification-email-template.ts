@@ -3,7 +3,7 @@ import {
   SESClient,
   CreateCustomVerificationEmailTemplateCommand,
 } from '@aws-sdk/client-ses';
-import { amazonSesAuth } from '../../index';
+import { amazonSesAuth } from '../auth';
 import {
   getVerifiedIdentities,
   getCustomVerificationTemplates,

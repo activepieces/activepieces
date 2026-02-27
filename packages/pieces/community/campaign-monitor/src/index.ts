@@ -7,6 +7,7 @@ import { findSubscriberAction } from './lib/actions/find-subscriber';
 import { newSubscriberAddedTrigger } from './lib/triggers/new-subscriber-added';
 import { subscriberUnsubscribedTrigger } from './lib/triggers/subscriber-unsubscribed';
 import { newClientTrigger } from './lib/triggers/new-client';
+import { campaignMonitorAuth } from './lib/auth';
 
 const markdownDescription = `
 To use Campaign Monitor, you need to get an API key:
@@ -15,12 +16,6 @@ To use Campaign Monitor, you need to get an API key:
 3. Click on API Keys.
 4. Create a new API key or use an existing one.
 `;
-
-export const campaignMonitorAuth = PieceAuth.SecretText({
-    displayName: 'API Key',
-    description: markdownDescription,
-    required: true,
-});
 
 export const campaignMonitor = createPiece({
     displayName: 'Campaign Monitor',

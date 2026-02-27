@@ -7,7 +7,8 @@ import {
   timeoutProp,
   createClient,
 } from '../common';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
+import { DustAuthType } from '../..';
 import mime from 'mime-types';
 import { PublicPostConversationsRequestBody } from '@dust-tt/client';
 

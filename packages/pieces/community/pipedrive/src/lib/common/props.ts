@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pipedriveApiCall, pipedrivePaginatedV1ApiCall, pipedrivePaginatedV2ApiCall } from '.';
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import {
 	DropdownOption,
 	DynamicPropsValue,

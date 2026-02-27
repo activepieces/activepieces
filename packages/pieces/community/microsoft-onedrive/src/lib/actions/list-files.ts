@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { oneDriveAuth } from '../../';
+import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';

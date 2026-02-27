@@ -5,7 +5,7 @@ import {
 	AuthenticationType,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { excelCommon, objectToArray } from '../common/common';
 
 export const appendRowAction = createAction({

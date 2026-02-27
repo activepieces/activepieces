@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { QuickbaseClient } from './client';
 import { QuickbaseApp, QuickbaseTable, QuickbaseField } from './types';
-import { quickbaseAuth } from '../..';
+import { quickbaseAuth } from '../auth';
 
 
 export const recordIdProp = Property.ShortText({

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createPineconeClientFromAuth } from '../common/pinecone-client';
-import { pineconeAuth } from '../../index';
+import { pineconeAuth } from '../auth';
 
 export const upsertVector = createAction({
   auth: pineconeAuth,

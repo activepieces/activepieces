@@ -7,34 +7,7 @@ import { freeAgentNewInvoiceTrigger } from './lib/triggers/new-invoice';
 import { freeAgentNewContactTrigger } from './lib/triggers/new-contact';
 import { freeAgentNewUserTrigger } from './lib/triggers/new-user';
 import { freeAgentNewTaskTrigger } from './lib/triggers/new-task';
-
-export const freeAgentAuth = PieceAuth.OAuth2({
-  description: 'Connect your FreeAgent account',
-  authUrl: 'https://api.freeagent.com/v2/approve_app',
-  tokenUrl: 'https://api.freeagent.com/v2/token_endpoint',
-  required: true,
-  scope: [],
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: 'https://api.freeagent.com/v2/users/me',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth.access_token,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Authentication failed. Please check your credentials.',
-      };
-    }
-  },
-});
+import { freeAgentAuth } from './lib/auth';
 
 export const freeAgent = createPiece({
   displayName: "FreeAgent",

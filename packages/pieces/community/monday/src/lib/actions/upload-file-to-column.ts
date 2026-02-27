@@ -3,7 +3,7 @@ import { makeClient, mondayCommon } from '../common';
 import { MondayColumnType } from '../common/constants';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { mondayAuth } from '../../';
+import { mondayAuth } from '../auth';
 
 export const uploadFileToColumnAction = createAction({
   auth: mondayAuth,

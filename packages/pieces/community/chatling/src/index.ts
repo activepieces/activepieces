@@ -9,6 +9,7 @@ import { sendMessage } from './lib/actions/send-message';
 import { createChatbot } from './lib/actions/create-chatbot';
 import { newConversation } from './lib/triggers/new-conversation';
 import { newContact } from './lib/triggers/new-contact';
+import { chatlingAuth } from './lib/auth';
 
 const markdownDescription = `
 To obtain your API key:
@@ -19,23 +20,6 @@ To obtain your API key:
 4. Press **New API key** and generate a new key
 5. Copy the key (it's only shown once)
 `;
-
-export const chatlingAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: markdownDescription,
-  required: true,
-  validate: async ({ auth }) => {
-    try {
-      await makeRequest(auth, HttpMethod.GET, '/project/settings');
-      return { valid: true };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API key',
-      };
-    }
-  },
-});
 
 export const chatling = createPiece({
   displayName: 'Chatling',

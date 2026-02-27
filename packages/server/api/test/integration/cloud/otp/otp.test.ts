@@ -1,6 +1,7 @@
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { Mock } from 'vitest'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
@@ -8,7 +9,8 @@ import { setupServer } from '../../../../src/app/server'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-let sendOtpSpy: jest.Mock
+
+let sendOtpSpy: Mock
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
@@ -16,16 +18,16 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-    sendOtpSpy = jest.fn()
-    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
+    sendOtpSpy = vi.fn()
+    vi.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
         sendOtp: sendOtpSpy,
-        sendInvitation: jest.fn(),
-        sendIssueCreatedNotification: jest.fn(),
-        sendQuotaAlert: jest.fn(),
-        sendReminderJobHandler: jest.fn(),
-        sendExceedFailureThresholdAlert: jest.fn(),
-        sendBadgeAwardedEmail: jest.fn(),
-        sendProjectMemberAdded: jest.fn(),
+        sendInvitation: vi.fn(),
+        sendIssueCreatedNotification: vi.fn(),
+        sendQuotaAlert: vi.fn(),
+        sendReminderJobHandler: vi.fn(),
+        sendExceedFailureThresholdAlert: vi.fn(),
+        sendBadgeAwardedEmail: vi.fn(),
+        sendProjectMemberAdded: vi.fn(),
     }))
 
 })

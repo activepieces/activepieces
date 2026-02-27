@@ -12,7 +12,7 @@ import {
 import dayjs from 'dayjs';
 import { notionCommon } from '../common';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 
 export const newComment = createTrigger({
   auth: notionAuth,

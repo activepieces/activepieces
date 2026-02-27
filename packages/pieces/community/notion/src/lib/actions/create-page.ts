@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 import { notionCommon } from '../common';
 
 export const createPage = createAction({

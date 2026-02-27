@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { subscriberId } from '../common/props';
-import { manychatAuth } from '../../index';
+import { manychatAuth } from '../auth';
 
 export const sendContentToUserAction = createAction({
 	auth: manychatAuth,

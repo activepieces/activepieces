@@ -1,7 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "ai-gateway-provider/providers/anthropic": [
+        "./node_modules/ai-gateway-provider/dist/providers/anthropic.d.ts"
+      ],
+      "ai-gateway-provider/providers/google": [
+        "./node_modules/ai-gateway-provider/dist/providers/google.d.ts"
+      ]
+    },
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"]
   },

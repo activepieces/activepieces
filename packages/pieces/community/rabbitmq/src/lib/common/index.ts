@@ -1,5 +1,5 @@
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
-import { rabbitmqAuth } from '../..';
+import { rabbitmqAuth } from '../auth';
 import amqp, { ChannelModel, Connection } from 'amqplib';
 
 export async function rabbitmqConnect(

@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { acuitySchedulingAuth } from '../../index';
+import { acuitySchedulingAuth } from '../auth';
 import { API_URL } from '../common';
 import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 

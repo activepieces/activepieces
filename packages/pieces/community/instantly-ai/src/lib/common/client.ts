@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { instantlyAiAuth } from '../..';
+import { instantlyAiAuth } from '../auth';
 
 export const BASE_URL = 'https://api.instantly.ai/api/v2';
 

@@ -11,7 +11,7 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { getPages } from '../common';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 
 export const updatedPage = createTrigger({
   auth: notionAuth,

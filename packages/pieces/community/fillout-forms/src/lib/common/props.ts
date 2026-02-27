@@ -1,7 +1,7 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { filloutFormsAuth } from '../..';
+import { filloutFormsAuth } from '../auth';
 
 export const formIdDropdown = Property.Dropdown({
   auth: filloutFormsAuth,

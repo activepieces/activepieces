@@ -1,4 +1,4 @@
-import { microsoftTeamsAuth } from '../../';
+import { microsoftTeamsAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { microsoftTeamsCommon } from '../common';

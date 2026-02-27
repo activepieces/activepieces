@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { CAPTAIN_DATA_BASE_URL, captainDataAuth } from '../..';
+import { captainDataAuth } from '../..';
+import { CAPTAIN_DATA_BASE_URL } from '../..';
 import { workflowProp } from '../common';
 
 export const launchWorkflow = createAction({

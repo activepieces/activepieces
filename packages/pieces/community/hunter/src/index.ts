@@ -10,12 +10,7 @@ import { searchLeadsAction } from "./lib/actions/search-leads";
 import { updateLeadAction } from "./lib/actions/update-lead";
 import { verifyEmailAction } from "./lib/actions/verify-email";
 import { newLeadTrigger } from "./lib/triggers/new-lead";
-
-export const hunterAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'You can obtain your API key from [Account Settings](https://hunter.io/dashboard)',
-});
+import { hunterAuth } from './lib/auth';
 
 export const hunter = createPiece({
   displayName: "Hunter",

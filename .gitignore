@@ -5,7 +5,7 @@ pieces-cache-db-*.sqlite
 # compiled output
 dist
 tmp
-.nx/
+.turbo/
 /out-tsc
 firebase-admin-sdk.json
 dev
@@ -44,7 +44,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
-.nx/
+.turbo/
 # System Files
 .DS_Store
 Thumbs.db
@@ -68,6 +68,9 @@ scratch.md
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# Turborepo
+.turbo
 
 # Playwright
 /test-results/

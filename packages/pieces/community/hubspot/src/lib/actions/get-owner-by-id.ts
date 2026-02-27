@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../..';
+import { hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
 
 export const getOwnerByIdAction = createAction({

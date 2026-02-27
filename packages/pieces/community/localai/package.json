@@ -1,7 +1,17 @@
 {
   "name": "@activepieces/piece-localai",
-  "version": "0.1.4",
+  "version": "0.1.5",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "dependencies": {
-    "openai": "4.67.1"
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "openai": "4.67.1",
+    "tslib": "2.6.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'"
   }
 }

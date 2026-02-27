@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { attioAuth } from '../../index';
+import { attioAuth } from '../auth';
 import { attioApiCall } from '../common/client';
 import {
 	formatInputFields,

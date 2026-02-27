@@ -14,7 +14,7 @@ import { Organisation } from '../common/models/oranisation';
 import { Event } from '../common/models/event';
 import { Category } from '../common/models/category';
 import { RecipientField } from '../common/models/recipient-field';
-import { certopusAuth } from '../../';
+import { certopusAuth } from '../auth';
 
 export const createCredential = createAction({
   auth: certopusAuth,

@@ -1,5 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { slackAuth } from '../..';
+import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
   profilePicture,

@@ -1,4 +1,4 @@
-import { instabaseAuth } from '../../index';
+import { instabaseAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 

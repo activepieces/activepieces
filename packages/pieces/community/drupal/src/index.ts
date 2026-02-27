@@ -17,6 +17,7 @@ import { drupalDeleteEntityAction } from './lib/actions/delete_entity';
 import { drupalPollingId } from './lib/triggers/polling-id';
 import { drupalPollingTimestamp } from './lib/triggers/polling-timestamp';
 import { drupalWebhook } from './lib/triggers/webhook';
+import { drupalAuth } from './lib/auth';
 
 const markdownPropertyDescription = `
 **Using Drupal's JSON:API**
@@ -31,68 +32,6 @@ Provide the website URL in the format https://www.example.com.
 
 For extra functionality, you can use the [Drupal Orchestration](https://www.drupal.org/project/orchestration) module.
 `;
-
-export const drupalAuth = PieceAuth.CustomAuth({
-  description: markdownPropertyDescription,
-  required: true,
-  props: {
-    website_url: Property.ShortText({
-      displayName: 'Website URL',
-      required: true,
-      description: 'URL of your Drupal site without a trailing "/" character',
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      required: true,
-    }),
-    password: Property.ShortText({
-      displayName: 'Password',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    const { website_url, username, password } = auth;
-    if (!website_url || !username || !password) {
-      return {
-        valid: false,
-        error: 'Please fill all the fields [website_url, username, password]',
-      };
-    }
-    if (website_url.endsWith('/')) {
-      return {
-        valid: false,
-        error: 'The website URL must not end with a trailing slash.',
-      };
-    }
-    try {
-      const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: website_url + `/jsonapi/user/user?filter[name]=` + username,
-        headers: {
-          'Authorization': `Basic ${basicAuth}`,
-          'Accept': 'application/vnd.api+json',
-        },
-      });
-      console.debug('Auth validation response', response);
-      if (response.status === 200) {
-        const data = (response.body as any).data;
-        return {
-          valid: (data && data.length > 0 && data[0].attributes.name === username),
-        };
-      }
-      return {
-        valid: false,
-        error: 'Authentication failed. Please check your credentials.',
-      };
-    } catch (e: any) {
-      return {
-        valid: false,
-        error: 'Connection failed: ' + e.message,
-      };
-    }
-  },
-});
 
 export const drupal = createPiece({
   displayName: 'Drupal',

@@ -12,7 +12,7 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { freeAgentAuth } from '../../index';
+import { freeAgentAuth } from '../auth';
 
 const props = {
   status: Property.StaticDropdown({

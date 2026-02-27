@@ -1,4 +1,4 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
@@ -71,7 +71,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             ids: request.body.ids,
             projectId: request.projectId,
         })
-        await reply.status(StatusCodes.NO_CONTENT).send()
+        await reply.status(StatusCodes.OK).send([])
         await recordSideEffects(fastify.log).handleRecordsEvent({
             tableId: deletedRecords[0]?.tableId,
             projectId: request.projectId,

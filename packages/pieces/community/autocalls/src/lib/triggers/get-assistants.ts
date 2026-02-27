@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { autocallsAuth, baseApiUrl } from '../..';
+import { autocallsAuth } from '../..';
+import { baseApiUrl } from '../..';
 import dayjs from 'dayjs';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof autocallsAuth>, { start?: string; end?: string }> = {

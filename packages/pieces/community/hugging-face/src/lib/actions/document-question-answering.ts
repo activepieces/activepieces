@@ -3,7 +3,7 @@ import {
   type DocumentQuestionAnsweringArgs,
   InferenceClient,
 } from '@huggingface/inference';
-import { huggingFaceAuth } from '../../index';
+import { huggingFaceAuth } from '../auth';
 
 export const documentQuestionAnswering = createAction({
   name: 'document_question_answering',

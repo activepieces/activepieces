@@ -6,7 +6,7 @@ import {
   Property,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { drupalAuth } from '../../';
+import { drupalAuth } from '../auth';
 import { DrupalAuthType, makeJsonApiRequest } from './jsonapi';
 
 

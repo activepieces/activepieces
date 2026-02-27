@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
-import { githubAuth } from '../..';
+import { githubAuth } from '../auth';
 import {
   AuthenticationType,
   httpClient,

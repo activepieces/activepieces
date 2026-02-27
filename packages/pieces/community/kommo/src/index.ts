@@ -3,6 +3,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { leadStatusChangedTrigger, newContactAddedTrigger, newLeadCreatedTrigger, newTaskCreatedTrigger } from "./lib/triggers";
 import { findLeadAction, updateContactAction, createLeadAction, createContactAction, findContactAction, findCompanyAction, updateLeadAction } from "./lib/actions";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { kommoAuth } from './lib/auth';
 
 const markdownDescription = `
 Please follow [Generate Long Live Token](https://developers.kommo.com/docs/long-lived-token) guide for generating token.
@@ -10,21 +11,6 @@ Please follow [Generate Long Live Token](https://developers.kommo.com/docs/long-
 Your Kommo account subdomain (e.g., "mycompany" if your URL is mycompany.kommo.com).
 
 `;
-
-export const kommoAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
-  required: true,
-  props: {
-    subdomain: PieceAuth.SecretText({
-      displayName: 'Subdomain',
-      required: true,
-    }),
-    apiToken: PieceAuth.SecretText({
-      displayName: 'Token',
-      required: true,
-    }),
-  },
-});
 
 export const kommo = createPiece({
   displayName: 'Kommo',

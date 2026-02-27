@@ -1,4 +1,4 @@
-import { claudeAuth } from '../../index';
+import { claudeAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import Anthropic from '@anthropic-ai/sdk';

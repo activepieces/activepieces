@@ -1,4 +1,5 @@
-import { createAuthClient, googleSearchConsoleAuth } from '../../';
+import { googleSearchConsoleAuth } from '../auth';
+import { createAuthClient } from '../../';
 import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 
 export const commonProps = {

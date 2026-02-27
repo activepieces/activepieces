@@ -1,0 +1,174 @@
+import { ApFlagId, SourceCode, deepMergeAndCast } from '@activepieces/shared';
+import { javascript } from '@codemirror/lang-javascript';
+import { json } from '@codemirror/lang-json';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
+import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
+import { t } from 'i18next';
+import { Code, Package } from 'lucide-react';
+import { useRef, useState } from 'react';
+
+import { useTheme } from '@/components/theme-provider';
+import { Button } from '@/components/ui/button';
+import { internalErrorToast } from '@/components/ui/sonner';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
+
+import { AddNpmDialog } from './add-npm-dialog';
+
+const styleTheme = EditorView.baseTheme({
+  '&.cm-editor.cm-focused': {
+    outline: 'none',
+  },
+});
+
+type CodeEditorProps = {
+  sourceCode: SourceCode;
+  onChange: (sourceCode: SourceCode) => void;
+  readonly: boolean;
+  applyCodeToCurrentStep?: () => void;
+  minHeight?: string;
+};
+
+const CodeEditor = ({
+  sourceCode,
+  readonly,
+  onChange,
+  applyCodeToCurrentStep,
+  minHeight,
+}: CodeEditorProps) => {
+  const { code, packageJson } = sourceCode;
+  const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
+  const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
+  const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
+  const { theme } = useTheme();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
+
+  const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(
+    ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+  );
+
+  const extensions = [
+    styleTheme,
+    EditorState.readOnly.of(readonly),
+    EditorView.editable.of(!readonly),
+    language === 'json' ? json() : javascript({ jsx: false, typescript: true }),
+  ];
+
+  function handlePackageClick() {
+    setActiveTab('packageJson');
+    setLanguage('json');
+  }
+
+  function handleCodeClick() {
+    setActiveTab('code');
+    setLanguage('typescript');
+  }
+
+  function handleAddPackages({
+    packageName,
+    packageVersion,
+  }: {
+    packageName: string;
+    packageVersion: string;
+  }) {
+    try {
+      const json = deepMergeAndCast(JSON.parse(packageJson), {
+        dependencies: {
+          [packageName]: packageVersion,
+        },
+      });
+      setActiveTab('packageJson');
+      onChange({ code, packageJson: JSON.stringify(json, null, 2) });
+    } catch (e) {
+      console.error(e);
+      internalErrorToast();
+    }
+  }
+
+  return (
+    <div
+      className="flex flex-col gap-2 border rounded py-2 px-2 transition-all"
+      ref={containerRef}
+    >
+      <div className="flex flex-row justify-center items-center h-full">
+        <div className="flex justify-start gap-4 items-center">
+          <div
+            className={cn('text-sm cursor-pointer', {
+              'font-bold': activeTab === 'code',
+            })}
+            onClick={() => handleCodeClick()}
+          >
+            {t('Code')}
+          </div>
+          {allowNpmPackagesInCodeStep && (
+            <div
+              className={cn('text-sm cursor-pointer', {
+                'font-bold': activeTab === 'packageJson',
+              })}
+              onClick={() => handlePackageClick()}
+            >
+              {t('Dependencies')}
+            </div>
+          )}
+        </div>
+        <div className="flex grow"></div>
+        {codeApplicationEnabled ? (
+          <Button
+            variant="outline"
+            className="flex gap-2"
+            size={'sm'}
+            onClick={applyCodeToCurrentStep}
+          >
+            <Code className="w-3 h-3" />
+            {t('Use code')}
+          </Button>
+        ) : (
+          allowNpmPackagesInCodeStep && (
+            <AddNpmDialog onAdd={handleAddPackages}>
+              <Button
+                variant="outline"
+                className="flex gap-2"
+                size={'sm'}
+                onClick={() => {}}
+              >
+                <Package className="w-4 h-4" />
+                {t('Add package')}
+              </Button>
+            </AddNpmDialog>
+          )
+        )}
+      </div>
+      <CodeMirror
+        value={activeTab === 'code' ? code : packageJson}
+        className="border-none"
+        minHeight={minHeight ?? '200px'}
+        width="100%"
+        height="100%"
+        maxWidth="100%"
+        basicSetup={{
+          foldGutter: true,
+          lineNumbers: true,
+          searchKeymap: false,
+          lintKeymap: true,
+          autocompletion: true,
+          foldKeymap: true,
+        }}
+        lang="typescript"
+        onChange={(value) => {
+          onChange(
+            activeTab === 'code'
+              ? { code: value, packageJson }
+              : { code, packageJson: value },
+          );
+        }}
+        theme={codeEditorTheme}
+        readOnly={readonly}
+        extensions={[...extensions, EditorView.lineWrapping]}
+      />
+    </div>
+  );
+};
+
+export { CodeEditor };

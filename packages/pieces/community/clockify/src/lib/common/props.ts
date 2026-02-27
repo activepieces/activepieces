@@ -1,7 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { clockifyApiCall } from './client';
-import { clockifyAuth } from '../..';
+import { clockifyAuth } from '../auth';
 
 interface DropdownParams {
 	displayName: string;

@@ -9,7 +9,8 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { dynamicsCRMAuth, getBaseUrl } from '../../';
+import { dynamicsCRMAuth } from '../auth';
+import { getBaseUrl } from '../../';
 import { DynamicsCRMClient } from './client';
 import { EntityAttributeType } from './constants';
 

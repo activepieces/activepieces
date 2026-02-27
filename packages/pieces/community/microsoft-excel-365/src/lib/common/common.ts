@@ -6,7 +6,7 @@ import {
   HttpRequest
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { excelAuth } from '../..';
+import { excelAuth } from '../auth';
 
 export const excelCommon = {
   baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',

@@ -4,7 +4,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { mauticAuth } from '../..';
+import { mauticAuth } from '../auth';
 
 // Function Section
 export const mapMauticToActivepiecesProperty = (

@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { excelCommon } from '../common/common';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 
 export const convertToRangeAction = createAction({
   auth: excelAuth,

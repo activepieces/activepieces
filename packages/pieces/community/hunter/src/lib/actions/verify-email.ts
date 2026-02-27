@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpError, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { hunterApiCall } from '../common';
-import { hunterAuth } from '../../index';
+import { hunterAuth } from '../auth';
 import { emailProp } from '../common/props';
 
 export const verifyEmailAction = createAction({

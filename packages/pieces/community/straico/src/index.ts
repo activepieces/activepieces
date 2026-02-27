@@ -23,6 +23,7 @@ import { agentUpdate } from './lib/actions/agent-update';
 import { agentGet } from './lib/actions/agent-get';
 import { agentPromptCompletion } from './lib/actions/agent-prompt-completion';
 import { PieceCategory } from '@activepieces/shared';
+import { straicoAuth } from './lib/auth';
 
 const markdownDescription = `
 Follow these instructions to get your Straico API Key:
@@ -30,34 +31,6 @@ Follow these instructions to get your Straico API Key:
 1. Visit the following website: https://platform.straico.com/user-settings.
 2. Once on the website, locate "Connect with Straico API" and click on the copy API Key.
 `;
-
-export const straicoAuth = PieceAuth.SecretText({
-  description: markdownDescription,
-  displayName: 'API Key',
-  required: true,
-  validate: async (auth) => {
-    try {
-      await httpClient.sendRequest<{
-        data: { model: string }[];
-      }>({
-        url: `${baseUrlv1}/models`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid API key',
-      };
-    }
-  },
-});
 
 export const straico = createPiece({
   displayName: 'Straico',

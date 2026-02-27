@@ -1,13 +1,15 @@
 import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
-import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAI, openai } from '@ai-sdk/openai'
+import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { ImageModel, LanguageModel } from 'ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig } from '@activepieces/shared'
-
+import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/shared'
+import { createAiGateway } from 'ai-gateway-provider';
+import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
+import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;
     modelId: string;
@@ -73,21 +75,53 @@ export async function createAIModel({
             return provider.chat(modelId)
         }
         case AIProviderName.CLOUDFLARE_GATEWAY: {
-            const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
-
-            const provider = createOpenAICompatible({ 
-                name: 'cloudflare',
-                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
-                headers: {
-                    'cf-aig-authorization': `Bearer ${auth.apiKey}`,
-                    'cf-aig-metadata': JSON.stringify({
-                        projectId,
-                        flowId,
-                        runId,
-                    })
+            const { accountId, gatewayId,vertexProject,vertexRegion } = config as CloudflareGatewayProviderConfig
+            const aigateway = createAiGateway({
+                accountId: accountId,
+                gateway: gatewayId,
+                apiKey: auth.apiKey,
+              });
+            const { provider: providerPrefix, model: actualModelId, publisher } = splitCloudflareGatewayModelId(modelId)
+            const cfMetadataHeaders = {
+                'cf-aig-metadata': JSON.stringify({
+                    projectId,
+                    flowId,
+                    runId,
+                }),
+            }
+            
+            const headers = {
+                'cf-aig-authorization': `Bearer ${auth.apiKey}`,
+                ...cfMetadataHeaders,
+            }
+            switch (providerPrefix) {
+                case 'anthropic': {
+                    const anthropicProvider = createAnthropicGateway({
+                        headers
+                    });
+                    return aigateway(anthropicProvider(actualModelId));
                 }
-            })
-            return provider.chatModel(modelId)
+                case 'google-ai-studio': {
+                    const googleProvider = createGoogleGateway({
+                        headers
+                    });
+                    return aigateway(googleProvider(actualModelId));
+                }
+                case 'google-vertex-ai': {
+                    if(vertexProject && vertexRegion && publisher) {
+                        const provider = createGoogleGenerativeAI({
+                            apiKey: auth.apiKey,
+                            baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/google-vertex-ai/v1/projects/${vertexProject}/locations/${vertexRegion}/publishers/${publisher}/`,
+                            headers,
+                        })
+                        return provider(actualModelId);
+                    }
+                    return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
+                }
+                default: {
+                    return handleDefaultAiGatewayProvider({accountId, gatewayId, headers, isImage, modelId})
+                }
+            }
         }
         case AIProviderName.CUSTOM: {
             const { apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
@@ -104,16 +138,36 @@ export async function createAIModel({
             }
             return provider.chatModel(modelId)
         }
-        case AIProviderName.ACTIVEPIECES: 
+        case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
-            const provider = createOpenRouter({ apiKey: auth.apiKey })
-            return provider.chat(modelId) as LanguageModel
+            const openRouterProvider = createOpenRouter({ apiKey: auth.apiKey })
+            return openRouterProvider.chat(modelId) as LanguageModel
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
     }
 }
 
+
+
 export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
 export const openaiSearchTool = openai.tools.webSearchPreview;
 export const googleSearchTool = google.tools.googleSearch;
+
+const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage, modelId}: {
+    accountId: string;
+    gatewayId: string;
+    headers: Record<string, string>;
+    isImage?: boolean;
+    modelId: string;
+})=>{
+    const provider = createOpenAICompatible({
+        name: 'cloudflare',
+        baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
+        headers,
+    })
+    if (isImage) {
+        return provider.imageModel(modelId)
+    }
+    return provider.chatModel(modelId)
+}

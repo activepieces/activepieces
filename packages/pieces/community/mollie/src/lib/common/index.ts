@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { mollieAuth } from '../..';
+import { mollieAuth } from '../auth';
 
 export const mollieCommon = {
   baseUrl: 'https://api.mollie.com/v2',

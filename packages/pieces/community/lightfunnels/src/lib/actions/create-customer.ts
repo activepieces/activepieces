@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { lightfunnelsAuth } from '../../index';
+import { lightfunnelsAuth } from '../auth';
 import { lightfunnelsCommon } from '../common/index';
 
 export const createCustomer = createAction({

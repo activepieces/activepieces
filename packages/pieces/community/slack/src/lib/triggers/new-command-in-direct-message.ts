@@ -4,7 +4,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { userId } from '../common/props';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
 
 export const newCommandInDirectMessageTrigger = createTrigger({

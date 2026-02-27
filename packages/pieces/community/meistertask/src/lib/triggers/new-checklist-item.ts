@@ -10,7 +10,7 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { meistertaskAuth } from '../../index';
+import { meistertaskAuth } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
 
 const getToken = (auth: any): string => {

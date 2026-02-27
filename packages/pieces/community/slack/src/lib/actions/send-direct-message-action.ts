@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import {
   profilePicture,

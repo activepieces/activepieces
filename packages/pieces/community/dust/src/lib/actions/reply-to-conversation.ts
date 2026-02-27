@@ -4,7 +4,8 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { dustAuth, DustAuthType } from '../..';
+import { dustAuth } from '../..';
+import { DustAuthType } from '../..';
 import {
   assistantProp,
   DUST_BASE_URL,

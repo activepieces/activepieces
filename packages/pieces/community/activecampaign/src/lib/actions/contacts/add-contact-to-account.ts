@@ -1,4 +1,4 @@
-import { activeCampaignAuth } from '../../..';
+import { activeCampaignAuth } from '../../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { activecampaignCommon, makeClient } from '../../common';
 
