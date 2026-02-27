@@ -231,6 +231,7 @@ describe('Flow API', () => {
                     },
                     valid: true,
                     displayName: 'Trigger',
+                    steps: [],
                 },
             })
             await databaseConnection()
