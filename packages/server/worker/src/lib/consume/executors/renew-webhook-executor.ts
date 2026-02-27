@@ -1,7 +1,7 @@
 import { ConsumeJobResponse, ConsumeJobResponseStatus, isNil, RenewWebhookJobData, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
-import { operationHandler } from '../../compute/operation-handler'
+import { operationHandler } from '../../execution/operation-handler'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 

@@ -1,14 +1,14 @@
 import { pieceTranslation } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
-import { IsNull } from 'typeorm'
+import { In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, sortByNameAndVersionDesc } from './utils'
+import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -55,8 +55,8 @@ export const pieceCache = (log: FastifyBaseLogger) => {
             const cacheKey = CACHE_KEY.list(locale)
 
             const cachedPieces = await getCachedOrFetch(cacheKey, async () => {
-                const allPieces = await fetchPiecesFromDB()
-                return translateLatestVersionPerPlatform(allPieces, locale)
+                const latestPieces = await fetchLatestPiecesFromDB()
+                return translatePieces(latestPieces, locale)
             })
 
             const devPieces = await loadDevPiecesIfEnabled(log)
@@ -96,10 +96,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
         async getRegistry(params: GetRegistryParams): Promise<PieceRegistryEntry[]> {
             const { release, platformId } = params
             const cacheKey = CACHE_KEY.registry()
-            const allRegistry = await getCachedOrFetch(cacheKey, async () => {
-                const allPieces = await fetchPiecesFromDB()
-                return allPieces.map(toRegistryEntry)
-            })
+            const allRegistry = await getCachedOrFetch(cacheKey, fetchRegistryFromDB)
 
             const devPieces = (await loadDevPiecesIfEnabled(log)).map(toRegistryEntry)
 
@@ -121,37 +118,48 @@ function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {
     }
 }
 
-function translateLatestVersionPerPlatform(allPieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
+function translatePieces(pieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
     if (locale === LocalesEnum.ENGLISH) {
-        allPieces.forEach((piece) => {
+        pieces.forEach((piece) => {
             piece.i18n = undefined
         })
-        return allPieces
+        return pieces
     }
 
-    const latestPerPlatform = new Map<string, PieceMetadataSchema>()
-    for (const piece of allPieces) {
-        const key = `${piece.name}:${piece.platformId ?? ''}`
-        if (!latestPerPlatform.has(key)) {
-            latestPerPlatform.set(key, piece)
-        }
-    }
-
-    return allPieces.map((piece) => {
-        const key = `${piece.name}:${piece.platformId ?? ''}`
-        if (latestPerPlatform.get(key) === piece) {
-            const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
-            translated.i18n = undefined
-            return translated
-        }
-        piece.i18n = undefined
-        return piece
+    return pieces.map((piece) => {
+        const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
+        translated.i18n = undefined
+        return translated
     })
 }
 
-async function fetchPiecesFromDB(): Promise<PieceMetadataSchema[]> {
-    const piecesFromDatabase = await repo().find()
-    return piecesFromDatabase.sort(sortByNameAndVersionDesc)
+async function fetchLatestPiecesFromDB(): Promise<PieceMetadataSchema[]> {
+    const allKeys = await repo()
+        .createQueryBuilder('pm')
+        .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"'])
+        .getRawMany<PieceKey>()
+
+    const latestIds = pickLatestVersionIds(allKeys)
+    return latestIds.length > 0 ? repo().find({ where: { id: In(latestIds) } }) : []
+}
+
+function pickLatestVersionIds(pieces: PieceKey[]): string[] {
+    const latest = new Map<string, PieceKey>()
+    for (const piece of pieces) {
+        const key = `${piece.name}:${piece.platformId ?? ''}`
+        const existing = latest.get(key)
+        if (isNil(existing) || isNewerVersion(piece.version, existing.version)) {
+            latest.set(key, piece)
+        }
+    }
+    return Array.from(latest.values()).map(p => p.id)
+}
+
+async function fetchRegistryFromDB(): Promise<PieceRegistryEntry[]> {
+    return repo()
+        .createQueryBuilder('pm')
+        .select(['pm."name"', 'pm."version"', 'pm."platformId"', 'pm."pieceType"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
+        .getRawMany<PieceRegistryEntry>()
 }
 
 const inFlightQueries = new Map<string, Promise<unknown>>()
@@ -252,4 +260,11 @@ type GetListParams = {
 type GetRegistryParams = {
     release: string | undefined
     platformId?: string
+}
+
+type PieceKey = {
+    id: string
+    name: string
+    version: string
+    platformId: string | null
 }

@@ -1,10 +1,9 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
-    PushGitRepoRequest,
-} from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { Permission, PrincipalType, SeekPage } from '@activepieces/shared'
+    Permission,
+    PrincipalType, PushGitRepoRequest, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
     Type,

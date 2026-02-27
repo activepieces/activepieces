@@ -1,0 +1,134 @@
+---
+title: "CyberArk Conjur"
+description: "Connect CyberArk Conjur to Activepieces for centralized secret management"
+---
+
+CyberArk Conjur is a secrets management solution that provides secure storage and access to credentials. Integration with Activepieces uses **host/API key authentication**: Activepieces authenticates as a Conjur host, receives a short-lived token, and uses it to retrieve secrets for which that host has `read` and `execute` permissions.
+
+Conjur policies are defined in `.yml` files. For recommended structure and patterns, see [Policy best practices](https://docs.cyberark.com/conjur-enterprise/13.0/en/Content/Operations/Policy/policy-best-practices.htm) in the CyberArk Conjur documentation. For policy syntax and operators, see the [Policy syntax](https://docs.cyberark.com/conjur-open-source/Latest/en/Content/Operations/Policy/policy-syntax.htm) reference.
+
+## Prerequisites
+
+- A Conjur server (Conjur Cloud, Conjur Enterprise, or Conjur Open Source)
+- A Conjur policy that defines a host for Activepieces and grants it access to the variables you want to use
+
+## Conjur host configuration for Activepieces
+
+To allow Activepieces to read secrets, configure a Conjur policy that declares a group, variables, a host, a layer, and the right permissions. The steps below describe how to create that policy file.
+
+### Example policy (Activepieces)
+
+The following policy defines a policy `activepieces` with a group, two variables, a host, a layer, and the grants so the host can read the variables.
+
+```yaml
+- !policy
+  id: activepieces
+  body:
+    - !group activepieces-secrets
+    - &variables
+        - !variable
+            id: key-1
+            kind: password
+        - !variable
+            id: key-2
+            kind: password
+    - !permit
+        role: !group /activepieces/activepieces-secrets
+        privileges: [read, update, execute]
+        resources: *variables
+
+    - !host activepieces
+    - !layer activepieces
+    - !grant
+        role: !layer activepieces
+        members:
+            - !host activepieces
+    - !grant
+        role: !group activepieces-secrets
+        member: !layer activepieces
+```
+
+### Policy steps (summary)
+
+1. **Declare a group** at the root of the policy (e.g. `activepieces-secrets`). This group will be allowed to read (and optionally execute) the variables.
+
+2. **Declare variables** and give the group `read` and `execute` on them (so the host can fetch secret values):
+
+   ```yaml
+   - &variables
+     - !variable
+         id: my-secret
+         kind: password
+   - !permit
+       role: !group /your-policy/your-group
+       privileges: [read, execute]
+       resources: *variables
+   ```
+
+3. **Declare the host** that Activepieces will use (e.g. `activepieces`) and a **layer** (e.g. `activepieces`), and add the host to the layer:
+
+   ```yaml
+   - !host activepieces
+   - !layer activepieces
+   - !grant
+       role: !layer activepieces
+       members:
+           - !host activepieces
+   ```
+
+4. **Grant the layer membership in the group** that has access to the variables:
+
+   ```yaml
+   - !grant
+     role: !group activepieces-secrets
+     member: !layer activepieces
+   ```
+
+5. **Load the policy** into Conjur. Conjur will create the host and return an **API key** for that host. You will use this API key and the host identity when connecting Activepieces.
+
+After loading the policy, Conjur returns something like:
+
+```json
+{
+  "created_roles": {
+    "conjur:host:activepieces/activepieces": {
+      "id": "conjur:host:activepieces/activepieces",
+      "api_key": "<your-host-api-key>"
+    }
+  },
+  "version": 1
+}
+```
+
+Store the **api_key** securely; you will enter it in Activepieces as the **API Key**.
+
+## Server URL and organization
+
+- **Conjur Cloud**: Use a URL of the form  
+  `https://<subdomain>.secretsmgr.cyberark.cloud/api/`  
+  and set **Organization account name** to `conjur` unless your Cloud tenant uses a different account.
+- **On-prem / Enterprise**: Use your Conjur server base URL (e.g. `https://conjur.example.com`) and your organization account name.
+
+## Connecting to Activepieces
+
+1. Go to **Platform Admin → Security → Secret Managers**.
+2. Select **CyberArk Conjur** from the provider list.
+3. Enter the connection details:
+   - **URL**: Conjur server URL (e.g. `https://conjur.example.com` or Conjur Cloud URL above). Do not add a trailing slash.
+   - **Organization account name**: Your Conjur account (e.g. `conjur` for Conjur Cloud).
+   - **Login ID**: For host authentication this must be the Conjur host ID with a `host/` prefix, e.g. `host/activepieces/activepieces` (policy id and host name as in your policy).
+   - **API Key**: The host API key returned when the host was created (see policy load response above).
+4. Click **Connect** to test and save the connection.
+
+## Using CyberArk Conjur secrets in connections
+
+When configuring a connection that uses a secret:
+
+1. Click the **key icon** (🔑) next to the credential field.
+2. Select **CyberArk Conjur** as the secret manager.
+3. Enter the **Secret key**: the Conjur variable path in the form `policy_id/variable_id`.  
+   For the example policy above, use:
+   - `activepieces/key-1`
+   - `activepieces/key-2`  
+
+Activepieces will authenticate as the configured host and retrieve the secret from Conjur when the flow runs.
