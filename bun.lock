@@ -5623,6 +5623,17 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/sign-now": {
+      "name": "@activepieces/piece-sign-now",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "form-data": "4.0.4",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/signrequest": {
       "name": "@activepieces/piece-signrequest",
       "version": "0.1.4",
@@ -8659,6 +8670,8 @@
     "@activepieces/piece-shopify": ["@activepieces/piece-shopify@workspace:packages/pieces/community/shopify"],
 
     "@activepieces/piece-short-io": ["@activepieces/piece-short-io@workspace:packages/pieces/community/short-io"],
+
+    "@activepieces/piece-sign-now": ["@activepieces/piece-sign-now@workspace:packages/pieces/community/sign-now"],
 
     "@activepieces/piece-signrequest": ["@activepieces/piece-signrequest@workspace:packages/pieces/community/signrequest"],
 
