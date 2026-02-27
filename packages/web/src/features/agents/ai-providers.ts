@@ -42,6 +42,17 @@ It is strongly recommended that you add your credit card information to your Ope
     ),
   },
   {
+    provider: AIProviderName.AVIAN,
+    name: 'Avian',
+    logoUrl: 'https://cdn.activepieces.com/pieces/avian.png',
+    markdown: t(`Follow these instructions to get your Avian API Key:
+
+1. Go to https://avian.io and sign up for an account.
+2. Navigate to the API Keys section of your dashboard.
+3. Create a new API key and copy it.
+`),
+  },
+  {
     provider: AIProviderName.OPENROUTER,
     name: 'OpenRouter',
     logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',

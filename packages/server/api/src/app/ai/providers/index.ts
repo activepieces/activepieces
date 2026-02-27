@@ -1,6 +1,7 @@
 import { AIProviderAuthConfig, AIProviderConfig, AIProviderName } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 import { anthropicProvider } from './anthropic-provider'
+import { avianProvider } from './avian-provider'
 import { azureProvider } from './azure-provider'
 import { cloudflareGatewayProvider } from './cloudflare-gateway-provider'
 import { googleProvider } from './google-provider'
@@ -14,6 +15,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.OPENROUTER]: openRouterProvider,
     [AIProviderName.AZURE]: azureProvider,
     [AIProviderName.GOOGLE]: googleProvider,
+    [AIProviderName.AVIAN]: avianProvider,
     [AIProviderName.CLOUDFLARE_GATEWAY]: cloudflareGatewayProvider,
     [AIProviderName.CUSTOM]: openAICompatibleProvider,
     [AIProviderName.ACTIVEPIECES]: {

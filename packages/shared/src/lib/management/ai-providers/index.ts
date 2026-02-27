@@ -7,6 +7,7 @@ export enum AIProviderName {
     ANTHROPIC = 'anthropic',
     AZURE = 'azure',
     GOOGLE = 'google',
+    AVIAN = 'avian',
     ACTIVEPIECES = 'activepieces',
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
@@ -48,6 +49,9 @@ export type OpenAIProviderAuthConfig = z.infer<typeof OpenAIProviderAuthConfig>
 
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuthConfig>
+
+export const AvianProviderAuthConfig = BaseAIProviderAuthConfig
+export type AvianProviderAuthConfig = z.infer<typeof AvianProviderAuthConfig>
 
 export const AnthropicProviderConfig = z.object({})
 export type AnthropicProviderConfig = z.infer<typeof AnthropicProviderConfig>
@@ -93,12 +97,16 @@ export type OpenAIProviderConfig = z.infer<typeof OpenAIProviderConfig>
 export const OpenRouterProviderConfig = z.object({})
 export type OpenRouterProviderConfig = z.infer<typeof OpenRouterProviderConfig>
 
+export const AvianProviderConfig = z.object({})
+export type AvianProviderConfig = z.infer<typeof AvianProviderConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
     OpenRouterProviderAuthConfig,
+    AvianProviderAuthConfig,
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
@@ -113,6 +121,7 @@ export const AIProviderConfig = z.union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
+    AvianProviderConfig,
     ActivePiecesProviderConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
@@ -147,6 +156,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.GOOGLE),
         config: GoogleProviderConfig,
         auth: GoogleProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.AVIAN),
+        config: AvianProviderConfig,
+        auth: AvianProviderAuthConfig,
     }),
     z.object({
         displayName: z.string().min(1),
