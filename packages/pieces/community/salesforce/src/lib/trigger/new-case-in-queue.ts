@@ -59,11 +59,11 @@ const polling: Polling<
             }));
         }
 
-        // Step 1: Find all cases assigned to this queue since last poll via CaseHistory.
-        // Using CaseHistory.CreatedDate (queue-assignment time) ensures we never miss a case
-        // that was created before the last sync but assigned to the queue after it.
         const isoDate = dayjs(lastFetchEpochMS).toISOString();
 
+        // Step 1a: Cases moved to queue after creation via owner change (CaseHistory).
+        // Assignment Rules that fire during case creation do NOT write a CaseHistory entry,
+        // so we also query Case directly (Step 1b) to cover that scenario.
         const historyResponse = await querySalesforceApi<{
             records: { CaseId: string; CreatedDate: string; NewValue: string }[];
         }>(
@@ -72,21 +72,36 @@ const polling: Polling<
             `SELECT CaseId, CreatedDate, NewValue FROM CaseHistory WHERE Field = 'Owner' AND CreatedDate > ${isoDate}`,
         );
 
-        console.log(JSON.stringify(historyResponse.body));
-
-        // NewValue is not filterable in SOQL so we filter in code.
-        // NewValue may store the queue ID or display name — check logs to confirm.
+        // NewValue is not filterable in SOQL — filter in code.
         const historyRecords = (historyResponse.body?.['records'] ?? []).filter(
             (r) => r.NewValue === caseQueueId,
         );
 
-        console.log(JSON.stringify(historyRecords));
-
-        if (historyRecords.length === 0) return [];
-
-        const caseIdToQueueDate: Record<string, string> = Object.fromEntries(
-            historyRecords.map((r) => [r.CaseId, r.CreatedDate]),
+        // Step 1b: Cases assigned to queue on creation via Assignment Rules.
+        // These never produce a CaseHistory entry — detected via Case.CreatedDate.
+        // Cases created before isoDate are excluded, so no overlap with Step 1a.
+        const directResponse = await querySalesforceApi<{
+            records: { Id: string; CreatedDate: string }[];
+        }>(
+            HttpMethod.GET,
+            auth,
+            `SELECT Id, CreatedDate FROM Case WHERE OwnerId = '${caseQueueId}' AND CreatedDate > ${isoDate}`,
         );
+
+        const directRecords = directResponse.body?.['records'] ?? [];
+
+        // Merge both sources — CaseHistory overwrites on duplicate since its CreatedDate
+        // reflects the actual assignment time, which is more accurate than Case.CreatedDate.
+        const caseIdToQueueDate: Record<string, string> = {};
+        for (const r of directRecords) {
+            caseIdToQueueDate[r.Id] = r.CreatedDate;
+        }
+        for (const r of historyRecords) {
+            caseIdToQueueDate[r.CaseId] = r.CreatedDate;
+        }
+
+        if (Object.keys(caseIdToQueueDate).length === 0) return [];
+
         const allIds = Object.keys(caseIdToQueueDate);
 
         // Step 2: Fetch full Case records in sequential batches of 200 (FIELDS(ALL) limit).
@@ -101,8 +116,6 @@ const polling: Polling<
                 auth,
                 `SELECT FIELDS(ALL) FROM Case WHERE Id IN (${ids}) LIMIT ${FIELDS_ALL_LIMIT}`,
             );
-
-            console.log(JSON.stringify(caseResponse.body));
 
             allCaseRecords.push(...(caseResponse.body?.['records'] ?? []));
         }
