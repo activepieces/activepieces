@@ -1,8 +1,8 @@
-import { FlowAction, FlowRunStatus } from '@activepieces/shared'
+import { FlowRunStatus } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { buildCodeAction, generateMockEngineConstants } from './test-helper'
+import { buildCodeAction, buildFlowVersion, generateMockEngineConstants } from './test-helper'
 
 describe('codeExecutor', () => {
 
@@ -39,34 +39,37 @@ describe('codeExecutor', () => {
     })
 
     it('should skip code action', async () => {
+        const step = buildCodeAction({
+            name: 'echo_step',
+            input: {},
+            skip: true,
+        })
+        const fv = buildFlowVersion([step])
         const result = await flowExecutor.execute({
-            action: buildCodeAction({
-                name: 'echo_step',
-                input: {},
-                skip: true,
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            stepNames: ['echo_step'],
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ flowVersion: fv }),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.echo_step).toBeUndefined()
     })
     it('should skip flow action', async () => {
-        const flow: FlowAction = {
-            ...buildCodeAction({
-                name: 'echo_step',
-                skip: true,
-                input: {},
-            }),
-            nextAction: {
-                ...buildCodeAction({
-                    name: 'echo_step_1',
-                    input: {
-                        'key': '{{ 1 + 2 }}',
-                    },
-                }),
+        const step1 = buildCodeAction({
+            name: 'echo_step',
+            skip: true,
+            input: {},
+        })
+        const step2 = buildCodeAction({
+            name: 'echo_step_1',
+            input: {
+                'key': '{{ 1 + 2 }}',
             },
-        }
+        })
+        const fv = buildFlowVersion([step1, step2])
         const result = await flowExecutor.execute({
-            action: flow, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            stepNames: ['echo_step', 'echo_step_1'],
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ flowVersion: fv }),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.echo_step).toBeUndefined()

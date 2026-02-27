@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, isNil, RouterAction, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
@@ -13,9 +13,10 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         executionState,
         constants,
     }) {
-        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
+        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterResolvedInput>({
             unresolvedInput: {
                 ...action.settings,
+                branches: action.branches ?? [],
             },
             executionState,
         })
@@ -36,7 +37,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     executionState: FlowExecutorContext
     constants: EngineConstants
     censoredInput: unknown
-    resolvedInput: RouterActionSettings
+    resolvedInput: RouterResolvedInput
     routerExecutionType: RouterExecutionType
 }): Promise<FlowExecutorContext> {
     const stepStartTime = performance.now()
@@ -75,8 +76,9 @@ async function handleRouterExecution({ action, executionState, constants, censor
                 continue
             }
     
+            const branchStepNames = action.branches?.[i]?.steps ?? []
             executionState = await flowExecutor.execute({
-                action: action.children[i],
+                stepNames: branchStepNames,
                 executionState,
                 constants,
             })
@@ -281,4 +283,14 @@ function isValidDate(date: unknown): boolean {
         return dayjs(date).isValid()
     }
     return false
+}
+
+type RouterResolvedInput = {
+    executionType: RouterExecutionType
+    branches: Array<{
+        branchType: BranchExecutionType
+        branchName: string
+        conditions?: BranchCondition[][]
+        steps?: string[]
+    }>
 }

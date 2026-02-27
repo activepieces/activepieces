@@ -54,11 +54,11 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
             sampleData: input.sampleData,
             engineConstants: constants,
         })
-        const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
+        flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion)
         return flowExecutor.execute({
-            action: step,
+            stepNames: [input.stepNameToTest!],
             executionState: await getFlowExecutionState(input, testContext),
-            constants: EngineConstants.fromExecuteFlowInput(input),
+            constants,
         })
     }
     return flowExecutor.executeFromTrigger({

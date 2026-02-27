@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersionState, PlatformId, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersion, PlatformId, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -9,10 +9,10 @@ type RetryConstants = {
 }
 
 type EngineConstantsParams = {
-    flowId: string
-    flowVersionId: string
-    flowVersionState: FlowVersionState
-    triggerPieceName: string
+    flowVersion?: FlowVersion
+    flowId?: string
+    flowVersionId?: string
+    triggerPieceName?: string
     flowRunId: string
     publicApiUrl: string
     internalApiUrl: string
@@ -50,10 +50,6 @@ export class EngineConstants {
 
     public readonly platformId: string
     public readonly timeoutInSeconds: number
-    public readonly flowId: string
-    public readonly flowVersionId: string
-    public readonly flowVersionState: FlowVersionState
-    public readonly triggerPieceName: string
     public readonly flowRunId: string
     public readonly publicApiUrl: string
     public readonly internalApiUrl: string
@@ -69,7 +65,23 @@ export class EngineConstants {
     public readonly logsUploadUrl?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
+    public readonly flowVersion?: FlowVersion
+    private readonly _flowId: string
+    private readonly _flowVersionId: string
+    private readonly _triggerPieceName: string
     private project: Project | null = null
+
+    public get flowId(): string {
+        return this.flowVersion?.flowId ?? this._flowId
+    }
+
+    public get flowVersionId(): string {
+        return this.flowVersion?.id ?? this._flowVersionId
+    }
+
+    public get triggerPieceName(): string {
+        return this.flowVersion?.trigger?.settings?.pieceName ?? this._triggerPieceName
+    }
 
     public get isRunningApTests(): boolean {
         return EngineConstants.TEST_MODE
@@ -95,14 +107,14 @@ export class EngineConstants {
             throw new EngineGenericError('InternalApiUrlNotEndsWithSlashError', `Internal API URL must end with a slash, got: ${params.internalApiUrl}`)
         }
 
-        this.flowId = params.flowId
-        this.flowVersionId = params.flowVersionId
-        this.flowVersionState = params.flowVersionState
+        this.flowVersion = params.flowVersion
+        this._flowId = params.flowId ?? ''
+        this._flowVersionId = params.flowVersionId ?? ''
+        this._triggerPieceName = params.triggerPieceName ?? ''
         this.flowRunId = params.flowRunId
         this.publicApiUrl = params.publicApiUrl
         this.internalApiUrl = params.internalApiUrl
         this.retryConstants = params.retryConstants
-        this.triggerPieceName = params.triggerPieceName
         this.engineToken = params.engineToken
         this.projectId = params.projectId
         this.progressUpdateType = params.progressUpdateType
@@ -117,13 +129,10 @@ export class EngineConstants {
         this.timeoutInSeconds = params.timeoutInSeconds
         this.stepNames = params.stepNames
     }
-  
+
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
         return new EngineConstants({
-            flowId: input.flowVersion.flowId,
-            flowVersionId: input.flowVersion.id,
-            flowVersionState: input.flowVersion.state,
-            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
+            flowVersion: input.flowVersion,
             flowRunId: input.flowRunId,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: input.internalApiUrl,
@@ -136,11 +145,11 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
-            logsUploadUrl: input.logsUploadUrl, 
+            logsUploadUrl: input.logsUploadUrl,
             logsFileId: input.logsFileId,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
-            stepNames: flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name),
+            stepNames: flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.name),
         })
     }
 
@@ -148,7 +157,6 @@ export class EngineConstants {
         return new EngineConstants({
             flowId: DEFAULT_MCP_DATA.flowId,
             flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
-            flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
             triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_MCP_DATA.flowRunId,
             publicApiUrl: input.publicApiUrl,
@@ -170,10 +178,10 @@ export class EngineConstants {
 
     public static fromExecutePropertyInput(input: Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }): EngineConstants {
         return new EngineConstants({
-            flowId: input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
-            flowVersionId: input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
-            flowVersionState: input.flowVersion?.state ?? DEFAULT_MCP_DATA.flowVersionState,
-            triggerPieceName: input.flowVersion?.trigger?.settings.pieceName ?? DEFAULT_MCP_DATA.triggerPieceName,
+            flowVersion: input.flowVersion,
+            flowId: DEFAULT_MCP_DATA.flowId,
+            flowVersionId: DEFAULT_MCP_DATA.flowVersionId,
+            triggerPieceName: DEFAULT_MCP_DATA.triggerPieceName,
             flowRunId: DEFAULT_EXECUTE_PROPERTY,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
@@ -188,16 +196,13 @@ export class EngineConstants {
             stepNameToTest: undefined,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
-            stepNames: input.flowVersion?.trigger ? flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name) : [],
+            stepNames: input.flowVersion ? flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.name) : [],
         })
     }
 
     public static fromExecuteTriggerInput(input: ExecuteTriggerOperation<TriggerHookType>): EngineConstants {
         return new EngineConstants({
-            flowId: input.flowVersion.flowId,
-            flowVersionId: input.flowVersion.id,
-            flowVersionState: input.flowVersion.state,
-            triggerPieceName: input.flowVersion.trigger.settings.pieceName,
+            flowVersion: input.flowVersion,
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
             publicApiUrl: input.publicApiUrl,
             internalApiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
@@ -212,7 +217,7 @@ export class EngineConstants {
             stepNameToTest: undefined,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
-            stepNames: flowStructureUtil.getAllSteps(input.flowVersion.trigger).map((step) => step.name),
+            stepNames: flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.name),
         })
     }
     public getPropsResolver(contextVersion: ContextVersion | undefined): PropsResolver {

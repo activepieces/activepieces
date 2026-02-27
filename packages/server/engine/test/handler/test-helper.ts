@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, BranchCondition, BranchExecutionType, CodeAction, FlowAction, FlowActionType, FlowTriggerType, FlowVersion, FlowVersionState, LoopOnItemsAction, PieceAction, ProgressUpdateType, PropertyExecutionType, RouterAction, RouterExecutionType, RunEnvironment } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
@@ -8,7 +8,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             timeoutInSeconds: params?.timeoutInSeconds ?? 10,
             flowId: params?.flowId ?? 'flowId',
             flowVersionId: params?.flowVersionId ?? 'flowVersionId',
-            flowVersionState: params?.flowVersionState ?? FlowVersionState.DRAFT,
+            triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
             flowRunId: params?.flowRunId ?? 'flowRunId',
             publicApiUrl: params?.publicApiUrl ?? 'http://127.0.0.1:4200/api/',
             internalApiUrl: params?.internalApiUrl ?? 'http://127.0.0.1:3000/',
@@ -19,7 +19,6 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             },
             engineToken: params?.engineToken ?? 'engineToken',
             projectId: params?.projectId ?? 'projectId',
-            triggerPieceName: params?.triggerPieceName ?? 'mcp-trigger-piece-name',
             progressUpdateType: params?.progressUpdateType ?? ProgressUpdateType.NONE,
             serverHandlerId: params?.serverHandlerId ?? null,
             httpRequestId: params?.httpRequestId ?? null,
@@ -27,18 +26,19 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             runEnvironment: params?.runEnvironment ?? RunEnvironment.TESTING,
             stepNameToTest: params?.stepNameToTest ?? undefined,
             stepNames: params?.stepNames ?? [],
+            flowVersion: params?.flowVersion,
         })
 }
 
 export function buildSimpleLoopAction({
     name,
     loopItems,
-    firstLoopAction,
+    children,
     skip,
 }: {
     name: string
     loopItems: string
-    firstLoopAction?: FlowAction
+    children?: string[]
     skip?: boolean
 }): LoopOnItemsAction {
     return {
@@ -49,39 +49,40 @@ export function buildSimpleLoopAction({
         settings: {
             items: loopItems,
         },
-        firstLoopAction,
+        children,
         valid: true,
     }
 }
 
-export function buildRouterWithOneCondition({ children, conditions, executionType, skip }: { children: FlowAction[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): FlowAction {
+export function buildRouterWithOneCondition({ branchStepNames, conditions, executionType, skip }: { branchStepNames: string[][], conditions: (BranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): RouterAction {
     return {
         name: 'router',
         displayName: 'Your Router Name',
         type: FlowActionType.ROUTER,
         skip: skip ?? false,
         settings: {
-            branches: conditions.map((condition) => {
-                if (condition === null) {
-                    return {
-                        branchType: BranchExecutionType.FALLBACK,
-                        branchName: 'Fallback Branch',
-                    }
-                }
-                return {
-                    conditions: [[condition]],
-                    branchType: BranchExecutionType.CONDITION,
-                    branchName: 'Test Branch',
-                }
-            }),
             executionType,
         },
-        children,
+        branches: conditions.map((condition, index) => {
+            if (condition === null) {
+                return {
+                    branchType: BranchExecutionType.FALLBACK as const,
+                    branchName: 'Fallback Branch',
+                    steps: branchStepNames?.[index] ?? [],
+                }
+            }
+            return {
+                conditions: [[condition]],
+                branchType: BranchExecutionType.CONDITION as const,
+                branchName: 'Test Branch',
+                steps: branchStepNames?.[index] ?? [],
+            }
+        }),
         valid: true,
     }
 }
 
-export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
+export function buildCodeAction({ name, input, skip, errorHandlingOptions }: { name: string, input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions }): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -95,12 +96,11 @@ export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOp
             },
             errorHandlingOptions,
         },
-        nextAction,
         valid: true,
     }
 }
 
-export function buildPieceAction({ name, input, skip, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, skip?: boolean, pieceName: string, actionName: string, nextAction?: FlowAction }): PieceAction {
+export function buildPieceAction({ name, input, skip, pieceName, actionName, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, skip?: boolean, pieceName: string, actionName: string }): PieceAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -117,7 +117,33 @@ export function buildPieceAction({ name, input, skip, pieceName, actionName, nex
             }])),
             errorHandlingOptions,
         },
-        nextAction,
         valid: true,
+    }
+}
+
+export function buildFlowVersion(steps: FlowAction[], triggerSteps?: string[]): FlowVersion {
+    return {
+        id: 'flowVersionId',
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        flowId: 'test-flow-id',
+        displayName: 'Test Flow',
+        trigger: {
+            name: 'trigger',
+            valid: true,
+            displayName: 'Test Trigger',
+            type: FlowTriggerType.EMPTY,
+            settings: {},
+            steps: triggerSteps ?? [],
+        },
+        steps,
+        updatedBy: null,
+        valid: true,
+        schemaVersion: null,
+        agentIds: [],
+        state: FlowVersionState.DRAFT,
+        connectionIds: [],
+        backupFiles: null,
+        notes: [],
     }
 }
