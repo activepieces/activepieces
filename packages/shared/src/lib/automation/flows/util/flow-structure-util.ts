@@ -99,25 +99,48 @@ const createBranch = (branchName: string, conditions: BranchCondition[][] | unde
 function findPathToStep(flowVersion: FlowVersion, targetStepName: string): StepWithIndex[] {
     const result: StepWithIndex[] = []
     const allSteps = getAllSteps(flowVersion)
-
+    const parentMap = buildParentMap(flowVersion)
     for (let i = 0; i < allSteps.length; i++) {
         const step = allSteps[i]
-        if (isParentOf(step, targetStepName)) {
+        if (isAncestorOf(step.name, targetStepName, parentMap)) {
             result.push({ ...step, dfsIndex: i })
         }
     }
     return result
 }
 
-function isParentOf(step: Step, targetStepName: string): boolean {
-    if (step.name === targetStepName) {
-        return false
-    }
-    const stepRefs = getDirectChildRefs(step)
-    if (stepRefs.includes(targetStepName)) {
-        return true
+function isAncestorOf(stepName: string, targetStepName: string, parentMap: Map<string, string>): boolean {
+    let current = targetStepName
+    while (parentMap.has(current)) {
+        current = parentMap.get(current)!
+        if (current === stepName) {
+            return true
+        }
     }
     return false
+}
+
+function buildParentMap(flowVersion: FlowVersion): Map<string, string> {
+    const parentMap = new Map<string, string>()
+    addParentsForChain(flowVersion.trigger.steps, flowVersion.trigger.name, flowVersion, parentMap)
+    return parentMap
+}
+
+function addParentsForChain(stepNames: string[], containerName: string, flowVersion: FlowVersion, parentMap: Map<string, string>): void {
+    let parentName = containerName
+    for (const stepName of stepNames) {
+        parentMap.set(stepName, parentName)
+        const step = getStep(stepName, flowVersion)
+        if (step?.type === FlowActionType.LOOP_ON_ITEMS) {
+            addParentsForChain((step as LoopOnItemsAction).children ?? [], stepName, flowVersion, parentMap)
+        }
+        else if (step?.type === FlowActionType.ROUTER) {
+            for (const branch of (step as RouterAction).branches ?? []) {
+                addParentsForChain(branch.steps, stepName, flowVersion, parentMap)
+            }
+        }
+        parentName = stepName
+    }
 }
 
 function getDirectChildRefs(step: Step): string[] {

@@ -1,37 +1,42 @@
-import { BranchExecutionType, FlowActionType, FlowVersion, RouterAction, RouterExecutionType } from '@activepieces/shared'
+import { BranchExecutionType, FlowActionType, FlowVersion, RouterExecutionType, Step } from '@activepieces/shared'
 import { Migration } from '.'
-import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
+import { legacyFlowStructureUtil, LegacyStep } from './legacy-flow-structure-util'
 
 export const migrateBranchToRouter: Migration = {
     targetSchemaVersion: undefined,
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
-            const unschemedStep = step as unknown as { type: string, settings: { conditions: unknown[] } }
+            const unschemedStep = step as unknown as LegacyStep
             if (unschemedStep.type === 'BRANCH') {
-                const routerAction: RouterAction = {
+                const routerAction = {
                     displayName: step.displayName,
                     name: step.name,
                     valid: step.valid,
                     type: FlowActionType.ROUTER,
                     skip: false,
                     settings: {
+                        branches: [
+                            {
+                                branchName: 'Branch 1',
+                                conditions: step.settings.conditions,
+                                branchType: BranchExecutionType.CONDITION,
+                            },
+                            {
+                                branchName: 'Otherwise',
+                                branchType: BranchExecutionType.FALLBACK,
+                            },
+                        ],
                         executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                        sampleData: {
+                            sampleDataFileId: undefined,
+                            sampleDataInputFileId: undefined,
+                            lastTestDate: undefined,
+                        },
                     },
-                    branches: [
-                        {
-                            branchName: 'Branch 1',
-                            conditions: step.settings.conditions,
-                            branchType: BranchExecutionType.CONDITION,
-                            steps: [],
-                        },
-                        {
-                            branchName: 'Otherwise',
-                            branchType: BranchExecutionType.FALLBACK,
-                            steps: [],
-                        },
-                    ],
+                    nextAction: unschemedStep.nextAction,
+                    children: [unschemedStep.onSuccessAction ?? null, unschemedStep.onFailureAction ?? null],
                 }
-                return routerAction
+                return routerAction as unknown as Step
             }
             return step
         })

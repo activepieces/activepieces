@@ -46,7 +46,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
             customOptions: {
                 removeAdditional: 'all',
                 useDefaults: true,
-                keywords: ['discriminator'],
+                discriminator: true,
                 coerceTypes: 'array',
                 formats: {},
             },

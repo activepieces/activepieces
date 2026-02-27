@@ -1,11 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../../core/common'
+import { DiscriminatedUnion } from '../../../core/common/base-model'
 import { Metadata } from '../../../core/common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema, SingleActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { Note } from '../note'
 import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, FlowTrigger, PieceTrigger } from '../triggers/trigger'
+import { FlowTrigger, UpdateEmptyTrigger, UpdatePieceTrigger } from '../triggers/trigger'
 
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
@@ -121,7 +122,7 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
 
-export const UpdateActionRequest = Type.Union([
+export const UpdateActionRequest = DiscriminatedUnion('type', [
     CodeActionSchema,
     LoopOnItemsActionSchema,
     PieceActionSchema,
@@ -156,7 +157,7 @@ export const AddActionRequest = Type.Object({
 })
 export type AddActionRequest = Static<typeof AddActionRequest>
 
-export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger])
+export const UpdateTriggerRequest = DiscriminatedUnion('type', [UpdateEmptyTrigger, UpdatePieceTrigger])
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>
 
 export const UpdateFlowStatusRequest = Type.Object({
@@ -185,7 +186,7 @@ export const UpdateOwnerRequest = Type.Object({
     ownerId: Type.String(),
 })
 export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
-export const FlowOperationRequest = Type.Union([
+export const FlowOperationRequest = DiscriminatedUnion('type', [
     Type.Object(
         {
             type: Type.Literal(FlowOperationType.MOVE_ACTION),

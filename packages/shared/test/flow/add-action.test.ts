@@ -1,4 +1,5 @@
 import {
+    BranchExecutionType,
     FlowActionType,
     FlowOperationRequest,
     flowOperations,
@@ -6,6 +7,7 @@ import {
     FlowVersion,
     LoopOnItemsAction,
     RouterAction,
+    RouterExecutionType,
     StepLocationRelativeToParent,
 } from '../../src'
 import {
@@ -116,6 +118,73 @@ describe('Add Action', () => {
         expect(result.steps.find(s => s.name === 'step_2')).toBeDefined()
     })
 
+    it('should add branch to router then add action inside the new branch', () => {
+        const flow = createEmptyFlowVersion()
+        // Add a router — gets default branches (Branch 1 + Otherwise)
+        const router = createRouterAction('step_1')
+        ;(router as RouterAction).branches = []
+        let result = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'trigger',
+                action: router,
+            },
+        })
+        // Add a new branch at index 1
+        result = flowOperations.apply(result, {
+            type: FlowOperationType.ADD_BRANCH,
+            request: {
+                stepName: 'step_1',
+                branchIndex: 1,
+                branchName: 'Branch 2',
+            },
+        })
+        // Add action inside the new branch (index 1)
+        result = flowOperations.apply(result, {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'step_1',
+                stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
+                branchIndex: 1,
+                action: createCodeAction('step_2'),
+            },
+        })
+        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
+        expect(routerStep.branches).toHaveLength(3)
+        expect(routerStep.branches![1].branchName).toBe('Branch 2')
+        expect(routerStep.branches![1].steps).toEqual(['step_2'])
+        expect(result.steps.find(s => s.name === 'step_2')).toBeDefined()
+    })
+
+    it('should add action inside router branch when branch.steps is undefined', () => {
+        const flow = createEmptyFlowVersion()
+        // Create a router where branches have no steps property
+        const router = createRouterAction('step_1')
+        for (const branch of (router as RouterAction).branches!) {
+            delete (branch as Record<string, unknown>).steps
+        }
+        let result = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'trigger',
+                action: router,
+            },
+        })
+        // Add inside branch 0 — should not throw "branch.steps is not iterable"
+        result = flowOperations.apply(result, {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'step_1',
+                stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
+                branchIndex: 0,
+                action: createCodeAction('step_2'),
+            },
+        })
+        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
+        expect(routerStep.branches![0].steps).toEqual(['step_2'])
+        expect(result.steps.find(s => s.name === 'step_2')).toBeDefined()
+    })
+
     it('should add action after loop step', () => {
         const flow = createFlowVersionWithLoop()
         const op: FlowOperationRequest = {
@@ -183,6 +252,57 @@ describe('Add Action', () => {
             },
         })
         expect(result.steps.map(s => s.name)).toContain('step_1')
+    })
+
+    it('should create router with default branches when branches are empty', () => {
+        const flow = createEmptyFlowVersion()
+        const result = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'trigger',
+                action: {
+                    name: 'step_1',
+                    displayName: 'Router',
+                    type: FlowActionType.ROUTER,
+                    valid: false,
+                    settings: {
+                        executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                    },
+                    branches: [],
+                },
+            },
+        })
+        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
+        expect(routerStep.branches).toHaveLength(2)
+        expect(routerStep.branches![0].branchType).toBe(BranchExecutionType.CONDITION)
+        expect(routerStep.branches![0].branchName).toBe('Branch 1')
+        expect(routerStep.branches![0].steps).toEqual([])
+        expect(routerStep.branches![1].branchType).toBe(BranchExecutionType.FALLBACK)
+        expect(routerStep.branches![1].branchName).toBe('Otherwise')
+        expect(routerStep.branches![1].steps).toEqual([])
+    })
+
+    it('should create router with default branches when branches is undefined', () => {
+        const flow = createEmptyFlowVersion()
+        const result = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'trigger',
+                action: {
+                    name: 'step_1',
+                    displayName: 'Router',
+                    type: FlowActionType.ROUTER,
+                    valid: false,
+                    settings: {
+                        executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                    },
+                },
+            },
+        })
+        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
+        expect(routerStep.branches).toHaveLength(2)
+        expect(routerStep.branches![0].branchName).toBe('Branch 1')
+        expect(routerStep.branches![1].branchName).toBe('Otherwise')
     })
 
     it('should recalculate valid flag after adding action', () => {
