@@ -19,10 +19,10 @@ export async function makeRequest(
   const coralogixDomain = auth.props.coralogixDomain;
   const domain =
     apiType === 'management'
-      ? 'api.coralogix.com'
+      ? `api.${coralogixDomain}`
       : apiType === 'ingestion'
-        ? `ingress.${coralogixDomain}`
-        : `api.${coralogixDomain}`;
+      ? `ingress.${coralogixDomain}`
+      : `api.${coralogixDomain}`;
   const apiKey =
     apiType === 'management' || apiType === 'dataQuery'
       ? auth.props.personalOrTeamApiKey

@@ -15,7 +15,7 @@ export const coralogixAuth = PieceAuth.CustomAuth({
     sendYourDataApiKey: PieceAuth.SecretText({
       displayName: 'Send-Your-Data API Key',
       description:
-        'Used for Coralogix ingestion APIs (for example /logs/v1/singles).',
+        'Used for Coralogix ingestion APIs (for example /logs/v1/singles). Find it in Settings → API Keys → Send Your Data.',
       required: false,
     }),
     coralogixDomain: Property.StaticDropdown({

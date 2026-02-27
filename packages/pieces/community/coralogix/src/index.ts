@@ -26,7 +26,7 @@ export const coralogix = createPiece({
     getAlertEventsStatistics,
     createCustomApiCallAction({
       auth: coralogixAuth,
-      baseUrl: () => 'https://api.coralogix.com',
+      baseUrl: (auth) => `https://api.${auth.props.coralogixDomain}`,
       authMapping: async (auth) => {
         return {
           'Content-Type': 'application/json',
