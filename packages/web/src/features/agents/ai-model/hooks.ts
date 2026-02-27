@@ -9,6 +9,7 @@ type Provider =
   | 'openai'
   | 'anthropic'
   | 'google'
+  | 'avian'
   | 'openrouter'
   | 'cloudflare-gateway'
   | 'custom'

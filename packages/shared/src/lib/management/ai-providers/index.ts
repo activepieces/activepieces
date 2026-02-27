@@ -7,6 +7,7 @@ export enum AIProviderName {
     ANTHROPIC = 'anthropic',
     AZURE = 'azure',
     GOOGLE = 'google',
+    AVIAN = 'avian',
     ACTIVEPIECES = 'activepieces',
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
@@ -52,6 +53,9 @@ export type OpenAIProviderAuthConfig = Static<typeof OpenAIProviderAuthConfig>
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = Static<typeof OpenRouterProviderAuthConfig>
 
+export const AvianProviderAuthConfig = BaseAIProviderAuthConfig
+export type AvianProviderAuthConfig = Static<typeof AvianProviderAuthConfig>
+
 export const AnthropicProviderConfig = Type.Object({})
 export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
 
@@ -96,12 +100,16 @@ export type OpenAIProviderConfig = Static<typeof OpenAIProviderConfig>
 export const OpenRouterProviderConfig = Type.Object({})
 export type OpenRouterProviderConfig = Static<typeof OpenRouterProviderConfig>
 
+export const AvianProviderConfig = Type.Object({})
+export type AvianProviderConfig = Static<typeof AvianProviderConfig>
+
 export const AIProviderAuthConfig = Type.Union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
     OpenRouterProviderAuthConfig,
+    AvianProviderAuthConfig,
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
@@ -116,6 +124,7 @@ export const AIProviderConfig = Type.Union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
+    AvianProviderConfig,
     ActivePiecesProviderConfig,
 ])
 export type AIProviderConfig = Static<typeof AIProviderConfig>
@@ -150,6 +159,12 @@ const ProviderConfigUnion = DiscriminatedUnion('provider', [
         provider: Type.Literal(AIProviderName.GOOGLE),
         config: GoogleProviderConfig,
         auth: GoogleProviderAuthConfig,
+    }),
+    Type.Object({
+        displayName: Type.String({ minLength: 1 }),
+        provider: Type.Literal(AIProviderName.AVIAN),
+        config: AvianProviderConfig,
+        auth: AvianProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
