@@ -25,14 +25,14 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   const invalidSteps = useMemo(
     () =>
       flowStructureUtil
-        .getAllSteps(flowVersion.trigger)
+        .getAllSteps(flowVersion)
         .filter(filterValidOrSkippedSteps).length,
     [flowVersion],
   );
   const { fitView } = useReactFlow();
   function onClick() {
     const invalidSteps = flowStructureUtil
-      .getAllSteps(flowVersion.trigger)
+      .getAllSteps(flowVersion)
       .filter(filterValidOrSkippedSteps);
     if (invalidSteps.length > 0) {
       selectStepByName(invalidSteps[0].name);

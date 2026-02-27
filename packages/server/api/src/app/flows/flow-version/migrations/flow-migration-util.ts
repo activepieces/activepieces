@@ -1,8 +1,9 @@
-import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, FlowVersion } from '@activepieces/shared'
+import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 
 export const flowMigrationUtil = {
     pinPieceToVersion(flowVersion: FlowVersion, pieceName: string, pieceVersion: string) {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
             if ((step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) && step.settings.pieceName === pieceName) {
                 return {
                     ...step,

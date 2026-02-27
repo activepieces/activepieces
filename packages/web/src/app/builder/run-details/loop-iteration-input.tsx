@@ -22,13 +22,13 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
       state.run,
       state.flowVersion,
       state.loopsIndexes,
-      flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
+      flowStructureUtil.getStep(stepName, state.flowVersion)?.type,
     ]);
   const stepOutput = useMemo(() => {
     return run && run.steps
       ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
       : null;
-  }, [run, stepName, loopsIndexes, flowVersion.trigger]);
+  }, [run, stepName, loopsIndexes, flowVersion]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);

@@ -24,7 +24,7 @@ export const flowContentBadgesCheck: BadgeCheck = {
             return { userId, badges: [] }
         }
         const badges: (keyof typeof BADGES)[] = []
-        const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const allSteps = flowStructureUtil.getAllSteps(flowVersion)
 
         const hasWebhook = allSteps.some(step =>
             step.type === FlowTriggerType.PIECE &&

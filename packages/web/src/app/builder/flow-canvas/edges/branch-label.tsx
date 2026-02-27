@@ -45,7 +45,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
     state.selectedBranchIndex,
     state.selectStepByName,
     state.setSelectedBranchIndex,
-    flowStructureUtil.getStep(props.sourceNodeName, state.flowVersion.trigger),
+    flowStructureUtil.getStep(props.sourceNodeName, state.flowVersion),
     state.applyOperation,
     state.readonly,
   ]);
@@ -54,7 +54,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
     props.stepLocationRelativeToParent ===
       StepLocationRelativeToParent.INSIDE_BRANCH &&
     step?.type === FlowActionType.ROUTER &&
-    step?.settings.branches[props.branchIndex]?.branchType ===
+    step?.branches?.[props.branchIndex]?.branchType ===
       BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
@@ -164,7 +164,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    disabled={step.settings.branches.length <= 2}
+                    disabled={(step.branches?.length ?? 0) <= 2}
                     onSelect={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

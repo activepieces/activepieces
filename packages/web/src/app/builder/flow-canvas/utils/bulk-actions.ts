@@ -93,13 +93,13 @@ export async function pasteNodes(
 export function getLastLocationAsPasteLocation(
   flowVersion: FlowVersion,
 ): PasteLocation {
-  const firstLevelParents = [
-    flowVersion.trigger,
-    ...flowStructureUtil.getAllNextActionsWithoutChildren(flowVersion.trigger),
-  ];
-  const lastAction = firstLevelParents[firstLevelParents.length - 1];
+  const triggerSteps = flowVersion.trigger.steps;
+  const lastStepName =
+    triggerSteps.length > 0
+      ? triggerSteps[triggerSteps.length - 1]
+      : flowVersion.trigger.name;
   return {
-    parentStepName: lastAction.name,
+    parentStepName: lastStepName,
     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
   };
 }
@@ -110,7 +110,7 @@ export function toggleSkipSelectedNodes({
   applyOperation,
 }: Pick<BuilderState, 'selectedNodes' | 'flowVersion' | 'applyOperation'>) {
   const steps = selectedNodes.map((node) =>
-    flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
+    flowStructureUtil.getStepOrThrow(node, flowVersion),
   ) as FlowAction[];
   const areAllStepsSkipped = steps.every((step) => !!step.skip);
   applyOperation({

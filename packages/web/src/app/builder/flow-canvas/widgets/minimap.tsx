@@ -72,10 +72,10 @@ const MinimapContentGuard = ({
 };
 
 const MinimapNode = ({ node }: { node: MiniMapNodeProps }) => {
-  const [trigger] = useBuilderStateContext((state) => [
-    state.flowVersion.trigger,
+  const [flowVersion] = useBuilderStateContext((state) => [
+    state.flowVersion,
   ]);
-  const step = flowStructureUtil.getStep(node.id, trigger);
+  const step = flowStructureUtil.getStep(node.id, flowVersion);
   if (isNil(step)) {
     return null;
   }

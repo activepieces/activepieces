@@ -84,13 +84,13 @@ async function isFlowChanged(fromFlow: FlowState, targetFlow: FlowState): Promis
     const notesFrom = new Map<string, string>()
     const notesTo = new Map<string, string>()
     
-    flowStructureUtil.getAllSteps(fromFlow.version.trigger).forEach((step) => {
+    flowStructureUtil.getAllSteps(fromFlow.version).forEach((step) => {
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             stepsPieceVersionsFrom.set(step.name, step.settings.pieceVersion)
         }
     })
 
-    flowStructureUtil.getAllSteps(targetFlow.version.trigger).forEach((step) => {
+    flowStructureUtil.getAllSteps(targetFlow.version).forEach((step) => {
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             stepsPiecesVersionTo.set(step.name, step.settings.pieceVersion)
         }

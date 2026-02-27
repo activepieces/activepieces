@@ -1,15 +1,15 @@
 import {
     AgentPieceProps,
     FlowActionType,
-    flowStructureUtil,
     FlowVersion,
 } from '@activepieces/shared'
 import { Migration } from '.'
+import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 
 export const migrateV15AgentProviderModel: Migration = {
     targetSchemaVersion: '15',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== '@activepieces/piece-ai') {
                 return step
             }

@@ -103,7 +103,7 @@ export const FlowDialogContent = ({
                 </div>
 
                 <PieceIconList
-                  trigger={flow.version.trigger}
+                  flowVersion={flow.version}
                   maxNumberOfIconsToShow={3}
                 />
               </div>

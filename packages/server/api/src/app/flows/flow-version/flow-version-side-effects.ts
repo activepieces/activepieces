@@ -46,7 +46,7 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
     switch (operation.type) {
         case FlowOperationType.UPDATE_TRIGGER:
         {
-            const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion.trigger)
+            const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion)
             const triggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && (flowVersion.trigger.type !== operation.request.type
                     || flowVersion.trigger.settings.triggerName !== operation.request.settings.triggerName
                     || flowVersion.trigger.settings.pieceName !== operation.request.settings.pieceName)
@@ -73,7 +73,7 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
             break
         }
         case FlowOperationType.DELETE_ACTION: {
-            const stepsToDelete = operation.request.names.map(name => flowStructureUtil.getStepOrThrow(name, flowVersion.trigger))
+            const stepsToDelete = operation.request.names.map(name => flowStructureUtil.getStepOrThrow(name, flowVersion))
             for (const step of stepsToDelete) {
                 const sampleDataExists = !isNil(step.settings.sampleData?.sampleDataFileId)
                 if (sampleDataExists) {

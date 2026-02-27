@@ -155,9 +155,9 @@ const PlatformTemplatesPage = () => {
         />
       ),
       cell: ({ row }) => {
-        const trigger = row.original.flows?.[0]?.trigger;
-        if (!trigger) return null;
-        return <PieceIconList trigger={trigger} maxNumberOfIconsToShow={2} />;
+        const flow = row.original.flows?.[0];
+        if (!flow) return null;
+        return <PieceIconList flowVersion={flow} maxNumberOfIconsToShow={2} />;
       },
     },
   ];

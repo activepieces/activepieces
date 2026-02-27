@@ -56,7 +56,7 @@ export const templateValidator = {
         }))
 
         const sanitizedFlows = flows.map((flow) => sanitizeObjectForPostgresql(flow))
-        const pieces = Array.from(new Set(sanitizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()))
+        const pieces = Array.from(new Set(sanitizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow)).flat()))
 
         return {
             flows: sanitizedFlows,

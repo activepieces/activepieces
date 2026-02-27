@@ -26,7 +26,7 @@ const getDataSelectorStructure: (
     return [];
   }
   const pathToTargetStep = flowStructureUtil.findPathToStep(
-    flowVersion.trigger,
+    flowVersion,
     selectedStep,
   );
   return pathToTargetStep.map((step) => {

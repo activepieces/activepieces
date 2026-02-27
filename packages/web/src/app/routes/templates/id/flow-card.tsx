@@ -41,7 +41,7 @@ export const FlowCard = ({
         {flow.trigger && (
           <div className="h-6 px-3 flex items-center rounded-md shrink-0">
             <PieceIconList
-              trigger={flow.trigger}
+              flowVersion={flow}
               maxNumberOfIconsToShow={3}
               size="md"
               className="flex gap-1.5"

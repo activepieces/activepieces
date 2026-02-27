@@ -1,7 +1,6 @@
 import {
     Field,
     FlowActionType,
-    flowStructureUtil,
     FlowVersion,
     isNil,
     Step,
@@ -10,6 +9,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { FieldEntity } from '../../../tables/field/field.entity'
 import { Migration } from '.'
+import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
@@ -19,7 +19,7 @@ const TARGET_ACTIONS = ['tables-create-records', 'tables-update-record']
 function collectFieldIdsFromFlow(flowVersion: FlowVersion) {
     const fieldIds: string[] = []
 
-    flowStructureUtil.getAllSteps(flowVersion.trigger).forEach((step) => {
+    legacyFlowStructureUtil.getAllSteps(flowVersion).forEach((step) => {
         if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.includes('0.1.')) {
             return
         }
@@ -64,7 +64,7 @@ export const migrateV11TablesToV2: Migration = {
             fieldIdToExternalId[field.id] = field.externalId
         }
 
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step: Step) => {
             if (!isTablesStep(step)) {
                 return step
             }

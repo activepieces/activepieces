@@ -6,8 +6,7 @@ import { ActivepiecesError, ApId, ApplicationEventName,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
-    flowStructureUtil,
-    FlowTrigger,
+    Step,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     GitPushOperationType,
@@ -206,32 +205,22 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
             sampleDataInputFileId: undefined,
             lastTestDate: undefined,
         }
-        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    sampleData: {
-                        ...step.settings.sampleData,
-                        ...clearSampleData,
-                    },
+        const clearStep = <T extends Step>(step: T): T => ({
+            ...step,
+            settings: {
+                ...step.settings,
+                sampleData: {
+                    ...step.settings.sampleData,
+                    ...clearSampleData,
                 },
-            }
-        }) as FlowTrigger
+            },
+        })
         return {
             ...operation,
             request: {
                 ...operation.request,
-                trigger: {
-                    ...trigger,
-                    settings: {
-                        ...trigger.settings,
-                        sampleData: {
-                            ...trigger.settings.sampleData,
-                            ...clearSampleData,
-                        },
-                    },
-                },
+                trigger: clearStep(operation.request.trigger),
+                steps: operation.request.steps?.map(clearStep),
             },
         }
     }

@@ -30,6 +30,7 @@ export const flowVersionMigrationService = {
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,
             ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
+            ...spreadIfDefined('steps', migratedFlowVersion.steps),
             connectionIds: migratedFlowVersion.connectionIds,
             agentIds: migratedFlowVersion.agentIds,
             backupFiles,

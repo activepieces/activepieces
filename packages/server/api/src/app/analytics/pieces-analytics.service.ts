@@ -31,7 +31,7 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                 if (isNil(flowVersion)) {
                     continue
                 }
-                const pieces = flowStructureUtil.getAllSteps(flowVersion.trigger).filter(
+                const pieces = flowStructureUtil.getAllSteps(flowVersion).filter(
                     (step) =>
                         step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE,
                 ).map((step) => {
