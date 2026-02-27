@@ -65,14 +65,23 @@ const polling: Polling<
         const isoDate = dayjs(lastFetchEpochMS).toISOString();
 
         const historyResponse = await querySalesforceApi<{
-            records: { CaseId: string; CreatedDate: string }[];
+            records: { CaseId: string; CreatedDate: string; NewValue: string }[];
         }>(
             HttpMethod.GET,
             auth,
-            `SELECT CaseId, CreatedDate FROM CaseHistory WHERE Field = 'Owner' AND NewValue = '${caseQueueId}' AND CreatedDate > ${isoDate}`,
+            `SELECT CaseId, CreatedDate, NewValue FROM CaseHistory WHERE Field = 'Owner' AND CreatedDate > ${isoDate}`,
         );
 
-        const historyRecords = historyResponse.body?.['records'] ?? [];
+        console.log(JSON.stringify(historyResponse.body));
+
+        // NewValue is not filterable in SOQL so we filter in code.
+        // NewValue may store the queue ID or display name — check logs to confirm.
+        const historyRecords = (historyResponse.body?.['records'] ?? []).filter(
+            (r) => r.NewValue === caseQueueId,
+        );
+
+        console.log(JSON.stringify(historyRecords));
+
         if (historyRecords.length === 0) return [];
 
         const caseIdToQueueDate: Record<string, string> = Object.fromEntries(
@@ -92,6 +101,8 @@ const polling: Polling<
                 auth,
                 `SELECT FIELDS(ALL) FROM Case WHERE Id IN (${ids}) LIMIT ${FIELDS_ALL_LIMIT}`,
             );
+
+            console.log(JSON.stringify(caseResponse.body));
 
             allCaseRecords.push(...(caseResponse.body?.['records'] ?? []));
         }
