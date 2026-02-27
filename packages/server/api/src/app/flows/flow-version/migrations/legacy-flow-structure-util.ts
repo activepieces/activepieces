@@ -113,7 +113,7 @@ export const legacyFlowStructureUtil = {
     extractAgentIds,
 }
 
-type LegacyStep = {
+export type LegacyStep = {
     name: string
     type: string
     displayName: string
@@ -121,6 +121,8 @@ type LegacyStep = {
     settings: Record<string, unknown>
     skip?: boolean
     nextAction?: LegacyStep
+    onSuccessAction?: LegacyStep | null
+    onFailureAction?: LegacyStep | null
     children?: (LegacyStep | null)[]
     firstLoopAction?: LegacyStep
 }

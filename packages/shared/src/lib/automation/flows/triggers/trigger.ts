@@ -57,6 +57,24 @@ export const FlowTrigger = Type.Union([
 
 export type FlowTrigger = Static<typeof FlowTrigger>
 
+const updateCommonProps = {
+    name: Type.String({}),
+    valid: Type.Boolean({}),
+    displayName: Type.String({}),
+    steps: Type.Optional(Type.Array(Type.String())),
+}
+
+export const UpdateEmptyTrigger = Type.Object({
+    ...updateCommonProps,
+    type: Type.Literal(FlowTriggerType.EMPTY),
+    settings: Type.Any(),
+})
+
+export const UpdatePieceTrigger = Type.Object({
+    ...updateCommonProps,
+    type: Type.Literal(FlowTriggerType.PIECE),
+    settings: PieceTriggerSettings,
+})
 
 export type StepSettings =
   | CodeActionSettings

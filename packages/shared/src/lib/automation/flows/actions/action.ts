@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { DiscriminatedUnion } from '../../../core/common/base-model'
 import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
@@ -213,12 +214,17 @@ const BranchSingleValueConditionValid = (addMinLength: boolean) =>
     })
 
 const BranchConditionValid = (addMinLength: boolean) =>
-    Type.Union([
-        BranchTextConditionValid(addMinLength),
-        BranchNumberConditionValid(addMinLength),
-        BranchDateConditionValid(addMinLength),
-        BranchSingleValueConditionValid(addMinLength),
-    ])
+    Type.Object({
+        firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+        secondValue: Type.Optional(Type.String(addMinLength ? { minLength: 1 } : {})),
+        caseSensitive: Type.Optional(Type.Boolean()),
+        operator: Type.Optional(Type.Union([
+            ...BranchOperatorTextLiterals,
+            ...BranchOperatorNumberLiterals,
+            ...BranchOperatorDateLiterals,
+            ...BranchOperatorSingleValueLiterals,
+        ])),
+    })
 
 export const ValidBranchCondition = BranchConditionValid(true)
 export type ValidBranchCondition = Static<typeof ValidBranchCondition>
@@ -242,7 +248,7 @@ export type BranchSingleValueCondition = Static<
   typeof BranchSingleValueCondition
 >
 
-export const FlowBranchSchema = Type.Union([
+export const FlowBranchSchema = DiscriminatedUnion('branchType', [
     Type.Object({
         conditions: Type.Array(Type.Array(BranchConditionValid(false))),
         branchType: Type.Literal(BranchExecutionType.CONDITION),

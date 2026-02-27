@@ -43,7 +43,7 @@ function remove(flowVersion: FlowVersion, request: DeleteBranchRequest): FlowVer
     }
 
     const deletedBranch = routerStep.branches[request.branchIndex]
-    const stepsToRemove = deletedBranch ? collectAllDescendants(deletedBranch.steps, cloned) : []
+    const stepsToRemove = deletedBranch ? collectAllDescendants(deletedBranch.steps ?? [], cloned) : []
 
     routerStep.branches = routerStep.branches.filter((_, index) => index !== request.branchIndex)
 

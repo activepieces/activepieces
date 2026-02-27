@@ -87,7 +87,7 @@ function handleRouter(routerStep: RouterAction, request: AddActionRequest, flowV
     if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && !isNil(request.branchIndex)) {
         const branches = [...(routerStep.branches ?? [])]
         const branch = { ...branches[request.branchIndex] }
-        branch.steps = [newAction.name, ...branch.steps]
+        branch.steps = [newAction.name, ...(branch.steps ?? [])]
         branches[request.branchIndex] = branch
         return updateStepInFlowVersion(flowVersion, routerStep.name, { ...routerStep, branches }, newAction)
     }
@@ -139,7 +139,7 @@ function addStepAfter(flowVersion: FlowVersion, parentName: string, newAction: F
             const routerStep = step as RouterAction
             if (routerStep.branches) {
                 for (const branch of routerStep.branches) {
-                    const branchIdx = branch.steps.indexOf(parentName)
+                    const branchIdx = (branch.steps ?? []).indexOf(parentName)
                     if (branchIdx !== -1) {
                         branch.steps.splice(branchIdx + 1, 0, newAction.name)
                         cloned.steps.push(newAction)
@@ -196,7 +196,7 @@ function removeNameRef(flowVersion: FlowVersion, name: string): FlowVersion {
             const routerStep = step as RouterAction
             if (routerStep.branches) {
                 for (const branch of routerStep.branches) {
-                    branch.steps = branch.steps.filter((s) => s !== name)
+                    branch.steps = (branch.steps ?? []).filter((s) => s !== name)
                 }
             }
         }
@@ -265,7 +265,7 @@ function update(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVer
                     ...baseProps,
                     settings: request.settings,
                     type: FlowActionType.ROUTER,
-                    branches: 'branches' in stepToUpdate ? (stepToUpdate as RouterAction).branches : [],
+                    branches: request.branches ?? ('branches' in stepToUpdate ? (stepToUpdate as RouterAction).branches : []),
                 }
                 break
             }

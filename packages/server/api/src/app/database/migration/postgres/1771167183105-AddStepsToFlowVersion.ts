@@ -6,7 +6,15 @@ export class AddStepsToFlowVersion1771167183105 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow_version"
-            ADD "steps" jsonb NOT NULL DEFAULT '[]'
+            ADD "steps" jsonb
+        `)
+        await queryRunner.query(`
+            UPDATE "flow_version"
+            SET "steps" = '[]'
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_version"
+            ALTER COLUMN "steps" SET NOT NULL
         `)
     }
 
