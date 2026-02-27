@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-woocommerce",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

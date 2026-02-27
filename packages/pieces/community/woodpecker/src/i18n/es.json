@@ -46,6 +46,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select the campaign to add prospects to": "Seleccione la campaña a la que agregar potenciales",
   "Prospect email address": "Correo electrónico del candidato",
   "Tags starting with # separated by spaces (e.g. #VC #Startup)": "Etiquetas que empiezan con # separadas por espacios (por ejemplo, #VC #Startup)",

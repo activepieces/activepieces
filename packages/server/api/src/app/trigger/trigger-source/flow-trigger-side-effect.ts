@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework'
 import {
     AppSystemProp,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -25,7 +25,7 @@ import { FastifyBaseLogger } from 'fastify'
 import {
     EngineHelperTriggerResult,
     OperationResponse,
-} from 'server-worker'
+} from 'worker'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue/job-queue'

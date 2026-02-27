@@ -18,9 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
-      "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/engine": ["packages/server/engine/src/main.ts"],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
       ],
@@ -1290,7 +1289,8 @@
       "@activepieces/piece-meistertask": [
         "packages/pieces/community/meistertask/src/index.ts"
       ],
-      "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
+      "@activepieces/sandbox": ["packages/server/sandbox/src/index.ts"],
+      "@activepieces/server-common": ["packages/server/common/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
@@ -1312,8 +1312,8 @@
       "activepieces/piece-cashfree-payments": [
         "packages/pieces/community/cashfree-payments/src/index.ts"
       ],
-      "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
-      "server-worker": ["packages/server/worker/src/index.ts"],
+      "ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
+      "worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"

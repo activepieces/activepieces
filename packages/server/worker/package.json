@@ -1,5 +1,5 @@
 {
-  "name": "server-worker",
+  "name": "worker",
   "version": "0.1.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/server-shared": "workspace:*",
+    "@activepieces/sandbox": "workspace:*",
+    "@activepieces/server-common": "workspace:*",
     "@activepieces/shared": "workspace:*",
     "@opentelemetry/api": "1.9.0",
     "axios": "1.13.5",
