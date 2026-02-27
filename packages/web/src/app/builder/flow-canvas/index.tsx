@@ -262,6 +262,9 @@ const getChildrenKey = (step: Step) => {
           branch.steps.length > 0 ? branch.steps.join('-') : 'null';
         return `${routerKey}-${childrenKey}`;
       }, '');
+    case FlowTriggerType.PIECE:
+    case FlowTriggerType.EMPTY:
+      return step.steps.join('-');
     case FlowActionType.CODE:
     case FlowActionType.PIECE:
       return '';

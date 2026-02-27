@@ -107,7 +107,14 @@ function handleRouter(routerStep: RouterAction, request: AddActionRequest, flowV
 function addStepAfter(flowVersion: FlowVersion, parentName: string, newAction: FlowAction): FlowVersion {
     const cloned: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
 
-    // Check trigger
+    // Parent is the trigger itself — insert at the beginning of trigger.steps
+    if (cloned.trigger.name === parentName) {
+        cloned.trigger.steps.unshift(newAction.name)
+        cloned.steps.push(newAction)
+        return cloned
+    }
+
+    // Check trigger steps list
     const triggerIdx = cloned.trigger.steps.indexOf(parentName)
     if (triggerIdx !== -1) {
         cloned.trigger.steps.splice(triggerIdx + 1, 0, newAction.name)
@@ -115,7 +122,7 @@ function addStepAfter(flowVersion: FlowVersion, parentName: string, newAction: F
         return cloned
     }
 
-    // Check loop children
+    // Check loop children and router branches
     for (const step of cloned.steps) {
         if (step.type === FlowActionType.LOOP_ON_ITEMS) {
             const loopStep = step as LoopOnItemsAction
@@ -143,10 +150,12 @@ function addStepAfter(flowVersion: FlowVersion, parentName: string, newAction: F
         }
     }
 
-    // Parent is the trigger itself (no steps yet or not found in steps list)
-    cloned.trigger.steps.push(newAction.name)
-    cloned.steps.push(newAction)
-    return cloned
+    throw new ActivepiecesError({
+        code: ErrorCode.FLOW_OPERATION_INVALID,
+        params: {
+            message: `Parent step ${parentName} not found in any step list`,
+        },
+    })
 }
 
 function updateStepInFlowVersion(flowVersion: FlowVersion, stepName: string, updatedStep: FlowAction, newAction: FlowAction): FlowVersion {

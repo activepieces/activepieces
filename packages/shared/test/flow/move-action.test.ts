@@ -84,6 +84,69 @@ describe('Move Action', () => {
         expect(result.trigger.steps).toContain('step_2')
     })
 
+    it('should move 4th step to directly after the trigger', () => {
+        // Build: trigger → step_1 → step_2 → step_3 → step_4
+        let flow: FlowVersion = createEmptyFlowVersion()
+        flow = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
+        })
+        flow = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
+        })
+        flow = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'step_2', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_3') },
+        })
+        flow = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'step_3', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_4') },
+        })
+        expect(flow.trigger.steps).toEqual(['step_1', 'step_2', 'step_3', 'step_4'])
+
+        // Move step_4 to directly after trigger (before step_1)
+        const result = flowOperations.apply(flow, {
+            type: FlowOperationType.MOVE_ACTION,
+            request: {
+                name: 'step_4',
+                newParentStep: 'trigger',
+                stepLocationRelativeToNewParent: StepLocationRelativeToParent.AFTER,
+            },
+        })
+        // step_4 should be the first step after trigger
+        expect(result.trigger.steps).toEqual(['step_4', 'step_1', 'step_2', 'step_3'])
+        expect(result.steps.find(s => s.name === 'step_4')).toBeDefined()
+    })
+
+    it('should move middle step to directly after the trigger', () => {
+        // Build: trigger → step_1 → step_2 → step_3
+        let flow: FlowVersion = createEmptyFlowVersion()
+        flow = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
+        })
+        flow = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
+        })
+        flow = flowOperations.apply(flow, {
+            type: FlowOperationType.ADD_ACTION,
+            request: { parentStep: 'step_2', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_3') },
+        })
+
+        // Move step_3 to directly after trigger
+        const result = flowOperations.apply(flow, {
+            type: FlowOperationType.MOVE_ACTION,
+            request: {
+                name: 'step_3',
+                newParentStep: 'trigger',
+                stepLocationRelativeToNewParent: StepLocationRelativeToParent.AFTER,
+            },
+        })
+        expect(result.trigger.steps).toEqual(['step_3', 'step_1', 'step_2'])
+    })
+
     it('should verify original location no longer has the ref', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
