@@ -6,7 +6,17 @@ import {
 import { coralogixAuth } from './auth';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
-type CoralogixApiType = 'management' | 'ingestion' | 'dataQuery';
+type CoralogixApiType = 'management' | 'ingestion';
+
+export const MANAGEMENT_DOMAIN: Record<string, string> = {
+  'eu1.coralogix.com': 'api.coralogix.com',
+  'eu2.coralogix.com': 'api.eu2.coralogix.com',
+  'us1.coralogix.com': 'api.coralogix.us',
+  'us2.coralogix.com': 'api.cx498.coralogix.com',
+  'ap1.coralogix.com': 'api.coralogix.in',
+  'ap2.coralogix.com': 'api.coralogixsg.com',
+  'ap3.coralogix.com': 'api.ap3.coralogix.com',
+};
 
 export async function makeRequest(
   auth: AppConnectionValueForAuthProperty<typeof coralogixAuth>,
@@ -19,15 +29,12 @@ export async function makeRequest(
   const coralogixDomain = auth.props.coralogixDomain;
   const domain =
     apiType === 'management'
-      ? `api.${coralogixDomain}`
-      : apiType === 'ingestion'
-      ? `ingress.${coralogixDomain}`
-      : `api.${coralogixDomain}`;
+      ? MANAGEMENT_DOMAIN[coralogixDomain] ?? 'api.coralogix.com'
+      : `ingress.${coralogixDomain}`;
   const apiKey =
-    apiType === 'management' || apiType === 'dataQuery'
+    apiType === 'management'
       ? auth.props.personalOrTeamApiKey
       : auth.props.sendYourDataApiKey;
-
   const response = await httpClient.sendRequest({
     method,
     url: `https://${domain}${path}`,

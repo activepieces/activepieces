@@ -3,16 +3,16 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { coralogixAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 
-export const acknowledgeIncidents = createAction({
+export const closeIncidents = createAction({
   auth: coralogixAuth,
-  name: 'acknowledgeIncidents',
-  displayName: 'Acknowledge Incidents',
-  description: 'Acknowledge one or more Coralogix incidents by incident ID.',
+  name: 'closeIncidents',
+  displayName: 'Close Incidents',
+  description: 'Close one or more Coralogix incidents (e.g. false positives or noise). Use Resolve for incidents that were actually fixed.',
   requireAuth: true,
   props: {
     incidentIds: Property.Array({
       displayName: 'Incident IDs',
-      description: 'List of incident IDs to acknowledge.',
+      description: 'List of incident IDs to close. Find the ID in Coralogix → Alerts → Incidents → click an incident → copy the ID from the URL.',
       required: true,
       defaultValue: [],
     }),
@@ -23,15 +23,12 @@ export const acknowledgeIncidents = createAction({
     const queryString = incidentIds
       .map((id) => `incident_ids=${encodeURIComponent(id)}`)
       .join('&');
-    const endpoint = `/mgmt/openapi/latest/incidents/incidents/v1/acknowledge?${queryString}`;
-    
-    const response = await makeRequest(
+
+    return await makeRequest(
       auth,
       'management',
       HttpMethod.POST,
-      endpoint
+      `/mgmt/openapi/latest/incidents/incidents/v1/close?${queryString}`
     );
-
-    return response;
   },
 });

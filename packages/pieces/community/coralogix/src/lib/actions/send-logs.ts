@@ -16,12 +16,6 @@ export const sendLogs = createAction({
         'Raw log message text. Provide either this field or Log Message (JSON).',
       required: false,
     }),
-    textJson: Property.Json({
-      displayName: 'Log Message (JSON)',
-      description:
-        'JSON log payload for the `text` field. Provide either this field or Log Message.',
-      required: false,
-    }),
     applicationName: Property.ShortText({
       displayName: 'Application Name',
       description: 'The application name for this log.',
@@ -84,7 +78,6 @@ export const sendLogs = createAction({
   async run({ auth, propsValue }) {
     const {
       text,
-      textJson,
       applicationName,
       subsystemName,
       severity,
@@ -97,18 +90,12 @@ export const sendLogs = createAction({
       hiResTimestamp,
     } = propsValue;
 
-    if (!text && textJson === undefined) {
-      throw new Error(
-        'Either Log Message or Log Message (JSON) must be provided.'
-      );
-    }
-
     const logRecord: Record<string, unknown> = {
       applicationName,
       subsystemName,
     };
 
-    logRecord['text'] = textJson !== undefined ? textJson : text;
+    logRecord['text'] =  text;
 
     if (severity !== undefined) logRecord['severity'] = Number(severity);
     if (category) logRecord['category'] = category;

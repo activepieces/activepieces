@@ -3,35 +3,38 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { coralogixAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 
-export const acknowledgeIncidents = createAction({
+export const assignIncidents = createAction({
   auth: coralogixAuth,
-  name: 'acknowledgeIncidents',
-  displayName: 'Acknowledge Incidents',
-  description: 'Acknowledge one or more Coralogix incidents by incident ID.',
+  name: 'assignIncidents',
+  displayName: 'Assign Incidents',
+  description: 'Assign one or more Coralogix incidents to a specific user.',
   requireAuth: true,
   props: {
     incidentIds: Property.Array({
       displayName: 'Incident IDs',
-      description: 'List of incident IDs to acknowledge.',
+      description:
+        'List of incident IDs to assign. Find IDs via "List Incidents" or the Coralogix Incidents page URL.',
       required: true,
       defaultValue: [],
+    }),
+    assignToUserId: Property.ShortText({
+      displayName: 'Assign To (User ID)',
+      description: 'The Coralogix user ID to assign the incidents to.',
+      required: true,
     }),
   },
   async run({ auth, propsValue }) {
     const incidentIds = (propsValue.incidentIds ?? []) as string[];
-
     const queryString = incidentIds
       .map((id) => `incident_ids=${encodeURIComponent(id)}`)
       .join('&');
-    const endpoint = `/mgmt/openapi/latest/incidents/incidents/v1/acknowledge?${queryString}`;
-    
-    const response = await makeRequest(
+
+    return await makeRequest(
       auth,
       'management',
       HttpMethod.POST,
-      endpoint
+      `/mgmt/openapi/latest/incidents/incidents/v1/by-user?${queryString}`,
+      { assigned_to: { user_id: propsValue.assignToUserId } }
     );
-
-    return response;
   },
 });
