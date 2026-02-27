@@ -8,7 +8,6 @@ import { closeIncidents } from './lib/actions/close-incidents';
 import { assignIncidents } from './lib/actions/assign-incidents';
 import { getIncidentById } from './lib/actions/get-incident-by-id';
 import { getIncidentEvents } from './lib/actions/get-incident-events';
-import { listAlertDefinitions } from './lib/actions/list-alert-definitions';
 import { setAlertActive } from './lib/actions/set-alert-active';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { newAlertEvent } from './lib/triggers/new-alert-event';
@@ -29,7 +28,6 @@ export const coralogix = createPiece({
     assignIncidents,
     getIncidentById,
     getIncidentEvents,
-    listAlertDefinitions,
     setAlertActive,
     createCustomApiCallAction({
       auth: coralogixAuth,
