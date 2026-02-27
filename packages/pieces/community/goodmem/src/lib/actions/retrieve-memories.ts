@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { goodmemAuth } from '../../index';
-import { getBaseUrl, getCommonHeaders, extractAuthFromContext } from '../common';
+import { getBaseUrl, getCommonHeaders, extractAuthFromContext, multiSpaceDropdown, rerankerDropdown, llmDropdown } from '../common';
 
 export const retrieveMemories = createAction({
   auth: goodmemAuth,
@@ -14,14 +14,10 @@ export const retrieveMemories = createAction({
       description: 'A natural language query used to find semantically similar memory chunks',
       required: true,
     }),
-    spaceIds: Property.ShortText({
-      displayName: 'Space IDs',
-      description: 'One or more space UUIDs to search across, separated by commas (e.g., "id1,id2"). Returned by Create Space.',
-      required: true,
-    }),
+    spaceIds: multiSpaceDropdown,
     maxResults: Property.Number({
       displayName: 'Maximum Results',
-      description: 'Maximum number of matching chunks to return',
+      description: 'Limit the number of returned memories',
       required: false,
       defaultValue: 5,
     }),
@@ -37,29 +33,40 @@ export const retrieveMemories = createAction({
       required: false,
       defaultValue: true,
     }),
+    rerankerId: rerankerDropdown,
+    llmId: llmDropdown,
+    relevanceThreshold: Property.Number({
+      displayName: 'Relevance Threshold',
+      description: 'Minimum score (0-1) for including results. Only used when Reranker or LLM is set.',
+      required: false,
+    }),
+    llmTemperature: Property.Number({
+      displayName: 'LLM Temperature',
+      description: 'Creativity setting for LLM generation (0-2). Only used when LLM ID is set.',
+      required: false,
+    }),
+    chronologicalResort: Property.Checkbox({
+      displayName: 'Chronological Resort',
+      description: 'Reorder results by creation time instead of relevance score',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const { query, spaceIds, maxResults, includeMemoryDefinition, waitForIndexing } = context.propsValue;
+    const { query, spaceIds, maxResults, includeMemoryDefinition, waitForIndexing, rerankerId, llmId, relevanceThreshold, llmTemperature, chronologicalResort } = context.propsValue;
     const { baseUrl: rawBaseUrl, apiKey } = extractAuthFromContext(context.auth);
     const baseUrl = getBaseUrl(rawBaseUrl);
 
-    if (!spaceIds || spaceIds.trim() === '') {
-      return {
-        success: false,
-        error: 'At least one Space ID is required.',
-      };
-    }
-
-    const spaceKeys = spaceIds
-      .split(',')
-      .map((id: string) => id.trim())
-      .filter((id: string) => id.length > 0)
+    // spaceIds is now an array from MultiSelectDropdown
+    const selectedSpaces = Array.isArray(spaceIds) ? spaceIds : [spaceIds];
+    const spaceKeys = selectedSpaces
+      .filter((id: string) => id && id.length > 0)
       .map((spaceId: string) => ({ spaceId }));
 
     if (spaceKeys.length === 0) {
       return {
         success: false,
-        error: 'At least one valid Space ID is required.',
+        error: 'At least one space must be selected.',
       };
     }
 
@@ -69,6 +76,22 @@ export const retrieveMemories = createAction({
       requestedSize: maxResults || 5,
       fetchMemory: includeMemoryDefinition !== false,
     };
+
+    // Add post-processor config if reranker or LLM is specified
+    if (rerankerId || llmId) {
+      const config: any = {};
+      if (rerankerId) config.reranker_id = rerankerId;
+      if (llmId) config.llm_id = llmId;
+      if (relevanceThreshold !== undefined && relevanceThreshold !== null) config.relevance_threshold = relevanceThreshold;
+      if (llmTemperature !== undefined && llmTemperature !== null) config.llm_temp = llmTemperature;
+      if (maxResults) config.max_results = maxResults;
+      if (chronologicalResort === true) config.chronological_resort = true;
+
+      requestBody.postProcessor = {
+        name: 'com.goodmem.retrieval.postprocess.ChatPostProcessorFactory',
+        config,
+      };
+    }
 
     const maxWaitMs = 60000;
     const pollIntervalMs = 5000;
@@ -93,6 +116,7 @@ export const retrieveMemories = createAction({
         const results: any[] = [];
         const memories: any[] = [];
         let resultSetId = '';
+        let abstractReply: any = null;
 
         // GoodMem API may return NDJSON or SSE format
         const responseText = typeof response.body === 'string' ? response.body : JSON.stringify(response.body);
@@ -116,6 +140,8 @@ export const retrieveMemories = createAction({
               resultSetId = item.resultSetBoundary.resultSetId;
             } else if (item.memoryDefinition) {
               memories.push(item.memoryDefinition);
+            } else if (item.abstractReply) {
+              abstractReply = item.abstractReply;
             } else if (item.retrievedItem) {
               results.push({
                 chunkId: item.retrievedItem.chunk?.chunk?.chunkId,
@@ -137,6 +163,7 @@ export const retrieveMemories = createAction({
           memories,
           totalResults: results.length,
           query,
+          ...(abstractReply ? { abstractReply } : {}),
         };
 
         if (results.length > 0 || !shouldWait) {

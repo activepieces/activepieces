@@ -5,12 +5,6 @@ import { retrieveMemories } from './lib/actions/retrieve-memories';
 import { deleteMemory } from './lib/actions/delete-memory';
 import { getMemory } from './lib/actions/get-memory';
 import { createSpace } from './lib/actions/create-space';
-import { deleteSpace } from './lib/actions/delete-space';
-import { listSpaces } from './lib/actions/list-spaces';
-import { getSpace } from './lib/actions/get-space';
-import { updateSpace } from './lib/actions/update-space';
-import { listMemories } from './lib/actions/list-memories';
-import { listEmbedders } from './lib/actions/list-embedders';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const goodmemAuth = PieceAuth.CustomAuth({
@@ -62,16 +56,10 @@ export const goodmem = createPiece({
   authors: ['bashareid'],
   actions: [
     createSpace,
-    listSpaces,
-    getSpace,
-    updateSpace,
-    deleteSpace,
     createMemory,
     retrieveMemories,
     getMemory,
-    listMemories,
     deleteMemory,
-    listEmbedders,
   ],
   triggers: [],
 });

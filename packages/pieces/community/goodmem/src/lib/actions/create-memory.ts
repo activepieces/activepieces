@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { goodmemAuth } from '../../index';
-import { getBaseUrl, getCommonHeaders, extractAuthFromContext } from '../common';
+import { getBaseUrl, getCommonHeaders, extractAuthFromContext, spaceIdDropdown } from '../common';
 
 export const createMemory = createAction({
   auth: goodmemAuth,
@@ -9,11 +9,7 @@ export const createMemory = createAction({
   displayName: 'Create Memory',
   description: 'Store a document as a new memory in a space. The memory is processed asynchronously - chunked into searchable pieces and embedded into vectors. Accepts a file or plain text.',
   props: {
-    spaceId: Property.ShortText({
-      displayName: 'Space ID',
-      description: 'The UUID of the space to store the memory in (returned by Create Space)',
-      required: true,
-    }),
+    spaceId: spaceIdDropdown,
     file: Property.File({
       displayName: 'File',
       description: 'A file to store as memory (PDF, DOCX, image, etc.). Connect the output of a trigger or action that provides a file. Content type is auto-detected from the file extension.',
