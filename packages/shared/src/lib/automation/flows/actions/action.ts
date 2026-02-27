@@ -280,7 +280,7 @@ export const RouterActionSchema = Type.Object({
     branches: Type.Optional(Type.Array(FlowBranchSchema)),
 })
 
-export const SingleActionSchema = Type.Union([
+export const SingleActionSchema = DiscriminatedUnion('type', [
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
