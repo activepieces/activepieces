@@ -92,6 +92,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                     trigger: migratedFlowTemplate.trigger,
                     schemaVersion: migratedFlowTemplate.schemaVersion,
                     notes: migratedFlowTemplate.notes,
+                    steps: migratedFlowTemplate.steps,
                 }
             }
         },
