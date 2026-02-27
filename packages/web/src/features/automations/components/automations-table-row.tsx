@@ -174,10 +174,10 @@ export const AutomationsTableRow = ({
           <span className="truncate">{item.name}</span>
         </div>
       </div>
-      <div className="w-[200px] shrink-0 px-2 flex items-center">
+      <div className="w-[230px] shrink-0 px-2 flex items-center">
         <RowItemDetails item={item} />
       </div>
-      <div className="w-[180px] shrink-0 px-2 flex items-center">
+      <div className="w-[200px] shrink-0 px-2 flex items-center">
         {item.data && (
           <FormattedDate
             date={new Date(item.data.updated)}
@@ -186,12 +186,12 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[150px] shrink-0 px-2 flex items-center">
+        <div className="w-[170px] shrink-0 px-2 flex items-center">
           <RowItemOwner item={item} />
         </div>
       )}
       <div
-        className="w-[100px] shrink-0 px-2 flex items-center"
+        className="w-[120px] shrink-0 px-2 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         {item.type === 'flow' && (

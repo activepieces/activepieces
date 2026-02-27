@@ -43,13 +43,6 @@ export const ProjectDashboardLayoutHeader = () => {
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
       show: true,
     },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/todos'),
-      label: t('Todos'),
-      icon: ListTodo,
-      hasPermission: checkAccess(Permission.READ_TODOS),
-      show: !platform.plan.embeddingEnabled,
-    },
   ];
 
   const isPathActive = (path: string) => {

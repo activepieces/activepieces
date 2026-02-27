@@ -1,5 +1,5 @@
-import { GetFlowTemplateRequestQuery } from '@activepieces/shared';
 import {
+  GetFlowTemplateRequestQuery,
   CreateFlowRequest,
   ErrorCode,
   FlowOperationRequest,

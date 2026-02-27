@@ -2,8 +2,6 @@ import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
   UpdateProjectPlatformRequest,
-} from '@activepieces/shared';
-import {
   isNil,
   ProjectType,
   ProjectWithLimits,

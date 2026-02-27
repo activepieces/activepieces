@@ -1,8 +1,11 @@
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
+import {
+  FolderDto,
+  PopulatedFlow,
+  ProjectMemberWithUser,
+  Table,
+} from '@activepieces/shared';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { t } from 'i18next';
-import React from 'react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -86,11 +89,11 @@ export const AutomationsTable = ({
           <div className="w-8 shrink-0"></div>
           <div className="flex-1 min-w-[200px] pl-2">{t('Name')}</div>
           {!embedState.isEmbedded && (
-            <div className="w-[200px] shrink-0 px-2">{t('Details')}</div>
+            <div className="w-[230px] shrink-0 px-2">{t('Details')}</div>
           )}
-          <div className="w-[180px] shrink-0 px-2">{t('Last modified')}</div>
-          <div className="w-[150px] shrink-0 px-2">{t('Owner')}</div>
-          <div className="w-[100px] shrink-0 px-2">{t('Status')}</div>
+          <div className="w-[200px] shrink-0 px-2">{t('Last modified')}</div>
+          <div className="w-[170px] shrink-0 px-2">{t('Owner')}</div>
+          <div className="w-[120px] shrink-0 px-2">{t('Status')}</div>
           <div className="w-[50px] shrink-0 px-2"></div>
         </div>
 
