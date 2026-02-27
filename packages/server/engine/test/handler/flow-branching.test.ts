@@ -1,30 +1,31 @@
 import { BranchCondition, BranchOperator, FlowRunStatus, RouterExecutionType } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { buildCodeAction, buildRouterWithOneCondition, generateMockEngineConstants } from './test-helper'
+import { buildCodeAction, buildFlowVersion, buildRouterWithOneCondition, generateMockEngineConstants } from './test-helper'
 
 function executeBranchActionWithOneCondition(condition: BranchCondition): Promise<FlowExecutorContext> {
+    const echoStep = buildCodeAction({
+        name: 'echo_step',
+        input: {
+            condition: true,
+        },
+    })
+    const echoStep1 = buildCodeAction({
+        name: 'echo_step_1',
+        input: {
+            condition: false,
+        },
+    })
+    const router = buildRouterWithOneCondition({
+        conditions: [condition],
+        executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+        branchStepNames: [['echo_step'], ['echo_step_1']],
+    })
+    const fv = buildFlowVersion([router, echoStep, echoStep1])
     return flowExecutor.execute({
-        action: buildRouterWithOneCondition({
-            conditions: [condition],
-            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-            children: [
-                buildCodeAction({
-                    name: 'echo_step',
-                    input: {
-                        condition: true,
-                    },
-                }),
-                buildCodeAction({
-                    name: 'echo_step_1',
-                    input: {
-                        condition: false,
-                    },
-                }),
-            ],
-        }),
+        stepNames: ['router'],
         executionState: FlowExecutorContext.empty(),
-        constants: generateMockEngineConstants(),
+        constants: generateMockEngineConstants({ flowVersion: fv }),
     })
 }
 
@@ -503,17 +504,20 @@ describe('flow with branching different  branches', () => {
     })
 
     it('should skip router', async () => {
+        const echoStep = buildCodeAction({ name: 'echo_step', input: {}, skip: true })
+        const router = buildRouterWithOneCondition({ branchStepNames: [['echo_step']], conditions: [
+            {
+                operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                firstValue: 'test',
+                secondValue: 'test',
+                caseSensitive: false,
+            },
+        ], executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, skip: true })
+        const fv = buildFlowVersion([router, echoStep])
         const result = await flowExecutor.execute({
-            action: buildRouterWithOneCondition({ children: [
-                buildCodeAction({ name: 'echo_step', input: {}, skip: true }),
-            ], conditions: [
-                {
-                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                    firstValue: 'test',
-                    secondValue: 'test',
-                    caseSensitive: false,
-                },
-            ], executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            stepNames: ['router'],
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ flowVersion: fv }),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.router).toBeUndefined()

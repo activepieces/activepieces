@@ -41,8 +41,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             } })
         }
 
-        const firstLoopAction = action.firstLoopAction
-
+        const childStepNames = action.children ?? []
 
         for (let i = 0; i < resolvedInput.items.length; ++i) {
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
@@ -54,9 +53,9 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 stepOutput = stepOutput.addIteration()
             }
             newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
-            if (!isNil(firstLoopAction) && !testSingleStepMode) {
+            if (childStepNames.length > 0 && !testSingleStepMode) {
                 newExecutionContext = await flowExecutor.execute({
-                    action: firstLoopAction,
+                    stepNames: childStepNames,
                     executionState: newExecutionContext,
                     constants,
                 })

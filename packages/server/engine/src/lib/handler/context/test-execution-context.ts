@@ -30,7 +30,7 @@ export const testExecutionContext = {
             return flowExecutionContext
         }
         
-        const flowSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const flowSteps = flowStructureUtil.getAllSteps(flowVersion)
 
         for (const step of flowSteps) {
             const { name } = step
