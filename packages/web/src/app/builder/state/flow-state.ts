@@ -225,7 +225,7 @@ export const createFlowState = (
           case FlowOperationType.UPDATE_TRIGGER:
           case FlowOperationType.UPDATE_ACTION: {
             debouncedAddToFlowUpdatesQueue(
-              operation.request.name,
+              operation.request.id,
               updateRequest,
             );
             break;
@@ -343,28 +343,32 @@ export const createFlowState = (
               };
             });
           }
+          const { name: triggerName, ...triggerData } = defaultValues;
           applyOperation({
             type: FlowOperationType.UPDATE_TRIGGER,
-            request: defaultValues,
+            request: {
+              ...triggerData,
+              id: triggerName,
+            },
           });
-          selectStepByName('trigger');
+          selectStepByName(triggerName);
           break;
         }
         case FlowOperationType.ADD_ACTION: {
           if (isTrigger) {
             break;
           }
+          const { name: stepName, ...actionData } = defaultValues;
           applyOperation({
             type: FlowOperationType.ADD_ACTION,
             request: {
               ...operation.actionLocation,
-              action: {
-                ...defaultValues,
-              },
+              id: stepName,
+              action: actionData,
             },
           });
           if (selectStepAfter) {
-            selectStepByName(defaultValues.name);
+            selectStepByName(stepName);
           }
           break;
         }
@@ -388,14 +392,16 @@ export const createFlowState = (
           applyOperation({
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-              kind: defaultValues.kind,
-              displayName: defaultValues.displayName,
-              name: operation.stepName,
-              settings: {
-                ...defaultValues.settings,
-                customLogoUrl,
+              id: operation.stepName,
+              action: {
+                kind: defaultValues.kind,
+                displayName: defaultValues.displayName,
+                settings: {
+                  ...defaultValues.settings,
+                  customLogoUrl,
+                },
+                valid: defaultValues.valid,
               },
-              valid: defaultValues.valid,
             },
           });
           removeStepTestListener(operation.stepName);
@@ -440,12 +446,18 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
   if (isActionNodeData(clonedLocalStepData)) {
     return flowOperations.apply(localFlowVersion, {
       type: FlowOperationType.UPDATE_ACTION,
-      request: clonedLocalStepData,
+      request: {
+        id: localNode.id,
+        action: clonedLocalStepData,
+      },
     });
   } else {
     return flowOperations.apply(localFlowVersion, {
       type: FlowOperationType.UPDATE_TRIGGER,
-      request: clonedLocalStepData,
+      request: {
+        ...clonedLocalStepData,
+        id: localNode.id,
+      },
     });
   }
 };

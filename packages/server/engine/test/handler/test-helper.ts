@@ -127,7 +127,6 @@ export function buildFlowVersion(steps: Array<FlowAction & TestMeta>, triggerSte
         type: FlowNodeType.TRIGGER,
         data: {
             kind: FlowTriggerKind.EMPTY,
-            name: 'trigger',
             valid: true,
             displayName: 'Test Trigger',
             settings: {},
@@ -223,12 +222,21 @@ export function buildFlowVersion(steps: Array<FlowAction & TestMeta>, triggerSte
     }
 }
 
+export function buildActionNode(action: FlowAction & TestMeta): FlowGraphNode {
+    return {
+        id: action.name,
+        type: FlowNodeType.ACTION,
+        data: stripMeta(action),
+    }
+}
+
 function stripMeta(action: FlowAction & TestMeta): FlowAction {
-    const { _loopChildren: _1, _branches: _2, ...data } = action
+    const { _loopChildren: _1, _branches: _2, name: _3, ...data } = action
     return data as FlowAction
 }
 
 type TestMeta = {
+    name: string
     _loopChildren?: string[]
     _branches?: TestBranch[]
 }

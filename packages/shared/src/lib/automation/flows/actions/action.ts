@@ -22,7 +22,6 @@ export enum BranchExecutionType {
 }
 
 const commonActionProps = {
-    name: Type.String({}),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
     skip: Type.Optional(Type.Boolean({})),

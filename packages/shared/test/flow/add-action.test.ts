@@ -47,8 +47,9 @@ describe('Add Action', () => {
         const op: FlowOperationRequest = {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
-                action: createCodeAction('step_1'),
+                action: createCodeAction(),
             },
         }
         const result = flowOperations.apply(flow, op)
@@ -62,8 +63,9 @@ describe('Add Action', () => {
         const op: FlowOperationRequest = {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
-                action: createPieceAction('step_1'),
+                action: createPieceAction(),
             },
         }
         const result = flowOperations.apply(flow, op)
@@ -76,9 +78,10 @@ describe('Add Action', () => {
         const op: FlowOperationRequest = {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_2',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                action: createCodeAction('step_2'),
+                action: createCodeAction(),
             },
         }
         const result = flowOperations.apply(flow, op)
@@ -93,17 +96,19 @@ describe('Add Action', () => {
         let result = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
-                action: createLoopAction('step_1'),
+                action: createLoopAction(),
             },
         })
         // Then add inside loop
         result = flowOperations.apply(result, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_2',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                action: createCodeAction('step_2'),
+                action: createCodeAction(),
             },
         })
         expect(hasLoopEdge(result, 'step_1', 'step_2')).toBe(true)
@@ -116,18 +121,20 @@ describe('Add Action', () => {
         let result = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
-                action: createRouterAction('step_1'),
+                action: createRouterAction(),
             },
         })
         // Add inside branch 0
         result = flowOperations.apply(result, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_2',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
                 branchIndex: 0,
-                action: createCodeAction('step_2'),
+                action: createCodeAction(),
             },
         })
         expect(hasBranchEdge(result, 'step_1', 'step_2', 0)).toBe(true)
@@ -140,8 +147,9 @@ describe('Add Action', () => {
         let result = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
-                action: createRouterAction('step_1'),
+                action: createRouterAction(),
             },
         })
         // Add a new branch at index 1
@@ -157,10 +165,11 @@ describe('Add Action', () => {
         result = flowOperations.apply(result, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_2',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
                 branchIndex: 1,
-                action: createCodeAction('step_2'),
+                action: createCodeAction(),
             },
         })
         const branchEdges = result.graph.edges.filter(e => e.source === 'step_1' && e.type === FlowEdgeType.BRANCH)
@@ -177,9 +186,10 @@ describe('Add Action', () => {
         const op: FlowOperationRequest = {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_3',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                action: createCodeAction('step_3'),
+                action: createCodeAction(),
             },
         }
         const result = flowOperations.apply(flow, op)
@@ -191,9 +201,10 @@ describe('Add Action', () => {
         const op: FlowOperationRequest = {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_4',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                action: createCodeAction('step_4'),
+                action: createCodeAction(),
             },
         }
         const result = flowOperations.apply(flow, op)
@@ -205,24 +216,27 @@ describe('Add Action', () => {
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
-                action: createCodeAction('step_1'),
+                action: createCodeAction(),
             },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_2',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                action: createCodeAction('step_2'),
+                action: createCodeAction(),
             },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_3',
                 parentStep: 'step_2',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                action: createPieceAction('step_3'),
+                action: createPieceAction(),
             },
         })
         expect(hasDefaultEdge(flow, 'trigger', 'step_1')).toBe(true)
@@ -237,8 +251,9 @@ describe('Add Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
-                action: createCodeAction('step_1'),
+                action: createCodeAction(),
             },
         })
         expect(result.graph.nodes.map(n => n.id)).toContain('step_1')
@@ -249,9 +264,9 @@ describe('Add Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
                 action: {
-                    name: 'step_1',
                     displayName: 'Router',
                     kind: FlowActionKind.ROUTER,
                     valid: false,
@@ -275,13 +290,14 @@ describe('Add Action', () => {
 
     it('should recalculate valid flag after adding action', () => {
         const flow = createEmptyFlowVersion()
-        const invalidAction = createCodeAction('step_1')
+        const invalidAction = createCodeAction()
         invalidAction.valid = false
         // Remove required sourceCode to make it actually invalid
         invalidAction.settings = { input: {} } as typeof invalidAction.settings
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
                 action: invalidAction,
             },

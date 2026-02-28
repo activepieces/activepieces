@@ -56,11 +56,11 @@ describe('Duplicate Step', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createLoopAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createLoopAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP, action: createCodeAction('step_2') },
+            request: { id: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP, action: createCodeAction() },
         })
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.DUPLICATE_ACTION,
@@ -85,11 +85,11 @@ describe('Duplicate Step', () => {
 
     it('should update step name references in settings during duplication', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
-        const codeWithRef = createCodeAction('step_1')
+        const codeWithRef = createCodeAction()
         codeWithRef.settings.input = { value: '{{step_1.output}}' }
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: codeWithRef },
+            request: { id: 'step_1', parentStep: 'trigger', action: codeWithRef },
         })
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.DUPLICATE_ACTION,

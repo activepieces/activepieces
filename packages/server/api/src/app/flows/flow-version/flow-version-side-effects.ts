@@ -47,7 +47,7 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
     switch (operation.type) {
         case FlowOperationType.UPDATE_TRIGGER:
         {
-            const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion)
+            const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.id, flowVersion)
             const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph)
             const triggerData = triggerNode?.data as PieceTrigger | undefined
             const triggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && (triggerNode?.data.kind !== operation.request.kind

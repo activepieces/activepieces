@@ -126,7 +126,7 @@ const getDefaultStepValues = ({
   pieceSelectorItem: PieceSelectorItem;
   overrideDefaultSettings?: StepSettings;
   customLogoUrl?: string;
-}): FlowNodeData => {
+}): FlowNodeData & { name: string } => {
   const errorHandlingOptions: CodeAction['settings']['errorHandlingOptions'] = {
     continueOnFailure: {
       value: false,

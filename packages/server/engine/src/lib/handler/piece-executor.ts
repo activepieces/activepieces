@@ -1,6 +1,6 @@
 import { URL } from 'url'
 import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EngineSocketEvent, ExecutionType, FlowActionKind, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EngineSocketEvent, ExecutionType, FlowActionKind, FlowGraphNode, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -13,25 +13,29 @@ import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
-import { ActionHandler, BaseExecutor } from './base-executor'
+import { BaseExecutor } from './base-executor'
+import { EngineConstants } from './context/engine-constants'
+import { FlowExecutorContext } from './context/flow-execution-context'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
-export const pieceExecutor: BaseExecutor<PieceAction> = {
+export const pieceExecutor: BaseExecutor = {
     async handle({
-        action,
+        node,
         executionState,
         constants,
     }) {
-        if (executionState.isCompleted({ stepName: action.name })) {
+        if (executionState.isCompleted({ stepName: node.id })) {
             return executionState
         }
-        const resultExecution = await runWithExponentialBackoff(executionState, action, constants, executeAction)
-        return continueIfFailureHandler(resultExecution, action, constants)
+        const resultExecution = await runWithExponentialBackoff(executionState, node, constants, executeAction)
+        return continueIfFailureHandler(resultExecution, node, constants)
     },
 }
 
-const executeAction: ActionHandler<PieceAction> = async ({ action, executionState, constants }) => {
+async function executeAction({ node, executionState, constants }: { node: FlowGraphNode, executionState: FlowExecutorContext, constants: EngineConstants }) {
+    const action = node.data as PieceAction
+    const stepName = node.id
     const stepStartTime = performance.now()
     const stepOutput = GenericStepOutput.create({
         input: {},
@@ -43,7 +47,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         if (isNil(action.settings.actionName)) {
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
-        
+
         const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
@@ -57,7 +61,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         })
 
         stepOutput.input = censoredInput
-    
+
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
@@ -75,16 +79,16 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const outputContext = progressService.createOutputContext({
             engineConstants: constants,
             flowExecutorContext: executionState,
-            stepName: action.name,
+            stepName,
             stepOutput,
         })
 
-        const isPaused = executionState.isPaused({ stepName: action.name })
+        const isPaused = executionState.isPaused({ stepName })
         if (!isPaused) {
             await progressService.sendUpdate({
                 engineConstants: constants,
-                flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
-                stepNameToUpdate: action.name,
+                flowExecutorContext: executionState.upsertStep(stepName, stepOutput),
+                stepNameToUpdate: stepName,
             })
         }
         const context: ActionContext<PieceAuthProperty, InputPropertyMap> = {
@@ -104,13 +108,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowVersionId: constants.flowVersionId,
             }),
             step: {
-                name: action.name,
+                name: stepName,
             },
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({
                 apiUrl: constants.internalApiUrl,
                 engineToken: constants.engineToken,
-                stepName: action.name,
+                stepName,
                 flowId: constants.flowId,
             }),
             server: {
@@ -180,7 +184,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({
+            return newExecutionContext.upsertStep(stepName, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
@@ -190,13 +194,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 throw new EngineGenericError('PauseResponseNotSetError', 'Pause response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted()
+            return newExecutionContext.upsertStep(stepName, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted()
                 .setVerdict({
                     status: FlowRunStatus.PAUSED,
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
+        return newExecutionContext.upsertStep(stepName, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))
 
@@ -207,10 +211,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             .setDuration(performance.now() - stepStartTime)
 
         return executionState
-            .upsertStep(action.name, failedStepOutput)
+            .upsertStep(stepName, failedStepOutput)
             .setVerdict({
                 status: FlowRunStatus.FAILED, failedStep: {
-                    name: action.name,
+                    name: stepName,
                     displayName: action.displayName,
                     message: utils.formatError(executionStateError),
                 },

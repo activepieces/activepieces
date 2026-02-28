@@ -24,16 +24,18 @@ describe('Update Action', () => {
         const op: FlowOperationRequest = {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-                name: 'step_1',
-                displayName: 'Updated Code',
-                kind: FlowActionKind.CODE,
-                valid: true,
-                settings: {
-                    sourceCode: {
-                        code: 'export const code = async () => { return { updated: true }; }',
-                        packageJson: '{}',
+                id: 'step_1',
+                action: {
+                    displayName: 'Updated Code',
+                    kind: FlowActionKind.CODE,
+                    valid: true,
+                    settings: {
+                        sourceCode: {
+                            code: 'export const code = async () => { return { updated: true }; }',
+                            packageJson: '{}',
+                        },
+                        input: {},
                     },
-                    input: {},
                 },
             },
         }
@@ -50,9 +52,9 @@ describe('Update Action', () => {
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_1',
                 parentStep: 'trigger',
                 action: {
-                    name: 'step_1',
                     displayName: 'Send Email',
                     kind: FlowActionKind.PIECE,
                     valid: true,
@@ -69,16 +71,18 @@ describe('Update Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-                name: 'step_1',
-                displayName: 'Send Slack Message',
-                kind: FlowActionKind.PIECE,
-                valid: true,
-                settings: {
-                    pieceName: '@activepieces/piece-slack',
-                    pieceVersion: '~0.3.0',
-                    actionName: 'send_message',
-                    input: { channel: '#general' },
-                    propertySettings: {},
+                id: 'step_1',
+                action: {
+                    displayName: 'Send Slack Message',
+                    kind: FlowActionKind.PIECE,
+                    valid: true,
+                    settings: {
+                        pieceName: '@activepieces/piece-slack',
+                        pieceVersion: '~0.3.0',
+                        actionName: 'send_message',
+                        input: { channel: '#general' },
+                        propertySettings: {},
+                    },
                 },
             },
         })
@@ -92,13 +96,15 @@ describe('Update Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-                name: 'step_1',
-                displayName: 'My Custom Step Name',
-                kind: FlowActionKind.CODE,
-                valid: true,
-                settings: {
-                    sourceCode: { code: 'test', packageJson: '{}' },
-                    input: {},
+                id: 'step_1',
+                action: {
+                    displayName: 'My Custom Step Name',
+                    kind: FlowActionKind.CODE,
+                    valid: true,
+                    settings: {
+                        sourceCode: { code: 'test', packageJson: '{}' },
+                        input: {},
+                    },
                 },
             },
         })
@@ -110,12 +116,14 @@ describe('Update Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-                name: 'step_1',
-                displayName: 'Updated Loop',
-                kind: FlowActionKind.LOOP_ON_ITEMS,
-                valid: true,
-                settings: {
-                    items: '{{trigger.newItems}}',
+                id: 'step_1',
+                action: {
+                    displayName: 'Updated Loop',
+                    kind: FlowActionKind.LOOP_ON_ITEMS,
+                    valid: true,
+                    settings: {
+                        items: '{{trigger.newItems}}',
+                    },
                 },
             },
         })
@@ -129,12 +137,14 @@ describe('Update Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-                name: 'step_1',
-                displayName: 'Updated Router',
-                kind: FlowActionKind.ROUTER,
-                valid: true,
-                settings: {
-                    executionType: 'EXECUTE_ALL_MATCH',
+                id: 'step_1',
+                action: {
+                    displayName: 'Updated Router',
+                    kind: FlowActionKind.ROUTER,
+                    valid: true,
+                    settings: {
+                        executionType: 'EXECUTE_ALL_MATCH',
+                    },
                 },
             },
         })
@@ -147,14 +157,16 @@ describe('Update Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-                name: 'step_1',
-                displayName: 'Code',
-                kind: FlowActionKind.CODE,
-                valid: true,
-                skip: true,
-                settings: {
-                    sourceCode: { code: 'test', packageJson: '{}' },
-                    input: {},
+                id: 'step_1',
+                action: {
+                    displayName: 'Code',
+                    kind: FlowActionKind.CODE,
+                    valid: true,
+                    skip: true,
+                    settings: {
+                        sourceCode: { code: 'test', packageJson: '{}' },
+                        input: {},
+                    },
                 },
             },
         })
@@ -166,13 +178,15 @@ describe('Update Action', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-                name: 'step_1',
-                displayName: 'Code',
-                kind: FlowActionKind.CODE,
-                valid: false,
-                settings: {
-                    sourceCode: { code: 'test', packageJson: '{}' },
-                    input: {},
+                id: 'step_1',
+                action: {
+                    displayName: 'Code',
+                    kind: FlowActionKind.CODE,
+                    valid: false,
+                    settings: {
+                        sourceCode: { code: 'test', packageJson: '{}' },
+                        input: {},
+                    },
                 },
             },
         })

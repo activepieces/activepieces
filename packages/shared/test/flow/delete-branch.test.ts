@@ -44,7 +44,7 @@ describe('Delete Branch', () => {
         let flow = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createRouterAction() },
         })
         // Add a third branch to have something to delete
         flow = flowOperations.apply(flow, {
@@ -70,7 +70,7 @@ describe('Delete Branch', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createRouterAction() },
         })
         // Add loop inside branch 0
         flow = flowOperations.apply(flow, {
@@ -79,7 +79,8 @@ describe('Delete Branch', () => {
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
                 branchIndex: 0,
-                action: createLoopAction('step_2'),
+                action: createLoopAction(),
+                id: 'step_2',
             },
         })
         // Add code inside loop
@@ -88,7 +89,8 @@ describe('Delete Branch', () => {
             request: {
                 parentStep: 'step_2',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                action: createCodeAction('step_3'),
+                action: createCodeAction(),
+                id: 'step_3',
             },
         })
         // Now delete branch 0

@@ -23,16 +23,17 @@ describe('Duplicate Branch', () => {
         let flow = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createRouterAction() },
         })
         // Add step inside branch 0
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: 'step_2',
                 parentStep: 'step_1',
                 stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
                 branchIndex: 0,
-                action: createCodeAction('step_2'),
+                action: createCodeAction(),
             },
         })
         return flow
@@ -62,7 +63,7 @@ describe('Duplicate Branch', () => {
         let flow = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createRouterAction() },
         })
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.DUPLICATE_BRANCH,

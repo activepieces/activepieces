@@ -27,7 +27,6 @@ export enum FlowTriggerKind {
 }
 
 const commonProps = {
-    name: Type.String({}),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
 }
@@ -58,7 +57,7 @@ export const FlowTrigger = DiscriminatedUnion('kind', [
 export type FlowTrigger = Static<typeof FlowTrigger>
 
 const updateCommonProps = {
-    name: Type.String({}),
+    id: Type.String({}),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
 }

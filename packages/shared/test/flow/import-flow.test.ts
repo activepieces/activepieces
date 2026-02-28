@@ -38,7 +38,6 @@ describe('Import Flow', () => {
                             id: 'trigger',
                             type: FlowNodeType.TRIGGER,
                             data: {
-                                name: 'trigger',
                                 kind: FlowTriggerKind.PIECE,
                                 valid: true,
                                 displayName: 'Webhook',
@@ -55,7 +54,6 @@ describe('Import Flow', () => {
                             id: 'step_1',
                             type: FlowNodeType.ACTION,
                             data: {
-                                name: 'step_1',
                                 kind: FlowActionKind.CODE,
                                 valid: true,
                                 displayName: 'Code',
@@ -96,7 +94,6 @@ describe('Import Flow', () => {
                             id: 'trigger',
                             type: FlowNodeType.TRIGGER,
                             data: {
-                                name: 'trigger',
                                 kind: FlowTriggerKind.PIECE,
                                 valid: true,
                                 displayName: 'Schedule',
@@ -113,7 +110,6 @@ describe('Import Flow', () => {
                             id: 'step_1',
                             type: FlowNodeType.ACTION,
                             data: {
-                                name: 'step_1',
                                 kind: FlowActionKind.LOOP_ON_ITEMS,
                                 valid: true,
                                 displayName: 'Loop',
@@ -124,7 +120,6 @@ describe('Import Flow', () => {
                             id: 'step_2',
                             type: FlowNodeType.ACTION,
                             data: {
-                                name: 'step_2',
                                 kind: FlowActionKind.CODE,
                                 valid: true,
                                 displayName: 'Code in Loop',
@@ -154,7 +149,7 @@ describe('Import Flow', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createCodeAction() },
         })
         expect(findNode(flow, 'step_1')).toBeDefined()
 
@@ -168,7 +163,6 @@ describe('Import Flow', () => {
                             id: 'trigger',
                             type: FlowNodeType.TRIGGER,
                             data: {
-                                name: 'trigger',
                                 kind: FlowTriggerKind.PIECE,
                                 valid: true,
                                 displayName: 'New Trigger',
@@ -185,7 +179,6 @@ describe('Import Flow', () => {
                             id: 'step_1',
                             type: FlowNodeType.ACTION,
                             data: {
-                                name: 'step_1',
                                 kind: FlowActionKind.CODE,
                                 valid: true,
                                 displayName: 'New Code',
@@ -223,7 +216,6 @@ describe('Import Flow', () => {
                             id: 'trigger',
                             type: FlowNodeType.TRIGGER,
                             data: {
-                                name: 'trigger',
                                 kind: FlowTriggerKind.PIECE,
                                 valid: true,
                                 displayName: 'Webhook',
@@ -240,7 +232,6 @@ describe('Import Flow', () => {
                             id: 'router_1',
                             type: FlowNodeType.ACTION,
                             data: {
-                                name: 'router_1',
                                 kind: FlowActionKind.ROUTER,
                                 valid: true,
                                 displayName: 'Not free email?',
@@ -253,7 +244,6 @@ describe('Import Flow', () => {
                             id: 'step_a',
                             type: FlowNodeType.ACTION,
                             data: {
-                                name: 'step_a',
                                 kind: FlowActionKind.CODE,
                                 valid: true,
                                 displayName: 'Branch A Step',
@@ -339,7 +329,6 @@ describe('Import Flow', () => {
                             id: 'trigger',
                             type: FlowNodeType.TRIGGER,
                             data: {
-                                name: 'trigger',
                                 kind: FlowTriggerKind.PIECE,
                                 valid: true,
                                 displayName: 'Schedule',

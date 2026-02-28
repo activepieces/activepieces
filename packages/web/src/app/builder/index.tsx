@@ -150,6 +150,7 @@ const BuilderPage = () => {
                 <ResizableVerticalPanelsProvider>
                   <StepSettingsProvider
                     pieceModel={pieceModel}
+                    stepName={selectedStep.id}
                     selectedStep={selectedStep.data}
                     key={constructContainerKey({
                       flowVersionId: flowVersion.id,
@@ -184,7 +185,7 @@ function constructContainerKey({
   step?: FlowGraphNode;
   hasPieceModelLoaded: boolean;
 }) {
-  const stepName = step?.data.name;
+  const stepName = step?.id;
   const triggerOrActionName =
     step?.data.kind === FlowTriggerKind.PIECE
       ? step?.data.settings.triggerName

@@ -2,18 +2,18 @@ import { FlowRunStatus } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { buildCodeAction, buildFlowVersion, generateMockEngineConstants } from './test-helper'
+import { buildActionNode, buildCodeAction, buildFlowVersion, generateMockEngineConstants } from './test-helper'
 
 describe('codeExecutor', () => {
 
     it('should execute code that echo parameters action successfully', async () => {
         const result = await codeExecutor.handle({
-            action: buildCodeAction({
+            node: buildActionNode(buildCodeAction({
                 name: 'echo_step',
                 input: {
                     'key': '{{ 1 + 2 }}',
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            })), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
@@ -21,10 +21,10 @@ describe('codeExecutor', () => {
 
     it('should execute code a code that throws an error', async () => {
         const result = await codeExecutor.handle({
-            action: buildCodeAction({
+            node: buildActionNode(buildCodeAction({
                 name: 'runtime',
                 input: {},
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            })), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.FAILED,

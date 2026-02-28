@@ -29,7 +29,6 @@ export function createEmptyFlowVersion(): FlowVersion {
                     id: 'trigger',
                     type: FlowNodeType.TRIGGER,
                     data: {
-                        name: 'trigger',
                         kind: FlowTriggerKind.PIECE,
                         valid: true,
                         settings: {
@@ -137,7 +136,6 @@ function createCodeNode(name: string): FlowGraphNode {
         id: name,
         type: FlowNodeType.ACTION,
         data: {
-            name,
             displayName: 'Code',
             kind: FlowActionKind.CODE,
             valid: true,
@@ -157,7 +155,6 @@ function createPieceNode(name: string): FlowGraphNode {
         id: name,
         type: FlowNodeType.ACTION,
         data: {
-            name,
             displayName: 'Send Email',
             kind: FlowActionKind.PIECE,
             valid: true,
@@ -181,7 +178,6 @@ function createLoopNode(name: string): FlowGraphNode {
         id: name,
         type: FlowNodeType.ACTION,
         data: {
-            name,
             displayName: 'Loop',
             kind: FlowActionKind.LOOP_ON_ITEMS,
             valid: true,
@@ -197,7 +193,6 @@ function createRouterNode(name: string): FlowGraphNode {
         id: name,
         type: FlowNodeType.ACTION,
         data: {
-            name,
             displayName: 'Router',
             kind: FlowActionKind.ROUTER,
             valid: true,
@@ -209,9 +204,8 @@ function createRouterNode(name: string): FlowGraphNode {
 }
 
 // These return UpdateActionRequest (used in operation requests)
-export function createCodeAction(name: string): UpdateActionRequest {
+export function createCodeAction(): UpdateActionRequest {
     return {
-        name,
         displayName: 'Code',
         kind: FlowActionKind.CODE,
         valid: true,
@@ -225,9 +219,8 @@ export function createCodeAction(name: string): UpdateActionRequest {
     }
 }
 
-export function createPieceAction(name: string): UpdateActionRequest {
+export function createPieceAction(): UpdateActionRequest {
     return {
-        name,
         displayName: 'Send Email',
         kind: FlowActionKind.PIECE,
         valid: true,
@@ -245,9 +238,8 @@ export function createPieceAction(name: string): UpdateActionRequest {
     }
 }
 
-export function createLoopAction(name: string): UpdateActionRequest {
+export function createLoopAction(): UpdateActionRequest {
     return {
-        name,
         displayName: 'Loop',
         kind: FlowActionKind.LOOP_ON_ITEMS,
         valid: true,
@@ -257,9 +249,8 @@ export function createLoopAction(name: string): UpdateActionRequest {
     }
 }
 
-export function createRouterAction(name: string): UpdateActionRequest {
+export function createRouterAction(): UpdateActionRequest {
     return {
-        name,
         displayName: 'Router',
         kind: FlowActionKind.ROUTER,
         valid: true,

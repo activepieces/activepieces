@@ -203,7 +203,6 @@ describe('Flow Diff Service', () => {
                                 settings: node.data.settings,
                                 valid: node.data.valid,
                                 kind: node.data.kind,
-                                name: node.data.name,
                                 displayName: node.data.displayName,
                             },
                         }

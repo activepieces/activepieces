@@ -34,11 +34,11 @@ describe('Skip Action', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createCodeAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
+            request: { id: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction() },
         })
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.SET_SKIP_ACTION,
@@ -68,11 +68,11 @@ describe('Skip Action', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createCodeAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
+            request: { id: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction() },
         })
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.SET_SKIP_ACTION,
@@ -84,12 +84,12 @@ describe('Skip Action', () => {
 
     it('should consider skipped steps when calculating flow validity', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
-        const invalidStep = createCodeAction('step_1')
+        const invalidStep = createCodeAction()
         invalidStep.valid = false
         invalidStep.settings = { input: {} } as typeof invalidStep.settings
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: invalidStep },
+            request: { id: 'step_1', parentStep: 'trigger', action: invalidStep },
         })
         // Flow should be invalid because step_1 is invalid
         expect(flow.valid).toBe(false)

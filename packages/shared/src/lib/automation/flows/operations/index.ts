@@ -158,6 +158,7 @@ export type MoveActionRequest = Static<typeof MoveActionRequest>
 
 export const AddActionRequest = Type.Object({
     parentStep: Type.String(),
+    id: Type.String(),
     stepLocationRelativeToParent: Type.Optional(
         Type.Enum(StepLocationRelativeToParent),
     ),
@@ -271,7 +272,10 @@ export const FlowOperationRequest = DiscriminatedUnion('type', [
     Type.Object(
         {
             type: Type.Literal(FlowOperationType.UPDATE_ACTION),
-            request: UpdateActionRequest,
+            request: Type.Object({
+                id: Type.String(),
+                action: UpdateActionRequest,
+            }),
         },
         {
             title: 'Update Action',

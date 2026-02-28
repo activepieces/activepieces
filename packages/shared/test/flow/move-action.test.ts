@@ -35,11 +35,11 @@ describe('Move Action', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createLoopAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createLoopAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
+            request: { id: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction() },
         })
         // Move step_2 inside loop
         const result = flowOperations.apply(flow, {
@@ -60,11 +60,11 @@ describe('Move Action', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createRouterAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
+            request: { id: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction() },
         })
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.MOVE_ACTION,
@@ -98,19 +98,19 @@ describe('Move Action', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createCodeAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
+            request: { id: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_2', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_3') },
+            request: { id: 'step_3', parentStep: 'step_2', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_3', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_4') },
+            request: { id: 'step_4', parentStep: 'step_3', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction() },
         })
 
         // Move step_4 to directly after trigger
@@ -132,11 +132,11 @@ describe('Move Action', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createCodeAction() },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createLoopAction('step_2') },
+            request: { id: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createLoopAction() },
         })
         // Move step_1 into loop
         const result = flowOperations.apply(flow, {

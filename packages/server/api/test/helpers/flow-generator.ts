@@ -77,7 +77,6 @@ function generateTriggerNode(id: string): FlowGraphNode {
         type: FlowNodeType.TRIGGER,
         data: {
             kind: FlowTriggerKind.PIECE,
-            name: id,
             displayName: faker.hacker.noun(),
             valid: true,
             settings: {
@@ -97,7 +96,6 @@ function generateActionNode(id: string): FlowGraphNode {
         type: FlowNodeType.ACTION,
         data: {
             kind: FlowActionKind.PIECE,
-            name: id,
             displayName: faker.hacker.noun(),
             valid: true,
             skip: false,

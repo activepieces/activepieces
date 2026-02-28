@@ -44,7 +44,7 @@ import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+  const { stepName, selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
     readonly,
@@ -72,7 +72,7 @@ const StepSettingsContainer = () => {
 
   const branchEdges =
     selectedStep.kind === FlowActionKind.ROUTER
-      ? flowStructureUtil.getBranchEdges(flowVersion.graph, selectedStep.name)
+      ? flowStructureUtil.getBranchEdges(flowVersion.graph, stepName)
       : [];
   const formDefaultValues = buildFormDefaultValues(selectedStep, branchEdges);
   const currentValuesRef = useRef<RouterFormData>(formDefaultValues);
@@ -125,7 +125,7 @@ const StepSettingsContainer = () => {
               applyOperation({
                 type: FlowOperationType.UPDATE_BRANCH,
                 request: {
-                  stepName: cleanedNewValues.name,
+                  stepName,
                   branchIndex: i,
                   branchName: branches[i].branchName,
                   conditions: branches[i].conditions,
@@ -137,8 +137,11 @@ const StepSettingsContainer = () => {
         applyOperation({
           type: FlowOperationType.UPDATE_ACTION,
           request: {
-            ...cleanedNewValues,
-            valid,
+            id: stepName,
+            action: {
+              ...cleanedNewValues,
+              valid,
+            },
           },
         });
       } else if (cleanedNewValues.kind === FlowTriggerKind.PIECE) {
@@ -146,6 +149,7 @@ const StepSettingsContainer = () => {
           type: FlowOperationType.UPDATE_TRIGGER,
           request: {
             ...cleanedNewValues,
+            id: stepName,
             valid,
           },
         });
@@ -157,8 +161,11 @@ const StepSettingsContainer = () => {
         applyOperation({
           type: FlowOperationType.UPDATE_ACTION,
           request: {
-            ...cleanedNewValues,
-            valid,
+            id: stepName,
+            action: {
+              ...cleanedNewValues,
+              valid,
+            },
           },
         });
       }
@@ -242,7 +249,7 @@ const StepSettingsContainer = () => {
         </div>
 
         <DynamicPropertiesProvider
-          key={`${selectedStep.name}-${selectedStep.kind}`}
+          key={`${stepName}-${selectedStep.kind}`}
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">

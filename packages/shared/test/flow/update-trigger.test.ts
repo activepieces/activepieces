@@ -22,7 +22,7 @@ describe('Update Trigger', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
-                name: 'trigger',
+                id: 'trigger',
                 kind: FlowTriggerKind.PIECE,
                 valid: true,
                 displayName: 'New Trigger',
@@ -48,7 +48,7 @@ describe('Update Trigger', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
-                name: 'trigger',
+                id: 'trigger',
                 kind: FlowTriggerKind.EMPTY,
                 valid: true,
                 displayName: 'Empty Trigger',
@@ -65,7 +65,7 @@ describe('Update Trigger', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
-                name: 'trigger',
+                id: 'trigger',
                 kind: FlowTriggerKind.PIECE,
                 valid: true,
                 displayName: 'Updated Trigger',
@@ -88,7 +88,7 @@ describe('Update Trigger', () => {
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
-                name: 'trigger',
+                id: 'trigger',
                 kind: FlowTriggerKind.EMPTY,
                 valid: false,
                 displayName: 'Empty',

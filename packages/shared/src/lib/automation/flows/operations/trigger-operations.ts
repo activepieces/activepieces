@@ -11,7 +11,6 @@ export const triggerOperations = {
     update(flowVersion: FlowVersion, request: UpdateTriggerRequest): FlowVersion {
         const triggerData = {
             displayName: request.displayName,
-            name: request.name,
             valid: false,
             kind: request.kind,
             settings: request.settings,
@@ -22,7 +21,7 @@ export const triggerOperations = {
             (n) => n.type === FlowNodeType.TRIGGER,
         )
         const updatedNode: FlowGraphNode = {
-            id: request.name,
+            id: request.id,
             type: FlowNodeType.TRIGGER,
             data: {
                 ...triggerData,

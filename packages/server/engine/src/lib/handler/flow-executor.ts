@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionKind, FlowRunStatus, flowStructureUtil, isActionNodeData, isNil, isTriggerNodeData } from '@activepieces/shared'
+import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowActionKind, FlowRunStatus, flowStructureUtil, isActionNodeData, isNil, isTriggerNodeData } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
@@ -11,7 +11,7 @@ import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
 
-function getExecuteFunction(): Record<FlowActionKind, BaseExecutor<FlowAction>> {
+function getExecuteFunction(): Record<FlowActionKind, BaseExecutor> {
     return {
         [FlowActionKind.CODE]: codeExecutor,
         [FlowActionKind.LOOP_ON_ITEMS]: loopExecutor,
@@ -21,7 +21,7 @@ function getExecuteFunction(): Record<FlowActionKind, BaseExecutor<FlowAction>> 
 }
 
 export const flowExecutor = {
-    getExecutorForAction(type: FlowActionKind): BaseExecutor<FlowAction> {
+    getExecutorForAction(type: FlowActionKind): BaseExecutor {
         const executeFunction = getExecuteFunction()
         const executor = executeFunction[type]
 
@@ -77,13 +77,11 @@ export const flowExecutor = {
                 throw new EngineGenericError('InvalidNodeDataError', `Expected action node data for step: ${stepName}`)
             }
 
-            const actionData = currentNode.data
-
-            if (actionData.skip && !testSingleStepMode) {
+            if (currentNode.data.skip && !testSingleStepMode) {
                 previousStepName = stepName
                 continue
             }
-            const handler = this.getExecutorForAction(actionData.kind)
+            const handler = this.getExecutorForAction(currentNode.data.kind)
 
             await progressService.sendUpdate({
                 engineConstants: constants,
@@ -94,7 +92,7 @@ export const flowExecutor = {
             })
 
             flowExecutionContext = await handler.handle({
-                action: actionData,
+                node: currentNode,
                 executionState: flowExecutionContext,
                 constants,
             })

@@ -38,6 +38,7 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
 };
 
 export type StepSettingsContextState = {
+  stepName: string;
   selectedStep: FlowNodeData;
   pieceModel: PieceMetadataModel | undefined;
   formSchema: TObject<any>;
@@ -50,6 +51,7 @@ export type StepSettingsContextState = {
 };
 
 export type StepSettingsProviderProps = {
+  stepName: string;
   selectedStep: FlowNodeData;
   pieceModel: PieceMetadataModel | undefined;
   children: ReactNode;
@@ -60,6 +62,7 @@ const StepSettingsContext = createContext<StepSettingsContextState | undefined>(
 );
 
 export const StepSettingsProvider = ({
+  stepName,
   selectedStep,
   pieceModel,
   children,
@@ -115,6 +118,7 @@ export const StepSettingsProvider = ({
       //need to re-render the form because sample data is changed outside of it, this will be fixed once we refactor the state
       key={selectedStep.settings.sampleData?.lastTestDate}
       value={{
+        stepName,
         selectedStep,
         pieceModel,
         formSchema,

@@ -19,6 +19,7 @@ function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowO
         {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: node.id,
                 action: node.data,
                 parentStep: request.newParentStep,
                 stepLocationRelativeToParent: request.stepLocationRelativeToNewParent,
@@ -43,6 +44,7 @@ function duplicateStep(stepName: string, flowVersion: FlowVersion): FlowOperatio
         {
             type: FlowOperationType.ADD_ACTION,
             request: {
+                id: clonedMain.id,
                 action: clonedMain.data,
                 parentStep: stepName,
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
@@ -106,7 +108,7 @@ function addChainOperations(
         const parentStep = i === 0 ? parentStepName : oldNameToNewName[chain[i - 1]]
         const location = i === 0 ? firstLocation : StepLocationRelativeToParent.AFTER
         const branchIdx = i === 0 ? branchIndex : undefined
-        operations.push(createAddActionOperation(clonedNode.data, parentStep, location, branchIdx))
+        operations.push(createAddActionOperation(clonedNode.id, clonedNode.data, parentStep, location, branchIdx))
 
         // Recurse into nested structures
         if (node.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
@@ -171,7 +173,7 @@ function duplicateBranch(routerName: string, childIndex: number, flowVersion: Fl
             const parentStep = i === 0 ? routerName : oldNameToNewName[chainNodes[i - 1].id]
             const location = i === 0 ? StepLocationRelativeToParent.INSIDE_BRANCH : StepLocationRelativeToParent.AFTER
             const branchIdx = i === 0 ? childIndex + 1 : undefined
-            operations.push(createAddActionOperation(clonedNode.data, parentStep, location, branchIdx))
+            operations.push(createAddActionOperation(clonedNode.id, clonedNode.data, parentStep, location, branchIdx))
 
             // Handle nested structures
             if (chainNodes[i].data.kind === FlowActionKind.LOOP_ON_ITEMS) {
@@ -213,7 +215,7 @@ function importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): FlowO
     return [
         createChangeNameOperation(request.displayName),
         ...deleteOperations,
-        ...(triggerNode && isTriggerNodeData(triggerNode.data) ? [createUpdateTriggerOperation(triggerNode.data)] : []),
+        ...(triggerNode && isTriggerNodeData(triggerNode.data) ? [createUpdateTriggerOperation({ ...triggerNode.data, id: triggerNode.id })] : []),
         ...importOperations,
         ...getImportOperationsForNotes(flowVersion, request),
     ]
@@ -249,7 +251,7 @@ function addImportChainOperations(
         const parentStep = i === 0 ? firstParent : chain[i - 1]
         const location = i === 0 ? firstLocation : StepLocationRelativeToParent.AFTER
         const branchIdx = i === 0 ? branchIndex : undefined
-        operations.push(createAddActionOperation(node.data, parentStep, location, branchIdx))
+        operations.push(createAddActionOperation(node.id, node.data, parentStep, location, branchIdx))
 
         // Handle nested structures
         if (node.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
@@ -344,6 +346,7 @@ function getOperationsForPaste(
             operations.push({
                 type: FlowOperationType.ADD_ACTION,
                 request: {
+                    id: clonedNodes[i].id,
                     action: data,
                     parentStep: pastingDetails.parentStepName,
                     stepLocationRelativeToParent: pastingDetails.stepLocationRelativeToParent,
@@ -355,6 +358,7 @@ function getOperationsForPaste(
             operations.push({
                 type: FlowOperationType.ADD_ACTION,
                 request: {
+                    id: clonedNodes[i].id,
                     action: data,
                     parentStep: clonedNodes[i - 1].id,
                     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
@@ -385,6 +389,7 @@ function getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportFl
 }
 
 function createAddActionOperation(
+    id: string,
     action: UpdateActionRequest,
     parentStep: string,
     stepLocationRelativeToParent: StepLocationRelativeToParent,
@@ -392,7 +397,7 @@ function createAddActionOperation(
 ): FlowOperationRequest {
     return {
         type: FlowOperationType.ADD_ACTION,
-        request: { action, parentStep, stepLocationRelativeToParent, branchIndex },
+        request: { id, action, parentStep, stepLocationRelativeToParent, branchIndex },
     }
 }
 

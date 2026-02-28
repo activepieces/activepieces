@@ -17,7 +17,6 @@ export const migrateV17ToGraph: Migration = {
             type: 'trigger',
             data: {
                 kind: oldTrigger.type,
-                name: oldTrigger.name,
                 displayName: oldTrigger.displayName,
                 valid: oldTrigger.valid,
                 settings: oldTrigger.settings,
@@ -75,7 +74,6 @@ function buildNode(
         type: 'action',
         data: {
             kind: step.type,
-            name: step.name,
             displayName: step.displayName,
             valid: step.valid,
             skip: step.skip,
@@ -131,7 +129,6 @@ function buildRouterNode(
         type: 'action',
         data: {
             kind: FlowActionKind.ROUTER,
-            name: step.name,
             displayName: step.displayName,
             valid: step.valid,
             skip: step.skip,
@@ -171,7 +168,6 @@ function buildLoopNode(
         type: 'action',
         data: {
             kind: FlowActionKind.LOOP_ON_ITEMS,
-            name: step.name,
             displayName: step.displayName,
             valid: step.valid,
             skip: step.skip,

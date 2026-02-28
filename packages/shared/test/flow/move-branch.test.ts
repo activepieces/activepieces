@@ -22,7 +22,7 @@ describe('Move Branch', () => {
         let flow = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
+            request: { id: 'step_1', parentStep: 'trigger', action: createRouterAction() },
         })
         // Add a second condition branch at index 1 (before fallback)
         flow = flowOperations.apply(flow, {

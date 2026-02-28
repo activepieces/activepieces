@@ -20,7 +20,6 @@ function makeCodeNode(name: string): FlowGraphNode {
         id: name,
         type: FlowNodeType.ACTION,
         data: {
-            name,
             kind: FlowActionKind.CODE,
             valid: true,
             displayName: 'Code',
@@ -37,7 +36,6 @@ function makeLoopNode(name: string): FlowGraphNode {
         id: name,
         type: FlowNodeType.ACTION,
         data: {
-            name,
             kind: FlowActionKind.LOOP_ON_ITEMS,
             valid: true,
             displayName: 'Loop on Items',
@@ -51,7 +49,6 @@ function makeRouterNode(name: string): FlowGraphNode {
         id: name,
         type: FlowNodeType.ACTION,
         data: {
-            name,
             kind: FlowActionKind.ROUTER,
             valid: true,
             displayName: 'Router',

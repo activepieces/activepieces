@@ -1,15 +1,16 @@
-import { CodeAction, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
+import { CodeAction, FlowGraphNode, FlowRunStatus, isNil, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import {  FlowExecutorContext } from '../handler/context/flow-execution-context'
 
-export async function runWithExponentialBackoff<T extends CodeAction | PieceAction>(
+export async function runWithExponentialBackoff(
     executionState: FlowExecutorContext,
-    action: T,
+    node: FlowGraphNode,
     constants: EngineConstants,
-    requestFunction: RequestFunction<T>,
+    requestFunction: RequestFunction,
     attemptCount = 1,
 ): Promise<FlowExecutorContext> {
-    const resultExecutionState = await requestFunction({ action, executionState, constants })
+    const resultExecutionState = await requestFunction({ node, executionState, constants })
+    const action = node.data as CodeAction | PieceAction
     const retryEnabled = action.settings.errorHandlingOptions?.retryOnFailure?.value
     if (
         executionFailedWithRetryableError(resultExecutionState) &&
@@ -19,7 +20,7 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
     ) {
         const backoffTime = Math.pow(constants.retryConstants.retryExponential, attemptCount) * constants.retryConstants.retryInterval
         await new Promise(resolve => setTimeout(resolve, backoffTime))
-        return runWithExponentialBackoff(executionState, action, constants, requestFunction, attemptCount + 1)
+        return runWithExponentialBackoff(executionState, node, constants, requestFunction, attemptCount + 1)
     }
 
     return resultExecutionState
@@ -27,9 +28,10 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
 
 export async function continueIfFailureHandler(
     executionState: FlowExecutorContext,
-    action: CodeAction | PieceAction,
+    node: FlowGraphNode,
     constants: EngineConstants,
 ): Promise<FlowExecutorContext> {
+    const action = node.data as CodeAction | PieceAction
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
 
     if (
@@ -49,11 +51,10 @@ const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorCont
     return flowExecutorContext.verdict.status === FlowRunStatus.FAILED
 }
 
-type Request<T extends CodeAction | PieceAction> = {
-    action: T
+type Request = {
+    node: FlowGraphNode
     executionState: FlowExecutorContext
     constants: EngineConstants
 }
 
-type RequestFunction<T extends CodeAction | PieceAction> = (request: Request<T>) => Promise<FlowExecutorContext>
-
+type RequestFunction = (request: Request) => Promise<FlowExecutorContext>

@@ -9,10 +9,9 @@ import { AddActionRequest, DeleteActionRequest, SkipActionRequest, StepLocationR
 
 const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema)
 
-function createAction(request: UpdateActionRequest): FlowGraphNode {
+function createAction(id: string, request: UpdateActionRequest): FlowGraphNode {
     const baseData = {
         displayName: request.displayName,
-        name: request.name,
         valid: false,
         skip: request.skip,
         kind: request.kind,
@@ -23,7 +22,7 @@ function createAction(request: UpdateActionRequest): FlowGraphNode {
     }
     const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(baseData)
     return {
-        id: request.name,
+        id,
         type: FlowNodeType.ACTION,
         data: {
             ...baseData,
@@ -36,7 +35,7 @@ function createAction(request: UpdateActionRequest): FlowGraphNode {
 
 function add(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
     const cloned: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    const newNode = createAction(request.action)
+    const newNode = createAction(request.id, request.action)
     const parentId = request.parentStep
     const parentNode = flowStructureUtil.getStepOrThrow(parentId, cloned)
     if (parentNode.data.kind === FlowActionKind.LOOP_ON_ITEMS && request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_LOOP) {
@@ -203,25 +202,24 @@ function collectDescendantIds(nodeId: string, flowVersion: FlowVersion): string[
 
 // --- Update Action ---
 
-function update(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVersion {
+function update(flowVersion: FlowVersion, request: { id: string, action: UpdateActionRequest }): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (node) => {
-        if (node.id !== request.name || !isActionNodeData(node.data)) {
+        if (node.id !== request.id || !isActionNodeData(node.data)) {
             return node
         }
 
         const updatedData = {
-            displayName: request.displayName,
-            name: request.name,
+            displayName: request.action.displayName,
             valid: false,
-            skip: request.skip,
-            kind: request.kind,
+            skip: request.action.skip,
+            kind: request.action.kind,
             settings: {
                 ...node.data.settings,
-                customLogoUrl: request.settings.customLogoUrl,
-                ...request.settings,
+                customLogoUrl: request.action.settings.customLogoUrl,
+                ...request.action.settings,
             },
         }
-        const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(updatedData)
+        const valid = (isNil(request.action.valid) ? true : request.action.valid) && actionSchemaValidator.Check(updatedData)
         return {
             ...node,
             data: {
@@ -282,7 +280,6 @@ function replaceOldStepNameWithNewOne({
 function clone(node: FlowGraphNode, oldNameToNewName: Record<string, string>): FlowGraphNode {
     const clonedData: FlowNodeData = JSON.parse(JSON.stringify(node.data))
     clonedData.displayName = `${node.data.displayName} Copy`
-    clonedData.name = oldNameToNewName[node.id]
     if (isActionNodeData(clonedData) && 'input' in clonedData.settings) {
         const settings = clonedData.settings
         Object.keys(oldNameToNewName).forEach((oldName) => {
