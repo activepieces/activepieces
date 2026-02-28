@@ -19,9 +19,7 @@ const BranchSettings = React.memo(
     });
 
     const handleDelete = (groupIndex: number, conditionIndex: number) => {
-      const conditions = form.getValues(
-        `branches.${branchIndex}.conditions`,
-      );
+      const conditions = form.getValues(`branches.${branchIndex}.conditions`);
       const newConditionsGroup = [...conditions[groupIndex]];
       const isSingleGroup = conditions.length === 1;
       const isSingleConditionInGroup = newConditionsGroup.length === 1;
@@ -37,9 +35,7 @@ const BranchSettings = React.memo(
     };
 
     const handleAnd = (groupIndex: number) => {
-      const conditions = form.getValues(
-        `branches.${branchIndex}.conditions`,
-      );
+      const conditions = form.getValues(`branches.${branchIndex}.conditions`);
       conditions[groupIndex] = [...conditions[groupIndex], emptyCondition];
       update(groupIndex, conditions[groupIndex]);
     };

@@ -1,9 +1,9 @@
 import {
     BranchExecutionType,
+    FlowEdgeType,
     flowOperations,
     FlowOperationType,
     FlowVersion,
-    RouterAction,
     StepLocationRelativeToParent,
 } from '../../src'
 import {
@@ -12,15 +12,18 @@ import {
     createRouterAction,
 } from './test-utils'
 
+function getBranchEdges(flow: FlowVersion, routerId: string) {
+    return flow.graph.edges
+        .filter(e => e.source === routerId && e.type === FlowEdgeType.BRANCH)
+        .sort((a, b) => ((a as Record<string, unknown>).branchIndex as number) - ((b as Record<string, unknown>).branchIndex as number))
+}
+
 describe('Duplicate Branch', () => {
     function buildFlowWithRouterAndSteps(): FlowVersion {
-        const router = createRouterAction('step_1')
-        ;(router as RouterAction).branches![0].steps = []
-        ;(router as RouterAction).branches![1].steps = []
         let flow = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: router },
+            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
         })
         // Add step inside branch 0
         flow = flowOperations.apply(flow, {
@@ -44,24 +47,22 @@ describe('Duplicate Branch', () => {
                 branchIndex: 0,
             },
         })
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
+        const branchEdges = getBranchEdges(result, 'step_1')
         // Should have 3 branches now (original condition, duplicate, fallback)
-        expect(routerStep.branches!.length).toBe(3)
+        expect(branchEdges.length).toBe(3)
         // Duplicated branch should have "Copy" in name
-        expect(routerStep.branches![1].branchName).toContain('Copy')
-        // Duplicated branch should have steps with new names
-        expect(routerStep.branches![1].steps.length).toBeGreaterThan(0)
-        expect(routerStep.branches![1].steps[0]).not.toBe('step_2')
+        const dupBranch = branchEdges.find(e => (e as Record<string, unknown>).branchIndex === 1)!
+        expect((dupBranch as Record<string, unknown>).branchName).toContain('Copy')
+        // Duplicated branch should have a target (new step)
+        expect(dupBranch.target).toBeDefined()
+        expect(dupBranch.target).not.toBe('step_2')
     })
 
     it('should duplicate empty branch', () => {
-        const router = createRouterAction('step_1')
-        ;(router as RouterAction).branches![0].steps = []
-        ;(router as RouterAction).branches![1].steps = []
         let flow = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: router },
+            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
         })
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.DUPLICATE_BRANCH,
@@ -70,10 +71,12 @@ describe('Duplicate Branch', () => {
                 branchIndex: 0,
             },
         })
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
-        expect(routerStep.branches!.length).toBe(3)
-        expect(routerStep.branches![1].branchName).toContain('Copy')
-        expect(routerStep.branches![1].steps).toEqual([])
+        const branchEdges = getBranchEdges(result, 'step_1')
+        expect(branchEdges.length).toBe(3)
+        const dupBranch = branchEdges.find(e => (e as Record<string, unknown>).branchIndex === 1)!
+        expect((dupBranch as Record<string, unknown>).branchName).toContain('Copy')
+        // Empty branch has null target
+        expect(dupBranch.target).toBeNull()
     })
 
     it('should duplicate branch with conditions', () => {
@@ -85,12 +88,9 @@ describe('Duplicate Branch', () => {
                 branchIndex: 0,
             },
         })
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
-        const duplicatedBranch = routerStep.branches![1]
-        expect(duplicatedBranch.branchType).toBe(BranchExecutionType.CONDITION)
-        if (duplicatedBranch.branchType === BranchExecutionType.CONDITION) {
-            expect(duplicatedBranch.conditions).toBeDefined()
-            expect(duplicatedBranch.conditions.length).toBeGreaterThan(0)
-        }
+        const branchEdges = getBranchEdges(result, 'step_1')
+        const dupBranch = branchEdges.find(e => (e as Record<string, unknown>).branchIndex === 1)!
+        expect((dupBranch as Record<string, unknown>).branchType).toBe(BranchExecutionType.CONDITION)
+        expect((dupBranch as Record<string, unknown>).conditions).toBeDefined()
     })
 })

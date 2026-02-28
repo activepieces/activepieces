@@ -21,7 +21,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
-import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
+import { LegacyFlowVersionTemplateInput, migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { communityTemplates } from './community-templates.service'
@@ -73,8 +73,9 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', {
         ...CreateParams,
         preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            const rawFlows = (request.body.flows ?? []) as unknown[]
+            const migratedFlows = await migrateFlowVersionTemplateList(rawFlows as LegacyFlowVersionTemplateInput[])
+            request.body.flows = migratedFlows as unknown as typeof request.body.flows
         },
     }, async (request, reply) => {
         const { type } = request.body
@@ -103,8 +104,9 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', { ...UpdateParams,
         preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            const rawFlows = (request.body.flows ?? []) as unknown[]
+            const migratedFlows = await migrateFlowVersionTemplateList(rawFlows as LegacyFlowVersionTemplateInput[])
+            request.body.flows = migratedFlows as unknown as typeof request.body.flows
         },
     }, async (request, reply) => {
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
@@ -246,9 +248,10 @@ async function migrateTemplateFlows(template: Template): Promise<Template> {
     if (!template.flows || template.flows.length === 0) {
         return template
     }
-    const migratedFlows = await migrateFlowVersionTemplateList(template.flows)
+    const migratedFlows = await migrateFlowVersionTemplateList(template.flows as unknown as LegacyFlowVersionTemplateInput[])
     return {
         ...template,
-        flows: migratedFlows,
+        flows: migratedFlows as unknown as typeof template.flows,
     }
 }
+

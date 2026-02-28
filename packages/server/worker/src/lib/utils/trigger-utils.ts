@@ -4,9 +4,10 @@ import {
     ActivepiecesError,
     EngineResponseStatus,
     ErrorCode,
-    FlowTriggerType,
+    flowStructureUtil,
+    FlowTriggerKind,
     FlowVersion,
-    PieceTriggerSettings,
+    PieceTrigger,
     PlatformId,
     ProjectId,
     TriggerHookType,
@@ -27,7 +28,8 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
         params: ExecuteTrigger,
     ): Promise<ExtractPayloadsResult> => {
         const { flowVersion, platformId } = params
-        if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
+        const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph)
+        if (!triggerNode || triggerNode.data.kind === FlowTriggerKind.EMPTY) {
             log.warn({
                 flowVersionId: flowVersion.id,
             }, '[WebhookUtils#extractPayload] empty trigger, skipping')
@@ -38,11 +40,11 @@ export const triggerHooks = (log: FastifyBaseLogger) => ({
         }
         const { payloads, status, errorMessage } = await getTriggerPayloadsAndStatus(engineToken, log, params)
 
-        const triggerSettings = flowVersion.trigger.settings as PieceTriggerSettings
+        const triggerData = triggerNode.data as PieceTrigger
         const triggerPiece = await pieceWorkerCache(log).getPiece({
             engineToken,
-            pieceName: triggerSettings.pieceName,
-            pieceVersion: triggerSettings.pieceVersion,
+            pieceName: triggerData.settings.pieceName,
+            pieceVersion: triggerData.settings.pieceVersion,
             platformId,
         })
         await triggerRunStats(log, await workerRedisConnections.useExisting()).save({

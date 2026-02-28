@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { FlowAction, ApFlagId, FlowTrigger } from '@activepieces/shared';
+import { FlowGraphNode, ApFlagId, FlowTrigger } from '@activepieces/shared';
 import { DialogClose } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -64,7 +64,7 @@ const WebhookRequest = z.object({
 });
 
 type TestWaitForNextWebhookDialogProps = {
-  currentStep: FlowAction;
+  currentStep: FlowGraphNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   testingMode: 'returnResponseAndWaitForNextWebhook';
@@ -146,7 +146,7 @@ const TestWaitForNextWebhookDialog = ({
           isLoading={false}
           onSubmit={(data) => {
             updateSampleData({
-              stepName: currentStep.name,
+              stepName: currentStep.id,
               output: {
                 body: data.body,
                 headers: data.headers,

@@ -1,18 +1,17 @@
-import { BranchExecutionType, FlowActionType, FlowVersion, RouterExecutionType, Step } from '@activepieces/shared'
-import { Migration } from '.'
+import { BranchExecutionType, FlowActionKind, FlowVersion, RouterExecutionType } from '@activepieces/shared'
 import { legacyFlowStructureUtil, LegacyStep } from './legacy-flow-structure-util'
+import { Migration } from '.'
 
 export const migrateBranchToRouter: Migration = {
     targetSchemaVersion: undefined,
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
-            const unschemedStep = step as unknown as LegacyStep
-            if (unschemedStep.type === 'BRANCH') {
-                const routerAction = {
+            if (step.type === 'BRANCH') {
+                const routerAction: LegacyStep = {
                     displayName: step.displayName,
                     name: step.name,
                     valid: step.valid,
-                    type: FlowActionType.ROUTER,
+                    type: FlowActionKind.ROUTER,
                     skip: false,
                     settings: {
                         branches: [
@@ -32,11 +31,17 @@ export const migrateBranchToRouter: Migration = {
                             sampleDataInputFileId: undefined,
                             lastTestDate: undefined,
                         },
+                        pieceName: '',
+                        pieceVersion: '',
+                        actionName: '',
+                        triggerName: '',
+                        input: {},
+                        propertySettings: {},
                     },
-                    nextAction: unschemedStep.nextAction,
-                    children: [unschemedStep.onSuccessAction ?? null, unschemedStep.onFailureAction ?? null],
+                    nextAction: step.nextAction,
+                    children: [step.onSuccessAction ?? null, step.onFailureAction ?? null],
                 }
-                return routerAction as unknown as Step
+                return routerAction
             }
             return step
         })

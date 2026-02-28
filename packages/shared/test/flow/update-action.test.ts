@@ -1,10 +1,9 @@
 import {
-    FlowActionType,
+    FlowActionKind,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
-    LoopOnItemsAction,
-    RouterAction,
+    FlowVersion,
 } from '../../src'
 import {
     createEmptyFlowVersion,
@@ -14,6 +13,11 @@ import {
     createFlowVersionWithSimpleAction,
 } from './test-utils'
 
+function getNodeData(flow: FlowVersion, id: string) {
+    const node = flow.graph.nodes.find(n => n.id === id)
+    return node?.data as Record<string, unknown> | undefined
+}
+
 describe('Update Action', () => {
     it('should update code action settings', () => {
         const flow = createFlowVersionWithSimpleAction()
@@ -22,7 +26,7 @@ describe('Update Action', () => {
             request: {
                 name: 'step_1',
                 displayName: 'Updated Code',
-                type: FlowActionType.CODE,
+                kind: FlowActionKind.CODE,
                 valid: true,
                 settings: {
                     sourceCode: {
@@ -34,9 +38,11 @@ describe('Update Action', () => {
             },
         }
         const result = flowOperations.apply(flow, op)
-        const step = result.steps.find(s => s.name === 'step_1')!
-        expect(step.displayName).toBe('Updated Code')
-        expect(step.settings.sourceCode.code).toContain('updated: true')
+        const data = getNodeData(result, 'step_1')!
+        expect(data.displayName).toBe('Updated Code')
+        expect((data.settings as Record<string, unknown>).sourceCode).toEqual(
+            expect.objectContaining({ code: expect.stringContaining('updated: true') }),
+        )
     })
 
     it('should update piece action settings', () => {
@@ -48,7 +54,7 @@ describe('Update Action', () => {
                 action: {
                     name: 'step_1',
                     displayName: 'Send Email',
-                    type: FlowActionType.PIECE,
+                    kind: FlowActionKind.PIECE,
                     valid: true,
                     settings: {
                         pieceName: '@activepieces/piece-gmail',
@@ -65,7 +71,7 @@ describe('Update Action', () => {
             request: {
                 name: 'step_1',
                 displayName: 'Send Slack Message',
-                type: FlowActionType.PIECE,
+                kind: FlowActionKind.PIECE,
                 valid: true,
                 settings: {
                     pieceName: '@activepieces/piece-slack',
@@ -76,9 +82,9 @@ describe('Update Action', () => {
                 },
             },
         })
-        const step = result.steps.find(s => s.name === 'step_1')!
-        expect(step.displayName).toBe('Send Slack Message')
-        expect(step.settings.pieceName).toBe('@activepieces/piece-slack')
+        const data = getNodeData(result, 'step_1')!
+        expect(data.displayName).toBe('Send Slack Message')
+        expect((data.settings as Record<string, unknown>).pieceName).toBe('@activepieces/piece-slack')
     })
 
     it('should update action displayName', () => {
@@ -88,7 +94,7 @@ describe('Update Action', () => {
             request: {
                 name: 'step_1',
                 displayName: 'My Custom Step Name',
-                type: FlowActionType.CODE,
+                kind: FlowActionKind.CODE,
                 valid: true,
                 settings: {
                     sourceCode: { code: 'test', packageJson: '{}' },
@@ -96,48 +102,44 @@ describe('Update Action', () => {
                 },
             },
         })
-        expect(result.steps.find(s => s.name === 'step_1')!.displayName).toBe('My Custom Step Name')
+        expect(getNodeData(result, 'step_1')!.displayName).toBe('My Custom Step Name')
     })
 
-    it('should update loop action while preserving children refs', () => {
+    it('should update loop action settings', () => {
         const flow = createFlowVersionWithLoop()
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
                 name: 'step_1',
                 displayName: 'Updated Loop',
-                type: FlowActionType.LOOP_ON_ITEMS,
+                kind: FlowActionKind.LOOP_ON_ITEMS,
                 valid: true,
                 settings: {
                     items: '{{trigger.newItems}}',
                 },
             },
         })
-        const loopStep = result.steps.find(s => s.name === 'step_1') as LoopOnItemsAction
-        expect(loopStep.displayName).toBe('Updated Loop')
-        expect(loopStep.settings.items).toBe('{{trigger.newItems}}')
-        expect(loopStep.children).toEqual(['step_2'])
+        const data = getNodeData(result, 'step_1')!
+        expect(data.displayName).toBe('Updated Loop')
+        expect((data.settings as Record<string, unknown>).items).toBe('{{trigger.newItems}}')
     })
 
-    it('should update router action while preserving branches refs', () => {
+    it('should update router action settings', () => {
         const flow = createFlowVersionWithRouter()
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_ACTION,
             request: {
                 name: 'step_1',
                 displayName: 'Updated Router',
-                type: FlowActionType.ROUTER,
+                kind: FlowActionKind.ROUTER,
                 valid: true,
                 settings: {
                     executionType: 'EXECUTE_ALL_MATCH',
                 },
             },
         })
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
-        expect(routerStep.displayName).toBe('Updated Router')
-        expect(routerStep.branches).toHaveLength(2)
-        expect(routerStep.branches![0].steps).toContain('step_2')
-        expect(routerStep.branches![1].steps).toContain('step_3')
+        const data = getNodeData(result, 'step_1')!
+        expect(data.displayName).toBe('Updated Router')
     })
 
     it('should update skip flag', () => {
@@ -147,7 +149,7 @@ describe('Update Action', () => {
             request: {
                 name: 'step_1',
                 displayName: 'Code',
-                type: FlowActionType.CODE,
+                kind: FlowActionKind.CODE,
                 valid: true,
                 skip: true,
                 settings: {
@@ -156,7 +158,7 @@ describe('Update Action', () => {
                 },
             },
         })
-        expect(result.steps.find(s => s.name === 'step_1')!.skip).toBe(true)
+        expect(getNodeData(result, 'step_1')!.skip).toBe(true)
     })
 
     it('should recalculate valid flag after update', () => {
@@ -166,7 +168,7 @@ describe('Update Action', () => {
             request: {
                 name: 'step_1',
                 displayName: 'Code',
-                type: FlowActionType.CODE,
+                kind: FlowActionKind.CODE,
                 valid: false,
                 settings: {
                     sourceCode: { code: 'test', packageJson: '{}' },

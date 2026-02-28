@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, isNil, RouterAction, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, flowStructureUtil, isNil, RouterAction, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
@@ -13,10 +13,17 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         executionState,
         constants,
     }) {
+        const graph = constants.flowVersion!.graph
+        const branchEdges = flowStructureUtil.getBranchEdges(graph, action.name)
+        const branches = branchEdges.map(edge => ({
+            branchType: edge.branchType,
+            branchName: edge.branchName,
+            conditions: edge.conditions,
+        }))
         const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterResolvedInput>({
             unresolvedInput: {
                 ...action.settings,
-                branches: action.branches ?? [],
+                branches,
             },
             executionState,
         })
@@ -76,7 +83,11 @@ async function handleRouterExecution({ action, executionState, constants, censor
                 continue
             }
     
-            const branchStepNames = action.branches?.[i]?.steps ?? []
+            const graph = constants.flowVersion!.graph
+            const branchEdgesInner = flowStructureUtil.getBranchEdges(graph, action.name)
+            const branchStepNames = branchEdgesInner[i]?.target
+                ? flowStructureUtil.getDefaultChain(graph, branchEdgesInner[i].target!)
+                : []
             executionState = await flowExecutor.execute({
                 stepNames: branchStepNames,
                 executionState,
@@ -291,6 +302,5 @@ type RouterResolvedInput = {
         branchType: BranchExecutionType
         branchName: string
         conditions?: BranchCondition[][]
-        steps?: string[]
     }>
 }

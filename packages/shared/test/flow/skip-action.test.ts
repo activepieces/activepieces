@@ -11,6 +11,11 @@ import {
     createFlowVersionWithSimpleAction,
 } from './test-utils'
 
+function getNodeData(flow: FlowVersion, id: string) {
+    const node = flow.graph.nodes.find(n => n.id === id)
+    return node?.data as Record<string, unknown> | undefined
+}
+
 describe('Skip Action', () => {
     it('should skip single action', () => {
         const flow = createFlowVersionWithSimpleAction()
@@ -22,7 +27,7 @@ describe('Skip Action', () => {
             },
         }
         const result = flowOperations.apply(flow, op)
-        expect(result.steps.find(s => s.name === 'step_1')!.skip).toBe(true)
+        expect(getNodeData(result, 'step_1')!.skip).toBe(true)
     })
 
     it('should skip multiple actions', () => {
@@ -42,8 +47,8 @@ describe('Skip Action', () => {
                 skip: true,
             },
         })
-        expect(result.steps.find(s => s.name === 'step_1')!.skip).toBe(true)
-        expect(result.steps.find(s => s.name === 'step_2')!.skip).toBe(true)
+        expect(getNodeData(result, 'step_1')!.skip).toBe(true)
+        expect(getNodeData(result, 'step_2')!.skip).toBe(true)
     })
 
     it('should unskip action', () => {
@@ -56,7 +61,7 @@ describe('Skip Action', () => {
             type: FlowOperationType.SET_SKIP_ACTION,
             request: { names: ['step_1'], skip: false },
         })
-        expect(result.steps.find(s => s.name === 'step_1')!.skip).toBe(false)
+        expect(getNodeData(result, 'step_1')!.skip).toBe(false)
     })
 
     it('should leave non-targeted actions unchanged', () => {
@@ -73,8 +78,8 @@ describe('Skip Action', () => {
             type: FlowOperationType.SET_SKIP_ACTION,
             request: { names: ['step_1'], skip: true },
         })
-        expect(result.steps.find(s => s.name === 'step_1')!.skip).toBe(true)
-        expect(result.steps.find(s => s.name === 'step_2')!.skip).toBeUndefined()
+        expect(getNodeData(result, 'step_1')!.skip).toBe(true)
+        expect(getNodeData(result, 'step_2')!.skip).toBeUndefined()
     })
 
     it('should consider skipped steps when calculating flow validity', () => {

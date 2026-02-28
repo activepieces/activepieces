@@ -6,8 +6,9 @@ import {
     FileCompression,
     FileType,
     FlowId,
-    FlowTrigger,
-    FlowTriggerType,
+    flowStructureUtil,
+    FlowTriggerKind,
+    FlowVersion,
     getPieceMajorAndMinorVersion,
     PieceTrigger,
     PopulatedFlow,
@@ -51,7 +52,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
             type: FileType.TRIGGER_EVENT_FILE,
             compression: FileCompression.NONE,
         })
-        const sourceName = getSourceName(flow.version.trigger)
+        const sourceName = getSourceName(flow.version)
 
         const trigger = await triggerEventRepo().save({
             id: apId(),
@@ -70,11 +71,14 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         projectId,
         flow,
     }: TestParams): Promise<SeekPage<TriggerEventWithPayload>> {
-        const trigger = flow.version.trigger
+        const triggerNode = flowStructureUtil.getTriggerNode(flow.version.graph)
         const platformId = await projectService.getPlatformId(projectId)
         const emptyPage = paginationHelper.createPage<TriggerEventWithPayload>([], null)
-        switch (trigger.type) {
-            case FlowTriggerType.PIECE: {
+        if (!triggerNode) {
+            return emptyPage
+        }
+        switch (triggerNode.data.kind) {
+            case FlowTriggerKind.PIECE: {
 
                 const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
@@ -113,7 +117,8 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     limit: engineResponse.result.output.length,
                 })
             }
-            case FlowTriggerType.EMPTY:
+            case FlowTriggerKind.EMPTY:
+            default:
                 return emptyPage
         }
     },
@@ -125,7 +130,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
         limit,
     }: ListParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
-        const sourceName = getSourceName(flow.version.trigger)
+        const sourceName = getSourceName(flow.version)
         const flowId = flow.id
         const paginator = buildPaginator({
             entity: TriggerEventEntity,
@@ -156,10 +161,14 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function getSourceName(trigger: FlowTrigger): string {
-    switch (trigger.type) {
-        case FlowTriggerType.PIECE: {
-            const pieceTrigger = trigger as PieceTrigger
+function getSourceName(flowVersion: FlowVersion): string {
+    const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph)
+    if (!triggerNode) {
+        return FlowTriggerKind.EMPTY
+    }
+    switch (triggerNode.data.kind) {
+        case FlowTriggerKind.PIECE: {
+            const pieceTrigger = triggerNode.data as PieceTrigger
             const pieceName = pieceTrigger.settings.pieceName
             const pieceVersion = getPieceMajorAndMinorVersion(
                 pieceTrigger.settings.pieceVersion,
@@ -168,8 +177,9 @@ function getSourceName(trigger: FlowTrigger): string {
             return `${pieceName}@${pieceVersion}:${triggerName}`
         }
 
-        case FlowTriggerType.EMPTY:
-            return trigger.type
+        case FlowTriggerKind.EMPTY:
+        default:
+            return triggerNode.data.kind
     }
 }
 

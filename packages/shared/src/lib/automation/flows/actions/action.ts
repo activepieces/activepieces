@@ -4,7 +4,7 @@ import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
 
-export enum FlowActionType {
+export enum FlowActionKind {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
@@ -68,7 +68,7 @@ export type CodeActionSettings = Static<typeof CodeActionSettings>
 
 export const CodeActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.CODE),
+    kind: Type.Literal(FlowActionKind.CODE),
     settings: CodeActionSettings,
 })
 export const PieceActionSettings = Type.Object({
@@ -84,7 +84,7 @@ export type PieceActionSettings = Static<typeof PieceActionSettings>
 
 export const PieceActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.PIECE),
+    kind: Type.Literal(FlowActionKind.PIECE),
     settings: PieceActionSettings,
 })
 
@@ -99,9 +99,8 @@ export type LoopOnItemsActionSettings = Static<
 
 export const LoopOnItemsActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.LOOP_ON_ITEMS),
+    kind: Type.Literal(FlowActionKind.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
-    children: Type.Optional(Type.Array(Type.String())),
 })
 
 export enum BranchOperator {
@@ -248,20 +247,6 @@ export type BranchSingleValueCondition = Static<
   typeof BranchSingleValueCondition
 >
 
-export const FlowBranchSchema = DiscriminatedUnion('branchType', [
-    Type.Object({
-        conditions: Type.Array(Type.Array(BranchConditionValid(false))),
-        branchType: Type.Literal(BranchExecutionType.CONDITION),
-        branchName: Type.String(),
-        steps: Type.Array(Type.String()),
-    }),
-    Type.Object({
-        branchType: Type.Literal(BranchExecutionType.FALLBACK),
-        branchName: Type.String(),
-        steps: Type.Array(Type.String()),
-    }),
-])
-
 export const RouterActionSettings = Type.Object({
     ...commonActionSettings,
     executionType: Type.Enum(RouterExecutionType),
@@ -275,12 +260,11 @@ export type RouterActionSettings = Static<typeof RouterActionSettings>
 
 export const RouterActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.ROUTER),
+    kind: Type.Literal(FlowActionKind.ROUTER),
     settings: RouterActionSettings,
-    branches: Type.Optional(Type.Array(FlowBranchSchema)),
 })
 
-export const SingleActionSchema = DiscriminatedUnion('type', [
+export const SingleActionSchema = DiscriminatedUnion('kind', [
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
@@ -288,8 +272,6 @@ export const SingleActionSchema = DiscriminatedUnion('type', [
 ])
 
 export type FlowAction = Static<typeof SingleActionSchema>
-
-export type FlowBranch = Static<typeof FlowBranchSchema>
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema>
 

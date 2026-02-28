@@ -38,7 +38,7 @@ export const FlowCard = ({
           )}
         </div>
 
-        {flow.trigger && (
+        {flow.graph && (
           <div className="h-6 px-3 flex items-center rounded-md shrink-0">
             <PieceIconList
               flowVersion={flow}

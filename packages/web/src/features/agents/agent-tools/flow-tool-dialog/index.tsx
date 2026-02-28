@@ -1,8 +1,9 @@
 import {
   AgentTool,
-  FlowTriggerType,
+  FlowTriggerKind,
   AgentToolType,
   AgentFlowTool,
+  flowStructureUtil,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -63,11 +64,13 @@ export function AgentFlowToolDialog({
   });
 
   const flows = useMemo(() => {
-    return data?.data.filter(
-      (flow) =>
-        flow.version.trigger.type === FlowTriggerType.PIECE &&
-        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
-    );
+    return data?.data.filter((flow) => {
+      const trigger = flowStructureUtil.getTriggerNode(flow.version.graph);
+      return (
+        trigger?.data.kind === FlowTriggerKind.PIECE &&
+        trigger.data.settings.pieceName === '@activepieces/piece-mcp'
+      );
+    });
   }, [data]);
 
   const handleSave = () => {

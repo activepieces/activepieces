@@ -1,7 +1,7 @@
 import {
-  FlowAction,
-  FlowActionType,
-  FlowTrigger,
+  FlowActionKind,
+  FlowGraph,
+  flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
@@ -140,7 +140,7 @@ export const useGradientFromPieces = (
   excludeCore = false,
 ) => {
   const steps = useMemo(
-    () => (flowVersion ? [flowVersion.trigger, ...flowVersion.steps] : []),
+    () => (flowVersion ? flowStructureUtil.getAllSteps(flowVersion) : []),
     [flowVersion],
   );
 
@@ -163,7 +163,7 @@ export const useGradientFromPieces = (
         displayName: piece.displayName,
         logoUrl: piece.logoUrl,
         description: piece.description,
-        type: FlowActionType.PIECE as const,
+        type: FlowActionKind.PIECE as const,
         pieceType: piece.pieceType,
         pieceName: piece.name,
         pieceVersion: piece.version,
@@ -223,6 +223,5 @@ export const useGradientFromPieces = (
 };
 
 type FlowVersionLike = {
-  trigger: FlowTrigger;
-  steps: FlowAction[];
+  graph: FlowGraph;
 };

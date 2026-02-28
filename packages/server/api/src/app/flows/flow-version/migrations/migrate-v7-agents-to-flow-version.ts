@@ -1,13 +1,13 @@
 import {
     AgentPieceProps,
-    FlowActionType,
+    FlowActionKind,
     FlowVersion,
     isNil,
     PopulatedFlow,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../../database/database-connection'
-import { Migration } from '.'
 import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
+import { Migration } from '.'
 
 export const moveAgentsToFlowVerion: Migration = {
     targetSchemaVersion: '7',
@@ -16,7 +16,7 @@ export const moveAgentsToFlowVerion: Migration = {
 
         const agentsAndMcpPromises = await Promise.all(
             legacyFlowStructureUtil.getAllSteps(flowVersion).map(async (step): Promise<{ agent: Record<string, unknown>, tools: { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[] } | null> => {
-                if (step.type === FlowActionType.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
+                if (step.type === FlowActionKind.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
                     const agentResults = await db.query('SELECT * FROM agent WHERE "externalId" = $1', [step.settings.input['agentId']])
                     if (isNil(agentResults) || agentResults.length === 0) {
                         return null
@@ -69,7 +69,7 @@ export const moveAgentsToFlowVerion: Migration = {
         )
 
         const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (step.type === FlowActionType.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
+            if (step.type === FlowActionKind.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
                 const prompt = step.settings.input['prompt']
                 const agentAndTools = agentsAndMcpPromises.find((agentAndMcp) => agentAndMcp?.agent?.externalId === step.settings.input['agentId'])
 

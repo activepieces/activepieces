@@ -1,10 +1,8 @@
 import {
-    FlowActionType,
+    FlowEdgeType,
     flowOperations,
     FlowOperationType,
     FlowVersion,
-    LoopOnItemsAction,
-    RouterAction,
     StepLocationRelativeToParent,
 } from '../../src'
 import {
@@ -15,8 +13,18 @@ import {
     createRouterAction,
 } from './test-utils'
 
+function findNode(flow: FlowVersion, id: string) {
+    return flow.graph.nodes.find(n => n.id === id)
+}
+
+function getBranchEdges(flow: FlowVersion, routerId: string) {
+    return flow.graph.edges
+        .filter(e => e.source === routerId && e.type === FlowEdgeType.BRANCH)
+        .sort((a, b) => ((a as Record<string, unknown>).branchIndex as number) - ((b as Record<string, unknown>).branchIndex as number))
+}
+
 describe('Delete Branch', () => {
-    it('should delete branch with steps and remove steps from flat array', () => {
+    it('should delete branch with steps and remove steps from graph', () => {
         const flow = createFlowVersionWithRouter()
         // Branch 0 has step_2
         const result = flowOperations.apply(flow, {
@@ -26,20 +34,17 @@ describe('Delete Branch', () => {
                 branchIndex: 0,
             },
         })
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
-        expect(routerStep.branches).toHaveLength(1)
-        // step_2 should be removed from the steps array
-        expect(result.steps.find(s => s.name === 'step_2')).toBeUndefined()
+        const branchEdges = getBranchEdges(result, 'step_1')
+        expect(branchEdges).toHaveLength(1)
+        // step_2 should be removed
+        expect(findNode(result, 'step_2')).toBeUndefined()
     })
 
     it('should delete empty branch', () => {
-        const router = createRouterAction('step_1')
-        ;(router as RouterAction).branches![0].steps = []
-        ;(router as RouterAction).branches![1].steps = []
         let flow = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: router },
+            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
         })
         // Add a third branch to have something to delete
         flow = flowOperations.apply(flow, {
@@ -50,8 +55,7 @@ describe('Delete Branch', () => {
                 branchName: 'Extra',
             },
         })
-        const beforeRouter = flow.steps.find(s => s.name === 'step_1') as RouterAction
-        const countBefore = beforeRouter.branches!.length
+        const countBefore = getBranchEdges(flow, 'step_1').length
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.DELETE_BRANCH,
             request: {
@@ -59,19 +63,14 @@ describe('Delete Branch', () => {
                 branchIndex: 1,
             },
         })
-        const afterRouter = result.steps.find(s => s.name === 'step_1') as RouterAction
-        expect(afterRouter.branches!.length).toBe(countBefore - 1)
+        expect(getBranchEdges(result, 'step_1').length).toBe(countBefore - 1)
     })
 
     it('should delete branch with nested loop inside and cascade removal', () => {
-        // Build router with a loop inside branch 0
-        const router = createRouterAction('step_1')
-        ;(router as RouterAction).branches![0].steps = []
-        ;(router as RouterAction).branches![1].steps = []
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: router },
+            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
         })
         // Add loop inside branch 0
         flow = flowOperations.apply(flow, {
@@ -101,8 +100,8 @@ describe('Delete Branch', () => {
             },
         })
         // Both step_2 (loop) and step_3 (child of loop) should be removed
-        expect(result.steps.find(s => s.name === 'step_2')).toBeUndefined()
-        expect(result.steps.find(s => s.name === 'step_3')).toBeUndefined()
+        expect(findNode(result, 'step_2')).toBeUndefined()
+        expect(findNode(result, 'step_3')).toBeUndefined()
     })
 
     it('should keep remaining branches intact after deletion', () => {
@@ -115,11 +114,11 @@ describe('Delete Branch', () => {
                 branchIndex: 0,
             },
         })
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
-        expect(routerStep.branches).toHaveLength(1)
+        const branchEdges = getBranchEdges(result, 'step_1')
+        expect(branchEdges).toHaveLength(1)
         // The fallback branch (originally at index 1) should still be intact
-        expect(routerStep.branches![0].branchName).toBe('Otherwise')
-        expect(routerStep.branches![0].steps).toContain('step_3')
-        expect(result.steps.find(s => s.name === 'step_3')).toBeDefined()
+        expect((branchEdges[0] as Record<string, unknown>).branchName).toBe('Otherwise')
+        expect(branchEdges[0].target).toBe('step_3')
+        expect(findNode(result, 'step_3')).toBeDefined()
     })
 })

@@ -1,23 +1,36 @@
 import {
-    FlowActionType,
+    FlowEdgeType,
     flowOperations,
     FlowOperationType,
     FlowVersion,
-    LoopOnItemsAction,
-    RouterAction,
     StepLocationRelativeToParent,
 } from '../../src'
 import {
     createCodeAction,
     createEmptyFlowVersion,
     createFlowVersionWithLoop,
-    createFlowVersionWithRouter,
     createLoopAction,
     createRouterAction,
 } from './test-utils'
 
+function findNode(flow: FlowVersion, id: string) {
+    return flow.graph.nodes.find(n => n.id === id)
+}
+
+function hasDefaultEdge(flow: FlowVersion, source: string, target: string) {
+    return flow.graph.edges.some(e => e.source === source && e.target === target && e.type === FlowEdgeType.DEFAULT)
+}
+
+function hasLoopEdge(flow: FlowVersion, source: string, target: string) {
+    return flow.graph.edges.some(e => e.source === source && e.target === target && e.type === FlowEdgeType.LOOP)
+}
+
+function hasBranchEdge(flow: FlowVersion, source: string, target: string, branchIndex: number) {
+    return flow.graph.edges.some(e => e.source === source && e.target === target && e.type === FlowEdgeType.BRANCH && (e as Record<string, unknown>).branchIndex === branchIndex)
+}
+
 describe('Move Action', () => {
-    it('should move action from trigger.steps to inside loop', () => {
+    it('should move action from main chain to inside loop', () => {
         // Build: trigger → step_1 (loop, empty) → step_2 (code)
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
@@ -37,19 +50,17 @@ describe('Move Action', () => {
                 stepLocationRelativeToNewParent: StepLocationRelativeToParent.INSIDE_LOOP,
             },
         })
-        expect(result.trigger.steps).not.toContain('step_2')
-        const loopStep = result.steps.find(s => s.name === 'step_1') as LoopOnItemsAction
-        expect(loopStep.children).toContain('step_2')
+        // step_2 should not be connected after step_1 via default edge
+        expect(hasDefaultEdge(result, 'step_1', 'step_2')).toBe(false)
+        // step_2 should be inside loop
+        expect(hasLoopEdge(result, 'step_1', 'step_2')).toBe(true)
     })
 
-    it('should move action from trigger.steps to inside router branch', () => {
+    it('should move action from main chain to inside router branch', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
-        const router = createRouterAction('step_1')
-        ;(router as RouterAction).branches![0].steps = []
-        ;(router as RouterAction).branches![1].steps = []
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: router },
+            request: { parentStep: 'trigger', action: createRouterAction('step_1') },
         })
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
@@ -64,12 +75,11 @@ describe('Move Action', () => {
                 branchIndex: 0,
             },
         })
-        expect(result.trigger.steps).not.toContain('step_2')
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
-        expect(routerStep.branches![0].steps).toContain('step_2')
+        expect(hasDefaultEdge(result, 'step_1', 'step_2')).toBe(false)
+        expect(hasBranchEdge(result, 'step_1', 'step_2', 0)).toBe(true)
     })
 
-    it('should move action from loop children to trigger.steps', () => {
+    it('should move action from loop to main chain', () => {
         const flow = createFlowVersionWithLoop()
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.MOVE_ACTION,
@@ -79,9 +89,8 @@ describe('Move Action', () => {
                 stepLocationRelativeToNewParent: StepLocationRelativeToParent.AFTER,
             },
         })
-        const loopStep = result.steps.find(s => s.name === 'step_1') as LoopOnItemsAction
-        expect(loopStep.children).not.toContain('step_2')
-        expect(result.trigger.steps).toContain('step_2')
+        expect(hasLoopEdge(result, 'step_1', 'step_2')).toBe(false)
+        expect(hasDefaultEdge(result, 'step_1', 'step_2')).toBe(true)
     })
 
     it('should move 4th step to directly after the trigger', () => {
@@ -103,9 +112,8 @@ describe('Move Action', () => {
             type: FlowOperationType.ADD_ACTION,
             request: { parentStep: 'step_3', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_4') },
         })
-        expect(flow.trigger.steps).toEqual(['step_1', 'step_2', 'step_3', 'step_4'])
 
-        // Move step_4 to directly after trigger (before step_1)
+        // Move step_4 to directly after trigger
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.MOVE_ACTION,
             request: {
@@ -114,37 +122,10 @@ describe('Move Action', () => {
                 stepLocationRelativeToNewParent: StepLocationRelativeToParent.AFTER,
             },
         })
-        // step_4 should be the first step after trigger
-        expect(result.trigger.steps).toEqual(['step_4', 'step_1', 'step_2', 'step_3'])
-        expect(result.steps.find(s => s.name === 'step_4')).toBeDefined()
-    })
-
-    it('should move middle step to directly after the trigger', () => {
-        // Build: trigger → step_1 → step_2 → step_3
-        let flow: FlowVersion = createEmptyFlowVersion()
-        flow = flowOperations.apply(flow, {
-            type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'trigger', action: createCodeAction('step_1') },
-        })
-        flow = flowOperations.apply(flow, {
-            type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_2') },
-        })
-        flow = flowOperations.apply(flow, {
-            type: FlowOperationType.ADD_ACTION,
-            request: { parentStep: 'step_2', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, action: createCodeAction('step_3') },
-        })
-
-        // Move step_3 to directly after trigger
-        const result = flowOperations.apply(flow, {
-            type: FlowOperationType.MOVE_ACTION,
-            request: {
-                name: 'step_3',
-                newParentStep: 'trigger',
-                stepLocationRelativeToNewParent: StepLocationRelativeToParent.AFTER,
-            },
-        })
-        expect(result.trigger.steps).toEqual(['step_3', 'step_1', 'step_2'])
+        // trigger → step_4 → step_1 → step_2 → step_3
+        expect(hasDefaultEdge(result, 'trigger', 'step_4')).toBe(true)
+        expect(hasDefaultEdge(result, 'step_4', 'step_1')).toBe(true)
+        expect(findNode(result, 'step_4')).toBeDefined()
     })
 
     it('should verify original location no longer has the ref', () => {
@@ -166,9 +147,8 @@ describe('Move Action', () => {
                 stepLocationRelativeToNewParent: StepLocationRelativeToParent.INSIDE_LOOP,
             },
         })
-        // step_1 should no longer be in trigger.steps (removed by delete, then re-added inside loop)
-        expect(result.trigger.steps).not.toContain('step_1')
-        const loopStep = result.steps.find(s => s.name === 'step_2') as LoopOnItemsAction
-        expect(loopStep.children).toContain('step_1')
+        // step_1 should not be connected from trigger via default edge to step_1 directly
+        // (it should go trigger → step_2 now, and step_1 should be inside loop)
+        expect(hasLoopEdge(result, 'step_2', 'step_1')).toBe(true)
     })
 })

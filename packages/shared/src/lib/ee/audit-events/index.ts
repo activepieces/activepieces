@@ -387,5 +387,11 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated note in flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.DELETE_NOTE:
             return `Deleted note in flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_BRANCH:
+            return `Updated branch number ${
+                event.data.request.request.branchIndex + 1
+            } in flow "${event.data.flowVersion.displayName}" for the step "${
+                event.data.request.request.stepName
+            }".`
     }
 }

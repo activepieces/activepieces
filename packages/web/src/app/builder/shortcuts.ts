@@ -47,8 +47,9 @@ export const useHandleKeyPressOnCanvas = () => {
           `[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`,
         );
       const insideBody = e.target === document.body;
+      const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph);
       const selectedNodesWithoutTrigger = selectedNodes.filter(
-        (node) => node !== flowVersion.trigger.name,
+        (node) => node !== triggerNode?.id,
       );
 
       shortcutHandler(e, {
@@ -111,17 +112,15 @@ export const useHandleKeyPressOnCanvas = () => {
           e.preventDefault();
           canvasBulkActions.getActionsInClipboard().then((actions) => {
             if (actions.length > 0) {
-              const triggerSteps = flowVersion.trigger.steps;
-              const lastStep =
-                triggerSteps.length > 0
-                  ? triggerSteps[triggerSteps.length - 1]
-                  : flowVersion.trigger.name;
+              const pasteLocation =
+                canvasBulkActions.getLastLocationAsPasteLocation(flowVersion);
               const lastSelectedNode =
                 selectedNodes.length === 1 ? selectedNodes[0] : null;
               canvasBulkActions.pasteNodes(
                 flowVersion,
                 {
-                  parentStepName: lastSelectedNode ?? lastStep,
+                  parentStepName:
+                    lastSelectedNode ?? pasteLocation.parentStepName,
                   stepLocationRelativeToParent:
                     StepLocationRelativeToParent.AFTER,
                 },

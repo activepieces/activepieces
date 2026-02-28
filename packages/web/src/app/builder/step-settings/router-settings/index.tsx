@@ -1,11 +1,12 @@
 import {
-  FlowActionType,
+  BranchEdge,
+  FlowActionKind,
+  FlowGraphNode,
   FlowOperationRequest,
   FlowOperationType,
   flowStructureUtil,
   FlowVersion,
   isNil,
-  RouterAction,
   RouterExecutionType,
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
@@ -33,16 +34,18 @@ import BranchesToolbar from './branches-toolbar';
 export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   const [
     step,
+    branchEdges,
     applyOperation,
     setSelectedBranchIndex,
     selectedBranchIndex,
     addOperationListener,
     removeOperationListener,
   ] = useBuilderStateContext((state) => [
-    flowStructureUtil.getActionOrThrow(
+    flowStructureUtil.getActionOrThrow(state.selectedStep!, state.flowVersion),
+    flowStructureUtil.getBranchEdges(
+      state.flowVersion.graph,
       state.selectedStep!,
-      state.flowVersion,
-    ) as RouterAction,
+    ),
     state.applyOperation,
     state.setSelectedBranchIndex,
     state.selectedBranchIndex,
@@ -51,26 +54,25 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   ]);
   const { fitView } = useReactFlow();
 
-  const { control, setValue, formState } =
-    useFormContext<RouterAction>();
+  const { control, setValue, formState } = useFormContext<RouterFormData>();
 
   //To validate array items we need to use form.trigger()
   const { insert, remove, move } = useFieldArray({
     control,
     name: 'branches',
   });
-  const form = useFormContext<RouterAction>();
+  const form = useFormContext<RouterFormData>();
   const deleteBranch = (index: number) => {
     applyOperation({
       type: FlowOperationType.DELETE_BRANCH,
       request: {
-        stepName: step.name,
+        stepName: step.id,
         branchIndex: index,
       },
     });
 
     setSelectedBranchIndex(null);
-    fitView(flowCanvasUtils.createFocusStepInGraphParams(step.name));
+    fitView(flowCanvasUtils.createFocusStepInGraphParams(step.id));
   };
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     ) => {
       switch (operation.type) {
         case FlowOperationType.DELETE_BRANCH: {
-          if (operation.request.stepName !== step.name) {
+          if (operation.request.stepName !== step.id) {
             return;
           }
           remove(operation.request.branchIndex);
@@ -88,38 +90,40 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
         }
         case FlowOperationType.DUPLICATE_BRANCH:
         case FlowOperationType.ADD_BRANCH: {
-          if (operation.request.stepName !== step.name) return;
+          if (operation.request.stepName !== step.id) return;
           const updatedStep = flowStructureUtil.getActionOrThrow(
             operation.request.stepName,
             flowVersion,
           );
-          if (updatedStep.type !== FlowActionType.ROUTER) {
+          if (updatedStep.data.kind !== FlowActionKind.ROUTER) {
             console.error(
               `Trying to duplicate a branch on a none router step! ${operation.request.stepName}`,
             );
             return;
           }
-          const branch =
-            updatedStep.branches![operation.request.branchIndex];
+          const updatedBranchEdges = flowStructureUtil.getBranchEdges(
+            flowVersion.graph,
+            operation.request.stepName,
+          );
+          const branchEdge = updatedBranchEdges[operation.request.branchIndex];
           if (operation.type === FlowOperationType.DUPLICATE_BRANCH) {
             insert(operation.request.branchIndex + 1, {
-              ...branch,
-              branchName: `${branch.branchName} Copy`,
+              branchName: `${branchEdge.branchName} Copy`,
+              branchType: branchEdge.branchType,
+              conditions: branchEdge.conditions,
             });
           } else {
-            insert(
-              updatedStep.branches!.length - 1,
-              flowStructureUtil.createBranch(
-                `Branch ${updatedStep.branches!.length}`,
-                undefined,
-              ),
-            );
+            insert(updatedBranchEdges.length - 1, {
+              branchName: `Branch ${updatedBranchEdges.length}`,
+              branchType: 'CONDITION',
+              conditions: [[]],
+            });
           }
           form.trigger();
           break;
         }
         case FlowOperationType.MOVE_BRANCH: {
-          if (operation.request.stepName !== step.name) return;
+          if (operation.request.stepName !== step.id) return;
           move(
             operation.request.sourceBranchIndex,
             operation.request.targetBranchIndex,
@@ -179,7 +183,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           <BranchesList
             errors={(formState.errors.branches as unknown[]) ?? []}
             readonly={readonly}
-            step={step}
+            branchEdges={branchEdges}
             branchNameChanged={(index, name) => {
               setValue(`branches.${index}.branchName` as const, name, {
                 shouldValidate: true,
@@ -190,7 +194,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               applyOperation({
                 type: FlowOperationType.MOVE_BRANCH,
                 request: {
-                  stepName: step.name,
+                  stepName: step.id,
                   sourceBranchIndex: sourceIndex,
                   targetBranchIndex: targetIndex,
                 },
@@ -200,7 +204,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               applyOperation({
                 type: FlowOperationType.DUPLICATE_BRANCH,
                 request: {
-                  stepName: step.name,
+                  stepName: step.id,
                   branchIndex: index,
                 },
               });
@@ -208,17 +212,17 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             }}
             setSelectedBranchIndex={(index) => {
               setSelectedBranchIndex(index);
-              const branchSteps = step.branches?.[index]?.steps ?? [];
-              if (branchSteps.length > 0) {
+              const branchEdge = branchEdges[index];
+              if (branchEdge?.target) {
                 fitView(
                   flowCanvasUtils.createFocusStepInGraphParams(
-                    branchSteps[0],
+                    branchEdge.target,
                   ),
                 );
               } else {
                 fitView(
                   flowCanvasUtils.createFocusStepInGraphParams(
-                    `${step.name}-big-add-button-${step.name}-branch-${index}-start-edge`,
+                    `${step.id}-big-add-button-${step.id}-branch-${index}-start-edge`,
                   ),
                 );
               }
@@ -228,11 +232,11 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             <div className="mt-2">
               <BranchesToolbar
                 addButtonClicked={() => {
-                  const branchCount = step.branches?.length ?? 0;
+                  const branchCount = branchEdges.length;
                   applyOperation({
                     type: FlowOperationType.ADD_BRANCH,
                     request: {
-                      stepName: step.name,
+                      stepName: step.id,
                       branchIndex: branchCount - 1,
                       branchName: `Branch ${branchCount}`,
                     },
@@ -258,3 +262,12 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
 });
 
 RouterSettings.displayName = 'RouterSettings';
+
+type BranchFormItem = Pick<
+  BranchEdge,
+  'branchName' | 'branchType' | 'conditions'
+>;
+
+type RouterFormData = FlowGraphNode['data'] & {
+  branches?: BranchFormItem[];
+};

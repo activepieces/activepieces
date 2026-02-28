@@ -1,11 +1,12 @@
 import {
-  FlowActionType,
+  FlowActionKind,
   flowStructureUtil,
-  FlowTriggerType,
+  FlowTriggerKind,
   FlowVersion,
   isNil,
   Note,
-  Step,
+  FlowGraphNode,
+  BranchEdge,
 } from '@activepieces/shared';
 import {
   ReactFlow,
@@ -146,15 +147,15 @@ export const FlowCanvas = React.memo(
       }
       const selectedSteps = selectedNodes
         .map((node) => flowStructureUtil.getStep(node, flowVersion))
-        .filter((step) => !isNil(step));
+        .filter((step): step is FlowGraphNode => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
-          step.type === FlowActionType.LOOP_ON_ITEMS ||
-          step.type === FlowActionType.ROUTER
+          step.data.kind === FlowActionKind.LOOP_ON_ITEMS ||
+          step.data.kind === FlowActionKind.ROUTER
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step, flowVersion)
-            .filter((c) => isNil(selectedNodes.find((n) => n === c.name)));
+            .filter((c) => isNil(selectedNodes.find((n) => n === c.id)));
           selectedSteps.push(...childrenNotSelected);
         }
       });
@@ -166,7 +167,7 @@ export const FlowCanvas = React.memo(
       }
       reactFlowStore
         .getState()
-        .addSelectedNodes(selectedSteps.map((step) => step.name));
+        .addSelectedNodes(selectedSteps.map((step) => step.id));
     }, [selectedNodes, reactFlowStore, selectedStep]);
 
     const { setCursorPosition } = useCursorPosition();
@@ -252,21 +253,44 @@ export const FlowCanvas = React.memo(
 );
 
 FlowCanvas.displayName = 'FlowCanvas';
-const getChildrenKey = (step: Step) => {
-  switch (step.type) {
-    case FlowActionType.LOOP_ON_ITEMS:
-      return (step.children ?? []).join('-');
-    case FlowActionType.ROUTER:
-      return (step.branches ?? []).reduce((routerKey, branch) => {
-        const childrenKey =
-          branch.steps.length > 0 ? branch.steps.join('-') : 'null';
+const getChildrenKey = (node: FlowGraphNode, flowVersion: FlowVersion) => {
+  const graph = flowVersion.graph;
+  switch (node.data.kind) {
+    case FlowActionKind.LOOP_ON_ITEMS: {
+      const loopEdge = flowStructureUtil.getLoopEdge(graph, node.id);
+      if (loopEdge && loopEdge.target) {
+        return flowStructureUtil
+          .getDefaultChain(graph, loopEdge.target)
+          .join('-');
+      }
+      return '';
+    }
+    case FlowActionKind.ROUTER: {
+      const branchEdges: BranchEdge[] = flowStructureUtil.getBranchEdges(
+        graph,
+        node.id,
+      );
+      return branchEdges.reduce((routerKey, branchEdge) => {
+        const childrenKey = branchEdge.target
+          ? flowStructureUtil
+              .getDefaultChain(graph, branchEdge.target)
+              .join('-')
+          : 'null';
         return `${routerKey}-${childrenKey}`;
       }, '');
-    case FlowTriggerType.PIECE:
-    case FlowTriggerType.EMPTY:
-      return step.steps.join('-');
-    case FlowActionType.CODE:
-    case FlowActionType.PIECE:
+    }
+    case FlowTriggerKind.PIECE:
+    case FlowTriggerKind.EMPTY: {
+      const successorEdge = flowStructureUtil.getSuccessorEdge(graph, node.id);
+      if (successorEdge && successorEdge.target) {
+        return flowStructureUtil
+          .getDefaultChain(graph, successorEdge.target)
+          .join('-');
+      }
+      return '';
+    }
+    case FlowActionKind.CODE:
+    case FlowActionKind.PIECE:
       return '';
   }
 };
@@ -277,18 +301,19 @@ const createGraphKey = (
 ) => {
   const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion)
-    .reduce((acc, step) => {
+    .reduce((acc, node) => {
       const branchesNames =
-        step.type === FlowActionType.ROUTER
-          ? (step.branches ?? [])
-              .map((branch) => branch.branchName)
+        node.data.kind === FlowActionKind.ROUTER
+          ? flowStructureUtil
+              .getBranchEdges(flowVersion.graph, node.id)
+              .map((branchEdge) => branchEdge.branchName)
               .join('-')
           : '0';
-      const childrenKey = getChildrenKey(step);
-      return `${acc}-${step.displayName}-${step.type}-${
-        step.type === FlowActionType.PIECE ||
-        step.type === FlowTriggerType.PIECE
-          ? step.settings.pieceName
+      const childrenKey = getChildrenKey(node, flowVersion);
+      return `${acc}-${node.data.displayName}-${node.data.kind}-${
+        node.data.kind === FlowActionKind.PIECE ||
+        node.data.kind === FlowTriggerKind.PIECE
+          ? node.data.settings.pieceName
           : ''
       }-${branchesNames}-${childrenKey}}`;
     }, '');

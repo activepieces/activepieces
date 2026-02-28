@@ -1,16 +1,16 @@
 import {
-    FlowActionType,
+    FlowActionKind,
     FlowVersion,
 } from '@activepieces/shared'
-import { Migration } from '.'
 import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
+import { Migration } from '.'
 
 
 export const migrateV10AiPiecesProviderId: Migration = {
     targetSchemaVersion: '10',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (step.type !== FlowActionType.PIECE) {
+            if (step.type !== FlowActionKind.PIECE) {
                 return step
             }
             if (step.settings.pieceName !== '@activepieces/piece-ai' || !['0.0.1', '0.0.2'].includes(step.settings.pieceVersion)) {

@@ -1,5 +1,5 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
+import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionKind, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateText, JSONParseError, LanguageModel, NoObjectGeneratedError, Output, Tool, zodSchema } from 'ai'
 import { z } from 'zod'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -155,7 +155,7 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
         const step: PieceAction = {
             name: operation.actionName,
             displayName: operation.actionName,
-            type: FlowActionType.PIECE,
+            type: FlowActionKind.PIECE,
             settings: {
                 input: resolvedInput,
                 actionName: operation.actionName,

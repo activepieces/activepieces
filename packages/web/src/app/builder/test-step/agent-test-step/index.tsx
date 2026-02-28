@@ -2,9 +2,10 @@ import {
   AgentResult,
   AgentTaskStatus,
   AI_PIECE_NAME,
-  FlowActionType,
+  FlowActionKind,
+  FlowGraphNode,
+  FlowNodeData,
   isNil,
-  Step,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -12,14 +13,21 @@ import { JsonViewer } from '@/components/json-viewer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
 
-export const isRunAgent = (step?: Step | null) => {
+export const isRunAgent = (step?: FlowGraphNode | FlowNodeData | null) => {
+  if (isNil(step)) return false;
+  const data = isFlowGraphNode(step) ? step.data : step;
   return (
-    !isNil(step) &&
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === AI_PIECE_NAME &&
-    step.settings.actionName === 'run_agent'
+    data.kind === FlowActionKind.PIECE &&
+    data.settings.pieceName === AI_PIECE_NAME &&
+    data.settings.actionName === 'run_agent'
   );
 };
+
+function isFlowGraphNode(
+  step: FlowGraphNode | FlowNodeData,
+): step is FlowGraphNode {
+  return 'data' in step && 'type' in step && typeof step.type === 'string';
+}
 
 export const defaultAgentOutput = {
   prompt: '',

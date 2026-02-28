@@ -23,9 +23,9 @@ export const sampleDataHooks = {
         const singleStepSampleData = await Promise.all(
           steps.map(async (step) => {
             return {
-              [step.name]: await getSampleData(
+              [step.id]: await getSampleData(
                 flowVersion!,
-                step.name,
+                step.id,
                 projectId!,
                 SampleDataFileType.OUTPUT,
               ),
@@ -55,10 +55,10 @@ export const sampleDataHooks = {
         const singleStepSampleDataInput = await Promise.all(
           steps.map(async (step) => {
             return {
-              [step.name]: step.settings.sampleData?.sampleDataInputFileId
+              [step.id]: step.data.settings.sampleData?.sampleDataInputFileId
                 ? await getSampleData(
                     flowVersion!,
-                    step.name,
+                    step.id,
                     projectId!,
                     SampleDataFileType.INPUT,
                   )

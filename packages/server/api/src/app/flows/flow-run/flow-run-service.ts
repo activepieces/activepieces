@@ -12,6 +12,7 @@ import {
     FlowRun,
     FlowRunId,
     FlowRunStatus,
+    flowStructureUtil,
     FlowVersionId,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
@@ -150,7 +151,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
                     oldFlowRun.flowId,
                 )
-                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                const triggerNode = flowStructureUtil.getTriggerNode(latestFlowVersion.graph)
+                const payload = oldFlowRun.steps ? oldFlowRun.steps[triggerNode!.id]?.output : undefined
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
@@ -327,7 +329,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const triggerPayload = await sampleDataService(log).getOrReturnEmpty({
             projectId,
             flowVersion,
-            stepName: flowVersion.trigger.name,
+            stepName: flowStructureUtil.getTriggerNode(flowVersion.graph)!.id,
             type: SampleDataFileType.OUTPUT,
         })
         const flowRun = await queueOrCreateInstantly({

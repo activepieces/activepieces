@@ -1,6 +1,6 @@
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionKind, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -181,7 +181,7 @@ type CreateOutputContextParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepName: string
-    stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
+    stepOutput: GenericStepOutput<FlowActionKind.PIECE, unknown>
 }
 
 const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {

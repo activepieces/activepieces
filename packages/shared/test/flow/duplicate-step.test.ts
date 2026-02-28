@@ -1,9 +1,9 @@
 import {
-    FlowActionType,
+    FlowActionKind,
+    FlowEdgeType,
     flowOperations,
     FlowOperationType,
     FlowVersion,
-    LoopOnItemsAction,
     StepLocationRelativeToParent,
 } from '../../src'
 import {
@@ -13,6 +13,14 @@ import {
     createLoopAction,
 } from './test-utils'
 
+function findNode(flow: FlowVersion, id: string) {
+    return flow.graph.nodes.find(n => n.id === id)
+}
+
+function getNodeData(flow: FlowVersion, id: string) {
+    return findNode(flow, id)?.data as Record<string, unknown> | undefined
+}
+
 describe('Duplicate Step', () => {
     it('should duplicate simple code action', () => {
         const flow = createFlowVersionWithSimpleAction()
@@ -21,22 +29,27 @@ describe('Duplicate Step', () => {
             request: { stepName: 'step_1' },
         })
         // Original still exists
-        expect(result.steps.find(s => s.name === 'step_1')).toBeDefined()
-        // A new step should be created with "Copy" suffix in displayName
-        const duplicated = result.steps.find(s => s.name !== 'step_1' && s.type === FlowActionType.CODE)
-        expect(duplicated).toBeDefined()
-        expect(duplicated!.displayName).toContain('Copy')
+        expect(findNode(result, 'step_1')).toBeDefined()
+        // A new node should be created with "Copy" suffix in displayName
+        const actionNodes = result.graph.nodes.filter(n => {
+            const data = n.data as Record<string, unknown>
+            return n.id !== 'step_1' && n.id !== 'trigger' && data.kind === FlowActionKind.CODE
+        })
+        expect(actionNodes).toHaveLength(1)
+        expect((actionNodes[0].data as Record<string, unknown>).displayName).toContain('Copy')
     })
 
-    it('should place duplicate after original in parent step list', () => {
+    it('should place duplicate after original via default edge', () => {
         const flow = createFlowVersionWithSimpleAction()
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.DUPLICATE_ACTION,
             request: { stepName: 'step_1' },
         })
-        // trigger.steps should have step_1 followed by the new duplicated step
-        expect(result.trigger.steps).toHaveLength(2)
-        expect(result.trigger.steps[0]).toBe('step_1')
+        // trigger → step_1 → duplicated
+        const step1DefaultEdge = result.graph.edges.find(e => e.source === 'step_1' && e.type === FlowEdgeType.DEFAULT)
+        expect(step1DefaultEdge).toBeDefined()
+        const duplicatedId = step1DefaultEdge!.target
+        expect(findNode(result, duplicatedId)).toBeDefined()
     })
 
     it('should duplicate loop with children', () => {
@@ -53,19 +66,21 @@ describe('Duplicate Step', () => {
             type: FlowOperationType.DUPLICATE_ACTION,
             request: { stepName: 'step_1' },
         })
-        // Original loop with child still intact
-        const originalLoop = result.steps.find(s => s.name === 'step_1') as LoopOnItemsAction
-        expect(originalLoop.children).toContain('step_2')
-        // A duplicate loop should exist
-        const duplicatedLoop = result.steps.find(
-            s => s.name !== 'step_1' && s.type === FlowActionType.LOOP_ON_ITEMS,
-        ) as LoopOnItemsAction
-        expect(duplicatedLoop).toBeDefined()
-        expect(duplicatedLoop.displayName).toContain('Copy')
-        // The duplicated loop should have children with new names
-        expect(duplicatedLoop.children).toBeDefined()
-        expect(duplicatedLoop.children!.length).toBeGreaterThan(0)
-        expect(duplicatedLoop.children![0]).not.toBe('step_2')
+        // Original loop still has loop edge to step_2
+        const origLoopEdge = result.graph.edges.find(e => e.source === 'step_1' && e.type === FlowEdgeType.LOOP)
+        expect(origLoopEdge).toBeDefined()
+        expect(origLoopEdge!.target).toBe('step_2')
+        // A duplicated loop should exist after step_1
+        const step1DefaultEdge = result.graph.edges.find(e => e.source === 'step_1' && e.type === FlowEdgeType.DEFAULT)
+        expect(step1DefaultEdge).toBeDefined()
+        const dupLoopId = step1DefaultEdge!.target
+        const dupLoopData = getNodeData(result, dupLoopId)!
+        expect(dupLoopData.kind).toBe(FlowActionKind.LOOP_ON_ITEMS)
+        expect(dupLoopData.displayName).toContain('Copy')
+        // The duplicated loop should have a loop edge to a new child
+        const dupLoopEdge = result.graph.edges.find(e => e.source === dupLoopId && e.type === FlowEdgeType.LOOP)
+        expect(dupLoopEdge).toBeDefined()
+        expect(dupLoopEdge!.target).not.toBe('step_2')
     })
 
     it('should update step name references in settings during duplication', () => {
@@ -80,11 +95,12 @@ describe('Duplicate Step', () => {
             type: FlowOperationType.DUPLICATE_ACTION,
             request: { stepName: 'step_1' },
         })
-        const duplicated = result.steps.find(s => s.name !== 'step_1')
+        const duplicated = result.graph.nodes.find(n => n.id !== 'step_1' && n.id !== 'trigger')
         expect(duplicated).toBeDefined()
-        // The reference inside settings.input should be updated to the new step name
-        const inputValue = (duplicated!.settings as { input: Record<string, string> }).input.value
-        expect(inputValue).not.toContain('step_1')
-        expect(inputValue).toContain(duplicated!.name)
+        const data = duplicated!.data as Record<string, unknown>
+        const settings = data.settings as Record<string, unknown>
+        const input = settings.input as Record<string, string>
+        expect(input.value).not.toContain('step_1')
+        expect(input.value).toContain(duplicated!.id)
     })
 })

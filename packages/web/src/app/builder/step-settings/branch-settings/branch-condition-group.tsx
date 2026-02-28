@@ -1,8 +1,8 @@
-import { RouterAction } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
+import { RouterFormData } from '@/app/builder/step-settings';
 import { BranchConditionToolbar } from '@/app/builder/step-settings/branch-settings/branch-condition-toolbar';
 import { BranchSingleCondition } from '@/app/builder/step-settings/branch-settings/branch-single-condition';
 import { HorizontalSeparatorWithText } from '@/components/ui/separator';
@@ -27,7 +27,7 @@ const BranchConditionGroup = React.memo(
     numberOfGroups,
     branchIndex,
   }: BranchConditionGroupProps) => {
-    const form = useFormContext<RouterAction>();
+    const form = useFormContext<RouterFormData>();
     const { fields } = useFieldArray({
       control: form.control,
       name: `branches.${branchIndex}.conditions.${groupIndex}` as const,

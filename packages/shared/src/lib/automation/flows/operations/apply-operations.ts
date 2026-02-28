@@ -1,13 +1,13 @@
 import { FlowVersion, FlowVersionState } from '../flow-version'
-import { FlowTriggerType } from '../triggers/trigger'
+import { FlowNodeType, isActionNodeData } from '../graph/flow-graph'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { actionOperations } from './action-operations'
 import { branchOperations } from './branch-operations'
 import { compositeOperations } from './composite-operations'
-import { ChangeNameRequest, FlowOperationRequest, FlowOperationType } from './index'
 import { noteOperations } from './note-operations'
 import { triggerOperations } from './trigger-operations'
+import { ChangeNameRequest, FlowOperationRequest, FlowOperationType } from './index'
 
 function changeName(flow: FlowVersion, request: ChangeNameRequest): FlowVersion {
     flow.displayName = request.displayName
@@ -37,6 +37,8 @@ function applyDirect(cloned: FlowVersion, operation: FlowOperationRequest): { re
             return { result: branchOperations.remove(cloned, operation.request), autoUpgrade: true }
         case FlowOperationType.MOVE_BRANCH:
             return { result: branchOperations.move(cloned, operation.request), autoUpgrade: true }
+        case FlowOperationType.UPDATE_BRANCH:
+            return { result: branchOperations.update(cloned, operation.request), autoUpgrade: true }
         case FlowOperationType.CHANGE_NAME:
             return { result: changeName(cloned, operation.request), autoUpgrade: false }
         case FlowOperationType.LOCK_FLOW:
@@ -91,9 +93,10 @@ export const flowOperations = {
             }
         }
 
-        cloned.valid = flowStructureUtil.getAllSteps(cloned).every((step) => {
-            const isSkipped = step.type != FlowTriggerType.EMPTY && step.type != FlowTriggerType.PIECE && step.skip
-            return step.valid || isSkipped
+        cloned.valid = flowStructureUtil.getAllSteps(cloned).every((node) => {
+            const isTriggerNode = node.type === FlowNodeType.TRIGGER
+            const isSkipped = !isTriggerNode && isActionNodeData(node.data) && node.data.skip
+            return node.data.valid || isSkipped
         })
         return cloned
     },

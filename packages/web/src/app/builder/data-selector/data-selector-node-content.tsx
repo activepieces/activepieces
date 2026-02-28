@@ -44,14 +44,14 @@ const DataSelectorNodeContent = ({
   const insertMention = useBuilderStateContext((state) => state.insertMention);
 
   const [ripple, rippleEvent] = useApRipple();
-  const step =
+  const stepNode =
     node.data.type === 'value'
       ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion)
       : node.data.type === 'test'
       ? flowStructureUtil.getStep(node.data.stepName, flowVersion)
       : undefined;
-  const stepMetadata = step
-    ? stepsHooks.useStepMetadata({ step }).stepMetadata
+  const stepMetadata = stepNode
+    ? stepsHooks.useStepMetadata({ step: stepNode.data }).stepMetadata
     : undefined;
   const showInsertButton =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;

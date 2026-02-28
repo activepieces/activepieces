@@ -5,7 +5,7 @@ import { ProgressUpdateType, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { FlowTriggerType } from '../flows/triggers/trigger'
+import { FlowTriggerKind } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
@@ -92,7 +92,7 @@ export const PollingJobData = Type.Object({
     schemaVersion: Type.Number(),
     flowVersionId: Type.String(),
     flowId: Type.String(),
-    triggerType: Type.Enum(FlowTriggerType),
+    triggerType: Type.Enum(FlowTriggerKind),
     jobType: Type.Literal(WorkerJobType.EXECUTE_POLLING),
 })
 export type PollingJobData = Static<typeof PollingJobData>

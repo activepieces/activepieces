@@ -1,4 +1,4 @@
-import { FlowTriggerType } from '@activepieces/shared';
+import { FlowTriggerKind, flowStructureUtil } from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 
 import { RightSideBarType, StepMetadataWithSuggestions } from '@/lib/types';
@@ -26,8 +26,11 @@ export const createPieceSelectorState = (
       stepNameOrAddButtonId: string | null,
     ) => {
       return set((state) => {
+        const triggerNode = flowStructureUtil.getTriggerNode(
+          state.flowVersion.graph,
+        );
         const isReplacingEmptyTrigger =
-          state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
+          triggerNode?.data.kind === FlowTriggerKind.EMPTY &&
           stepNameOrAddButtonId === 'trigger';
         return {
           openedPieceSelectorStepNameOrAddButtonId: stepNameOrAddButtonId,

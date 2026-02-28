@@ -1,4 +1,4 @@
-import { FlowVersion } from '@activepieces/shared'
+import { FlowNodeType, FlowTriggerKind, FlowVersion, PieceTrigger } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { projectDiffService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-diff.service'
 import { projectStateService } from '../../../../../../../../src/app/ee/projects/project-release/project-state/project-state.service'
@@ -92,7 +92,9 @@ describe('Flow Diff Service', () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowOneDist = flowGenerator.randomizeMetadata(undefined, flowOne.version)
         // Ensure trigger propertySettings match (randomizeMetadata randomizes them)
-        flowOneDist.version.trigger.settings.propertySettings = flowOne.version.trigger.settings.propertySettings
+        const triggerOne = getTriggerData(flowOne.version)
+        const triggerOneDist = getTriggerData(flowOneDist.version)
+        triggerOneDist.settings.propertySettings = triggerOne.settings.propertySettings
         flowOne.externalId = flowOneDist.id
 
         const stateOne = await projectStateService(logger).getFlowState(flowOne)
@@ -143,8 +145,8 @@ describe('Flow Diff Service', () => {
     it('should compare piece version only based on major and minor version', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowTwo = JSON.parse(JSON.stringify(flowOne))
-        flowTwo.version.trigger.settings.pieceVersion = '0.1.1'
-        flowOne.version.trigger.settings.pieceVersion = '0.1.0'
+        getTriggerData(flowTwo.version).settings.pieceVersion = '0.1.1'
+        getTriggerData(flowOne.version).settings.pieceVersion = '0.1.0'
         const diff = await projectDiffService.diff({
             currentState: {
                 flows: [flowOne],
@@ -159,8 +161,8 @@ describe('Flow Diff Service', () => {
     it('should detect major piece version change', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowTwo = JSON.parse(JSON.stringify(flowOne))
-        flowTwo.version.trigger.settings.pieceVersion = '0.2.1'
-        flowOne.version.trigger.settings.pieceVersion = '0.1.0'
+        getTriggerData(flowTwo.version).settings.pieceVersion = '0.2.1'
+        getTriggerData(flowOne.version).settings.pieceVersion = '0.1.0'
         const diff = await projectDiffService.diff({
             currentState: {
                 flows: [flowOne],
@@ -183,39 +185,59 @@ describe('Flow Diff Service', () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowStateOne = await projectStateService(logger).getFlowState(flowOne)
 
-        // Create a flow with identical trigger content but different property ordering
+        // Create a flow with identical trigger content but different node property ordering
+        const triggerOne = flowOne.version.graph.nodes.find(n => n.type === FlowNodeType.TRIGGER)!
         const flowTwo = {
             ...flowOne,
             version: {
                 ...flowOne.version,
-                trigger: {
-                    // Reorder trigger properties but keep same content
-                    settings: flowOne.version.trigger.settings, // settings first
-                    valid: flowOne.version.trigger.valid, // valid second
-                    type: flowOne.version.trigger.type, // type third
-                    name: flowOne.version.trigger.name, // name fourth
-                    displayName: flowOne.version.trigger.displayName, // displayName last
-                    steps: flowOne.version.trigger.steps,
+                graph: {
+                    ...flowOne.version.graph,
+                    nodes: flowOne.version.graph.nodes.map(node => {
+                        if (node.type !== FlowNodeType.TRIGGER) return node
+                        // Reorder data properties but keep same content
+                        return {
+                            id: node.id,
+                            type: node.type,
+                            data: {
+                                settings: node.data.settings,
+                                valid: node.data.valid,
+                                kind: node.data.kind,
+                                name: node.data.name,
+                                displayName: node.data.displayName,
+                            },
+                        }
+                    }),
                 },
             },
         }
         const flowStateTwo = await projectStateService(logger).getFlowState(flowTwo)
 
         // Also test with nested trigger.settings properties in different order
+        const triggerData = triggerOne.data as PieceTrigger
         const flowThree = {
             ...flowOne,
             version: {
                 ...flowOne.version,
-                trigger: {
-                    ...flowOne.version.trigger,
-                    settings: {
+                graph: {
+                    ...flowOne.version.graph,
+                    nodes: flowOne.version.graph.nodes.map(node => {
+                        if (node.type !== FlowNodeType.TRIGGER) return node
                         // Reorder settings properties but keep same content
-                        propertySettings: flowOne.version.trigger.settings.propertySettings, // propertySettings first
-                        input: flowOne.version.trigger.settings.input, // input second
-                        triggerName: flowOne.version.trigger.settings.triggerName, // triggerName third
-                        pieceVersion: flowOne.version.trigger.settings.pieceVersion, // pieceVersion fourth
-                        pieceName: flowOne.version.trigger.settings.pieceName, // pieceName last
-                    },
+                        return {
+                            ...node,
+                            data: {
+                                ...node.data,
+                                settings: {
+                                    propertySettings: triggerData.settings.propertySettings,
+                                    input: triggerData.settings.input,
+                                    triggerName: triggerData.settings.triggerName,
+                                    pieceVersion: triggerData.settings.pieceVersion,
+                                    pieceName: triggerData.settings.pieceName,
+                                },
+                            },
+                        }
+                    }),
                 },
             },
         }
@@ -246,3 +268,8 @@ describe('Flow Diff Service', () => {
         expect(diff2.flows).toEqual([])
     })
 })
+
+function getTriggerData(version: FlowVersion): PieceTrigger {
+    const triggerNode = version.graph.nodes.find(n => n.type === FlowNodeType.TRIGGER)!
+    return triggerNode.data as PieceTrigger
+}

@@ -1,12 +1,10 @@
 import { piecePropertiesUtils } from '@activepieces/pieces-framework';
 import {
-  FlowAction,
-  FlowActionType,
+  FlowActionKind,
   BranchOperator,
   CodeAction,
   PieceAction,
   PieceTrigger,
-  FlowTrigger,
   deepMergeAndCast,
   BranchExecutionType,
   RouterExecutionType,
@@ -14,12 +12,14 @@ import {
   flowStructureUtil,
   StepSettings,
   RouterActionSettingsWithValidation,
-  FlowTriggerType,
+  FlowTriggerKind,
   PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
   FlowVersion,
   FlowOperationType,
   isManualPieceTrigger,
+  FlowNodeData,
+  FlowAction,
 } from '@activepieces/shared';
 import { Value } from '@sinclair/typebox/value';
 import { useRef } from 'react';
@@ -47,9 +47,9 @@ const isPieceActionOrTrigger = (
   pieceSelectorItem: PieceSelectorItem,
 ): pieceSelectorItem is PieceSelectorPieceItem => {
   return (
-    pieceSelectorItem.type === FlowActionType.PIECE ||
+    pieceSelectorItem.type === FlowActionKind.PIECE ||
     (flowStructureUtil.isTrigger(pieceSelectorItem.type) &&
-      pieceSelectorItem.type === FlowTriggerType.PIECE)
+      pieceSelectorItem.type === FlowTriggerKind.PIECE)
   );
 };
 
@@ -58,10 +58,10 @@ const isStepInitiallyValid = (
   overrideDefaultSettings?: StepSettings,
 ) => {
   switch (pieceSelectorItem.type) {
-    case FlowActionType.CODE:
+    case FlowActionKind.CODE:
       return true;
-    case FlowActionType.PIECE:
-    case FlowTriggerType.PIECE: {
+    case FlowActionKind.PIECE:
+    case FlowTriggerKind.PIECE: {
       const overridingInput =
         overrideDefaultSettings && 'input' in overrideDefaultSettings
           ? overrideDefaultSettings.input
@@ -76,7 +76,7 @@ const isStepInitiallyValid = (
       const hasAuth = !isNil(pieceSelectorItem.pieceMetadata.auth);
       return isValid && (!needsAuth || !hasAuth);
     }
-    case FlowActionType.LOOP_ON_ITEMS: {
+    case FlowActionKind.LOOP_ON_ITEMS: {
       if (
         overrideDefaultSettings &&
         'input' in overrideDefaultSettings &&
@@ -86,10 +86,10 @@ const isStepInitiallyValid = (
       }
       return false;
     }
-    case FlowTriggerType.EMPTY: {
+    case FlowTriggerKind.EMPTY: {
       return false;
     }
-    case FlowActionType.ROUTER: {
+    case FlowActionKind.ROUTER: {
       if (overrideDefaultSettings) {
         const errors = Array.from(
           Value.Errors(
@@ -126,7 +126,7 @@ const getDefaultStepValues = ({
   pieceSelectorItem: PieceSelectorItem;
   overrideDefaultSettings?: StepSettings;
   customLogoUrl?: string;
-}): FlowAction | FlowTrigger => {
+}): FlowNodeData => {
   const errorHandlingOptions: CodeAction['settings']['errorHandlingOptions'] = {
     continueOnFailure: {
       value: false,
@@ -155,10 +155,10 @@ const getDefaultStepValues = ({
   };
 
   switch (pieceSelectorItem.type) {
-    case FlowActionType.CODE:
+    case FlowActionKind.CODE:
       return deepMergeAndCast<CodeAction>(
         {
-          type: FlowActionType.CODE,
+          kind: FlowActionKind.CODE,
           settings: overrideDefaultSettings ?? {
             sourceCode: {
               code: defaultCode,
@@ -170,49 +170,27 @@ const getDefaultStepValues = ({
         },
         common,
       );
-    case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionKind.LOOP_ON_ITEMS:
       return deepMergeAndCast<FlowAction>(
         {
-          type: FlowActionType.LOOP_ON_ITEMS,
+          kind: FlowActionKind.LOOP_ON_ITEMS,
           settings: overrideDefaultSettings ?? {
             items: '',
           },
         },
         common,
       );
-    case FlowActionType.ROUTER:
+    case FlowActionKind.ROUTER:
       return deepMergeAndCast<FlowAction>(
         {
-          type: FlowActionType.ROUTER,
+          kind: FlowActionKind.ROUTER,
           settings: overrideDefaultSettings ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
           },
-          branches: [
-            {
-              conditions: [
-                [
-                  {
-                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                    firstValue: '',
-                    secondValue: '',
-                    caseSensitive: false,
-                  },
-                ],
-              ],
-              branchType: BranchExecutionType.CONDITION,
-              branchName: 'Branch 1',
-              steps: [],
-            },
-            {
-              branchType: BranchExecutionType.FALLBACK,
-              branchName: 'Otherwise',
-              steps: [],
-            },
-          ],
         },
         common,
       );
-    case FlowActionType.PIECE: {
+    case FlowActionKind.PIECE: {
       if (!isPieceActionOrTrigger(pieceSelectorItem)) {
         throw new Error(
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
@@ -220,7 +198,7 @@ const getDefaultStepValues = ({
       }
       return deepMergeAndCast<PieceAction>(
         {
-          type: FlowActionType.PIECE,
+          kind: FlowActionKind.PIECE,
           settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
             actionName: pieceSelectorItem.actionOrTrigger.name,
@@ -241,7 +219,7 @@ const getDefaultStepValues = ({
         common,
       );
     }
-    case FlowTriggerType.PIECE: {
+    case FlowTriggerKind.PIECE: {
       if (!isPieceActionOrTrigger(pieceSelectorItem)) {
         throw new Error(
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
@@ -249,7 +227,7 @@ const getDefaultStepValues = ({
       }
       return deepMergeAndCast<PieceTrigger>(
         {
-          type: FlowTriggerType.PIECE,
+          kind: FlowTriggerKind.PIECE,
           settings: overrideDefaultSettings ?? {
             pieceName: pieceSelectorItem.pieceMetadata.pieceName,
             triggerName: pieceSelectorItem.actionOrTrigger.name,

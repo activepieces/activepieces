@@ -1,7 +1,9 @@
 import {
-    FlowTriggerType,
+    FlowTriggerKind,
+    FlowNodeType,
     flowOperations,
     FlowOperationType,
+    FlowVersion,
     PropertyExecutionType,
 } from '../../src'
 import {
@@ -9,17 +11,21 @@ import {
     createEmptyFlowVersion,
 } from './test-utils'
 
+function getTriggerData(flow: FlowVersion) {
+    const node = flow.graph.nodes.find(n => n.type === FlowNodeType.TRIGGER)
+    return node?.data as Record<string, unknown> | undefined
+}
+
 describe('Update Trigger', () => {
-    it('should update trigger to PIECE type with settings', () => {
+    it('should update trigger to PIECE kind with settings', () => {
         const flow = createEmptyFlowVersion()
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                kind: FlowTriggerKind.PIECE,
                 valid: true,
                 displayName: 'New Trigger',
-                steps: [],
                 settings: {
                     pieceName: '@activepieces/piece-github',
                     pieceVersion: '~0.3.0',
@@ -31,41 +37,38 @@ describe('Update Trigger', () => {
                 },
             },
         })
-        expect(result.trigger.type).toBe(FlowTriggerType.PIECE)
-        expect(result.trigger.displayName).toBe('New Trigger')
-        if (result.trigger.type === FlowTriggerType.PIECE) {
-            expect(result.trigger.settings.pieceName).toBe('@activepieces/piece-github')
-        }
+        const triggerData = getTriggerData(result)!
+        expect(triggerData.kind).toBe(FlowTriggerKind.PIECE)
+        expect(triggerData.displayName).toBe('New Trigger')
+        expect((triggerData.settings as Record<string, unknown>).pieceName).toBe('@activepieces/piece-github')
     })
 
-    it('should update trigger to EMPTY type', () => {
+    it('should update trigger to EMPTY kind', () => {
         const flow = createEmptyFlowVersion()
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
                 name: 'trigger',
-                type: FlowTriggerType.EMPTY,
+                kind: FlowTriggerKind.EMPTY,
                 valid: true,
                 displayName: 'Empty Trigger',
-                steps: [],
                 settings: {},
             },
         })
-        expect(result.trigger.type).toBe(FlowTriggerType.EMPTY)
-        expect(result.trigger.displayName).toBe('Empty Trigger')
+        const triggerData = getTriggerData(result)!
+        expect(triggerData.kind).toBe(FlowTriggerKind.EMPTY)
+        expect(triggerData.displayName).toBe('Empty Trigger')
     })
 
-    it('should preserve trigger.steps after update', () => {
+    it('should preserve graph edges after trigger update', () => {
         const flow = createFlowVersionWithSimpleAction()
-        expect(flow.trigger.steps).toEqual(['step_1'])
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                kind: FlowTriggerKind.PIECE,
                 valid: true,
                 displayName: 'Updated Trigger',
-                steps: [],
                 settings: {
                     pieceName: '@activepieces/piece-github',
                     pieceVersion: '~0.3.0',
@@ -75,9 +78,9 @@ describe('Update Trigger', () => {
                 },
             },
         })
-        // Steps should be preserved even though the request doesn't carry them
-        expect(result.trigger.steps).toEqual(['step_1'])
-        expect(result.steps.find(s => s.name === 'step_1')).toBeDefined()
+        // Edges should be preserved
+        expect(result.graph.edges.some(e => e.source === 'trigger' && e.target === 'step_1')).toBe(true)
+        expect(result.graph.nodes.find(n => n.id === 'step_1')).toBeDefined()
     })
 
     it('should recalculate valid flag after trigger update', () => {
@@ -86,14 +89,12 @@ describe('Update Trigger', () => {
             type: FlowOperationType.UPDATE_TRIGGER,
             request: {
                 name: 'trigger',
-                type: FlowTriggerType.EMPTY,
+                kind: FlowTriggerKind.EMPTY,
                 valid: false,
                 displayName: 'Empty',
-                steps: [],
                 settings: {},
             },
         })
-        // FlowVersion validity depends on all steps being valid
         expect(typeof result.valid).toBe('boolean')
     })
 })

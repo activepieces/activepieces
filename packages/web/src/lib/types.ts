@@ -6,10 +6,10 @@ import {
   TriggerBase,
 } from '@activepieces/pieces-framework';
 import {
-  FlowActionType,
+  FlowActionKind,
   PackageType,
   PieceType,
-  FlowTriggerType,
+  FlowTriggerKind,
   FlowOperationType,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
@@ -21,7 +21,7 @@ type BaseStepMetadata = {
 };
 
 export type PieceStepMetadata = BaseStepMetadata & {
-  type: FlowActionType.PIECE | FlowTriggerType.PIECE;
+  type: FlowActionKind.PIECE | FlowTriggerKind.PIECE;
   pieceName: string;
   pieceVersion: string;
   categories: string[];
@@ -33,10 +33,10 @@ export type PieceStepMetadata = BaseStepMetadata & {
 
 export type PrimitiveStepMetadata = BaseStepMetadata & {
   type:
-    | FlowActionType.CODE
-    | FlowActionType.LOOP_ON_ITEMS
-    | FlowActionType.ROUTER
-    | FlowTriggerType.EMPTY;
+    | FlowActionKind.CODE
+    | FlowActionKind.LOOP_ON_ITEMS
+    | FlowActionKind.ROUTER
+    | FlowTriggerKind.EMPTY;
 };
 
 export type PieceStepMetadataWithSuggestions = PieceStepMetadata &
@@ -86,12 +86,12 @@ export type PieceSelectorOperation =
 export type PieceSelectorPieceItem =
   | {
       actionOrTrigger: TriggerBase;
-      type: FlowTriggerType.PIECE;
+      type: FlowTriggerKind.PIECE;
       pieceMetadata: PieceStepMetadata;
     }
   | ({
       actionOrTrigger: ActionBase;
-      type: FlowActionType.PIECE;
+      type: FlowActionKind.PIECE;
       pieceMetadata: PieceStepMetadata;
     } & {
       auth?: PieceAuthProperty;

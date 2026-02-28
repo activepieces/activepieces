@@ -1,6 +1,6 @@
 import {
   ApFlagId,
-  FlowActionType,
+  FlowActionKind,
   TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -62,7 +62,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
       <div className="grid grid-cols-3 p-2 gap-3 min-w-[350px]">
         {aiActions.map((item, index) => {
           const actionIcon =
-            item.type === FlowActionType.PIECE
+            item.type === FlowActionKind.PIECE
               ? ACTION_ICON_MAP[item.actionOrTrigger.name]
               : 'https://cdn.activepieces.com/pieces/new-core/image-ai.svg';
           return (
@@ -90,7 +90,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
                   return;
                 }
 
-                if (item.type === FlowActionType.PIECE) {
+                if (item.type === FlowActionKind.PIECE) {
                   capture({
                     name: TelemetryEventName.PIECE_SELECTOR_SEARCH,
                     payload: {

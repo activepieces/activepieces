@@ -1,22 +1,20 @@
 import {
     AIProviderName,
     ApEdition,
-    FlowAction,
-    FlowActionType,
+    FlowActionKind,
     FlowVersion,
     isNil,
-    PieceAction,
 } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
+import { legacyFlowStructureUtil, LegacyStep } from './legacy-flow-structure-util'
 import { Migration } from '.'
-import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 
 
 export const migrateV9AiPieces: Migration = {
     targetSchemaVersion: '9',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (step.type !== FlowActionType.PIECE) {
+            if (step.type !== FlowActionKind.PIECE) {
                 return step
             }
             if (step.settings.pieceName === '@activepieces/piece-text-ai') {
@@ -38,7 +36,7 @@ export const migrateV9AiPieces: Migration = {
     },
 }
 
-function migrateUtilityAction(step: PieceAction): FlowAction {
+function migrateUtilityAction(step: LegacyStep): LegacyStep {
     const input = step.settings?.input as Record<string, unknown>
     return {
         ...step,
@@ -57,7 +55,7 @@ function migrateUtilityAction(step: PieceAction): FlowAction {
         },
     }
 }
-function migrateTextai(step: PieceAction): FlowAction {
+function migrateTextai(step: LegacyStep): LegacyStep {
     const actionName = step.settings.actionName
     const input = step.settings?.input as Record<string, unknown>
 
@@ -104,7 +102,7 @@ function migrateTextai(step: PieceAction): FlowAction {
     }
 }
 
-function migrateImageai(step: PieceAction): FlowAction {
+function migrateImageai(step: LegacyStep): LegacyStep {
     const input = step.settings?.input as Record<string, unknown>
     const files = 'image' in input && !isNil(input.image) ? [{ file: input.image }] : input.files
     return {

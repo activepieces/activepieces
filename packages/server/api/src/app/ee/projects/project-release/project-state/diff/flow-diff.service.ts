@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, FlowState, flowStructureUtil, FlowTriggerType, FlowVersion, isNil, mapsAreSame, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
+import { assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionKind, flowPieceUtil, FlowProjectOperationType, FlowState, flowStructureUtil, FlowTriggerKind, FlowVersion, isNil, mapsAreSame, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
 import semver from 'semver'
 
@@ -85,14 +85,14 @@ async function isFlowChanged(fromFlow: FlowState, targetFlow: FlowState): Promis
     const notesTo = new Map<string, string>()
     
     flowStructureUtil.getAllSteps(fromFlow.version).forEach((step) => {
-        if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
-            stepsPieceVersionsFrom.set(step.name, step.settings.pieceVersion)
+        if ([FlowActionKind.PIECE, FlowTriggerKind.PIECE].includes(step.data.kind)) {
+            stepsPieceVersionsFrom.set(step.id, (step.data.settings as Record<string, string>).pieceVersion)
         }
     })
 
     flowStructureUtil.getAllSteps(targetFlow.version).forEach((step) => {
-        if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
-            stepsPiecesVersionTo.set(step.name, step.settings.pieceVersion)
+        if ([FlowActionKind.PIECE, FlowTriggerKind.PIECE].includes(step.data.kind)) {
+            stepsPiecesVersionTo.set(step.id, (step.data.settings as Record<string, string>).pieceVersion)
         }
     })
 
@@ -115,20 +115,22 @@ async function isFlowChanged(fromFlow: FlowState, targetFlow: FlowState): Promis
     const normalizedFromFlow = await normalize(fromFlow.version)
     const normalizedTargetFlow = await normalize(targetFlow.version)
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
-        || !deepEqual(normalizedFromFlow.trigger, normalizedTargetFlow.trigger) || !isMatched || !notesMatched
+        || !deepEqual(normalizedFromFlow.graph, normalizedTargetFlow.graph) || !isMatched || !notesMatched
 }
 
 async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
     return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
-        clonedStep.settings.sampleData = DEFAULT_SAMPLE_DATA_SETTINGS
-        const authExists = clonedStep?.settings?.input?.auth
-        
-        if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
-            clonedStep.settings.pieceVersion = ''
+        const settings = clonedStep.data.settings as Record<string, unknown>
+        settings.sampleData = DEFAULT_SAMPLE_DATA_SETTINGS
+        const input = settings.input as Record<string, unknown> | undefined
+        const authExists = input?.auth
+
+        if ([FlowActionKind.PIECE, FlowTriggerKind.PIECE].includes(clonedStep.data.kind)) {
+            (settings as Record<string, string>).pieceVersion = ''
             if (authExists) {
-                clonedStep.settings.input.auth = ''
+                input!.auth = ''
             }
         }
         return clonedStep

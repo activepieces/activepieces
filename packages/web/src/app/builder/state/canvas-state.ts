@@ -1,4 +1,8 @@
-import { FlowTriggerType, isNil } from '@activepieces/shared';
+import {
+  FlowTriggerKind,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
@@ -54,9 +58,12 @@ export const createCanvasState = (
     failedStepNameInRun,
     initialState.flowVersion,
   );
+  const triggerNode = flowStructureUtil.getTriggerNode(
+    initialState.flowVersion.graph,
+  );
   const isEmptyTriggerInitiallySelected =
     initiallySelectedStep === 'trigger' &&
-    initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
+    triggerNode?.data.kind === FlowTriggerKind.EMPTY;
   return {
     showMinimap: false,
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
@@ -97,15 +104,18 @@ export const createCanvasState = (
     selectStepByName: (selectedStep: string) => {
       set((state) => {
         const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
+        const currentTriggerNode = flowStructureUtil.getTriggerNode(
+          state.flowVersion.graph,
+        );
         const rightSidebar =
           selectedStep === 'trigger' &&
-          state.flowVersion.trigger.type === FlowTriggerType.EMPTY
+          currentTriggerNode?.data.kind === FlowTriggerKind.EMPTY
             ? RightSideBarType.NONE
             : RightSideBarType.PIECE_SETTINGS;
 
         const isEmptyTrigger =
           selectedStep === 'trigger' &&
-          state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
+          currentTriggerNode?.data.kind === FlowTriggerKind.EMPTY;
 
         return {
           openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger

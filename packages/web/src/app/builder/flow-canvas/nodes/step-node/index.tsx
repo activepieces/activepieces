@@ -1,7 +1,7 @@
 import {
   FlowOperationType,
-  Step,
-  FlowTriggerType,
+  FlowNodeData,
+  FlowTriggerKind,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useDraggable } from '@dnd-kit/core';
@@ -49,7 +49,7 @@ const ApStepCanvasNode = React.memo(
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
-      !!flowStructureUtil.getStep(step.name, state.flowVersion)?.valid,
+      !!flowStructureUtil.getStep(step.name, state.flowVersion)?.data.valid,
       state.rightSidebar !== RightSideBarType.NONE,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -57,9 +57,9 @@ const ApStepCanvasNode = React.memo(
     });
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion);
-      return steps.findIndex((s) => s.name === step.name) + 1;
+      return steps.findIndex((s) => s.id === step.name) + 1;
     }, [step, flowVersion]);
-    const isTrigger = flowStructureUtil.isTrigger(step.type);
+    const isTrigger = flowStructureUtil.isTrigger(step.kind);
     const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion);
 
     const { attributes, listeners, setNodeRef } = useDraggable({
@@ -76,7 +76,7 @@ const ApStepCanvasNode = React.memo(
     ) => {
       selectStepByName(step.name);
       setSelectedBranchIndex(null);
-      if (step.type === FlowTriggerType.EMPTY) {
+      if (step.kind === FlowTriggerKind.EMPTY) {
         setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
       }
       if (preventDefault) {
@@ -208,8 +208,8 @@ const ApStepCanvasNode = React.memo(
 ApStepCanvasNode.displayName = 'ApStepCanvasNode';
 export { ApStepCanvasNode };
 
-function getPieceSelectorOperationType(step: Step) {
-  if (flowStructureUtil.isTrigger(step.type)) {
+function getPieceSelectorOperationType(step: FlowNodeData) {
+  if (flowStructureUtil.isTrigger(step.kind)) {
     return FlowOperationType.UPDATE_TRIGGER;
   }
   return FlowOperationType.UPDATE_ACTION;

@@ -39,9 +39,8 @@ export const templateValidator = {
             
             const importRequest = {
                 displayName: flow.displayName,
-                trigger: flow.trigger,
+                graph: flow.graph,
                 schemaVersion: flow.schemaVersion,
-                steps: flow.steps,
             }
 
             const importOperation: FlowOperationRequest = { 

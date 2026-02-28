@@ -22,7 +22,7 @@ const getDataSelectorStructure: (
   state: BuilderState,
 ) => DataSelectorTreeNode[] = (state) => {
   const { selectedStep, flowVersion } = state;
-  if (!selectedStep || !flowVersion || !flowVersion.trigger) {
+  if (!selectedStep || !flowVersion) {
     return [];
   }
   const pathToTargetStep = flowStructureUtil.findPathToStep(
@@ -39,10 +39,10 @@ const getDataSelectorStructure: (
     } catch (error) {
       console.error('Failed to traverse step:', error);
       return {
-        key: `error-${step.name}`,
+        key: `error-${step.id}`,
         data: {
           type: 'chunk',
-          displayName: `Error loading ${step.name}`,
+          displayName: `Error loading ${step.id}`,
         },
       };
     }

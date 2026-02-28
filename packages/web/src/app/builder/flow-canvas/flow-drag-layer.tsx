@@ -149,7 +149,9 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
         <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
 
-      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
+      {draggedStep && (
+        <StepDragOverlay step={draggedStep.data}></StepDragOverlay>
+      )}
       <NoteDragOverlay />
     </>
   );
@@ -178,7 +180,7 @@ function handleStepDragEnd({
     if (
       droppedAtNodeData?.parentStepName &&
       draggedStep &&
-      draggedStep.name !== droppedAtNodeData.parentStepName
+      draggedStep.id !== droppedAtNodeData.parentStepName
     ) {
       const isPartOfInnerFlow = flowStructureUtil.isChildOf(
         draggedStep,
@@ -197,7 +199,7 @@ function handleStepDragEnd({
       applyOperation({
         type: FlowOperationType.MOVE_ACTION,
         request: {
-          name: draggedStep.name,
+          name: draggedStep.id,
           newParentStep: droppedAtNodeData.parentStepName,
           stepLocationRelativeToNewParent:
             droppedAtNodeData.stepLocationRelativeToParent,

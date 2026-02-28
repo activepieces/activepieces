@@ -67,5 +67,5 @@ function traverseFlowInternal(step: Step | undefined): Step[] {
 }
 
 function getAllSteps(flowVersion: FlowVersion): Step[] {
-    return traverseFlowInternal(flowVersion.trigger as Step)
+    return traverseFlowInternal((flowVersion as unknown as { trigger: Step }).trigger)
 }

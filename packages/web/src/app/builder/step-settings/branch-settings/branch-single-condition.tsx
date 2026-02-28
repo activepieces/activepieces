@@ -2,7 +2,6 @@ import {
   BranchOperator,
   textConditions,
   singleValueConditions,
-  RouterAction,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
@@ -22,6 +21,7 @@ import {
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
 import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
+import { RouterFormData } from '../index';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),
@@ -73,7 +73,7 @@ const BranchSingleCondition = ({
   readonly,
   branchIndex,
 }: BranchSingleConditionProps) => {
-  const form = useFormContext<RouterAction>();
+  const form = useFormContext<RouterFormData>();
 
   const condition = form.getValues(
     `branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,

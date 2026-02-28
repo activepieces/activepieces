@@ -1,15 +1,14 @@
 import {
     Field,
-    FlowActionType,
+    FlowActionKind,
     FlowVersion,
     isNil,
-    Step,
 } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { FieldEntity } from '../../../tables/field/field.entity'
+import { legacyFlowStructureUtil, LegacyStep } from './legacy-flow-structure-util'
 import { Migration } from '.'
-import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
@@ -20,7 +19,7 @@ function collectFieldIdsFromFlow(flowVersion: FlowVersion) {
     const fieldIds: string[] = []
 
     legacyFlowStructureUtil.getAllSteps(flowVersion).forEach((step) => {
-        if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.includes('0.1.')) {
+        if (step.type !== FlowActionKind.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.includes('0.1.')) {
             return
         }
         const actionName = step.settings.actionName as string | undefined
@@ -64,7 +63,7 @@ export const migrateV11TablesToV2: Migration = {
             fieldIdToExternalId[field.id] = field.externalId
         }
 
-        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step: Step) => {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step: LegacyStep) => {
             if (!isTablesStep(step)) {
                 return step
             }
@@ -104,10 +103,10 @@ export const migrateV11TablesToV2: Migration = {
 }
 
 
-function isTablesStep(step: Step): boolean {
-    return step.type === FlowActionType.PIECE && step.settings.pieceName === TABLES_PIECE_NAME && (step.settings.pieceVersion.includes('0.1.') || step.settings.pieceVersion.includes('0.2.'))
+function isTablesStep(step: LegacyStep): boolean {
+    return step.type === FlowActionKind.PIECE && step.settings.pieceName === TABLES_PIECE_NAME && (step.settings.pieceVersion.includes('0.1.') || step.settings.pieceVersion.includes('0.2.'))
 }
 
-function isOldTablesStep(step: Step): boolean {
+function isOldTablesStep(step: LegacyStep): boolean {
     return isTablesStep(step) && step.settings.pieceVersion.includes('0.1.')
 }

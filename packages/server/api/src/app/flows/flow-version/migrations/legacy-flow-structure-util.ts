@@ -1,4 +1,4 @@
-import { FlowActionType, FlowVersion, FlowTrigger, FlowAction, Step } from '@activepieces/shared'
+import { FlowActionKind, FlowVersion } from '@activepieces/shared'
 
 /**
  * Legacy flow structure utilities for pre-v17 migrations.
@@ -8,20 +8,20 @@ import { FlowActionType, FlowVersion, FlowTrigger, FlowAction, Step } from '@act
  * - RouterAction has `children: (FlowAction | null)[]` for branch bodies
  * - LoopOnItemsAction has `firstLoopAction` for the loop body
  *
- * After v17 migration, flows use a flat-array model and these utilities
+ * After v17 migration, flows use a graph model and these utilities
  * are no longer needed.
  */
 
-function getAllSteps(flowVersion: FlowVersion): Step[] {
-    const steps: Step[] = []
-    const trigger = flowVersion.trigger as unknown as LegacyTrigger
-    collectSteps(trigger, steps)
+function getAllSteps(flowVersion: FlowVersion): LegacyStep[] {
+    const steps: LegacyStep[] = []
+    const legacyFV = flowVersion as unknown as LegacyFlowVersion
+    collectSteps(legacyFV.trigger, steps)
     return steps
 }
 
-function collectSteps(step: LegacyStep | null | undefined, result: Step[]): void {
+function collectSteps(step: LegacyStep | null | undefined, result: LegacyStep[]): void {
     if (!step) return
-    result.push(step as unknown as Step)
+    result.push(step)
     if (step.nextAction) {
         collectSteps(step.nextAction, result)
     }
@@ -37,20 +37,20 @@ function collectSteps(step: LegacyStep | null | undefined, result: Step[]): void
 
 function transferFlow(
     flowVersion: FlowVersion,
-    transferFunction: (step: Step) => Step,
+    transferFunction: (step: LegacyStep) => LegacyStep,
 ): FlowVersion {
     const cloned: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    const trigger = cloned.trigger as unknown as LegacyStep
-    cloned.trigger = transferStep(trigger, transferFunction) as unknown as FlowTrigger
+    const legacyCloned = cloned as unknown as LegacyFlowVersion
+    legacyCloned.trigger = transferStep(legacyCloned.trigger, transferFunction) as LegacyStep
     return cloned
 }
 
 function transferStep(
     step: LegacyStep | null | undefined,
-    fn: (step: Step) => Step,
+    fn: (step: LegacyStep) => LegacyStep,
 ): LegacyStep | null | undefined {
     if (!step) return step
-    const transformed = fn(step as unknown as Step) as unknown as LegacyStep
+    const transformed = fn(step)
     if (transformed.nextAction) {
         transformed.nextAction = transferStep(transformed.nextAction, fn) as LegacyStep
     }
@@ -66,9 +66,9 @@ function transferStep(
 }
 
 function extractConnectionIds(flowVersion: FlowVersion): string[] {
-    const trigger = flowVersion.trigger as unknown as LegacyTrigger
-    const triggerAuthIds = trigger.settings?.input?.auth
-        ? extractConnectionIdsFromAuth(trigger.settings.input.auth as string)
+    const legacyFV = flowVersion as unknown as LegacyFlowVersion
+    const triggerAuthIds = legacyFV.trigger?.settings?.input?.auth
+        ? extractConnectionIdsFromAuth(legacyFV.trigger.settings.input.auth as string)
         : []
 
     const stepAuthIds = getAllSteps(flowVersion)
@@ -93,16 +93,16 @@ function extractAgentIds(flowVersion: FlowVersion): string[] {
     return getAllSteps(flowVersion).map(step => getExternalAgentId(step)).filter((step): step is string => step !== null && step !== '')
 }
 
-function getExternalAgentId(action: Step): string | null {
-    if (isAgentPiece(action) && 'agentId' in action.settings.input) {
+function getExternalAgentId(action: LegacyStep): string | null {
+    if (isAgentPiece(action) && action.settings.input && 'agentId' in action.settings.input) {
         return action.settings.input.agentId as string
     }
     return null
 }
 
-function isAgentPiece(action: Step): boolean {
+function isAgentPiece(action: LegacyStep): boolean {
     return (
-        action.type === FlowActionType.PIECE && action.settings.pieceName === '@activepieces/piece-ai'
+        action.type === FlowActionKind.PIECE && action.settings.pieceName === '@activepieces/piece-ai'
     )
 }
 
@@ -113,13 +113,24 @@ export const legacyFlowStructureUtil = {
     extractAgentIds,
 }
 
+export type LegacyStepSettings = {
+    pieceName: string
+    pieceVersion: string
+    actionName: string
+    triggerName: string
+    input: Record<string, unknown>
+    propertySettings: Record<string, unknown>
+    [key: string]: unknown
+}
+
 export type LegacyStep = {
     name: string
     type: string
     displayName: string
     valid: boolean
-    settings: Record<string, unknown>
+    settings: LegacyStepSettings
     skip?: boolean
+    customLogoUrl?: string
     nextAction?: LegacyStep
     onSuccessAction?: LegacyStep | null
     onFailureAction?: LegacyStep | null
@@ -127,10 +138,6 @@ export type LegacyStep = {
     firstLoopAction?: LegacyStep
 }
 
-type LegacyTrigger = LegacyStep & {
-    settings: {
-        input?: {
-            auth?: string
-        }
-    }
+type LegacyFlowVersion = {
+    trigger: LegacyStep
 }

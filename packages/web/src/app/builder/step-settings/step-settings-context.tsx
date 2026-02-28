@@ -4,9 +4,8 @@ import {
   piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
 import {
-  FlowAction,
+  FlowNodeData,
   setAtPath,
-  FlowTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
 import { TObject, Type } from '@sinclair/typebox';
@@ -39,7 +38,7 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
 };
 
 export type StepSettingsContextState = {
-  selectedStep: FlowAction | FlowTrigger;
+  selectedStep: FlowNodeData;
   pieceModel: PieceMetadataModel | undefined;
   formSchema: TObject<any>;
   updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
@@ -51,7 +50,7 @@ export type StepSettingsContextState = {
 };
 
 export type StepSettingsProviderProps = {
-  selectedStep: FlowAction | FlowTrigger;
+  selectedStep: FlowNodeData;
   pieceModel: PieceMetadataModel | undefined;
   children: ReactNode;
 };
@@ -72,7 +71,7 @@ export const StepSettingsProvider = ({
 
   if (!formSchemaInitializedRef.current && selectedStep) {
     const schema = formUtils.buildPieceSchema(
-      selectedStep.type,
+      selectedStep.kind,
       selectedStep.settings.actionName ?? selectedStep.settings.triggerName,
       pieceModel ?? null,
     );

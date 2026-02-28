@@ -1,4 +1,4 @@
-import { ApEdition, FlowRun, FlowTriggerType, isFailedState, isFlowRunStateTerminal, isManualPieceTrigger, isNil, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, FlowRun, flowStructureUtil, FlowTriggerKind, isFailedState, isFlowRunStateTerminal, isManualPieceTrigger, isNil, PieceTrigger, RunEnvironment, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -16,8 +16,9 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             return
         }
         const flowVersion = await flowVersionService(log).getOne(flowRun.flowVersionId)
-        const isPieceTrigger = !isNil(flowVersion) && flowVersion.trigger.type === FlowTriggerType.PIECE && !isNil(flowVersion.trigger.settings.triggerName) 
-        const isManualTrigger = isPieceTrigger && isManualPieceTrigger({ pieceName: flowVersion.trigger.settings.pieceName, triggerName: flowVersion.trigger.settings.triggerName })
+        const triggerNode = !isNil(flowVersion) ? flowStructureUtil.getTriggerNode(flowVersion.graph) : undefined
+        const isPieceTrigger = !isNil(triggerNode) && triggerNode.data.kind === FlowTriggerKind.PIECE && !isNil((triggerNode.data as PieceTrigger).settings.triggerName)
+        const isManualTrigger = isPieceTrigger && isManualPieceTrigger({ pieceName: (triggerNode!.data as PieceTrigger).settings.pieceName, triggerName: (triggerNode!.data as PieceTrigger).settings.triggerName! })
         if (flowRun.environment === RunEnvironment.TESTING || isManualTrigger) {
             websocketService.to(flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, {
                 flowRun,

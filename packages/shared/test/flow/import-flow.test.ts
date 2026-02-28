@@ -1,14 +1,14 @@
 import {
+    BranchEdge,
     BranchExecutionType,
     BranchOperator,
-    FlowActionType,
+    FlowActionKind,
+    FlowEdgeType,
+    FlowNodeType,
     flowOperations,
     FlowOperationType,
-    FlowTriggerType,
+    FlowTriggerKind,
     FlowVersion,
-    LoopOnItemsAction,
-    PropertyExecutionType,
-    RouterAction,
     RouterExecutionType,
     StepLocationRelativeToParent,
 } from '../../src'
@@ -17,6 +17,14 @@ import {
     createEmptyFlowVersion,
 } from './test-utils'
 
+function findNode(flow: FlowVersion, id: string) {
+    return flow.graph.nodes.find(n => n.id === id)
+}
+
+function getNodeData(flow: FlowVersion, id: string) {
+    return findNode(flow, id)?.data as Record<string, unknown> | undefined
+}
+
 describe('Import Flow', () => {
     it('should import flow into empty flow with trigger and steps', () => {
         const flow = createEmptyFlowVersion()
@@ -24,205 +32,291 @@ describe('Import Flow', () => {
             type: FlowOperationType.IMPORT_FLOW,
             request: {
                 displayName: 'Imported Flow',
-                trigger: {
-                    name: 'trigger',
-                    type: FlowTriggerType.PIECE,
-                    valid: true,
-                    displayName: 'Webhook',
-                    steps: ['step_1'],
-                    settings: {
-                        pieceName: '@activepieces/piece-webhook',
-                        pieceVersion: '~0.1.0',
-                        triggerName: 'catch_webhook',
-                        input: {},
-                        propertySettings: {},
-                    },
-                },
-                steps: [
-                    {
-                        name: 'step_1',
-                        type: FlowActionType.CODE,
-                        valid: true,
-                        displayName: 'Code',
-                        settings: {
-                            sourceCode: { code: 'test', packageJson: '{}' },
-                            input: {},
+                graph: {
+                    nodes: [
+                        {
+                            id: 'trigger',
+                            type: FlowNodeType.TRIGGER,
+                            data: {
+                                name: 'trigger',
+                                kind: FlowTriggerKind.PIECE,
+                                valid: true,
+                                displayName: 'Webhook',
+                                settings: {
+                                    pieceName: '@activepieces/piece-webhook',
+                                    pieceVersion: '~0.1.0',
+                                    triggerName: 'catch_webhook',
+                                    input: {},
+                                    propertySettings: {},
+                                },
+                            },
                         },
-                    },
-                ],
+                        {
+                            id: 'step_1',
+                            type: FlowNodeType.ACTION,
+                            data: {
+                                name: 'step_1',
+                                kind: FlowActionKind.CODE,
+                                valid: true,
+                                displayName: 'Code',
+                                settings: {
+                                    sourceCode: { code: 'test', packageJson: '{}' },
+                                    input: {},
+                                },
+                            },
+                        },
+                    ],
+                    edges: [
+                        {
+                            id: 'trigger-default',
+                            source: 'trigger',
+                            target: 'step_1',
+                            type: FlowEdgeType.DEFAULT,
+                        },
+                    ],
+                },
                 schemaVersion: null,
                 notes: null,
             },
         })
         expect(result.displayName).toBe('Imported Flow')
-        expect(result.trigger.steps).toContain('step_1')
-        expect(result.steps.find(s => s.name === 'step_1')).toBeDefined()
+        expect(findNode(result, 'step_1')).toBeDefined()
+        expect(result.graph.edges.some(e => e.source === 'trigger' && e.target === 'step_1')).toBe(true)
     })
 
-    it('should import flow with loop and reconstruct children', () => {
+    it('should import flow with loop and reconstruct edges', () => {
         const flow = createEmptyFlowVersion()
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.IMPORT_FLOW,
             request: {
                 displayName: 'Flow with Loop',
-                trigger: {
-                    name: 'trigger',
-                    type: FlowTriggerType.PIECE,
-                    valid: true,
-                    displayName: 'Schedule',
-                    steps: ['step_1'],
-                    settings: {
-                        pieceName: 'schedule',
-                        pieceVersion: '0.0.1',
-                        triggerName: 'every_hour',
-                        input: {},
-                        propertySettings: {},
-                    },
-                },
-                steps: [
-                    {
-                        name: 'step_1',
-                        type: FlowActionType.LOOP_ON_ITEMS,
-                        valid: true,
-                        displayName: 'Loop',
-                        settings: { items: '{{trigger.items}}' },
-                        children: ['step_2'],
-                    },
-                    {
-                        name: 'step_2',
-                        type: FlowActionType.CODE,
-                        valid: true,
-                        displayName: 'Code in Loop',
-                        settings: {
-                            sourceCode: { code: 'test', packageJson: '{}' },
-                            input: {},
+                graph: {
+                    nodes: [
+                        {
+                            id: 'trigger',
+                            type: FlowNodeType.TRIGGER,
+                            data: {
+                                name: 'trigger',
+                                kind: FlowTriggerKind.PIECE,
+                                valid: true,
+                                displayName: 'Schedule',
+                                settings: {
+                                    pieceName: 'schedule',
+                                    pieceVersion: '0.0.1',
+                                    triggerName: 'every_hour',
+                                    input: {},
+                                    propertySettings: {},
+                                },
+                            },
                         },
-                    },
-                ],
-                schemaVersion: null,
-                notes: null,
-            },
-        })
-        const loopStep = result.steps.find(s => s.name === 'step_1') as LoopOnItemsAction
-        expect(loopStep).toBeDefined()
-        expect(loopStep.children).toContain('step_2')
-        expect(result.steps.find(s => s.name === 'step_2')).toBeDefined()
-    })
-
-    it('should import flow with router and reconstruct branches', () => {
-        const flow = createEmptyFlowVersion()
-        const result = flowOperations.apply(flow, {
-            type: FlowOperationType.IMPORT_FLOW,
-            request: {
-                displayName: 'Flow with Router',
-                trigger: {
-                    name: 'trigger',
-                    type: FlowTriggerType.PIECE,
-                    valid: true,
-                    displayName: 'Schedule',
-                    steps: ['step_1'],
-                    settings: {
-                        pieceName: 'schedule',
-                        pieceVersion: '0.0.1',
-                        triggerName: 'every_hour',
-                        input: {},
-                        propertySettings: {},
-                    },
+                        {
+                            id: 'step_1',
+                            type: FlowNodeType.ACTION,
+                            data: {
+                                name: 'step_1',
+                                kind: FlowActionKind.LOOP_ON_ITEMS,
+                                valid: true,
+                                displayName: 'Loop',
+                                settings: { items: '{{trigger.items}}' },
+                            },
+                        },
+                        {
+                            id: 'step_2',
+                            type: FlowNodeType.ACTION,
+                            data: {
+                                name: 'step_2',
+                                kind: FlowActionKind.CODE,
+                                valid: true,
+                                displayName: 'Code in Loop',
+                                settings: {
+                                    sourceCode: { code: 'test', packageJson: '{}' },
+                                    input: {},
+                                },
+                            },
+                        },
+                    ],
+                    edges: [
+                        { id: 'trigger-default', source: 'trigger', target: 'step_1', type: FlowEdgeType.DEFAULT },
+                        { id: 'step_1-loop', source: 'step_1', target: 'step_2', type: FlowEdgeType.LOOP },
+                    ],
                 },
-                steps: [
-                    {
-                        name: 'step_1',
-                        type: FlowActionType.ROUTER,
-                        valid: true,
-                        displayName: 'Router',
-                        settings: { executionType: RouterExecutionType.EXECUTE_FIRST_MATCH },
-                        branches: [
-                            {
-                                branchType: BranchExecutionType.CONDITION,
-                                branchName: 'Condition 1',
-                                conditions: [[{ operator: BranchOperator.TEXT_CONTAINS, firstValue: 'a', secondValue: 'b', caseSensitive: false }]],
-                                steps: ['step_2'],
-                            },
-                            {
-                                branchType: BranchExecutionType.FALLBACK,
-                                branchName: 'Otherwise',
-                                steps: ['step_3'],
-                            },
-                        ],
-                    },
-                    {
-                        name: 'step_2',
-                        type: FlowActionType.CODE,
-                        valid: true,
-                        displayName: 'Branch 1 Code',
-                        settings: { sourceCode: { code: 'test', packageJson: '{}' }, input: {} },
-                    },
-                    {
-                        name: 'step_3',
-                        type: FlowActionType.CODE,
-                        valid: true,
-                        displayName: 'Fallback Code',
-                        settings: { sourceCode: { code: 'test2', packageJson: '{}' }, input: {} },
-                    },
-                ],
                 schemaVersion: null,
                 notes: null,
             },
         })
-        const routerStep = result.steps.find(s => s.name === 'step_1') as RouterAction
-        expect(routerStep).toBeDefined()
-        expect(routerStep.branches).toHaveLength(2)
-        expect(routerStep.branches![0].steps).toContain('step_2')
-        expect(routerStep.branches![1].steps).toContain('step_3')
+        expect(findNode(result, 'step_1')).toBeDefined()
+        expect(findNode(result, 'step_2')).toBeDefined()
+        // Loop edge should exist
+        expect(result.graph.edges.some(e => e.source === 'step_1' && e.type === FlowEdgeType.LOOP)).toBe(true)
     })
 
     it('should replace existing steps on import', () => {
-        // Start with a flow that has step_1
         let flow: FlowVersion = createEmptyFlowVersion()
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_ACTION,
             request: { parentStep: 'trigger', action: createCodeAction('step_1') },
         })
-        expect(flow.steps.find(s => s.name === 'step_1')).toBeDefined()
+        expect(findNode(flow, 'step_1')).toBeDefined()
 
         const result = flowOperations.apply(flow, {
             type: FlowOperationType.IMPORT_FLOW,
             request: {
                 displayName: 'Replaced Flow',
-                trigger: {
-                    name: 'trigger',
-                    type: FlowTriggerType.PIECE,
-                    valid: true,
-                    displayName: 'New Trigger',
-                    steps: ['step_1'],
-                    settings: {
-                        pieceName: 'schedule',
-                        pieceVersion: '0.0.1',
-                        triggerName: 'every_hour',
-                        input: {},
-                        propertySettings: {},
-                    },
+                graph: {
+                    nodes: [
+                        {
+                            id: 'trigger',
+                            type: FlowNodeType.TRIGGER,
+                            data: {
+                                name: 'trigger',
+                                kind: FlowTriggerKind.PIECE,
+                                valid: true,
+                                displayName: 'New Trigger',
+                                settings: {
+                                    pieceName: 'schedule',
+                                    pieceVersion: '0.0.1',
+                                    triggerName: 'every_hour',
+                                    input: {},
+                                    propertySettings: {},
+                                },
+                            },
+                        },
+                        {
+                            id: 'step_1',
+                            type: FlowNodeType.ACTION,
+                            data: {
+                                name: 'step_1',
+                                kind: FlowActionKind.CODE,
+                                valid: true,
+                                displayName: 'New Code',
+                                settings: { sourceCode: { code: 'new code', packageJson: '{}' }, input: {} },
+                            },
+                        },
+                    ],
+                    edges: [
+                        { id: 'trigger-default', source: 'trigger', target: 'step_1', type: FlowEdgeType.DEFAULT },
+                    ],
                 },
-                steps: [
-                    {
-                        name: 'step_1',
-                        type: FlowActionType.CODE,
-                        valid: true,
-                        displayName: 'New Code',
-                        settings: { sourceCode: { code: 'new code', packageJson: '{}' }, input: {} },
-                    },
-                ],
                 schemaVersion: null,
                 notes: null,
             },
         })
         expect(result.displayName).toBe('Replaced Flow')
-        expect(result.steps.find(s => s.name === 'step_1')!.displayName).toBe('New Code')
+        expect(getNodeData(result, 'step_1')!.displayName).toBe('New Code')
+    })
+
+    it('should import flow with router and preserve branch conditions', () => {
+        const flow = createEmptyFlowVersion()
+        const conditions = [
+            [
+                { operator: BranchOperator.BOOLEAN_IS_FALSE, firstValue: '{{step_1.free_email}}' },
+                { operator: BranchOperator.EXISTS, firstValue: '{{step_1.domain}}' },
+            ],
+        ]
+        const result = flowOperations.apply(flow, {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: {
+                displayName: 'Flow with Router',
+                graph: {
+                    nodes: [
+                        {
+                            id: 'trigger',
+                            type: FlowNodeType.TRIGGER,
+                            data: {
+                                name: 'trigger',
+                                kind: FlowTriggerKind.PIECE,
+                                valid: true,
+                                displayName: 'Webhook',
+                                settings: {
+                                    pieceName: '@activepieces/piece-webhook',
+                                    pieceVersion: '~0.1.0',
+                                    triggerName: 'catch_webhook',
+                                    input: {},
+                                    propertySettings: {},
+                                },
+                            },
+                        },
+                        {
+                            id: 'router_1',
+                            type: FlowNodeType.ACTION,
+                            data: {
+                                name: 'router_1',
+                                kind: FlowActionKind.ROUTER,
+                                valid: true,
+                                displayName: 'Not free email?',
+                                settings: {
+                                    executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                                },
+                            },
+                        },
+                        {
+                            id: 'step_a',
+                            type: FlowNodeType.ACTION,
+                            data: {
+                                name: 'step_a',
+                                kind: FlowActionKind.CODE,
+                                valid: true,
+                                displayName: 'Branch A Step',
+                                settings: {
+                                    sourceCode: { code: 'test', packageJson: '{}' },
+                                    input: {},
+                                },
+                            },
+                        },
+                    ],
+                    edges: [
+                        { id: 'trigger-default', source: 'trigger', target: 'router_1', type: FlowEdgeType.DEFAULT },
+                        {
+                            id: 'router_1-branch-0',
+                            source: 'router_1',
+                            target: 'step_a',
+                            type: FlowEdgeType.BRANCH,
+                            branchIndex: 0,
+                            branchName: 'Has Domain',
+                            branchType: BranchExecutionType.CONDITION,
+                            conditions,
+                        },
+                        {
+                            id: 'router_1-branch-1',
+                            source: 'router_1',
+                            target: null,
+                            type: FlowEdgeType.BRANCH,
+                            branchIndex: 1,
+                            branchName: 'Otherwise',
+                            branchType: BranchExecutionType.FALLBACK,
+                        },
+                    ],
+                },
+                schemaVersion: null,
+                notes: null,
+            },
+        })
+
+        expect(findNode(result, 'router_1')).toBeDefined()
+        expect(findNode(result, 'step_a')).toBeDefined()
+
+        // Check branch edges have correct conditions
+        const branchEdges = result.graph.edges
+            .filter((e): e is BranchEdge => e.type === FlowEdgeType.BRANCH && e.source === 'router_1')
+            .sort((a, b) => a.branchIndex - b.branchIndex)
+
+        expect(branchEdges).toHaveLength(2)
+        expect(branchEdges[0]).toMatchObject({
+            branchIndex: 0,
+            branchName: 'Has Domain',
+            branchType: BranchExecutionType.CONDITION,
+        })
+        expect(branchEdges[0].conditions).toEqual(conditions)
+
+        expect(branchEdges[1]).toMatchObject({
+            branchIndex: 1,
+            branchName: 'Otherwise',
+            branchType: BranchExecutionType.FALLBACK,
+        })
     })
 
     it('should import with notes (delete old, add new)', () => {
         let flow: FlowVersion = createEmptyFlowVersion()
-        // Add an existing note
         flow = flowOperations.apply(flow, {
             type: FlowOperationType.ADD_NOTE,
             request: {
@@ -239,21 +333,28 @@ describe('Import Flow', () => {
             type: FlowOperationType.IMPORT_FLOW,
             request: {
                 displayName: 'Flow with Notes',
-                trigger: {
-                    name: 'trigger',
-                    type: FlowTriggerType.PIECE,
-                    valid: true,
-                    displayName: 'Schedule',
-                    steps: [],
-                    settings: {
-                        pieceName: 'schedule',
-                        pieceVersion: '0.0.1',
-                        triggerName: 'every_hour',
-                        input: {},
-                        propertySettings: {},
-                    },
+                graph: {
+                    nodes: [
+                        {
+                            id: 'trigger',
+                            type: FlowNodeType.TRIGGER,
+                            data: {
+                                name: 'trigger',
+                                kind: FlowTriggerKind.PIECE,
+                                valid: true,
+                                displayName: 'Schedule',
+                                settings: {
+                                    pieceName: 'schedule',
+                                    pieceVersion: '0.0.1',
+                                    triggerName: 'every_hour',
+                                    input: {},
+                                    propertySettings: {},
+                                },
+                            },
+                        },
+                    ],
+                    edges: [],
                 },
-                steps: [],
                 schemaVersion: null,
                 notes: [
                     {
@@ -269,7 +370,6 @@ describe('Import Flow', () => {
                 ],
             },
         })
-        // Old note should be gone, new note should be present
         expect(result.notes.find(n => n.id === 'note-1')).toBeUndefined()
         expect(result.notes.find(n => n.id === 'note-2')).toBeDefined()
         expect(result.notes.find(n => n.id === 'note-2')!.content).toBe('New Note')

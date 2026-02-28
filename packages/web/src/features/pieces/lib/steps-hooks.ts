@@ -1,10 +1,9 @@
 import {
-  FlowAction,
-  FlowActionType,
-  FlowTriggerType,
+  FlowActionKind,
+  FlowNodeData,
+  FlowTriggerKind,
   LocalesEnum,
   SuggestionType,
-  FlowTrigger,
 } from '@activepieces/shared';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +37,7 @@ export const stepsHooks = {
       isLoading: query.isLoading,
     };
   },
-  useStepsMetadata: (props: (FlowAction | FlowTrigger)[]) => {
+  useStepsMetadata: (props: FlowNodeData[]) => {
     const { i18n } = useTranslation();
     return useQueries({
       queries: props.map((step) => {
@@ -119,7 +118,7 @@ function passSearch(
 }
 
 type UseStepMetadata = {
-  step: FlowAction | FlowTrigger;
+  step: FlowNodeData;
 };
 
 type UseMetadataProps = {
@@ -129,19 +128,19 @@ type UseMetadataProps = {
 };
 
 const getQueryKeyForStepMetadata = (
-  step: FlowAction | FlowTrigger,
+  step: FlowNodeData,
   locale: LocalesEnum,
 ): (string | undefined)[] => {
   const isPieceStep =
-    step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
+    step.kind === FlowActionKind.PIECE || step.kind === FlowTriggerKind.PIECE;
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   const customLogoUrl =
     'customLogoUrl' in step ? (step.customLogoUrl as string) : undefined;
   const actionName =
-    step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
+    step.kind === FlowActionKind.PIECE ? step.settings.actionName : undefined;
   const triggerName =
-    step.type === FlowTriggerType.PIECE ? step.settings.triggerName : undefined;
+    step.kind === FlowTriggerKind.PIECE ? step.settings.triggerName : undefined;
   return [
     actionName,
     triggerName,
@@ -149,6 +148,6 @@ const getQueryKeyForStepMetadata = (
     pieceVersion,
     customLogoUrl,
     locale,
-    step.type,
+    step.kind,
   ];
 };

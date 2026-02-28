@@ -1,5 +1,5 @@
 import {
-    FlowActionType,
+    FlowActionKind,
     GenericStepOutput,
     LoopStepOutput,
     StepOutputStatus,
@@ -11,7 +11,7 @@ describe('Logging Utils', () => {
         const largeValue = 'x'.repeat(2000) // Large value that will exceed the limit
         const steps = {
             step1: GenericStepOutput.create({
-                type: FlowActionType.PIECE,
+                type: FlowActionKind.PIECE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {
                     smallKey: 'small',
@@ -31,7 +31,7 @@ describe('Logging Utils', () => {
     it('Should keep smallest input values and truncate largest ones', () => {
         const steps = {
             step1: GenericStepOutput.create({
-                type: FlowActionType.PIECE,
+                type: FlowActionKind.PIECE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {
                     small1: 'a',
@@ -58,7 +58,7 @@ describe('Logging Utils', () => {
                 {
                     // First iteration
                     innerStep1: GenericStepOutput.create({
-                        type: FlowActionType.PIECE,
+                        type: FlowActionKind.PIECE,
                         status: StepOutputStatus.SUCCEEDED,
                         input: {
                             small: 'a',
@@ -69,7 +69,7 @@ describe('Logging Utils', () => {
                 {
                     // Second iteration
                     innerStep2: GenericStepOutput.create({
-                        type: FlowActionType.PIECE,
+                        type: FlowActionKind.PIECE,
                         status: StepOutputStatus.SUCCEEDED,
                         input: {
                             small: 'b',
@@ -80,7 +80,7 @@ describe('Logging Utils', () => {
                 {
                     // Third iteration
                     innerStep3: GenericStepOutput.create({
-                        type: FlowActionType.PIECE,
+                        type: FlowActionKind.PIECE,
                         status: StepOutputStatus.SUCCEEDED,
                         input: {
                             small: 'c',

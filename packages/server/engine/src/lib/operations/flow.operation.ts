@@ -5,7 +5,7 @@ import {
     ExecuteFlowOperation,
     ExecuteTriggerResponse,
     ExecutionType,
-    FlowActionType,
+    FlowActionKind,
     flowStructureUtil,
     GenericStepOutput,
     isNil,
@@ -72,8 +72,9 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
             const newPayload = await runOrReturnPayload(input)
-            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
-                type: input.flowVersion.trigger.type,
+            const triggerNode = flowStructureUtil.getTriggerNode(input.flowVersion.graph)!
+            flowContext = flowContext.upsertStep(triggerNode.id, GenericStepOutput.create({
+                type: triggerNode.data.kind,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
             }).setOutput(newPayload))
@@ -118,7 +119,7 @@ async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Pr
     if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
         return null
     }
-    if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
+    if (stepOutput.type === FlowActionKind.LOOP_ON_ITEMS) {
         const loopOutput = new LoopStepOutput(stepOutput)
         const iterations = loopOutput.output?.iterations ?? []
         const newIterations: Record<string, StepOutput>[] = []

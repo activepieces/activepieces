@@ -95,11 +95,12 @@ export const TextInputWithMentions = ({
   placeholder,
   enableMarkdown,
 }: TextInputWithMentionsProps) => {
-  const steps = useBuilderStateContext((state) =>
+  const stepNodes = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion),
   );
+  const steps = stepNodes.map((node) => node.data);
   const stepsMetadata = stepsHooks
-    .useStepsMetadata(steps)
+    .useStepsMetadata(stepNodes.map((node) => node.data))
     .map(({ data: metadata }, index) => {
       if (metadata) {
         return {

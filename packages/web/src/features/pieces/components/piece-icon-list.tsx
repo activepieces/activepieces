@@ -1,7 +1,7 @@
 import {
-  FlowAction,
-  FlowActionType,
-  FlowTrigger,
+  FlowActionKind,
+  FlowGraph,
+  flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';
 import { cva } from 'class-variance-authority';
@@ -55,7 +55,7 @@ export function PieceIconList({
   background?: string;
   excludeCore?: boolean;
 }) {
-  const steps = [flowVersion.trigger, ...flowVersion.steps];
+  const steps = flowStructureUtil.getAllSteps(flowVersion);
 
   const { pieceNames, coreMetadata } = useMemo(
     () => extractPieceNamesAndCoreMetadata(steps, excludeCore),
@@ -76,7 +76,7 @@ export function PieceIconList({
         displayName: piece.displayName,
         logoUrl: piece.logoUrl,
         description: piece.description,
-        type: FlowActionType.PIECE as const,
+        type: FlowActionKind.PIECE as const,
         pieceType: piece.pieceType,
         pieceName: piece.name,
         pieceVersion: piece.version,
@@ -136,6 +136,5 @@ export function PieceIconList({
 }
 
 type FlowVersionLike = {
-  trigger: FlowTrigger;
-  steps: FlowAction[];
+  graph: FlowGraph;
 };

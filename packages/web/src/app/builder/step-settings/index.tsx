@@ -1,9 +1,10 @@
 import {
-  FlowAction,
-  FlowActionType,
+  BranchEdge,
+  FlowActionKind,
+  FlowNodeData,
   FlowOperationType,
-  FlowTrigger,
-  FlowTriggerType,
+  FlowTriggerKind,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
@@ -69,12 +70,17 @@ const StepSettingsContainer = () => {
     step: selectedStep,
   });
 
-  const currentValuesRef = useRef<FlowAction | FlowTrigger>(selectedStep);
-  const form = useForm<FlowAction | FlowTrigger>({
+  const branchEdges =
+    selectedStep.kind === FlowActionKind.ROUTER
+      ? flowStructureUtil.getBranchEdges(flowVersion.graph, selectedStep.name)
+      : [];
+  const formDefaultValues = buildFormDefaultValues(selectedStep, branchEdges);
+  const currentValuesRef = useRef<RouterFormData>(formDefaultValues);
+  const form = useForm<RouterFormData>({
     mode: 'all',
     disabled: readonly,
     reValidateMode: 'onChange',
-    defaultValues: selectedStep,
+    defaultValues: formDefaultValues,
     resetOptions: {
       keepDefaultValues: false,
       keepDirtyValues: true,
@@ -91,10 +97,10 @@ const StepSettingsContainer = () => {
         currentValuesRef.current,
       );
       if (
-        cleanedNewValues.type === FlowTriggerType.EMPTY ||
+        cleanedNewValues.kind === FlowTriggerKind.EMPTY ||
         (isNil(pieceModel) &&
-          (cleanedNewValues.type === FlowActionType.PIECE ||
-            cleanedNewValues.type === FlowTriggerType.PIECE))
+          (cleanedNewValues.kind === FlowActionKind.PIECE ||
+            cleanedNewValues.kind === FlowTriggerKind.PIECE))
       ) {
         return result;
       }
@@ -104,7 +110,38 @@ const StepSettingsContainer = () => {
       const valid = Object.keys(result.errors).length === 0;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
-      if (cleanedNewValues.type === FlowTriggerType.PIECE) {
+
+      // Handle branch updates separately for routers
+      if (cleanedNewValues.kind === FlowActionKind.ROUTER) {
+        const routerFormData = cleanedNewValues as unknown as RouterFormData;
+        const branches = routerFormData.branches;
+        const oldBranches =
+          'branches' in cleanedCurrentValues
+            ? (cleanedCurrentValues as unknown as RouterFormData).branches
+            : [];
+        if (branches && !deepEqual(branches, oldBranches)) {
+          for (let i = 0; i < branches.length; i++) {
+            if (!deepEqual(branches[i], oldBranches?.[i])) {
+              applyOperation({
+                type: FlowOperationType.UPDATE_BRANCH,
+                request: {
+                  stepName: cleanedNewValues.name,
+                  branchIndex: i,
+                  branchName: branches[i].branchName,
+                  conditions: branches[i].conditions,
+                },
+              });
+            }
+          }
+        }
+        applyOperation({
+          type: FlowOperationType.UPDATE_ACTION,
+          request: {
+            ...cleanedNewValues,
+            valid,
+          },
+        });
+      } else if (cleanedNewValues.kind === FlowTriggerKind.PIECE) {
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
           request: {
@@ -112,7 +149,11 @@ const StepSettingsContainer = () => {
             valid,
           },
         });
-      } else {
+      } else if (
+        cleanedNewValues.kind === FlowActionKind.CODE ||
+        cleanedNewValues.kind === FlowActionKind.PIECE ||
+        cleanedNewValues.kind === FlowActionKind.LOOP_ON_ITEMS
+      ) {
         applyOperation({
           type: FlowOperationType.UPDATE_ACTION,
           request: {
@@ -128,7 +169,7 @@ const StepSettingsContainer = () => {
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
   const isManualTrigger =
-    modifiedStep.type === FlowTriggerType.PIECE &&
+    modifiedStep.kind === FlowTriggerKind.PIECE &&
     pieceSelectorUtils.isManualTrigger({
       pieceName: modifiedStep.settings.pieceName,
       triggerName: modifiedStep.settings.triggerName ?? '',
@@ -139,8 +180,8 @@ const StepSettingsContainer = () => {
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
-    [FlowActionType.CODE, FlowActionType.PIECE].includes(
-      modifiedStep.type as FlowActionType,
+    [FlowActionKind.CODE, FlowActionKind.PIECE].includes(
+      modifiedStep.kind as FlowActionKind,
     ) && !isNil(stepMetadata);
 
   const runAgentStep =
@@ -174,9 +215,11 @@ const StepSettingsContainer = () => {
               displayName={modifiedStep.displayName}
               branchName={
                 !isNil(selectedBranchIndex) &&
-                modifiedStep.type === FlowActionType.ROUTER
-                  ? modifiedStep.branches?.[selectedBranchIndex]
-                      ?.branchName
+                modifiedStep.kind === FlowActionKind.ROUTER &&
+                'branches' in modifiedStep
+                  ? (modifiedStep as RouterFormData).branches?.[
+                      selectedBranchIndex
+                    ]?.branchName
                   : undefined
               }
               setBranchName={(value) => {
@@ -199,7 +242,7 @@ const StepSettingsContainer = () => {
         </div>
 
         <DynamicPropertiesProvider
-          key={`${selectedStep.name}-${selectedStep.type}`}
+          key={`${selectedStep.name}-${selectedStep.kind}`}
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
@@ -213,13 +256,13 @@ const StepSettingsContainer = () => {
                     GAP_SIZE_FOR_STEP_SETTINGS,
                   )}
                 >
-                  {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
+                  {modifiedStep.kind === FlowActionKind.LOOP_ON_ITEMS && (
                     <LoopsSettings readonly={readonly}></LoopsSettings>
                   )}
-                  {modifiedStep.type === FlowActionType.CODE && (
+                  {modifiedStep.kind === FlowActionKind.CODE && (
                     <CodeSettings readonly={readonly}></CodeSettings>
                   )}
-                  {modifiedStep.type === FlowActionType.PIECE &&
+                  {modifiedStep.kind === FlowActionKind.PIECE &&
                     runAgentStep &&
                     modifiedStep && (
                       <AgentSettings
@@ -228,7 +271,7 @@ const StepSettingsContainer = () => {
                         readonly={readonly}
                       />
                     )}
-                  {modifiedStep.type === FlowActionType.PIECE &&
+                  {modifiedStep.kind === FlowActionKind.PIECE &&
                     !runAgentStep &&
                     modifiedStep && (
                       <PieceSettings
@@ -237,11 +280,11 @@ const StepSettingsContainer = () => {
                         readonly={readonly}
                       ></PieceSettings>
                     )}
-                  {modifiedStep.type === FlowActionType.ROUTER &&
+                  {modifiedStep.kind === FlowActionKind.ROUTER &&
                     modifiedStep && (
                       <RouterSettings readonly={readonly}></RouterSettings>
                     )}
-                  {modifiedStep.type === FlowTriggerType.PIECE &&
+                  {modifiedStep.kind === FlowTriggerKind.PIECE &&
                     modifiedStep && (
                       <PieceSettings
                         step={modifiedStep}
@@ -252,14 +295,14 @@ const StepSettingsContainer = () => {
                   {showActionErrorHandlingForm && (
                     <ActionErrorHandlingForm
                       hideContinueOnFailure={
-                        stepMetadata.type === FlowActionType.PIECE
+                        stepMetadata.type === FlowActionKind.PIECE
                           ? stepMetadata.errorHandlingOptions?.continueOnFailure
                               ?.hide
                           : false
                       }
                       disabled={readonly}
                       hideRetryOnFailure={
-                        stepMetadata.type === FlowActionType.PIECE
+                        stepMetadata.type === FlowActionKind.PIECE
                           ? stepMetadata.errorHandlingOptions?.retryOnFailure
                               ?.hide
                           : false
@@ -284,7 +327,7 @@ const StepSettingsContainer = () => {
                   >
                     {showGenerateSampleData && (
                       <TestStepContainer
-                        type={modifiedStep.type}
+                        type={modifiedStep.kind}
                         flowId={flowVersion.flowId}
                         flowVersionId={flowVersion.id}
                         projectId={project?.id}
@@ -306,3 +349,29 @@ const StepSettingsContainer = () => {
 };
 StepSettingsContainer.displayName = 'StepSettingsContainer';
 export { StepSettingsContainer };
+
+export type BranchFormItem = Pick<
+  BranchEdge,
+  'branchName' | 'branchType' | 'conditions'
+>;
+
+export type RouterFormData = FlowNodeData & {
+  branches?: BranchFormItem[];
+};
+
+function buildFormDefaultValues(
+  selectedStep: FlowNodeData,
+  branchEdges: BranchEdge[],
+): RouterFormData {
+  if (selectedStep.kind !== FlowActionKind.ROUTER) {
+    return selectedStep;
+  }
+  return {
+    ...selectedStep,
+    branches: branchEdges.map((edge) => ({
+      branchName: edge.branchName,
+      branchType: edge.branchType,
+      conditions: edge.conditions,
+    })),
+  };
+}

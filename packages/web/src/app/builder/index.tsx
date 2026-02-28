@@ -1,8 +1,7 @@
 import {
-  FlowAction,
-  FlowActionType,
-  FlowTrigger,
-  FlowTriggerType,
+  FlowActionKind,
+  FlowGraphNode,
+  FlowTriggerKind,
   FlowVersionState,
   flowStructureUtil,
 } from '@activepieces/shared';
@@ -53,10 +52,7 @@ const BuilderPage = () => {
     state.rightSidebar,
     state.selectedStep,
     state.removeAllStepTestsListeners,
-    flowStructureUtil.getStep(
-      state.selectedStep ?? '',
-      state.flowVersion,
-    ),
+    flowStructureUtil.getStep(state.selectedStep ?? '', state.flowVersion),
   ]);
   useEffect(() => {
     return () => {
@@ -71,11 +67,11 @@ const BuilderPage = () => {
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
-      name: selectedStep?.settings.pieceName,
-      version: selectedStep?.settings.pieceVersion,
+      name: selectedStep?.data.settings.pieceName,
+      version: selectedStep?.data.settings.pieceVersion,
       enabled:
-        selectedStep?.type === FlowActionType.PIECE ||
-        selectedStep?.type === FlowTriggerType.PIECE,
+        selectedStep?.data.kind === FlowActionKind.PIECE ||
+        selectedStep?.data.kind === FlowTriggerKind.PIECE,
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
   flowCanvasHooks.useSetSocketListener(refetchPiece);
@@ -154,7 +150,7 @@ const BuilderPage = () => {
                 <ResizableVerticalPanelsProvider>
                   <StepSettingsProvider
                     pieceModel={pieceModel}
-                    selectedStep={selectedStep}
+                    selectedStep={selectedStep.data}
                     key={constructContainerKey({
                       flowVersionId: flowVersion.id,
                       step: selectedStep,
@@ -185,23 +181,24 @@ function constructContainerKey({
   hasPieceModelLoaded,
 }: {
   flowVersionId: string;
-  step?: FlowAction | FlowTrigger;
+  step?: FlowGraphNode;
   hasPieceModelLoaded: boolean;
 }) {
-  const stepName = step?.name;
+  const stepName = step?.data.name;
   const triggerOrActionName =
-    step?.type === FlowTriggerType.PIECE
-      ? step?.settings.triggerName
-      : step?.settings.actionName;
+    step?.data.kind === FlowTriggerKind.PIECE
+      ? step?.data.settings.triggerName
+      : step?.data.settings.actionName;
   const pieceName =
-    step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
-      ? step?.settings.pieceName
+    step?.data.kind === FlowTriggerKind.PIECE ||
+    step?.data.kind === FlowActionKind.PIECE
+      ? step?.data.settings.pieceName
       : undefined;
   //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
   const isSkipped =
-    step?.type != FlowTriggerType.EMPTY &&
-    step?.type != FlowTriggerType.PIECE &&
-    step?.skip;
+    step?.data.kind != FlowTriggerKind.EMPTY &&
+    step?.data.kind != FlowTriggerKind.PIECE &&
+    step?.data.skip;
   return `${flowVersionId}-${stepName ?? ''}-${triggerOrActionName ?? ''}-${
     pieceName ?? ''
   }-${'skipped-' + !!isSkipped}-${

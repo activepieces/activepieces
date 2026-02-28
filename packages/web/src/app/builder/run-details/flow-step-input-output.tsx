@@ -41,13 +41,9 @@ export const FlowStepInputOutput = () => {
   );
   const selectedStepOutput = useMemo(() => {
     return run && selectedStep && run.steps
-      ? flowRunUtils.extractStepOutput(
-          selectedStep.name,
-          loopsIndexes,
-          run.steps,
-        )
+      ? flowRunUtils.extractStepOutput(selectedStep.id, loopsIndexes, run.steps)
       : null;
-  }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
+  }, [run, selectedStep?.id, loopsIndexes, flowVersion.graph]);
   const isAgent = isRunAgent(selectedStep);
   const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
   const parsedOutput =
@@ -101,7 +97,7 @@ export const FlowStepInputOutput = () => {
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 text-base font-medium">
           <StepStatusIcon status={selectedStepOutput.status} size="4.5" />
-          <span>{selectedStep.displayName}</span>
+          <span>{selectedStep.data.displayName}</span>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersion, PlatformId, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, flowStructureUtil, FlowVersion, isTriggerNodeData, PieceTrigger, PlatformId, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -80,7 +80,13 @@ export class EngineConstants {
     }
 
     public get triggerPieceName(): string {
-        return this.flowVersion?.trigger?.settings?.pieceName ?? this._triggerPieceName
+        if (this.flowVersion) {
+            const triggerNode = flowStructureUtil.getTriggerNode(this.flowVersion.graph)
+            if (triggerNode && isTriggerNodeData(triggerNode.data) && triggerNode.data.kind === 'PIECE_TRIGGER') {
+                return (triggerNode.data as PieceTrigger).settings.pieceName
+            }
+        }
+        return this._triggerPieceName
     }
 
     public get isRunningApTests(): boolean {
@@ -149,7 +155,7 @@ export class EngineConstants {
             logsFileId: input.logsFileId,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
-            stepNames: flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.name),
+            stepNames: flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.id),
         })
     }
 
@@ -196,7 +202,7 @@ export class EngineConstants {
             stepNameToTest: undefined,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
-            stepNames: input.flowVersion ? flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.name) : [],
+            stepNames: input.flowVersion ? flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.id) : [],
         })
     }
 
@@ -217,7 +223,7 @@ export class EngineConstants {
             stepNameToTest: undefined,
             timeoutInSeconds: input.timeoutInSeconds,
             platformId: input.platformId,
-            stepNames: flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.name),
+            stepNames: flowStructureUtil.getAllSteps(input.flowVersion).map((step) => step.id),
         })
     }
     public getPropsResolver(contextVersion: ContextVersion | undefined): PropsResolver {

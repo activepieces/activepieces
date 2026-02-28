@@ -1,7 +1,7 @@
 import {
     AgentPieceProps,
-    FlowActionType,
-    FlowTriggerType,
+    FlowActionKind,
+    FlowTriggerKind,
     FlowVersion,
     FlowVersionState,
     PropertyExecutionType,
@@ -28,7 +28,7 @@ describe('migrate-v0-branch-to-router', () => {
             schemaVersion: undefined,
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
@@ -42,14 +42,14 @@ describe('migrate-v0-branch-to-router', () => {
                     },
                     onSuccessAction: {
                         name: 'step_2',
-                        type: FlowActionType.CODE,
+                        type: FlowActionKind.CODE,
                         displayName: 'On Success',
                         valid: true,
                         settings: { sourceCode: { code: '', packageJson: '' }, input: {} },
                     },
                     onFailureAction: {
                         name: 'step_3',
-                        type: FlowActionType.CODE,
+                        type: FlowActionKind.CODE,
                         displayName: 'On Failure',
                         valid: true,
                         settings: { sourceCode: { code: '', packageJson: '' }, input: {} },
@@ -63,7 +63,7 @@ describe('migrate-v0-branch-to-router', () => {
         expect(result.schemaVersion).toBe('1')
         const trigger = result.trigger as unknown as Record<string, unknown>
         const router = trigger.nextAction as Record<string, unknown>
-        expect(router.type).toBe(FlowActionType.ROUTER)
+        expect(router.type).toBe(FlowActionKind.ROUTER)
         expect(router.name).toBe('step_1')
         const settings = router.settings as Record<string, unknown>
         const branches = settings.branches as Record<string, unknown>[]
@@ -82,7 +82,7 @@ describe('migrate-v0-branch-to-router', () => {
             schemaVersion: undefined,
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
@@ -110,13 +110,13 @@ describe('migrate-v0-branch-to-router', () => {
             schemaVersion: undefined,
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.CODE,
+                    type: FlowActionKind.CODE,
                     displayName: 'Code',
                     valid: true,
                     settings: { sourceCode: { code: 'test', packageJson: '{}' }, input: {} },
@@ -128,7 +128,7 @@ describe('migrate-v0-branch-to-router', () => {
 
         const trigger = result.trigger as unknown as Record<string, unknown>
         const step = trigger.nextAction as Record<string, unknown>
-        expect(step.type).toBe(FlowActionType.CODE)
+        expect(step.type).toBe(FlowActionKind.CODE)
     })
 })
 
@@ -139,7 +139,7 @@ describe('migrate-v1-connection-ids', () => {
             schemaVersion: '1',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: { auth: "{{connections['conn-123']}}" } },
@@ -157,13 +157,13 @@ describe('migrate-v1-connection-ids', () => {
             schemaVersion: '1',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'Gmail',
                     valid: true,
                     settings: { pieceName: 'gmail', pieceVersion: '1.0.0', actionName: 'send', input: { auth: "{{connections['gmail-abc']}}" } },
@@ -181,7 +181,7 @@ describe('migrate-v1-connection-ids', () => {
             schemaVersion: '1',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
@@ -201,13 +201,13 @@ describe('migrate-v2-agent-piece', () => {
             schemaVersion: '2',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'Agent',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-agent', pieceVersion: '0.1.0', actionName: 'run', input: {} },
@@ -228,13 +228,13 @@ describe('migrate-v2-agent-piece', () => {
             schemaVersion: '2',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'Gmail',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.5.0', actionName: 'send', input: {} },
@@ -257,13 +257,13 @@ describe('migrate-v3-agent-piece', () => {
             schemaVersion: '3',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'Agent',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-agent', pieceVersion: '0.2.0', actionName: 'run', input: {} },
@@ -287,13 +287,13 @@ describe('migrate-v4-agent-piece', () => {
             schemaVersion: '4',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-ai', pieceVersion: '0.0.1', actionName: 'run', input: { agentId: 'agent-xyz' } },
@@ -312,13 +312,13 @@ describe('migrate-v4-agent-piece', () => {
             schemaVersion: '4',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.CODE,
+                    type: FlowActionKind.CODE,
                     displayName: 'Code',
                     valid: true,
                     settings: { sourceCode: { code: '', packageJson: '' }, input: {} },
@@ -339,13 +339,13 @@ describe('migrate-v5-http-to-webhook', () => {
             schemaVersion: '5',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'HTTP Response',
                     valid: true,
                     settings: {
@@ -386,13 +386,13 @@ describe('migrate-v5-http-to-webhook', () => {
             schemaVersion: '5',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'HTTP Response',
                     valid: true,
                     settings: {
@@ -424,13 +424,13 @@ describe('migrate-v5-http-to-webhook', () => {
             schemaVersion: '5',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'Gmail',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.5.0', actionName: 'send', input: {} },
@@ -453,7 +453,7 @@ describe('migrate-v6-property-settings', () => {
             schemaVersion: '6',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: {
@@ -471,7 +471,7 @@ describe('migrate-v6-property-settings', () => {
                 },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.CODE,
+                    type: FlowActionKind.CODE,
                     displayName: 'Code',
                     valid: true,
                     settings: { sourceCode: { code: '', packageJson: '' }, input: { code: 'x' } },
@@ -502,13 +502,13 @@ describe('migrate-v8-agent-tools', () => {
             schemaVersion: '8',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'Agent',
                     valid: true,
                     settings: {
@@ -555,13 +555,13 @@ describe('migrate-v8-agent-tools', () => {
             schemaVersion: '8',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'Agent',
                     valid: true,
                     settings: {
@@ -602,13 +602,13 @@ describe('migrate-v10-ai-pieces-provider-id', () => {
             schemaVersion: '10',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-ai', pieceVersion: '0.0.1', actionName: 'askAi', input: { provider: 'openai' } },
@@ -629,13 +629,13 @@ describe('migrate-v10-ai-pieces-provider-id', () => {
             schemaVersion: '10',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-ai', pieceVersion: '0.0.2', actionName: 'askAi', input: {} },
@@ -655,13 +655,13 @@ describe('migrate-v10-ai-pieces-provider-id', () => {
             schemaVersion: '10',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI',
                     valid: true,
                     settings: { pieceName: '@activepieces/piece-ai', pieceVersion: '0.0.3', actionName: 'askAi', input: {} },
@@ -684,7 +684,7 @@ describe('migrate-v13-add-notes', () => {
             schemaVersion: '13',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.EMPTY,
+                type: FlowTriggerKind.EMPTY,
                 displayName: 'Trigger',
                 valid: false,
                 settings: {},
@@ -705,7 +705,7 @@ describe('migrate-v13-add-notes', () => {
             schemaVersion: '13',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.EMPTY,
+                type: FlowTriggerKind.EMPTY,
                 displayName: 'Trigger',
                 valid: false,
                 settings: {},
@@ -726,13 +726,13 @@ describe('migrate-v14-agent-provider-model', () => {
             schemaVersion: '14',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI Agent',
                     valid: true,
                     settings: {
@@ -762,13 +762,13 @@ describe('migrate-v14-agent-provider-model', () => {
             schemaVersion: '14',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI Ask',
                     valid: true,
                     settings: {
@@ -797,13 +797,13 @@ describe('migrate-v15-agent-provider-model', () => {
             schemaVersion: '15',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI Agent',
                     valid: true,
                     settings: {
@@ -834,13 +834,13 @@ describe('migrate-v15-agent-provider-model', () => {
             schemaVersion: '15',
             trigger: {
                 name: 'trigger',
-                type: FlowTriggerType.PIECE,
+                type: FlowTriggerKind.PIECE,
                 displayName: 'Trigger',
                 valid: true,
                 settings: { pieceName: 'test', pieceVersion: '1.0.0', triggerName: 'test', input: {} },
                 nextAction: {
                     name: 'step_1',
-                    type: FlowActionType.PIECE,
+                    type: FlowActionKind.PIECE,
                     displayName: 'AI Ask',
                     valid: true,
                     settings: {
@@ -878,8 +878,7 @@ function createLegacyFlowVersion(overrides: { schemaVersion: string | undefined,
         connectionIds: [],
         agentIds: [],
         notes: [],
-        steps: [],
         backupFiles: null,
-        trigger: overrides.trigger as unknown as FlowVersion['trigger'],
-    }
+        trigger: overrides.trigger,
+    } as unknown as FlowVersion
 }

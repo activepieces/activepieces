@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework'
 import { Sandbox } from '@activepieces/sandbox'
 import { webhookSecretsUtils } from '@activepieces/server-common'
-import { AgentPieceProps, AgentToolType, AI_PIECE_NAME, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ExecuteActionResponse, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, parseToJsonIfPossible, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { AgentPieceProps, AgentTool, AgentToolType, AI_PIECE_NAME, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ExecuteActionResponse, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowActionKind, flowStructureUtil, FlowTriggerKind, FlowVersion, parseToJsonIfPossible, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../cache/code-builder'
@@ -55,7 +55,8 @@ export const operationHandler = (log: FastifyBaseLogger) => ({
             projectId: operation.projectId,
         }, '[threadEngineRunner#executeTrigger]')
 
-        const triggerSettings = operation.flowVersion.trigger.settings as PieceTriggerSettings
+        const triggerNode = flowStructureUtil.getTriggerNode(operation.flowVersion.graph)!
+        const triggerSettings = (triggerNode.data as { settings: PieceTriggerSettings }).settings
         const triggerPiece = await pieceWorkerCache(log).getPiece({
             engineToken,
             pieceName: triggerSettings.pieceName,
@@ -143,11 +144,11 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
     }, async (span) => {
         try {
             const steps = flowStructureUtil.getAllSteps(flowVersion)
-            const pieceSteps = steps.filter((step) => step.type === FlowTriggerType.PIECE || step.type === FlowActionType.PIECE)
+            const pieceSteps = steps.filter((step) => step.data.kind === FlowTriggerKind.PIECE || step.data.kind === FlowActionKind.PIECE)
             span.setAttribute('sandbox.pieceStepsCount', pieceSteps.length)
 
             const flowPieces = pieceSteps.map((step) => {
-                const { pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
+                const { pieceName, pieceVersion } = step.data.settings as PieceTriggerSettings | PieceActionSettings
                 const pieces = [ pieceWorkerCache(log).getPiece({
                     engineToken,
                     pieceName,
@@ -155,12 +156,12 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
                     platformId,
                 })]
                 if (pieceName === AI_PIECE_NAME) {
-                    const agentTools = step.settings.input?.[AgentPieceProps.AGENT_TOOLS]
+                    const agentTools = (step.data.settings as PieceActionSettings).input?.[AgentPieceProps.AGENT_TOOLS] as AgentTool[] | undefined
                     for (const tool of agentTools ?? []) {
                         if (tool.type === AgentToolType.PIECE) {
                             pieces.push(pieceWorkerCache(log).getPiece({
                                 engineToken,
-                                platformId: tool.platformId,
+                                platformId,
                                 pieceName: tool.pieceMetadata.pieceName,
                                 pieceVersion: tool.pieceMetadata.pieceVersion,
                             }),
@@ -186,10 +187,10 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
 
 function getCodePieces(flowVersion: FlowVersion): CodeArtifact[] {
     const steps = flowStructureUtil.getAllSteps(flowVersion)
-    return steps.filter((step) => step.type === FlowActionType.CODE).map((step) => {
-        const codeAction = step as CodeAction
+    return steps.filter((step) => step.data.kind === FlowActionKind.CODE).map((step) => {
+        const codeAction = step.data as CodeAction
         return {
-            name: codeAction.name,
+            name: step.id,
             flowVersionId: flowVersion.id,
             flowVersionState: flowVersion.state,
             sourceCode: codeAction.settings.sourceCode,

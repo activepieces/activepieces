@@ -1,4 +1,8 @@
-import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  FlowTriggerKind,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckCircle2Icon,
@@ -114,8 +118,8 @@ const PieceSelectorContent = ({
     state.openedPieceSelectorStepNameOrAddButtonId,
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
     state.setSelectedPieceMetadataInPieceSelector,
-    state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
-      id === 'trigger',
+    flowStructureUtil.getTriggerNode(state.flowVersion.graph)?.data.kind ===
+      FlowTriggerKind.EMPTY && id === 'trigger',
     state.deselectStep,
   ]);
   const { searchQuery, setSearchQuery } = usePieceSearchContext();

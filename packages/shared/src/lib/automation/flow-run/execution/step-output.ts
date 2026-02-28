@@ -1,6 +1,6 @@
 import { isNil } from '../../../core/common'
-import { FlowActionType } from '../../flows/actions/action'
-import { FlowTriggerType } from '../../flows/triggers/trigger'
+import { FlowActionKind } from '../../flows/actions/action'
+import { FlowTriggerKind } from '../../flows/triggers/trigger'
 
 export enum StepOutputStatus {
     FAILED = 'FAILED',
@@ -10,7 +10,7 @@ export enum StepOutputStatus {
     SUCCEEDED = 'SUCCEEDED',
 }
 
-type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = {
+type BaseStepOutputParams<T extends FlowActionKind | FlowTriggerKind, OUTPUT> = {
     type: T
     status: StepOutputStatus
     input: unknown
@@ -19,7 +19,7 @@ type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = 
     errorMessage?: unknown
 }
 
-export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPUT> {
+export class GenericStepOutput<T extends FlowActionKind | FlowTriggerKind, OUTPUT> {
     type: T
     status: StepOutputStatus
     input: unknown
@@ -64,7 +64,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         })
     }
 
-    static create<T extends FlowActionType | FlowTriggerType, OUTPUT>({
+    static create<T extends FlowActionKind | FlowTriggerKind, OUTPUT>({
         input,
         type,
         status,
@@ -85,11 +85,11 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
 }
 
 export type StepOutput =
-  | GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>
-  | GenericStepOutput<FlowActionType.ROUTER, unknown>
+  | GenericStepOutput<FlowActionKind.LOOP_ON_ITEMS, LoopStepResult>
+  | GenericStepOutput<FlowActionKind.ROUTER, unknown>
   | GenericStepOutput<
-  | Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER>
-  | FlowTriggerType,
+  | Exclude<FlowActionKind, FlowActionKind.LOOP_ON_ITEMS | FlowActionKind.ROUTER>
+  | FlowTriggerKind,
   unknown
   >
 
@@ -104,12 +104,12 @@ type RouterStepResult = {
 }
 
 export class RouterStepOutput extends GenericStepOutput<
-FlowActionType.ROUTER,
+FlowActionKind.ROUTER,
 RouterStepResult
 > {
     static init({ input }: { input: unknown }): RouterStepOutput {
         return new RouterStepOutput({
-            type: FlowActionType.ROUTER,
+            type: FlowActionKind.ROUTER,
             input,
             status: StepOutputStatus.SUCCEEDED,
         })
@@ -123,11 +123,11 @@ export type LoopStepResult = {
 }
 
 export class LoopStepOutput extends GenericStepOutput<
-FlowActionType.LOOP_ON_ITEMS,
+FlowActionKind.LOOP_ON_ITEMS,
 LoopStepResult
 > {
     constructor(
-        step: BaseStepOutputParams<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>,
+        step: BaseStepOutputParams<FlowActionKind.LOOP_ON_ITEMS, LoopStepResult>,
     ) {
         super(step)
         this.output = step.output ?? {
@@ -139,7 +139,7 @@ LoopStepResult
 
     static init({ input }: { input: unknown }): LoopStepOutput {
         return new LoopStepOutput({
-            type: FlowActionType.LOOP_ON_ITEMS,
+            type: FlowActionKind.LOOP_ON_ITEMS,
             input,
             status: StepOutputStatus.SUCCEEDED,
         })

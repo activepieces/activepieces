@@ -1,17 +1,17 @@
 import {
     AgentPieceProps,
-    FlowActionType,
+    FlowActionKind,
     FlowVersion,
     isNil,
 } from '@activepieces/shared'
-import { Migration } from '.'
 import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
+import { Migration } from '.'
 
 export const cleanUpAgentTools: Migration = {
     targetSchemaVersion: '8',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (step.type === FlowActionType.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
+            if (step.type === FlowActionKind.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
                 const tools = (step.settings.input['agentTools'] as { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[]) ?? []
                 const newTools = tools.map(tool => {
                     switch (tool.type) {

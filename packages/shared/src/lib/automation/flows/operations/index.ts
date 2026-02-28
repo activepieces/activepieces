@@ -2,11 +2,12 @@ import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../../core/common'
 import { DiscriminatedUnion } from '../../../core/common/base-model'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema, SingleActionSchema } from '../actions/action'
+import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
+import { FlowGraph } from '../graph/flow-graph'
 import { Note } from '../note'
 import { SaveSampleDataRequest } from '../sample-data'
-import { FlowTrigger, UpdateEmptyTrigger, UpdatePieceTrigger } from '../triggers/trigger'
+import { UpdateEmptyTrigger, UpdatePieceTrigger } from '../triggers/trigger'
 
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
@@ -28,6 +29,7 @@ export enum FlowOperationType {
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
     MOVE_BRANCH = 'MOVE_BRANCH',
+    UPDATE_BRANCH = 'UPDATE_BRANCH',
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
     UPDATE_MINUTES_SAVED = 'UPDATE_MINUTES_SAVED',
     UPDATE_OWNER = 'UPDATE_OWNER',
@@ -59,6 +61,14 @@ export const MoveBranchRequest = Type.Object({
     stepName: Type.String(),
 })
 export type MoveBranchRequest = Static<typeof MoveBranchRequest>
+
+export const UpdateBranchRequest = Type.Object({
+    branchIndex: Type.Number(),
+    stepName: Type.String(),
+    conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
+    branchName: Type.Optional(Type.String()),
+})
+export type UpdateBranchRequest = Static<typeof UpdateBranchRequest>
 
 export const SkipActionRequest = Type.Object({
     names: Type.Array(Type.String()),
@@ -95,8 +105,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: FlowTrigger,
-    steps: Type.Optional(Type.Array(SingleActionSchema)),
+    graph: Type.Unsafe<FlowGraph>(Type.Unknown()),
     schemaVersion: Nullable(Type.String()),
     notes: Nullable(Type.Array(Note)),
 })
@@ -122,7 +131,7 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
 
-export const UpdateActionRequest = DiscriminatedUnion('type', [
+export const UpdateActionRequest = DiscriminatedUnion('kind', [
     CodeActionSchema,
     LoopOnItemsActionSchema,
     PieceActionSchema,
@@ -157,7 +166,7 @@ export const AddActionRequest = Type.Object({
 })
 export type AddActionRequest = Static<typeof AddActionRequest>
 
-export const UpdateTriggerRequest = DiscriminatedUnion('type', [UpdateEmptyTrigger, UpdatePieceTrigger])
+export const UpdateTriggerRequest = DiscriminatedUnion('kind', [UpdateEmptyTrigger, UpdatePieceTrigger])
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>
 
 export const UpdateFlowStatusRequest = Type.Object({
@@ -353,6 +362,15 @@ export const FlowOperationRequest = DiscriminatedUnion('type', [
         {
             type: Type.Literal(FlowOperationType.MOVE_BRANCH),
             request: MoveBranchRequest,
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_BRANCH),
+            request: UpdateBranchRequest,
+        },
+        {
+            title: 'Update Branch',
         },
     ),
     Type.Object(

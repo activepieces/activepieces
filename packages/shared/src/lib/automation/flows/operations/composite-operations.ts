@@ -1,16 +1,16 @@
-import { BranchExecutionType, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { FlowActionKind } from '../actions/action'
 import { FlowVersion } from '../flow-version'
-import { FlowTrigger } from '../triggers/trigger'
+import { BranchEdge, FlowEdgeType, FlowGraph, FlowGraphNode, FlowNodeType, isActionNodeData, isTriggerNodeData } from '../graph/flow-graph'
 import { flowStructureUtil } from '../util/flow-structure-util'
-import { actionUtils } from './action-operations'
-import { FlowOperationRequest, FlowOperationType, ImportFlowRequest, MoveActionRequest, StepLocationRelativeToParent } from './index'
+import { actionOperations, actionUtils } from './action-operations'
+import { FlowOperationRequest, FlowOperationType, ImportFlowRequest, MoveActionRequest, StepLocationRelativeToParent, UpdateActionRequest, UpdateTriggerRequest } from './index'
 
 // --- Move Action ---
 
 function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowOperationRequest[] {
-    const action = flowStructureUtil.getActionOrThrow(request.name, flowVersion)
+    const node = flowStructureUtil.getActionOrThrow(request.name, flowVersion)
     flowStructureUtil.getStepOrThrow(request.newParentStep, flowVersion)
-
+    if (!isActionNodeData(node.data)) return []
     return [
         {
             type: FlowOperationType.DELETE_ACTION,
@@ -19,7 +19,7 @@ function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowO
         {
             type: FlowOperationType.ADD_ACTION,
             request: {
-                action,
+                action: node.data,
                 parentStep: request.newParentStep,
                 stepLocationRelativeToParent: request.stepLocationRelativeToNewParent,
                 branchIndex: request.branchIndex,
@@ -31,104 +31,162 @@ function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowO
 // --- Duplicate Step ---
 
 function duplicateStep(stepName: string, flowVersion: FlowVersion): FlowOperationRequest[] {
-    const clonedAction: FlowAction = JSON.parse(JSON.stringify(flowStructureUtil.getActionOrThrow(stepName, flowVersion)))
-    const allDescendants = collectDescendantSteps(clonedAction, flowVersion)
-    const allActions = [clonedAction, ...allDescendants]
-    const oldNameToNewName = actionUtils.mapToNewNames(flowVersion, allActions)
+    const node = flowStructureUtil.getActionOrThrow(stepName, flowVersion)
+    const allDescendants = collectDescendantNodes(node, flowVersion)
+    const allNodes = [node, ...allDescendants]
+    const oldNameToNewName = actionUtils.mapToNewNames(flowVersion, allNodes)
 
-    const clonedMain = actionUtils.clone(JSON.parse(JSON.stringify(clonedAction)), oldNameToNewName)
-    updateInternalRefs(clonedMain, oldNameToNewName)
+    const clonedMain = actionUtils.clone(JSON.parse(JSON.stringify(node)), oldNameToNewName)
 
+    if (!isActionNodeData(clonedMain.data)) return []
     const operations: FlowOperationRequest[] = [
         {
             type: FlowOperationType.ADD_ACTION,
             request: {
-                action: clonedMain,
+                action: clonedMain.data,
                 parentStep: stepName,
                 stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
             },
         },
     ]
 
-    for (const descendant of allDescendants) {
-        const clonedDescendant = actionUtils.clone(JSON.parse(JSON.stringify(descendant)), oldNameToNewName)
-        updateInternalRefs(clonedDescendant, oldNameToNewName)
-        operations.push({
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-                action: clonedDescendant,
-                parentStep: findParentNameDirect(clonedMain, clonedDescendant.name),
-                stepLocationRelativeToParent: findLocationRelativeToParentDirect(clonedMain, clonedDescendant.name),
-                branchIndex: findBranchIndexDirect(clonedMain, clonedDescendant.name),
-            },
-        })
+    // Add descendant operations - we need to reconstruct the graph structure
+    const clonedDescendantOps = getDescendantAddOperations(node, allDescendants, oldNameToNewName, flowVersion)
+    operations.push(...clonedDescendantOps)
+
+    return operations
+}
+
+function getDescendantAddOperations(
+    parentNode: FlowGraphNode,
+    descendants: FlowGraphNode[],
+    oldNameToNewName: Record<string, string>,
+    flowVersion: FlowVersion,
+): FlowOperationRequest[] {
+    const operations: FlowOperationRequest[] = []
+    const graph = flowVersion.graph
+
+    if (parentNode.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+        const loopEdge = flowStructureUtil.getLoopEdge(graph, parentNode.id)
+        if (loopEdge && loopEdge.target) {
+            addChainOperations(loopEdge.target, graph, oldNameToNewName, oldNameToNewName[parentNode.id], StepLocationRelativeToParent.INSIDE_LOOP, undefined, operations, flowVersion)
+        }
+    }
+    else if (parentNode.data.kind === FlowActionKind.ROUTER) {
+        const branchEdges = flowStructureUtil.getBranchEdges(graph, parentNode.id)
+        for (const branchEdge of branchEdges) {
+            if (branchEdge.target) {
+                addChainOperations(branchEdge.target, graph, oldNameToNewName, oldNameToNewName[parentNode.id], StepLocationRelativeToParent.INSIDE_BRANCH, branchEdge.branchIndex, operations, flowVersion)
+            }
+        }
     }
 
     return operations
 }
 
+function addChainOperations(
+    startNodeId: string,
+    graph: FlowGraph,
+    oldNameToNewName: Record<string, string>,
+    parentStepName: string,
+    firstLocation: StepLocationRelativeToParent,
+    branchIndex: number | undefined,
+    operations: FlowOperationRequest[],
+    flowVersion: FlowVersion,
+): void {
+    const chain = flowStructureUtil.getDefaultChain(graph, startNodeId)
+    for (let i = 0; i < chain.length; i++) {
+        const nodeId = chain[i]
+        const node = graph.nodes.find((n) => n.id === nodeId)
+        if (!node) continue
+
+        const clonedNode = actionUtils.clone(JSON.parse(JSON.stringify(node)), oldNameToNewName)
+        if (!isActionNodeData(clonedNode.data)) continue
+
+        const parentStep = i === 0 ? parentStepName : oldNameToNewName[chain[i - 1]]
+        const location = i === 0 ? firstLocation : StepLocationRelativeToParent.AFTER
+        const branchIdx = i === 0 ? branchIndex : undefined
+        operations.push(createAddActionOperation(clonedNode.data, parentStep, location, branchIdx))
+
+        // Recurse into nested structures
+        if (node.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+            const loopEdge = flowStructureUtil.getLoopEdge(graph, nodeId)
+            if (loopEdge && loopEdge.target) {
+                addChainOperations(loopEdge.target, graph, oldNameToNewName, oldNameToNewName[nodeId], StepLocationRelativeToParent.INSIDE_LOOP, undefined, operations, flowVersion)
+            }
+        }
+        else if (node.data.kind === FlowActionKind.ROUTER) {
+            const branchEdges = flowStructureUtil.getBranchEdges(graph, nodeId)
+            for (const bEdge of branchEdges) {
+                if (bEdge.target) {
+                    addChainOperations(bEdge.target, graph, oldNameToNewName, oldNameToNewName[nodeId], StepLocationRelativeToParent.INSIDE_BRANCH, bEdge.branchIndex, operations, flowVersion)
+                }
+            }
+        }
+    }
+}
+
 // --- Duplicate Branch ---
 
 function duplicateBranch(routerName: string, childIndex: number, flowVersion: FlowVersion): FlowOperationRequest[] {
-    const router = flowStructureUtil.getActionOrThrow(routerName, flowVersion) as RouterAction
-    if (!router.branches) {
+    const routerNode = flowStructureUtil.getActionOrThrow(routerName, flowVersion)
+    const branchEdges = flowStructureUtil.getBranchEdges(flowVersion.graph, routerName)
+    if (branchEdges.length === 0) {
         return []
     }
-    const branch = router.branches[childIndex]
+    const branchEdge = branchEdges[childIndex]
+    if (!branchEdge) return []
+
     const operations: FlowOperationRequest[] = [{
         type: FlowOperationType.ADD_BRANCH,
         request: {
-            branchName: `${branch.branchName} Copy`,
+            branchName: `${branchEdge.branchName} Copy`,
             branchIndex: childIndex + 1,
             stepName: routerName,
-            conditions: branch.branchType === BranchExecutionType.CONDITION ? branch.conditions : undefined,
+            conditions: branchEdge.branchType === 'CONDITION' ? branchEdge.conditions : undefined,
         },
     }]
 
-    if (branch.steps.length > 0) {
-        const branchSteps = branch.steps.map((name) => flowStructureUtil.getActionOrThrow(name, flowVersion))
-        const allDescendants = branchSteps.flatMap((step) => [step, ...collectDescendantSteps(step, flowVersion)])
-        const oldNameToNewName = actionUtils.mapToNewNames(flowVersion, allDescendants)
+    if (branchEdge.target) {
+        const chain = flowStructureUtil.getDefaultChain(flowVersion.graph, branchEdge.target)
+        const chainNodes = chain.map((id) => flowVersion.graph.nodes.find((n) => n.id === id)!).filter(Boolean)
+        const allDescendants = chainNodes.flatMap((node) => [node, ...collectDescendantNodes(node, flowVersion)])
 
-        for (let i = 0; i < branchSteps.length; i++) {
-            const clonedStep: FlowAction = actionUtils.clone(JSON.parse(JSON.stringify(branchSteps[i])), oldNameToNewName)
-            updateInternalRefs(clonedStep, oldNameToNewName)
-
-            if (i === 0) {
-                operations.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
-                        action: clonedStep,
-                        parentStep: routerName,
-                        branchIndex: childIndex + 1,
-                    },
-                })
+        // Remove duplicates
+        const seen = new Set<string>()
+        const uniqueDescendants: FlowGraphNode[] = []
+        for (const d of allDescendants) {
+            if (!seen.has(d.id)) {
+                seen.add(d.id)
+                uniqueDescendants.push(d)
             }
-            else {
-                operations.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        action: clonedStep,
-                        parentStep: oldNameToNewName[branchSteps[i - 1].name],
-                        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                    },
-                })
-            }
+        }
 
-            const descendants = collectDescendantSteps(branchSteps[i], flowVersion)
-            for (const desc of descendants) {
-                const clonedDesc = actionUtils.clone(JSON.parse(JSON.stringify(desc)), oldNameToNewName)
-                updateInternalRefs(clonedDesc, oldNameToNewName)
-                operations.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        action: clonedDesc,
-                        parentStep: findParentNameDirect(clonedStep, clonedDesc.name),
-                        stepLocationRelativeToParent: findLocationRelativeToParentDirect(clonedStep, clonedDesc.name),
-                        branchIndex: findBranchIndexDirect(clonedStep, clonedDesc.name),
-                    },
-                })
+        const oldNameToNewName = actionUtils.mapToNewNames(flowVersion, uniqueDescendants)
+
+        for (let i = 0; i < chainNodes.length; i++) {
+            const clonedNode = actionUtils.clone(JSON.parse(JSON.stringify(chainNodes[i])), oldNameToNewName)
+            if (!isActionNodeData(clonedNode.data)) continue
+
+            const parentStep = i === 0 ? routerName : oldNameToNewName[chainNodes[i - 1].id]
+            const location = i === 0 ? StepLocationRelativeToParent.INSIDE_BRANCH : StepLocationRelativeToParent.AFTER
+            const branchIdx = i === 0 ? childIndex + 1 : undefined
+            operations.push(createAddActionOperation(clonedNode.data, parentStep, location, branchIdx))
+
+            // Handle nested structures
+            if (chainNodes[i].data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+                const loopEdge = flowStructureUtil.getLoopEdge(flowVersion.graph, chainNodes[i].id)
+                if (loopEdge && loopEdge.target) {
+                    addChainOperations(loopEdge.target, flowVersion.graph, oldNameToNewName, oldNameToNewName[chainNodes[i].id], StepLocationRelativeToParent.INSIDE_LOOP, undefined, operations, flowVersion)
+                }
+            }
+            else if (chainNodes[i].data.kind === FlowActionKind.ROUTER) {
+                const innerBranchEdges = flowStructureUtil.getBranchEdges(flowVersion.graph, chainNodes[i].id)
+                for (const bEdge of innerBranchEdges) {
+                    if (bEdge.target) {
+                        addChainOperations(bEdge.target, flowVersion.graph, oldNameToNewName, oldNameToNewName[chainNodes[i].id], StepLocationRelativeToParent.INSIDE_BRANCH, bEdge.branchIndex, operations, flowVersion)
+                    }
+                }
             }
         }
     }
@@ -139,58 +197,157 @@ function duplicateBranch(routerName: string, childIndex: number, flowVersion: Fl
 // --- Import Flow ---
 
 function importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] {
-    const existingStepNames = flowVersion.steps.map((s) => s.name)
+    const existingActionNodes = flowVersion.graph.nodes
+        .filter((n) => n.type === FlowNodeType.ACTION)
+        .map((n) => n.id)
 
-    const deleteOperations = existingStepNames.map(name =>
+    const deleteOperations = existingActionNodes.map(name =>
         createDeleteActionOperation(name),
     )
 
-    const importOperations = getImportOperationsForSteps(request.trigger, request.steps ?? [])
+    const importGraph = request.graph
+    const triggerNode = importGraph.nodes.find((n) => n.type === FlowNodeType.TRIGGER)
+
+    const importOperations = getImportOperationsFromGraph(importGraph)
 
     return [
         createChangeNameOperation(request.displayName),
         ...deleteOperations,
-        createUpdateTriggerOperation(request.trigger),
+        ...(triggerNode && isTriggerNodeData(triggerNode.data) ? [createUpdateTriggerOperation(triggerNode.data)] : []),
         ...importOperations,
         ...getImportOperationsForNotes(flowVersion, request),
     ]
 }
 
+function getImportOperationsFromGraph(graph: FlowGraph): FlowOperationRequest[] {
+    const operations: FlowOperationRequest[] = []
+    const triggerNode = graph.nodes.find((n) => n.type === FlowNodeType.TRIGGER)
+    if (!triggerNode) return operations
+
+    // Follow default edges from trigger
+    const defaultEdge = graph.edges.find((e) => e.source === triggerNode.id && e.type === FlowEdgeType.DEFAULT)
+    if (!defaultEdge || !defaultEdge.target) return operations
+
+    addImportChainOperations(defaultEdge.target, graph, triggerNode.id, StepLocationRelativeToParent.AFTER, undefined, operations)
+    return operations
+}
+
+function addImportChainOperations(
+    startNodeId: string,
+    graph: FlowGraph,
+    firstParent: string,
+    firstLocation: StepLocationRelativeToParent,
+    branchIndex: number | undefined,
+    operations: FlowOperationRequest[],
+): void {
+    const chain = getDefaultChainFromGraph(graph, startNodeId)
+    for (let i = 0; i < chain.length; i++) {
+        const nodeId = chain[i]
+        const node = graph.nodes.find((n) => n.id === nodeId)
+        if (!node || !isActionNodeData(node.data)) continue
+
+        const parentStep = i === 0 ? firstParent : chain[i - 1]
+        const location = i === 0 ? firstLocation : StepLocationRelativeToParent.AFTER
+        const branchIdx = i === 0 ? branchIndex : undefined
+        operations.push(createAddActionOperation(node.data, parentStep, location, branchIdx))
+
+        // Handle nested structures
+        if (node.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+            const loopEdge = graph.edges.find((e) => e.source === nodeId && e.type === FlowEdgeType.LOOP)
+            if (loopEdge && loopEdge.target) {
+                addImportChainOperations(loopEdge.target, graph, nodeId, StepLocationRelativeToParent.INSIDE_LOOP, undefined, operations)
+            }
+        }
+        else if (node.data.kind === FlowActionKind.ROUTER) {
+            const branchEdges = graph.edges
+                .filter((e): e is BranchEdge => e.source === nodeId && e.type === FlowEdgeType.BRANCH)
+                .sort((a, b) => a.branchIndex - b.branchIndex)
+
+            // ADD_ACTION creates default branches. For extra branches beyond those, emit ADD_BRANCH.
+            const defaultBranchCount = actionOperations.getDefaultBranchEdges('').length
+            for (const bEdge of branchEdges) {
+                if (bEdge.branchIndex >= defaultBranchCount) {
+                    operations.push({
+                        type: FlowOperationType.ADD_BRANCH,
+                        request: {
+                            stepName: nodeId,
+                            branchIndex: bEdge.branchIndex,
+                            branchName: bEdge.branchName,
+                            conditions: bEdge.conditions,
+                        },
+                    })
+                }
+                else {
+                    operations.push({
+                        type: FlowOperationType.UPDATE_BRANCH,
+                        request: {
+                            stepName: nodeId,
+                            branchIndex: bEdge.branchIndex,
+                            branchName: bEdge.branchName,
+                            conditions: bEdge.conditions,
+                        },
+                    })
+                }
+            }
+
+            for (const bEdge of branchEdges) {
+                if (bEdge.target) {
+                    addImportChainOperations(bEdge.target, graph, nodeId, StepLocationRelativeToParent.INSIDE_BRANCH, bEdge.branchIndex, operations)
+                }
+            }
+        }
+    }
+}
+
+function getDefaultChainFromGraph(graph: FlowGraph, startId: string): string[] {
+    const result: string[] = [startId]
+    let currentId = startId
+    while (true) {
+        const edge = graph.edges.find((e) => e.source === currentId && e.type === FlowEdgeType.DEFAULT)
+        if (!edge || !edge.target) break
+        result.push(edge.target)
+        currentId = edge.target
+    }
+    return result
+}
+
 // --- Copy Actions ---
 
-function getActionsForCopy(selectedSteps: string[], flowVersion: FlowVersion): FlowAction[] {
-    const allSteps = flowStructureUtil.getAllSteps(flowVersion)
-    const actionsToCopy = selectedSteps
+function getActionsForCopy(selectedSteps: string[], flowVersion: FlowVersion): FlowGraphNode[] {
+    const allNodes = flowStructureUtil.getAllSteps(flowVersion)
+    const nodesToCopy = selectedSteps
         .map((stepName) => flowStructureUtil.getStepOrThrow(stepName, flowVersion))
-        .filter((step) => flowStructureUtil.isAction(step.type))
-    return actionsToCopy
-        .filter(step => !actionsToCopy.filter(parent => parent.name !== step.name).some(parent => flowStructureUtil.isChildOf(parent, step.name, flowVersion)))
-        .map(step => JSON.parse(JSON.stringify(step)) as FlowAction)
-        .sort((a, b) => allSteps.findIndex(s => s.name === a.name) - allSteps.findIndex(s => s.name === b.name))
+        .filter((node) => node.type === FlowNodeType.ACTION)
+    return nodesToCopy
+        .filter(node => !nodesToCopy.filter(parent => parent.id !== node.id).some(parent => flowStructureUtil.isChildOf(parent, node.id, flowVersion)))
+        .map(node => JSON.parse(JSON.stringify(node)) as FlowGraphNode)
+        .sort((a, b) => allNodes.findIndex(n => n.id === a.id) - allNodes.findIndex(n => n.id === b.id))
 }
 
 // --- Paste Operations ---
 
 function getOperationsForPaste(
-    actions: FlowAction[],
+    nodes: FlowGraphNode[],
     flowVersion: FlowVersion,
     pastingDetails: PasteLocation,
 ): FlowOperationRequest[] {
-    const newNamesMap = actionUtils.mapToNewNames(flowVersion, actions)
-    const clonedActions: FlowAction[] = actions.map(action => {
-        const cloned: FlowAction = JSON.parse(JSON.stringify(action))
+    const newNamesMap = actionUtils.mapToNewNames(flowVersion, nodes)
+    const clonedNodes: FlowGraphNode[] = nodes.map(node => {
+        const cloned: FlowGraphNode = JSON.parse(JSON.stringify(node))
         return actionUtils.clone(cloned, newNamesMap)
     })
     const operations: FlowOperationRequest[] = []
-    for (let i = 0; i < clonedActions.length; i++) {
+    for (let i = 0; i < clonedNodes.length; i++) {
+        const data = clonedNodes[i].data
+        if (!isActionNodeData(data)) continue
         if (i === 0) {
             operations.push({
                 type: FlowOperationType.ADD_ACTION,
                 request: {
-                    action: clonedActions[i],
+                    action: data,
                     parentStep: pastingDetails.parentStepName,
                     stepLocationRelativeToParent: pastingDetails.stepLocationRelativeToParent,
-                    branchIndex: pastingDetails.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH ? pastingDetails.branchIndex : undefined,
+                    branchIndex: pastingDetails.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH ? (pastingDetails as InsideBranchPasteLocation).branchIndex : undefined,
                 },
             })
         }
@@ -198,8 +355,8 @@ function getOperationsForPaste(
             operations.push({
                 type: FlowOperationType.ADD_ACTION,
                 request: {
-                    action: clonedActions[i],
-                    parentStep: clonedActions[i - 1].name,
+                    action: data,
+                    parentStep: clonedNodes[i - 1].id,
                     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                 },
             })
@@ -210,193 +367,8 @@ function getOperationsForPaste(
 
 // --- Shared Helpers ---
 
-function collectDescendantSteps(action: FlowAction, flowVersion: FlowVersion): FlowAction[] {
-    const result: FlowAction[] = []
-    const childRefs = flowStructureUtil.getDirectChildRefs(action)
-    for (const name of childRefs) {
-        const step = flowVersion.steps.find((s) => s.name === name)
-        if (step) {
-            result.push(step)
-            result.push(...collectDescendantSteps(step, flowVersion))
-        }
-    }
-    return result
-}
-
-function updateInternalRefs(action: FlowAction, nameMap: Record<string, string>): void {
-    if (action.type === FlowActionType.LOOP_ON_ITEMS) {
-        const loopAction = action as LoopOnItemsAction
-        if (loopAction.children) {
-            loopAction.children = loopAction.children.map((name) => nameMap[name] ?? name)
-        }
-    }
-    if (action.type === FlowActionType.ROUTER) {
-        const routerAction = action as RouterAction
-        if (routerAction.branches) {
-            for (const branch of routerAction.branches) {
-                branch.steps = branch.steps.map((name) => nameMap[name] ?? name)
-            }
-        }
-    }
-}
-
-function findParentNameDirect(action: FlowAction, _targetName: string): string {
-    return action.name
-}
-
-function findLocationRelativeToParentDirect(action: FlowAction, targetName: string): StepLocationRelativeToParent {
-    if (action.type === FlowActionType.LOOP_ON_ITEMS) {
-        const loopAction = action as LoopOnItemsAction
-        if (loopAction.children?.includes(targetName)) {
-            return StepLocationRelativeToParent.INSIDE_LOOP
-        }
-    }
-    if (action.type === FlowActionType.ROUTER) {
-        const routerAction = action as RouterAction
-        if (routerAction.branches) {
-            for (const branch of routerAction.branches) {
-                if (branch.steps.includes(targetName)) {
-                    return StepLocationRelativeToParent.INSIDE_BRANCH
-                }
-            }
-        }
-    }
-    return StepLocationRelativeToParent.AFTER
-}
-
-function findBranchIndexDirect(action: FlowAction, targetName: string): number | undefined {
-    if (action.type === FlowActionType.ROUTER) {
-        const routerAction = action as RouterAction
-        if (routerAction.branches) {
-            for (let i = 0; i < routerAction.branches.length; i++) {
-                if (routerAction.branches[i].steps.includes(targetName)) {
-                    return i
-                }
-            }
-        }
-    }
-    return undefined
-}
-
-function getImportOperationsForSteps(trigger: FlowTrigger, steps: FlowAction[]): FlowOperationRequest[] {
-    const operations: FlowOperationRequest[] = []
-    const stepsMap = new Map(steps.map((s) => [s.name, s]))
-
-    for (let i = 0; i < (trigger.steps ?? []).length; i++) {
-        const stepName = trigger.steps[i]
-        const step = stepsMap.get(stepName)
-        if (!step) continue
-
-        operations.push({
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-                parentStep: i === 0 ? trigger.name : trigger.steps[i - 1],
-                stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                action: stripChildRefs(step),
-            },
-        })
-
-        operations.push(...getChildImportOperations(step, stepsMap))
-    }
-
-    return operations
-}
-
-function getChildImportOperations(step: FlowAction, stepsMap: Map<string, FlowAction>): FlowOperationRequest[] {
-    const operations: FlowOperationRequest[] = []
-
-    switch (step.type) {
-        case FlowActionType.LOOP_ON_ITEMS: {
-            const loopStep = step as LoopOnItemsAction
-            if (loopStep.children) {
-                for (let i = 0; i < loopStep.children.length; i++) {
-                    const childName = loopStep.children[i]
-                    const childStep = stepsMap.get(childName)
-                    if (!childStep) continue
-
-                    if (i === 0) {
-                        operations.push({
-                            type: FlowOperationType.ADD_ACTION,
-                            request: {
-                                parentStep: step.name,
-                                stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                                action: stripChildRefs(childStep),
-                            },
-                        })
-                    }
-                    else {
-                        operations.push({
-                            type: FlowOperationType.ADD_ACTION,
-                            request: {
-                                parentStep: loopStep.children[i - 1],
-                                stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                                action: stripChildRefs(childStep),
-                            },
-                        })
-                    }
-
-                    operations.push(...getChildImportOperations(childStep, stepsMap))
-                }
-            }
-            break
-        }
-        case FlowActionType.ROUTER: {
-            const routerStep = step as RouterAction
-            if (routerStep.branches) {
-                for (let branchIdx = 0; branchIdx < routerStep.branches.length; branchIdx++) {
-                    const branch = routerStep.branches[branchIdx]
-                    for (let i = 0; i < branch.steps.length; i++) {
-                        const childName = branch.steps[i]
-                        const childStep = stepsMap.get(childName)
-                        if (!childStep) continue
-
-                        if (i === 0) {
-                            operations.push({
-                                type: FlowOperationType.ADD_ACTION,
-                                request: {
-                                    parentStep: step.name,
-                                    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
-                                    branchIndex: branchIdx,
-                                    action: stripChildRefs(childStep),
-                                },
-                            })
-                        }
-                        else {
-                            operations.push({
-                                type: FlowOperationType.ADD_ACTION,
-                                request: {
-                                    parentStep: branch.steps[i - 1],
-                                    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-                                    action: stripChildRefs(childStep),
-                                },
-                            })
-                        }
-
-                        operations.push(...getChildImportOperations(childStep, stepsMap))
-                    }
-                }
-            }
-            break
-        }
-        default:
-            break
-    }
-
-    return operations
-}
-
-function stripChildRefs(action: FlowAction): FlowAction {
-    const cloned: FlowAction = JSON.parse(JSON.stringify(action))
-    if (cloned.type === FlowActionType.LOOP_ON_ITEMS) {
-        (cloned as LoopOnItemsAction).children = []
-    }
-    if (cloned.type === FlowActionType.ROUTER) {
-        const router = cloned as RouterAction
-        if (router.branches) {
-            router.branches = router.branches.map((b) => ({ ...b, steps: [] }))
-        }
-    }
-    return cloned
+function collectDescendantNodes(node: FlowGraphNode, flowVersion: FlowVersion): FlowGraphNode[] {
+    return flowStructureUtil.getAllChildSteps(node, flowVersion)
 }
 
 function getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] {
@@ -412,6 +384,18 @@ function getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportFl
     ]
 }
 
+function createAddActionOperation(
+    action: UpdateActionRequest,
+    parentStep: string,
+    stepLocationRelativeToParent: StepLocationRelativeToParent,
+    branchIndex?: number,
+): FlowOperationRequest {
+    return {
+        type: FlowOperationType.ADD_ACTION,
+        request: { action, parentStep, stepLocationRelativeToParent, branchIndex },
+    }
+}
+
 function createDeleteActionOperation(actionName: string): FlowOperationRequest {
     return {
         type: FlowOperationType.DELETE_ACTION,
@@ -419,10 +403,10 @@ function createDeleteActionOperation(actionName: string): FlowOperationRequest {
     }
 }
 
-function createUpdateTriggerOperation(trigger: FlowTrigger): FlowOperationRequest {
+function createUpdateTriggerOperation(triggerData: UpdateTriggerRequest): FlowOperationRequest {
     return {
         type: FlowOperationType.UPDATE_TRIGGER,
-        request: trigger,
+        request: triggerData,
     }
 }
 
@@ -433,7 +417,7 @@ function createChangeNameOperation(displayName: string): FlowOperationRequest {
     }
 }
 
-export const compositeOperations = { moveAction, duplicateStep, duplicateBranch, importFlow, getImportOperationsForSteps, getActionsForCopy, getOperationsForPaste }
+export const compositeOperations = { moveAction, duplicateStep, duplicateBranch, importFlow, getImportOperationsFromGraph, getActionsForCopy, getOperationsForPaste }
 
 export type InsideBranchPasteLocation = {
     branchIndex: number

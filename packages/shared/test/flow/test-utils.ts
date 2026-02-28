@@ -1,13 +1,16 @@
 import {
     BranchExecutionType,
     BranchOperator,
-    FlowAction,
-    FlowActionType,
-    FlowTriggerType,
+    FlowActionKind,
+    FlowEdgeType,
+    FlowGraphNode,
+    FlowNodeType,
+    FlowTriggerKind,
     FlowVersion,
     FlowVersionState,
     PropertyExecutionType,
     RouterExecutionType,
+    UpdateActionRequest,
 } from '../../src'
 
 export function createEmptyFlowVersion(): FlowVersion {
@@ -20,21 +23,28 @@ export function createEmptyFlowVersion(): FlowVersion {
         displayName: 'Test Flow',
         agentIds: [],
         notes: [],
-        trigger: {
-            name: 'trigger',
-            type: FlowTriggerType.PIECE,
-            valid: true,
-            settings: {
-                input: {},
-                pieceName: 'schedule',
-                pieceVersion: '0.0.1',
-                propertySettings: {},
-                triggerName: 'every_hour',
-            },
-            steps: [],
-            displayName: 'Schedule',
+        graph: {
+            nodes: [
+                {
+                    id: 'trigger',
+                    type: FlowNodeType.TRIGGER,
+                    data: {
+                        name: 'trigger',
+                        kind: FlowTriggerKind.PIECE,
+                        valid: true,
+                        settings: {
+                            input: {},
+                            pieceName: 'schedule',
+                            pieceVersion: '0.0.1',
+                            propertySettings: {},
+                            triggerName: 'every_hour',
+                        },
+                        displayName: 'Schedule',
+                    },
+                },
+            ],
+            edges: [],
         },
-        steps: [],
         connectionIds: [],
         valid: true,
         state: FlowVersionState.DRAFT,
@@ -42,59 +52,168 @@ export function createEmptyFlowVersion(): FlowVersion {
 }
 
 export function createFlowVersionWithSimpleAction(): FlowVersion {
-    return {
-        ...createEmptyFlowVersion(),
-        trigger: {
-            ...createEmptyFlowVersion().trigger,
-            steps: ['step_1'],
-        },
-        steps: [createCodeAction('step_1')],
-    }
+    const flow = createEmptyFlowVersion()
+    flow.graph.nodes.push(createCodeNode('step_1'))
+    flow.graph.edges.push({
+        id: 'trigger-default',
+        source: 'trigger',
+        target: 'step_1',
+        type: FlowEdgeType.DEFAULT,
+    })
+    return flow
 }
 
 export function createFlowVersionWithLoop(): FlowVersion {
-    return {
-        ...createEmptyFlowVersion(),
-        trigger: {
-            ...createEmptyFlowVersion().trigger,
-            steps: ['step_1'],
+    const flow = createEmptyFlowVersion()
+    flow.graph.nodes.push(
+        createLoopNode('step_1'),
+        createCodeNode('step_2'),
+    )
+    flow.graph.edges.push(
+        {
+            id: 'trigger-default',
+            source: 'trigger',
+            target: 'step_1',
+            type: FlowEdgeType.DEFAULT,
         },
-        steps: [
-            {
-                name: 'step_1',
-                type: FlowActionType.LOOP_ON_ITEMS,
-                valid: true,
-                displayName: 'Loop',
-                settings: {
-                    items: '{{trigger.items}}',
-                },
-                children: ['step_2'],
-            },
-            createCodeAction('step_2'),
-        ],
-    }
+        {
+            id: 'step_1-loop',
+            source: 'step_1',
+            target: 'step_2',
+            type: FlowEdgeType.LOOP,
+        },
+    )
+    return flow
 }
 
 export function createFlowVersionWithRouter(): FlowVersion {
-    return {
-        ...createEmptyFlowVersion(),
-        trigger: {
-            ...createEmptyFlowVersion().trigger,
-            steps: ['step_1'],
+    const flow = createEmptyFlowVersion()
+    flow.graph.nodes.push(
+        createRouterNode('step_1'),
+        createCodeNode('step_2'),
+        createCodeNode('step_3'),
+    )
+    flow.graph.edges.push(
+        {
+            id: 'trigger-default',
+            source: 'trigger',
+            target: 'step_1',
+            type: FlowEdgeType.DEFAULT,
         },
-        steps: [
-            createRouterAction('step_1'),
-            createCodeAction('step_2'),
-            createCodeAction('step_3'),
-        ],
+        {
+            id: 'step_1-branch-0',
+            source: 'step_1',
+            target: 'step_2',
+            type: FlowEdgeType.BRANCH,
+            branchIndex: 0,
+            branchName: 'Branch 1',
+            branchType: BranchExecutionType.CONDITION,
+            conditions: [
+                [
+                    {
+                        operator: BranchOperator.TEXT_CONTAINS,
+                        firstValue: '{{trigger.value}}',
+                        secondValue: 'test',
+                        caseSensitive: false,
+                    },
+                ],
+            ],
+        },
+        {
+            id: 'step_1-branch-1',
+            source: 'step_1',
+            target: 'step_3',
+            type: FlowEdgeType.BRANCH,
+            branchIndex: 1,
+            branchName: 'Otherwise',
+            branchType: BranchExecutionType.FALLBACK,
+        },
+    )
+    return flow
+}
+
+function createCodeNode(name: string): FlowGraphNode {
+    return {
+        id: name,
+        type: FlowNodeType.ACTION,
+        data: {
+            name,
+            displayName: 'Code',
+            kind: FlowActionKind.CODE,
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: 'export const code = async (inputs) => { return {}; }',
+                    packageJson: '{}',
+                },
+                input: {},
+            },
+        },
     }
 }
 
-export function createCodeAction(name: string): FlowAction {
+function createPieceNode(name: string): FlowGraphNode {
+    return {
+        id: name,
+        type: FlowNodeType.ACTION,
+        data: {
+            name,
+            displayName: 'Send Email',
+            kind: FlowActionKind.PIECE,
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-gmail',
+                pieceVersion: '~0.5.0',
+                actionName: 'send_email',
+                input: {},
+                propertySettings: {
+                    to: {
+                        type: PropertyExecutionType.MANUAL,
+                    },
+                },
+            },
+        },
+    }
+}
+
+function createLoopNode(name: string): FlowGraphNode {
+    return {
+        id: name,
+        type: FlowNodeType.ACTION,
+        data: {
+            name,
+            displayName: 'Loop',
+            kind: FlowActionKind.LOOP_ON_ITEMS,
+            valid: true,
+            settings: {
+                items: '{{trigger.items}}',
+            },
+        },
+    }
+}
+
+function createRouterNode(name: string): FlowGraphNode {
+    return {
+        id: name,
+        type: FlowNodeType.ACTION,
+        data: {
+            name,
+            displayName: 'Router',
+            kind: FlowActionKind.ROUTER,
+            valid: true,
+            settings: {
+                executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            },
+        },
+    }
+}
+
+// These return UpdateActionRequest (used in operation requests)
+export function createCodeAction(name: string): UpdateActionRequest {
     return {
         name,
         displayName: 'Code',
-        type: FlowActionType.CODE,
+        kind: FlowActionKind.CODE,
         valid: true,
         settings: {
             sourceCode: {
@@ -106,11 +225,11 @@ export function createCodeAction(name: string): FlowAction {
     }
 }
 
-export function createPieceAction(name: string): FlowAction {
+export function createPieceAction(name: string): UpdateActionRequest {
     return {
         name,
         displayName: 'Send Email',
-        type: FlowActionType.PIECE,
+        kind: FlowActionKind.PIECE,
         valid: true,
         settings: {
             pieceName: '@activepieces/piece-gmail',
@@ -126,49 +245,26 @@ export function createPieceAction(name: string): FlowAction {
     }
 }
 
-export function createLoopAction(name: string): FlowAction {
+export function createLoopAction(name: string): UpdateActionRequest {
     return {
         name,
         displayName: 'Loop',
-        type: FlowActionType.LOOP_ON_ITEMS,
+        kind: FlowActionKind.LOOP_ON_ITEMS,
         valid: true,
         settings: {
             items: '{{trigger.items}}',
         },
-        children: [],
     }
 }
 
-export function createRouterAction(name: string): FlowAction {
+export function createRouterAction(name: string): UpdateActionRequest {
     return {
         name,
         displayName: 'Router',
-        type: FlowActionType.ROUTER,
+        kind: FlowActionKind.ROUTER,
         valid: true,
         settings: {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
         },
-        branches: [
-            {
-                conditions: [
-                    [
-                        {
-                            operator: BranchOperator.TEXT_CONTAINS,
-                            firstValue: '{{trigger.value}}',
-                            secondValue: 'test',
-                            caseSensitive: false,
-                        },
-                    ],
-                ],
-                branchType: BranchExecutionType.CONDITION,
-                branchName: 'Branch 1',
-                steps: ['step_2'],
-            },
-            {
-                branchType: BranchExecutionType.FALLBACK,
-                branchName: 'Otherwise',
-                steps: ['step_3'],
-            },
-        ],
     }
 }

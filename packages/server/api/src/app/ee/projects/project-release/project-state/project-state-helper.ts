@@ -21,10 +21,12 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         const project = await projectService.getOneOrThrow(projectId)
 
         const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
-            const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version)
-            const isNotEmptyTrigger = !isNil(step.settings?.input)
-            if (oldStep?.settings?.input?.auth && isNotEmptyTrigger) {
-                step.settings.input.auth = oldStep.settings.input.auth
+            const oldStep = flowStructureUtil.getStep(step.id, originalFlow.version)
+            const stepSettings = step.data.settings as Record<string, Record<string, unknown>>
+            const oldStepSettings = oldStep?.data.settings as Record<string, Record<string, unknown>> | undefined
+            const isNotEmptyTrigger = !isNil(stepSettings?.input)
+            if (oldStepSettings?.input?.auth && isNotEmptyTrigger) {
+                stepSettings.input.auth = oldStepSettings.input.auth
             }
             return step
         })
@@ -37,10 +39,9 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 type: FlowOperationType.IMPORT_FLOW,
                 request: {
                     displayName: newFlow.version.displayName,
-                    trigger: newFlowVersion.trigger,
+                    graph: newFlowVersion.graph,
                     schemaVersion: newFlow.version.schemaVersion,
                     notes: newFlow.version.notes,
-                    steps: newFlowVersion.steps,
                 },
             },
         })

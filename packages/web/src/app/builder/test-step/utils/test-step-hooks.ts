@@ -1,5 +1,6 @@
 import {
   FlowAction,
+  FlowGraphNode,
   ApErrorParams,
   ErrorCode,
   parseToJsonIfPossible,
@@ -178,7 +179,7 @@ export const testStepHooks = {
     });
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
-  useTestAction: ({ currentStep }: { currentStep: FlowAction }) => {
+  useTestAction: ({ currentStep }: { currentStep: FlowGraphNode }) => {
     const { flowVersionId, addActionTestListener } =
       useRequiredStateToTestSteps().builderState;
     return useMutation<{ runId: string }, Error, TestActionMutationParams>({
@@ -187,7 +188,7 @@ export const testStepHooks = {
           request: {
             projectId: authenticationSession.getProjectId()!,
             flowVersionId,
-            stepName: currentStep.name,
+            stepName: currentStep.id,
           },
         });
         return response;
@@ -195,7 +196,7 @@ export const testStepHooks = {
       onSuccess: (testStepResponse: { runId: string }) => {
         addActionTestListener({
           runId: testStepResponse.runId,
-          stepName: currentStep.name,
+          stepName: currentStep.id,
         });
       },
       onError: () => {

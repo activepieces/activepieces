@@ -1,4 +1,4 @@
-import { flowStructureUtil, isNil, Step } from '@activepieces/shared';
+import { FlowNodeData, flowStructureUtil, isNil } from '@activepieces/shared';
 import { MiniMap, MiniMapNodeProps } from '@xyflow/react';
 
 import { useTheme } from '@/components/theme-provider';
@@ -59,7 +59,7 @@ const MinimapContentGuard = ({
   step,
   node,
 }: {
-  step: Step;
+  step: FlowNodeData;
   node: MiniMapNodeProps;
 }) => {
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -72,14 +72,12 @@ const MinimapContentGuard = ({
 };
 
 const MinimapNode = ({ node }: { node: MiniMapNodeProps }) => {
-  const [flowVersion] = useBuilderStateContext((state) => [
-    state.flowVersion,
-  ]);
+  const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const step = flowStructureUtil.getStep(node.id, flowVersion);
   if (isNil(step)) {
     return null;
   }
 
-  return <MinimapContentGuard step={step} node={node} />;
+  return <MinimapContentGuard step={step.data} node={node} />;
 };
 export default Minimap;

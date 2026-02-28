@@ -1,4 +1,4 @@
-import { ApplicationEvent, ApplicationEventName, BADGES, FlowActionType, FlowOperationType, flowStructureUtil, FlowTriggerType, FlowUpdatedEvent, isNil } from '@activepieces/shared'
+import { ApplicationEvent, ApplicationEventName, BADGES, FlowActionKind, FlowOperationType, flowStructureUtil, FlowTriggerKind, FlowUpdatedEvent, isNil } from '@activepieces/shared'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
@@ -20,29 +20,29 @@ export const flowContentBadgesCheck: BadgeCheck = {
         }
         const flowVersionId = flowUpdatedEvent.data.flowVersion.id
         const flowVersion = await flowVersionRepo().findOneBy({ id: flowVersionId })
-        if (!flowVersion || !flowVersion.trigger) {
+        if (!flowVersion || !flowVersion.graph) {
             return { userId, badges: [] }
         }
         const badges: (keyof typeof BADGES)[] = []
         const allSteps = flowStructureUtil.getAllSteps(flowVersion)
 
         const hasWebhook = allSteps.some(step =>
-            step.type === FlowTriggerType.PIECE &&
-            step.settings?.pieceName === WEBHOOK_PIECE_NAME,
+            step.data.kind === FlowTriggerKind.PIECE &&
+            (step.data.settings as Record<string, unknown>)?.pieceName === WEBHOOK_PIECE_NAME,
         )
         if (hasWebhook) {
             badges.push('webhook-wizard')
         }
 
         const hasAI = allSteps.some(step =>
-            (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) &&
-            step.settings?.pieceName === AI_PIECE_NAME,
+            (step.data.kind === FlowActionKind.PIECE || step.data.kind === FlowTriggerKind.PIECE) &&
+            (step.data.settings as Record<string, unknown>)?.pieceName === AI_PIECE_NAME,
         )
         if (hasAI) {
             badges.push('agentic-genius')
         }
 
-        const hasCode = allSteps.some(step => step.type === FlowActionType.CODE)
+        const hasCode = allSteps.some(step => step.data.kind === FlowActionKind.CODE)
         if (hasCode) {
             badges.push('coding-chad')
         }
@@ -50,4 +50,3 @@ export const flowContentBadgesCheck: BadgeCheck = {
         return { userId, badges }
     },
 }
-

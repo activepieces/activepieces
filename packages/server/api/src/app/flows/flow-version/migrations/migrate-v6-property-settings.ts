@@ -1,18 +1,19 @@
 import { FlowVersion, PropertyExecutionType } from '@activepieces/shared'
-import { Migration } from '.'
 import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
+import { Migration } from '.'
 
 export const migratePropertySettingsV6: Migration = {
     targetSchemaVersion: '6',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
             const input = step.settings?.input ?? {}
-            const sampleDataFileId = step.settings?.inputUiInfo?.sampleDataFileId
-            const sampleDataInputFileId = step.settings?.inputUiInfo?.sampleDataInputFileId
-            const lastTestDate = step.settings?.inputUiInfo?.lastTestDate
-            const schema = step.settings?.schema
-            const customLogoUrl = step.settings?.inputUiInfo?.customizedInputs?.logoUrl ?? (('customLogoUrl' in step && step.customLogoUrl) ? step.customLogoUrl : undefined)
-            const customizedInputs = step.settings?.inputUiInfo?.customizedInputs ?? {}
+            const inputUiInfo = step.settings?.inputUiInfo as Record<string, unknown> | undefined
+            const sampleDataFileId = inputUiInfo?.sampleDataFileId
+            const sampleDataInputFileId = inputUiInfo?.sampleDataInputFileId
+            const lastTestDate = inputUiInfo?.lastTestDate
+            const schema = step.settings?.schema as Record<string, unknown> | undefined
+            const customizedInputs = (inputUiInfo?.customizedInputs ?? {}) as Record<string, unknown>
+            const customLogoUrl = customizedInputs?.logoUrl ?? (step.customLogoUrl ? step.customLogoUrl : undefined)
             return {
                 ...step,
                 settings: {

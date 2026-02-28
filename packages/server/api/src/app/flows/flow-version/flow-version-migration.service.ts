@@ -1,8 +1,7 @@
-import { 
-    FlowVersion, 
+import {
+    FlowVersion,
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
-    spreadIfDefined,
 } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
 import { flowVersionBackupService } from './flow-version-backup.service'
@@ -29,8 +28,7 @@ export const flowVersionMigrationService = {
 
         await flowVersionRepo().update(flowVersion.id, {
             schemaVersion: migratedFlowVersion.schemaVersion,
-            ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
-            ...spreadIfDefined('steps', migratedFlowVersion.steps),
+            graph: migratedFlowVersion.graph as unknown as Record<string, unknown>,
             connectionIds: migratedFlowVersion.connectionIds,
             agentIds: migratedFlowVersion.agentIds,
             backupFiles,

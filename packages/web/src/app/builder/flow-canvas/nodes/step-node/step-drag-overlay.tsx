@@ -1,4 +1,4 @@
-import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import { FlowNodeData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -11,7 +11,7 @@ import {
 } from '../../../state/cursor-position-context';
 import { flowCanvasConsts } from '../../utils/consts';
 
-const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
+const StepDragOverlay = ({ step }: { step: FlowNodeData }) => {
   const { open } = useSidebar();
   const { cursorPosition } = useCursorPosition();
   const [overlayPosition, setOverlayPosition] =

@@ -1,6 +1,6 @@
 import {
-    FlowActionType,
-    FlowTriggerType,
+    FlowActionKind,
+    FlowTriggerKind,
     FlowVersion,
     FlowVersionState,
     isNil,
@@ -10,8 +10,8 @@ import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../../project/project-service'
 import { flowService } from '../../flow/flow.service'
-import { Migration } from '.'
 import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
+import { Migration } from '.'
 
 export const migrateV12FixPieceVersion: Migration = {
     targetSchemaVersion: '12',
@@ -34,7 +34,7 @@ export const migrateV12FixPieceVersion: Migration = {
         const stepNameToPieceVersion: Record<string, string> = {}
         const steps = legacyFlowStructureUtil.getAllSteps(flowVersion)
         for (const step of steps) {
-            if (step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE) {
+            if (step.type === FlowActionKind.PIECE || step.type === FlowTriggerKind.PIECE) {
                 const { data: pieceMetadata } = await tryCatch(async () => pieceMetadataService(system.globalLogger()).getOrThrow({
                     platformId,
                     name: step.settings.pieceName,

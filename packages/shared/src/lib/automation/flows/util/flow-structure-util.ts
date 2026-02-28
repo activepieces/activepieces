@@ -1,28 +1,28 @@
 import { isNil } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
-import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, FlowBranch, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { BranchCondition, BranchExecutionType, emptyCondition, FlowActionKind } from '../actions/action'
 import { FlowVersion } from '../flow-version'
-import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
+import { BranchEdge, FlowEdgeType, FlowGraph, FlowGraphEdge, FlowGraphNode, FlowNodeType, isActionNodeData } from '../graph/flow-graph'
+import { FlowTriggerKind } from '../triggers/trigger'
 
 
 export const AI_PIECE_NAME = '@activepieces/piece-ai'
 
-export type Step = FlowAction | FlowTrigger
-type StepWithIndex = Step & {
-    dfsIndex: number
+function isAction(kind: FlowActionKind | FlowTriggerKind | undefined): kind is FlowActionKind {
+    return kind === FlowActionKind.CODE
+        || kind === FlowActionKind.PIECE
+        || kind === FlowActionKind.LOOP_ON_ITEMS
+        || kind === FlowActionKind.ROUTER
 }
 
-function isAction(type: FlowActionType | FlowTriggerType | undefined): type is FlowActionType {
-    return Object.entries(FlowActionType).some(([, value]) => value === type)
+function isTrigger(kind: FlowActionKind | FlowTriggerKind | undefined): kind is FlowTriggerKind {
+    return kind === FlowTriggerKind.EMPTY
+        || kind === FlowTriggerKind.PIECE
 }
 
-function isTrigger(type: FlowActionType | FlowTriggerType | undefined): type is FlowTriggerType {
-    return Object.entries(FlowTriggerType).some(([, value]) => value === type)
-}
-
-function getActionOrThrow(name: string, flowVersion: FlowVersion): FlowAction {
-    const step = getStepOrThrow(name, flowVersion)
-    if (!isAction(step.type)) {
+function getActionOrThrow(name: string, flowVersion: FlowVersion): FlowGraphNode {
+    const node = getStepOrThrow(name, flowVersion)
+    if (node.type !== FlowNodeType.ACTION) {
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
@@ -30,31 +30,16 @@ function getActionOrThrow(name: string, flowVersion: FlowVersion): FlowAction {
             },
         })
     }
-    return step as FlowAction
+    return node
 }
 
-function getTriggerOrThrow(name: string, flowVersion: FlowVersion): FlowTrigger {
-    if (flowVersion.trigger.name === name) {
-        return flowVersion.trigger
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.STEP_NOT_FOUND,
-        params: {
-            stepName: name,
-        },
-    })
+function getStep(name: string, flowVersion: FlowVersion): FlowGraphNode | undefined {
+    return flowVersion.graph.nodes.find((n) => n.id === name)
 }
 
-function getStep(name: string, flowVersion: FlowVersion): Step | undefined {
-    if (flowVersion.trigger.name === name) {
-        return flowVersion.trigger
-    }
-    return flowVersion.steps.find((step) => step.name === name)
-}
-
-function getStepOrThrow(name: string, flowVersion: FlowVersion): Step {
-    const step = getStep(name, flowVersion)
-    if (isNil(step)) {
+function getStepOrThrow(name: string, flowVersion: FlowVersion): FlowGraphNode {
+    const node = getStep(name, flowVersion)
+    if (isNil(node)) {
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
@@ -62,48 +47,89 @@ function getStepOrThrow(name: string, flowVersion: FlowVersion): Step {
             },
         })
     }
-    return step
+    return node
 }
 
-function getAllSteps(flowVersion: FlowVersionLike): Step[] {
-    return [flowVersion.trigger, ...flowVersion.steps]
+function getAllSteps(flowVersion: FlowVersionLike): FlowGraphNode[] {
+    return flowVersion.graph.nodes
 }
 
 function transferFlow(
     flowVersion: FlowVersion,
-    transferFunction: (step: Step) => Step,
+    transferFunction: (node: FlowGraphNode) => FlowGraphNode,
 ): FlowVersion {
     const clonedFlow: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    clonedFlow.trigger = transferFunction(clonedFlow.trigger) as FlowTrigger
-    clonedFlow.steps = clonedFlow.steps.map((step) => transferFunction(step) as FlowAction)
+    clonedFlow.graph.nodes = clonedFlow.graph.nodes.map((node) => transferFunction(node))
     return clonedFlow
 }
 
-const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined): FlowBranch => {
+function createBranchEdge(source: string, branchIndex: number, branchName: string, conditions: BranchCondition[][] | undefined): BranchEdge {
     if (conditions) {
         return {
-            conditions,
-            branchType: BranchExecutionType.CONDITION,
+            id: `${source}-branch-${branchIndex}`,
+            source,
+            target: null,
+            type: FlowEdgeType.BRANCH,
+            branchIndex,
             branchName,
-            steps: [],
+            branchType: BranchExecutionType.CONDITION,
+            conditions,
         }
     }
     return {
-        conditions: [[emptyCondition]],
-        branchType: BranchExecutionType.CONDITION,
+        id: `${source}-branch-${branchIndex}`,
+        source,
+        target: null,
+        type: FlowEdgeType.BRANCH,
+        branchIndex,
         branchName,
-        steps: [],
+        branchType: BranchExecutionType.CONDITION,
+        conditions: [[emptyCondition]],
     }
+}
+
+function getTriggerNode(graph: FlowGraph): FlowGraphNode | undefined {
+    return graph.nodes.find((n) => n.type === FlowNodeType.TRIGGER)
+}
+
+function getSuccessorEdge(graph: FlowGraph, nodeId: string): FlowGraphEdge | undefined {
+    return graph.edges.find((e) => e.source === nodeId && e.type === FlowEdgeType.DEFAULT)
+}
+
+function getPredecessorEdge(graph: FlowGraph, nodeId: string): FlowGraphEdge | undefined {
+    return graph.edges.find((e) => e.target === nodeId)
+}
+
+function getLoopEdge(graph: FlowGraph, loopNodeId: string): FlowGraphEdge | undefined {
+    return graph.edges.find((e) => e.source === loopNodeId && e.type === FlowEdgeType.LOOP)
+}
+
+function getBranchEdges(graph: FlowGraph, routerNodeId: string): BranchEdge[] {
+    return graph.edges
+        .filter((e): e is BranchEdge => e.source === routerNodeId && e.type === FlowEdgeType.BRANCH)
+        .sort((a, b) => a.branchIndex - b.branchIndex)
+}
+
+function getDefaultChain(graph: FlowGraph, startNodeId: string): string[] {
+    const result: string[] = [startNodeId]
+    let currentId = startNodeId
+    while (true) {
+        const edge = getSuccessorEdge(graph, currentId)
+        if (!edge || !edge.target) break
+        result.push(edge.target)
+        currentId = edge.target
+    }
+    return result
 }
 
 function findPathToStep(flowVersion: FlowVersion, targetStepName: string): StepWithIndex[] {
     const result: StepWithIndex[] = []
-    const allSteps = getAllSteps(flowVersion)
+    const allNodes = getAllSteps(flowVersion)
     const parentMap = buildParentMap(flowVersion)
-    for (let i = 0; i < allSteps.length; i++) {
-        const step = allSteps[i]
-        if (isAncestorOf(step.name, targetStepName, parentMap)) {
-            result.push({ ...step, dfsIndex: i })
+    for (let i = 0; i < allNodes.length; i++) {
+        const node = allNodes[i]
+        if (isAncestorOf(node.id, targetStepName, parentMap)) {
+            result.push({ ...node, dfsIndex: i })
         }
     }
     return result
@@ -122,66 +148,109 @@ function isAncestorOf(stepName: string, targetStepName: string, parentMap: Map<s
 
 function buildParentMap(flowVersion: FlowVersion): Map<string, string> {
     const parentMap = new Map<string, string>()
-    addParentsForChain(flowVersion.trigger.steps, flowVersion.trigger.name, flowVersion, parentMap)
+    const graph = flowVersion.graph
+    const triggerNode = getTriggerNode(graph)
+    if (!triggerNode) return parentMap
+    const defaultEdge = getSuccessorEdge(graph, triggerNode.id)
+    if (defaultEdge?.target) {
+        addChainToParentMap(defaultEdge.target, triggerNode.id, graph, parentMap)
+    }
     return parentMap
 }
 
-function addParentsForChain(stepNames: string[], containerName: string, flowVersion: FlowVersion, parentMap: Map<string, string>): void {
-    let parentName = containerName
-    for (const stepName of stepNames) {
-        parentMap.set(stepName, parentName)
-        const step = getStep(stepName, flowVersion)
-        if (step?.type === FlowActionType.LOOP_ON_ITEMS) {
-            addParentsForChain((step as LoopOnItemsAction).children ?? [], stepName, flowVersion, parentMap)
-        }
-        else if (step?.type === FlowActionType.ROUTER) {
-            for (const branch of (step as RouterAction).branches ?? []) {
-                addParentsForChain(branch.steps, stepName, flowVersion, parentMap)
+function addChainToParentMap(startId: string, containerId: string, graph: FlowGraph, parentMap: Map<string, string>): void {
+    const chain = getDefaultChain(graph, startId)
+    let parentName = containerId
+    for (const nodeId of chain) {
+        parentMap.set(nodeId, parentName)
+        const node = graph.nodes.find((n) => n.id === nodeId)
+        if (node?.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+            const loopEdge = getLoopEdge(graph, nodeId)
+            if (loopEdge?.target) {
+                addChainToParentMap(loopEdge.target, nodeId, graph, parentMap)
             }
         }
-        parentName = stepName
+        else if (node?.data.kind === FlowActionKind.ROUTER) {
+            for (const branchEdge of getBranchEdges(graph, nodeId)) {
+                if (branchEdge.target) {
+                    addChainToParentMap(branchEdge.target, nodeId, graph, parentMap)
+                }
+            }
+        }
+        parentName = nodeId
     }
 }
 
-function getDirectChildRefs(step: Step): string[] {
-    if (isTrigger(step.type)) {
-        return (step as FlowTrigger).steps ?? []
+function getDirectChildRefs(node: FlowGraphNode, graph: FlowGraph): string[] {
+    if (node.type === FlowNodeType.TRIGGER) {
+        return []
     }
-    switch (step.type) {
-        case FlowActionType.LOOP_ON_ITEMS: {
-            const loopAction = step as LoopOnItemsAction
-            return loopAction.children ?? []
+    switch (node.data.kind) {
+        case FlowActionKind.LOOP_ON_ITEMS: {
+            const loopEdge = getLoopEdge(graph, node.id)
+            return loopEdge && loopEdge.target ? [loopEdge.target] : []
         }
-        case FlowActionType.ROUTER: {
-            const routerAction = step as RouterAction
-            return (routerAction.branches ?? []).flatMap((branch) => branch.steps)
+        case FlowActionKind.ROUTER: {
+            const branchEdges = getBranchEdges(graph, node.id)
+            return branchEdges.filter((e) => e.target !== null).map((e) => e.target!)
         }
         default:
             return []
     }
 }
 
-function getAllChildSteps(action: LoopOnItemsAction | RouterAction, flowVersion: FlowVersion): Step[] {
-    const childNames = getDirectChildRefs(action)
-    const result: Step[] = []
-    for (const name of childNames) {
-        const step = getStep(name, flowVersion)
-        if (step) {
-            result.push(step)
-            if (step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.ROUTER) {
-                result.push(...getAllChildSteps(step as LoopOnItemsAction | RouterAction, flowVersion))
+function getAllChildSteps(node: FlowGraphNode, flowVersion: FlowVersion): FlowGraphNode[] {
+    const graph = flowVersion.graph
+    const result: FlowGraphNode[] = []
+
+    if (node.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+        const loopEdge = getLoopEdge(graph, node.id)
+        if (loopEdge && loopEdge.target) {
+            collectChainAndDescendants(loopEdge.target, graph, result)
+        }
+    }
+    else if (node.data.kind === FlowActionKind.ROUTER) {
+        const branchEdges = getBranchEdges(graph, node.id)
+        for (const branchEdge of branchEdges) {
+            if (branchEdge.target) {
+                collectChainAndDescendants(branchEdge.target, graph, result)
             }
         }
     }
+
     return result
 }
 
-function isChildOf(parent: Step, childStepName: string, flowVersion: FlowVersion): boolean {
-    switch (parent.type) {
-        case FlowActionType.ROUTER:
-        case FlowActionType.LOOP_ON_ITEMS: {
-            const children = getAllChildSteps(parent as LoopOnItemsAction | RouterAction, flowVersion)
-            return children.some((c) => c.name === childStepName)
+function collectChainAndDescendants(startId: string, graph: FlowGraph, result: FlowGraphNode[]): void {
+    const chain = getDefaultChain(graph, startId)
+    for (const nodeId of chain) {
+        const node = graph.nodes.find((n) => n.id === nodeId)
+        if (node) {
+            result.push(node)
+            if (node.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+                const loopEdge = getLoopEdge(graph, nodeId)
+                if (loopEdge && loopEdge.target) {
+                    collectChainAndDescendants(loopEdge.target, graph, result)
+                }
+            }
+            else if (node.data.kind === FlowActionKind.ROUTER) {
+                const branchEdges = getBranchEdges(graph, nodeId)
+                for (const branchEdge of branchEdges) {
+                    if (branchEdge.target) {
+                        collectChainAndDescendants(branchEdge.target, graph, result)
+                    }
+                }
+            }
+        }
+    }
+}
+
+function isChildOf(parent: FlowGraphNode, childStepName: string, flowVersion: FlowVersion): boolean {
+    switch (parent.data.kind) {
+        case FlowActionKind.ROUTER:
+        case FlowActionKind.LOOP_ON_ITEMS: {
+            const children = getAllChildSteps(parent, flowVersion)
+            return children.some((c) => c.id === childStepName)
         }
         default:
             break
@@ -189,19 +258,8 @@ function isChildOf(parent: Step, childStepName: string, flowVersion: FlowVersion
     return false
 }
 
-const findUnusedNames = (flowVersion: FlowVersion, count = 1) => {
-    const names = getAllSteps(flowVersion).map((f) => f.name)
-    const unusedNames = []
-    for (let i = 1; i <= count; i++) {
-        const name = findUnusedName(names)
-        unusedNames.push(name)
-        names.push(name)
-    }
-    return unusedNames
-}
-
-const findUnusedName = (source: FlowVersion | string[]) => {
-    const names = Array.isArray(source) ? source : getAllSteps(source).map((f) => f.name)
+function findUnusedName(source: FlowVersion | string[]): string {
+    const names = Array.isArray(source) ? source : getAllSteps(source).map((n) => n.id)
     let index = 1
     let name = 'step_1'
     while (names.includes(name)) {
@@ -210,7 +268,6 @@ const findUnusedName = (source: FlowVersion | string[]) => {
     }
     return name
 }
-
 
 function extractConnectionIdsFromAuth(auth: string): string[] {
     const match = auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
@@ -221,35 +278,27 @@ function extractConnectionIdsFromAuth(auth: string): string[] {
 }
 
 function extractAgentIds(flowVersion: FlowVersion): string[] {
-    return getAllSteps(flowVersion).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+    return getAllSteps(flowVersion).map(node => getExternalAgentId(node)).filter((id): id is string => id !== null && id !== '')
 }
 
-function getExternalAgentId(action: Step) {
-    if (isAgentPiece(action) && 'agentId' in action.settings.input) {
-        return action.settings.input.agentId
-    }
-    return null
-}
-
-function isAgentPiece(action: Step) {
-    return (
-        action.type === FlowActionType.PIECE && action.settings.pieceName === AI_PIECE_NAME
-    )
+function getExternalAgentId(node: FlowGraphNode): string | null {
+    if (node.data.kind !== FlowActionKind.PIECE) return null
+    if (node.data.settings.pieceName !== AI_PIECE_NAME) return null
+    const agentId = node.data.settings.input['agentId']
+    return typeof agentId === 'string' ? agentId : null
 }
 
 function extractConnectionIds(flowVersion: FlowVersion): string[] {
-    const triggerAuthIds = flowVersion.trigger.settings?.input?.auth
-        ? extractConnectionIdsFromAuth(flowVersion.trigger.settings.input.auth)
-        : []
+    const allIds = getAllSteps(flowVersion)
+        .flatMap(node => {
+            if (!isActionNodeData(node.data) || !('input' in node.data.settings)) return []
+            const auth = node.data.settings.input?.['auth']
+            return typeof auth === 'string'
+                ? extractConnectionIdsFromAuth(auth)
+                : []
+        })
 
-    const stepAuthIds = getAllSteps(flowVersion)
-        .flatMap(step =>
-            step.settings?.input?.auth
-                ? extractConnectionIdsFromAuth(step.settings.input.auth)
-                : [],
-        )
-
-    return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
+    return Array.from(new Set(allIds))
 }
 
 export const flowStructureUtil = {
@@ -259,21 +308,27 @@ export const flowStructureUtil = {
     transferFlow,
     getStepOrThrow,
     getActionOrThrow,
-    getTriggerOrThrow,
     getStep,
-    createBranch,
+    createBranchEdge,
     findPathToStep,
     isChildOf,
     findUnusedName,
-    findUnusedNames,
     getAllChildSteps,
     extractConnectionIds,
-    isAgentPiece,
     extractAgentIds,
     getDirectChildRefs,
+    getTriggerNode,
+    getSuccessorEdge,
+    getPredecessorEdge,
+    getLoopEdge,
+    getBranchEdges,
+    getDefaultChain,
+}
+
+type StepWithIndex = FlowGraphNode & {
+    dfsIndex: number
 }
 
 type FlowVersionLike = {
-    trigger: FlowTrigger
-    steps: FlowAction[]
+    graph: FlowGraph
 }

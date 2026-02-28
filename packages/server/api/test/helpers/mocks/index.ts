@@ -30,9 +30,12 @@ import {
     FlowRun,
     FlowRunStatus,
     FlowStatus,
-    FlowTriggerType,
+    FlowEdgeType,
+    FlowNodeType,
+    FlowTriggerKind,
     FlowVersion,
     FlowVersionState,
+    LATEST_FLOW_SCHEMA_VERSION,
     GitBranchType,
     GitRepo,
     InvitationStatus,
@@ -507,14 +510,22 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
 export const createMockFlowVersion = (
     flowVersion?: Partial<FlowVersion>,
 ): FlowVersion => {
-    const emptyTrigger = {
-        type: FlowTriggerType.EMPTY,
-        name: 'trigger',
-        settings: {},
-        valid: false,
-        displayName: 'Select Trigger',
-        steps: [],
-    } as const
+    const emptyGraph = {
+        nodes: [
+            {
+                id: 'trigger',
+                type: FlowNodeType.TRIGGER,
+                data: {
+                    kind: FlowTriggerKind.EMPTY,
+                    name: 'trigger',
+                    settings: {},
+                    valid: false,
+                    displayName: 'Select Trigger',
+                },
+            },
+        ],
+        edges: [],
+    }
 
     return {
         id: flowVersion?.id ?? apId(),
@@ -523,13 +534,13 @@ export const createMockFlowVersion = (
         displayName: flowVersion?.displayName ?? faker.word.words(),
         flowId: flowVersion?.flowId ?? apId(),
         agentIds: flowVersion?.agentIds ?? [],
-        trigger: flowVersion?.trigger ?? emptyTrigger,
-        steps: flowVersion?.steps ?? [],
+        graph: flowVersion?.graph ?? emptyGraph,
         connectionIds: flowVersion?.connectionIds ?? [],
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
         notes: flowVersion?.notes ?? [],
+        schemaVersion: flowVersion?.schemaVersion ?? LATEST_FLOW_SCHEMA_VERSION,
     }
 }
 

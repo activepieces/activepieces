@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { FlowRunStatus, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { FlowRunStatus, flowStructureUtil, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { flowExecutor } from './flow-executor'
 
@@ -41,7 +41,11 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             } })
         }
 
-        const childStepNames = action.children ?? []
+        const graph = constants.flowVersion!.graph
+        const loopEdge = flowStructureUtil.getLoopEdge(graph, action.name)
+        const childStepNames = loopEdge?.target
+            ? flowStructureUtil.getDefaultChain(graph, loopEdge.target)
+            : []
 
         for (let i = 0; i < resolvedInput.items.length; ++i) {
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })

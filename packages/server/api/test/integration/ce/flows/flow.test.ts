@@ -1,8 +1,9 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
+    FlowNodeType,
     FlowOperationType,
     FlowStatus,
-    FlowTriggerType,
+    FlowTriggerKind,
     FlowVersionState,
     PackageType,
     PieceType,
@@ -87,19 +88,19 @@ describe('Flow API', () => {
             expect(responseBody?.operationStatus).toBeDefined()
             expect(responseBody?.templateId).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(15)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
             expect(responseBody?.version?.updatedBy).toBeNull()
             expect(responseBody?.version?.flowId).toBe(responseBody?.id)
             expect(responseBody?.version?.displayName).toBe('test flow')
-            expect(Object.keys(responseBody?.version?.trigger)).toHaveLength(6)
-            expect(responseBody?.version?.trigger.type).toBe('EMPTY')
-            expect(responseBody?.version?.trigger.name).toBe('trigger')
-            expect(responseBody?.version?.trigger.settings).toMatchObject({})
-            expect(responseBody?.version?.trigger.valid).toBe(false)
-            expect(responseBody?.version?.trigger.displayName).toBe('Select Trigger')
+            const triggerNode = responseBody?.version?.graph?.nodes?.find((n: { type: string }) => n.type === 'trigger')
+            expect(triggerNode).toBeDefined()
+            expect(triggerNode.data.kind).toBe('EMPTY')
+            expect(triggerNode.id).toBe('trigger')
+            expect(triggerNode.data.settings).toMatchObject({})
+            expect(triggerNode.data.valid).toBe(false)
+            expect(triggerNode.data.displayName).toBe('Select Trigger')
             expect(responseBody?.version?.valid).toBe(false)
             expect(responseBody?.version?.state).toBe('DRAFT')
         })
@@ -145,25 +146,31 @@ describe('Flow API', () => {
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockOwner.id,
-                trigger: {
-                    type: FlowTriggerType.PIECE,
-                    settings: {
-                        pieceName: '@activepieces/piece-schedule',
-                        pieceVersion: '0.1.5',
-                        input: {
-                            run_on_weekends: false,
-                        },
-                        triggerName: 'every_hour',
-                        propertySettings: {
-                            'run_on_weekends': {
-                                type: PropertyExecutionType.MANUAL,
+                graph: {
+                    nodes: [{
+                        id: 'trigger',
+                        type: FlowNodeType.TRIGGER,
+                        data: {
+                            kind: FlowTriggerKind.PIECE,
+                            name: 'trigger',
+                            displayName: 'Schedule',
+                            valid: true,
+                            settings: {
+                                pieceName: '@activepieces/piece-schedule',
+                                pieceVersion: '0.1.5',
+                                input: {
+                                    run_on_weekends: false,
+                                },
+                                triggerName: 'every_hour',
+                                propertySettings: {
+                                    'run_on_weekends': {
+                                        type: PropertyExecutionType.MANUAL,
+                                    },
+                                },
                             },
                         },
-                    },
-                    valid: true,
-                    name: 'trigger',
-                    displayName: 'Schedule',
-                    steps: [],
+                    }],
+                    edges: [],
                 },
             })
             await databaseConnection()
@@ -212,7 +219,7 @@ describe('Flow API', () => {
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('ENABLING')
-                expect(Object.keys(responseBody.version)).toHaveLength(15)
+                expect(Object.keys(responseBody.version)).toHaveLength(14)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
             }
         })
@@ -279,7 +286,7 @@ describe('Flow API', () => {
             expect(responseBody?.metadata).toBeNull()
             expect(responseBody?.operationStatus).toBe('DISABLING')
             expect(responseBody?.templateId).toBeNull()
-            expect(Object.keys(responseBody?.version)).toHaveLength(15)
+            expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -331,25 +338,31 @@ describe('Flow API', () => {
                 flowId: mockFlow.id,
                 updatedBy: mockOwner.id,
                 state: FlowVersionState.DRAFT,
-                trigger: {
-                    type: FlowTriggerType.PIECE,
-                    settings: {
-                        pieceName: '@activepieces/piece-schedule',
-                        pieceVersion: '0.1.5',
-                        input: {
-                            run_on_weekends: false,
-                        },
-                        triggerName: 'every_hour',
-                        propertySettings: {
-                            'run_on_weekends': {
-                                type: PropertyExecutionType.MANUAL,
+                graph: {
+                    nodes: [{
+                        id: 'trigger',
+                        type: FlowNodeType.TRIGGER,
+                        data: {
+                            kind: FlowTriggerKind.PIECE,
+                            name: 'trigger',
+                            displayName: 'Schedule',
+                            valid: true,
+                            settings: {
+                                pieceName: '@activepieces/piece-schedule',
+                                pieceVersion: '0.1.5',
+                                input: {
+                                    run_on_weekends: false,
+                                },
+                                triggerName: 'every_hour',
+                                propertySettings: {
+                                    'run_on_weekends': {
+                                        type: PropertyExecutionType.MANUAL,
+                                    },
+                                },
                             },
                         },
-                    },
-                    valid: true,
-                    name: 'trigger',
-                    displayName: 'Schedule',
-                    steps: [],
+                    }],
+                    edges: [],
                 },
             })
             await databaseConnection()
@@ -392,7 +405,7 @@ describe('Flow API', () => {
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('DISABLING')
-                expect(Object.keys(responseBody.version)).toHaveLength(15)
+                expect(Object.keys(responseBody.version)).toHaveLength(14)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
                 expect(responseBody.version.state).toBe('LOCKED')
                 expect(responseBody.templateId).toBeNull()
@@ -635,7 +648,7 @@ describe('Flow API', () => {
             expect(responseBody).toHaveProperty('description')
             expect(responseBody).toHaveProperty('flows')
             expect(responseBody.flows).toHaveLength(1)
-            expect(responseBody.flows[0]).toHaveProperty('trigger')
+            expect(responseBody.flows[0]).toHaveProperty('graph')
         })
     })
 })

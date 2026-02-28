@@ -1,279 +1,233 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { applyFunctionToValuesSync, isNil, isString } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
-import { BranchExecutionType, FlowAction, FlowActionType, FlowBranch, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
+import { BranchExecutionType, FlowActionKind, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
+import { BranchEdge, FlowEdgeType, FlowGraphNode, FlowNodeData, FlowNodeType, isActionNodeData } from '../graph/flow-graph'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { AddActionRequest, DeleteActionRequest, SkipActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
 
 const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema)
 
-function createAction(request: UpdateActionRequest): FlowAction {
-    const baseProperties = {
+function createAction(request: UpdateActionRequest): FlowGraphNode {
+    const baseData = {
         displayName: request.displayName,
         name: request.name,
         valid: false,
         skip: request.skip,
+        kind: request.kind,
         settings: {
             ...request.settings,
             customLogoUrl: request.settings.customLogoUrl,
         },
     }
-    let action: FlowAction
-    switch (request.type) {
-        case FlowActionType.ROUTER:
-            action = {
-                ...baseProperties,
-                type: FlowActionType.ROUTER,
-                settings: request.settings,
-                branches: getDefaultBranchesIfEmpty(request.branches),
-            }
-            break
-        case FlowActionType.LOOP_ON_ITEMS:
-            action = {
-                ...baseProperties,
-                type: FlowActionType.LOOP_ON_ITEMS,
-                settings: request.settings,
-                children: [],
-            }
-            break
-        case FlowActionType.PIECE:
-            action = {
-                ...baseProperties,
-                type: FlowActionType.PIECE,
-                settings: request.settings,
-            }
-            break
-        case FlowActionType.CODE:
-            action = {
-                ...baseProperties,
-                type: FlowActionType.CODE,
-                settings: request.settings,
-            }
-            break
-    }
-    const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(action)
+    const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(baseData)
     return {
-        ...action,
-        valid,
+        id: request.name,
+        type: FlowNodeType.ACTION,
+        data: {
+            ...baseData,
+            valid,
+        } as FlowNodeData,
     }
 }
 
 // --- Add Action ---
 
-function handleLoopOnItems(loopStep: LoopOnItemsAction, request: AddActionRequest, flowVersion: FlowVersion): FlowVersion {
-    const newAction = createAction(request.action)
-
-    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_LOOP) {
-        const updatedChildren = [newAction.name, ...(loopStep.children ?? [])]
-        return updateStepInFlowVersion(flowVersion, loopStep.name, { ...loopStep, children: updatedChildren }, newAction)
-    }
-    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
-        return addStepAfter(flowVersion, loopStep.name, newAction)
-    }
-    else {
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_OPERATION_INVALID,
-            params: {
-                message: `Loop step parent ${request.stepLocationRelativeToParent} not found`,
-            },
-        })
-    }
-}
-
-function handleRouter(routerStep: RouterAction, request: AddActionRequest, flowVersion: FlowVersion): FlowVersion {
-    const newAction = createAction(request.action)
-
-    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && !isNil(request.branchIndex)) {
-        const branches = [...(routerStep.branches ?? [])]
-        const branch = { ...branches[request.branchIndex] }
-        branch.steps = [newAction.name, ...(branch.steps ?? [])]
-        branches[request.branchIndex] = branch
-        return updateStepInFlowVersion(flowVersion, routerStep.name, { ...routerStep, branches }, newAction)
-    }
-    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
-        return addStepAfter(flowVersion, routerStep.name, newAction)
-    }
-    else {
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_OPERATION_INVALID,
-            params: {
-                message: `Router step parent ${request.stepLocationRelativeToParent} not found`,
-            },
-        })
-    }
-}
-
-function addStepAfter(flowVersion: FlowVersion, parentName: string, newAction: FlowAction): FlowVersion {
-    const cloned: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-
-    // Parent is the trigger itself — insert at the beginning of trigger.steps
-    if (cloned.trigger.name === parentName) {
-        cloned.trigger.steps.unshift(newAction.name)
-        cloned.steps.push(newAction)
-        return cloned
-    }
-
-    // Check trigger steps list
-    const triggerIdx = cloned.trigger.steps.indexOf(parentName)
-    if (triggerIdx !== -1) {
-        cloned.trigger.steps.splice(triggerIdx + 1, 0, newAction.name)
-        cloned.steps.push(newAction)
-        return cloned
-    }
-
-    // Check loop children and router branches
-    for (const step of cloned.steps) {
-        if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-            const loopStep = step as LoopOnItemsAction
-            if (loopStep.children) {
-                const childIdx = loopStep.children.indexOf(parentName)
-                if (childIdx !== -1) {
-                    loopStep.children.splice(childIdx + 1, 0, newAction.name)
-                    cloned.steps.push(newAction)
-                    return cloned
-                }
-            }
-        }
-        if (step.type === FlowActionType.ROUTER) {
-            const routerStep = step as RouterAction
-            if (routerStep.branches) {
-                for (const branch of routerStep.branches) {
-                    const branchIdx = (branch.steps ?? []).indexOf(parentName)
-                    if (branchIdx !== -1) {
-                        branch.steps.splice(branchIdx + 1, 0, newAction.name)
-                        cloned.steps.push(newAction)
-                        return cloned
-                    }
-                }
-            }
-        }
-    }
-
-    throw new ActivepiecesError({
-        code: ErrorCode.FLOW_OPERATION_INVALID,
-        params: {
-            message: `Parent step ${parentName} not found in any step list`,
-        },
-    })
-}
-
-function updateStepInFlowVersion(flowVersion: FlowVersion, stepName: string, updatedStep: FlowAction, newAction: FlowAction): FlowVersion {
-    const cloned: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    cloned.steps = cloned.steps.map((s) => s.name === stepName ? updatedStep : s)
-    cloned.steps.push(newAction)
-    return cloned
-}
-
 function add(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
-    const parentStep = flowStructureUtil.getStepOrThrow(request.parentStep, flowVersion)
-
-    switch (parentStep.type) {
-        case FlowActionType.LOOP_ON_ITEMS:
-            return handleLoopOnItems(parentStep as LoopOnItemsAction, request, flowVersion)
-        case FlowActionType.ROUTER:
-            return handleRouter(parentStep as RouterAction, request, flowVersion)
-        default: {
-            const newAction = createAction(request.action)
-            return addStepAfter(flowVersion, request.parentStep, newAction)
-        }
+    const cloned: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
+    const newNode = createAction(request.action)
+    const parentId = request.parentStep
+    const parentNode = flowStructureUtil.getStepOrThrow(parentId, cloned)
+    if (parentNode.data.kind === FlowActionKind.LOOP_ON_ITEMS && request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_LOOP) {
+        return addInsideLoop(cloned, parentId, newNode)
     }
+    else if (parentNode.data.kind === FlowActionKind.ROUTER && request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && !isNil(request.branchIndex)) {
+        return addInsideBranch(cloned, parentId, request.branchIndex, newNode)
+    }
+    else {
+        return addAfter(cloned, parentId, newNode)
+    }
+}
+
+function addAfter(flowVersion: FlowVersion, parentId: string, newNode: FlowGraphNode): FlowVersion {
+    flowVersion.graph.nodes.push(newNode)
+    const existingEdge = flowStructureUtil.getSuccessorEdge(flowVersion.graph, parentId)
+    if (existingEdge && existingEdge.type === FlowEdgeType.DEFAULT) {
+        const oldTarget = existingEdge.target
+        existingEdge.target = newNode.id
+        flowVersion.graph.edges.push({
+            id: `${newNode.id}-default`,
+            source: newNode.id,
+            target: oldTarget,
+            type: FlowEdgeType.DEFAULT,
+        })
+    }
+    else {
+        flowVersion.graph.edges.push({
+            id: `${parentId}-default`,
+            source: parentId,
+            target: newNode.id,
+            type: FlowEdgeType.DEFAULT,
+        })
+    }
+    addStructuralEdges(flowVersion, newNode)
+    return flowVersion
+}
+
+function addStructuralEdges(flowVersion: FlowVersion, newNode: FlowGraphNode): void {
+    if (newNode.data.kind === FlowActionKind.ROUTER) {
+        flowVersion.graph.edges.push(...getDefaultBranchEdges(newNode.id))
+    }
+    else if (newNode.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+        flowVersion.graph.edges.push({
+            id: `${newNode.id}-loop`,
+            source: newNode.id,
+            target: null,
+            type: FlowEdgeType.LOOP,
+        })
+    }
+}
+
+function addInsideLoop(flowVersion: FlowVersion, loopId: string, newNode: FlowGraphNode): FlowVersion {
+    flowVersion.graph.nodes.push(newNode)
+    const loopEdge = flowStructureUtil.getLoopEdge(flowVersion.graph, loopId)
+    if (loopEdge && loopEdge.target) {
+        const oldFirst = loopEdge.target
+        loopEdge.target = newNode.id
+        flowVersion.graph.edges.push({
+            id: `${newNode.id}-default`,
+            source: newNode.id,
+            target: oldFirst,
+            type: FlowEdgeType.DEFAULT,
+        })
+    }
+    else if (loopEdge) {
+        loopEdge.target = newNode.id
+    }
+    else {
+        flowVersion.graph.edges.push({
+            id: `${loopId}-loop`,
+            source: loopId,
+            target: newNode.id,
+            type: FlowEdgeType.LOOP,
+        })
+    }
+    addStructuralEdges(flowVersion, newNode)
+    return flowVersion
+}
+
+function addInsideBranch(flowVersion: FlowVersion, routerId: string, branchIndex: number, newNode: FlowGraphNode): FlowVersion {
+    flowVersion.graph.nodes.push(newNode)
+    const branchEdges = flowStructureUtil.getBranchEdges(flowVersion.graph, routerId)
+    const branchEdge = branchEdges.find((e) => e.branchIndex === branchIndex)
+    if (branchEdge && branchEdge.target) {
+        const oldFirst = branchEdge.target
+        branchEdge.target = newNode.id
+        flowVersion.graph.edges.push({
+            id: `${newNode.id}-default`,
+            source: newNode.id,
+            target: oldFirst,
+            type: FlowEdgeType.DEFAULT,
+        })
+    }
+    else if (branchEdge) {
+        branchEdge.target = newNode.id
+    }
+    else {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: {
+                message: `Branch index ${branchIndex} not found on router ${routerId}`,
+            },
+        })
+    }
+    addStructuralEdges(flowVersion, newNode)
+    return flowVersion
 }
 
 // --- Delete Action ---
 
-function removeNameRef(flowVersion: FlowVersion, name: string): FlowVersion {
-    flowVersion.trigger.steps = flowVersion.trigger.steps.filter((s) => s !== name)
-
-    for (const step of flowVersion.steps) {
-        if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-            const loopStep = step as LoopOnItemsAction
-            if (loopStep.children) {
-                loopStep.children = loopStep.children.filter((s) => s !== name)
-            }
-        }
-        if (step.type === FlowActionType.ROUTER) {
-            const routerStep = step as RouterAction
-            if (routerStep.branches) {
-                for (const branch of routerStep.branches) {
-                    branch.steps = (branch.steps ?? []).filter((s) => s !== name)
-                }
-            }
-        }
+function remove(flowVersion: FlowVersion, request: DeleteActionRequest): FlowVersion {
+    const cloned: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
+    for (const name of request.names) {
+        removeNode(cloned, name)
     }
-    return flowVersion
+    return cloned
 }
 
-function remove(flowVersion: FlowVersion, request: DeleteActionRequest): FlowVersion {
-    let clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    for (const name of request.names) {
-        clonedVersion = removeNameRef(clonedVersion, name)
-        clonedVersion.steps = clonedVersion.steps.filter((s) => s.name !== name)
+function removeNode(flowVersion: FlowVersion, nodeId: string): void {
+    const node = flowVersion.graph.nodes.find((n) => n.id === nodeId)
+    if (!node) return
+
+    // First collect all descendants to remove (for loops/routers)
+    const descendantIds = collectDescendantIds(nodeId, flowVersion)
+
+    // Find the edge pointing TO this node
+    const incomingEdge = flowStructureUtil.getPredecessorEdge(flowVersion.graph, nodeId)
+    // Find this node's outgoing default edge
+    const outgoingDefaultEdge = flowStructureUtil.getSuccessorEdge(flowVersion.graph, nodeId)
+
+    if (incomingEdge && outgoingDefaultEdge) {
+        incomingEdge.target = outgoingDefaultEdge.target
     }
-    return clonedVersion
+    else if (incomingEdge) {
+        // If no outgoing default, the incoming edge now points to nothing
+        // If it's a branch/loop edge, set target to null; if default, remove it
+        if (incomingEdge.type === FlowEdgeType.DEFAULT) {
+            flowVersion.graph.edges = flowVersion.graph.edges.filter((e) => e !== incomingEdge)
+        }
+        else {
+            (incomingEdge as BranchEdge).target = null
+        }
+    }
+
+    // Remove the node and all its edges
+    const allToRemove = new Set([nodeId, ...descendantIds])
+    flowVersion.graph.nodes = flowVersion.graph.nodes.filter((n) => !allToRemove.has(n.id))
+    flowVersion.graph.edges = flowVersion.graph.edges.filter(
+        (e) => !allToRemove.has(e.source) && (!allToRemove.has(e.target!) || e === incomingEdge),
+    )
+    // Also remove the outgoing default edge of the deleted node
+    if (outgoingDefaultEdge) {
+        flowVersion.graph.edges = flowVersion.graph.edges.filter((e) => e !== outgoingDefaultEdge)
+    }
+}
+
+function collectDescendantIds(nodeId: string, flowVersion: FlowVersion): string[] {
+    const node = flowVersion.graph.nodes.find((n) => n.id === nodeId)
+    if (!node) return []
+    const descendants = flowStructureUtil.getAllChildSteps(node, flowVersion)
+    return descendants.map((d) => d.id)
 }
 
 // --- Update Action ---
 
 function update(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVersion {
-    return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
-        if (stepToUpdate.name !== request.name) {
-            return stepToUpdate
+    return flowStructureUtil.transferFlow(flowVersion, (node) => {
+        if (node.id !== request.name || !isActionNodeData(node.data)) {
+            return node
         }
 
-        const baseProps = {
+        const updatedData = {
             displayName: request.displayName,
             name: request.name,
             valid: false,
             skip: request.skip,
+            kind: request.kind,
             settings: {
-                ...stepToUpdate.settings,
+                ...node.data.settings,
                 customLogoUrl: request.settings.customLogoUrl,
+                ...request.settings,
             },
         }
-
-        let updatedAction: FlowAction
-        switch (request.type) {
-            case FlowActionType.CODE: {
-                updatedAction = {
-                    ...baseProps,
-                    settings: request.settings,
-                    type: FlowActionType.CODE,
-                }
-                break
-            }
-            case FlowActionType.PIECE: {
-                updatedAction = {
-                    ...baseProps,
-                    settings: request.settings,
-                    type: FlowActionType.PIECE,
-                }
-                break
-            }
-            case FlowActionType.LOOP_ON_ITEMS: {
-                updatedAction = {
-                    ...baseProps,
-                    settings: request.settings,
-                    type: FlowActionType.LOOP_ON_ITEMS,
-                    children: 'children' in stepToUpdate ? (stepToUpdate as LoopOnItemsAction).children : [],
-                }
-                break
-            }
-
-            case FlowActionType.ROUTER: {
-                updatedAction = {
-                    ...baseProps,
-                    settings: request.settings,
-                    type: FlowActionType.ROUTER,
-                    branches: request.branches ?? ('branches' in stepToUpdate ? (stepToUpdate as RouterAction).branches : []),
-                }
-                break
-            }
-        }
-        const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(updatedAction)
+        const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(updatedData)
         return {
-            ...updatedAction,
-            valid,
+            ...node,
+            data: {
+                ...updatedData,
+                valid,
+            } as FlowNodeData,
         }
     })
 }
@@ -281,24 +235,27 @@ function update(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVer
 // --- Skip Action ---
 
 function skip(flowVersion: FlowVersion, request: SkipActionRequest): FlowVersion {
-    return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
-        if (!request.names.includes(stepToUpdate.name)) {
-            return stepToUpdate
+    return flowStructureUtil.transferFlow(flowVersion, (node) => {
+        if (!request.names.includes(node.id) || !isActionNodeData(node.data)) {
+            return node
         }
         return {
-            ...stepToUpdate,
-            skip: request.skip,
+            ...node,
+            data: {
+                ...node.data,
+                skip: request.skip,
+            } as FlowNodeData,
         }
     })
 }
 
 // --- Action Utils (used by composite-operations) ---
 
-function mapToNewNames(flowVersion: FlowVersion, clonedActions: FlowAction[]): Record<string, string> {
+function mapToNewNames(flowVersion: FlowVersion, clonedNodes: FlowGraphNode[]): Record<string, string> {
     const existingNames = flowStructureUtil.getAllSteps(flowVersion)
-        .map(step => step.name)
+        .map(node => node.id)
 
-    const oldStepNames = clonedActions.map(step => step.name)
+    const oldStepNames = clonedNodes.map(node => node.id)
 
     return oldStepNames.reduce((nameMap, oldName) => {
         const newName = flowStructureUtil.findUnusedName(existingNames)
@@ -313,7 +270,7 @@ function replaceOldStepNameWithNewOne({
     newStepName,
 }: ReplaceOldStepNameWithNewOneProps): string {
     const regex = /{{(.*?)}}/g
-    return input.replace(regex, (match, content) => {
+    return input.replace(regex, (_match, content) => {
         const replacedContent = content.replaceAll(
             new RegExp(`\\b${oldStepName}\\b`, 'g'),
             `${newStepName}`,
@@ -322,12 +279,13 @@ function replaceOldStepNameWithNewOne({
     })
 }
 
-function clone(step: FlowAction, oldNameToNewName: Record<string, string>): FlowAction {
-    step.displayName = `${step.displayName} Copy`
-    step.name = oldNameToNewName[step.name]
-    if ('input' in step.settings) {
+function clone(node: FlowGraphNode, oldNameToNewName: Record<string, string>): FlowGraphNode {
+    const clonedData: FlowNodeData = JSON.parse(JSON.stringify(node.data))
+    clonedData.displayName = `${node.data.displayName} Copy`
+    clonedData.name = oldNameToNewName[node.id]
+    if (isActionNodeData(clonedData) && 'input' in clonedData.settings) {
+        const settings = clonedData.settings
         Object.keys(oldNameToNewName).forEach((oldName) => {
-            const settings = step.settings as { input: unknown }
             settings.input = applyFunctionToValuesSync(
                 settings.input,
                 (value: unknown) => {
@@ -343,35 +301,41 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
             )
         })
     }
-    if (step.settings.sampleData) {
-        step.settings = {
-            ...step.settings,
-            sampleData: {},
-        }
+    if ('sampleData' in clonedData.settings && clonedData.settings.sampleData) {
+        clonedData.settings.sampleData = {}
     }
-    return step
+    return {
+        id: oldNameToNewName[node.id],
+        type: node.type,
+        data: clonedData,
+    }
 }
 
-function getDefaultBranchesIfEmpty(branches: FlowBranch[] | undefined): FlowBranch[] {
-    if (branches && branches.length > 0) {
-        return branches
-    }
+function getDefaultBranchEdges(source: string): BranchEdge[] {
     return [
         {
-            branchType: BranchExecutionType.CONDITION,
+            id: `${source}-branch-0`,
+            source,
+            target: null,
+            type: FlowEdgeType.BRANCH,
+            branchIndex: 0,
             branchName: 'Branch 1',
+            branchType: BranchExecutionType.CONDITION,
             conditions: [[]],
-            steps: [],
         },
         {
-            branchType: BranchExecutionType.FALLBACK,
+            id: `${source}-branch-1`,
+            source,
+            target: null,
+            type: FlowEdgeType.BRANCH,
+            branchIndex: 1,
             branchName: 'Otherwise',
-            steps: [],
+            branchType: BranchExecutionType.FALLBACK,
         },
     ]
 }
 
-export const actionOperations = { add, remove, update, skip, createAction }
+export const actionOperations = { add, remove, update, skip, createAction, getDefaultBranchEdges }
 export const actionUtils = { mapToNewNames, clone }
 
 type ReplaceOldStepNameWithNewOneProps = {
@@ -379,3 +343,4 @@ type ReplaceOldStepNameWithNewOneProps = {
     oldStepName: string
     newStepName: string
 }
+

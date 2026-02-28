@@ -1,4 +1,4 @@
-import { assertEqual, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, EngineGenericError, executionJournal, FailedStep, FlowActionKind, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -78,9 +78,9 @@ export class FlowExecutorContext {
         if (isNil(stepOutput)) {
             return undefined
         }
-        assertEqual(stepOutput.type, FlowActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
+        assertEqual(stepOutput.type, FlowActionKind.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
         // The new LoopStepOutput is needed as casting directly to LoopClassOutput will just cast the data but the class methods will not be available
-        return new LoopStepOutput(stepOutput as GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>)
+        return new LoopStepOutput(stepOutput as GenericStepOutput<FlowActionKind.LOOP_ON_ITEMS, LoopStepResult>)
     }
 
     public isCompleted({ stepName }: { stepName: string }): boolean {
@@ -172,7 +172,7 @@ export class FlowExecutorContext {
 
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
-            if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
+            if (!stepOutput.output || stepOutput.type !== FlowActionKind.LOOP_ON_ITEMS) {
                 throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]

@@ -1,7 +1,7 @@
 import path from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { CodeAction, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { CodeAction, EngineGenericError, FlowActionKind, FlowRunStatus, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -32,7 +32,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
     const stepOutput = GenericStepOutput.create({
         input: censoredInput,
-        type: FlowActionType.CODE,
+        type: FlowActionKind.CODE,
         status: StepOutputStatus.RUNNING,
     })
     

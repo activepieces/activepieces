@@ -1,5 +1,6 @@
 import {
-  FlowAction,
+  FlowGraphNode,
+  FlowNodeData,
   flowOperations,
   FlowOperationType,
   flowStructureUtil,
@@ -14,7 +15,7 @@ import { BuilderState } from '../../builder-hooks';
 
 type CopyActionsRequest = {
   type: 'COPY_ACTIONS';
-  actions: FlowAction[];
+  actions: FlowGraphNode[];
 };
 
 export function copySelectedNodes({
@@ -52,7 +53,7 @@ export function deleteSelectedNodes({
   }
 }
 
-export async function getActionsInClipboard(): Promise<FlowAction[]> {
+export async function getActionsInClipboard(): Promise<FlowGraphNode[]> {
   try {
     const clipboardText = await navigator.clipboard.readText();
     const request: CopyActionsRequest = JSON.parse(clipboardText);
@@ -93,11 +94,28 @@ export async function pasteNodes(
 export function getLastLocationAsPasteLocation(
   flowVersion: FlowVersion,
 ): PasteLocation {
-  const triggerSteps = flowVersion.trigger.steps;
+  const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph);
+  if (!triggerNode) {
+    return {
+      parentStepName: 'trigger',
+      stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+    };
+  }
+  const successorEdge = flowStructureUtil.getSuccessorEdge(
+    flowVersion.graph,
+    triggerNode.id,
+  );
+  const chainStepNames =
+    successorEdge && successorEdge.target
+      ? flowStructureUtil.getDefaultChain(
+          flowVersion.graph,
+          successorEdge.target,
+        )
+      : [];
   const lastStepName =
-    triggerSteps.length > 0
-      ? triggerSteps[triggerSteps.length - 1]
-      : flowVersion.trigger.name;
+    chainStepNames.length > 0
+      ? chainStepNames[chainStepNames.length - 1]
+      : triggerNode.id;
   return {
     parentStepName: lastStepName,
     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
@@ -111,12 +129,14 @@ export function toggleSkipSelectedNodes({
 }: Pick<BuilderState, 'selectedNodes' | 'flowVersion' | 'applyOperation'>) {
   const steps = selectedNodes.map((node) =>
     flowStructureUtil.getStepOrThrow(node, flowVersion),
-  ) as FlowAction[];
-  const areAllStepsSkipped = steps.every((step) => !!step.skip);
+  );
+  const areAllStepsSkipped = steps.every(
+    (step) => 'skip' in step.data && !!step.data.skip,
+  );
   applyOperation({
     type: FlowOperationType.SET_SKIP_ACTION,
     request: {
-      names: steps.map((step) => step.name),
+      names: steps.map((step) => step.id),
       skip: !areAllStepsSkipped,
     },
   });
@@ -126,6 +146,7 @@ export const canvasBulkActions = {
   copySelectedNodes,
   deleteSelectedNodes,
   getActionsInClipboard,
+  getLastLocationAsPasteLocation,
   pasteNodes,
   toggleSkipSelectedNodes,
 };

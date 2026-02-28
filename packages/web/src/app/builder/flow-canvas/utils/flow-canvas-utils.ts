@@ -1,17 +1,16 @@
 import {
-  FlowAction,
-  FlowActionType,
+  FlowActionKind,
   FlowOperationType,
   FlowRun,
   flowStructureUtil,
   FlowVersion,
   isNil,
-  LoopOnItemsAction,
-  RouterAction,
   StepLocationRelativeToParent,
-  FlowTrigger,
-  FlowTriggerType,
+  FlowTriggerKind,
   Note,
+  FlowNodeData,
+  FlowGraphNode,
+  BranchEdge,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -33,11 +32,11 @@ import {
 } from './types';
 
 const createBigAddButtonGraph: (
-  parentStep: LoopOnItemsAction | RouterAction,
+  parentStepName: string,
   nodeData: ApBigAddButtonNode['data'],
-) => ApGraph = (parentStep, nodeData) => {
+) => ApGraph = (parentStepName, nodeData) => {
   const bigAddButtonNode: ApBigAddButtonNode = {
-    id: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
+    id: `${parentStepName}-big-add-button-${nodeData.edgeId}`,
     type: ApNodeType.BIG_ADD_BUTTON,
     position: { x: 0, y: 0 },
     data: nodeData,
@@ -47,7 +46,7 @@ const createBigAddButtonGraph: (
     },
   };
   const graphEndNode: ApGraphEndNode = {
-    id: `${parentStep.name}-subgraph-end-${nodeData.edgeId}`,
+    id: `${parentStepName}-subgraph-end-${nodeData.edgeId}`,
     type: ApNodeType.GRAPH_END_WIDGET as const,
     position: {
       x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
@@ -61,13 +60,13 @@ const createBigAddButtonGraph: (
 
   const straightLineEdge: ApStraightLineEdge = {
     id: `big-button-straight-line-for${nodeData.edgeId}`,
-    source: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
-    target: `${parentStep.name}-subgraph-end-${nodeData.edgeId}`,
+    source: `${parentStepName}-big-add-button-${nodeData.edgeId}`,
+    target: `${parentStepName}-subgraph-end-${nodeData.edgeId}`,
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
       drawArrowHead: false,
       hideAddButton: true,
-      parentStepName: parentStep.name,
+      parentStepName,
     },
   };
   return {
@@ -77,18 +76,18 @@ const createBigAddButtonGraph: (
 };
 
 const createStepGraph: (
-  step: FlowAction | FlowTrigger,
+  stepData: FlowNodeData,
   graphHeight: number,
   nextStepName: string | undefined,
-) => ApGraph = (step, graphHeight, nextStepName) => {
+) => ApGraph = (stepData, graphHeight, nextStepName) => {
   const stepNode: ApStepNode = {
-    id: step.name,
+    id: stepData.name,
     type: ApNodeType.STEP as const,
     position: { x: 0, y: 0 },
     data: {
-      step,
+      step: stepData,
     },
-    selectable: step.name !== 'trigger',
+    selectable: stepData.name !== 'trigger',
     draggable: true,
     style: {
       pointerEvents: 'all',
@@ -96,7 +95,7 @@ const createStepGraph: (
   };
 
   const graphEndNode: ApGraphEndNode = {
-    id: `${step.name}-subgraph-end`,
+    id: `${stepData.name}-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET as const,
     position: {
       x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
@@ -107,20 +106,20 @@ const createStepGraph: (
   };
 
   const straightLineEdge: ApStraightLineEdge = {
-    id: `${step.name}-${nextStepName ?? 'graph-end'}-edge`,
-    source: step.name,
-    target: `${step.name}-subgraph-end`,
+    id: `${stepData.name}-${nextStepName ?? 'graph-end'}-edge`,
+    source: stepData.name,
+    target: `${stepData.name}-subgraph-end`,
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
       drawArrowHead: !isNil(nextStepName),
-      parentStepName: step.name,
+      parentStepName: stepData.name,
     },
   };
   return {
     nodes: [stepNode, graphEndNode],
     edges:
-      step.type !== FlowActionType.LOOP_ON_ITEMS &&
-      step.type !== FlowActionType.ROUTER
+      stepData.kind !== FlowActionKind.LOOP_ON_ITEMS &&
+      stepData.kind !== FlowActionKind.ROUTER
         ? [straightLineEdge]
         : [],
   };
@@ -135,8 +134,8 @@ const buildChainGraph: (
   }
 
   const stepName = stepNames[0];
-  const step = flowVersion.steps.find((s) => s.name === stepName);
-  if (!step) {
+  const node = flowVersion.graph.nodes.find((n) => n.id === stepName);
+  if (!node) {
     return { nodes: [], edges: [] };
   }
 
@@ -144,16 +143,16 @@ const buildChainGraph: (
   const hasNextStep = stepNames.length > 1;
 
   const graph: ApGraph = createStepGraph(
-    step,
+    node.data,
     flowCanvasConsts.AP_NODE_SIZE.STEP.height +
       flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
     nextStepName,
   );
   const childGraph =
-    step.type === FlowActionType.LOOP_ON_ITEMS
-      ? buildLoopChildGraph(step, flowVersion, hasNextStep)
-      : step.type === FlowActionType.ROUTER
-      ? buildRouterChildGraph(step, flowVersion, hasNextStep)
+    node.data.kind === FlowActionKind.LOOP_ON_ITEMS
+      ? buildLoopChildGraph(node, flowVersion, hasNextStep)
+      : node.data.kind === FlowActionKind.ROUTER
+      ? buildRouterChildGraph(node, flowVersion, hasNextStep)
       : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
@@ -232,17 +231,22 @@ const calculateGraphBoundingBox = (graph: ApGraph) => {
 };
 
 const buildLoopChildGraph = (
-  step: LoopOnItemsAction,
+  node: FlowGraphNode,
   flowVersion: FlowVersion,
   hasNextStep: boolean,
 ): ApGraph => {
-  const hasChildren = (step.children?.length ?? 0) > 0;
+  const loopEdge = flowStructureUtil.getLoopEdge(flowVersion.graph, node.id);
+  const childStepNames =
+    loopEdge && loopEdge.target
+      ? flowStructureUtil.getDefaultChain(flowVersion.graph, loopEdge.target)
+      : [];
+  const hasChildren = childStepNames.length > 0;
   const childGraph = hasChildren
-    ? buildChainGraph(step.children!, flowVersion)
-    : createBigAddButtonGraph(step, {
-        parentStepName: step.name,
+    ? buildChainGraph(childStepNames, flowVersion)
+    : createBigAddButtonGraph(node.id, {
+        parentStepName: node.id,
         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-        edgeId: `${step.name}-loop-start-edge`,
+        edgeId: `${node.id}-loop-start-edge`,
       });
 
   const childGraphBoundingBox = calculateGraphBoundingBox(childGraph);
@@ -258,7 +262,7 @@ const buildLoopChildGraph = (
     flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2;
 
   const loopReturnNode: ApLoopReturnNode = {
-    id: `${step.name}-loop-return-node`,
+    id: `${node.id}-loop-return-node`,
     type: ApNodeType.LOOP_RETURN_NODE,
     position: {
       x: deltaLeftX + flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
@@ -282,8 +286,8 @@ const buildLoopChildGraph = (
   });
   const edges: ApEdge[] = [
     {
-      id: `${step.name}-loop-start-edge`,
-      source: step.name,
+      id: `${node.id}-loop-start-edge`,
+      source: node.id,
       target: `${childGraph.nodes[0].id}`,
       type: ApEdgeType.LOOP_START_EDGE as const,
       data: {
@@ -291,12 +295,12 @@ const buildLoopChildGraph = (
       },
     },
     {
-      id: `${step.name}-loop-return-node`,
+      id: `${node.id}-loop-return-node`,
       source: `${childGraph.nodes[childGraph.nodes.length - 1].id}`,
-      target: `${step.name}-loop-return-node`,
+      target: `${node.id}-loop-return-node`,
       type: ApEdgeType.LOOP_RETURN_EDGE as const,
       data: {
-        parentStepName: step.name,
+        parentStepName: node.id,
         isLoopEmpty: !hasChildren,
         drawArrowHeadAfterEnd: hasNextStep,
         verticalSpaceBetweenReturnNodeStartAndEnd:
@@ -307,7 +311,7 @@ const buildLoopChildGraph = (
   ];
 
   const subgraphEndSubNode: ApGraphEndNode = {
-    id: `${step.name}-loop-subgraph-end`,
+    id: `${node.id}-loop-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
       x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
@@ -329,20 +333,26 @@ const buildLoopChildGraph = (
 };
 
 const buildRouterChildGraph = (
-  step: RouterAction,
+  node: FlowGraphNode,
   flowVersion: FlowVersion,
   hasNextStep: boolean,
 ) => {
-  const branches = step.branches ?? [];
-  const childGraphs = branches.map((branch, index) => {
-    return branch.steps.length > 0
-      ? buildChainGraph(branch.steps, flowVersion)
-      : createBigAddButtonGraph(step, {
-          parentStepName: step.name,
+  const branchEdges: BranchEdge[] = flowStructureUtil.getBranchEdges(
+    flowVersion.graph,
+    node.id,
+  );
+  const childGraphs = branchEdges.map((branchEdge, index) => {
+    const branchStepNames = branchEdge.target
+      ? flowStructureUtil.getDefaultChain(flowVersion.graph, branchEdge.target)
+      : [];
+    return branchStepNames.length > 0
+      ? buildChainGraph(branchStepNames, flowVersion)
+      : createBigAddButtonGraph(node.id, {
+          parentStepName: node.id,
           stepLocationRelativeToParent:
             StepLocationRelativeToParent.INSIDE_BRANCH,
           branchIndex: index,
-          edgeId: `${step.name}-branch-${index}-start-edge`,
+          edgeId: `${node.id}-branch-${index}-start-edge`,
         });
   });
 
@@ -353,7 +363,7 @@ const buildRouterChildGraph = (
   );
 
   const subgraphEndSubNode: ApGraphEndNode = {
-    id: `${step.name}-branch-subgraph-end`,
+    id: `${node.id}-branch-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET,
     position: {
       x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
@@ -369,16 +379,23 @@ const buildRouterChildGraph = (
   };
   const edges: ApEdge[] = childGraphsAfterOffset
     .map((childGraph, branchIndex) => {
+      const branchEdge = branchEdges[branchIndex];
+      const branchStepNames = branchEdge.target
+        ? flowStructureUtil.getDefaultChain(
+            flowVersion.graph,
+            branchEdge.target,
+          )
+        : [];
       return [
         {
-          id: `${step.name}-branch-${branchIndex}-start-edge`,
-          source: step.name,
+          id: `${node.id}-branch-${branchIndex}-start-edge`,
+          source: node.id,
           target: `${childGraph.nodes[0].id}`,
           type: ApEdgeType.ROUTER_START_EDGE as const,
           data: {
-            isBranchEmpty: branches[branchIndex].steps.length === 0,
+            isBranchEmpty: branchStepNames.length === 0,
             label:
-              branches[branchIndex]?.branchName ??
+              branchEdge.branchName ??
               `${t('Branch')} ${branchIndex + 1} (missing branch)`,
             branchIndex,
             stepLocationRelativeToParent:
@@ -390,7 +407,7 @@ const buildRouterChildGraph = (
           },
         },
         {
-          id: `${step.name}-branch-${branchIndex}-end-edge`,
+          id: `${node.id}-branch-${branchIndex}-end-edge`,
           source: `${childGraph.nodes.at(-1)!.id}`,
           target: subgraphEndSubNode.id,
           type: ApEdgeType.ROUTER_END_EDGE as const,
@@ -404,7 +421,7 @@ const buildRouterChildGraph = (
             drawHorizontalLine:
               branchIndex === 0 ||
               branchIndex === childGraphsAfterOffset.length - 1,
-            routerOrBranchStepName: step.name,
+            routerOrBranchStepName: node.id,
             isNextStepEmpty: !hasNextStep,
           },
         },
@@ -475,11 +492,11 @@ const createAddOperationFromAddButtonData = (data: ApButtonData) => {
 };
 
 const isSkipped = (stepName: string, flowVersion: FlowVersion) => {
-  const step = flowStructureUtil.getStep(stepName, flowVersion);
+  const node = flowStructureUtil.getStep(stepName, flowVersion);
   if (
-    isNil(step) ||
-    step.type === FlowTriggerType.EMPTY ||
-    step.type === FlowTriggerType.PIECE
+    isNil(node) ||
+    node.data.kind === FlowTriggerKind.EMPTY ||
+    node.data.kind === FlowTriggerKind.PIECE
   ) {
     return false;
   }
@@ -487,15 +504,15 @@ const isSkipped = (stepName: string, flowVersion: FlowVersion) => {
     .findPathToStep(flowVersion, stepName)
     .filter(
       (stepInPath) =>
-        stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
-        stepInPath.type === FlowActionType.ROUTER,
+        stepInPath.data.kind === FlowActionKind.LOOP_ON_ITEMS ||
+        stepInPath.data.kind === FlowActionKind.ROUTER,
     )
     .filter((routerOrLoop) =>
       flowStructureUtil.isChildOf(routerOrLoop, stepName, flowVersion),
     )
-    .filter((parent) => parent.skip);
+    .filter((parent) => 'skip' in parent.data && parent.data.skip);
 
-  return skippedParents.length > 0 || !!step.skip;
+  return skippedParents.length > 0 || ('skip' in node.data && !!node.data.skip);
 };
 
 const getStepStatus = (
@@ -538,7 +555,7 @@ function determineInitiallySelectedStep(
 ): string | null {
   const firstInvalidStep = flowStructureUtil
     .getAllSteps(flowVersion)
-    .find((s) => !s.valid);
+    .find((s) => !s.data.valid);
   const isNewFlow = window.location.search.includes(NEW_FLOW_QUERY_PARAM);
   if (failedStepNameInRun) {
     return failedStepNameInRun;
@@ -546,7 +563,7 @@ function determineInitiallySelectedStep(
   if (isNewFlow) {
     return null;
   }
-  return firstInvalidStep?.name ?? 'trigger';
+  return firstInvalidStep?.id ?? 'trigger';
 }
 const doesSelectionRectangleExist = () => {
   return (
@@ -557,15 +574,27 @@ const doesSelectionRectangleExist = () => {
 };
 export const flowCanvasUtils = {
   createFlowGraph(version: FlowVersion, notes: Note[]): ApGraph {
-    const hasNextStep = version.trigger.steps.length > 0;
-    const nextStepName = hasNextStep ? version.trigger.steps[0] : undefined;
+    const triggerNode = flowStructureUtil.getTriggerNode(version.graph);
+    if (!triggerNode) {
+      return buildNotesGraph(notes);
+    }
+    const successorEdge = flowStructureUtil.getSuccessorEdge(
+      version.graph,
+      triggerNode.id,
+    );
+    const chainStepNames =
+      successorEdge && successorEdge.target
+        ? flowStructureUtil.getDefaultChain(version.graph, successorEdge.target)
+        : [];
+    const hasNextStep = chainStepNames.length > 0;
+    const nextStepName = hasNextStep ? chainStepNames[0] : undefined;
     const triggerGraph = createStepGraph(
-      version.trigger,
+      triggerNode.data,
       flowCanvasConsts.AP_NODE_SIZE.STEP.height +
         flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
       nextStepName,
     );
-    const chainGraph = buildChainGraph(version.trigger.steps, version);
+    const chainGraph = buildChainGraph(chainStepNames, version);
     const stepsGraph = mergeGraph(
       triggerGraph,
       offsetGraph(chainGraph, {
