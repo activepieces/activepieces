@@ -12,9 +12,8 @@ export const sendLogs = createAction({
   props: {
     text: Property.LongText({
       displayName: 'Log Message',
-      description:
-        'Raw log message text. Provide either this field or Log Message (JSON).',
-      required: false,
+      description: 'The log message text or a JSON string.',
+      required: true,
     }),
     applicationName: Property.ShortText({
       displayName: 'Application Name',
@@ -97,7 +96,7 @@ export const sendLogs = createAction({
 
     logRecord['text'] =  text;
 
-    if (severity !== undefined) logRecord['severity'] = Number(severity);
+    if (severity !== undefined && severity !== null) logRecord['severity'] = Number(severity);
     if (category) logRecord['category'] = category;
     if (className) logRecord['className'] = className;
     if (computerName) logRecord['computerName'] = computerName;
