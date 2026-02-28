@@ -8,7 +8,6 @@ import {
   ImportFlowRequest,
   ListFlowsRequest,
   PopulatedFlow,
-  FlowTrigger,
   FlowTriggerKind,
   WebsocketClientEvent,
   FlowStatusUpdatedResponse,
@@ -237,20 +236,24 @@ export const flowHooks = {
         if (!trigger) {
           throw new Error('MCP trigger not found');
         }
-        const stepData = pieceSelectorUtils.getDefaultStepValues({
-          stepName: 'trigger',
-          pieceSelectorItem: {
-            actionOrTrigger: trigger,
-            type: FlowTriggerKind.PIECE,
-            pieceMetadata: stepUtils.mapPieceToMetadata({
-              piece: mcpPiece,
-              type: 'trigger',
-            }),
-          },
-        }) as FlowTrigger;
+        const { name: triggerName, ...triggerData } =
+          pieceSelectorUtils.getDefaultStepValues({
+            stepName: 'trigger',
+            pieceSelectorItem: {
+              actionOrTrigger: trigger,
+              type: FlowTriggerKind.PIECE,
+              pieceMetadata: stepUtils.mapPieceToMetadata({
+                piece: mcpPiece,
+                type: 'trigger',
+              }),
+            },
+          });
+        if (triggerData.kind !== FlowTriggerKind.PIECE) {
+          throw new Error('Expected trigger kind to be PIECE');
+        }
         await flowsApi.update(flow.id, {
           type: FlowOperationType.UPDATE_TRIGGER,
-          request: stepData,
+          request: { ...triggerData, id: triggerName },
         });
         return flow;
       },

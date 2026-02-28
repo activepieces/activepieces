@@ -28,7 +28,10 @@ import { ApStepNodeStatusInRun } from './step-node-status-in-run';
 import { TriggerWidget } from './trigger-widget';
 
 const ApStepCanvasNode = React.memo(
-  ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
+  ({
+    id: stepName,
+    data: { step },
+  }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
       isSelected,
@@ -42,14 +45,14 @@ const ApStepCanvasNode = React.memo(
       isRightSidebarOpen,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
-      state.selectedStep === step.name,
-      state.activeDraggingStep === step.name,
+      state.selectedStep === stepName,
+      state.activeDraggingStep === stepName,
       state.readonly,
       state.flowVersion,
       state.setSelectedBranchIndex,
-      state.openedPieceSelectorStepNameOrAddButtonId === step.name,
+      state.openedPieceSelectorStepNameOrAddButtonId === stepName,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
-      !!flowStructureUtil.getStep(step.name, state.flowVersion)?.data.valid,
+      !!flowStructureUtil.getStep(stepName, state.flowVersion)?.data.valid,
       state.rightSidebar !== RightSideBarType.NONE,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -57,13 +60,13 @@ const ApStepCanvasNode = React.memo(
     });
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion);
-      return steps.findIndex((s) => s.id === step.name) + 1;
-    }, [step, flowVersion]);
+      return steps.findIndex((s) => s.id === stepName) + 1;
+    }, [stepName, flowVersion]);
     const isTrigger = flowStructureUtil.isTrigger(step.kind);
-    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion);
+    const isSkipped = flowCanvasUtils.isSkipped(stepName, flowVersion);
 
     const { attributes, listeners, setNodeRef } = useDraggable({
-      id: step.name,
+      id: stepName,
       disabled: isTrigger || readonly,
       data: {
         type: flowCanvasConsts.DRAGGED_STEP_TAG,
@@ -74,10 +77,10 @@ const ApStepCanvasNode = React.memo(
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
       preventDefault = true,
     ) => {
-      selectStepByName(step.name);
+      selectStepByName(stepName);
       setSelectedBranchIndex(null);
       if (step.kind === FlowTriggerKind.EMPTY) {
-        setOpenedPieceSelectorStepNameOrAddButtonId(step.name);
+        setOpenedPieceSelectorStepNameOrAddButtonId(stepName);
       }
       if (preventDefault) {
         e.stopPropagation();
@@ -122,7 +125,7 @@ const ApStepCanvasNode = React.memo(
     return (
       <div
         {...{
-          [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
+          [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: stepName,
         }}
         style={{
           height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px`,
@@ -143,24 +146,24 @@ const ApStepCanvasNode = React.memo(
           },
         )}
         onClick={(e) => handleStepClick(e)}
-        key={step.name}
+        key={stepName}
         ref={isPieceSelectorOpened ? null : setNodeRef}
         {...stepNodeDivAttributes}
         {...stepNodeDivListeners}
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
         <StepInvalidOrSkippedIcon isValid={isStepValid} isSkipped={isSkipped} />
-        <LoopIterationInput stepName={step.name} />
-        <ApStepNodeStatusInRun stepName={step.name} />
-        <StepNodeName stepName={step.name} />
+        <LoopIterationInput stepName={stepName} />
+        <ApStepNodeStatusInRun stepName={stepName} />
+        <StepNodeName stepName={stepName} />
         <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (
             <PieceSelector
               operation={{
                 type: getPieceSelectorOperationType(step),
-                stepName: step.name,
+                stepName,
               }}
-              id={step.name}
+              id={stepName}
               openSelectorOnClick={false}
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
@@ -182,7 +185,7 @@ const ApStepCanvasNode = React.memo(
                   stepIndex={stepIndex}
                   isSkipped={isSkipped}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
-                  stepName={step.name}
+                  stepName={stepName}
                 />
                 {!readonly && <StepNodeChevron />}
               </div>

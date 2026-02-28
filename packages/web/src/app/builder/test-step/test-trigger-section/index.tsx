@@ -1,4 +1,4 @@
-import { FlowTrigger, isNil } from '@activepieces/shared';
+import { isNil, PieceTrigger } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useRef, useState } from 'react';
@@ -9,6 +9,7 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ChatDrawerSource } from '@/lib/types';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { useStepSettingsContext } from '../../step-settings/step-settings-context';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 import { testStepHooks } from '../utils/test-step-hooks';
@@ -28,7 +29,8 @@ type TestTriggerSectionProps = {
 
 const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
-    const form = useFormContext<Pick<FlowTrigger, 'name' | 'settings'>>();
+    const { stepName } = useStepSettingsContext();
+    const form = useFormContext<PieceTrigger>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
     const abortControllerRef = useRef<AbortController>(new AbortController());
@@ -39,9 +41,9 @@ const TestTriggerSection = React.memo(
       version: formValues.settings.pieceVersion,
     });
 
-    const trigger = pieceModel?.triggers?.[formValues.settings.triggerName];
-    const mockData =
-      pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
+    const triggerName = formValues.settings.triggerName ?? '';
+    const trigger = pieceModel?.triggers?.[triggerName];
+    const mockData = pieceModel?.triggers?.[triggerName]?.sampleData;
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
@@ -50,8 +52,8 @@ const TestTriggerSection = React.memo(
     const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
       useBuilderStateContext((state) => {
         return {
-          sampleData: state.outputSampleData[formValues.name],
-          sampleDataInput: state.inputSampleData[formValues.name],
+          sampleData: state.outputSampleData[stepName],
+          sampleDataInput: state.inputSampleData[stepName],
           setChatDrawerOpenSource: state.setChatDrawerOpenSource,
         };
       });
@@ -99,7 +101,7 @@ const TestTriggerSection = React.memo(
       return null;
     }
     const testType: TestType = triggerEventUtils.getTestType({
-      triggerName: formValues.settings.triggerName,
+      triggerName,
       pieceName: formValues.settings.pieceName,
       trigger: trigger,
     });
@@ -130,8 +132,7 @@ const TestTriggerSection = React.memo(
         case 'simulation':
           return t('testPieceWebhookTriggerNote', {
             pieceName: pieceModel?.displayName,
-            triggerName:
-              pieceModel?.triggers[formValues.settings.triggerName].displayName,
+            triggerName: pieceModel?.triggers[triggerName]?.displayName,
           });
         case 'webhook':
           return (

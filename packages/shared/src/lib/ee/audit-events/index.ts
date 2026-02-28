@@ -311,7 +311,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         case FlowOperationType.ADD_ACTION:
             return `Added action "${event.data.request.request.action.displayName}" to "${event.data.flowVersion.displayName}" Flow.`
         case FlowOperationType.UPDATE_ACTION:
-            return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`
+            return `Updated action "${event.data.request.request.action.displayName}" in "${event.data.flowVersion.displayName}" Flow.`
         case FlowOperationType.DELETE_ACTION:
         {
             const request = event.data.request.request

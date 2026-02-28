@@ -1,5 +1,5 @@
 import {
-  FlowNodeData,
+  FlowGraphNode,
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
@@ -63,7 +63,7 @@ type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 
 function convertTextToTipTapJsonContent(
   userInputText: string,
-  steps: FlowNodeData[],
+  steps: FlowGraphNode[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ): {
   type: TipTapNodeTypes.paragraph;
@@ -162,11 +162,11 @@ function parseStepAndNameFromMention(mention: string) {
 
 function parseLabelFromMention(
   mention: string,
-  steps: FlowNodeData[],
+  steps: FlowGraphNode[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
   const { stepName, path } = parseStepAndNameFromMention(mention);
-  const stepIdx = steps.findIndex((step) => step.name === stepName);
+  const stepIdx = steps.findIndex((step) => step.id === stepName);
   if (stepIdx < 0) {
     return {
       displayText: `(Missing) ${stepName}`,
@@ -186,7 +186,7 @@ function parseLabelFromMention(
 
 function createMentionNodeFromText(
   mention: string,
-  steps: FlowNodeData[],
+  steps: FlowGraphNode[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
   return {

@@ -142,7 +142,6 @@ const getDefaultStepValues = ({
     overrideDefaultSettings,
   );
   const common = {
-    name: stepName,
     valid: isValid,
     displayName: isPieceActionOrTrigger(pieceSelectorItem)
       ? pieceSelectorItem.actionOrTrigger.displayName
@@ -156,68 +155,80 @@ const getDefaultStepValues = ({
 
   switch (pieceSelectorItem.type) {
     case FlowActionKind.CODE:
-      return deepMergeAndCast<CodeAction>(
-        {
-          kind: FlowActionKind.CODE,
-          settings: overrideDefaultSettings ?? {
-            sourceCode: {
-              code: defaultCode,
-              packageJson: '{}',
+      return {
+        name: stepName,
+        ...deepMergeAndCast<CodeAction>(
+          {
+            kind: FlowActionKind.CODE,
+            settings: overrideDefaultSettings ?? {
+              sourceCode: {
+                code: defaultCode,
+                packageJson: '{}',
+              },
+              input,
+              errorHandlingOptions,
             },
-            input,
-            errorHandlingOptions,
           },
-        },
-        common,
-      );
+          common,
+        ),
+      };
     case FlowActionKind.LOOP_ON_ITEMS:
-      return deepMergeAndCast<FlowAction>(
-        {
-          kind: FlowActionKind.LOOP_ON_ITEMS,
-          settings: overrideDefaultSettings ?? {
-            items: '',
+      return {
+        name: stepName,
+        ...deepMergeAndCast<FlowAction>(
+          {
+            kind: FlowActionKind.LOOP_ON_ITEMS,
+            settings: overrideDefaultSettings ?? {
+              items: '',
+            },
           },
-        },
-        common,
-      );
+          common,
+        ),
+      };
     case FlowActionKind.ROUTER:
-      return deepMergeAndCast<FlowAction>(
-        {
-          kind: FlowActionKind.ROUTER,
-          settings: overrideDefaultSettings ?? {
-            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+      return {
+        name: stepName,
+        ...deepMergeAndCast<FlowAction>(
+          {
+            kind: FlowActionKind.ROUTER,
+            settings: overrideDefaultSettings ?? {
+              executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            },
           },
-        },
-        common,
-      );
+          common,
+        ),
+      };
     case FlowActionKind.PIECE: {
       if (!isPieceActionOrTrigger(pieceSelectorItem)) {
         throw new Error(
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
         );
       }
-      return deepMergeAndCast<PieceAction>(
-        {
-          kind: FlowActionKind.PIECE,
-          settings: overrideDefaultSettings ?? {
-            pieceName: pieceSelectorItem.pieceMetadata.pieceName,
-            actionName: pieceSelectorItem.actionOrTrigger.name,
-            pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
-            input,
-            errorHandlingOptions,
-            propertySettings: Object.fromEntries(
-              Object.entries(input).map(([key]) => [
-                key,
-                {
-                  type: PropertyExecutionType.MANUAL,
-                  schema: undefined,
-                },
-              ]),
-            ),
+      return {
+        name: stepName,
+        ...deepMergeAndCast<PieceAction>(
+          {
+            kind: FlowActionKind.PIECE,
+            settings: overrideDefaultSettings ?? {
+              pieceName: pieceSelectorItem.pieceMetadata.pieceName,
+              actionName: pieceSelectorItem.actionOrTrigger.name,
+              pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
+              input,
+              errorHandlingOptions,
+              propertySettings: Object.fromEntries(
+                Object.entries(input).map(([key]) => [
+                  key,
+                  {
+                    type: PropertyExecutionType.MANUAL,
+                    schema: undefined,
+                  },
+                ]),
+              ),
+            },
           },
-        },
-        common,
-      );
+          common,
+        ),
+      };
     }
     case FlowTriggerKind.PIECE: {
       if (!isPieceActionOrTrigger(pieceSelectorItem)) {
@@ -225,26 +236,29 @@ const getDefaultStepValues = ({
           `Invalid piece selector item ${JSON.stringify(pieceSelectorItem)}`,
         );
       }
-      return deepMergeAndCast<PieceTrigger>(
-        {
-          kind: FlowTriggerKind.PIECE,
-          settings: overrideDefaultSettings ?? {
-            pieceName: pieceSelectorItem.pieceMetadata.pieceName,
-            triggerName: pieceSelectorItem.actionOrTrigger.name,
-            pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
-            input,
-            propertySettings: Object.fromEntries(
-              Object.entries(input).map(([key]) => [
-                key,
-                {
-                  type: PropertyExecutionType.MANUAL,
-                },
-              ]),
-            ),
+      return {
+        name: stepName,
+        ...deepMergeAndCast<PieceTrigger>(
+          {
+            kind: FlowTriggerKind.PIECE,
+            settings: overrideDefaultSettings ?? {
+              pieceName: pieceSelectorItem.pieceMetadata.pieceName,
+              triggerName: pieceSelectorItem.actionOrTrigger.name,
+              pieceVersion: pieceSelectorItem.pieceMetadata.pieceVersion,
+              input,
+              propertySettings: Object.fromEntries(
+                Object.entries(input).map(([key]) => [
+                  key,
+                  {
+                    type: PropertyExecutionType.MANUAL,
+                  },
+                ]),
+              ),
+            },
           },
-        },
-        common,
-      );
+          common,
+        ),
+      };
     }
     default:
       throw new Error('Unsupported type: ' + pieceSelectorItem.type);

@@ -76,18 +76,19 @@ const createBigAddButtonGraph: (
 };
 
 const createStepGraph: (
+  stepName: string,
   stepData: FlowNodeData,
   graphHeight: number,
   nextStepName: string | undefined,
-) => ApGraph = (stepData, graphHeight, nextStepName) => {
+) => ApGraph = (stepName, stepData, graphHeight, nextStepName) => {
   const stepNode: ApStepNode = {
-    id: stepData.name,
+    id: stepName,
     type: ApNodeType.STEP as const,
     position: { x: 0, y: 0 },
     data: {
       step: stepData,
     },
-    selectable: stepData.name !== 'trigger',
+    selectable: stepName !== 'trigger',
     draggable: true,
     style: {
       pointerEvents: 'all',
@@ -95,7 +96,7 @@ const createStepGraph: (
   };
 
   const graphEndNode: ApGraphEndNode = {
-    id: `${stepData.name}-subgraph-end`,
+    id: `${stepName}-subgraph-end`,
     type: ApNodeType.GRAPH_END_WIDGET as const,
     position: {
       x: flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2,
@@ -106,13 +107,13 @@ const createStepGraph: (
   };
 
   const straightLineEdge: ApStraightLineEdge = {
-    id: `${stepData.name}-${nextStepName ?? 'graph-end'}-edge`,
-    source: stepData.name,
-    target: `${stepData.name}-subgraph-end`,
+    id: `${stepName}-${nextStepName ?? 'graph-end'}-edge`,
+    source: stepName,
+    target: `${stepName}-subgraph-end`,
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
       drawArrowHead: !isNil(nextStepName),
-      parentStepName: stepData.name,
+      parentStepName: stepName,
     },
   };
   return {
@@ -143,6 +144,7 @@ const buildChainGraph: (
   const hasNextStep = stepNames.length > 1;
 
   const graph: ApGraph = createStepGraph(
+    node.id,
     node.data,
     flowCanvasConsts.AP_NODE_SIZE.STEP.height +
       flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,
@@ -589,6 +591,7 @@ export const flowCanvasUtils = {
     const hasNextStep = chainStepNames.length > 0;
     const nextStepName = hasNextStep ? chainStepNames[0] : undefined;
     const triggerGraph = createStepGraph(
+      triggerNode.id,
       triggerNode.data,
       flowCanvasConsts.AP_NODE_SIZE.STEP.height +
         flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS,

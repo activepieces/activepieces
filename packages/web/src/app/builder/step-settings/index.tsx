@@ -44,7 +44,8 @@ import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-  const { stepName, selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+  const { stepName, selectedStep, pieceModel, formSchema } =
+    useStepSettingsContext();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [
     readonly,
@@ -248,9 +249,7 @@ const StepSettingsContainer = () => {
           <Separator className="w-full h-px" />
         </div>
 
-        <DynamicPropertiesProvider
-          key={`${stepName}-${selectedStep.kind}`}
-        >
+        <DynamicPropertiesProvider key={`${stepName}-${selectedStep.kind}`}>
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">

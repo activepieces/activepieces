@@ -98,14 +98,13 @@ export const TextInputWithMentions = ({
   const stepNodes = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion),
   );
-  const steps = stepNodes.map((node) => node.data);
   const stepsMetadata = stepsHooks
     .useStepsMetadata(stepNodes.map((node) => node.data))
     .map(({ data: metadata }, index) => {
       if (metadata) {
         return {
           ...metadata,
-          stepDisplayName: steps[index].displayName,
+          stepDisplayName: stepNodes[index].data.displayName,
         };
       }
       return undefined;
@@ -118,7 +117,7 @@ export const TextInputWithMentions = ({
   const insertMention = (propertyPath: string) => {
     const mentionNode = textMentionUtils.createMentionNodeFromText(
       `{{${propertyPath}}}`,
-      steps,
+      stepNodes,
       stepsMetadata,
     );
     editor?.chain().focus().insertContent(mentionNode).run();
@@ -131,7 +130,7 @@ export const TextInputWithMentions = ({
       type: 'doc',
       content: textMentionUtils.convertTextToTipTapJsonContent(
         convertToText(initialValue),
-        steps,
+        stepNodes,
         stepsMetadata,
       ),
     },

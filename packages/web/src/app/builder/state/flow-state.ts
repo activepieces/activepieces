@@ -224,10 +224,7 @@ export const createFlowState = (
           }
           case FlowOperationType.UPDATE_TRIGGER:
           case FlowOperationType.UPDATE_ACTION: {
-            debouncedAddToFlowUpdatesQueue(
-              operation.request.id,
-              updateRequest,
-            );
+            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
             break;
           }
           case FlowOperationType.UPDATE_NOTE:
