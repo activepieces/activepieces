@@ -138,6 +138,19 @@ export async function createAIModel({
             }
             return provider.chatModel(modelId)
         }
+        case AIProviderName.X_AI: {
+            const provider = createOpenAICompatible({
+                name: 'x-ai',
+                baseURL: 'https://api.x.ai/v1',
+                headers: {
+                    'Authorization': `Bearer ${auth.apiKey}`,
+                },
+            })
+            if (isImage) {
+                return provider.imageModel(modelId)
+            }
+            return provider.chatModel(modelId)
+        }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER: {
             const openRouterProvider = createOpenRouter({ apiKey: auth.apiKey })
