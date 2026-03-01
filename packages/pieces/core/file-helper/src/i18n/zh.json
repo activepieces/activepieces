@@ -117,5 +117,7 @@
   "FreeARC Archive": "FreeARC Archive",
   "CD Audio": "CD Audio",
   "MPEG Transport Stream": "MPEG Transport Stream",
-  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container"
+  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container",
+  "Get File Name": "获取文件名",
+  "Get the name of a file": "获取文件的名称"
 }
