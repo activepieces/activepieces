@@ -9,13 +9,12 @@ import {
     ScimGroupResource,
     ScimListResponse,
     ScimPatchRequest,
-} from '@activepieces/ee-shared'
-import {
     DefaultProjectRole,
     isNil,
     ProjectType,
     UserStatus,
 } from '@activepieces/shared'
+
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../../core/db/repo-factory'

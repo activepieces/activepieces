@@ -4,9 +4,9 @@ import {
     SCIM_SCHEMA_SCHEMA,
     SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA,
     SCIM_USER_SCHEMA,
-} from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { PrincipalType } from '@activepieces/shared'
+    PrincipalType,
+} from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-common'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 

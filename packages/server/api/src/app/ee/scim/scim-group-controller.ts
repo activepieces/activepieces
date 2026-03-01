@@ -4,9 +4,9 @@ import {
     ScimListQueryParams,
     ScimPatchRequest,
     ScimResourceId,
-} from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { PrincipalType } from '@activepieces/shared'
+    PrincipalType,
+} from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-common'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { scimGroupService } from './scim-group-service'
