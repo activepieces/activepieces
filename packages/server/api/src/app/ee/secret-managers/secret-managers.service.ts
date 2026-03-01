@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage, SecretManagerFieldsSeperator } from '@activepieces/shared'
+import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerFieldsSeperator, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -21,7 +21,10 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
         
             return {
                 ...metadata,
-                connected: await secretManagersService(log).checkConnection(decryptedConfig, metadata.id, platformId),
+                connection: {
+                    configured: !isNil(savedConfig),
+                    connected: await secretManagersService(log).checkConnection(decryptedConfig, metadata.id, platformId),
+                },
             }
         }))
         return {

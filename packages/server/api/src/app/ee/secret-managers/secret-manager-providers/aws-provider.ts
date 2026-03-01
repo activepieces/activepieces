@@ -8,12 +8,12 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     name: 'AWS Secrets Manager',
     logo: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
     fields: {
-        accessKeyId: {
+        accessKey: {
             displayName: 'Access Key',
             placeholder: 'access-key',
             type: 'text',
         },
-        secretAccessKey: {
+        secretKey: {
             displayName: 'Secret Key',
             placeholder: 'secret-key',
             type: 'password',
@@ -38,8 +38,8 @@ function getSecretsManagerClient(config: AWSProviderConfig, region: string): Sec
     return new SecretsManagerClient({
         region,
         credentials: {
-            accessKeyId: config.accessKeyId,
-            secretAccessKey: config.secretAccessKey,
+            accessKeyId: config.accessKey,
+            secretAccessKey: config.secretKey,
         },
     })
 }

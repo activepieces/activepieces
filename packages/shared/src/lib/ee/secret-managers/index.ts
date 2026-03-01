@@ -1,5 +1,5 @@
-import { BaseModelSchema, DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema, DiscriminatedUnion } from '../../core/common'
 import { AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
 
 export * from './dto'
@@ -28,12 +28,14 @@ export const SecretManagerFieldSchema =  Type.Object({
     type: Type.Union([Type.Literal('text'), Type.Literal('password')]),
 })
 
-
 export const SecretManagerProviderMetaDataBaseSchema = Type.Object({
     id: Type.Enum(SecretManagerProviderId),
     name: Type.String(),
     logo: Type.String(),
-    connected: Type.Optional(Type.Boolean()),
+    connection: Type.Optional(Type.Object({
+        configured: Type.Boolean(),
+        connected: Type.Boolean(),
+    })),
 })
 
 export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [

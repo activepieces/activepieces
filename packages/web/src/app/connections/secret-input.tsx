@@ -1,4 +1,7 @@
-import { SecretManagerProviderId } from '@activepieces/shared';
+import {
+  SecretManagerProviderId,
+  SecretManagerFieldsSeperator,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';
@@ -20,7 +23,6 @@ import {
 } from '@/components/ui/tooltip';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { cn } from '@/lib/utils';
-import { SecretManagerFieldsSeperator } from '@activepieces/shared';
 
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
@@ -109,7 +111,9 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       const values = getSecretParamsForProvider(providerId).map(
         ([fieldKey]) => fieldValues[fieldKey] || '',
       );
-      return `{{${providerId}${SecretManagerFieldsSeperator}${values.join(SecretManagerFieldsSeperator)}}}`;
+      return `{{${providerId}${SecretManagerFieldsSeperator}${values.join(
+        SecretManagerFieldsSeperator,
+      )}}}`;
     };
 
     const toggleSecretManager = useCallback(() => {
