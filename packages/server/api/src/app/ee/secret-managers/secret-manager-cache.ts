@@ -1,4 +1,5 @@
 import { apDayjsDuration, redisHelper } from '@activepieces/server-common'
+import { EncryptedObject, encryptUtils } from 'src/app/helper/encryption'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 
 const ONE_HOUR_SECONDS = apDayjsDuration(1, 'hour').asSeconds()
@@ -20,11 +21,12 @@ export const secretManagerCache = {
         await distributedStore.put(buildConnectionCheckKey(platformId, providerId), value, ONE_HOUR_SECONDS)
     },
     async getSecretValue(platformId: string, providerId: string, path: string): Promise<string | undefined> {
-        const result = await distributedStore.get<string>(buildSecretValueKey(platformId, providerId, path))
-        return result ?? undefined
+        const result = await distributedStore.get<EncryptedObject>(buildSecretValueKey(platformId, providerId, path))
+        return result ? encryptUtils.decryptString(result) : undefined
     },
     async setSecretValue(platformId: string, providerId: string, path: string, value: string): Promise<void> {
-        await distributedStore.put(buildSecretValueKey(platformId, providerId, path), value, ONE_HOUR_SECONDS)
+        const encryptedValue = await encryptUtils.encryptString(value)
+        await distributedStore.put(buildSecretValueKey(platformId, providerId, path), encryptedValue, ONE_HOUR_SECONDS)
     },
     async invalidatePlatformEntries(platformId: string): Promise<void> {
         const redis = await redisConnections.useExisting()
