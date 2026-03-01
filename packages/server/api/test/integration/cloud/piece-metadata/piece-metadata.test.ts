@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     FilteredPieceBehavior,
@@ -8,10 +9,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
@@ -25,20 +24,17 @@ let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
     mockLog = app!.log!
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
 })
 
 beforeEach(async () => {
     await databaseConnection().getRepository('piece_metadata').createQueryBuilder().delete().execute()
 })
-
-afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-})
-
 describe('Piece Metadata API', () => {
     describe('Get Piece metadata', () => {
         it('Should return metadata when authenticated', async () => {

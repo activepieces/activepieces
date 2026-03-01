@@ -1,11 +1,10 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
-import { setupServer } from '../../../../src/app/server'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -13,8 +12,11 @@ let app: FastifyInstance | null = null
 let sendOtpSpy: Mock
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
 })
 
 beforeEach(() => {
@@ -31,12 +33,6 @@ beforeEach(() => {
     }))
 
 })
-
-afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-})
-
 describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
         it('Generates new OTP', async () => {

@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
     AppConnectionScope,
@@ -11,7 +12,6 @@ import {
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
@@ -22,15 +22,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 const setupWithGlobalConnections = () => {
     return mockAndSaveBasicSetup({
         platform: {

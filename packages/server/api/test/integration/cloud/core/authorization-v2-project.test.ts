@@ -1,4 +1,5 @@
 
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { AuthorizationRouteSecurity, AuthorizationType, RouteKind } from '@activepieces/server-common'
 import {
     ActivepiecesError,
@@ -13,9 +14,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import {
     createMockProjectMember,
     createMockProjectRole,
@@ -28,15 +27,15 @@ let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
     mockLog = app!.log!
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-}, 600000)
+    await teardownTestEnvironment()
+})
+
+
 
 describe('authorizeOrThrow - Project', () => {
     describe('PROJECT authorization', () => {

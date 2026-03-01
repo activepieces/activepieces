@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     CustomDomain,
     DefaultProjectRole,
@@ -18,10 +19,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
-import { setupServer } from '../../../../src/app/server'
 import { decodeToken } from '../../../helpers/auth'
 import {
     CLOUD_PLATFORM_ID,
@@ -43,8 +42,11 @@ let app: FastifyInstance | null = null
 let sendOtpSpy: Mock
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
 })
 
 beforeEach(async () => {
@@ -69,12 +71,6 @@ beforeEach(async () => {
     await databaseConnection().getRepository('custom_domain').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('user_invitation').createQueryBuilder().delete().execute()
 })
-
-afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-})
-
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
         it('Add new user if the domain is allowed', async () => {
@@ -377,8 +373,6 @@ describe('Authentication API', () => {
                 },
             })
 
-
-
             const mockSignInRequest = createMockSignInRequest({
                 email: mockUserIdentity.email,
                 password: rawPassword,
@@ -479,8 +473,6 @@ describe('Authentication API', () => {
                     verified: true,
                 },
             })
-
-
 
             const mockSignInRequest = createMockSignInRequest({
                 email: mockEmail,

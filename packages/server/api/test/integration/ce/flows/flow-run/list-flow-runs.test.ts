@@ -1,22 +1,18 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../../src/app/server'
 import { generateMockToken } from '../../../../helpers/auth'
 import { mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('List flow runs endpoint', () => {
     it('should return 200', async () => {
         // arrange

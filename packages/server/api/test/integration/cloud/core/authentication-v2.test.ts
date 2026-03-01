@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -7,9 +8,7 @@ import {
 import { FastifyInstance } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticateOrThrow } from '../../../../src/app/core/security/v2/authn/authenticate'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     mockAndSaveBasicSetup,
@@ -19,15 +18,12 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('authenticateOrThrow', () => {
     describe('API Key Authentication', () => {
         it('should authenticate with valid API key', async () => {

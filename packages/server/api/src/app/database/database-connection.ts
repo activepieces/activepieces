@@ -135,3 +135,7 @@ export const databaseConnection = (): DataSource => {
     }
     return _databaseConnection
 }
+
+export function resetDatabaseConnection(): void {
+    _databaseConnection = null
+}
