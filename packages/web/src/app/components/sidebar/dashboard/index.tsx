@@ -107,7 +107,7 @@ export function ProjectDashboardSidebar() {
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/flows`);
+      navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
     [navigate],

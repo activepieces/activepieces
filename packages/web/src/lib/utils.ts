@@ -301,7 +301,7 @@ export const determineDefaultRoute = (
   checkAccess: (permission: Permission) => boolean,
 ) => {
   if (checkAccess(Permission.READ_FLOW)) {
-    return authenticationSession.appendProjectRoutePrefix('/flows');
+    return authenticationSession.appendProjectRoutePrefix('/automations');
   }
   if (checkAccess(Permission.READ_RUN)) {
     return authenticationSession.appendProjectRoutePrefix('/runs');
@@ -392,11 +392,14 @@ export const scrollToElementAndClickIt = (elementId: string) => {
 export const routesThatRequireProjectId = {
   runs: '/runs',
   singleRun: '/runs/:runId',
+  // deprecated
   flows: '/flows',
+  // deprecated
+  tables: '/tables',
   singleFlow: '/flows/:flowId',
+  automations: '/automations',
   connections: '/connections',
   singleConnection: '/connections/:connectionId',
-  tables: '/tables',
   singleTable: '/tables/:tableId',
   settings: '/settings',
   releases: '/releases',

@@ -334,6 +334,8 @@ import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres
 import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
 import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
 import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
+import { AddFolderColumnToTable1769638834372 } from './migration/postgres/1769638834372-add-folder-column-to-table'
+import { AddTableFolderForeignKey1769638834373 } from './migration/postgres/1769638834373-AddTableFolderForeignKey'
 import { AddSecretManagersEntity1770717998442 } from './migration/postgres/1770717998442-AddSecretManagersEntity'
 import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167183104-AddSecretManagersFlag'
 
@@ -686,6 +688,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTablesIntoTemplateEntity1768306510367,
         AddTemplateIdToFlowEntity1768829135202,
         RemoveOperatorRole1769613456917,
+        AddFolderColumnToTable1769638834372,
+        AddTableFolderForeignKey1769638834373,
         AddSecretManagersEntity1770717998442,
         AddSecretManagersFlag1771167183104,
     ]

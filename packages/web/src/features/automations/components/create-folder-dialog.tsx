@@ -1,9 +1,9 @@
-import { Folder } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -14,91 +14,96 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { validationUtils } from '@/lib/utils';
+import { foldersApi } from '@/features/folders/lib/folders-api';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
-import { foldersApi } from '../lib/folders-api';
+type CreateFolderDialogProps = {
+  updateSearchParams: (_folderId?: string) => void;
+  refetchFolders: () => void;
+  className?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-const RenameFolderSchema = Type.Object({
+const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
-    errorMessage: t('Please enter a folder name'),
+    errorMessage: t('Please enter folder name'),
     pattern: '.*\\S.*',
   }),
 });
 
-type RenameFolderSchema = Static<typeof RenameFolderSchema>;
+type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
-const RenameFolderDialog = ({
-  children,
-  folderId,
-  onRename,
-  name,
-}: {
-  children: React.ReactNode;
-  folderId: string;
-  onRename: () => void;
-  name: string;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const form = useForm<RenameFolderSchema>({
-    resolver: typeboxResolver(RenameFolderSchema),
+export const CreateFolderDialog = ({
+  updateSearchParams,
+  refetchFolders,
+  open,
+  onOpenChange,
+}: CreateFolderDialogProps) => {
+  const form = useForm<CreateFolderFormSchema>({
+    resolver: typeboxResolver(CreateFolderFormSchema),
   });
 
-  const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
+  const { mutate, isPending } = useMutation<
+    FolderDto,
+    Error,
+    CreateFolderFormSchema
+  >({
     mutationFn: async (data) => {
-      return await foldersApi.renameFolder(folderId, {
+      return await foldersApi.create({
         displayName: data.displayName.trim(),
+        projectId: authenticationSession.getProjectId()!,
       });
     },
-    onSuccess: () => {
-      setIsOpen(false);
-      onRename();
-      toast.success(t('Renamed flow successfully'));
+    onSuccess: (folder) => {
+      form.reset();
+      onOpenChange(false);
+      updateSearchParams(folder.id);
+      refetchFolders();
+      toast.success(t('Added folder successfully'));
     },
-    onError: (err) => {
-      if (validationUtils.isValidationError(err)) {
-        form.setError('displayName', {
-          message: t('Folder name already used'),
-        });
-      } else {
-        internalErrorToast();
+    onError: (error) => {
+      if (api.isError(error)) {
+        switch (error.response?.status) {
+          case HttpStatusCode.Conflict: {
+            form.setError('root.serverError', {
+              message: t('The folder name already exists.'),
+            });
+            break;
+          }
+          default: {
+            internalErrorToast();
+            break;
+          }
+        }
       }
     },
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="w-full" asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {t('Rename')} {name}
-          </DialogTitle>
+          <DialogTitle>{t('New Folder')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <FormField
+              control={form.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem>
                   <Input
                     {...field}
                     required
-                    id="displayName"
-                    placeholder={t('New Folder Name')}
+                    id="folder"
+                    placeholder={t('Folder Name')}
                     className="rounded-sm"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        form.handleSubmit((data) => mutate(data))();
-                      }
-                    }}
                   />
                   <FormMessage />
                 </FormItem>
@@ -112,11 +117,8 @@ const RenameFolderDialog = ({
             <DialogFooter>
               <Button
                 variant={'outline'}
+                onClick={() => onOpenChange(false)}
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsOpen(false);
-                }}
               >
                 {t('Cancel')}
               </Button>
@@ -130,5 +132,3 @@ const RenameFolderDialog = ({
     </Dialog>
   );
 };
-
-export { RenameFolderDialog };

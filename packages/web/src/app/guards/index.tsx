@@ -31,10 +31,10 @@ import { PlatformLayout } from '../components/platform-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
+import { AutomationsPage } from '../routes/automations';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
-import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
@@ -58,7 +58,6 @@ import { RunsPage } from '../routes/runs';
 import { FlowRunPage } from '../routes/runs/id';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
-import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
 import { TemplatesPage } from '../routes/templates';
 
@@ -104,13 +103,25 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   },
+  // deprecated - redirect to automations
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
+    element: <Navigate to="/automations" replace />,
+  }),
+  // deprecated - redirect to automations
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.tables,
+    element: <Navigate to="/automations" replace />,
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.automations,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_FLOW}>
-          <PageTitle title="Flows">
-            <FlowsPage />
+        <RoutePermissionGuard
+          requiredPermissions={[Permission.READ_FLOW, Permission.READ_TABLE]}
+        >
+          <PageTitle title="Automations">
+            <AutomationsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
@@ -119,7 +130,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleFlow,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_FLOW}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
         <PageTitle title="Builder">
           <BuilderLayout>
             <FlowBuilderPage />
@@ -151,7 +162,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRun,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_RUN}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
         <PageTitle title="Flow Run">
           <BuilderLayout>
             <FlowRunPage />
@@ -164,7 +175,7 @@ const routes = [
     path: routesThatRequireProjectId.runs,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_RUN}>
           <PageTitle title="Runs">
             <RunsPage />
           </PageTitle>
@@ -186,22 +197,11 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.tables,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_TABLE}>
-          <PageTitle title="Tables">
-            <ApTablesPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
+
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleTable,
     element: (
-      <RoutePermissionGuard permission={Permission.READ_TABLE}>
+      <RoutePermissionGuard requiredPermissions={Permission.READ_TABLE}>
         <PageTitle title="Table">
           <BuilderLayout>
             <ApTableStateProvider>
@@ -216,7 +216,9 @@ const routes = [
     path: routesThatRequireProjectId.connections,
     element: (
       <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_APP_CONNECTION}>
+        <RoutePermissionGuard
+          requiredPermissions={Permission.READ_APP_CONNECTION}
+        >
           <PageTitle title="Connections">
             <AppConnectionsPage />
           </PageTitle>

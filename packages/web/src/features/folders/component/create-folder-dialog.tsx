@@ -1,15 +1,9 @@
-import { FolderDto, Permission } from '@activepieces/shared';
+import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import {
-  QueryObserverResult,
-  RefetchOptions,
-  useMutation,
-} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { FolderPlus } from 'lucide-react';
-import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -20,29 +14,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
-
-import { foldersApi } from '../lib/folders-api';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;
-  refetchFolders: (
-    options?: RefetchOptions,
-  ) => Promise<QueryObserverResult<FolderDto[], Error>>;
+  refetchFolders: () => void;
   className?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 const CreateFolderFormSchema = Type.Object({
@@ -57,15 +42,13 @@ type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 export const CreateFolderDialog = ({
   updateSearchParams,
   refetchFolders,
-  className,
+  open,
+  onOpenChange,
 }: CreateFolderDialogProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const form = useForm<CreateFolderFormSchema>({
     resolver: typeboxResolver(CreateFolderFormSchema),
   });
 
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const { mutate, isPending } = useMutation<
     FolderDto,
     Error,
@@ -79,7 +62,7 @@ export const CreateFolderDialog = ({
     },
     onSuccess: (folder) => {
       form.reset();
-      setIsDialogOpen(false);
+      onOpenChange(false);
       updateSearchParams(folder.id);
       refetchFolders();
       toast.success(t('Added folder successfully'));
@@ -103,23 +86,7 @@ export const CreateFolderDialog = ({
   });
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              disabled={!userHasPermissionToUpdateFolders}
-              size="icon"
-              className={cn(className)}
-            >
-              <FolderPlus />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="right">{t('New folder')}</TooltipContent>
-      </Tooltip>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('New Folder')}</DialogTitle>
@@ -150,7 +117,7 @@ export const CreateFolderDialog = ({
             <DialogFooter>
               <Button
                 variant={'outline'}
-                onClick={() => setIsDialogOpen(false)}
+                onClick={() => onOpenChange(false)}
                 type="button"
               >
                 {t('Cancel')}

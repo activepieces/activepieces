@@ -25,7 +25,7 @@ const pieceIconVariants = cva(
         lg: 'size-[40px] min-w-[40px] min-h-[40px]',
         md: 'size-[36px] min-w-[36px] min-h-[36px]',
         sm: 'size-[30px] min-w-[30px] min-h-[30px]',
-        xs: 'size-[18px] min-w-[18px] min-h-[18px]',
+        xs: 'size-[25px] min-w-[25px] min-h-[25px]',
       },
       border: {
         true: 'border border-solid',
@@ -43,7 +43,7 @@ const pieceIconVariantsWithPadding = cva('', {
       lg: 'p-2',
       md: 'p-1.75',
       sm: 'p-1.25',
-      xs: '',
+      xs: 'p-1.25',
     },
   },
 });
@@ -69,7 +69,10 @@ const PieceIcon = React.memo(
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn(pieceIconVariants({ border, size, circle }))}
+            className={cn(
+              pieceIconVariants({ border, size, circle }),
+              'overflow-hidden',
+            )}
             style={background ? { backgroundColor: background } : undefined}
           >
             {}

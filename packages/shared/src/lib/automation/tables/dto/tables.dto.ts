@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Nullable } from '../../../core/common'
 import { FieldState } from '../../project-release/project-state'
 import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
@@ -8,6 +9,8 @@ export const CreateTableRequest = Type.Object({
     name: Type.String(),
     fields: Type.Optional(Type.Array(FieldState)),
     externalId: Type.Optional(Type.String()),
+    folderId: Type.Optional(Type.String({})),
+    folderName: Type.Optional(Type.String({})),
 })
 
 export type CreateTableRequest = Static<typeof CreateTableRequest>
@@ -16,6 +19,7 @@ export const ExportTableResponse = Type.Object({
     fields: Type.Array(Type.Object({ id: Type.String(), name: Type.String() })),
     rows: Type.Array(Type.Record(Type.String(), Type.String())),
     name: Type.String(),
+    
 })
 
 export type ExportTableResponse = Static<typeof ExportTableResponse>
@@ -32,6 +36,7 @@ export const UpdateTableRequest = Type.Object({
     name: Type.Optional(Type.String()),
     trigger: Type.Optional(Type.Enum(TableAutomationTrigger)),
     status: Type.Optional(Type.Enum(TableAutomationStatus)),
+    folderId: Nullable(Type.String()),
 })
 
 export type UpdateTableRequest = Static<typeof UpdateTableRequest>
@@ -43,7 +48,15 @@ export const ListTablesRequest = Type.Object({
     cursor: Type.Optional(Type.String({})),
     name: Type.Optional(Type.String({})),
     externalIds: Type.Optional(Type.Array(Type.String())),
+    folderId: Type.Optional(Type.String()),
 })
 
 export type ListTablesRequest = Static<typeof ListTablesRequest>
+
+export const CountTablesRequest = Type.Object({
+    projectId: Type.String(),
+    folderId: Type.Optional(Type.String()),
+})
+
+export type CountTablesRequest = Static<typeof CountTablesRequest>
 

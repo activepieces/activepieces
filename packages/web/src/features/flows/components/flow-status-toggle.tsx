@@ -49,7 +49,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
     });
 
   return (
-    <>
+    <div className="flex items-center justify-start">
       <ApErrorDialog />
       <Tooltip>
         <TooltipTrigger asChild>
@@ -91,7 +91,7 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
           </Tooltip>
         )
       )}
-    </>
+    </div>
   );
 };
 

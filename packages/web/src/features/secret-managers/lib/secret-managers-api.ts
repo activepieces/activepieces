@@ -2,8 +2,8 @@ import {
   ConnectSecretManagerRequest,
   DisconnectSecretManagerRequest,
   SecretManagerProviderMetaData,
+  SeekPage,
 } from '@activepieces/shared';
-import { SeekPage } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
