@@ -19,6 +19,8 @@ Secret Managers allow you to integrate external secret management systems with A
 
 - **[HashiCorp Vault](./hashicorp)** - Enterprise-grade secrets management
 - **[CyberArk Conjur](./cyberark-conjur)** - Centralized secrets management with host-based authentication
+- **[AWS Secrets Manager](./aws)** - Managed secrets storage on AWS
+- **[1Password](./1password)** - Consumer and team password manager with Secrets Automation
 
 ## How to Connect
 
@@ -54,7 +56,7 @@ When you use a secret manager in a connection:
 
 ## Caching
 
-Connection checks and retrieved secrets are cached in memory for **1 hour** to reduce latency and provider API load.
+Connection checks and retrieved secrets are cached in redis encrypted for **1 hour** to reduce latency and provider API load.
 
 To force a refresh (e.g. after rotating credentials or updating secrets), platform admins can clear the cache in the secret managers setup page
 
