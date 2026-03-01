@@ -77,8 +77,7 @@ It is strongly recommended that you add your credit card information to your Ope
     logoUrl: 'https://cdn.activepieces.com/pieces/grok-xai.png',
     markdown: t(`Follow these instructions to get your xAI (Grok) API Key:
 1. Go to https://console.x.ai/.
-2. Create or sign in to your account and obtain your API key.
-3.`),
+2. Create or sign in to your account and obtain your API key.`),
   },
 ];
 
