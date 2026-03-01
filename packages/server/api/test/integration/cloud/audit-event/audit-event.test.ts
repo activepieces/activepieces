@@ -2,13 +2,13 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createAuditEvent,
-    mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 
@@ -23,58 +23,40 @@ describe('Audit Event API', () => {
     describe('List Audit event API', () => {
         it('should list audit events', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup({
+            const ctxOne = await createTestContext(app!, {
                 plan: {
                     auditLogEnabled: true,
                 },
             })
-            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup({
-               
-            })
+            const ctxTwo = await createTestContext(app!)
 
-
-            const testToken1 = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
-            })
 
             const mockAuditEvents1 = [
                 createAuditEvent({
-                    platformId: mockPlatformOne.id,
-                    userId: mockUserOne.id,
+                    platformId: ctxOne.platform.id,
+                    userId: ctxOne.user.id,
                 }),
                 createAuditEvent({
-                    platformId: mockPlatformOne.id,
-                    userId: mockUserOne.id,
+                    platformId: ctxOne.platform.id,
+                    userId: ctxOne.user.id,
                 }),
             ]
-            await databaseConnection()
-                .getRepository('audit_event')
-                .save(mockAuditEvents1)
+            await db.save('audit_event', mockAuditEvents1)
 
             const mockAuditEvents2 = [
                 createAuditEvent({
-                    platformId: mockPlatformTwo.id,
-                    userId: mockUserTwo.id,
+                    platformId: ctxTwo.platform.id,
+                    userId: ctxTwo.user.id,
                 }),
                 createAuditEvent({
-                    platformId: mockPlatformTwo.id,
-                    userId: mockUserTwo.id,
+                    platformId: ctxTwo.platform.id,
+                    userId: ctxTwo.user.id,
                 }),
             ]
-            await databaseConnection()
-                .getRepository('audit_event')
-                .save(mockAuditEvents2)
+            await db.save('audit_event', mockAuditEvents2)
 
             // act
-            const response1 = await app?.inject({
-                method: 'GET',
-                url: '/v1/audit-events',
-                headers: {
-                    authorization: `Bearer ${testToken1}`,
-                },
-            })
+            const response1 = await ctxOne.get('/v1/audit-events')
 
             // assert
             expect(response1?.statusCode).toBe(StatusCodes.OK)
@@ -91,19 +73,19 @@ describe('Audit Event API', () => {
 
         it('should return forbidden if the user is not the owner', async () => {
             // arrange
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const ctx = await createTestContext(app!)
 
             const { mockUser } = await mockBasicUser({
                 user: {
-                    platformId: mockPlatform.id,
+                    platformId: ctx.platform.id,
                     platformRole: PlatformRole.MEMBER,
                 },
             })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                
-                platform: { id: mockPlatform.id },
+
+                platform: { id: ctx.platform.id },
             })
 
             // act

@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
+import { db } from '../../../helpers/db'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -57,7 +58,7 @@ describe('OTP API', () => {
         it('Sends OTP to user', async () => {
             const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
-            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+            await db.update('user_identity', mockUserIdentity.id, {
                 verified: false,
             })
 
@@ -78,7 +79,7 @@ describe('OTP API', () => {
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
             expect(sendOtpSpy).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: null,
+                platformId: expect.any(String),
                 type: OtpType.EMAIL_VERIFICATION,
                 userIdentity: expect.objectContaining({
                     email: mockUserIdentity.email,

@@ -3,8 +3,8 @@ import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockSigningKey,
     mockAndSaveBasicSetup,
@@ -75,14 +75,12 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -112,14 +110,12 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -159,9 +155,7 @@ describe('Signing Key API', () => {
                 platformId: mockPlatformOne.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save(mockSigningKey)
+            await db.save('signing_key', mockSigningKey)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -198,9 +192,7 @@ describe('Signing Key API', () => {
                 platformId: mockPlatformTwo.id,
             })
 
-            await databaseConnection()
-                .getRepository('signing_key')
-                .save([mockSigningKeyOne, mockSigningKeyTwo])
+            await db.save('signing_key', [mockSigningKeyOne, mockSigningKeyTwo])
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,

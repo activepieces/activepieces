@@ -6,24 +6,18 @@ import {
     FlowTriggerType,
     PackageType,
     PieceType,
-    PlatformRole,
-    PrincipalType,
-    ProjectRole,
     TriggerStrategy,
     TriggerTestStrategy,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
-    createMockProjectMember,
-    mockAndSaveBasicSetup,
-    mockBasicUser,
 } from '../../../helpers/mocks'
+import { describeRolePermissions } from '../../../helpers/permission-test'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 
@@ -34,360 +28,101 @@ beforeAll(async () => {
 afterAll(async () => {
     await teardownTestEnvironment()
 })
+
+async function setupFlowWithScheduleTrigger(ctx: TestContext) {
+    const mockFlow = createMockFlow({
+        projectId: ctx.project.id,
+        status: FlowStatus.DISABLED,
+    })
+    await db.save('flow', mockFlow)
+
+    const mockPieceMetadata = createMockPieceMetadata({
+        name: '@activepieces/piece-schedule',
+        version: '0.1.5',
+        triggers: {
+            every_hour: {
+                name: 'every_hour',
+                displayName: 'Every Hour',
+                description: 'Triggers the current flow every hour',
+                requireAuth: false,
+                props: {},
+                type: TriggerStrategy.POLLING,
+                sampleData: {},
+                testStrategy: TriggerTestStrategy.TEST_FUNCTION,
+            },
+        },
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+    })
+    await db.save('piece_metadata', mockPieceMetadata)
+
+    const mockFlowVersion = createMockFlowVersion({
+        flowId: mockFlow.id,
+        updatedBy: ctx.user.id,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            settings: {
+                pieceName: '@activepieces/piece-schedule',
+                pieceVersion: '0.1.5',
+                input: {},
+                propertySettings: {},
+                triggerName: 'every_hour',
+            },
+            valid: true,
+            displayName: 'Trigger',
+        },
+    })
+    await db.save('flow_version', mockFlowVersion)
+    await db.update('flow', mockFlow.id, { publishedVersionId: mockFlowVersion.id })
+
+    return { mockFlow, mockFlowVersion, mockPieceMetadata }
+}
+
 describe('Flow API', () => {
     describe('Create Flow endpoint', () => {
-
-        it.each([
-            DefaultProjectRole.ADMIN,
-            DefaultProjectRole.EDITOR,
-        ])('Succeeds if user role is %s', async (testRole) => {
-            // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
-            const { mockUser } = await mockBasicUser({
-                user: {
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
-                },
-            })
-
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
-
-            const mockProjectMember = createMockProjectMember({
-                userId: mockUser.id,
-                platformId: mockPlatform.id,
-                projectId: mockProject.id,
-                projectRoleId: projectRole.id,
-            })
-            await databaseConnection().getRepository('project_member').save([mockProjectMember])
-
-            const mockToken = await generateMockToken({
-                id: mockUser.id,
-                type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            const mockCreateFlowRequest = {
-                displayName: 'test flow',
-                projectId: mockProject.id,
-            }
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/flows',
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-                body: mockCreateFlowRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        })
-
-        it.each([
-            DefaultProjectRole.VIEWER,
-        ])('Fails if user role is %s', async (testRole) => {
-            // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
-            const { mockUser } = await mockBasicUser({
-                user: {
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
-                },
-            })
-
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
-
-            const mockProjectMember = createMockProjectMember({
-                userId: mockUser.id,
-                platformId: mockPlatform.id,
-                projectId: mockProject.id,
-                projectRoleId: projectRole.id,
-            })
-            await databaseConnection().getRepository('project_member').save([mockProjectMember])
-
-            const mockToken = await generateMockToken({
-                id: mockUser.id,
-                type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            const mockCreateFlowRequest = {
-                displayName: 'test flow',
-                projectId: mockProject.id,
-            }
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/flows',
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-                body: mockCreateFlowRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('PERMISSION_DENIED')
-            expect(responseBody?.params?.userId).toBe(mockUser.id)
-            expect(responseBody?.params?.projectId).toBe(mockProject.id)
+        describeRolePermissions({
+            app: () => app!,
+            request: (memberCtx, ownerCtx) => {
+                return memberCtx.post('/v1/flows', {
+                    displayName: 'test flow',
+                    projectId: ownerCtx.project.id,
+                })
+            },
+            allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR],
+            forbiddenRoles: [DefaultProjectRole.VIEWER],
         })
     })
 
     describe('Update flow endpoint', () => {
-        it.each([
-            {
-                role: DefaultProjectRole.ADMIN,
-                request: {
-                    type: FlowOperationType.CHANGE_STATUS,
-                    request: {
-                        status: 'ENABLED',
-                    },
-                },
+        describeRolePermissions({
+            app: () => app!,
+            beforeEach: async (ctx) => {
+                await setupFlowWithScheduleTrigger(ctx)
             },
-            {
-                role: DefaultProjectRole.EDITOR,
-                request: {
+            request: async (memberCtx, ownerCtx) => {
+                const { mockFlow } = await setupFlowWithScheduleTrigger(ownerCtx)
+                return memberCtx.post(`/v1/flows/${mockFlow.id}`, {
                     type: FlowOperationType.CHANGE_STATUS,
-                    request: {
-                        status: 'ENABLED',
-                    },
-                },
+                    request: { status: 'ENABLED' },
+                })
             },
-        ])('Succeeds if user role is %s', async ({ role, request }) => {
-            // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-            const { mockUser } = await mockBasicUser({
-                user: {
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
-                },
-            })
-
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: role }) as ProjectRole
-
-            const mockProjectMember = createMockProjectMember({
-                userId: mockUser.id,
-                platformId: mockPlatform.id,
-                projectId: mockProject.id,
-                projectRoleId: projectRole.id,
-            })
-            await databaseConnection().getRepository('project_member').save([mockProjectMember])
-            
-            const mockFlow = createMockFlow({
-                projectId: mockProject.id,
-                status: FlowStatus.DISABLED,
-            })
-            await databaseConnection().getRepository('flow').save([mockFlow])
-            const mockPieceMetadata = createMockPieceMetadata({ 
-                name: '@activepieces/piece-schedule',
-                version: '0.1.5',
-                triggers: {
-                    'every_hour': {
-                        'name': 'every_hour',
-                        'displayName': 'Every Hour',
-                        'description': 'Triggers the current flow every hour',
-                        'requireAuth': false,
-                        'props': {
-                        },
-                        'type': TriggerStrategy.POLLING,
-                        'sampleData': {
-                        },
-                        'testStrategy': TriggerTestStrategy.TEST_FUNCTION,
-                    },
-                },
-                pieceType: PieceType.OFFICIAL,
-                packageType: PackageType.REGISTRY,
-            })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
-            const mockFlowVersion = createMockFlowVersion({
-                flowId: mockFlow.id,
-                updatedBy: mockUser.id,
-                trigger: {
-                    type: FlowTriggerType.PIECE,
-                    name: 'trigger',
-                    settings: {
-                        pieceName: '@activepieces/piece-schedule',
-                        pieceVersion: '0.1.5',
-                        input: {},
-                        propertySettings: {},
-                        triggerName: 'every_hour',
-                    },
-                    valid: true,
-                    displayName: 'Trigger',
-                },
-            })
-            await databaseConnection()
-                .getRepository('flow_version')
-                .save([mockFlowVersion])
-
-            await databaseConnection().getRepository('flow').update(mockFlow.id, {
-                publishedVersionId: mockFlowVersion.id,
-            })
-
-            const mockToken = await generateMockToken({
-                id: mockUser.id,
-                type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/v1/flows/${mockFlow.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-                body: request,
-            })
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-        })
-
-        it.each([
-            {
-                role: DefaultProjectRole.VIEWER,
-                request: {
-                    type: FlowOperationType.CHANGE_STATUS,
-                    request: {
-                        status: 'ENABLED',
-                    },
-                },
-            },
-        ])('Fails if user role is %s', async ({ role, request }) => {
-            // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
-            const { mockUser } = await mockBasicUser({
-                user: {
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
-                },
-            })
-
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: role }) as ProjectRole
-
-            const mockProjectMember = createMockProjectMember({
-                userId: mockUser.id,
-                platformId: mockPlatform.id,
-                projectId: mockProject.id,
-                projectRoleId: projectRole.id,
-            })
-            await databaseConnection().getRepository('project_member').save([mockProjectMember])
-
-            const mockFlow = createMockFlow({
-                projectId: mockProject.id,
-                status: FlowStatus.DISABLED,
-            })
-            await databaseConnection().getRepository('flow').save([mockFlow])
-
-            const mockFlowVersion = createMockFlowVersion({
-                flowId: mockFlow.id,
-                updatedBy: mockUser.id,
-            })
-            await databaseConnection()
-                .getRepository('flow_version')
-                .save([mockFlowVersion])
-
-            await databaseConnection().getRepository('flow').update(mockFlow.id, {
-                publishedVersionId: mockFlowVersion.id,
-            })
-
-            const mockToken = await generateMockToken({
-                id: mockUser.id,
-                type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/v1/flows/${mockFlow.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-                body: request,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('PERMISSION_DENIED')
-            expect(responseBody?.params?.userId).toBe(mockUser.id)
-            expect(responseBody?.params?.projectId).toBe(mockProject.id)
+            allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR],
+            forbiddenRoles: [DefaultProjectRole.VIEWER],
         })
     })
 
     describe('List Flows endpoint', () => {
-        it.each([
-            DefaultProjectRole.ADMIN,
-            DefaultProjectRole.EDITOR,
-            DefaultProjectRole.VIEWER,
-        ])('Succeeds if user role is %s', async (testRole) => {
-            // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
-            const { mockUser } = await mockBasicUser({
-                user: {
-                    platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
-                },
-            })
-
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
-
-            const mockProjectMember = createMockProjectMember({
-                userId: mockUser.id,
-                platformId: mockPlatform.id,
-                projectId: mockProject.id,
-                projectRoleId: projectRole.id,
-            })
-            await databaseConnection().getRepository('project_member').save([mockProjectMember])
-
-            const mockToken = await generateMockToken({
-                id: mockUser.id,
-                type: PrincipalType.USER,
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/flows',
-                query: {
-                    projectId: mockProject.id,
+        describeRolePermissions({
+            app: () => app!,
+            request: (memberCtx, ownerCtx) => {
+                return memberCtx.get('/v1/flows', {
+                    projectId: ownerCtx.project.id,
                     status: 'ENABLED',
-                },
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
+                })
+            },
+            allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR, DefaultProjectRole.VIEWER],
+            forbiddenRoles: [],
         })
-
-      
     })
 })

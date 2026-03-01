@@ -14,7 +14,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { db } from '../../../helpers/db'
 import {
     createMockProjectMember,
     createMockProjectRole,
@@ -22,6 +22,7 @@ import {
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { ProjectRole } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -40,12 +41,10 @@ afterAll(async () => {
 describe('authorizeOrThrow - Project', () => {
     describe('PROJECT authorization', () => {
         it('should allow USER with project access', async () => {
-            
+
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
-            const projectRole = await databaseConnection()
-                .getRepository('project_role')
-                .findOneByOrFail({ name: DefaultProjectRole.ADMIN })
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockOwner.id,
@@ -53,15 +52,12 @@ describe('authorizeOrThrow - Project', () => {
                 projectId: mockProject.id,
                 projectRoleId: projectRole.id,
             })
-            await databaseConnection().getRepository('project_member').save(mockProjectMember)
+            await db.save('project_member', mockProjectMember)
 
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -83,10 +79,7 @@ describe('authorizeOrThrow - Project', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -109,16 +102,13 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should allow SERVICE principal with access to project platform', async () => {
-            
+
             const { mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const principal: Principal = {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -134,16 +124,14 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject SERVICE principal accessing project from different platform', async () => {
-            
+
             const { mockApiKey, mockPlatform } = await mockAndSaveBasicSetupWithApiKey()
             const { mockProject: otherProject } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -166,16 +154,13 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject principal not in allowedPrincipals for PROJECT', async () => {
-            
+
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -198,16 +183,14 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should allow ENGINE principal accessing its own project', async () => {
-            
+
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
                 id: apId(),
                 type: PrincipalType.ENGINE,
                 projectId: mockProject.id,
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -223,7 +206,7 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject ENGINE principal accessing different project', async () => {
-            
+
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockProject: otherProject } = await mockAndSaveBasicSetup()
 
@@ -231,9 +214,7 @@ describe('authorizeOrThrow - Project', () => {
                 id: apId(),
                 type: PrincipalType.ENGINE,
                 projectId: mockProject.id,
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -255,10 +236,10 @@ describe('authorizeOrThrow - Project', () => {
             )
         })
     })
-    
+
     describe('RBAC permission checks', () => {
         it('should reject user without required permission', async () => {
-            
+
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -267,10 +248,7 @@ describe('authorizeOrThrow - Project', () => {
                 },
             })
 
-            // Create a role with only READ_FLOW permission
-            const viewerRole = await databaseConnection()
-                .getRepository('project_role')
-                .findOneByOrFail({ name: DefaultProjectRole.VIEWER })
+            const viewerRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.VIEWER })
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -278,15 +256,12 @@ describe('authorizeOrThrow - Project', () => {
                 projectId: mockProject.id,
                 projectRoleId: viewerRole.id,
             })
-            await databaseConnection().getRepository('project_member').save(mockProjectMember)
+            await db.save('project_member', mockProjectMember)
 
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -311,7 +286,7 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should reject user with no role in project', async () => {
-            
+
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -320,15 +295,10 @@ describe('authorizeOrThrow - Project', () => {
                 },
             })
 
-            // No project member created for this user
-
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -351,7 +321,7 @@ describe('authorizeOrThrow - Project', () => {
         })
 
         it('should allow user with custom role having required permission', async () => {
-            
+
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -360,13 +330,12 @@ describe('authorizeOrThrow - Project', () => {
                 },
             })
 
-            // Create a custom role with specific permission
             const customRole = createMockProjectRole({
                 platformId: mockPlatform.id,
                 type: RoleType.CUSTOM,
                 permissions: [Permission.READ_FLOW, Permission.WRITE_FLOW],
             })
-            await databaseConnection().getRepository('project_role').save(customRole)
+            await db.save('project_role', customRole)
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
@@ -374,15 +343,12 @@ describe('authorizeOrThrow - Project', () => {
                 projectId: mockProject.id,
                 projectRoleId: customRole.id,
             })
-            await databaseConnection().getRepository('project_member').save(mockProjectMember)
+            await db.save('project_member', mockProjectMember)
 
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                
-                platform: {
-                    id: mockPlatform.id,
-                },
+                platform: { id: mockPlatform.id },
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,

@@ -2,8 +2,8 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import { FlowStatus, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -43,12 +43,12 @@ describe('Webhook Service', () => {
             projectId: mockProject.id,
             status: FlowStatus.DISABLED,
         })
-        await databaseConnection().getRepository('flow').save([mockFlow])
+        await db.save('flow', [mockFlow])
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
         })
-        await databaseConnection().getRepository('flow_version').save([mockFlowVersion])
-        await databaseConnection().getRepository('flow').update(mockFlow.id, {
+        await db.save('flow_version', [mockFlowVersion])
+        await db.update('flow', mockFlow.id, {
             publishedVersionId: mockFlowVersion.id,
         })
         const mockToken = await generateMockToken({

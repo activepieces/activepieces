@@ -3,8 +3,8 @@ import { GitBranchType, PlatformRole, PrincipalType } from '@activepieces/shared
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockGitRepo,
     createMockProject,
@@ -41,7 +41,7 @@ describe('Git API', () => {
             })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser2.id })
-            await databaseConnection().getRepository('project').save(mockProject2)
+            await db.save('project', mockProject2)
 
             const request = {
                 projectId: mockProject.id,
@@ -130,7 +130,7 @@ describe('Git API', () => {
             })
 
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
-            await databaseConnection().getRepository('git_repo').save(mockGitRepo)
+            await db.save('git_repo', mockGitRepo)
 
             const token = await generateMockToken({
                 id: mockOwner.id,
@@ -162,9 +162,7 @@ describe('Git API', () => {
                 },
             })
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
-            await databaseConnection()
-                .getRepository('git_repo')
-                .save([mockGitRepo])
+            await db.save('git_repo', [mockGitRepo])
 
             const { mockUser: mockUser2 } = await mockBasicUser({
                 user: {
@@ -173,7 +171,7 @@ describe('Git API', () => {
                 },
             })
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser2.id })
-            await databaseConnection().getRepository('project').save(mockProject2)
+            await db.save('project', mockProject2)
 
             const token = await generateMockToken({
                 id: mockUser2.id,
@@ -213,15 +211,11 @@ describe('Git API', () => {
             })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
-            await databaseConnection()
-                .getRepository('project')
-                .save([mockProject2])
+            await db.save('project', [mockProject2])
 
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
             const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
-            await databaseConnection()
-                .getRepository('git_repo')
-                .save([mockGitRepo, mockGitRepo2])
+            await db.save('git_repo', [mockGitRepo, mockGitRepo2])
 
             const response = await app?.inject({
                 method: 'GET',
@@ -250,19 +244,15 @@ describe('Git API', () => {
             })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
-            await databaseConnection()
-                .getRepository('project')
-                .save([mockProject2])
+            await db.save('project', [mockProject2])
 
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
             const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
-            await databaseConnection()
-                .getRepository('git_repo')
-                .save([mockGitRepo, mockGitRepo2])
+            await db.save('git_repo', [mockGitRepo, mockGitRepo2])
 
             const token = await generateMockToken({
                 id: mockOwner.id,
-                
+
                 type: PrincipalType.USER,
                 platform: {
                     id: mockProject.platformId,
@@ -289,19 +279,15 @@ describe('Git API', () => {
             })
 
             const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id })
-            await databaseConnection()
-                .getRepository('project')
-                .save([mockProject2])
+            await db.save('project', [mockProject2])
 
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
             const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
-            await databaseConnection()
-                .getRepository('git_repo')
-                .save([mockGitRepo, mockGitRepo2])
+            await db.save('git_repo', [mockGitRepo, mockGitRepo2])
 
             const token = await generateMockToken({
                 id: mockOwner.id,
-                
+
                 type: PrincipalType.USER,
                 platform: {
                     id: mockProject.platformId,

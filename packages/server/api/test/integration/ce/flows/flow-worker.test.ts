@@ -5,8 +5,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockFlow,
     createMockFlowVersion,
@@ -34,17 +34,17 @@ describe('Flow API for Worker', () => {
                 ownerId: mockOwner.id,
             })
 
-            await databaseConnection().getRepository('project').save([mockProject2])
+            await db.save('project', [mockProject2])
 
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
             })
-            await databaseConnection().getRepository('flow').save([mockFlow])
+            await db.save('flow', [mockFlow])
 
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
             })
-            await databaseConnection().getRepository('flow_version').save([mockFlowVersion])
+            await db.save('flow_version', [mockFlowVersion])
 
             const mockToken = await generateMockToken({
                 id: apId(),

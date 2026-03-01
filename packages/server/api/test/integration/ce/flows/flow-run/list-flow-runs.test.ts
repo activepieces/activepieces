@@ -1,9 +1,7 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
-import { PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { databaseConnection } from '../../../../../src/app/database/database-connection'
-import { generateMockToken } from '../../../../helpers/auth'
-import { mockAndSaveBasicSetup } from '../../../../helpers/mocks'
+import { createTestContext } from '../../../../helpers/test-context'
+
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
@@ -16,26 +14,11 @@ afterAll(async () => {
 describe('List flow runs endpoint', () => {
     it('should return 200', async () => {
         // arrange
-        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
-
-        const testToken = await generateMockToken({
-            type: PrincipalType.USER,
-            id: mockOwner.id,
-            platform: {
-                id: mockPlatform.id,
-            },
-        })
+        const ctx = await createTestContext(app!)
 
         // act
-        const response = await app?.inject({
-            method: 'GET',
-            url: '/v1/flow-runs',
-            headers: {
-                authorization: `Bearer ${testToken}`,
-            },
-            query: {
-                projectId: mockProject.id,
-            },
+        const response = await ctx.get('/v1/flow-runs', {
+            projectId: ctx.project.id,
         })
 
         // assert

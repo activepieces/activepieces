@@ -2,6 +2,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { db } from '../../../helpers/db'
 import {
     createMockSignInRequest,
     createMockSignUpRequest,
@@ -71,11 +72,9 @@ describe('Authentication API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const project = await databaseConnection()
-                .getRepository('project')
-                .findOneBy({
-                    id: responseBody.projectId,
-                })
+            const project = await db.findOneBy('project', {
+                id: responseBody.projectId,
+            })
 
             expect(project?.ownerId).toBe(responseBody.id)
             expect(project?.displayName).toBeDefined()

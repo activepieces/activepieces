@@ -11,8 +11,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
@@ -48,7 +48,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -103,7 +103,7 @@ describe('GlobalConnection API', () => {
             const mockPieceMetadata = createMockPieceMetadata({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -153,7 +153,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -262,7 +262,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
@@ -321,7 +321,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -390,7 +390,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -461,7 +461,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 
@@ -534,7 +534,7 @@ describe('GlobalConnection API', () => {
                 platformId: mockPlatform.id,
                 packageType: PackageType.REGISTRY,
             })
-            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+            await db.save('piece_metadata', [mockPieceMetadata])
 
             
 

@@ -8,8 +8,8 @@ import {
 import { FastifyInstance } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticateOrThrow } from '../../../../src/app/core/security/v2/authn/authenticate'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import {
     mockAndSaveBasicSetup,
     mockAndSaveBasicSetupWithApiKey,
@@ -115,7 +115,7 @@ describe('authenticateOrThrow', () => {
 
             const mockAccessToken = await generateMockToken(mockPrincipal)
 
-            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+            await db.update('user_identity', mockUserIdentity.id, {
                 tokenVersion: nanoid(),
             })
 

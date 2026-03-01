@@ -6,7 +6,7 @@ import {
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
     mockAndSaveBasicSetup,
@@ -27,7 +27,7 @@ describe('Create Project Release', () => {
         const apiKey = createMockApiKey({
             platformId: mockPlatform.id,
         })
-        await databaseConnection().getRepository('api_key').save([apiKey])
+        await db.save('api_key', apiKey)
 
         const request: CreateProjectReleaseRequestBody = {
             name: faker.animal.bird(),

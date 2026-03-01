@@ -11,7 +11,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import {
     mockAndSaveBasicSetup,
     mockAndSaveBasicSetupWithApiKey,

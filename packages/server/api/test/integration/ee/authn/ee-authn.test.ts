@@ -2,11 +2,11 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import {
     createMockCustomDomain,
     mockAndSaveBasicSetup,
 } from '../../../../test/helpers/mocks'
+import { db } from '../../../helpers/db'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 
 
@@ -69,9 +69,7 @@ describe('Authentication API', () => {
         const mockCustomDomain = createMockCustomDomain({
             platformId: mockPlatform.id,
         })
-        await databaseConnection()
-            .getRepository('custom_domain')
-            .save(mockCustomDomain)
+        await db.save('custom_domain', mockCustomDomain)
 
         const mockedUpEmail = faker.internet.email()
         const mockSignUpRequest = createMockSignUpRequest({ email: mockedUpEmail })

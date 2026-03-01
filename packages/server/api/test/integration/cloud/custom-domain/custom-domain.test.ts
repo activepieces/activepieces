@@ -1,13 +1,14 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { AddDomainRequest, CustomDomainStatus, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { AddDomainRequest, ApEdition, CustomDomainStatus, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { system } from '../../../../src/app/helper/system/system'
+import { db } from '../../../helpers/db'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
-    mockAndSaveBasicSetup, 
+    mockAndSaveBasicSetup,
     mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -48,7 +49,8 @@ describe('Custom Domain API', () => {
             const responseBody = response?.json()
 
             expect(responseBody.domain).toBe(request.domain)
-            expect(responseBody.status).toBe(CustomDomainStatus.PENDING)
+            const expectedStatus = system.getEdition() === ApEdition.CLOUD ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE
+            expect(responseBody.status).toBe(expectedStatus)
         })
 
         it('should fail if user is not platform owner', async () => {
@@ -108,9 +110,7 @@ describe('Custom Domain API', () => {
                     domain: faker.internet.domainName(),
                 }),
             ]
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(mockCustomDomains1)
+            await db.save('custom_domain', mockCustomDomains1)
 
             const mockCustomDomains2 = [
                 createMockCustomDomain({
@@ -118,9 +118,7 @@ describe('Custom Domain API', () => {
                     domain: faker.internet.domainName(),
                 }),
             ]
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(mockCustomDomains2)
+            await db.save('custom_domain', mockCustomDomains2)
 
             // act
             const response1 = await app?.inject({
@@ -159,9 +157,7 @@ describe('Custom Domain API', () => {
                 platformId: mockPlatformOne.id,
                 domain: faker.internet.domainName(),
             })
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(customDomain)
+            await db.save('custom_domain', customDomain)
 
             // act
             const response = await app?.inject({
@@ -185,7 +181,7 @@ describe('Custom Domain API', () => {
                     platformRole: PlatformRole.MEMBER,
                 },
             })
-  
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
@@ -196,9 +192,7 @@ describe('Custom Domain API', () => {
                 platformId: mockPlatformOne.id,
                 domain: faker.internet.domainName(),
             })
-            await databaseConnection()
-                .getRepository('custom_domain')
-                .save(customDomain)
+            await db.save('custom_domain', customDomain)
 
             // act
             const response = await app?.inject({

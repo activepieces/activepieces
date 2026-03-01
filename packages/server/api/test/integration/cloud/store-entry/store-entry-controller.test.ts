@@ -1,9 +1,10 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, DefaultProjectRole, PlatformRole, PrincipalType, User } from '@activepieces/shared'
+import { apId, DefaultProjectRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
+import { db } from '../../../helpers/db'
 import { createMockProjectMember, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { ProjectRole, PlatformRole } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -16,24 +17,20 @@ afterAll(async () => {
 })
 describe('Store-entries API', () => {
     let engineToken: string
-    let mockUser: User
     let projectId: string
 
     beforeEach(async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
         projectId = mockProject.id
 
-        const { mockUser: user } = await mockBasicUser({
+        const { mockUser } = await mockBasicUser({
             user: {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.MEMBER,
             },
         })
-        mockUser = user
 
-        const projectRole = await databaseConnection()
-            .getRepository('project_role')
-            .findOneByOrFail({ name: DefaultProjectRole.ADMIN })
+        const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
 
         const mockProjectMember = createMockProjectMember({
             userId: mockUser.id,
@@ -41,15 +38,13 @@ describe('Store-entries API', () => {
             projectId,
             projectRoleId: projectRole.id,
         })
-        await databaseConnection().getRepository('project_member').save(mockProjectMember)
+        await db.save('project_member', mockProjectMember)
 
         engineToken = await generateMockToken({
             type: PrincipalType.ENGINE,
             id: apId(),
             projectId,
-            platform: {
-                id: mockPlatform.id,
-            },
+            platform: { id: mockPlatform.id },
         })
     })
 
@@ -114,14 +109,8 @@ function makePostRequest(testToken: string, key: string, value: string, projectI
     return app?.inject({
         method: 'POST',
         url: '/v1/store-entries/',
-        headers: {
-            authorization: `Bearer ${testToken}`,
-        },
-        body: {
-            projectId,
-            key,
-            value,
-        },
+        headers: { authorization: `Bearer ${testToken}` },
+        body: { projectId, key, value },
     })
 }
 
@@ -129,9 +118,7 @@ function makeGetRequest(testToken: string, key: string): Promise<LightMyRequestR
     return app?.inject({
         method: 'GET',
         url: `/v1/store-entries/?key=${key}`,
-        headers: {
-            authorization: `Bearer ${testToken}`,
-        },
+        headers: { authorization: `Bearer ${testToken}` },
     })
 }
 
@@ -139,8 +126,6 @@ function makeDeleteRequest(testToken: string, key: string): Promise<LightMyReque
     return app?.inject({
         method: 'DELETE',
         url: `/v1/store-entries/?key=${key}`,
-        headers: {
-            authorization: `Bearer ${testToken}`,
-        },
+        headers: { authorization: `Bearer ${testToken}` },
     })
 }

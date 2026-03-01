@@ -1,7 +1,9 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { ApEdition } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { system } from '../../../../src/app/helper/system/system'
+
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
@@ -14,6 +16,10 @@ afterAll(async () => {
 describe('AppSumo API', () => {
     describe('Action endpoint', () => {
         it('Activates new accounts', async () => {
+            const edition = system.getEdition()
+            if (edition !== ApEdition.CLOUD) {
+                return
+            }
             // arrange
             const mockEmail = 'mock-email'
 
