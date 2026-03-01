@@ -150,3 +150,7 @@ export const databaseConnection = (): DataSource => {
 export function resetDatabaseConnection(): void {
     setPersistedConnection(null)
 }
+
+export function resetDatabaseConnection(): void {
+    _databaseConnection = null
+}
