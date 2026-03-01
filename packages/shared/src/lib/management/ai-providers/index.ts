@@ -10,7 +10,6 @@ export enum AIProviderName {
     ACTIVEPIECES = 'activepieces',
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
-    X_AI = 'x-ai',
 }
 
 
@@ -52,9 +51,6 @@ export type OpenAIProviderAuthConfig = Static<typeof OpenAIProviderAuthConfig>
 
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = Static<typeof OpenRouterProviderAuthConfig>
-
-export const X_AIProviderAuthConfig = BaseAIProviderAuthConfig
-export type X_AIProviderAuthConfig = Static<typeof X_AIProviderAuthConfig>
 
 export const AnthropicProviderConfig = Type.Object({})
 export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
@@ -100,16 +96,12 @@ export type OpenAIProviderConfig = Static<typeof OpenAIProviderConfig>
 export const OpenRouterProviderConfig = Type.Object({})
 export type OpenRouterProviderConfig = Static<typeof OpenRouterProviderConfig>
 
-export const X_AIProviderConfig = Type.Object({})
-export type X_AIProviderConfig = Static<typeof X_AIProviderConfig>
-
 export const AIProviderAuthConfig = Type.Union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
     OpenRouterProviderAuthConfig,
-    X_AIProviderAuthConfig,
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
@@ -124,7 +116,6 @@ export const AIProviderConfig = Type.Union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
-    X_AIProviderConfig,
     ActivePiecesProviderConfig,
 ])
 export type AIProviderConfig = Static<typeof AIProviderConfig>
@@ -171,12 +162,6 @@ const ProviderConfigUnion = DiscriminatedUnion('provider', [
         provider: Type.Literal(AIProviderName.CUSTOM),
         config: OpenAICompatibleProviderConfig,
         auth: OpenAICompatibleProviderAuthConfig,
-    }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.X_AI),
-        config: X_AIProviderConfig,
-        auth: X_AIProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),

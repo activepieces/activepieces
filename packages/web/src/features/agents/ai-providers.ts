@@ -71,14 +71,6 @@ It is strongly recommended that you add your credit card information to your Ope
 2. In the api key header, set the value of your auth header name.
 3. In the api key, set your auth header value (full value including the Bearer if any).`),
   },
-  {
-    provider: AIProviderName.X_AI,
-    name: 'xAI (Grok)',
-    logoUrl: 'https://cdn.activepieces.com/pieces/grok-xai.png',
-    markdown: t(`Follow these instructions to get your xAI (Grok) API Key:
-1. Go to https://console.x.ai/.
-2. Create or sign in to your account and obtain your API key.`),
-  },
 ];
 
 export type AiProviderInfo = {

@@ -56,7 +56,7 @@ const ALLOWED_MODELS_BY_PROVIDER: Partial<Record<Provider, readonly string[]>> =
         (model) => `${AIProviderName.ANTHROPIC}/${model}`,
       ),
       ...GOOGLE_MODELS.map((model) => `${AIProviderName.GOOGLE}/${model}`),
-      ...X_AI_MODELS.map((model) => `${AIProviderName.X_AI}/${model}`),
+      ...X_AI_MODELS.map((model) => `${'x-ai'}/${model}`),
     ],
   };
 
