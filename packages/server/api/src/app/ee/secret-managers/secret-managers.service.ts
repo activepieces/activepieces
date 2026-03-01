@@ -1,11 +1,10 @@
-import { ConnectSecretManagerRequest, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, ErrorCode, isEnumValue, isNil, isObject, isString, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
-import { secretManagerCache } from './secret-manager-cache'
 import { secretManagerProvider, secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { SecretManagerEntity } from './secret-manager.entity'
+import { secretManagerCache } from './secret-manager-cache'
 
 const secretManagerRepository = repoFactory(SecretManagerEntity)
 

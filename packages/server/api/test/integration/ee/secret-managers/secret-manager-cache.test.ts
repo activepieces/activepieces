@@ -1,5 +1,5 @@
-import { SecretManagerProviderId } from '@activepieces/ee-shared'
-import { apAxios } from '@activepieces/server-shared'
+import { SecretManagerProviderId } from '@activepieces/shared'
+import { apAxios } from '@activepieces/server-common'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

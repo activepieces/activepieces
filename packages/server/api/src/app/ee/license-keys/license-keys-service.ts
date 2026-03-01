@@ -1,4 +1,4 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-common'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'

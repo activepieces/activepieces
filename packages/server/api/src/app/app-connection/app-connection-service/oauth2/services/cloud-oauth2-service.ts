@@ -1,6 +1,6 @@
 
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { apAxios } from '@activepieces/server-shared'
+import { apAxios } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     AppConnectionType,

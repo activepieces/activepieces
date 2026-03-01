@@ -7,7 +7,6 @@ import { extractPieceFromModule } from '@activepieces/shared'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
-import { execSync } from 'child_process'
 import { pieceTranslation,PieceMetadata } from '@activepieces/pieces-framework'
 type SubPiece = {
     name: string;
@@ -127,7 +126,7 @@ function getChangedPiecesDistPaths(): string[] | null {
         return null
     }
     return changedPieces.split('\n').filter(Boolean).map(p => {
-        return resolve(cwd(), 'dist', p)
+        return resolve(cwd(), p, 'dist')
     }).filter(p => {
         const exists = existsSync(join(p, 'package.json'))
         if (!exists) {
@@ -144,9 +143,17 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 }
 
 async function findAllDistPaths(): Promise<string[]> {
-    const baseDir = resolve(cwd(), 'dist', 'packages')
-    const piecesBuildOutputPath = resolve(baseDir, 'pieces')
-    return await traverseFolder(piecesBuildOutputPath)
+    const sourcePiecesPath = resolve(cwd(), 'packages', 'pieces')
+    const sourceFolders = await traverseFolder(sourcePiecesPath)
+    const distPaths: string[] = []
+    for (const folder of sourceFolders) {
+        const distPath = join(folder, 'dist')
+        const distPackageJson = join(distPath, 'package.json')
+        if (existsSync(distPackageJson)) {
+            distPaths.push(distPath)
+        }
+    }
+    return distPaths
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
@@ -173,13 +180,6 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
-        
-        const packageLockPath = join(folderPath, 'package.json');
-        const packageExists = await stat(packageLockPath).catch(() => null);
-        if (packageExists) {
-            console.info(`[loadPieceFromFolder] package.json exists, running bun install`)
-            execSync('bun install', { cwd: folderPath, stdio: 'inherit' });
-        }
 
         const module = await import(
             join(folderPath, 'src', 'index')

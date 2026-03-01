@@ -1,4 +1,4 @@
-import { AWSProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { AWSProviderConfig, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, isNil, isObject, isString } from '@activepieces/shared'
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,12 +9,12 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     name: 'AWS Secrets Manager',
     logo: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
     fields: {
-        accessKey: {
+        accessKeyId: {
             displayName: 'Access Key',
             placeholder: 'access-key',
             type: 'text',
         },
-        secretKey: {
+        secretAccessKey: {
             displayName: 'Secret Key',
             placeholder: 'secret-key',
             type: 'password',
@@ -26,7 +26,7 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         },
     },
     secretParams: {
-        secretName: {
+        path: {
             displayName: 'Secret Path',
             placeholder: 'secret-name:secret-json-key',
             type: 'text',
@@ -39,8 +39,8 @@ function getSecretsManagerClient(config: AWSProviderConfig, region: string): Sec
     return new SecretsManagerClient({
         region,
         credentials: {
-            accessKeyId: config.accessKey,
-            secretAccessKey: config.secretKey,
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
         },
     })
 }

@@ -1,13 +1,17 @@
 {
   "name": "@activepieces/piece-mcp",
-"version": "0.0.16",
+  "version": "0.0.16",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "http-status-codes": "2.2.0",
+    "tslib": "2.6.2"
   }
 }

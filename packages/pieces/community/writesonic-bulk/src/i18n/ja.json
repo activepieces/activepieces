@@ -1,5 +1,5 @@
 {
-  "Writesonic-bulk AI-powered writing assistant": "書き込み式一括AI駆動ライティングアシスタント",
+  "Writesonic AI-powered writing assistant": "書き込み式のAI駆動ライティングアシスタント",
   "\nTo get your API Key:\n\n1. Go to [app.writesonic.com](https://app.writesonic.com/)\n2. Login to your Writesonic account\n3. Hover over your display picture on the top-right corner to open the profile menu\n4. Click on \"API Dashboard\"\n5. Click on the switch to activate the API\n6. Click on \"Reveal API Key\"\n7. Copy and save your API key securely (never commit to public repositories)\n": "\nTo get your API Key:\n\n1. Go to [app.writesonic.com](https://app.writesonic.com/)\n2. Login to your Writesonic account\n3. Hover over your display picture on the top-right corner to open the profile menu\n4. Click on \"API Dashboard\"\n5. Click on the switch to activate the API\n6. Click on \"Reveal API Key\"\n7. Copy and save your API key securely (never commit to public repositories)\n",
   "Blog Ideas": "ブログのアイデア",
   "Blog Intros": "ブログの紹介",
@@ -45,10 +45,12 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
+  "Follow redirects": "リダイレクトをフォローする",
   "The topic or keyword to generate blog ideas for": "ブログのアイデアを生成するトピックまたはキーワード",
   "A keyword to include in the blog introduction": "ブログの紹介に含めるキーワード",
   "Select the engine quality level": "エンジンの品質レベルを選択",
@@ -73,7 +75,7 @@
   "The sentence you want to expand": "展開したい文章。",
   "A keyword to include in the expanded sentence": "拡張文に含めるキーワード",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Economy": "経済",
   "Average": "平均",
   "Good": "良い",
@@ -117,5 +119,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }

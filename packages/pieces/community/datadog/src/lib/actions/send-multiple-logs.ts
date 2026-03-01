@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { v2 } from '@datadog/datadog-api-client';
-import { datadogAuth } from '../..';
-import { getDatadogConfiguration } from '../common';
+import { getDatadogConfiguration } from '../common/helpers';
 import { z } from 'zod';
+import { datadogAuth } from '../common/auth';
 
 export const sendMultipleLogs = createAction({
   name: 'sendMultipleLogs',
@@ -15,18 +15,20 @@ export const sendMultipleLogs = createAction({
       displayName: 'Logs',
       required: true,
       description: `Logs to send to Datadog, must contain a \`logs\` key with an array of objects. Documentation: https://docs.datadoghq.com/api/latest/logs/#send-logs`,
-      defaultValue: {logs: [
-        {
-          ddsource: "source",
-          ddtags: "env:test,version:1.0",
-          hostname: "hostname",
-          message: "message",
-          service: "service",
-          additionalProperties: {
-            status: "info",
+      defaultValue: {
+        logs: [
+          {
+            ddsource: 'source',
+            ddtags: 'env:test,version:1.0',
+            hostname: 'hostname',
+            message: 'message',
+            service: 'service',
+            additionalProperties: {
+              status: 'info',
+            },
           },
-        },
-      ]}
+        ],
+      },
     }),
   },
   async run({ auth, propsValue }) {
@@ -37,24 +39,38 @@ export const sendMultipleLogs = createAction({
 
     // Validate the request body
     z.object({
-      logs: z.array(
-        z.object({
-          message: z.string({error: "Log message cannot be empty"}),
-          ddsource: z.string().optional(),
-          ddtags: z.string().optional(),
-          hostname: z.string().optional(),
-          service: z.string().optional(),
-          additionalProperties: z.record(z.string(), z.unknown()).optional(),
-        }).strict().describe("Allowed properties are `message`, `ddsource`, `ddtags`, `hostname`, `service`, `additionalProperties`"),
-        { error: "Logs must be an array of objects under `logs` key e.g `{'logs': [{'message': 'test'}]}`"}
-      ).min(1, "At least one log entry is required")
-    }).strict().parse(propsValue.body);
+      logs: z
+        .array(
+          z
+            .object({
+              message: z.string({ error: 'Log message cannot be empty' }),
+              ddsource: z.string().optional(),
+              ddtags: z.string().optional(),
+              hostname: z.string().optional(),
+              service: z.string().optional(),
+              additionalProperties: z
+                .record(z.string(), z.unknown())
+                .optional(),
+            })
+            .strict()
+            .describe(
+              'Allowed properties are `message`, `ddsource`, `ddtags`, `hostname`, `service`, `additionalProperties`'
+            ),
+          {
+            error:
+              "Logs must be an array of objects under `logs` key e.g `{'logs': [{'message': 'test'}]}`",
+          }
+        )
+        .min(1, 'At least one log entry is required'),
+    })
+      .strict()
+      .parse(propsValue.body);
 
     const params: v2.LogsApiSubmitLogRequest = {
       body: propsValue.body['logs'] as v2.HTTPLogItem[],
     };
 
-    await apiInstance.submitLog(params)
+    await apiInstance.submitLog(params);
     return {
       success: true,
       message: 'Logs sent successfully',
