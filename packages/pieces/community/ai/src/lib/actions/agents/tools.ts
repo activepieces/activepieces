@@ -42,7 +42,7 @@ function createTransportConfig(
 }
 
 export function sanitizeToolName(name: string): string {
-  return String(name).replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').slice(0, 128);
+  return String(name).replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').slice(0, 60);
 }
 
 type FlattenedMcpResult = {
@@ -64,7 +64,7 @@ function flattenMcpServers(
       const agentTool = agentMcpTools.find((t) => t.toolName === server.mcpName);
 
       for (const [toolName, fn] of Object.entries(server.tools)) {
-        const key = sanitizeToolName(`${toolName}_${server.mcpName}`);
+        const key = sanitizeToolName(`${toolName}`) + '_mcp';
         tools[key] = fn;
         if (agentTool) {
           keyToAgentTool[key] = agentTool;
