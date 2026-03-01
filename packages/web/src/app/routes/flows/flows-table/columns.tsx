@@ -46,7 +46,7 @@ export const flowsTableColumns = ({
     cell: ({ row }) => {
       return (
         <PieceIconList
-          trigger={row.original.version.trigger}
+          flowVersion={row.original.version}
           maxNumberOfIconsToShow={2}
         />
       );

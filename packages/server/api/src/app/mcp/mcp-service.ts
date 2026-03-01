@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-common'
-import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { apId, FlowStatus, flowStructureUtil, FlowTriggerKind, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PieceTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -56,7 +56,8 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             })
             const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
             for (const flow of enabledFlows) {
-                const mcpTrigger = flow.version.trigger.settings as McpTrigger
+                const triggerNode = flowStructureUtil.getTriggerNode(flow.version.graph)!
+                const mcpTrigger = (triggerNode.data as PieceTrigger).settings as unknown as McpTrigger
                 const mcpInputs = mcpTrigger.input?.inputSchema ?? []
                 const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
                 
@@ -132,7 +133,10 @@ async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promi
         versionState: FlowVersionState.DRAFT,
         includeTriggerSource: false,
     })
-    return flows.data.filter((flow) => flow.version.trigger.type === FlowTriggerType.PIECE && flow.version.trigger.settings.pieceName === MCP_TRIGGER_PIECE_NAME)
+    return flows.data.filter((flow) => {
+        const triggerNode = flowStructureUtil.getTriggerNode(flow.version.graph)
+        return triggerNode?.data.kind === FlowTriggerKind.PIECE && (triggerNode.data as PieceTrigger).settings.pieceName === MCP_TRIGGER_PIECE_NAME
+    })
 }
 
 function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {

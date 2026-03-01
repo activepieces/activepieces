@@ -1,7 +1,6 @@
 import {
-  FlowAction,
-  FlowActionType,
-  Step,
+  FlowActionKind,
+  FlowGraphNode,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -29,11 +28,12 @@ enum DialogType {
   WEBHOOK = 'WEBHOOK',
 }
 
-const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
+const isReturnResponseAndWaitForWebhook = (step: FlowGraphNode) => {
   return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-webhook' &&
-    step.settings.actionName === 'return_response_and_wait_for_next_webhook'
+    step.data.kind === FlowActionKind.PIECE &&
+    step.data.settings.pieceName === '@activepieces/piece-webhook' &&
+    step.data.settings.actionName ===
+      'return_response_and_wait_for_next_webhook'
   );
 };
 
@@ -41,7 +41,7 @@ const TestStepSectionImplementation = React.memo(
   ({
     isSaving,
     currentStep,
-  }: TestActionComponentProps & { currentStep: FlowAction }) => {
+  }: TestActionComponentProps & { currentStep: FlowGraphNode }) => {
     const [activeDialog, setActiveDialog] = useState<DialogType>(
       DialogType.NONE,
     );
@@ -55,15 +55,15 @@ const TestStepSectionImplementation = React.memo(
       revertSampleDataLocally,
     ] = useBuilderStateContext((state) => {
       return [
-        state.outputSampleData[currentStep.name],
-        state.inputSampleData[currentStep.name],
-        state.errorLogs[currentStep.name],
-        currentStep.type === FlowActionType.CODE
-          ? state.consoleLogs[currentStep.name]
+        state.outputSampleData[currentStep.id],
+        state.inputSampleData[currentStep.id],
+        state.errorLogs[currentStep.id],
+        currentStep.data.kind === FlowActionKind.CODE
+          ? state.consoleLogs[currentStep.id]
           : null,
         state.isStepBeingTested,
         state.removeStepTestListener,
-        state.revertSampleDataLocallyCallbacks[currentStep.name],
+        state.revertSampleDataLocallyCallbacks[currentStep.id],
       ];
     });
 
@@ -72,12 +72,12 @@ const TestStepSectionImplementation = React.memo(
         currentStep,
       });
 
-    const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
+    const lastTestDate = currentStep.data.settings.sampleData?.lastTestDate;
 
     const sampleDataExists =
       !isNil(lastTestDate) ||
       !isNil(errorMessage) ||
-      isStepBeingTested(currentStep.name);
+      isStepBeingTested(currentStep.id);
     const onTestButtonClick = async () => {
       if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
@@ -93,14 +93,14 @@ const TestStepSectionImplementation = React.memo(
     const isTesting =
       activeDialog !== DialogType.NONE ||
       isWatingTestResult ||
-      isStepBeingTested(currentStep.name);
+      isStepBeingTested(currentStep.id);
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
     return (
       <>
         {!sampleDataExists && !isTesting && (
           <div className="grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip invalid={!currentStep.valid}>
+            <TestButtonTooltip invalid={!currentStep.data.valid}>
               <Button
                 variant="outline"
                 size="sm"
@@ -108,7 +108,7 @@ const TestStepSectionImplementation = React.memo(
                 keyboardShortcut="G"
                 onKeyboardShortcut={onTestButtonClick}
                 loading={isTesting || isSaving}
-                disabled={!currentStep.valid || isLoadingDynamicProperties}
+                disabled={!currentStep.data.valid || isLoadingDynamicProperties}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
                 {t('Test Step')}
@@ -118,7 +118,7 @@ const TestStepSectionImplementation = React.memo(
         )}
         {(sampleDataExists || isTesting) && (
           <TestSampleDataViewer
-            isValid={currentStep.valid || isLoadingDynamicProperties}
+            isValid={currentStep.data.valid || isLoadingDynamicProperties}
             currentStep={currentStep}
             isTesting={isTesting}
             sampleData={sampleData}
@@ -129,7 +129,7 @@ const TestStepSectionImplementation = React.memo(
             errorMessage={errorMessage}
             consoleLogs={consoleLogs}
             onCancelTesting={() => {
-              removeStepTestListener(currentStep.name);
+              removeStepTestListener(currentStep.id);
               revertSampleDataLocally?.();
             }}
           ></TestSampleDataViewer>
@@ -147,13 +147,13 @@ const TestStepSectionImplementation = React.memo(
   },
 );
 
-const isAction = (step: Step): step is FlowAction => {
-  return flowStructureUtil.isAction(step.type);
+const isAction = (step: FlowGraphNode): boolean => {
+  return flowStructureUtil.isAction(step.data.kind);
 };
 const TestActionSection = React.memo((props: TestActionComponentProps) => {
   const currentStep = useBuilderStateContext((state) =>
     state.selectedStep
-      ? flowStructureUtil.getStep(state.selectedStep, state.flowVersion.trigger)
+      ? flowStructureUtil.getStep(state.selectedStep, state.flowVersion)
       : null,
   );
   if (isNil(currentStep) || !isAction(currentStep)) {

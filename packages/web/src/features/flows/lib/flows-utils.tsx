@@ -1,4 +1,8 @@
-import { PopulatedFlow, FlowTriggerType } from '@activepieces/shared';
+import {
+  PopulatedFlow,
+  FlowTriggerKind,
+  flowStructureUtil,
+} from '@activepieces/shared';
 import cronstrue from 'cronstrue/i18n';
 import { t } from 'i18next';
 import JSZip from 'jszip';
@@ -33,9 +37,9 @@ export const flowsUtils = {
   downloadFlow,
   zipFlows,
   flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
-    const trigger = flow.version.trigger;
-    switch (trigger?.type) {
-      case FlowTriggerType.PIECE: {
+    const trigger = flowStructureUtil.getTriggerNode(flow.version.graph);
+    switch (trigger?.data.kind) {
+      case FlowTriggerKind.PIECE: {
         const cronExpression = flow.triggerSource?.schedule?.cronExpression;
         return cronExpression
           ? `${t('Run')} ${cronstrue
@@ -43,7 +47,7 @@ export const flowsUtils = {
               .toLocaleLowerCase()}`
           : t('Real time flow');
       }
-      case FlowTriggerType.EMPTY:
+      case FlowTriggerKind.EMPTY:
         console.error(
           t("Flow can't be published with empty trigger {name}", {
             name: flow.version.displayName,
@@ -53,9 +57,9 @@ export const flowsUtils = {
     }
   },
   flowStatusIconRenderer: (flow: PopulatedFlow) => {
-    const trigger = flow.version.trigger;
-    switch (trigger?.type) {
-      case FlowTriggerType.PIECE: {
+    const trigger = flowStructureUtil.getTriggerNode(flow.version.graph);
+    switch (trigger?.data.kind) {
+      case FlowTriggerKind.PIECE: {
         const cronExpression = flow.triggerSource?.schedule?.cronExpression;
         if (cronExpression) {
           return <TimerReset className="h-4 w-4 text-foreground" />;
@@ -63,7 +67,7 @@ export const flowsUtils = {
           return <Zap className="h-4 w-4 text-foreground fill-foreground" />;
         }
       }
-      case FlowTriggerType.EMPTY: {
+      case FlowTriggerKind.EMPTY: {
         console.error(
           t("Flow can't be published with empty trigger {name}", {
             name: flow.version.displayName,

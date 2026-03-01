@@ -1,4 +1,5 @@
-import { flowStructureUtil, FlowVersion } from '@activepieces/shared'
+import { FlowVersion } from '@activepieces/shared'
+import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 import { Migration } from '.'
 
 export const migrateConnectionIds: Migration = {
@@ -7,7 +8,7 @@ export const migrateConnectionIds: Migration = {
         return {
             ...flowVersion,
             schemaVersion: '2',
-            connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
+            connectionIds: legacyFlowStructureUtil.extractConnectionIds(flowVersion),
         }
     },
-} 
+}

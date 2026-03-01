@@ -1,11 +1,12 @@
 import {
-  FlowActionType,
+  FlowActionKind,
   flowStructureUtil,
-  FlowTriggerType,
+  FlowTriggerKind,
   FlowVersion,
   isNil,
   Note,
-  Step,
+  FlowGraphNode,
+  BranchEdge,
 } from '@activepieces/shared';
 import {
   ReactFlow,
@@ -145,28 +146,28 @@ export const FlowCanvas = React.memo(
         return;
       }
       const selectedSteps = selectedNodes
-        .map((node) => flowStructureUtil.getStep(node, flowVersion.trigger))
-        .filter((step) => !isNil(step));
+        .map((node) => flowStructureUtil.getStep(node, flowVersion))
+        .filter((step): step is FlowGraphNode => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
-          step.type === FlowActionType.LOOP_ON_ITEMS ||
-          step.type === FlowActionType.ROUTER
+          step.data.kind === FlowActionKind.LOOP_ON_ITEMS ||
+          step.data.kind === FlowActionKind.ROUTER
         ) {
           const childrenNotSelected = flowStructureUtil
-            .getAllChildSteps(step)
-            .filter((c) => isNil(selectedNodes.find((n) => n === c.name)));
+            .getAllChildSteps(step, flowVersion)
+            .filter((c) => isNil(selectedNodes.find((n) => n === c.id)));
           selectedSteps.push(...childrenNotSelected);
         }
       });
       const step = selectedStep
-        ? flowStructureUtil.getStep(selectedStep, flowVersion.trigger)
+        ? flowStructureUtil.getStep(selectedStep, flowVersion)
         : null;
       if (selectedNodes.length === 0 && step) {
         selectedSteps.push(step);
       }
       reactFlowStore
         .getState()
-        .addSelectedNodes(selectedSteps.map((step) => step.name));
+        .addSelectedNodes(selectedSteps.map((step) => step.id));
     }, [selectedNodes, reactFlowStore, selectedStep]);
 
     const { setCursorPosition } = useCursorPosition();
@@ -252,24 +253,44 @@ export const FlowCanvas = React.memo(
 );
 
 FlowCanvas.displayName = 'FlowCanvas';
-const getChildrenKey = (step: Step) => {
-  switch (step.type) {
-    case FlowActionType.LOOP_ON_ITEMS:
-      return step.firstLoopAction ? step.firstLoopAction.name : '';
-    case FlowActionType.ROUTER:
-      return step.children.reduce((routerKey, child) => {
-        const childrenKey = child
+const getChildrenKey = (node: FlowGraphNode, flowVersion: FlowVersion) => {
+  const graph = flowVersion.graph;
+  switch (node.data.kind) {
+    case FlowActionKind.LOOP_ON_ITEMS: {
+      const loopEdge = flowStructureUtil.getLoopEdge(graph, node.id);
+      if (loopEdge && loopEdge.target) {
+        return flowStructureUtil
+          .getDefaultChain(graph, loopEdge.target)
+          .join('-');
+      }
+      return '';
+    }
+    case FlowActionKind.ROUTER: {
+      const branchEdges: BranchEdge[] = flowStructureUtil.getBranchEdges(
+        graph,
+        node.id,
+      );
+      return branchEdges.reduce((routerKey, branchEdge) => {
+        const childrenKey = branchEdge.target
           ? flowStructureUtil
-              .getAllSteps(child)
-              .reduce(
-                (childKey, grandChild) => `${childKey}-${grandChild.name}`,
-                '',
-              )
+              .getDefaultChain(graph, branchEdge.target)
+              .join('-')
           : 'null';
         return `${routerKey}-${childrenKey}`;
       }, '');
-    case FlowActionType.CODE:
-    case FlowActionType.PIECE:
+    }
+    case FlowTriggerKind.PIECE:
+    case FlowTriggerKind.EMPTY: {
+      const successorEdge = flowStructureUtil.getSuccessorEdge(graph, node.id);
+      if (successorEdge && successorEdge.target) {
+        return flowStructureUtil
+          .getDefaultChain(graph, successorEdge.target)
+          .join('-');
+      }
+      return '';
+    }
+    case FlowActionKind.CODE:
+    case FlowActionKind.PIECE:
       return '';
   }
 };
@@ -279,19 +300,20 @@ const createGraphKey = (
   selectedStep: string,
 ) => {
   const flowGraphKey = flowStructureUtil
-    .getAllSteps(flowVersion.trigger)
-    .reduce((acc, step) => {
+    .getAllSteps(flowVersion)
+    .reduce((acc, node) => {
       const branchesNames =
-        step.type === FlowActionType.ROUTER
-          ? step.settings.branches.map((branch) => branch.branchName).join('-')
+        node.data.kind === FlowActionKind.ROUTER
+          ? flowStructureUtil
+              .getBranchEdges(flowVersion.graph, node.id)
+              .map((branchEdge) => branchEdge.branchName)
+              .join('-')
           : '0';
-      const childrenKey = getChildrenKey(step);
-      return `${acc}-${step.displayName}-${step.type}-${
-        step.nextAction ? step.nextAction.name : ''
-      }-${
-        step.type === FlowActionType.PIECE ||
-        step.type === FlowTriggerType.PIECE
-          ? step.settings.pieceName
+      const childrenKey = getChildrenKey(node, flowVersion);
+      return `${acc}-${node.data.displayName}-${node.data.kind}-${
+        node.data.kind === FlowActionKind.PIECE ||
+        node.data.kind === FlowTriggerKind.PIECE
+          ? node.data.settings.pieceName
           : ''
       }-${branchesNames}-${childrenKey}}`;
     }, '');

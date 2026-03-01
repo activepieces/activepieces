@@ -1,9 +1,8 @@
 import {
-  FlowAction,
-  FlowActionType,
+  FlowActionKind,
+  FlowNodeData,
   isNil,
-  FlowTrigger,
-  FlowTriggerType,
+  FlowTriggerKind,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -28,7 +27,7 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 
 type StepInfoProps = {
-  step: FlowAction | FlowTrigger;
+  step: FlowNodeData;
 };
 
 const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
@@ -37,8 +36,8 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
   });
 
   const isPiece =
-    stepMetadata?.type === FlowActionType.PIECE ||
-    stepMetadata?.type === FlowTriggerType.PIECE;
+    stepMetadata?.type === FlowActionKind.PIECE ||
+    stepMetadata?.type === FlowTriggerKind.PIECE;
   const pieceVersion = isPiece
     ? (stepMetadata as PieceStepMetadata)?.pieceVersion
     : undefined;
@@ -83,9 +82,9 @@ const PreviousOrNextButton = ({ isNext }: { isNext: boolean }) => {
   const [selectedStep, setSelectedStep, flowVersion] = useBuilderStateContext(
     (state) => [state.selectedStep, state.selectStepByName, state.flowVersion],
   );
-  const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger);
+  const allSteps = flowStructureUtil.getAllSteps(flowVersion);
   const currentStepIndex = allSteps.findIndex(
-    (step) => step.name === selectedStep,
+    (step) => step.id === selectedStep,
   );
   const nextStep = allSteps.at(currentStepIndex + 1);
   const previousStep =
@@ -101,9 +100,9 @@ const PreviousOrNextButton = ({ isNext }: { isNext: boolean }) => {
             e.preventDefault();
             e.stopPropagation();
             if (isNext && nextStep) {
-              setSelectedStep(nextStep.name);
+              setSelectedStep(nextStep.id);
             } else if (!isNext && previousStep) {
-              setSelectedStep(previousStep.name);
+              setSelectedStep(previousStep.id);
             }
           }}
           size="icon"
@@ -131,8 +130,8 @@ const StepDisplayedText = ({
   stepMetadata?: StepMetadataWithActionOrTriggerOrAgentDisplayName;
 }) => {
   const actionOrTriggerDisplayName =
-    stepMetadata?.type === FlowActionType.PIECE ||
-    stepMetadata?.type === FlowTriggerType.PIECE
+    stepMetadata?.type === FlowActionKind.PIECE ||
+    stepMetadata?.type === FlowTriggerKind.PIECE
       ? stepMetadata?.actionOrTriggerOrAgentDisplayName
       : stepMetadata?.displayName;
 

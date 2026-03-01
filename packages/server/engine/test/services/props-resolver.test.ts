@@ -1,5 +1,5 @@
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionKind, FlowTriggerKind, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
@@ -17,7 +17,7 @@ const executionState = FlowExecutorContext.empty()
     .upsertStep(
         'trigger',
         GenericStepOutput.create({
-            type: FlowTriggerType.PIECE,
+            type: FlowTriggerKind.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
             output: {
@@ -42,7 +42,7 @@ const executionState = FlowExecutorContext.empty()
     .upsertStep('step_1',
         GenericStepOutput.create({
 
-            type: FlowActionType.PIECE,
+            type: FlowActionKind.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
             output: {
@@ -50,7 +50,7 @@ const executionState = FlowExecutorContext.empty()
             },
         }))
     .upsertStep('step_2', GenericStepOutput.create({
-        type: FlowActionType.PIECE,
+        type: FlowActionKind.PIECE,
         status: StepOutputStatus.SUCCEEDED,
         input: {},
         output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
@@ -64,14 +64,14 @@ describe('Props resolver', () => {
     test('Test resolve inside nested loops', async () => {
 
         const modifiedExecutionState = executionState.upsertStep('step_3', GenericStepOutput.create({
-            type: FlowActionType.LOOP_ON_ITEMS,
+            type: FlowActionKind.LOOP_ON_ITEMS,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
             output: {
                 iterations: [
                     {
                         'step_8': GenericStepOutput.create({
-                            type: FlowActionType.PIECE,
+                            type: FlowActionKind.PIECE,
                             status: StepOutputStatus.SUCCEEDED,
                             input: {},
                             output: {
@@ -80,14 +80,14 @@ describe('Props resolver', () => {
                             },
                         }),
                         'step_4': GenericStepOutput.create({
-                            type: FlowActionType.LOOP_ON_ITEMS,
+                            type: FlowActionKind.LOOP_ON_ITEMS,
                             status: StepOutputStatus.SUCCEEDED,
                             input: {},
                             output: {
                                 iterations: [
                                     {
                                         'step_7': GenericStepOutput.create({
-                                            'type': FlowActionType.PIECE,
+                                            'type': FlowActionKind.PIECE,
                                             'status': StepOutputStatus.SUCCEEDED,
                                             'input': {
                                                 'unit': 'seconds',

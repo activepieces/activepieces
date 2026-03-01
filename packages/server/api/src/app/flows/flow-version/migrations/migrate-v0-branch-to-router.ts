@@ -1,17 +1,18 @@
-import { BranchExecutionType, FlowAction, FlowActionType, flowStructureUtil, FlowVersion, RouterAction, RouterExecutionType } from '@activepieces/shared'
+import { BranchExecutionType, FlowActionKind, FlowVersion, RouterExecutionType } from '@activepieces/shared'
+import { legacyFlowStructureUtil, LegacyStep } from './legacy-flow-structure-util'
 import { Migration } from '.'
 
 export const migrateBranchToRouter: Migration = {
     targetSchemaVersion: undefined,
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const unschemedStep = step as unknown as { type: string, settings: { conditions: unknown[] }, onSuccessAction: FlowAction | null, onFailureAction: FlowAction | null }
-            if (unschemedStep.type === 'BRANCH') {
-                const routerAction: RouterAction = {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
+            if (step.type === 'BRANCH') {
+                const routerAction: LegacyStep = {
                     displayName: step.displayName,
                     name: step.name,
                     valid: step.valid,
-                    type: FlowActionType.ROUTER,
+                    type: FlowActionKind.ROUTER,
+                    skip: false,
                     settings: {
                         branches: [
                             {
@@ -32,7 +33,7 @@ export const migrateBranchToRouter: Migration = {
                         },
                     },
                     nextAction: step.nextAction,
-                    children: [unschemedStep.onSuccessAction ?? null, unschemedStep.onFailureAction ?? null],
+                    children: [step.onSuccessAction ?? null, step.onFailureAction ?? null],
                 }
                 return routerAction
             }

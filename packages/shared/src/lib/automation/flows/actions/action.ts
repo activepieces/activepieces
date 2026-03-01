@@ -1,9 +1,10 @@
 import { Static, Type } from '@sinclair/typebox'
+import { DiscriminatedUnion } from '../../../core/common/base-model'
 import { VersionType } from '../../pieces'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
 
-export enum FlowActionType {
+export enum FlowActionKind {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
@@ -21,7 +22,6 @@ export enum BranchExecutionType {
 }
 
 const commonActionProps = {
-    name: Type.String({}),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
     skip: Type.Optional(Type.Boolean({})),
@@ -67,7 +67,7 @@ export type CodeActionSettings = Static<typeof CodeActionSettings>
 
 export const CodeActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.CODE),
+    kind: Type.Literal(FlowActionKind.CODE),
     settings: CodeActionSettings,
 })
 export const PieceActionSettings = Type.Object({
@@ -83,7 +83,7 @@ export type PieceActionSettings = Static<typeof PieceActionSettings>
 
 export const PieceActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.PIECE),
+    kind: Type.Literal(FlowActionKind.PIECE),
     settings: PieceActionSettings,
 })
 
@@ -98,7 +98,7 @@ export type LoopOnItemsActionSettings = Static<
 
 export const LoopOnItemsActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.LOOP_ON_ITEMS),
+    kind: Type.Literal(FlowActionKind.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
 })
 
@@ -212,12 +212,17 @@ const BranchSingleValueConditionValid = (addMinLength: boolean) =>
     })
 
 const BranchConditionValid = (addMinLength: boolean) =>
-    Type.Union([
-        BranchTextConditionValid(addMinLength),
-        BranchNumberConditionValid(addMinLength),
-        BranchDateConditionValid(addMinLength),
-        BranchSingleValueConditionValid(addMinLength),
-    ])
+    Type.Object({
+        firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+        secondValue: Type.Optional(Type.String(addMinLength ? { minLength: 1 } : {})),
+        caseSensitive: Type.Optional(Type.Boolean()),
+        operator: Type.Optional(Type.Union([
+            ...BranchOperatorTextLiterals,
+            ...BranchOperatorNumberLiterals,
+            ...BranchOperatorDateLiterals,
+            ...BranchOperatorSingleValueLiterals,
+        ])),
+    })
 
 export const ValidBranchCondition = BranchConditionValid(true)
 export type ValidBranchCondition = Static<typeof ValidBranchCondition>
@@ -241,106 +246,39 @@ export type BranchSingleValueCondition = Static<
   typeof BranchSingleValueCondition
 >
 
-
-export const RouterBranchesSchema = (addMinLength: boolean) =>
-    Type.Array(
-        Type.Union([
-            Type.Object({
-                conditions: Type.Array(Type.Array(BranchConditionValid(addMinLength))),
-                branchType: Type.Literal(BranchExecutionType.CONDITION),
-                branchName: Type.String(),
-            }),
-            Type.Object({
-                branchType: Type.Literal(BranchExecutionType.FALLBACK),
-                branchName: Type.String(),
-            }),
-        ]),
-    )
-
 export const RouterActionSettings = Type.Object({
     ...commonActionSettings,
-    branches: RouterBranchesSchema(false),
     executionType: Type.Enum(RouterExecutionType),
 })
 
 export const RouterActionSettingsWithValidation = Type.Object({
-    branches: RouterBranchesSchema(true),
     executionType: Type.Enum(RouterExecutionType),
 })
 
 export type RouterActionSettings = Static<typeof RouterActionSettings>
 
-
-
-// Union of all actions
-
-export const FlowAction = Type.Recursive((action) =>
-    Type.Union([
-        Type.Intersect([
-            CodeActionSchema,
-            Type.Object({
-                nextAction: Type.Optional(action),
-            }),
-        ]),
-        Type.Intersect([
-            PieceActionSchema,
-            Type.Object({
-                nextAction: Type.Optional(action),
-            }),
-        ]),
-        Type.Intersect([
-            LoopOnItemsActionSchema,
-            Type.Object({
-                nextAction: Type.Optional(action),
-                firstLoopAction: Type.Optional(action),
-            }),
-        ]),
-        Type.Intersect([
-            Type.Object({
-                ...commonActionProps,
-                type: Type.Literal(FlowActionType.ROUTER),
-                settings: RouterActionSettings,
-            }),
-            Type.Object({
-                nextAction: Type.Optional(action),
-                children: Type.Array(Type.Union([action, Type.Null()])),
-            }),
-        ]),
-    ]),
-)
 export const RouterActionSchema = Type.Object({
     ...commonActionProps,
-    type: Type.Literal(FlowActionType.ROUTER),
+    kind: Type.Literal(FlowActionKind.ROUTER),
     settings: RouterActionSettings,
 })
 
-export const SingleActionSchema = Type.Union([
+export const SingleActionSchema = DiscriminatedUnion('kind', [
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
     RouterActionSchema,
 ])
-export type FlowAction = Static<typeof FlowAction>
 
+export type FlowAction = Static<typeof SingleActionSchema>
 
-export type RouterAction = Static<typeof RouterActionSchema> & {
-    nextAction?: FlowAction
-    children: (FlowAction | null)[]
-}
+export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema>
 
-export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & {
-    nextAction?: FlowAction
-    firstLoopAction?: FlowAction
-}
+export type RouterAction = Static<typeof RouterActionSchema>
 
-export type PieceAction = Static<typeof PieceActionSchema> & {
-    nextAction?: FlowAction
-}
+export type PieceAction = Static<typeof PieceActionSchema>
 
-export type CodeAction = Static<typeof CodeActionSchema> & {
-    nextAction?: FlowAction
-}
-
+export type CodeAction = Static<typeof CodeActionSchema>
 
 export const emptyCondition: ValidBranchCondition = {
     firstValue: '',

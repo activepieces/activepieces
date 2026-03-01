@@ -87,7 +87,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     [reactFlow],
   );
   const draggedStep = activeDraggingStep
-    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion)
     : undefined;
   const handleDragStart = (e: DragStartEvent) => {
     if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_STEP_TAG) {
@@ -149,7 +149,9 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
         <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
 
-      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
+      {draggedStep && (
+        <StepDragOverlay step={draggedStep.data}></StepDragOverlay>
+      )}
       <NoteDragOverlay />
     </>
   );
@@ -167,7 +169,7 @@ function handleStepDragEnd({
   'applyOperation' | 'activeDraggingStep' | 'flowVersion'
 >) {
   const draggedStep = activeDraggingStep
-    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion)
     : undefined;
   const isOverSomething =
     !isNil(e.over?.data?.current) &&
@@ -178,11 +180,12 @@ function handleStepDragEnd({
     if (
       droppedAtNodeData?.parentStepName &&
       draggedStep &&
-      draggedStep.name !== droppedAtNodeData.parentStepName
+      draggedStep.id !== droppedAtNodeData.parentStepName
     ) {
       const isPartOfInnerFlow = flowStructureUtil.isChildOf(
         draggedStep,
         droppedAtNodeData.parentStepName,
+        flowVersion,
       );
       if (isPartOfInnerFlow) {
         toast(t('Invalid Move'), {
@@ -196,7 +199,7 @@ function handleStepDragEnd({
       applyOperation({
         type: FlowOperationType.MOVE_ACTION,
         request: {
-          name: draggedStep.name,
+          name: draggedStep.id,
           newParentStep: droppedAtNodeData.parentStepName,
           stepLocationRelativeToNewParent:
             droppedAtNodeData.stepLocationRelativeToParent,

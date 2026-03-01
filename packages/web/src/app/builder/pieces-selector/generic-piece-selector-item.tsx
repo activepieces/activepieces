@@ -1,4 +1,4 @@
-import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
+import { FlowActionKind, FlowTriggerKind } from '@activepieces/shared';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
@@ -14,8 +14,8 @@ type GenericActionOrTriggerItemProps = {
 
 const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
   if (
-    item.type === FlowActionType.PIECE ||
-    item.type === FlowTriggerType.PIECE
+    item.type === FlowActionKind.PIECE ||
+    item.type === FlowTriggerKind.PIECE
   ) {
     return {
       displayName: item.actionOrTrigger.displayName,

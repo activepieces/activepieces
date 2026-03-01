@@ -1,8 +1,9 @@
 import {
   isNil,
-  FlowTriggerType,
+  FlowTriggerKind,
   UpdateRunProgressRequest,
   assertNotNullOrUndefined,
+  flowStructureUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useRef } from 'react';
@@ -37,18 +38,24 @@ const TestFlowWidget = () => {
   const runRef = useRef(run);
   runRef.current = run;
 
+  const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph);
+  const triggerData = triggerNode?.data;
   const triggerHasSampleData =
-    flowVersion.trigger.type === FlowTriggerType.PIECE &&
-    !isNil(flowVersion.trigger.settings.sampleData?.lastTestDate);
+    triggerData?.kind === FlowTriggerKind.PIECE &&
+    !isNil(triggerData.settings.sampleData?.lastTestDate);
 
-  const isChatTrigger = pieceSelectorUtils.isChatTrigger(
-    flowVersion.trigger.settings.pieceName,
-    flowVersion.trigger.settings.triggerName,
-  );
-  const isManualTrigger = pieceSelectorUtils.isManualTrigger({
-    pieceName: flowVersion.trigger.settings.pieceName,
-    triggerName: flowVersion.trigger.settings.triggerName,
-  });
+  const isChatTrigger =
+    triggerData?.kind === FlowTriggerKind.PIECE &&
+    pieceSelectorUtils.isChatTrigger(
+      triggerData.settings.pieceName,
+      triggerData.settings.triggerName ?? '',
+    );
+  const isManualTrigger =
+    triggerData?.kind === FlowTriggerKind.PIECE &&
+    pieceSelectorUtils.isManualTrigger({
+      pieceName: triggerData.settings.pieceName,
+      triggerName: triggerData.settings.triggerName ?? '',
+    });
 
   const { mutate: runFlow, isPending: isTestingFlow } =
     flowHooks.useTestFlowOrStartManualTrigger({

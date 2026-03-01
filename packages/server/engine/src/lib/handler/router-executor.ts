@@ -1,5 +1,5 @@
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, isNil, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowGraphNode, FlowRunStatus, flowStructureUtil, isNil, RouterAction, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { utils } from '../utils'
 import { BaseExecutor } from './base-executor'
@@ -7,38 +7,50 @@ import { EngineConstants } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
-export const routerExecuter: BaseExecutor<RouterAction> = {
+export const routerExecuter: BaseExecutor = {
     async handle({
-        action,
+        node,
         executionState,
         constants,
     }) {
-        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
+        const action = node.data as RouterAction
+        const stepName = node.id
+        const graph = constants.flowVersion!.graph
+        const branchEdges = flowStructureUtil.getBranchEdges(graph, stepName)
+        const branches = branchEdges.map(edge => ({
+            branchType: edge.branchType,
+            branchName: edge.branchName,
+            conditions: edge.conditions,
+        }))
+        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterResolvedInput>({
             unresolvedInput: {
                 ...action.settings,
+                branches,
             },
             executionState,
         })
 
         switch (resolvedInput.executionType) {
             case RouterExecutionType.EXECUTE_ALL_MATCH:
-                return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_ALL_MATCH })
+                return handleRouterExecution({ node, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_ALL_MATCH })
             case RouterExecutionType.EXECUTE_FIRST_MATCH:
-                return handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_FIRST_MATCH })
+                return handleRouterExecution({ node, executionState, constants, censoredInput, resolvedInput, routerExecutionType: RouterExecutionType.EXECUTE_FIRST_MATCH })
             default:
                 throw new EngineGenericError('RouterExecutionTypeNotSupportedError', `Router execution type ${resolvedInput.executionType} is not supported`)
         }
     },
 }
 
-async function handleRouterExecution({ action, executionState, constants, censoredInput, resolvedInput, routerExecutionType }: {
-    action: RouterAction
+async function handleRouterExecution({ node, executionState, constants, censoredInput, resolvedInput, routerExecutionType }: {
+    node: FlowGraphNode
     executionState: FlowExecutorContext
     constants: EngineConstants
     censoredInput: unknown
-    resolvedInput: RouterActionSettings
+    resolvedInput: RouterResolvedInput
     routerExecutionType: RouterExecutionType
 }): Promise<FlowExecutorContext> {
+    const action = node.data as RouterAction
+    const stepName = node.id
     const stepStartTime = performance.now()
 
     const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
@@ -63,7 +75,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
             evaluation: evaluatedConditions[index],
         })),
     }).setDuration(stepEndTime - stepStartTime)
-    executionState = executionState.upsertStep(action.name, routerOutput)
+    executionState = executionState.upsertStep(stepName, routerOutput)
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError(async () => {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
@@ -74,13 +86,18 @@ async function handleRouterExecution({ action, executionState, constants, censor
             if (!condition) {
                 continue
             }
-    
+
+            const graph = constants.flowVersion!.graph
+            const branchEdgesInner = flowStructureUtil.getBranchEdges(graph, stepName)
+            const branchStepNames = branchEdgesInner[i]?.target
+                ? flowStructureUtil.getDefaultChain(graph, branchEdgesInner[i].target!)
+                : []
             executionState = await flowExecutor.execute({
-                action: action.children[i],
+                stepNames: branchStepNames,
                 executionState,
                 constants,
             })
-    
+
             const shouldBreakExecution = executionState.verdict.status !== FlowRunStatus.RUNNING || routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH
             if (shouldBreakExecution) {
                 break
@@ -90,8 +107,8 @@ async function handleRouterExecution({ action, executionState, constants, censor
     })
     if (executionStateError) {
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return executionState.upsertStep(action.name, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-            name: action.name,
+        return executionState.upsertStep(stepName, failedStepOutput).setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
+            name: stepName,
             displayName: action.displayName,
             message: utils.formatError(executionStateError),
         } })
@@ -281,4 +298,13 @@ function isValidDate(date: unknown): boolean {
         return dayjs(date).isValid()
     }
     return false
+}
+
+type RouterResolvedInput = {
+    executionType: RouterExecutionType
+    branches: Array<{
+        branchType: BranchExecutionType
+        branchName: string
+        conditions?: BranchCondition[][]
+    }>
 }

@@ -3,10 +3,9 @@ import {
     DATA_TYPE_KEY_IN_FILE_METADATA,
     FileCompression,
     FileType,
-    FlowAction,
+    FlowGraphNode,
     FlowId,
     flowStructureUtil,
-    FlowTrigger,
     FlowVersion,
     FlowVersionId,
     isNil,
@@ -14,7 +13,6 @@ import {
     SampleDataDataType,
     SampleDataFileType,
     SaveSampleDataResponse,
-    Step,
     stringifyNullOrUndefined,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -22,28 +20,34 @@ import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 export const sampleDataService = (log: FastifyBaseLogger) => ({
-    async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<Step> {
+    async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<FlowGraphNode> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(params.flowVersionId)
-        const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion.trigger)
+        const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion)
         const sampleDataFile = await saveSampleData(params, log)
-        const clonedStep: Step = JSON.parse(JSON.stringify(step))
+        const clonedStep: FlowGraphNode = JSON.parse(JSON.stringify(step))
+        const settings = clonedStep.data.settings as Record<string, unknown>
+        const existingSampleData = settings.sampleData as Record<string, unknown> | undefined
         return {
             ...clonedStep,
-            settings: {
-                ...clonedStep.settings,
-                sampleData: {
-                    ...clonedStep.settings.sampleData,
-                    sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
-                    sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
-                    lastTestDate: dayjs().toISOString(),
+            data: {
+                ...clonedStep.data,
+                settings: {
+                    ...settings,
+                    sampleData: {
+                        ...existingSampleData,
+                        sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : existingSampleData?.sampleDataFileId,
+                        sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : existingSampleData?.sampleDataInputFileId,
+                        lastTestDate: dayjs().toISOString(),
+                    },
                 },
             },
-        }
+        } as FlowGraphNode
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
-        const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
+        const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion)
         const fileType = params.type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
-        const fileId = params.type === SampleDataFileType.OUTPUT ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
+        const stepSettings = step.data.settings as Record<string, Record<string, unknown>>
+        const fileId = (params.type === SampleDataFileType.OUTPUT ? stepSettings.sampleData?.sampleDataFileId : stepSettings.sampleData?.sampleDataInputFileId) as string | undefined
         if (isNil(fileId)) {
             return {}
         }
@@ -80,15 +84,15 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         }).andWhere('metadata->>\'flowId\' = :flowId', { flowId: params.flowId }).execute()
     },
     async getSampleDataForFlow(projectId: ProjectId, flowVersion: FlowVersion, type: SampleDataFileType): Promise<Record<string, unknown>> {
-        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const steps = flowStructureUtil.getAllSteps(flowVersion)
         const sampleDataPromises = steps.map(async (step) => {
             const data = await this.getOrReturnEmpty({
                 projectId,
                 flowVersion,
-                stepName: step.name,
+                stepName: step.id,
                 type,
             })
-            return { [step.name]: data }
+            return { [step.id]: data }
         })
         const sampleDataArray = await Promise.all(sampleDataPromises)
         return Object.assign({}, ...sampleDataArray)
@@ -103,7 +107,7 @@ export async function saveSampleData({
     type,
 }: SaveSampleDataParams, log: FastifyBaseLogger): Promise<SaveSampleDataResponse> {
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
-    const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
+    const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion)
     const fileType = type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
     const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step, fileType, log)
     const payloadWithStringifiedNullOrUndefined = isNil(payload) ? stringifyNullOrUndefined(payload) : payload
@@ -124,8 +128,9 @@ export async function saveSampleData({
     })
 }
 
-async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: FlowAction | FlowTrigger, fileType: FileType, log: FastifyBaseLogger): Promise<string> {
-    const sampleDataId = fileType === FileType.SAMPLE_DATA ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
+async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: FlowGraphNode, fileType: FileType, log: FastifyBaseLogger): Promise<string> {
+    const stepSettings = step.data.settings as Record<string, Record<string, unknown>>
+    const sampleDataId = (fileType === FileType.SAMPLE_DATA ? stepSettings.sampleData?.sampleDataFileId : stepSettings.sampleData?.sampleDataInputFileId) as string | undefined
     if (isNil(sampleDataId)) {
         return apId()
     }

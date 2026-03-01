@@ -1,4 +1,4 @@
-import { FlowActionType, FlowOperationType, isNil } from '@activepieces/shared';
+import { FlowActionKind, FlowOperationType, isNil } from '@activepieces/shared';
 
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import {
@@ -113,7 +113,7 @@ const ApprovalsTabContent = ({
           key={`${item.pieceMetadata.pieceName}-${item.action.name}`}
           item={{
             actionOrTrigger: item.action,
-            type: FlowActionType.PIECE,
+            type: FlowActionKind.PIECE,
             pieceMetadata: item.pieceMetadata,
           }}
           hidePieceIconAndDescription={false}
@@ -126,7 +126,7 @@ const ApprovalsTabContent = ({
             handleAddingOrUpdatingStep({
               pieceSelectorItem: {
                 actionOrTrigger: item.action,
-                type: FlowActionType.PIECE,
+                type: FlowActionKind.PIECE,
                 pieceMetadata: item.pieceMetadata,
               },
               operation,

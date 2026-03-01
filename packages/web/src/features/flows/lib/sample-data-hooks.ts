@@ -19,13 +19,13 @@ export const sampleDataHooks = {
       retry: 4,
       refetchOnWindowFocus: false,
       queryFn: async () => {
-        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);
+        const steps = flowStructureUtil.getAllSteps(flowVersion!);
         const singleStepSampleData = await Promise.all(
           steps.map(async (step) => {
             return {
-              [step.name]: await getSampleData(
+              [step.id]: await getSampleData(
                 flowVersion!,
-                step.name,
+                step.id,
                 projectId!,
                 SampleDataFileType.OUTPUT,
               ),
@@ -51,14 +51,14 @@ export const sampleDataHooks = {
       retry: 4,
       refetchOnWindowFocus: false,
       queryFn: async () => {
-        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);
+        const steps = flowStructureUtil.getAllSteps(flowVersion!);
         const singleStepSampleDataInput = await Promise.all(
           steps.map(async (step) => {
             return {
-              [step.name]: step.settings.sampleData?.sampleDataInputFileId
+              [step.id]: step.data.settings.sampleData?.sampleDataInputFileId
                 ? await getSampleData(
                     flowVersion!,
-                    step.name,
+                    step.id,
                     projectId!,
                     SampleDataFileType.INPUT,
                   )

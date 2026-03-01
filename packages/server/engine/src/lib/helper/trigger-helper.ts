@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, flowStructureUtil, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -74,7 +74,9 @@ export const triggerHelper = {
     },
 
     async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
-        const { pieceName, pieceVersion, triggerName, input, propertySettings } = (params.flowVersion.trigger as PieceTrigger).settings
+        const triggerNode = flowStructureUtil.getTriggerNode(params.flowVersion.graph)!
+        const triggerData = triggerNode.data as PieceTrigger
+        const { pieceName, pieceVersion, triggerName, input, propertySettings } = triggerData.settings
 
         if (isNil(triggerName)) {
             throw new EngineGenericError('TriggerNameNotSetError', 'Trigger name is not set')

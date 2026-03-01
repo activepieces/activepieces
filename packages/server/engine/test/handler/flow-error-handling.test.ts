@@ -3,13 +3,13 @@ import { FlowRunStatus } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'
-import { buildCodeAction, buildPieceAction, generateMockEngineConstants } from './test-helper'
+import { buildActionNode, buildCodeAction, buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 describe('code piece with error handling', () => {
 
     it('should continue on failure when execute code a code that throws an error', async () => {
         const result = await codeExecutor.handle({
-            action: buildCodeAction({
+            node: buildActionNode(buildCodeAction({
                 name: 'runtime',
                 input: {},
                 errorHandlingOptions: {
@@ -20,7 +20,7 @@ describe('code piece with error handling', () => {
                         value: false,
                     },
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            })), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
@@ -35,7 +35,7 @@ describe('piece with error handling', () => {
 
     it('should continue on failure when piece fails', async () => {
         const result = await pieceExecutor.handle({
-            action: buildPieceAction({
+            node: buildActionNode(buildPieceAction({
                 name: 'send_http',
                 pieceName: '@activepieces/piece-http',
                 actionName: 'send_request',
@@ -55,7 +55,7 @@ describe('piece with error handling', () => {
                         value: false,
                     },
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            })), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
 
         const expectedError = {

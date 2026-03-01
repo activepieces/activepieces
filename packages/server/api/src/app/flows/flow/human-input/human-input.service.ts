@@ -1,4 +1,4 @@
-import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
+import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, flowStructureUtil, FormInputType, FormResponse, isNil, PieceTrigger, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { platformService } from '../../../platform/platform.service'
@@ -29,8 +29,12 @@ function isFormTrigger(flow: PopulatedFlow | null): flow is PopulatedFlow {
     if (isNil(flow)) {
         return false
     }
-    const triggerSettings = flow.version.trigger.settings
-    return triggerSettings.pieceName === FORMS_PIECE_NAME && FORMS_TRIGGER_NAMES.includes(triggerSettings.triggerName)
+    const triggerNode = flowStructureUtil.getTriggerNode(flow.version.graph)
+    if (isNil(triggerNode)) {
+        return false
+    }
+    const triggerData = triggerNode.data as PieceTrigger
+    return triggerData.settings.pieceName === FORMS_PIECE_NAME && FORMS_TRIGGER_NAMES.includes(triggerData.settings.triggerName!)
 }
 
 export const humanInputService = (log: FastifyBaseLogger) => ({
@@ -45,25 +49,28 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+        const triggerNode = flowStructureUtil.getTriggerNode(flow.version.graph)!
+        const triggerData = triggerNode.data as PieceTrigger
         const pieceVersion = await pieceMetadataService(log).resolveExactVersion({
             name: FORMS_PIECE_NAME,
-            version: flow.version.trigger.settings.pieceVersion,
+            version: triggerData.settings.pieceVersion,
             platformId: await projectService.getPlatformId(flow.projectId),
         })
-        const triggerSettings = flow.version.trigger.settings
         return {
             id: flow.id,
             title: flow.version.displayName,
-            props: triggerSettings.triggerName === FILE_TRIGGER ? SIMPLE_FILE_PROPS : triggerSettings.input,
+            props: triggerData.settings.triggerName === FILE_TRIGGER ? SIMPLE_FILE_PROPS : triggerData.settings.input as FormResponse['props'],
             projectId: flow.projectId,
             version: pieceVersion,
         }
     },
     getChatUIByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<ChatUIResponse> => {
         const flow = await getPopulatedFlowById(log, flowId, useDraft)
+        const triggerNode = flow ? flowStructureUtil.getTriggerNode(flow.version.graph) : undefined
+        const triggerData = triggerNode?.data as PieceTrigger | undefined
         if (!flow
-            || flow.version.trigger.settings.triggerName !== 'chat_submission'
-            || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
+            || triggerData?.settings.triggerName !== 'chat_submission'
+            || triggerData?.settings.pieceName !== FORMS_PIECE_NAME) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_FORM_NOT_FOUND,
                 params: {
@@ -77,7 +84,7 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         return {
             id: flow.id,
             title: flow.version.displayName,
-            props: flow.version.trigger.settings.input,
+            props: triggerData.settings.input as ChatUIResponse['props'],
             projectId: flow.projectId,
             platformLogoUrl: platform.logoIconUrl,
             platformName: platform.name,

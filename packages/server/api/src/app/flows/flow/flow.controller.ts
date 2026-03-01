@@ -6,8 +6,6 @@ import { ActivepiecesError, ApId, ApplicationEventName,
     FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
-    flowStructureUtil,
-    FlowTrigger,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
     GitPushOperationType,
@@ -80,17 +78,18 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
         preValidation: async (request) => {
             if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
+                const rawRequest = request.body.request as Record<string, unknown>
                 const migratedFlowTemplate = await migrateFlowVersionTemplate({
-                    displayName: request.body.request.displayName,
-                    trigger: request.body.request.trigger,
-                    schemaVersion: request.body.request.schemaVersion,
-                    notes: request.body.request.notes ?? [],
+                    displayName: rawRequest.displayName as string,
+                    trigger: rawRequest.graph,
+                    graph: rawRequest.graph,
+                    schemaVersion: rawRequest.schemaVersion as string | null,
+                    notes: (rawRequest.notes ?? []) as unknown[],
                     valid: false,
                 })
                 request.body.request = {
-                    ...request.body.request,
                     displayName: migratedFlowTemplate.displayName,
-                    trigger: migratedFlowTemplate.trigger,
+                    graph: migratedFlowTemplate.graph,
                     schemaVersion: migratedFlowTemplate.schemaVersion,
                     notes: migratedFlowTemplate.notes,
                 }
@@ -201,41 +200,38 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
     if (operation.type === FlowOperationType.IMPORT_FLOW) {
-        const clearSampleData = {
-            sampleDataFileId: undefined,
-            sampleDataInputFileId: undefined,
-            lastTestDate: undefined,
-        }
-        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    sampleData: {
-                        ...step.settings.sampleData,
-                        ...clearSampleData,
-                    },
-                },
-            }
-        }) as FlowTrigger
+        const graph = operation.request.graph
         return {
             ...operation,
             request: {
                 ...operation.request,
-                trigger: {
-                    ...trigger,
-                    settings: {
-                        ...trigger.settings,
-                        sampleData: {
-                            ...trigger.settings.sampleData,
-                            ...clearSampleData,
-                        },
-                    },
+                graph: {
+                    ...graph,
+                    nodes: graph.nodes.map(cleanNodeSampleData) as typeof graph.nodes,
                 },
             },
         }
     }
     return operation
+}
+
+function cleanNodeSampleData(node: { id: string, type: string, data: { settings: unknown } & Record<string, unknown> }): typeof node {
+    const settings = node.data.settings as Record<string, unknown>
+    return {
+        ...node,
+        data: {
+            ...node.data,
+            settings: {
+                ...settings,
+                sampleData: {
+                    ...(settings.sampleData as Record<string, unknown>),
+                    sampleDataFileId: undefined,
+                    sampleDataInputFileId: undefined,
+                    lastTestDate: undefined,
+                },
+            },
+        },
+    }
 }
 
 async function assertThatFlowIsNotBeingUsed(

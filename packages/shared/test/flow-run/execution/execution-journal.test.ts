@@ -1,10 +1,10 @@
 import { executionJournal } from '../../../src/lib/automation/flow-run/execution/execution-journal'
 import { GenericStepOutput, LoopStepOutput, StepOutput, StepOutputStatus } from '../../../src/lib/automation/flow-run/execution/step-output'
-import { FlowActionType } from '../../../src/lib/automation/flows/actions/action'
+import { FlowActionKind } from '../../../src/lib/automation/flows/actions/action'
 
 function createCodeStep(status: StepOutputStatus = StepOutputStatus.SUCCEEDED): StepOutput {
     return GenericStepOutput.create({
-        type: FlowActionType.CODE,
+        type: FlowActionKind.CODE,
         status,
         input: {},
     })
@@ -18,12 +18,12 @@ describe('executionJournal.getPathToStep', () => {
     it('should return correct paths for each step in the flow', () => {
         const steps: Record<string, StepOutput> = {
             step1: GenericStepOutput.create({
-                type: FlowActionType.CODE,
+                type: FlowActionKind.CODE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
             }),
             step2: GenericStepOutput.create({
-                type: FlowActionType.LOOP_ON_ITEMS,
+                type: FlowActionKind.LOOP_ON_ITEMS,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
                 output: {
@@ -32,12 +32,12 @@ describe('executionJournal.getPathToStep', () => {
                     iterations: [
                         {
                             step3: GenericStepOutput.create({
-                                type: FlowActionType.CODE,
+                                type: FlowActionKind.CODE,
                                 status: StepOutputStatus.SUCCEEDED,
                                 input: {},
                             }),
                             step4: GenericStepOutput.create({
-                                type: FlowActionType.LOOP_ON_ITEMS,
+                                type: FlowActionKind.LOOP_ON_ITEMS,
                                 status: StepOutputStatus.SUCCEEDED,
                                 input: {},
                                 output: {
@@ -45,7 +45,7 @@ describe('executionJournal.getPathToStep', () => {
                                     index: 0,
                                     iterations: [{
                                         step5: GenericStepOutput.create({
-                                            type: FlowActionType.CODE,
+                                            type: FlowActionKind.CODE,
                                             status: StepOutputStatus.SUCCEEDED,
                                             input: {},
                                         }),
@@ -55,12 +55,12 @@ describe('executionJournal.getPathToStep', () => {
                         },
                         {
                             step3: GenericStepOutput.create({
-                                type: FlowActionType.CODE,
+                                type: FlowActionKind.CODE,
                                 status: StepOutputStatus.SUCCEEDED,
                                 input: {},
                             }),
                             step4: GenericStepOutput.create({
-                                type: FlowActionType.LOOP_ON_ITEMS,
+                                type: FlowActionKind.LOOP_ON_ITEMS,
                                 status: StepOutputStatus.SUCCEEDED,
                                 input: {},
                                 output: {
@@ -68,7 +68,7 @@ describe('executionJournal.getPathToStep', () => {
                                     index: 0,
                                     iterations: [{
                                         step5: GenericStepOutput.create({
-                                            type: FlowActionType.CODE,
+                                            type: FlowActionKind.CODE,
                                             status: StepOutputStatus.SUCCEEDED,
                                             input: {},
                                         }),
@@ -134,7 +134,7 @@ describe('executionJournal.getOrCreateStateAtPath', () => {
         const steps: Record<string, StepOutput> = {}
         executionJournal.getOrCreateStateAtPath({ path: [['newLoop', 0]], steps })
         expect(steps['newLoop']).toBeDefined()
-        expect(steps['newLoop'].type).toBe(FlowActionType.LOOP_ON_ITEMS)
+        expect(steps['newLoop'].type).toBe(FlowActionKind.LOOP_ON_ITEMS)
     })
 
     it('should auto-create missing iterations', () => {

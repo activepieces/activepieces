@@ -1,4 +1,4 @@
-import { FlowActionType, flowStructureUtil, isNil } from '@activepieces/shared';
+import { FlowActionKind, flowStructureUtil, isNil } from '@activepieces/shared';
 import { CaretDownIcon, CaretUpIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -15,20 +15,20 @@ import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
-  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes, stepType] =
+  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes, stepKind] =
     useBuilderStateContext((state) => [
       state.setLoopIndex,
       state.loopsIndexes[stepName] ?? 0,
       state.run,
       state.flowVersion,
       state.loopsIndexes,
-      flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
+      flowStructureUtil.getStep(stepName, state.flowVersion)?.data.kind,
     ]);
   const stepOutput = useMemo(() => {
     return run && run.steps
       ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
       : null;
-  }, [run, stepName, loopsIndexes, flowVersion.trigger]);
+  }, [run, stepName, loopsIndexes, flowVersion]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -48,7 +48,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
   const totalIterations =
     stepOutput &&
     stepOutput.output &&
-    stepOutput.type === FlowActionType.LOOP_ON_ITEMS
+    stepOutput.type === FlowActionKind.LOOP_ON_ITEMS
       ? stepOutput.output.iterations.length
       : 0;
 
@@ -60,7 +60,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     setLoopIndex(stepName, parsedValue - 1);
   }
 
-  if (isNil(run) || stepType !== FlowActionType.LOOP_ON_ITEMS) {
+  if (isNil(run) || stepKind !== FlowActionKind.LOOP_ON_ITEMS) {
     return <></>;
   }
 

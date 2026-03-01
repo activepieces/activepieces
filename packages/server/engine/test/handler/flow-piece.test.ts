@@ -1,14 +1,14 @@
-import { FlowAction, FlowRunStatus } from '@activepieces/shared'
+import { FlowRunStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'
-import { buildPieceAction, generateMockEngineConstants } from './test-helper'
+import { buildActionNode, buildFlowVersion, buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 describe('pieceExecutor', () => {
 
     it('should execute data mapper successfully', async () => {
         const result = await pieceExecutor.handle({
-            action: buildPieceAction({
+            node: buildActionNode(buildPieceAction({
                 name: 'data_mapper',
                 pieceName: '@activepieces/piece-data-mapper',
                 actionName: 'advanced_mapping',
@@ -17,7 +17,7 @@ describe('pieceExecutor', () => {
                         'key': '{{ 1 + 2 }}',
                     },
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            })), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
@@ -27,7 +27,7 @@ describe('pieceExecutor', () => {
 
     it('should execute fail gracefully when pieces fail', async () => {
         const result = await pieceExecutor.handle({
-            action: buildPieceAction({
+            node: buildActionNode(buildPieceAction({
                 name: 'send_http',
                 pieceName: '@activepieces/piece-http',
                 actionName: 'send_request',
@@ -39,7 +39,7 @@ describe('pieceExecutor', () => {
                     'body': {},
                     'queryParams': {},
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            })), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
 
         const expectedError = {
@@ -66,14 +66,18 @@ describe('pieceExecutor', () => {
         expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError, null, 2))
     }, 10000)
     it('should skip piece action', async () => {
+        const step = buildPieceAction({
+            name: 'data_mapper',
+            input: {},
+            skip: true,
+            pieceName: '@activepieces/piece-data-mapper',
+            actionName: 'advanced_mapping',
+        })
+        const fv = buildFlowVersion([step])
         const result = await flowExecutor.execute({
-            action: buildPieceAction({
-                name: 'data_mapper',
-                input: {},
-                skip: true,
-                pieceName: '@activepieces/piece-data-mapper',
-                actionName: 'advanced_mapping',
-            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            stepNames: ['data_mapper'],
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ flowVersion: fv }),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
@@ -81,31 +85,29 @@ describe('pieceExecutor', () => {
         expect(result.steps.data_mapper).toBeUndefined()
     })
     it('should skip piece action in flow', async () => {
-        const flow: FlowAction = {
-            ...buildPieceAction({
-                name: 'data_mapper',
-                input: {
-                    mapping: {
-                        'key': '{{ 1 + 2 }}',
-                    },
+        const step1 = buildPieceAction({
+            name: 'data_mapper',
+            input: {
+                mapping: {
+                    'key': '{{ 1 + 2 }}',
                 },
-                skip: false,
-                pieceName: '@activepieces/piece-data-mapper',
-                actionName: 'advanced_mapping',
-            }),
-            nextAction: {
-                ...buildPieceAction({
-                    name: 'send_http',
-                    pieceName: '@activepieces/piece-http',
-                    actionName: 'send_request',
-                    input: {},
-                    skip: true,
-                }),
-                nextAction: undefined,
             },
-        }
+            skip: false,
+            pieceName: '@activepieces/piece-data-mapper',
+            actionName: 'advanced_mapping',
+        })
+        const step2 = buildPieceAction({
+            name: 'send_http',
+            pieceName: '@activepieces/piece-http',
+            actionName: 'send_request',
+            input: {},
+            skip: true,
+        })
+        const fv = buildFlowVersion([step1, step2])
         const result = await flowExecutor.execute({
-            action: flow, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+            stepNames: ['data_mapper', 'send_http'],
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ flowVersion: fv }),
         })
         expect(result.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,

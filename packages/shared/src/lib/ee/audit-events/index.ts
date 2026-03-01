@@ -311,7 +311,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         case FlowOperationType.ADD_ACTION:
             return `Added action "${event.data.request.request.action.displayName}" to "${event.data.flowVersion.displayName}" Flow.`
         case FlowOperationType.UPDATE_ACTION:
-            return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`
+            return `Updated action "${event.data.request.request.action.displayName}" in "${event.data.flowVersion.displayName}" Flow.`
         case FlowOperationType.DELETE_ACTION:
         {
             const request = event.data.request.request
@@ -387,5 +387,11 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated note in flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.DELETE_NOTE:
             return `Deleted note in flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_BRANCH:
+            return `Updated branch number ${
+                event.data.request.request.branchIndex + 1
+            } in flow "${event.data.flowVersion.displayName}" for the step "${
+                event.data.request.request.stepName
+            }".`
     }
 }

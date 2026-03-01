@@ -1,8 +1,9 @@
 import {
     DefaultProjectRole,
+    FlowNodeType,
     FlowOperationType,
     FlowStatus,
-    FlowTriggerType,
+    FlowTriggerKind,
     PackageType,
     PieceType,
     PlatformRole,
@@ -219,18 +220,25 @@ describe('Flow API', () => {
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockUser.id,
-                trigger: {
-                    type: FlowTriggerType.PIECE,
-                    name: 'trigger',
-                    settings: {
-                        pieceName: '@activepieces/piece-schedule',
-                        pieceVersion: '0.1.5',
-                        input: {},
-                        propertySettings: {},
-                        triggerName: 'every_hour',
-                    },
-                    valid: true,
-                    displayName: 'Trigger',
+                graph: {
+                    nodes: [{
+                        id: 'trigger',
+                        type: FlowNodeType.TRIGGER,
+                        data: {
+                            kind: FlowTriggerKind.PIECE,
+                            name: 'trigger',
+                            displayName: 'Trigger',
+                            valid: true,
+                            settings: {
+                                pieceName: '@activepieces/piece-schedule',
+                                pieceVersion: '0.1.5',
+                                input: {},
+                                propertySettings: {},
+                                triggerName: 'every_hour',
+                            },
+                        },
+                    }],
+                    edges: [],
                 },
             })
             await databaseConnection()

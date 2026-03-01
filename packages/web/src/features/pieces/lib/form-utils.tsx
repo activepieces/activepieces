@@ -16,7 +16,8 @@ import {
   PieceTrigger,
   isNil,
   RouterActionSchema,
-  RouterBranchesSchema,
+  BranchCondition,
+  BranchExecutionType,
   SampleDataSetting,
   RouterExecutionType,
   UpsertOAuth2Request,
@@ -26,10 +27,9 @@ import {
   UpsertCustomAuthRequest,
   UpsertBasicAuthRequest,
   UpsertSecretTextRequest,
-  FlowTriggerType,
-  FlowActionType,
-  FlowAction,
-  FlowTrigger,
+  FlowTriggerKind,
+  FlowActionKind,
+  FlowNodeData,
   PropertyExecutionType,
   PropertySettings,
   PieceTriggerSettings,
@@ -38,12 +38,12 @@ import { TSchema, Type } from '@sinclair/typebox';
 import { t } from 'i18next';
 
 function buildInputSchemaForStep(
-  type: FlowActionType | FlowTriggerType,
+  type: FlowActionKind | FlowTriggerKind,
   piece: PieceMetadata | null,
   actionNameOrTriggerName: string,
 ): TSchema {
   switch (type) {
-    case FlowActionType.PIECE: {
+    case FlowActionKind.PIECE: {
       if (
         piece &&
         actionNameOrTriggerName &&
@@ -57,7 +57,7 @@ function buildInputSchemaForStep(
       }
       return Type.Object({});
     }
-    case FlowTriggerType.PIECE: {
+    case FlowTriggerKind.PIECE: {
       if (
         piece &&
         actionNameOrTriggerName &&
@@ -269,13 +269,11 @@ function buildConnectionSchema(auth: PieceAuthProperty) {
 
 export const formUtils = {
   /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
-  removeUndefinedFromInput: (step: FlowAction | FlowTrigger) => {
-    const copiedStep = JSON.parse(JSON.stringify(step)) as
-      | FlowAction
-      | FlowTrigger;
+  removeUndefinedFromInput: (step: FlowNodeData) => {
+    const copiedStep = JSON.parse(JSON.stringify(step)) as FlowNodeData;
     if (
-      copiedStep.type !== FlowTriggerType.PIECE &&
-      copiedStep.type !== FlowActionType.PIECE
+      copiedStep.kind !== FlowTriggerKind.PIECE &&
+      copiedStep.kind !== FlowActionKind.PIECE
     ) {
       return step;
     }
@@ -285,17 +283,16 @@ export const formUtils = {
         ([_, value]) => value !== undefined,
       ),
     );
-    copiedStep.nextAction = null;
     return copiedStep;
   },
 
   buildPieceSchema: (
-    type: FlowActionType | FlowTriggerType,
+    type: FlowActionKind | FlowTriggerKind,
     actionNameOrTriggerName: string,
     piece: PieceMetadataModel | null,
   ) => {
     switch (type) {
-      case FlowActionType.LOOP_ON_ITEMS:
+      case FlowActionKind.LOOP_ON_ITEMS:
         return Type.Composite([
           Type.Omit(LoopOnItemsActionSchema, ['settings']),
           Type.Object({
@@ -306,20 +303,28 @@ export const formUtils = {
             }),
           }),
         ]);
-      case FlowActionType.ROUTER:
+      case FlowActionKind.ROUTER:
         return Type.Intersect([
           Type.Omit(RouterActionSchema, ['settings']),
           Type.Object({
             settings: Type.Object({
-              branches: RouterBranchesSchema(true),
               executionType: Type.Enum(RouterExecutionType),
               sampleData: SampleDataSetting,
             }),
+            branches: Type.Array(
+              Type.Object({
+                branchName: Type.String({ minLength: 1 }),
+                branchType: Type.Enum(BranchExecutionType),
+                conditions: Type.Optional(
+                  Type.Array(Type.Array(BranchCondition)),
+                ),
+              }),
+            ),
           }),
         ]);
-      case FlowActionType.CODE:
+      case FlowActionKind.CODE:
         return CodeActionSchema;
-      case FlowActionType.PIECE: {
+      case FlowActionKind.PIECE: {
         return Type.Composite([
           Type.Omit(PieceActionSchema, ['settings']),
           Type.Object({
@@ -339,7 +344,7 @@ export const formUtils = {
           }),
         ]);
       }
-      case FlowTriggerType.PIECE: {
+      case FlowTriggerKind.PIECE: {
         return Type.Composite([
           Type.Omit(PieceTrigger, ['settings']),
           Type.Object({

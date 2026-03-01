@@ -75,9 +75,9 @@ const TemplateViewer = ({ template }: { template: Template }) => {
               <span className="text-sm font-medium text-muted-foreground">
                 {t('Steps in this flow')}
               </span>
-              {template.flows?.[0]?.trigger && (
+              {template.flows?.[0] && (
                 <PieceIconList
-                  trigger={template.flows[0].trigger}
+                  flowVersion={template.flows[0]}
                   maxNumberOfIconsToShow={5}
                 />
               )}

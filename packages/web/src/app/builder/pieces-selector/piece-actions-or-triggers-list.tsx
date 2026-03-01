@@ -1,7 +1,7 @@
 import {
-  FlowActionType,
+  FlowActionKind,
   isNil,
-  FlowTriggerType,
+  FlowTriggerKind,
   TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -32,29 +32,29 @@ export const convertStepMetadataToPieceSelectorItems = (
   stepMetadataWithSuggestions: StepMetadataWithSuggestions,
 ): PieceSelectorItem[] => {
   switch (stepMetadataWithSuggestions.type) {
-    case FlowActionType.PIECE: {
+    case FlowActionKind.PIECE: {
       const actions = pieceSelectorUtils.removeHiddenActions(
         stepMetadataWithSuggestions,
       );
       return actions.map((action) => ({
         actionOrTrigger: action,
-        type: FlowActionType.PIECE,
+        type: FlowActionKind.PIECE,
         pieceMetadata: stepMetadataWithSuggestions,
       }));
     }
-    case FlowTriggerType.PIECE: {
+    case FlowTriggerKind.PIECE: {
       const triggers = Object.values(
         stepMetadataWithSuggestions.suggestedTriggers ?? {},
       );
       return triggers.map((trigger) => ({
         actionOrTrigger: trigger,
-        type: FlowTriggerType.PIECE,
+        type: FlowTriggerKind.PIECE,
         pieceMetadata: stepMetadataWithSuggestions,
       }));
     }
-    case FlowActionType.CODE:
-    case FlowActionType.LOOP_ON_ITEMS:
-    case FlowActionType.ROUTER: {
+    case FlowActionKind.CODE:
+    case FlowActionKind.LOOP_ON_ITEMS:
+    case FlowActionKind.ROUTER: {
       return CORE_ACTIONS_METADATA.filter(
         (step) => step.type === stepMetadataWithSuggestions.type,
       );
@@ -102,14 +102,14 @@ export const PieceActionsOrTriggersList: React.FC<
                 stepMetadataWithSuggestions={stepMetadataWithSuggestions}
                 onClick={() => {
                   if (
-                    item.type === FlowActionType.PIECE ||
-                    item.type === FlowTriggerType.PIECE
+                    item.type === FlowActionKind.PIECE ||
+                    item.type === FlowTriggerKind.PIECE
                   ) {
                     capture({
                       name: TelemetryEventName.PIECE_SELECTOR_SEARCH,
                       payload: {
                         search: searchQuery,
-                        isTrigger: item.type === FlowTriggerType.PIECE,
+                        isTrigger: item.type === FlowTriggerKind.PIECE,
                         selectedActionOrTriggerName: item.actionOrTrigger.name,
                       },
                     });

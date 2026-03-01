@@ -1,7 +1,7 @@
 import {
   PieceCategory,
-  FlowTriggerType,
-  FlowActionType,
+  FlowTriggerKind,
+  FlowActionKind,
   AI_PIECE_NAME,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -15,14 +15,14 @@ import {
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (
-    stepMetadata.type === FlowActionType.PIECE ||
-    stepMetadata.type === FlowTriggerType.PIECE
+    stepMetadata.type === FlowActionKind.PIECE ||
+    stepMetadata.type === FlowTriggerKind.PIECE
   ) {
     return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
   }
   return (
-    stepMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
-    stepMetadata.type === FlowActionType.ROUTER
+    stepMetadata.type === FlowActionKind.LOOP_ON_ITEMS ||
+    stepMetadata.type === FlowActionKind.ROUTER
   );
 };
 
@@ -57,8 +57,8 @@ const getAiAndAgentsPieces = (queryResult: StepMetadataWithSuggestions[]) => {
 
 const isAiAndAgentPiece = (stepMetadata: StepMetadata) => {
   if (
-    stepMetadata.type === FlowActionType.PIECE ||
-    stepMetadata.type === FlowTriggerType.PIECE
+    stepMetadata.type === FlowActionKind.PIECE ||
+    stepMetadata.type === FlowTriggerKind.PIECE
   ) {
     return stepMetadata.categories.some((category) =>
       [
@@ -71,8 +71,8 @@ const isAiAndAgentPiece = (stepMetadata: StepMetadata) => {
 };
 
 const isUtilityPiece = (metadata: StepMetadata) =>
-  metadata.type !== FlowTriggerType.PIECE &&
-  metadata.type !== FlowActionType.PIECE
+  metadata.type !== FlowTriggerKind.PIECE &&
+  metadata.type !== FlowActionKind.PIECE
     ? !isFlowController(metadata)
     : metadata.categories.includes(PieceCategory.CORE) &&
       !isFlowController(metadata);
@@ -125,8 +125,8 @@ const filterResultByPieceType = (
 ) => {
   return queryResult.filter(
     (piece): piece is PieceStepMetadataWithSuggestions =>
-      piece.type === FlowActionType.PIECE ||
-      piece.type === FlowTriggerType.PIECE,
+      piece.type === FlowActionKind.PIECE ||
+      piece.type === FlowTriggerKind.PIECE,
   );
 };
 

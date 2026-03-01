@@ -1,9 +1,4 @@
-import {
-  RouterAction,
-  BranchExecutionType,
-  isNil,
-  RouterActionSettings,
-} from '@activepieces/shared';
+import { BranchEdge, BranchExecutionType, isNil } from '@activepieces/shared';
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Trash, CopyPlus, Pencil } from 'lucide-react';
@@ -28,7 +23,7 @@ import {
 import { cn } from '../../../../lib/utils';
 
 type BranchListProps = {
-  step: RouterAction;
+  branchEdges: BranchEdge[];
   setSelectedBranchIndex: (index: number) => void;
   deleteBranch: (index: number) => void;
   duplicateBranch: (index: number) => void;
@@ -44,7 +39,7 @@ type BranchListProps = {
   }) => void;
 };
 export const BranchesList = ({
-  step,
+  branchEdges,
   setSelectedBranchIndex,
   errors,
   duplicateBranch,
@@ -56,10 +51,10 @@ export const BranchesList = ({
   const [branchNameEditingIndex, setBranchNameEditingIndex] = useState<
     number | null
   >(null);
-  const form = useFormContext<RouterAction>();
+  const form = useFormContext();
   return (
     <Sortable
-      value={step.settings.branches.map((branch, idx) => ({
+      value={branchEdges.map((branch, idx) => ({
         id: idx + 1,
         branch,
       }))}
@@ -67,7 +62,7 @@ export const BranchesList = ({
         moveBranch({ sourceIndex: activeIndex, targetIndex: overIndex });
       }}
     >
-      {step.settings.branches.map((branch, index) =>
+      {branchEdges.map((branch, index) =>
         branch.branchType === BranchExecutionType.FALLBACK ? (
           <React.Fragment key={index}></React.Fragment>
         ) : (
@@ -98,10 +93,10 @@ export const BranchesList = ({
                 branchNameChanged={(name) => {
                   branchNameChanged(index, name);
                 }}
-                showDeleteButton={step.settings.branches.length > 2}
+                showDeleteButton={branchEdges.length > 2}
               ></BranchListItem>
 
-              {index === step.settings.branches.length - 2 ? null : (
+              {index === branchEdges.length - 2 ? null : (
                 <Separator></Separator>
               )}
             </div>
@@ -113,7 +108,7 @@ export const BranchesList = ({
 };
 
 type BranchListItemProps = {
-  branch: RouterActionSettings['branches'][number];
+  branch: BranchEdge;
   branchIndex: number;
   readonly: boolean;
   onClick: () => void;

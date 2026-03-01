@@ -3,7 +3,7 @@ import { ActivepiecesError, ApFlagId, CreateTemplateRequestBody, ErrorCode, Temp
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { flagService } from '../../../../flags/flag.service'
-import { migrateFlowVersionTemplateList } from '../../../../flows/flow-version/migrations'
+import { LegacyFlowVersionTemplateInput, migrateFlowVersionTemplateList } from '../../../../flows/flow-version/migrations'
 import { templateService } from '../../../../template/template.service'
 
 export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = async (
@@ -33,8 +33,9 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
     app.post('/', {
         ...CreateTemplateRequest,
         preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            const rawFlows = (request.body.flows ?? []) as unknown as LegacyFlowVersionTemplateInput[]
+            const migratedFlows = await migrateFlowVersionTemplateList(rawFlows)
+            request.body.flows = migratedFlows as unknown as typeof request.body.flows
         },
     }, async (request) => {
         const { type } = request.body
@@ -55,8 +56,9 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
     app.post('/:id', {
         ...UpdateTemplateRequest,
         preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            const rawFlows = (request.body.flows ?? []) as unknown as LegacyFlowVersionTemplateInput[]
+            const migratedFlows = await migrateFlowVersionTemplateList(rawFlows)
+            request.body.flows = migratedFlows as unknown as typeof request.body.flows
         },
     }, async (request) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
@@ -135,3 +137,4 @@ const DeleteTemplateRequest = {
         }),
     },
 }
+

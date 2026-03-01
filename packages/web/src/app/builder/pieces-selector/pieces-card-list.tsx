@@ -1,7 +1,7 @@
 import {
-  FlowActionType,
+  FlowActionKind,
   FlowOperationType,
-  FlowTriggerType,
+  FlowTriggerKind,
 } from '@activepieces/shared';
 import React, { useState } from 'react';
 
@@ -198,7 +198,7 @@ const getItemHeight = (
   const { ACTION_OR_TRIGGER_ITEM_HEIGHT, PIECE_ITEM_HEIGHT } =
     PIECE_SELECTOR_ELEMENTS_HEIGHTS;
   if (
-    pieceMetadata.type === FlowActionType.PIECE &&
+    pieceMetadata.type === FlowActionKind.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
     const actionsListWithoutHiddenActions =
@@ -210,7 +210,7 @@ const getItemHeight = (
     );
   }
   if (
-    pieceMetadata.type === FlowTriggerType.PIECE &&
+    pieceMetadata.type === FlowTriggerKind.PIECE &&
     showActionsOrTriggersInsidePiecesList
   ) {
     return (
@@ -220,9 +220,9 @@ const getItemHeight = (
     );
   }
   const isCoreAction =
-    pieceMetadata.type === FlowActionType.CODE ||
-    pieceMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
-    pieceMetadata.type === FlowActionType.ROUTER;
+    pieceMetadata.type === FlowActionKind.CODE ||
+    pieceMetadata.type === FlowActionKind.LOOP_ON_ITEMS ||
+    pieceMetadata.type === FlowActionKind.ROUTER;
   if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
     return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
   }

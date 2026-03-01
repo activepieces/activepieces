@@ -1,10 +1,9 @@
 import {
   isNil,
   isObject,
-  FlowAction,
-  FlowActionType,
-  FlowTrigger,
-  FlowTriggerType,
+  FlowActionKind,
+  FlowGraphNode,
+  FlowTriggerKind,
 } from '@activepieces/shared';
 
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
@@ -312,27 +311,27 @@ function getSearchableValue(
 }
 
 function traverseStep(
-  step: (FlowAction | FlowTrigger) & { dfsIndex: number },
+  step: FlowGraphNode & { dfsIndex: number },
   sampleData: Record<string, unknown>,
   zipArraysOfProperties: boolean,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
+  const displayName = `${step.dfsIndex + 1}. ${step.data.displayName}`;
   const stepNeedsTesting =
-    isNil(step.settings.sampleData?.lastTestDate) &&
-    (step.type !== FlowTriggerType.PIECE ||
+    isNil(step.data.settings.sampleData?.lastTestDate) &&
+    (step.data.kind !== FlowTriggerKind.PIECE ||
       !pieceSelectorUtils.isManualTrigger({
-        pieceName: step.settings.pieceName,
-        triggerName: step.settings.triggerName ?? '',
+        pieceName: step.data.settings.pieceName,
+        triggerName: step.data.settings.triggerName ?? '',
       }));
   if (stepNeedsTesting) {
-    return buildTestStepNode(displayName, step.name);
+    return buildTestStepNode(displayName, step.id);
   }
-  if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-    const copiedSampleData = JSON.parse(JSON.stringify(sampleData[step.name]));
+  if (step.data.kind === FlowActionKind.LOOP_ON_ITEMS) {
+    const copiedSampleData = JSON.parse(JSON.stringify(sampleData[step.id]));
     delete copiedSampleData['iterations'];
     const headNode = traverseOutput(
       displayName,
-      [step.name],
+      [step.id],
       copiedSampleData,
       zipArraysOfProperties,
       true,
@@ -343,8 +342,8 @@ function traverseStep(
 
   return traverseOutput(
     displayName,
-    [step.name],
-    sampleData[step.name],
+    [step.id],
+    sampleData[step.id],
     zipArraysOfProperties,
     true,
   );

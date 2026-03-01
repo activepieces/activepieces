@@ -1,5 +1,5 @@
-import { GitBranchType } from '@activepieces/shared';
 import {
+  GitBranchType,
   FlowOperationType,
   FlowVersion,
   FlowVersionState,
@@ -117,7 +117,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         type: FlowOperationType.IMPORT_FLOW,
         request: {
           displayName: modifiedFlowVersion.displayName,
-          trigger: modifiedFlowVersion.trigger,
+          graph: modifiedFlowVersion.graph,
           schemaVersion: modifiedFlowVersion.schemaVersion,
           notes: modifiedFlowVersion.notes,
         },

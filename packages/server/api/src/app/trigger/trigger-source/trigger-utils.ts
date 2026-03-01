@@ -2,9 +2,11 @@ import { TriggerBase } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
     ErrorCode,
-    FlowTriggerType,
+    flowStructureUtil,
+    FlowTriggerKind,
     FlowVersion,
     isNil,
+    PieceTrigger,
     ProjectId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -20,22 +22,25 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
 
         })
         if (isNil(pieceTrigger)) {
+            const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph)
+            const triggerData = triggerNode?.data as PieceTrigger | undefined
             throw new ActivepiecesError({
                 code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
                 params: {
-                    pieceName: flowVersion.trigger.settings.pieceName,
-                    pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                    triggerName: flowVersion.trigger.settings.triggerName,
+                    pieceName: triggerData?.settings.pieceName ?? '',
+                    pieceVersion: triggerData?.settings.pieceVersion ?? '',
+                    triggerName: triggerData?.settings.triggerName ?? '',
                 },
             })
         }
         return pieceTrigger
     },
     async getPieceTrigger({ flowVersion, projectId }: GetPieceTriggerOrThrowParams): Promise<TriggerBase | null> {
-        if (flowVersion.trigger.type !== FlowTriggerType.PIECE) {
+        const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph)
+        if (isNil(triggerNode) || triggerNode.data.kind !== FlowTriggerKind.PIECE) {
             return null
         }
-        const { pieceName, pieceVersion, triggerName } = flowVersion.trigger.settings
+        const { pieceName, pieceVersion, triggerName } = (triggerNode.data as PieceTrigger).settings
         if (isNil(triggerName)) {
             return null
         }

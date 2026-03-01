@@ -4,14 +4,16 @@ import {
     Cursor,
     ErrorCode,
     FlowAction,
-    FlowActionType,
+    FlowActionKind,
+    FlowGraphNode,
     FlowId,
+    FlowNodeType,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
     flowStructureUtil,
-    FlowTrigger,
-    FlowTriggerType,
+    FlowTriggerKind,
+    UpdateTriggerRequest,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -53,25 +55,25 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
 
         const pieceVersion: Record<string, string> = {}
         const platformId = await projectService.getPlatformId(projectId)
-        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const steps = flowStructureUtil.getAllSteps(flowVersion)
         for (const step of steps) {
-            const stepTypeIsPiece = [FlowActionType.PIECE, FlowTriggerType.PIECE].includes(
-                step.type,
+            const stepTypeIsPiece = [FlowActionKind.PIECE, FlowTriggerKind.PIECE].includes(
+                step.data.kind,
             )
             if (stepTypeIsPiece) {
                 const pieceMetadata = await pieceMetadataService(log).getOrThrow({
                     platformId,
-                    name: step.settings.pieceName,
-                    version: step.settings.pieceVersion,
+                    name: (step.data.settings as Record<string, string>).pieceName,
+                    version: (step.data.settings as Record<string, string>).pieceVersion,
                     entityManager,
                 })
-                pieceVersion[step.name] = pieceMetadata.version
+                pieceVersion[step.id] = pieceMetadata.version
             }
         }
         return flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const clonedStep = JSON.parse(JSON.stringify(step))
-            if (pieceVersion[step.name]) {
-                clonedStep.settings.pieceVersion = pieceVersion[step.name]
+            const clonedStep: FlowGraphNode = JSON.parse(JSON.stringify(step))
+            if (pieceVersion[step.id]) {
+                (clonedStep.data.settings as Record<string, string>).pieceVersion = pieceVersion[step.id]
             }
             return clonedStep
         })
@@ -98,8 +100,8 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 operations = [{
                     type: FlowOperationType.IMPORT_FLOW,
                     request: {
-                        trigger: previousVersion.trigger,
                         displayName: previousVersion.displayName,
+                        graph: previousVersion.graph,
                         schemaVersion: previousVersion.schemaVersion,
                         notes: previousVersion.notes,
                     },
@@ -114,16 +116,22 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                     payload: userOperation.request.payload,
                     type: userOperation.request.type,
                 })
-                if (flowStructureUtil.isAction(modifiedStep.type)) {
+                if (flowStructureUtil.isAction(modifiedStep.data.kind)) {
                     operations = [{
                         type: FlowOperationType.UPDATE_ACTION,
-                        request: modifiedStep as FlowAction,
+                        request: {
+                            id: modifiedStep.id,
+                            action: modifiedStep.data as FlowAction,
+                        },
                     }]
                 }
                 else {
                     operations = [{
                         type: FlowOperationType.UPDATE_TRIGGER,
-                        request: modifiedStep as FlowTrigger,
+                        request: {
+                            ...modifiedStep.data,
+                            id: modifiedStep.id,
+                        } as UpdateTriggerRequest,
                     }]
                 }
                 break
@@ -307,13 +315,21 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             id: apId(),
             displayName: request.displayName,
             flowId,
-            trigger: {
-                type: FlowTriggerType.EMPTY,
-                name: 'trigger',
-                settings: {},
-                valid: false,
-                displayName: 'Select Trigger',
+            graph: {
+                nodes: [{
+                    id: 'trigger',
+                    type: FlowNodeType.TRIGGER,
+                    data: {
+                        kind: FlowTriggerKind.EMPTY,
+                        name: 'trigger',
+                        valid: false,
+                        displayName: 'Select Trigger',
+                        settings: {},
+                    },
+                }],
+                edges: [],
             },
+            backupFiles: null,
             schemaVersion: LATEST_FLOW_SCHEMA_VERSION,
             connectionIds: [],
             agentIds: [],
@@ -329,14 +345,16 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeSampleData: boolean,
     ): FlowVersion {
         return flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const clonedStep = JSON.parse(JSON.stringify(step))
+            const clonedStep: FlowGraphNode = JSON.parse(JSON.stringify(step))
+            const settings = clonedStep.data.settings as Record<string, unknown>
             if (removeConnectionNames) {
-                clonedStep.settings.input = removeConnectionsFromInput(clonedStep.settings.input)
+                settings.input = removeConnectionsFromInput(settings.input as Record<string, unknown>)
             }
-            if (removeSampleData && !isNil(clonedStep?.settings?.sampleData)) {
-                clonedStep.settings.sampleData.sampleDataFileId = undefined
-                clonedStep.settings.sampleData.sampleDataInputFileId = undefined
-                clonedStep.settings.sampleData.lastTestDate = undefined
+            if (removeSampleData && !isNil(settings?.sampleData)) {
+                const sampleData = settings.sampleData as Record<string, unknown>
+                sampleData.sampleDataFileId = undefined
+                sampleData.sampleDataInputFileId = undefined
+                sampleData.lastTestDate = undefined
             }
             return clonedStep
         })

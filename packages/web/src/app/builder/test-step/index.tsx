@@ -1,4 +1,4 @@
-import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
+import { FlowActionKind, FlowTriggerKind } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 
@@ -9,7 +9,7 @@ type TestStepContainerProps = {
   flowVersionId: string;
   isSaving: boolean;
   flowId: string;
-  type: FlowActionType | FlowTriggerType;
+  type: FlowActionKind | FlowTriggerKind;
   projectId: string;
 };
 
@@ -26,7 +26,7 @@ const TestStepContainer = React.memo(
         <div className="text-md font-semibold ">
           {t('Generate Sample Data')}
         </div>
-        {type === FlowTriggerType.PIECE ? (
+        {type === FlowTriggerKind.PIECE ? (
           <TestTriggerSection
             flowId={flowId}
             isSaving={isSaving}

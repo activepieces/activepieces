@@ -1,4 +1,4 @@
-import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import { FlowNodeData } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -25,7 +25,7 @@ const ActionErrorHandlingForm = React.memo(
     hideRetryOnFailure,
     disabled,
   }: ActionErrorHandlingFormProps) => {
-    const form = useFormContext<FlowAction | FlowTrigger>();
+    const form = useFormContext<FlowNodeData>();
 
     return (
       <div className={cn('grid', GAP_SIZE_FOR_STEP_SETTINGS)}>

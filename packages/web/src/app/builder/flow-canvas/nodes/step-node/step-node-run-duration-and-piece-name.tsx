@@ -31,7 +31,7 @@ const StepNodeRunDurationAndPieceName = ({
     return run && run.steps
       ? flowRunUtils.extractStepOutput(stepName, loopIndexes, run.steps)
       : null;
-  }, [run, stepName, loopIndexes, flowVersion.trigger]);
+  }, [run, stepName, loopIndexes, flowVersion.graph]);
 
   return (
     <div className="flex justify-between mt-0.5 w-full items-center">

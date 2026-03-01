@@ -1,6 +1,5 @@
 import {
-  FlowAction,
-  FlowActionType,
+  FlowActionKind,
   FlowOperationType,
   FlowRun,
   flowStructureUtil,
@@ -11,6 +10,8 @@ import {
   StepRunResponse,
   stringifyNullOrUndefined,
   WebsocketClientEvent,
+  FlowGraphNode,
+  FlowNodeData,
 } from '@activepieces/shared';
 import { Socket } from 'socket.io-client';
 import { StoreApi } from 'zustand';
@@ -53,7 +54,7 @@ export type RunState = {
   isStepBeingTested: (stepName: string) => boolean;
   /**Used to revert the sample data locally when the test is cancelled */
   revertSampleDataLocallyCallbacks: Record<string, (() => void) | undefined>;
-  beforeStepTestPreparation: (step: FlowAction) => void;
+  beforeStepTestPreparation: (step: FlowGraphNode) => void;
 };
 type RunStateInitialState = {
   run: FlowRun | null;
@@ -103,35 +104,35 @@ export const createRunState = (
       set((state) => {
         const parentLoop = flowStructureUtil.getStepOrThrow(
           stepName,
-          state.flowVersion.trigger,
+          state.flowVersion,
         );
-        if (parentLoop.type !== FlowActionType.LOOP_ON_ITEMS) {
+        if (parentLoop.data.kind !== FlowActionKind.LOOP_ON_ITEMS) {
           console.error(
             `Trying to set loop index for a step that is not a loop: ${stepName}`,
           );
           return state;
         }
         const childLoops = flowStructureUtil
-          .getAllChildSteps(parentLoop)
-          .filter((c) => c.type === FlowActionType.LOOP_ON_ITEMS)
-          .filter((c) => c.name !== stepName);
+          .getAllChildSteps(parentLoop, state.flowVersion)
+          .filter((c) => c.data.kind === FlowActionKind.LOOP_ON_ITEMS)
+          .filter((c) => c.id !== stepName);
         const loopsIndexes = { ...state.loopsIndexes };
 
         loopsIndexes[stepName] = index;
 
         childLoops.forEach((childLoop) => {
           const childLoopOutput = flowRunUtils.extractStepOutput(
-            childLoop.name,
+            childLoop.id,
             loopsIndexes,
             state.run?.steps ?? {},
           ) as LoopStepOutput | undefined;
 
           if (isNil(childLoopOutput) || isNil(childLoopOutput.output)) {
-            loopsIndexes[childLoop.name] = 0;
+            loopsIndexes[childLoop.id] = 0;
           } else {
-            loopsIndexes[childLoop.name] = Math.max(
+            loopsIndexes[childLoop.id] = Math.max(
               Math.min(
-                loopsIndexes[childLoop.name],
+                loopsIndexes[childLoop.id],
                 childLoopOutput.output.iterations.length - 1,
               ),
               0,
@@ -150,11 +151,8 @@ export const createRunState = (
       runId: string;
       stepName: string;
     }) => {
-      const step = flowStructureUtil.getStep(
-        stepName,
-        get().flowVersion.trigger,
-      );
-      if (isNil(step) || !flowStructureUtil.isAction(step?.type)) {
+      const step = flowStructureUtil.getStep(stepName, get().flowVersion);
+      if (isNil(step) || !flowStructureUtil.isAction(step?.data.kind)) {
         console.error(`Step ${stepName} not found or is not an action`);
         return;
       }
@@ -176,7 +174,7 @@ export const createRunState = (
               response.standardError === '' ? null : response.standardError,
             );
           }
-          if (step.type === FlowActionType.CODE) {
+          if (step.data.kind === FlowActionKind.CODE) {
             get().setConsoleLogs(
               stepName,
               response.standardOutput === '' ? null : response.standardOutput,
@@ -238,14 +236,14 @@ export const createRunState = (
     stepTestListeners: {},
     updateSampleData: ({ stepName, input, output }: UpdateSampleDataParams) => {
       const { setSampleDataLocally, applyOperation, flowVersion } = get();
-      const step = flowStructureUtil.getStep(stepName, flowVersion.trigger);
+      const step = flowStructureUtil.getStep(stepName, flowVersion);
       if (isNil(step)) {
         console.error(`Step ${stepName} not found`);
         internalErrorToast();
         return;
       }
       setSampleDataLocally({
-        stepName: step.name,
+        stepName: step.id,
         type: 'output',
         value: output,
       });
@@ -253,21 +251,21 @@ export const createRunState = (
       applyOperation({
         type: FlowOperationType.SAVE_SAMPLE_DATA,
         request: {
-          stepName: step.name,
+          stepName: step.id,
           payload,
           type: SampleDataFileType.OUTPUT,
         },
       });
       if (!isNil(input)) {
         setSampleDataLocally({
-          stepName: step.name,
+          stepName: step.id,
           type: 'input',
           value: input,
         });
         applyOperation({
           type: FlowOperationType.SAVE_SAMPLE_DATA,
           request: {
-            stepName: step.name,
+            stepName: step.id,
             payload: input,
             type: SampleDataFileType.INPUT,
           },
@@ -311,8 +309,8 @@ export const createRunState = (
     isStepBeingTested: (stepName: string) => {
       return !isNil(get().stepTestListeners[stepName]);
     },
-    beforeStepTestPreparation: (step: FlowAction) => {
-      const stepName = step.name;
+    beforeStepTestPreparation: (step: FlowGraphNode) => {
+      const stepName = step.id;
       get().removeStepTestListener(stepName);
       const currentSampleData = get().outputSampleData[stepName];
       const currentErrorLogs = get().errorLogs[stepName];

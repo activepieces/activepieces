@@ -1,4 +1,4 @@
-import { FlowActionType, StepOutput } from '@activepieces/shared'
+import { FlowActionKind, StepOutput } from '@activepieces/shared'
 import PriorityQueue from 'priority-queue-typescript'
 import { utils } from '../utils'
 
@@ -82,7 +82,7 @@ function traverseStepsAndCollectKeys(
             }
         }
 
-        if (step?.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
+        if (step?.type === FlowActionKind.LOOP_ON_ITEMS && step.output) {
             const loopOutput = step.output as { iterations: Record<string, StepOutput>[] }
             if (loopOutput.iterations) {
                 for (const iteration of loopOutput.iterations) {

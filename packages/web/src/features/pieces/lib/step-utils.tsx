@@ -4,14 +4,12 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
-  FlowAction,
-  FlowActionType,
+  FlowActionKind,
+  FlowNodeData,
   flowStructureUtil,
   LocalesEnum,
   spreadIfDefined,
-  Step,
-  FlowTriggerType,
-  FlowTrigger,
+  FlowTriggerKind,
   StepOutput,
   StepRunResponse,
 } from '@activepieces/shared';
@@ -27,47 +25,44 @@ import {
 import { piecesApi } from './pieces-api';
 
 export const CORE_STEP_METADATA: Record<
-  Exclude<FlowActionType, FlowActionType.PIECE> | FlowTriggerType.EMPTY,
+  Exclude<FlowActionKind, FlowActionKind.PIECE> | FlowTriggerKind.EMPTY,
   PrimitiveStepMetadata
 > = {
-  [FlowActionType.CODE]: {
+  [FlowActionKind.CODE]: {
     displayName: t('Code'),
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/code.svg',
     description: t('Powerful Node.js & TypeScript code with npm'),
-    type: FlowActionType.CODE as const,
+    type: FlowActionKind.CODE as const,
   },
-  [FlowActionType.LOOP_ON_ITEMS]: {
+  [FlowActionKind.LOOP_ON_ITEMS]: {
     displayName: t('Loop on Items'),
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/loop.svg',
     description: 'Iterate over a list of items',
-    type: FlowActionType.LOOP_ON_ITEMS as const,
+    type: FlowActionKind.LOOP_ON_ITEMS as const,
   },
-  [FlowActionType.ROUTER]: {
+  [FlowActionKind.ROUTER]: {
     displayName: t('Router'),
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
     description: t('Split your flow into branches depending on condition(s)'),
-    type: FlowActionType.ROUTER as const,
+    type: FlowActionKind.ROUTER as const,
   },
-  [FlowTriggerType.EMPTY]: {
+  [FlowTriggerKind.EMPTY]: {
     displayName: t('Empty Trigger'),
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
     description: t('Empty Trigger'),
-    type: FlowTriggerType.EMPTY as const,
+    type: FlowTriggerKind.EMPTY as const,
   },
 } as const;
 export const CORE_ACTIONS_METADATA = [
-  CORE_STEP_METADATA[FlowActionType.CODE],
-  CORE_STEP_METADATA[FlowActionType.LOOP_ON_ITEMS],
-  CORE_STEP_METADATA[FlowActionType.ROUTER],
+  CORE_STEP_METADATA[FlowActionKind.CODE],
+  CORE_STEP_METADATA[FlowActionKind.LOOP_ON_ITEMS],
+  CORE_STEP_METADATA[FlowActionKind.ROUTER],
 ] as const;
 
 export const stepUtils = {
-  getKeys(
-    step: FlowAction | FlowTrigger,
-    locale: LocalesEnum,
-  ): (string | undefined)[] {
+  getKeys(step: FlowNodeData, locale: LocalesEnum): (string | undefined)[] {
     const isPieceStep =
-      step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
+      step.kind === FlowActionKind.PIECE || step.kind === FlowTriggerKind.PIECE;
     const pieceName = isPieceStep ? step.settings.pieceName : undefined;
     const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
     const customLogoUrl = isPieceStep
@@ -76,27 +71,27 @@ export const stepUtils = {
         : undefined
       : undefined;
 
-    return [pieceName, pieceVersion, customLogoUrl, locale, step.type];
+    return [pieceName, pieceVersion, customLogoUrl, locale, step.kind];
   },
   async getMetadata(
-    step: FlowAction | FlowTrigger,
+    step: FlowNodeData,
     locale: LocalesEnum,
   ): Promise<StepMetadataWithActionOrTriggerOrAgentDisplayName> {
     const customLogoUrl =
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
-    switch (step.type) {
-      case FlowActionType.ROUTER:
-      case FlowActionType.LOOP_ON_ITEMS:
-      case FlowActionType.CODE:
-      case FlowTriggerType.EMPTY:
+    switch (step.kind) {
+      case FlowActionKind.ROUTER:
+      case FlowActionKind.LOOP_ON_ITEMS:
+      case FlowActionKind.CODE:
+      case FlowTriggerKind.EMPTY:
         return {
-          ...CORE_STEP_METADATA[step.type],
+          ...CORE_STEP_METADATA[step.kind],
           ...spreadIfDefined('logoUrl', customLogoUrl),
           actionOrTriggerOrAgentDisplayName: '',
           actionOrTriggerOrAgentDescription: '',
         };
-      case FlowActionType.PIECE:
-      case FlowTriggerType.PIECE: {
+      case FlowActionKind.PIECE:
+      case FlowTriggerKind.PIECE: {
         const piece = await piecesApi.get({
           name: step.settings.pieceName,
           version: step.settings.pieceVersion,
@@ -104,14 +99,14 @@ export const stepUtils = {
         });
         const metadata = stepUtils.mapPieceToMetadata({
           piece,
-          type: step.type === FlowActionType.PIECE ? 'action' : 'trigger',
+          type: step.kind === FlowActionKind.PIECE ? 'action' : 'trigger',
         });
         const actionOrTriggerDisplayName =
-          step.type === FlowActionType.PIECE
+          step.kind === FlowActionKind.PIECE
             ? piece.actions[step.settings.actionName!].displayName
             : piece.triggers[step.settings.triggerName!].displayName;
         const actionOrTriggerDescription =
-          step.type === FlowActionType.PIECE
+          step.kind === FlowActionKind.PIECE
             ? piece.actions[step.settings.actionName!].description
             : piece.triggers[step.settings.triggerName!].description;
         return {
@@ -134,7 +129,7 @@ export const stepUtils = {
       displayName: piece.displayName,
       logoUrl: piece.logoUrl,
       description: piece.description,
-      type: type === 'action' ? FlowActionType.PIECE : FlowTriggerType.PIECE,
+      type: type === 'action' ? FlowActionKind.PIECE : FlowTriggerKind.PIECE,
       pieceType: piece.pieceType,
       pieceName: piece.name,
       pieceVersion: piece.version,
@@ -163,13 +158,13 @@ export function extractPieceNamesAndCoreMetadata(
 
   for (const step of steps) {
     if (
-      step.type === FlowActionType.PIECE ||
-      step.type === FlowTriggerType.PIECE
+      step.data.kind === FlowActionKind.PIECE ||
+      step.data.kind === FlowTriggerKind.PIECE
     ) {
-      pieceNamesSet.add(step.settings.pieceName);
+      pieceNamesSet.add(step.data.settings.pieceName);
     } else if (!excludeCore) {
       const coreMeta =
-        CORE_STEP_METADATA[step.type as keyof typeof CORE_STEP_METADATA];
+        CORE_STEP_METADATA[step.data.kind as keyof typeof CORE_STEP_METADATA];
       if (coreMeta) {
         coreMetadata.push(coreMeta);
       }
@@ -181,9 +176,9 @@ export function extractPieceNamesAndCoreMetadata(
 
 function mapErrorHandlingOptions(
   piece: PieceMetadataModel,
-  step: Step,
+  step: FlowNodeData,
 ): ErrorHandlingOptionsParam {
-  if (flowStructureUtil.isTrigger(step.type)) {
+  if (flowStructureUtil.isTrigger(step.kind)) {
     return {
       continueOnFailure: {
         hide: true,
@@ -194,7 +189,7 @@ function mapErrorHandlingOptions(
     };
   }
   const selectedAction =
-    step.type === FlowActionType.PIECE
+    step.kind === FlowActionKind.PIECE
       ? piece.actions[step.settings.actionName!]
       : null;
   const errorHandlingOptions = selectedAction?.errorHandlingOptions;

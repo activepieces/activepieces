@@ -1,6 +1,6 @@
 import {
-  FlowTrigger,
-  FlowActionType,
+  FlowActionKind,
+  FlowGraph,
   flowStructureUtil,
   PieceCategory,
 } from '@activepieces/shared';
@@ -136,12 +136,12 @@ const buildGradientFromColors = (colors: string[]): string => {
 };
 
 export const useGradientFromPieces = (
-  trigger: FlowTrigger | undefined,
+  flowVersion: FlowVersionLike | undefined,
   excludeCore = false,
 ) => {
   const steps = useMemo(
-    () => (trigger ? flowStructureUtil.getAllSteps(trigger) : []),
-    [trigger],
+    () => (flowVersion ? flowStructureUtil.getAllSteps(flowVersion) : []),
+    [flowVersion],
   );
 
   const { pieceNames, coreMetadata } = useMemo(
@@ -163,7 +163,7 @@ export const useGradientFromPieces = (
         displayName: piece.displayName,
         logoUrl: piece.logoUrl,
         description: piece.description,
-        type: FlowActionType.PIECE as const,
+        type: FlowActionKind.PIECE as const,
         pieceType: piece.pieceType,
         pieceName: piece.name,
         pieceVersion: piece.version,
@@ -220,4 +220,8 @@ export const useGradientFromPieces = (
   }, [colorQueries, logosToProcess.length]);
 
   return gradient;
+};
+
+type FlowVersionLike = {
+  graph: FlowGraph;
 };

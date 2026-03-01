@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, flowStructureUtil, FlowVersion, isNil, PieceTrigger, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -25,6 +25,8 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 simulate,
             })
             log.info('[triggerSourceService#enable] Soft deleted trigger source')
+            const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph)!
+            const triggerData = triggerNode.data as PieceTrigger
             const triggerSourceWithouSchedule: Omit<TriggerSource, 'created' | 'updated' | 'schedule'> = {
                 id: apId(),
                 type: pieceTrigger.type,
@@ -32,8 +34,8 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 flowId: flowVersion.flowId,
                 triggerName: pieceTrigger.name,
                 flowVersionId: flowVersion.id,
-                pieceName: flowVersion.trigger.settings.pieceName,
-                pieceVersion: flowVersion.trigger.settings.pieceVersion,
+                pieceName: triggerData.settings.pieceName,
+                pieceVersion: triggerData.settings.pieceVersion,
                 simulate,
             }
             const triggerSource = await triggerSourceRepo().save(triggerSourceWithouSchedule)
@@ -41,7 +43,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 flowId: flowVersion.flowId,
                 flowVersionId: flowVersion.id,
                 projectId,
-                pieceName: flowVersion.trigger.settings.pieceName,
+                pieceName: triggerData.settings.pieceName,
                 pieceTrigger,
                 simulate,
             })

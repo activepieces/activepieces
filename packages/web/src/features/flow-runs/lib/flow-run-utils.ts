@@ -1,6 +1,6 @@
 import {
   executionJournal,
-  FlowActionType,
+  FlowActionKind,
   FlowRun,
   FlowRunStatus,
   isFailedState,
@@ -57,7 +57,7 @@ export const flowRunUtils = {
         lastStepWithStatus = stepName;
       }
 
-      if (step.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
+      if (step.type === FlowActionKind.LOOP_ON_ITEMS && step.output) {
         const iterations = step.output.iterations;
         iterations.forEach((iteration) => {
           const lastOneInIteration = flowRunUtils.findLastStepWithStatus(

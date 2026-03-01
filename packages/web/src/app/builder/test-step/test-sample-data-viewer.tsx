@@ -1,7 +1,8 @@
 import {
   AgentResult,
   AgentTaskStatus,
-  FlowAction,
+  FlowGraphNode,
+  FlowNodeData,
   isNil,
   StepOutputStatus,
 } from '@activepieces/shared';
@@ -23,7 +24,7 @@ import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestSampleDataViewerProps = {
   isValid: boolean;
-  currentStep?: FlowAction;
+  currentStep?: FlowGraphNode | FlowNodeData;
   isTesting: boolean;
   agentResult?: AgentResult;
   sampleData?: unknown;

@@ -8,10 +8,10 @@ import {
   flowStructureUtil,
   isNil,
   StepSettings,
-  FlowTriggerType,
+  FlowTriggerKind,
   debounce,
-  FlowAction,
-  FlowTrigger,
+  FlowNodeData,
+  isActionNodeData,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
@@ -224,10 +224,7 @@ export const createFlowState = (
           }
           case FlowOperationType.UPDATE_TRIGGER:
           case FlowOperationType.UPDATE_ACTION: {
-            debouncedAddToFlowUpdatesQueue(
-              operation.request.name,
-              updateRequest,
-            );
+            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
             break;
           }
           case FlowOperationType.UPDATE_NOTE:
@@ -263,9 +260,10 @@ export const createFlowState = (
     setVersion: (flowVersion: FlowVersion) => {
       const initiallySelectedStep =
         flowCanvasUtils.determineInitiallySelectedStep(null, flowVersion);
+      const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph);
       const isEmptyTriggerInitiallySelected =
         initiallySelectedStep === 'trigger' &&
-        flowVersion.trigger.type === FlowTriggerType.EMPTY;
+        triggerNode?.data.kind === FlowTriggerKind.EMPTY;
       set((state) => ({
         flowVersion,
         run: null,
@@ -325,49 +323,56 @@ export const createFlowState = (
         customLogoUrl,
       });
       const isTrigger =
-        defaultValues.type === FlowTriggerType.PIECE ||
-        defaultValues.type === FlowTriggerType.EMPTY;
+        defaultValues.kind === FlowTriggerKind.PIECE ||
+        defaultValues.kind === FlowTriggerKind.EMPTY;
       switch (operation.type) {
         case FlowOperationType.UPDATE_TRIGGER: {
           if (!isTrigger) {
             break;
           }
-          if (flowVersion.trigger.type === FlowTriggerType.EMPTY) {
+          const currentTriggerNode = flowStructureUtil.getTriggerNode(
+            flowVersion.graph,
+          );
+          if (currentTriggerNode?.data.kind === FlowTriggerKind.EMPTY) {
             set(() => {
               return {
                 rightSidebar: RightSideBarType.PIECE_SETTINGS,
               };
             });
           }
+          const { name: triggerName, ...triggerData } = defaultValues;
           applyOperation({
             type: FlowOperationType.UPDATE_TRIGGER,
-            request: defaultValues,
+            request: {
+              ...triggerData,
+              id: triggerName,
+            },
           });
-          selectStepByName('trigger');
+          selectStepByName(triggerName);
           break;
         }
         case FlowOperationType.ADD_ACTION: {
           if (isTrigger) {
             break;
           }
+          const { name: stepName, ...actionData } = defaultValues;
           applyOperation({
             type: FlowOperationType.ADD_ACTION,
             request: {
               ...operation.actionLocation,
-              action: {
-                ...defaultValues,
-              },
+              id: stepName,
+              action: actionData,
             },
           });
           if (selectStepAfter) {
-            selectStepByName(defaultValues.name);
+            selectStepByName(stepName);
           }
           break;
         }
         case FlowOperationType.UPDATE_ACTION: {
           const currentAction = flowStructureUtil.getStep(
             operation.stepName,
-            flowVersion.trigger,
+            flowVersion,
           );
           if (isNil(currentAction)) {
             console.error(
@@ -376,22 +381,24 @@ export const createFlowState = (
             break;
           }
           if (
-            !flowStructureUtil.isAction(currentAction.type) ||
-            !flowStructureUtil.isAction(defaultValues.type)
+            !flowStructureUtil.isAction(currentAction.data.kind) ||
+            !flowStructureUtil.isAction(defaultValues.kind)
           ) {
             break;
           }
           applyOperation({
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-              type: defaultValues.type,
-              displayName: defaultValues.displayName,
-              name: operation.stepName,
-              settings: {
-                ...defaultValues.settings,
-                customLogoUrl,
+              id: operation.stepName,
+              action: {
+                kind: defaultValues.kind,
+                displayName: defaultValues.displayName,
+                settings: {
+                  ...defaultValues.settings,
+                  customLogoUrl,
+                },
+                valid: defaultValues.valid,
               },
-              valid: defaultValues.valid,
             },
           });
           removeStepTestListener(operation.stepName);
@@ -416,35 +423,38 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
   if (operation.type !== FlowOperationType.SAVE_SAMPLE_DATA) {
     return localFlowVersion;
   }
-  const localStep = flowStructureUtil.getStep(
+  const localNode = flowStructureUtil.getStep(
     operation.request.stepName,
-    updatedFlowVersion.trigger,
+    localFlowVersion,
   );
-  const updatedStep = flowStructureUtil.getStep(
+  const updatedNode = flowStructureUtil.getStep(
     operation.request.stepName,
-    updatedFlowVersion.trigger,
+    updatedFlowVersion,
   );
-  if (isNil(localStep) || isNil(updatedStep)) {
+  if (isNil(localNode) || isNil(updatedNode)) {
     console.error(`Step ${operation.request.stepName} not found`);
     return localFlowVersion;
   }
-  const clonedLocalStepWithUpdatedSampleDataProperty: FlowAction | FlowTrigger =
-    JSON.parse(JSON.stringify(localStep));
-  clonedLocalStepWithUpdatedSampleDataProperty.settings.sampleData =
-    updatedStep.settings.sampleData;
-  if (
-    flowStructureUtil.isAction(
-      clonedLocalStepWithUpdatedSampleDataProperty.type,
-    )
-  ) {
+  const clonedLocalStepData: FlowNodeData = JSON.parse(
+    JSON.stringify(localNode.data),
+  );
+  clonedLocalStepData.settings.sampleData =
+    updatedNode.data.settings.sampleData;
+  if (isActionNodeData(clonedLocalStepData)) {
     return flowOperations.apply(localFlowVersion, {
       type: FlowOperationType.UPDATE_ACTION,
-      request: clonedLocalStepWithUpdatedSampleDataProperty as FlowAction,
+      request: {
+        id: localNode.id,
+        action: clonedLocalStepData,
+      },
     });
   } else {
     return flowOperations.apply(localFlowVersion, {
       type: FlowOperationType.UPDATE_TRIGGER,
-      request: clonedLocalStepWithUpdatedSampleDataProperty as FlowTrigger,
+      request: {
+        ...clonedLocalStepData,
+        id: localNode.id,
+      },
     });
   }
 };

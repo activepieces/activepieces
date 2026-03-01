@@ -5,10 +5,10 @@ import {
   FlowVersion,
   FlowVersionMetadata,
   FlowVersionTemplate,
+  ImportFlowRequest,
   ListFlowsRequest,
   PopulatedFlow,
-  FlowTrigger,
-  FlowTriggerType,
+  FlowTriggerKind,
   WebsocketClientEvent,
   FlowStatusUpdatedResponse,
   isNil,
@@ -236,20 +236,24 @@ export const flowHooks = {
         if (!trigger) {
           throw new Error('MCP trigger not found');
         }
-        const stepData = pieceSelectorUtils.getDefaultStepValues({
-          stepName: 'trigger',
-          pieceSelectorItem: {
-            actionOrTrigger: trigger,
-            type: FlowTriggerType.PIECE,
-            pieceMetadata: stepUtils.mapPieceToMetadata({
-              piece: mcpPiece,
-              type: 'trigger',
-            }),
-          },
-        }) as FlowTrigger;
+        const { name: triggerName, ...triggerData } =
+          pieceSelectorUtils.getDefaultStepValues({
+            stepName: 'trigger',
+            pieceSelectorItem: {
+              actionOrTrigger: trigger,
+              type: FlowTriggerKind.PIECE,
+              pieceMetadata: stepUtils.mapPieceToMetadata({
+                piece: mcpPiece,
+                type: 'trigger',
+              }),
+            },
+          });
+        if (triggerData.kind !== FlowTriggerKind.PIECE) {
+          throw new Error('Expected trigger kind to be PIECE');
+        }
         await flowsApi.update(flow.id, {
           type: FlowOperationType.UPDATE_TRIGGER,
-          request: stepData,
+          request: { ...triggerData, id: triggerName },
         });
         return flow;
       },
@@ -358,19 +362,15 @@ export const flowHooks = {
       ? (template.metadata['externalId'] as string)
       : flow.externalId;
 
-    const triggerString = JSON.stringify(templateFlow.trigger).replaceAll(
+    const migratedFlow = replaceExternalIds(
+      templateFlow,
       oldExternalId,
       flow.externalId,
     );
-    const updatedTrigger = JSON.parse(triggerString);
 
     return await flowsApi.update(flow.id, {
       type: FlowOperationType.IMPORT_FLOW,
-      request: {
-        displayName: templateFlow.displayName,
-        trigger: updatedTrigger,
-        schemaVersion: templateFlow.schemaVersion,
-      },
+      request: buildImportRequest(migratedFlow),
     });
   },
   importFlowsFromTemplates: async ({
@@ -425,22 +425,14 @@ export const flowHooks = {
 
     const importPromises = allFlowsToImport.map(
       async ({ flow, templateFlow }) => {
-        let triggerString = JSON.stringify(templateFlow.trigger);
-
+        let migratedFlow = templateFlow;
         for (const [oldId, newId] of externalIdMap.entries()) {
-          triggerString = triggerString.replaceAll(oldId, newId);
+          migratedFlow = replaceExternalIds(migratedFlow, oldId, newId);
         }
-
-        const updatedTrigger = JSON.parse(triggerString);
 
         return await flowsApi.update(flow.id, {
           type: FlowOperationType.IMPORT_FLOW,
-          request: {
-            displayName: templateFlow.displayName,
-            trigger: updatedTrigger,
-            schemaVersion: templateFlow.schemaVersion,
-            notes: templateFlow.notes,
-          },
+          request: buildImportRequest(migratedFlow),
         });
       },
     );
@@ -448,6 +440,27 @@ export const flowHooks = {
     return await Promise.all(importPromises);
   },
 };
+
+function replaceExternalIds(
+  templateFlow: FlowVersionTemplate,
+  oldId: string,
+  newId: string,
+): FlowVersionTemplate {
+  const serialized = JSON.stringify(templateFlow);
+  return JSON.parse(serialized.replaceAll(oldId, newId)) as FlowVersionTemplate;
+}
+
+function buildImportRequest(
+  templateFlow: FlowVersionTemplate,
+): ImportFlowRequest {
+  const raw = templateFlow as Record<string, unknown>;
+  return {
+    displayName: templateFlow.displayName,
+    graph: templateFlow.graph ?? raw['trigger'],
+    schemaVersion: templateFlow.schemaVersion,
+    notes: templateFlow.notes,
+  } as ImportFlowRequest;
+}
 
 type UseChangeFlowStatusParams = {
   flowId: string;

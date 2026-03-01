@@ -1,8 +1,10 @@
 import {
     assertNotNullOrUndefined,
+    flowStructureUtil,
     FlowVersion,
     isNil,
     parseToJsonIfPossible,
+    PieceTrigger,
 } from '@activepieces/shared'
 
 let webhookSecrets:
@@ -41,7 +43,9 @@ string,
 async function getWebhookSecret(
     flowVersion: FlowVersion,
 ): Promise<string | Record<string, string> | undefined> {
-    const appName = flowVersion.trigger.settings.pieceName
+    const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph)
+    const triggerData = triggerNode?.data as PieceTrigger | undefined
+    const appName = triggerData?.settings?.pieceName
     if (!appName) {
         return undefined
     }

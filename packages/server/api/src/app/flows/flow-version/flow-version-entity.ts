@@ -22,7 +22,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: String,
             nullable: true,
         },
-        trigger: {
+        graph: {
             type: 'jsonb',
             nullable: true,
         },

@@ -29,7 +29,7 @@ export const platformTemplateService = () => ({
     async update({ id, params }: UpdateParams): Promise<Template> {
         const { name, description, summary, tags, blogUrl, metadata, categories, flows, status } = params
         const flow: FlowVersionTemplate | undefined = flows?.[0] ? sanitizeObjectForPostgresql(flows[0]) : undefined
-        const pieces = flow ? flowPieceUtil.getUsedPieces(flow.trigger) : undefined
+        const pieces = flow ? flowPieceUtil.getUsedPieces(flow) : undefined
         await templateRepo().update(id, {
             ...spreadIfDefined('name', name),
             ...spreadIfDefined('description', description),

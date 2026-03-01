@@ -1,6 +1,5 @@
 import {
-  FlowAction,
-  FlowActionType,
+  FlowActionKind,
   FlowOperationType,
   flowStructureUtil,
   StepLocationRelativeToParent,
@@ -75,29 +74,29 @@ export const CanvasContextMenuContent = ({
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
   ]);
   const disabled = selectedNodes.length === 0;
-  const areAllStepsSkipped = selectedNodes.every(
-    (node) =>
-      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as FlowAction)
-        ?.skip,
-  );
+  const areAllStepsSkipped = selectedNodes.every((node) => {
+    const step = flowStructureUtil.getStep(node, flowVersion);
+    return step && 'skip' in step.data && !!step.data.skip;
+  });
+  const triggerNode = flowStructureUtil.getTriggerNode(flowVersion.graph);
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
-    (node) => node === flowVersion.trigger.name,
+    (node) => node === triggerNode?.id,
   );
 
   const firstSelectedStep = flowStructureUtil.getStep(
     selectedNodes[0],
-    flowVersion.trigger,
+    flowVersion,
   );
   const showPasteAfterLastStep =
     !readonly && contextMenuType === ContextMenuType.CANVAS;
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === FlowActionType.LOOP_ON_ITEMS &&
+    firstSelectedStep?.data.kind === FlowActionKind.LOOP_ON_ITEMS &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === FlowActionType.ROUTER &&
+    firstSelectedStep?.data.kind === FlowActionKind.ROUTER &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAfterCurrentStep =
@@ -275,10 +274,12 @@ export const CanvasContextMenuContent = ({
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
               {firstSelectedStep &&
-                firstSelectedStep.settings.branches.map(
-                  (branch, branchIndex) => (
+                firstSelectedStep.data.kind === FlowActionKind.ROUTER &&
+                flowStructureUtil
+                  .getBranchEdges(flowVersion.graph, firstSelectedStep.id)
+                  .map((branchEdge, branchIndex) => (
                     <ContextMenuItem
-                      key={branch.branchName}
+                      key={branchEdge.branchName}
                       onClick={() => {
                         pasteNodes(
                           flowVersion,
@@ -292,29 +293,31 @@ export const CanvasContextMenuContent = ({
                         );
                       }}
                     >
-                      {branch.branchName}
+                      {branchEdge.branchName}
                     </ContextMenuItem>
-                  ),
-                )}
+                  ))}
               <ContextMenuItem
                 onClick={() => {
+                  const routerBranchEdges = flowStructureUtil.getBranchEdges(
+                    flowVersion.graph,
+                    firstSelectedStep!.id,
+                  );
+                  const branchCount = routerBranchEdges.length;
                   applyOperation({
                     type: FlowOperationType.ADD_BRANCH,
                     request: {
-                      stepName: firstSelectedStep.name,
-                      branchIndex:
-                        firstSelectedStep.settings.branches.length - 1,
-                      branchName: `Branch ${firstSelectedStep.settings.branches.length}`,
+                      stepName: firstSelectedStep!.id,
+                      branchIndex: branchCount - 1,
+                      branchName: `Branch ${branchCount}`,
                     },
                   });
                   pasteNodes(
                     flowVersion,
                     {
-                      parentStepName: firstSelectedStep.name,
+                      parentStepName: firstSelectedStep!.id,
                       stepLocationRelativeToParent:
                         StepLocationRelativeToParent.INSIDE_BRANCH,
-                      branchIndex:
-                        firstSelectedStep.settings.branches.length - 1,
+                      branchIndex: branchCount - 1,
                     },
                     applyOperation,
                   );

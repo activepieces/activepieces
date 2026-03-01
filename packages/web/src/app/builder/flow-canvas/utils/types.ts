@@ -1,7 +1,6 @@
 import {
-  FlowAction,
+  FlowNodeData,
   StepLocationRelativeToParent,
-  FlowTrigger,
   Note,
 } from '@activepieces/shared';
 import { Edge } from '@xyflow/react';
@@ -31,7 +30,7 @@ export type ApStepNode = {
     y: number;
   };
   data: {
-    step: FlowAction | FlowTrigger;
+    step: FlowNodeData;
   };
   selectable?: boolean;
   style?: React.CSSProperties;

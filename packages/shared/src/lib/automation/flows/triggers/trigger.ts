@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { DiscriminatedUnion } from '../../../core/common/base-model'
 import { VersionType } from '../../pieces'
 import { CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
 import { PropertySettings } from '../properties'
@@ -20,22 +21,20 @@ export const PieceTriggerSettings = Type.Object({
 export type PieceTriggerSettings = Static<typeof PieceTriggerSettings>
 
 
-export enum FlowTriggerType {
+export enum FlowTriggerKind {
     EMPTY = 'EMPTY',
     PIECE = 'PIECE_TRIGGER',
 }
 
 const commonProps = {
-    name: Type.String({}),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
-    nextAction: Type.Optional(Type.Any()),
 }
 
 
 export const EmptyTrigger = Type.Object({
     ...commonProps,
-    type: Type.Literal(FlowTriggerType.EMPTY),
+    kind: Type.Literal(FlowTriggerKind.EMPTY),
     settings: Type.Any(),
 })
 
@@ -44,19 +43,36 @@ export type EmptyTrigger = Static<typeof EmptyTrigger>
 
 export const PieceTrigger = Type.Object({
     ...commonProps,
-    type: Type.Literal(FlowTriggerType.PIECE),
+    kind: Type.Literal(FlowTriggerKind.PIECE),
     settings: PieceTriggerSettings,
 })
 
 export type PieceTrigger = Static<typeof PieceTrigger>
 
-export const FlowTrigger = Type.Union([
+export const FlowTrigger = DiscriminatedUnion('kind', [
     PieceTrigger,
     EmptyTrigger,
 ])
 
 export type FlowTrigger = Static<typeof FlowTrigger>
 
+const updateCommonProps = {
+    id: Type.String({}),
+    valid: Type.Boolean({}),
+    displayName: Type.String({}),
+}
+
+export const UpdateEmptyTrigger = Type.Object({
+    ...updateCommonProps,
+    kind: Type.Literal(FlowTriggerKind.EMPTY),
+    settings: Type.Any(),
+})
+
+export const UpdatePieceTrigger = Type.Object({
+    ...updateCommonProps,
+    kind: Type.Literal(FlowTriggerKind.PIECE),
+    settings: PieceTriggerSettings,
+})
 
 export type StepSettings =
   | CodeActionSettings

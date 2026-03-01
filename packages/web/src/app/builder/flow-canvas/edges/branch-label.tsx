@@ -1,5 +1,5 @@
 import {
-  FlowActionType,
+  FlowActionKind,
   BranchExecutionType,
   FlowOperationType,
   flowStructureUtil,
@@ -40,22 +40,26 @@ const BranchLabel = (props: BaseBranchLabel) => {
     step,
     applyOperation,
     readonly,
+    branchEdges,
   ] = useBuilderStateContext((state) => [
     state.selectedStep,
     state.selectedBranchIndex,
     state.selectStepByName,
     state.setSelectedBranchIndex,
-    flowStructureUtil.getStep(props.sourceNodeName, state.flowVersion.trigger),
+    flowStructureUtil.getStep(props.sourceNodeName, state.flowVersion),
     state.applyOperation,
     state.readonly,
+    flowStructureUtil.getBranchEdges(
+      state.flowVersion.graph,
+      props.sourceNodeName,
+    ),
   ]);
 
   const isFallbackBranch =
     props.stepLocationRelativeToParent ===
       StepLocationRelativeToParent.INSIDE_BRANCH &&
-    step?.type === FlowActionType.ROUTER &&
-    step?.settings.branches[props.branchIndex]?.branchType ===
-      BranchExecutionType.FALLBACK;
+    step?.data.kind === FlowActionKind.ROUTER &&
+    branchEdges[props.branchIndex]?.branchType === BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
     StepLocationRelativeToParent.INSIDE_BRANCH;
@@ -68,7 +72,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
   const { fitView } = useReactFlow();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(false);
 
-  if (isNil(step) || step.type !== FlowActionType.ROUTER) {
+  if (isNil(step) || step.data.kind !== FlowActionKind.ROUTER) {
     return <></>;
   }
 
@@ -123,7 +127,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
 
           {!isOtherwiseBranch &&
             !readonly &&
-            step.type === FlowActionType.ROUTER && (
+            step.data.kind === FlowActionKind.ROUTER && (
               <DropdownMenu
                 modal={true}
                 open={isDropdownMenuOpen}
@@ -164,7 +168,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    disabled={step.settings.branches.length <= 2}
+                    disabled={branchEdges.length <= 2}
                     onSelect={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

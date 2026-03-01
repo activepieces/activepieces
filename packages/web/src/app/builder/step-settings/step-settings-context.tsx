@@ -4,9 +4,8 @@ import {
   piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
 import {
-  FlowAction,
+  FlowNodeData,
   setAtPath,
-  FlowTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
 import { TObject, Type } from '@sinclair/typebox';
@@ -39,7 +38,8 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
 };
 
 export type StepSettingsContextState = {
-  selectedStep: FlowAction | FlowTrigger;
+  stepName: string;
+  selectedStep: FlowNodeData;
   pieceModel: PieceMetadataModel | undefined;
   formSchema: TObject<any>;
   updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
@@ -51,7 +51,8 @@ export type StepSettingsContextState = {
 };
 
 export type StepSettingsProviderProps = {
-  selectedStep: FlowAction | FlowTrigger;
+  stepName: string;
+  selectedStep: FlowNodeData;
   pieceModel: PieceMetadataModel | undefined;
   children: ReactNode;
 };
@@ -61,6 +62,7 @@ const StepSettingsContext = createContext<StepSettingsContextState | undefined>(
 );
 
 export const StepSettingsProvider = ({
+  stepName,
   selectedStep,
   pieceModel,
   children,
@@ -72,7 +74,7 @@ export const StepSettingsProvider = ({
 
   if (!formSchemaInitializedRef.current && selectedStep) {
     const schema = formUtils.buildPieceSchema(
-      selectedStep.type,
+      selectedStep.kind,
       selectedStep.settings.actionName ?? selectedStep.settings.triggerName,
       pieceModel ?? null,
     );
@@ -116,6 +118,7 @@ export const StepSettingsProvider = ({
       //need to re-render the form because sample data is changed outside of it, this will be fixed once we refactor the state
       key={selectedStep.settings.sampleData?.lastTestDate}
       value={{
+        stepName,
         selectedStep,
         pieceModel,
         formSchema,

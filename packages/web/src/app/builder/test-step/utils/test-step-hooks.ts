@@ -1,17 +1,15 @@
 import {
-  FlowAction,
+  FlowGraphNode,
   ApErrorParams,
   ErrorCode,
   parseToJsonIfPossible,
   StepRunResponse,
-  FlowTrigger,
   TriggerEventWithPayload,
   TriggerTestStrategy,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { useFormContext } from 'react-hook-form';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
@@ -21,6 +19,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { wait } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { useStepSettingsContext } from '../../step-settings/step-settings-context';
 
 import { testStepUtils } from './test-step-utils';
 
@@ -32,10 +31,9 @@ export const testStepHooks = {
     setErrorMessage: ((msg: string | undefined) => void) | undefined;
     onSuccess: () => void;
   }) => {
-    const { form, builderState } = useRequiredStateToTestSteps();
+    const { builderState, stepName } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     const flowVersionId = builderState.flowVersionId;
-    const stepName = form.getValues().name;
 
     return useMutation<TriggerEventWithPayload[], Error, AbortSignal>({
       mutationFn: async (abortSignal: AbortSignal) => {
@@ -96,9 +94,8 @@ export const testStepHooks = {
     });
   },
   useSaveMockData: ({ onSuccess }: { onSuccess: () => void }) => {
-    const { form, builderState } = useRequiredStateToTestSteps();
+    const { builderState, stepName } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
-    const stepName = form.getValues().name;
 
     return useMutation({
       mutationFn: async (mockData: unknown) => {
@@ -123,10 +120,9 @@ export const testStepHooks = {
     setErrorMessage: (msg: string | undefined) => void;
     onSuccess: () => void;
   }) => {
-    const { form, builderState } = useRequiredStateToTestSteps();
+    const { builderState, stepName } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     const flowVersionId = builderState.flowVersionId;
-    const stepName = form.getValues().name;
 
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
@@ -178,7 +174,7 @@ export const testStepHooks = {
     });
   },
   /**To reset the loading state of the mutation use a new mutation key, but to make sure sucess never gets called, use the abortSignal */
-  useTestAction: ({ currentStep }: { currentStep: FlowAction }) => {
+  useTestAction: ({ currentStep }: { currentStep: FlowGraphNode }) => {
     const { flowVersionId, addActionTestListener } =
       useRequiredStateToTestSteps().builderState;
     return useMutation<{ runId: string }, Error, TestActionMutationParams>({
@@ -187,7 +183,7 @@ export const testStepHooks = {
           request: {
             projectId: authenticationSession.getProjectId()!,
             flowVersionId,
-            stepName: currentStep.name,
+            stepName: currentStep.id,
           },
         });
         return response;
@@ -195,7 +191,7 @@ export const testStepHooks = {
       onSuccess: (testStepResponse: { runId: string }) => {
         addActionTestListener({
           runId: testStepResponse.runId,
-          stepName: currentStep.name,
+          stepName: currentStep.id,
         });
       },
       onError: () => {
@@ -206,7 +202,7 @@ export const testStepHooks = {
 };
 
 const useRequiredStateToTestSteps = () => {
-  const form = useFormContext<FlowTrigger>();
+  const { stepName } = useStepSettingsContext();
   const builderState = useBuilderStateContext((state) => ({
     flow: state.flow,
     flowVersion: state.flowVersion,
@@ -214,7 +210,7 @@ const useRequiredStateToTestSteps = () => {
     addActionTestListener: state.addActionTestListener,
     updateSampleData: state.updateSampleData,
   }));
-  return { form, builderState };
+  return { builderState, stepName };
 };
 
 type TestActionMutationParams =

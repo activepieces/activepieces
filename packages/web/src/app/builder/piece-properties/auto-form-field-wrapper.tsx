@@ -3,11 +3,7 @@ import {
   PieceProperty,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import {
-  FlowAction,
-  FlowTrigger,
-  PropertyExecutionType,
-} from '@activepieces/shared';
+import { FlowNodeData, PropertyExecutionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Calendar, SquareFunction, File } from 'lucide-react';
 import React from 'react';
@@ -193,7 +189,7 @@ function DynamicValueToggle({
   disabled,
   isToggled,
 }: DynamicValueToggleProps) {
-  const form = useFormContext<FlowAction | FlowTrigger>();
+  const form = useFormContext<FlowNodeData>();
   function updatePropertySettings(mode: PropertyExecutionType) {
     const propertySettingsForSingleProperty = {
       ...form.getValues().settings?.propertySettings?.[propertyName],

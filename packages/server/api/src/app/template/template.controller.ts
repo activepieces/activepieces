@@ -21,7 +21,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
-import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
+import { LegacyFlowVersionTemplateInput, migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { communityTemplates } from './community-templates.service'
@@ -33,10 +33,11 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
         const template = await templateService(app.log).getOne({ id: request.params.id })
         if (!isNil(template)) {
-            return template
+            return migrateTemplateFlows(template)
         }
         if (edition !== ApEdition.CLOUD) {
-            return communityTemplates.getOrThrow(request.params.id)
+            const communityTemplate = await communityTemplates.getOrThrow(request.params.id)
+            return migrateTemplateFlows(communityTemplate)
         }
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -59,8 +60,11 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         const officialTemplates = await loadOfficialTemplatesOrReturnEmpty(app.log, request.query)
         const customTemplates = await loadCustomTemplatesOrReturnEmpty(app.log, request.query, request.principal)
 
+        const allTemplates = [...officialTemplates, ...customTemplates]
+        const migratedTemplates = await Promise.all(allTemplates.map(migrateTemplateFlows))
+
         return {
-            data: [...officialTemplates, ...customTemplates],
+            data: migratedTemplates,
             next: null,
             previous: null,
         }
@@ -69,8 +73,9 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', {
         ...CreateParams,
         preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            const rawFlows = (request.body.flows ?? []) as unknown[]
+            const migratedFlows = await migrateFlowVersionTemplateList(rawFlows as LegacyFlowVersionTemplateInput[])
+            request.body.flows = migratedFlows as unknown as typeof request.body.flows
         },
     }, async (request, reply) => {
         const { type } = request.body
@@ -99,8 +104,9 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', { ...UpdateParams,
         preValidation: async (request) => {
-            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
-            request.body.flows = migratedFlows
+            const rawFlows = (request.body.flows ?? []) as unknown[]
+            const migratedFlows = await migrateFlowVersionTemplateList(rawFlows as LegacyFlowVersionTemplateInput[])
+            request.body.flows = migratedFlows as unknown as typeof request.body.flows
         },
     }, async (request, reply) => {
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
@@ -237,3 +243,15 @@ async function loadCustomTemplatesOrReturnEmpty(
     const customTemplates = await templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
     return customTemplates.data
 }
+
+async function migrateTemplateFlows(template: Template): Promise<Template> {
+    if (!template.flows || template.flows.length === 0) {
+        return template
+    }
+    const migratedFlows = await migrateFlowVersionTemplateList(template.flows as unknown as LegacyFlowVersionTemplateInput[])
+    return {
+        ...template,
+        flows: migratedFlows as unknown as typeof template.flows,
+    }
+}
+

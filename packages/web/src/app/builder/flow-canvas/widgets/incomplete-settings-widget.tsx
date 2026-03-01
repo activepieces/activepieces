@@ -1,7 +1,6 @@
 import {
-  FlowAction,
   FlowVersion,
-  Step,
+  FlowGraphNode,
   flowStructureUtil,
 } from '@activepieces/shared';
 import { useReactFlow } from '@xyflow/react';
@@ -25,20 +24,18 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   const invalidSteps = useMemo(
     () =>
       flowStructureUtil
-        .getAllSteps(flowVersion.trigger)
+        .getAllSteps(flowVersion)
         .filter(filterValidOrSkippedSteps).length,
     [flowVersion],
   );
   const { fitView } = useReactFlow();
   function onClick() {
     const invalidSteps = flowStructureUtil
-      .getAllSteps(flowVersion.trigger)
+      .getAllSteps(flowVersion)
       .filter(filterValidOrSkippedSteps);
     if (invalidSteps.length > 0) {
-      selectStepByName(invalidSteps[0].name);
-      fitView(
-        flowCanvasUtils.createFocusStepInGraphParams(invalidSteps[0].name),
-      );
+      selectStepByName(invalidSteps[0].id);
+      fitView(flowCanvasUtils.createFocusStepInGraphParams(invalidSteps[0].id));
     }
   }
   return (
@@ -61,7 +58,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 
 IncompleteSettingsButton.displayName = 'IncompleteSettingsButton';
 export default IncompleteSettingsButton;
-function filterValidOrSkippedSteps(step: Step) {
-  if ((step as FlowAction).skip) return false;
-  return !step.valid;
+function filterValidOrSkippedSteps(node: FlowGraphNode) {
+  if ('skip' in node.data && node.data.skip) return false;
+  return !node.data.valid;
 }

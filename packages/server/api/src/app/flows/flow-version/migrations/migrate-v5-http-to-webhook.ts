@@ -1,5 +1,6 @@
-import { FlowActionType, flowStructureUtil, FlowVersion, PropertyExecutionType } from '@activepieces/shared'
+import { FlowActionKind, FlowVersion, PropertyExecutionType } from '@activepieces/shared'
 import semver from 'semver'
+import { legacyFlowStructureUtil } from './legacy-flow-structure-util'
 import { Migration } from '.'
 
 const HTTP_PIECE_NAME = '@activepieces/piece-http'
@@ -10,9 +11,9 @@ const WEBHOOK_RETURN_RESPONSE_ACTION = 'return_response'
 export const migrateHttpToWebhookV5: Migration = {
     targetSchemaVersion: '5',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const newVersion = legacyFlowStructureUtil.transferFlow(flowVersion, (step) => {
             if (
-                step.type === FlowActionType.PIECE &&
+                step.type === FlowActionKind.PIECE &&
                 step.settings.pieceName === HTTP_PIECE_NAME &&
                 step.settings.actionName === HTTP_RETURN_RESPONSE_ACTION
             ) {
