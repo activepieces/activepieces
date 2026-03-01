@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { initializeDatabase } from '../../src/app/database'
 import { databaseConnection, resetDatabaseConnection } from '../../src/app/database/database-connection'
+import { databaseSeeds } from '../../src/app/database/seeds'
 import { setupServer } from '../../src/app/server'
 
 const GLOBAL_KEY = '__TEST_ENV__'
@@ -40,6 +41,7 @@ export async function teardownTestEnvironment(): Promise<void> {
 async function createFreshEnvironment(): Promise<FastifyInstance> {
     const existing = getGlobalState()
     if (existing) {
+        await existing.app.close()
         await databaseConnection().destroy()
     }
     resetDatabaseConnection()
@@ -56,7 +58,6 @@ async function cleanDatabase(): Promise<void> {
     if (tableNames.length > 0) {
         await ds.query(`TRUNCATE TABLE ${tableNames} CASCADE`)
     }
-    const { databaseSeeds } = await import('../../src/app/database/seeds')
     await databaseSeeds.run()
 }
 

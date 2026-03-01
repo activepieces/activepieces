@@ -18,7 +18,6 @@ const instances = new Map<string, RepoGetter>()
 
 /**
  * Creates a {@link RepoGetter} for the given entity.
- * Uses entity name strings as keys to survive Vitest module re-evaluation.
  * @param entity The entity to create a {@link RepoGetter} for.
  * @returns A {@link RepoGetter} for the given entity.
  */
