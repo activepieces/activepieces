@@ -11,11 +11,11 @@ export const secretManagersController: FastifyPluginAsyncTypebox = async (app) =
         return service.list({ platformId: request.principal.platform.id })
     })
 
-    app.post('/connect', ConnectSecretManager, async (request) => {
+    app.post('/', ConnectSecretManager, async (request) => {
         return service.connect({ ...request.body, platformId: request.principal.platform.id })
     })
 
-    app.delete('/disconnect', DisconnectSecretManager, async (request) => {
+    app.delete('/', DisconnectSecretManager, async (request) => {
         return service.disconnect({ providerId: request.query.providerId, platformId: request.principal.platform.id })
     })
 

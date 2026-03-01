@@ -58,7 +58,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -100,7 +100,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -147,7 +147,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -191,7 +191,7 @@ describe('Secret Manager Cache', () => {
             // First connect + list to populate cache
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -205,7 +205,7 @@ describe('Secret Manager Cache', () => {
             // Second connect — clears cache
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -239,7 +239,7 @@ describe('Secret Manager Cache', () => {
             // Connect and list to populate cache
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -253,14 +253,14 @@ describe('Secret Manager Cache', () => {
             // Disconnect — clears cache and config
             await app!.inject({
                 method: 'DELETE',
-                url: '/v1/secret-managers/disconnect?providerId=hashicorp',
+                url: '/v1/secret-managers?providerId=hashicorp',
                 headers: { authorization: `Bearer ${testToken}` },
             })
 
             // Reconnect with fresh config
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })
@@ -295,7 +295,7 @@ describe('Secret Manager Cache', () => {
 
             await app!.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: { authorization: `Bearer ${testToken}` },
                 body: { providerId: SecretManagerProviderId.HASHICORP, config: mockVaultConfig },
             })

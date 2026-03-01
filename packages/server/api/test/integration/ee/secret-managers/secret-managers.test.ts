@@ -93,7 +93,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -137,7 +137,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -209,7 +209,7 @@ describe('Secret Managers API', () => {
 
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -251,7 +251,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
