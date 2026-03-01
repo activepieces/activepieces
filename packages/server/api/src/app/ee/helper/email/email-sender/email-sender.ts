@@ -1,0 +1,80 @@
+import { AppSystemProp } from '@activepieces/server-common'
+import { ApEnvironment } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../../helper/system/system'
+import { logEmailSender } from './log-email-sender'
+import { smtpEmailSender } from './smtp-email-sender'
+
+export type EmailSender = {
+    send: (args: SendArgs) => Promise<void>
+}
+
+const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
+    const env = system.get(AppSystemProp.ENVIRONMENT)
+
+    if (env === ApEnvironment.PRODUCTION) {
+        return smtpEmailSender(log)
+    }
+
+    return logEmailSender(log)
+}
+export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
+
+type BaseEmailTemplateData<Name extends string, Vars extends Record<string, string>> = {
+    name: Name
+    vars: Vars
+}
+
+type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
+    projectName: string
+    role: string
+    setupLink: string
+}>
+
+type ProjectMemberAddedEmailTemplateData = BaseEmailTemplateData<'project-member-added', {
+    projectName: string
+    role: string
+    loginLink: string
+}>
+
+type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
+    setupLink: string
+}>
+
+type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
+    setupLink: string
+}>
+
+type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
+    issueUrl: string
+    flowName: string
+    isIssue: string
+    createdAt: string
+}>
+
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
+    flowName: string
+    projectName: string
+}>
+
+type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
+    badgeTitle: string
+    badgeDescription: string
+    badgeImageUrl: string
+    firstName: string
+}>
+
+export type EmailTemplateData =
+  | InvitationEmailTemplateData
+  | ProjectMemberAddedEmailTemplateData
+  | ResetPasswordEmailTemplateData
+  | VerifyEmailTemplateData
+  | IssueCreatedTemplateData
+  | TriggerFailureThresholdTemplateData
+  | BadgeAwardedTemplateData
+
+type SendArgs = {
+    emails: string[]
+    platformId: string | undefined
+    templateData: EmailTemplateData
+}

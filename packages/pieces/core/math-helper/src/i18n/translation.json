@@ -1,0 +1,17 @@
+{
+  "\nPerform mathematical operations.\n": "\nPerform mathematical operations.\n",
+  "Addition": "Addition",
+  "Subtraction": "Subtraction",
+  "Multiplication": "Multiplication",
+  "Division": "Division",
+  "Modulo": "Modulo",
+  "Generate Random Number": "Generate Random Number",
+  "Add the first number and the second number": "Add the first number and the second number",
+  "Subtract the first number from the second number": "Subtract the first number from the second number",
+  "Multiply first number by the second number": "Multiply first number by the second number",
+  "Divide first number by the second number": "Divide first number by the second number",
+  "Get the remainder of the first number divided by second number": "Get the remainder of the first number divided by second number",
+  "Generate random number between two numbers (inclusive)": "Generate random number between two numbers (inclusive)",
+  "First Number": "First Number",
+  "Second Number": "Second Number"
+}

@@ -1,0 +1,29 @@
+---
+title: "GCP"
+description: ""
+---
+
+This documentation is to deploy activepieces on VM Instance or VM Instance Group, we should first create VM template
+
+## Create VM Template
+
+First choose machine type (e.g e2-medium)
+
+After configuring the VM Template, you can proceed to click on "Deploy Container" and specify the following container-specific settings:
+
+- Image: activepieces/activepieces
+- Run as a privileged container: true
+- Environment Variables:
+  - `AP_REDIS_TYPE`: MEMORY
+  - `AP_DB_TYPE`: SQLITE3
+  - `AP_FRONTEND_URL`: http://localhost:80
+  - `AP_EXECUTION_MODE`: SANDBOX_PROCESS
+- Firewall: Allow HTTP traffic (for testing purposes only)
+
+Once these details are entered, click on the "Deploy" button and patiently wait for the container deployment process to complete.\
+
+After a successful deployment, you can access the ActivePieces application by visiting the external IP address of the VM on GCP.
+
+## Production Deployment
+
+Please visit [ActivePieces](/install/configuration/environment-variables) for more details on how to customize the application.

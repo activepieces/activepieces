@@ -1,0 +1,37 @@
+import { ConnectionKey, Project } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import {
+    ApIdSchema,
+    BaseColumnSchemaPart,
+} from '../../database/database-common'
+
+export type ConnectionKeySchema = {
+    project: Project
+} & ConnectionKey
+
+export const ConnectionKeyEntity = new EntitySchema<ConnectionKeySchema>({
+    name: 'connection_key',
+    columns: {
+        ...BaseColumnSchemaPart,
+        projectId: ApIdSchema,
+        settings: {
+            type: 'jsonb',
+        },
+    },
+    indices: [
+        {
+            name: 'idx_connection_key_project_id',
+            columns: ['projectId'],
+            unique: false,
+        },
+    ],
+    relations: {
+        project: {
+            type: 'many-to-one',
+            target: 'project',
+            onDelete: 'CASCADE',
+            joinColumn: true,
+            inverseSide: 'connectionKeys',
+        },
+    },
+})

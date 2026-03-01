@@ -1,0 +1,25 @@
+---
+title: "Cloud Infrastructure"
+icon: "server"
+---
+
+<Warning>
+  The playbooks are private, Please ask your team for access.
+</Warning>
+
+Our infrastructure stack includes several key components to monitor, deploy, and manage our services effectively.
+
+## Hosting Providers
+
+We use two main hosting providers:
+
+- **DigitalOcean**: Hosts our databases including Redis and PostgreSQL.
+- **Hetzner**: Provides the machines that run our services.
+
+## Observability: Logs & Telemetry
+
+We collect logs and telemetry from all services using **HyperDX**.
+
+## Kamal for Deployment
+
+We use **Kamal** as a deployment tool to deploy our Docker containers to production with zero downtime.

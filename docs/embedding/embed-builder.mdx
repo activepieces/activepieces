@@ -1,0 +1,91 @@
+---
+title: "Embed Builder"
+description: ""
+icon: "wrench"
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+This documentation explains how to embed the Activepieces iframe inside your application and customize it.
+
+## Configure SDK
+
+Adding the embedding SDK script will initialize an object in your window called `activepieces`, which has a method called `configure` that you should call after the container has been rendered.
+<Tip>
+The following scripts shouldn't contain the `async` or `defer` attributes.
+</Tip>
+
+
+<Tip>
+These steps assume you have already generated a JWT token from the backend. If not, please check the [provision-users](./provision-users) page.
+</Tip>
+
+```html
+<script src="https://cdn.activepieces.com/sdk/embed/0.8.1.js">
+</script>
+<script>
+const instanceUrl = 'YOUR_INSTANCE_URL';
+const jwtToken = 'GENERATED_JWT_TOKEN';
+const containerId = 'YOUR_CONTAINER_ID';
+activepieces.configure({
+  instanceUrl,
+  jwtToken,
+  prefix: "/",
+  embedding: {
+    containerId,
+    builder: {
+      disableNavigation: false,
+      hideFlowName: false
+    },
+    dashboard: {
+      hideSidebar: false
+    },
+    hideFolders: false,
+    navigation: {
+      handler: ({ route }) => {
+          // The iframe route has changed, make sure you check the navigation section.
+        }
+    }
+  },
+});
+
+</script>
+```
+<Tip>
+`configure` returns a promise which is resolved after authentication is done.
+
+ </Tip>
+
+<Tip>
+Please check the [navigation](./navigation) section, as it's very important to understand how navigation works and how to supply an auto-sync experience.
+</Tip>
+
+**Configure Parameters:**
+
+| Parameter Name |  Required |  Type | Description |
+| --- | --- | --- | --- |
+| instanceUrl| ✅ |  string | The url of the instance hosting Activepieces, could be https://cloud.activepieces.com if you are a cloud user. |
+| jwtToken | ✅  |  string | The jwt token you generated to authenticate your users to Activepieces. |
+| prefix | ❌ | string | Some customers have an embedding prefix, like this `<embedding_url_prefix>/<Activepieces_url>`. For example if the prefix is `/automation` and the Activepieces url is `/flows` the full url would be `/automation/flows`. |
+| embedding.containerId | ❌ | string | The html element's id that is going to be containing Activepieces's iframe. |
+| embedding.builder.disableNavigation | ❌ |  boolean \| `keep_home_button_only` | Hides the folder name, home button (if not set to [`keep_home_button_only`](./sdk-changelog#20%2F05%2F2025-0-4-0)) and delete option in the builder, by default it is false. |
+| embedding.builder.hideFlowName | ❌ |  boolean | Hides the flow name and flow actions dropdown in the builder's header, by default it is false. |
+| embedding.builder.homeButtonClickedHandler | ❌ | `()=>void` | Callback that stops home button from navigating to dashboard and overrides it with this handler (added in [0.4.0](./sdk-changelog#20%2F05%2F2025-0-4-0))
+| embedding.builder.homeButtonIcon | ❌ | `logo`  \| `back` |  if set to **`back`** the tooltip shown on hovering the home button is removed (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))
+| embedding.dashboard.hideSidebar | ❌ | boolean | Controls the visibility of the sidebar in the dashboard, by default it is false. |
+| embedding.dashboard.hideFlowsPageNavbar | ❌ | boolean | Controls the visibility of the navbar showing flows,issues and runs above the flows table in the dashboard, by default it is false. (added in [0.6.0](./sdk-changelog#07%2F07%2F2025-0-6-0)) |
+| embedding.dashboard.hidePageHeader | ❌ | boolean | Hides the page header in the dashboard by default it is false. (added in [0.8.0](./sdk-changelog#09%2F21%2F2025-0-8-0)) |
+| embedding.hideFolders | ❌ | boolean | Hides all things related to folders in both the flows table and builder by default it is false. |
+| embedding.styling.fontUrl | ❌ | string | The url of the font to be used in the embedding, by default it is `https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap`. |
+| embedding.styling.fontFamily | ❌ | string | The font family to be used in the embedding, by default it is `Roboto`. |
+| embedding.styling.mode | ❌ | `light` \| `dark` | Controls light/dark mode (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
+| embedding.hideExportAndImportFlow | ❌ | boolean | Hides the option to export or import flows (added in [0.4.0](./sdk-changelog#20%2F05%2F2025-0-4-0)) |
+| embedding.hideDuplicateFlow | ❌ |  boolean | Hides the option to duplicate a flow  (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
+| embedding.locale | ❌ |  `en` \| `nl` \| `de` \| `fr`  \| `es` \| `ja` \| `zh` \| `pt` \| `zh-TW` \| `ru` \|  | it takes [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) locale codes (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
+| navigation.handler  | ❌ | `({route:string}) => void`  | This callback will be triggered each time a route in Activepieces changes, you can read more about it [here](/embedding/navigation) |
+<Tip>
+ For the font to be loaded, you need to set both the `fontUrl` and `fontFamily` properties.
+ If you only set one of them, the default font will be used.
+ The default font is `Roboto`.
+ The font weights we use are the default font-weights from [tailwind](https://tailwindcss.com/docs/font-weight).
+</Tip>

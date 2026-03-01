@@ -1,0 +1,75 @@
+import {
+  createPiece,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
+import { createEvent } from './lib/actions/create_event';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { customerIOCommon } from './lib/common';
+import { Buffer } from 'buffer';
+import { PieceCategory } from '@activepieces/shared';
+import { customerIOAuth } from './lib/auth';
+
+const markdown = `
+**Site ID:**\n
+
+Please log in and go to Settings, click [here](https://fly.customer.io/settings/api_credentials).
+
+**Tracking API Key:**\n
+
+Please log in and go to Settings, click [here](https://fly.customer.io/settings/api_credentials).
+
+**APP API Token:**\n
+
+Please log in and find it in Account Settings, click [here](https://fly.customer.io/settings/api_credentials?keyType=app).
+
+<br>
+Please note that the Track API Key and App API Key are different. You can read more about it [here](https://customer.io/docs/accounts-and-workspaces/managing-credentials/).
+`;
+type CustomerIOAuth = {
+  region: 'eu' | 'us';
+  track_site_id: string;
+  track_api_key: string;
+  api_bearer_token: string;
+};
+export const customerIo: any = createPiece({
+  displayName: 'customer.io',
+  auth: customerIOAuth,
+  description:
+    'Create personalized journeys across all channels with our customer engagement platform.',
+  categories: [PieceCategory.MARKETING],
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/customerio.png',
+  authors: ['hamedsh', 'AbuAboud', 'AdamSelene'],
+  actions: [
+    createEvent,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        auth ? customerIOCommon[auth.props.region || 'us'].trackUrl : '',
+      auth: customerIOAuth,
+      name: 'custom_track_api_call',
+      description: 'CustomerIO Track Custom API Call (track.customer.io)',
+      displayName: 'Track Custom API Call',
+      authMapping: async (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth).props.track_site_id}:${
+            (auth).props.track_api_key
+          }`,
+          'utf8'
+        ).toString('base64')}`,
+      }),
+    }),
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        auth ? customerIOCommon[auth.props.region || 'us'].apiUrl : '',
+      auth: customerIOAuth,
+      name: 'custom_app_api_call',
+      description: 'CustomerIO App Custom API Call (api.customer.io)',
+      displayName: 'App Custom API Call',
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth).props.api_bearer_token}`,
+      }),
+    }),
+  ],
+  triggers: [],
+});

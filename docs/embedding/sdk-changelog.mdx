@@ -1,0 +1,129 @@
+---
+title: "SDK Changelog"
+description: "A log of all notable changes to Activepieces SDK"
+icon: "code-commit"
+---
+
+
+
+<Warning>
+**Breaking Change:** <br></br> <br></br> If your Activepieces image version is < 0.45.0 and (you are using the connect method from the embed SDk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your Activepieces image to >= 0.45.0
+</Warning>
+
+<Warning> 
+ Between Acitvepieces image version 0.32.1 and 0.46.4 the navigation handler was including the project id in the path, this might have broken implementation logic for people using the navigation handler, this has been fixed from 0.46.5 and onwards, the handler won't show the project id prepended to routes.
+</Warning>
+
+Change log format: MM/DD/YYYY (version)
+
+
+
+### 10/27/2025 (0.8.1)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.8.1.js
+- Fixed a bug where if you didn't start your navigation route with '/' it would redirect you to '/flows'
+
+### 09/21/2025 (0.8.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.8.0.js
+- This version requires you to **upgrade Activepieces to [0.70.0](https://github.com/activepieces/activepieces/releases/tag/0.70.0)**.
+- Removed `embedding.dashboard.hideSettings`.
+- Added `embedding.dashboard.hidePageHeader` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+
+
+
+### 07/30/2025 (0.7.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.7.0.js
+- This version requires you to **upgrade Activepieces to [0.66.7](https://github.com/activepieces/activepieces/releases/tag/0.66.7)**
+- Added `embedding.dashboard.hideSettings` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+
+### 07/07/2025 (0.6.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.6.0.js
+- This version requires you to **upgrade Activepieces to [0.66.1](https://github.com/activepieces/activepieces/releases/tag/0.66.1)**
+- Added `embedding.dashboard.hideFlowsPageNavbar` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+- **(Breaking Change)** `embedding.dashboard.hideSidebar` used to hide the navbar above the flows table in the dashboard now it relies on `embedding.dashboard.hideFlowsPageNavbar`.
+
+
+
+
+
+### 03/07/2025 (0.5.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.5.0.js
+- This version requires you to **upgrade Activepieces to [0.64.2](https://github.com/activepieces/activepieces/releases/tag/0.64.2)**
+- Added `embedding.hideDuplicateFlow` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+- Added `embedding.builder.homeButtonIcon` parameter to the [configure](./embed-builder#configure-parameters) method **(value: 'logo' | 'back')**, if set to **'back'** the tooltip shown on hovering the home button is removed.
+- Added `embedding.locale` parameter to the [configure](./embed-builder#configure-parameters) method, it takes [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) locale codes, here are the ones supported: **('en' | 'nl' | 'it' | 'de' | 'fr' | 'bg' | 'uk' | 'hu' | 'es' | 'ja' | 'id' | 'vi' | 'zh' | 'pt')**
+- Added `embedding.styling.mode` parameter to [configure](./embed-builder#configure-parameters) method **(value: 'light' | 'dark')**
+- **(Breaking Change)** Removed `embedding.builder.hideLogo` parameter from the [configure](./embed-builder#configure-parameters) method. 
+- **(Breaking Change)** Removed MCP methods from sdk. 
+
+
+
+### 17/06/2025 (0.5.0-rc.1)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.5.0-rc.1.js
+- This version requires you to **upgrade Activepieces to [0.64.0-rc.0](https://github.com/activepieces/activepieces/pkgs/container/activepieces/438888138?tag=0.64.0-rc.0)**
+- Revert back the `prefix` parameter from the [configure](./embed-builder#configure-parameters) method.
+
+
+
+
+### 16/06/2025 (0.5.0-rc.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.5.0-rc.0.js
+- This version requires you to **upgrade Activepieces to [0.64.0-rc.0](https://github.com/activepieces/activepieces/pkgs/container/activepieces/438888138?tag=0.64.0-rc.0)**
+- Added `embedding.hideDuplicateFlow` parameter to the [configure](./embed-builder#configure-parameters) method **(value: true | false)**. 
+- Added `embedding.builder.homeButtonIcon` parameter to the [configure](./embed-builder#configure-parameters) method **(value: 'logo' | 'back')**, if set to **'back'** the tooltip shown on hovering the home button is removed.
+- Added `embedding.locale` parameter to the [configure](./embed-builder#configure-parameters) method, it takes [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) locale codes, here are the ones supported: **('en' | 'nl' | 'it' | 'de' | 'fr' | 'bg' | 'uk' | 'hu' | 'es' | 'ja' | 'id' | 'vi' | 'zh' | 'pt')**
+- Added `embedding.styling.mode` parameter to [configure](./embed-builder#configure-parameters) method **(value: 'light' | 'dark')**
+- **(Breaking Change)** Removed `prefix` parameter from the [configure](./embed-builder#configure-parameters) method. 
+- **(Breaking Change)** Removed `embedding.builder.hideLogo` parameter from the [configure](./embed-builder#configure-parameters) method. 
+
+
+
+
+### 26/05/2025 (0.4.1)
+- Fixed an issue where sometimes the embed HTML file was getting cached.
+
+
+### 20/05/2025 (0.4.0)
+
+-- Note: we didn't consider adding optional new parameters as a breaking change so we were bumping the patch version, but that was wrong and we will begin bumping the minor version for those changes from now on, and patch version will only get bumped for bug fixes.
+- This version requires you to update Activepieces to 0.56.0
+- Added `embedding.hideExportAndImportFlow` parameter to the [configure](./embed-builder#configure-parameters) method.
+- Added new possible value to the configure method param `embed.builder.disableNavigation` which is "keep_home_button_only" that keeps only the home button and hides the folder name with the delete flow action. 
+- Added new param to the configure method `embed.builder.homeButtonClickedHandler`, that overrides the navigation behaviour on clicking the home button. 
+
+
+
+### 17/04/2025 (0.3.7)
+- Added MCP methods to update MCP configurations.
+
+
+
+### 16/04/2025 (0.3.6)
+- Added the [request](./sdk-server-requests) method which allows you to call our backend API.
+
+
+### 24/2/2025 (0.3.5)
+- Added a new parameter to the connect method to make the connection dialog a popup instead of an iframe taking the full page.
+- Fixed a bug where the returned promise from the connect method was always resolved to \{connection: undefined\}
+- Now when you use the connect method with the "connectionName" parameter, the user will reconnect to the connection with the matching externalId instead of creating a new one.
+
+
+
+### 04/02/2025 (0.3.4)
+
+- This version requires you to update Activepieces to 0.41.0
+- Adds the ability to pass font family name and font url to the embed sdk
+
+
+### 26/01/2025 (0.3.3)
+
+- This version requires you to update Activepieces to 0.39.8
+- activepieces.configure method was being resolved before the user was authenticated, this is fixed now, so you can use activepieces.navigate method to navigate to your desired initial route.
+
+
+### 04/12/2024 (0.3.0)
+
+- add custom navigation handler ([#4500](https://github.com/activepieces/activepieces/pull/4500))
+- allow passing a predefined name for connection in connect method ([#4485](https://github.com/activepieces/activepieces/pull/4485))
+- add changelog ([#4503](https://github.com/activepieces/activepieces/pull/4503))
+
+

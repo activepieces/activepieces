@@ -1,0 +1,78 @@
+---
+title: "Props Validation"
+description: "Learn about different types of properties validation "
+icon: 'magnifying-glass'
+---
+
+Activepieces uses Zod for runtime validation of piece properties. Zod provides a powerful schema validation system that helps ensure your piece receives valid inputs.
+
+To use Zod validation in your piece, first import the validation helper and Zod:
+
+<Warning>
+Please make sure the `minimumSupportedRelease` is set to at least `0.36.1` for the validation to work.
+</Warning>
+
+```typescript
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
+
+export const getIcecreamFlavor = createAction({
+  name: 'get_icecream_flavor', // Unique name for the action.
+  displayName: 'Get Ice Cream Flavor',
+  description: 'Fetches a random ice cream flavor based on user preferences.',
+  props: {
+    sweetnessLevel: Property.Number({
+      displayName: 'Sweetness Level',
+      required: true,
+      description: 'Specify the sweetness level (0 to 10).',
+    }),
+    includeToppings: Property.Checkbox({
+      displayName: 'Include Toppings',
+      required: false,
+      description: 'Should the flavor include toppings?',
+      defaultValue: true,
+    }),
+    numberOfFlavors: Property.Number({
+      displayName: 'Number of Flavors',
+      required: true,
+      description: 'How many flavors do you want to fetch? (1-5)',
+      defaultValue: 1,
+    }),
+  },
+  async run({ propsValue }) {
+    // Validate the input properties using Zod
+    await propsValidation.validateZod(propsValue, {
+      sweetnessLevel: z.number().min(0).max(10, 'Sweetness level must be between 0 and 10.'),
+      numberOfFlavors: z.number().min(1).max(5, 'You can fetch between 1 and 5 flavors.'),
+    });
+
+    // Action logic
+    const sweetnessLevel = propsValue.sweetnessLevel;
+    const includeToppings = propsValue.includeToppings ?? true; // Default to true
+    const numberOfFlavors = propsValue.numberOfFlavors;
+
+    // Simulate fetching random ice cream flavors
+    const allFlavors = [
+      'Vanilla',
+      'Chocolate',
+      'Strawberry',
+      'Mint',
+      'Cookie Dough',
+      'Pistachio',
+      'Mango',
+      'Coffee',
+      'Salted Caramel',
+      'Blackberry',
+    ];
+    const selectedFlavors = allFlavors.slice(0, numberOfFlavors);
+
+    return {
+      message: `Here are your ${numberOfFlavors} flavors: ${selectedFlavors.join(', ')}`,
+      sweetnessLevel: sweetnessLevel,
+      includeToppings: includeToppings,
+    };
+  },
+});
+
+```

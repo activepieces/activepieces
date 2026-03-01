@@ -1,0 +1,56 @@
+runtime: nodejs
+name: activepieces
+description: A Pulumi template to deploy Activepieces in a development or production configuration.
+stack: activepieces-dev
+template:
+  description: Deploy Activepieces into into an ECS Fargate instance & optionally add Postgres, Redis and a DNS registration with SSL.  
+  config:
+    aws:region:
+      description: The AWS region to deploy into
+      default: us-west-2
+    environment:
+      description: Environment
+      default: prod
+    containerCpu:
+      description: The amount of CPU to allocate for the container
+      default: 256
+    containerMemory:
+      description: The amount of memory to allocate for the container
+      default: 512
+    containerInstances:
+      description: Number of running containers behind load balancer
+      default: 1
+    usePostgres:
+      description: Add Postgres for storage or use SQLite3 locally
+      default: true
+    dbIsPublic:
+      description: Should Db be publicly reachable. Ignored if usePostgres is false.
+      default: false
+    dbUsername:
+      description: Default username for the Postgres. Ignored if usePostgres is false
+      default: postgres
+    dbPassword:
+      description: Defaults to "postgres". Ignored if usePostgres is false
+      default: postgres
+      secret: true
+    dbInstanceClass:
+      description: The size of the RDS instance
+      default: db.t3.micro
+    useRedis:
+      description: Use a single node Redis cluster or in-memory
+      default: true
+    redisNodeType:
+      description: Node type for the Redis 7 cluster
+      default: cache.t3.micro
+    domain:
+      description: Optional - E.g. "yourdomain.com". Hosted zone must already exist in Route 53. Creates SSL cert
+    subDomain:
+      description: Optional - E.g. "activepieces". "domain" must be set
+    addIpToPostgresSecurityGroup:
+      description: Optional - An IP address to add to the allowed inbound traffic for the Postgres
+    apEncryptionKey:
+      description: Optional - Run 'openssl rand -hex 16' locally to generate or leave blank to auto-generate
+      secret: true
+    apJwtSecret:
+      description: Optional - Run 'openssl rand -hex 32' locally to generate or leave blank to auto-generate
+      secret: true
