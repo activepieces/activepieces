@@ -1,8 +1,8 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
+import { db } from '../../../helpers/db'
 import {
     createMockSignInRequest,
     createMockSignUpRequest,
@@ -11,8 +11,11 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
 })
 
 beforeEach(async () => {
@@ -21,12 +24,6 @@ beforeEach(async () => {
     await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
 })
-
-afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-})
-
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
         it('Adds new user', async () => {
@@ -75,11 +72,9 @@ describe('Authentication API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const project = await databaseConnection()
-                .getRepository('project')
-                .findOneBy({
-                    id: responseBody.projectId,
-                })
+            const project = await db.findOneBy('project', {
+                id: responseBody.projectId,
+            })
 
             expect(project?.ownerId).toBe(responseBody.id)
             expect(project?.displayName).toBeDefined()
