@@ -12,8 +12,8 @@ import {
     flowOperations,
     FlowOperationType,
     flowStructureUtil,
-    FlowTrigger,
     FlowTriggerKind,
+    UpdateTriggerRequest,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -119,13 +119,19 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 if (flowStructureUtil.isAction(modifiedStep.data.kind)) {
                     operations = [{
                         type: FlowOperationType.UPDATE_ACTION,
-                        request: modifiedStep.data as FlowAction,
+                        request: {
+                            id: modifiedStep.id,
+                            action: modifiedStep.data as FlowAction,
+                        },
                     }]
                 }
                 else {
                     operations = [{
                         type: FlowOperationType.UPDATE_TRIGGER,
-                        request: modifiedStep.data as FlowTrigger,
+                        request: {
+                            ...modifiedStep.data,
+                            id: modifiedStep.id,
+                        } as UpdateTriggerRequest,
                     }]
                 }
                 break
