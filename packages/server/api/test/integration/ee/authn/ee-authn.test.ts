@@ -1,31 +1,24 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
 import {
     createMockCustomDomain,
     mockAndSaveBasicSetup,
 } from '../../../../test/helpers/mocks'
+import { db } from '../../../helpers/db'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
-
-
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
         it('Adds new user', async () => {
@@ -76,9 +69,7 @@ describe('Authentication API', () => {
         const mockCustomDomain = createMockCustomDomain({
             platformId: mockPlatform.id,
         })
-        await databaseConnection()
-            .getRepository('custom_domain')
-            .save(mockCustomDomain)
+        await db.save('custom_domain', mockCustomDomain)
 
         const mockedUpEmail = faker.internet.email()
         const mockSignUpRequest = createMockSignUpRequest({ email: mockedUpEmail })
