@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage, SecretManagerFieldsSeperator } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -192,9 +192,9 @@ const extractProviderIdAndPathFromKey = (key: string): {
     path: string
 } => {
     const keyWithoutBraces = trimKeyBraces(key)
-    const splits = keyWithoutBraces.split(':')
+    const splits = keyWithoutBraces.split(SecretManagerFieldsSeperator)
     const providerId = splits[0]
-    const path = splits.slice(1).join(':')
+    const path = splits.slice(1).join(SecretManagerFieldsSeperator)
     if (!isEnumValue(SecretManagerProviderId, providerId)) {
         throw new ActivepiecesError({
             code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,

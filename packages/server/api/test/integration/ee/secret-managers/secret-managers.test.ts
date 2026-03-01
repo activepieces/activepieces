@@ -1,6 +1,5 @@
-import { SecretManagerProviderId } from '@activepieces/ee-shared'
 import { apAxios } from '@activepieces/server-shared'
-import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, UpsertGlobalConnectionRequestBody, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'

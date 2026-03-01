@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 import { cn } from '@/lib/utils';
+import { SecretManagerFieldsSeperator } from '@activepieces/shared';
 
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: string;
@@ -108,7 +109,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       const values = getSecretParamsForProvider(providerId).map(
         ([fieldKey]) => fieldValues[fieldKey] || '',
       );
-      return `{{${providerId}:${values.join(':')}}}`;
+      return `{{${providerId}${SecretManagerFieldsSeperator}${values.join(SecretManagerFieldsSeperator)}}}`;
     };
 
     const toggleSecretManager = useCallback(() => {
