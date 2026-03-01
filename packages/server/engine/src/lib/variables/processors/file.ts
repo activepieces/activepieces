@@ -1,7 +1,6 @@
 import { ApFile } from '@activepieces/pieces-framework'
 import { isNil, isString } from '@activepieces/shared'
 import axios from 'axios'
-import isBase64 from 'is-base64'
 import mime from 'mime-types'
 import { ProcessorFn } from './types'
 
@@ -10,6 +9,9 @@ export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
         return null
     }
     try {
+        if (urlOrBase64.startsWith('data:')) {
+            return handleBase64File(urlOrBase64)
+        }
         const file = handleBase64File(urlOrBase64)
         if (!isNil(file)) {
             return file
@@ -23,15 +25,22 @@ export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
 }
 
 function handleBase64File(propertyValue: string): ApFile | null {
-    if (!isBase64(propertyValue, { allowMime: true })) {
+    // Use string operations instead of regex on the full value to avoid
+    // "Maximum call stack size exceeded" errors with large Base64 payloads
+    const base64Marker = ';base64,'
+    if (!propertyValue.startsWith('data:')) {
         return null
     }
-    const matches = propertyValue.match(/^data:([A-Za-z-+/]+);base64,(.+)$/) // example match: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAABlBMVEUAAAD///+l2Z/dAAAAM0lEQVR4nGP4/5/h/1+G/58ZDrAz3D/McH8yw83NDDeNGe4Ug9C9zwz3gVLMDA/A6P9/AFGGFyjOXZtQAAAAAElFTkSuQmCC
-    if (!matches || matches?.length !== 3) {
+    const markerIndex = propertyValue.indexOf(base64Marker)
+    if (markerIndex === -1) {
         return null
     }
-    const base64 = matches[2]
-    const extension = mime.extension(matches[1]) || 'bin'
+    const mimeType = propertyValue.slice('data:'.length, markerIndex)
+    const base64 = propertyValue.slice(markerIndex + base64Marker.length).trim()
+    if (!mimeType || !base64) {
+        return null
+    }
+    const extension = mime.extension(mimeType) || 'bin'
     return new ApFile(
         `unknown.${extension}`,
         Buffer.from(base64, 'base64'),
