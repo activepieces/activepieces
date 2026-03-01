@@ -2,8 +2,6 @@ import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
   UpdateProjectPlatformRequest,
-} from '@activepieces/shared';
-import {
   isNil,
   ProjectType,
   ProjectWithLimits,
@@ -91,6 +89,25 @@ export const projectCollectionUtils = {
       onError: (error) => {
         onError(error);
       },
+    });
+  },
+  useUpdateProject: (
+    onSuccess: () => void,
+    onError: (error: Error) => void,
+  ) => {
+    return useMutation({
+      mutationFn: ({
+        projectId,
+        request,
+      }: {
+        projectId: string;
+        request: UpdateProjectPlatformRequest;
+      }) => api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request),
+      onSuccess: (data) => {
+        projectCollection.utils.writeUpdate(data);
+        onSuccess();
+      },
+      onError,
     });
   },
   update: (projectId: string, request: UpdateProjectPlatformRequest) => {

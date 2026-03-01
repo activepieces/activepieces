@@ -100,7 +100,7 @@ export const BuilderHeader = () => {
   };
 
   const titleContent = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 px-4">
       <Breadcrumb>
         <BreadcrumbList>
           {!embedState.disableNavigationInBuilder && (

@@ -3,10 +3,20 @@ import {
   PlatformWithoutSensitiveData,
   ProjectWithLimits,
   ProjectType,
+  AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Lock, User, Tag, Users, Workflow, Clock, Hash } from 'lucide-react';
+import {
+  Lock,
+  User,
+  Tag,
+  Users,
+  Workflow,
+  Clock,
+  Hash,
+  Link2,
+} from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -14,15 +24,16 @@ import { FormattedDate } from '@/components/ui/formatted-date';
 
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
-  currentUserId?: string;
 };
 
 export const projectsTableColumns = ({
   platform,
 }: ProjectsTableColumnsProps): ColumnDef<
-  RowDataWithActions<ProjectWithLimits>
+  RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
 >[] => {
-  const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
+  const columns: ColumnDef<
+    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
+  >[] = [
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
@@ -117,6 +128,23 @@ export const projectsTableColumns = ({
             ? '-'
             : row.original.externalId;
         return <div className="text-left truncate">{displayValue}</div>;
+      },
+    });
+  }
+  if (platform.plan.globalConnectionsEnabled) {
+    columns.push({
+      accessorKey: 'globalConnectionsCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t('Global Connections')}
+          icon={Link2}
+        />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">{row.original.globalConnectionsCount}</div>
+        );
       },
     });
   }
