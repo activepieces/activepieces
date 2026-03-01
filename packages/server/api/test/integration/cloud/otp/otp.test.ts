@@ -12,7 +12,7 @@ let app: FastifyInstance | null = null
 let sendOtpSpy: Mock
 
 beforeAll(async () => {
-    app = await setupTestEnvironment()
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 afterAll(async () => {

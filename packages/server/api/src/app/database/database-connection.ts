@@ -117,7 +117,15 @@ export const commonProperties = {
     entities: getEntities(),
 }
 
-let _databaseConnection: DataSource | null = null
+const DB_GLOBAL_KEY = '__AP_DB_CONNECTION__'
+
+function getPersistedConnection(): DataSource | null {
+    return ((globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] as DataSource) ?? null
+}
+
+function setPersistedConnection(ds: DataSource | null): void {
+    (globalThis as Record<string, unknown>)[DB_GLOBAL_KEY] = ds
+}
 
 const createDataSource = (): DataSource => {
     switch (databaseType) {
@@ -130,12 +138,15 @@ const createDataSource = (): DataSource => {
 }
 
 export const databaseConnection = (): DataSource => {
-    if (isNil(_databaseConnection)) {
-        _databaseConnection = createDataSource()
+    const existing = getPersistedConnection()
+    if (!isNil(existing)) {
+        return existing
     }
-    return _databaseConnection
+    const ds = createDataSource()
+    setPersistedConnection(ds)
+    return ds
 }
 
 export function resetDatabaseConnection(): void {
-    _databaseConnection = null
+    setPersistedConnection(null)
 }

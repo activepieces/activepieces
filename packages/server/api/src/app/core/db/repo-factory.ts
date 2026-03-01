@@ -14,27 +14,29 @@ type RepoGetter<T extends ObjectLiteral = ObjectLiteral> = (
     entityManager?: EntityManager
 ) => Repository<T>
 
-const instances = new Map<EntitySchema, RepoGetter>()
+const instances = new Map<string, RepoGetter>()
 
 /**
  * Creates a {@link RepoGetter} for the given entity.
+ * Uses entity name strings as keys to survive Vitest module re-evaluation.
  * @param entity The entity to create a {@link RepoGetter} for.
  * @returns A {@link RepoGetter} for the given entity.
  */
 export const repoFactory = <T extends ObjectLiteral>(
     entity: EntitySchema<T>,
 ): RepoGetter<T> => {
-    if (instances.has(entity)) {
-        return instances.get(entity) as RepoGetter<T>
+    const entityName = entity.options.name
+    if (instances.has(entityName)) {
+        return instances.get(entityName) as RepoGetter<T>
     }
 
     const newInstance: RepoGetter<T> = (entityManager?: EntityManager) => {
         return (
-            entityManager?.getRepository(entity) ??
-      databaseConnection().getRepository(entity)
-        )
+            entityManager?.getRepository(entityName) ??
+      databaseConnection().getRepository(entityName)
+        ) as Repository<T>
     }
 
-    instances.set(entity, newInstance as RepoGetter)
+    instances.set(entityName, newInstance as RepoGetter)
     return newInstance
 }

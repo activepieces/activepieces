@@ -12,11 +12,6 @@ export default defineConfig({
     testTimeout: 60000,
     hookTimeout: 60000,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
     setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
   },
