@@ -1,5 +1,5 @@
-import { ProjectMemberWithUser } from '@activepieces/shared';
 import {
+  ProjectMemberWithUser,
   CreateProjectRoleRequestBody,
   UpdateProjectRoleRequestBody,
   ProjectRole,

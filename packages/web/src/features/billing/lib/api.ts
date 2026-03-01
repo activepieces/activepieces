@@ -3,8 +3,8 @@ import {
   CreateSubscriptionParams,
   CreateAICreditCheckoutSessionParamsSchema,
   UpdateAICreditsAutoTopUpParamsSchema,
+  PlatformBillingInformation,
 } from '@activepieces/shared';
-import { PlatformBillingInformation } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
