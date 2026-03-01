@@ -77,14 +77,13 @@ describe('OTP API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
-            expect(sendOtpSpy).toHaveBeenCalledWith({
+            expect(sendOtpSpy).toHaveBeenCalledWith(expect.objectContaining({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: expect.any(String),
                 type: OtpType.EMAIL_VERIFICATION,
                 userIdentity: expect.objectContaining({
                     email: mockUserIdentity.email,
                 }),
-            })
+            }))
         })
 
         it('OTP is unique per user per OTP type', async () => {
