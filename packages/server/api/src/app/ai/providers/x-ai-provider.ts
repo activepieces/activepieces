@@ -44,7 +44,8 @@ export const xAiProvider: AIProviderStrategy<X_AIProviderAuthConfig, X_AIProvide
                 name: model.id,
                 type: AIProviderModelType.TEXT,
             }))
-        } catch {
+        }
+        catch {
             return X_AI_FALLBACK_MODELS
         }
     },
