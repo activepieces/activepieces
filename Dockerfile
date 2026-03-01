@@ -83,17 +83,6 @@ RUN rm -rf packages/pieces/core packages/pieces/custom && \
       -exec rm -rf {} + && \
     rm -f bun.lock && bun install
 
-# Remove piece directories not needed at runtime (keeps only the 4 pieces server-api imports)
-# Then regenerate bun.lock so it matches the trimmed workspace
-RUN rm -rf packages/pieces/core packages/pieces/custom && \
-    find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
-      ! -name slack \
-      ! -name square \
-      ! -name facebook-leads \
-      ! -name intercom \
-      -exec rm -rf {} + && \
-    rm -f bun.lock && bun install
-
 ### STAGE 2: Run ###
 FROM base AS run
 
