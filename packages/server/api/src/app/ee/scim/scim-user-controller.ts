@@ -1,12 +1,12 @@
+import { securityAccess } from '@activepieces/server-common'
 import {
     CreateScimUserRequest,
+    PrincipalType,
     ReplaceScimUserRequest,
     ScimListQueryParams,
     ScimPatchRequest,
     ScimResourceId,
-    PrincipalType,
 } from '@activepieces/shared'
-import { securityAccess } from '@activepieces/server-common'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { scimUserService } from './scim-user-service'

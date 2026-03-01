@@ -1,6 +1,6 @@
+import { Static, Type } from '@sinclair/typebox'
 import { isNil } from '../../core/common'
 import { PlatformRole } from '../../core/user'
-import { Static, Type } from '@sinclair/typebox'
 
 export const SCIM_USER_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:User'
 export const SCIM_GROUP_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:Group'

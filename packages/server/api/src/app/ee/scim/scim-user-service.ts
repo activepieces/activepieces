@@ -1,12 +1,9 @@
 import { cryptoUtils } from '@activepieces/server-common'
 import {
-    isNil,
-    PlatformRole,
-    User,
-    UserIdentityProvider,
-    UserStatus,
     CreateScimUserRequest,
+    isNil,
     parseScimFilter,
+    PlatformRole,
     ReplaceScimUserRequest,
     SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA,
     SCIM_LIST_RESPONSE_SCHEMA,
@@ -15,6 +12,9 @@ import {
     ScimListResponse,
     ScimPatchRequest,
     ScimUserResource,
+    User,
+    UserIdentityProvider,
+    UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

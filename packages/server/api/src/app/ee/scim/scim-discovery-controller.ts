@@ -1,12 +1,12 @@
+import { securityAccess } from '@activepieces/server-common'
 import {
+    PrincipalType,
     SCIM_GROUP_SCHEMA,
     SCIM_RESOURCE_TYPE_SCHEMA,
     SCIM_SCHEMA_SCHEMA,
     SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA,
     SCIM_USER_SCHEMA,
-    PrincipalType,
 } from '@activepieces/shared'
-import { securityAccess } from '@activepieces/server-common'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 

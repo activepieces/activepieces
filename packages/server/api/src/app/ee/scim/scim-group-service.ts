@@ -1,6 +1,9 @@
 import {
     CreateScimGroupRequest,
+    DefaultProjectRole,
+    isNil,
     parseScimFilter,
+    ProjectType,
     ReplaceScimGroupRequest,
     SCIM_GROUP_SCHEMA,
     SCIM_LIST_RESPONSE_SCHEMA,
@@ -9,9 +12,6 @@ import {
     ScimGroupResource,
     ScimListResponse,
     ScimPatchRequest,
-    DefaultProjectRole,
-    isNil,
-    ProjectType,
     UserStatus,
 } from '@activepieces/shared'
 
