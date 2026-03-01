@@ -1318,6 +1318,10 @@
       "@activepieces/piece-kissflow": [
         "packages/pieces/community/kissflow/src/index.ts"
       ],
+      "@activepieces/piece-klaviyo": [
+        "packages/pieces/community/klaviyo/src/index.ts"
+      ],
+
       "@activepieces/piece-housecall-pro": [
         "packages/pieces/community/housecall-pro/src/index.ts"
       ],
