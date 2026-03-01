@@ -1391,6 +1391,7 @@
   "Activation failed, invalid license key": "アクティベーションに失敗しました。無効なライセンスキーです。",
   "Today": "今日",
   "Yesterday": "昨日",
+  "Configure credentials for {managerName} secret manager.": "{managerName} シークレットマネージャーの資格情報を設定します。",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
   "{count} flows created successfully in a new folder_other": "",
   "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": ""

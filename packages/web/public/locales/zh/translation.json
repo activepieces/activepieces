@@ -1391,6 +1391,7 @@
   "Activation failed, invalid license key": "Activation failed, invalid license key",
   "Today": "今日：",
   "Yesterday": "Yesterday",
+  "Configure credentials for {managerName} secret manager.": "Configure credentials for {managerName} secret manager.",
   "You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!_other": "",
   "{count} flows created successfully in a new folder_other": "",
   "This template includes {count} flows with all dependencies. A new folder will be created to organize them._other": ""
