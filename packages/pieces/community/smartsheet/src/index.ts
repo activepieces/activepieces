@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient, createCustomApiCallAction } from '@activepieces/pieces-common';
 
 // Actions
 import { addRowToSheet } from './lib/actions/add-row-to-sheet';
@@ -9,6 +9,10 @@ import { attachFileToRow } from './lib/actions/attach-file-to-row';
 import { findRowsByQuery } from './lib/actions/find-rows-by-query';
 import { findAttachmentByRowId } from './lib/actions/find-attachment-by-row-id';
 import { findSheetByName } from './lib/actions/find-sheet-by-name';
+import { listSheets } from './lib/actions/list-sheets';
+import { getSheetById } from './lib/actions/get-sheet';
+import { deleteRow } from './lib/actions/delete-row';
+import { getColumns } from './lib/actions/get-columns';
 
 // Webhook Triggers
 import { newRowAddedTrigger } from './lib/triggers/new-row-trigger';
@@ -40,12 +44,25 @@ export const smartsheet = createPiece({
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['onyedikachi-david', 'kishanprmr'],
 	actions: [
+		listSheets,
+		getSheetById,
 		addRowToSheet,
 		updateRow,
-		attachFileToRow,
+		deleteRow,
 		findRowsByQuery,
+		getColumns,
+		attachFileToRow,
 		findAttachmentByRowId,
 		findSheetByName,
+		createCustomApiCallAction({
+			baseUrl: () => {
+				return 'https://api.smartsheet.com/2.0';
+			},
+			auth: smartsheetAuth,
+			authMapping: async (auth) => ({
+				Authorization: `Bearer ${auth.secret_text}`,
+			}),
+		}),
 	],
 	triggers: [newRowAddedTrigger, updatedRowTrigger, newAttachmentTrigger, newCommentTrigger],
 });

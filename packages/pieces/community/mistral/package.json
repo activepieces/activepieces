@@ -1,0 +1,7 @@
+{
+  "name": "@activepieces/piece-mistral",
+  "version": "0.1.0",
+  "dependencies": {
+    "@mistralai/mistralai": "1.3.7"
+  }
+}
