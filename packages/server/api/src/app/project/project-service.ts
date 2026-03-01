@@ -15,7 +15,7 @@ import {
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
-import { Brackets, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedStore } from '../database/redis-connections'
 import { system } from '../helper/system/system'
@@ -27,21 +27,17 @@ export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
-        const colors = Object.values(ColorName)
-        const icon: ProjectIcon = {
-            color: colors[Math.floor(Math.random() * colors.length)],
-        }
+        const { callPostCreateHooks = true, entityManager, ...rest } = params
+        const icon = this.createProjectIcon()
         const newProject: NewProject = {
             id: apId(),
-            ...params,
+            ...rest,
             icon,
-            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
-        const savedProject = await projectRepo().save(newProject)
-        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
-        if (!isNil(params.maxConcurrentJobs)) {
-            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        const savedProject = await projectRepo(entityManager).save(newProject)
+        if (callPostCreateHooks) {
+            await this.callProjectPostCreateHooks(savedProject)
         }
         return savedProject
     },
@@ -82,7 +78,7 @@ export const projectService = {
         })
     },
 
-    async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
+    async update(projectId: ProjectId, request: UpdateParams, entityManager?: EntityManager): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
 
@@ -98,7 +94,7 @@ export const projectService = {
             ...spreadIfDefined('icon', request.icon),
         } : {}
 
-        await projectRepo().update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
+        await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         return this.getOneOrThrow(projectId)
     },
 
@@ -208,6 +204,19 @@ export const projectService = {
             externalId,
         })
     },
+    createProjectIcon: ()=>{
+        const colors = Object.values(ColorName)
+        const icon: ProjectIcon = {
+            color: colors[Math.floor(Math.random() * colors.length)],
+        }
+        return icon
+    },
+    callProjectPostCreateHooks: async (savedProject: Project)=>{
+        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
+        if (!isNil(savedProject.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), savedProject.maxConcurrentJobs)
+        }
+    },
 }
 
 
@@ -293,6 +302,8 @@ type CreateParams = {
     externalId?: string
     metadata?: Metadata
     maxConcurrentJobs?: number
+    callPostCreateHooks?: boolean
+    entityManager?: EntityManager
 }
 
 type GetByPlatformIdAndExternalIdParams = {

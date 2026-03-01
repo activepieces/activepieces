@@ -171,6 +171,7 @@ export const UpdateGlobalConnectionValueRequestBody = Type.Object({
     }),
     projectIds: Type.Optional(Type.Array(Type.String())),
     metadata: Type.Optional(Metadata),
+    preSelectForNewProjects: Type.Optional(Type.Boolean()),
 })
 
 export type UpdateConnectionValueRequestBody = Static<typeof UpdateConnectionValueRequestBody>
@@ -180,6 +181,7 @@ const GlobalConnectionExtras =  Type.Object({
     projectIds: Type.Array(Type.String()),
     externalId: Type.Optional(Type.String()),
     metadata: Type.Optional(Metadata),
+    preSelectForNewProjects: Type.Optional(Type.Boolean()),
 })
 export const UpsertGlobalConnectionRequestBody = 
     Type.Union([

@@ -16,6 +16,7 @@ export const UpdateProjectPlatformRequest = Type.Object({
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
     })),
+    globalConnectionExternalIds: Type.Optional(Type.Array(Type.String())),
 })
 
 export type UpdateProjectPlatformRequest = Static<typeof UpdateProjectPlatformRequest>
@@ -27,6 +28,7 @@ export const CreatePlatformProjectRequest = Type.Object({
     externalId: Nullable(Type.String()),
     metadata: Nullable(Metadata),
     maxConcurrentJobs: Nullable(Type.Number()),
+    globalConnectionExternalIds: Type.Optional(Type.Array(Type.String())),
 })
 
 export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>
