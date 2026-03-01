@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import bcrypt from 'bcrypt'
 import { passwordHasher } from '../../../../src/app/authentication/lib/password-hasher'
 
