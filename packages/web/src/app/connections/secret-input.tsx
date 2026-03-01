@@ -1,6 +1,6 @@
 import {
   SecretManagerProviderId,
-  SecretManagerFieldsSeperator,
+  SecretManagerFieldsSeparator,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
@@ -111,9 +111,8 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       const values = getSecretParamsForProvider(providerId).map(
         ([fieldKey]) => fieldValues[fieldKey] || '',
       );
-      return `{{${providerId}${SecretManagerFieldsSeperator}${values.join(
-        SecretManagerFieldsSeperator,
-      )}}}`;
+      const parts = [providerId, ...values].join(SecretManagerFieldsSeparator);
+      return `{{${parts}}}`;
     };
 
     const toggleSecretManager = useCallback(() => {

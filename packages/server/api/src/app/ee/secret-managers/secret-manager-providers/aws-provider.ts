@@ -8,13 +8,13 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
     name: 'AWS Secrets Manager',
     logo: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
     fields: {
-        accessKey: {
-            displayName: 'Access Key',
+        accessKeyId: {
+            displayName: 'Access Key ID',
             placeholder: 'access-key',
             type: 'text',
         },
-        secretKey: {
-            displayName: 'Secret Key',
+        secretAccessKey: {
+            displayName: 'Secret Access Key',
             placeholder: 'secret-key',
             type: 'password',
         },
@@ -34,21 +34,20 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
 }
 
 
-function getSecretsManagerClient(config: AWSProviderConfig, region: string): SecretsManagerClient {
+function getSecretsManagerClient(config: AWSProviderConfig): SecretsManagerClient {
     return new SecretsManagerClient({
-        region,
+        region: config.region,
         credentials: {
-            accessKeyId: config.accessKey,
-            secretAccessKey: config.secretKey,
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
         },
     })
 }
 
 export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.AWS> => ({
     checkConnection: async (config) => {
-        const region = config.region
         try {
-            const client = getSecretsManagerClient(config, region)
+            const client = getSecretsManagerClient(config)
             await client.send(new ListSecretsCommand({ MaxResults: 1 }))
             return true
         }
@@ -74,11 +73,10 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
         return Promise.resolve()
     },
     getSecret: async (request, config) => {
-        const region = config.region
-        const [secretName, secretJsonKey] = validatePathFormat(request.path)
+        const { secretName, secretJsonKey } = validatePathFormat(request.path)
 
         try {
-            const client = getSecretsManagerClient(config, region)
+            const client = getSecretsManagerClient(config)
             const response = await client.send(new GetSecretValueCommand({
                 SecretId: secretName,
             }))
@@ -123,9 +121,9 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
 
 })
 
-const validatePathFormat = (path: string): string[] => {
-    const splits = path.split(':')
-    if (splits.length < 2) {
+const validatePathFormat = (path: string): { secretName: string, secretJsonKey: string } => {
+    const colonIndex = path.indexOf(':')
+    if (colonIndex === -1) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
@@ -133,5 +131,8 @@ const validatePathFormat = (path: string): string[] => {
             },
         })
     }
-    return splits
+    return {
+        secretName: path.slice(0, colonIndex),
+        secretJsonKey: path.slice(colonIndex + 1),
+    }
 }

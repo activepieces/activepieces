@@ -40,7 +40,9 @@ const SecretManagerProviderCard = ({
                     <CircleAlert className="size-4 text-destructive" />
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Your configuration is not working.')}
+                    {t(
+                      'Your configuration is not working, please try reconnecting',
+                    )}
                   </TooltipContent>
                 </Tooltip>
               )}

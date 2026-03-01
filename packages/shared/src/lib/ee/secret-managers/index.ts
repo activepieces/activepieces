@@ -61,4 +61,4 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
 
 export type SecretManagerProviderMetaData = Static<typeof SecretManagerProviderMetaDataSchema>
 
-export const SecretManagerFieldsSeperator = '|ap_sep_v1|'
+export const SecretManagerFieldsSeparator = '|ap_sep_v1|'

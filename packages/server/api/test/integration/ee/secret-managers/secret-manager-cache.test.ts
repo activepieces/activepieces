@@ -83,7 +83,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList)
 
-            secretManagerCache.clearByPlatform(mockPlatform.id)
+            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
 
         it('should not cache when checkConnection fails', async () => {
@@ -128,7 +128,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList * 2)
 
-            secretManagerCache.clearByPlatform(mockPlatform.id)
+            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
     })
 
@@ -171,7 +171,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirst)
 
-            secretManagerCache.clearByPlatform(mockPlatform.id)
+            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
     })
 
@@ -221,7 +221,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            secretManagerCache.clearByPlatform(mockPlatform.id)
+            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
 
         it('should clear cache on disconnect', async () => {
@@ -276,7 +276,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            secretManagerCache.clearByPlatform(mockPlatform.id)
+            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
     })
 

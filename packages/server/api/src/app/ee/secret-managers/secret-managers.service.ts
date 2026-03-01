@@ -38,7 +38,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             return false
         }
         else {
-            const cached = secretManagerCache.getCheck(platformId, providerId)
+            const cached = secretManagerCache.getConnectionStatus(platformId, providerId)
             if (cached !== undefined) {
                 return cached
             }
@@ -46,7 +46,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 const provider = secretManagerProvider(log, providerId)
                 const connected = Boolean(await provider.checkConnection(config).catch(() => false))
                 if (connected) {
-                    secretManagerCache.setCheck(platformId, providerId, true)
+                    secretManagerCache.setConnectionStatus(platformId, providerId, true)
                 }
                 return connected
             }
@@ -64,7 +64,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 { platformId: request.platformId, providerId: request.providerId },
                 { auth: encryptedConfig },
             )
-            secretManagerCache.clearByPlatform(request.platformId)
+            secretManagerCache.invalidatePlatformEntries(request.platformId)
             return
         }
         await secretManagerRepository().save({
@@ -73,7 +73,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             providerId: request.providerId,
             auth: encryptedConfig,
         })
-        secretManagerCache.clearByPlatform(request.platformId)
+        secretManagerCache.invalidatePlatformEntries(request.platformId)
     },
 
     getSecret: async (request: { path: string, platformId: string, providerId: SecretManagerProviderId }) => {
@@ -92,12 +92,12 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const cached = secretManagerCache.getSecret(request.platformId, request.providerId, request.path)
+        const cached = secretManagerCache.getSecretValue(request.platformId, request.providerId, request.path)
         if (cached !== undefined) {
             return cached
         }
         const secret = await provider.getSecret(request, decryptedConfig)
-        secretManagerCache.setSecret(request.platformId, request.providerId, request.path, secret)
+        secretManagerCache.setSecretValue(request.platformId, request.providerId, request.path, secret)
         return secret
     },
 
@@ -148,7 +148,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             platformId,
             providerId,
         })
-        secretManagerCache.clearByPlatform(platformId)
+        secretManagerCache.invalidatePlatformEntries(platformId)
     },
 })
 
