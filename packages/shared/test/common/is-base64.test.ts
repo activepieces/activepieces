@@ -1,4 +1,4 @@
-import { isBase64 } from '../../src/lib/common/utils/utils'
+import { isBase64 } from '../../src/lib/core/common/utils/utils'
 
 const validBase64 = 'SGVsbG8gV29ybGQ='  // "Hello World"
 const validPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
