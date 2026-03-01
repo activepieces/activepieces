@@ -1,4 +1,4 @@
-import { SecretManagerProviderId } from '@activepieces/shared'
+import { SecretManagerProviderId, SecretManagerFieldsSeparator } from '@activepieces/shared'
 import { apAxios } from '@activepieces/server-common'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -83,7 +83,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList)
 
-            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
 
         it('should not cache when checkConnection fails', async () => {
@@ -128,7 +128,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirstList * 2)
 
-            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
     })
 
@@ -156,7 +156,7 @@ describe('Secret Manager Cache', () => {
 
             // First resolveString — calls provider
             await secretManagersService(mockLog).resolveString({
-                key: '{{hashicorp:secret/data/keys/my-api-key}}',
+                key: `{{hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
                 platformId: mockPlatform.id,
             })
 
@@ -165,13 +165,13 @@ describe('Secret Manager Cache', () => {
 
             // Second resolveString — should hit cache
             await secretManagersService(mockLog).resolveString({
-                key: '{{hashicorp:secret/data/keys/my-api-key}}',
+                key: `{{hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
                 platformId: mockPlatform.id,
             })
 
             expect(axiosRequestSpy.mock.calls.length).toBe(callsAfterFirst)
 
-            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
     })
 
@@ -221,7 +221,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
 
         it('should clear cache on disconnect', async () => {
@@ -276,7 +276,7 @@ describe('Secret Manager Cache', () => {
 
             expect(axiosRequestSpy.mock.calls.length).toBeGreaterThan(0)
 
-            secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
+            await secretManagerCache.invalidatePlatformEntries(mockPlatform.id)
         })
     })
 

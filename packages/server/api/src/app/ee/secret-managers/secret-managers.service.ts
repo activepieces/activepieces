@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerFieldsSeperator, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerFieldsSeparator, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
@@ -38,7 +38,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             return false
         }
         else {
-            const cached = secretManagerCache.getConnectionStatus(platformId, providerId)
+            const cached = await secretManagerCache.getConnectionStatus(platformId, providerId)
             if (cached !== undefined) {
                 return cached
             }
@@ -46,7 +46,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 const provider = secretManagerProvider(log, providerId)
                 const connected = Boolean(await provider.checkConnection(config).catch(() => false))
                 if (connected) {
-                    secretManagerCache.setConnectionStatus(platformId, providerId, true)
+                    await secretManagerCache.setConnectionStatus(platformId, providerId, true)
                 }
                 return connected
             }
@@ -64,7 +64,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 { platformId: request.platformId, providerId: request.providerId },
                 { auth: encryptedConfig },
             )
-            secretManagerCache.invalidatePlatformEntries(request.platformId)
+            await secretManagerCache.invalidatePlatformEntries(request.platformId)
             return
         }
         await secretManagerRepository().save({
@@ -73,7 +73,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             providerId: request.providerId,
             auth: encryptedConfig,
         })
-        secretManagerCache.invalidatePlatformEntries(request.platformId)
+        await secretManagerCache.invalidatePlatformEntries(request.platformId)
     },
 
     getSecret: async (request: { path: string, platformId: string, providerId: SecretManagerProviderId }) => {
@@ -92,12 +92,12 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const cached = secretManagerCache.getSecretValue(request.platformId, request.providerId, request.path)
+        const cached = await secretManagerCache.getSecretValue(request.platformId, request.providerId, request.path)
         if (cached !== undefined) {
             return cached
         }
         const secret = await provider.getSecret(request, decryptedConfig)
-        secretManagerCache.setSecretValue(request.platformId, request.providerId, request.path, secret)
+        await secretManagerCache.setSecretValue(request.platformId, request.providerId, request.path, secret)
         return secret
     },
 
@@ -148,7 +148,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             platformId,
             providerId,
         })
-        secretManagerCache.invalidatePlatformEntries(platformId)
+        await secretManagerCache.invalidatePlatformEntries(platformId)
     },
 })
 
@@ -195,9 +195,9 @@ const extractProviderIdAndPathFromKey = (key: string): {
     path: string
 } => {
     const keyWithoutBraces = trimKeyBraces(key)
-    const splits = keyWithoutBraces.split(SecretManagerFieldsSeperator)
+    const splits = keyWithoutBraces.split(SecretManagerFieldsSeparator)
     const providerId = splits[0]
-    const path = splits.slice(1).join(SecretManagerFieldsSeperator)
+    const path = splits.slice(1).join(SecretManagerFieldsSeparator)
     if (!isEnumValue(SecretManagerProviderId, providerId)) {
         throw new ActivepiecesError({
             code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,

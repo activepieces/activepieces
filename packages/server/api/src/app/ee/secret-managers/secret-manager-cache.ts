@@ -1,32 +1,36 @@
-import { apDayjsDuration } from '@activepieces/server-common'
-import NodeCache from 'node-cache'
+import { apDayjsDuration, redisHelper } from '@activepieces/server-common'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 
 const ONE_HOUR_SECONDS = apDayjsDuration(1, 'hour').asSeconds()
 
-const cache = new NodeCache({ stdTTL: ONE_HOUR_SECONDS, useClones: false })
+const KEY_PREFIX = 'secret-manager'
 
 const buildConnectionCheckKey = (platformId: string, providerId: string) =>
-    `${platformId}:check:${providerId}`
+    `${KEY_PREFIX}:${platformId}:check:${providerId}`
 
 const buildSecretValueKey = (platformId: string, providerId: string, path: string) =>
-    `${platformId}:secret:${providerId}:${path}`
+    `${KEY_PREFIX}:${platformId}:secret:${providerId}:${path}`
 
 export const secretManagerCache = {
-    getConnectionStatus(platformId: string, providerId: string): boolean | undefined {
-        return cache.get<boolean>(buildConnectionCheckKey(platformId, providerId))
+    async getConnectionStatus(platformId: string, providerId: string): Promise<boolean | undefined> {
+        const result = await distributedStore.get<boolean>(buildConnectionCheckKey(platformId, providerId))
+        return result ?? undefined
     },
-    setConnectionStatus(platformId: string, providerId: string, value: boolean): void {
-        cache.set(buildConnectionCheckKey(platformId, providerId), value)
+    async setConnectionStatus(platformId: string, providerId: string, value: boolean): Promise<void> {
+        await distributedStore.put(buildConnectionCheckKey(platformId, providerId), value, ONE_HOUR_SECONDS)
     },
-    getSecretValue(platformId: string, providerId: string, path: string): string | undefined {
-        return cache.get<string>(buildSecretValueKey(platformId, providerId, path))
+    async getSecretValue(platformId: string, providerId: string, path: string): Promise<string | undefined> {
+        const result = await distributedStore.get<string>(buildSecretValueKey(platformId, providerId, path))
+        return result ?? undefined
     },
-    setSecretValue(platformId: string, providerId: string, path: string, value: string): void {
-        cache.set(buildSecretValueKey(platformId, providerId, path), value)
+    async setSecretValue(platformId: string, providerId: string, path: string, value: string): Promise<void> {
+        await distributedStore.put(buildSecretValueKey(platformId, providerId, path), value, ONE_HOUR_SECONDS)
     },
-    invalidatePlatformEntries(platformId: string): void {
-        const prefix = `${platformId}:`
-        const keys = cache.keys().filter(key => key.startsWith(prefix))
-        cache.del(keys)
+    async invalidatePlatformEntries(platformId: string): Promise<void> {
+        const redis = await redisConnections.useExisting()
+        const keys = await redisHelper.scanAll(redis, `${KEY_PREFIX}:${platformId}:*`)
+        if (keys.length > 0) {
+            await redis.del(keys)
+        }
     },
 }

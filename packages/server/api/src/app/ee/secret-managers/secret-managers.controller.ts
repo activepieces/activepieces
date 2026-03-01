@@ -20,7 +20,7 @@ export const secretManagersController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.delete('/cache', ClearSecretManagerCache, async (request, reply) => {
-        secretManagerCache.invalidatePlatformEntries(request.principal.platform.id)
+        await secretManagerCache.invalidatePlatformEntries(request.principal.platform.id)
         return reply.status(204).send()
     })
 }

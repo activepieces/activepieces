@@ -24,8 +24,8 @@ export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchem
  */
 
 export const AWSProviderConfigSchema = Type.Object({
-    accessKey: Type.String(),
-    secretKey: Type.String(),
+    accessKeyId: Type.String(),
+    secretAccessKey: Type.String(),
     region: Type.String(),
 })
 export type AWSProviderConfig = Static<typeof AWSProviderConfigSchema>
