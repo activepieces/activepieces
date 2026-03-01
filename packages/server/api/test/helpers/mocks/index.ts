@@ -26,6 +26,7 @@ import {
     FileType,
     FilteredPieceBehavior,
     Flow,
+    Folder,
     FlowOperationStatus,
     FlowRun,
     FlowRunStatus,
@@ -61,6 +62,8 @@ import {
     RunEnvironment,
     SigningKey,
     Table,
+    TableWebhook,
+    TableWebhookEventType,
     TeamProjectsLimit,
     Template,
     TemplateStatus,
@@ -555,7 +558,7 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
     }
 }
 
-const createMockTable = ({ projectId }: { projectId: string }): Table => {
+export const createMockTable = ({ projectId }: { projectId: string }): Table => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -566,7 +569,7 @@ const createMockTable = ({ projectId }: { projectId: string }): Table => {
     }
 }
 
-const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
+export const createMockField = ({ tableId, projectId }: { tableId: string, projectId: string }): Field => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -581,7 +584,7 @@ const createMockField = ({ tableId, projectId }: { tableId: string, projectId: s
         type: FieldType.STATIC_DROPDOWN,
     }
 }
-const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
+export const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: string }): Record => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -591,7 +594,7 @@ const createMockRecord = ({ tableId, projectId }: { tableId: string, projectId: 
     }
 }
 
-const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
+export const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fieldId: string, projectId: string }): Cell => {
     return {
         id: apId(),
         created: faker.date.recent().toISOString(),
@@ -603,6 +606,29 @@ const createMockCell = ({ recordId, fieldId, projectId }: { recordId: string, fi
     }
 }
 
+
+export const createMockFolder = (folder?: Partial<Folder>): Folder => {
+    return {
+        id: folder?.id ?? apId(),
+        created: folder?.created ?? faker.date.recent().toISOString(),
+        updated: folder?.updated ?? faker.date.recent().toISOString(),
+        projectId: folder?.projectId ?? apId(),
+        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayOrder: folder?.displayOrder ?? 0,
+    }
+}
+
+export const createMockTableWebhook = (webhook?: Partial<TableWebhook>): TableWebhook => {
+    return {
+        id: webhook?.id ?? apId(),
+        created: webhook?.created ?? faker.date.recent().toISOString(),
+        updated: webhook?.updated ?? faker.date.recent().toISOString(),
+        projectId: webhook?.projectId ?? apId(),
+        tableId: webhook?.tableId ?? apId(),
+        events: webhook?.events ?? [TableWebhookEventType.RECORD_CREATED],
+        flowId: webhook?.flowId ?? apId(),
+    }
+}
 
 type Solution = {
     table: Table
