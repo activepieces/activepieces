@@ -1,5 +1,5 @@
 import { pieceTranslation } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
@@ -64,7 +64,8 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
 
-            const filteredPieces = [...cachedPieces, ...translatedDevPieces].filter((piece) =>
+            const devPieceNames = new Set(translatedDevPieces.map((p) => p.name))
+            const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces].filter((piece) =>
                 filterPieceBasedOnType(platformId, piece),
             )
             return lastVersionOfEachPiece(filteredPieces)

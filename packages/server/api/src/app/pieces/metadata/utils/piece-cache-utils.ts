@@ -1,4 +1,4 @@
-import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
+import { AppSystemProp, filePiecesUtils } from '@activepieces/server-common'
 import { apId, isEmpty, isNil, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'

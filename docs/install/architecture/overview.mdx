@@ -47,24 +47,24 @@ The repository is structured as a monorepo using Turbo, with TypeScript as the p
 ```
 .
 ├── packages
-│   ├── react-ui
+│   ├── web
 │   ├── server
 │   │   ├── api
 │   │   ├── worker
+│   │   ├── engine
 │   │   ├── sandbox
-│   │   └── shared
+│   │   └── common
 │   ├── ee
-│   ├── engine
 │   ├── pieces
 │   └── shared
 ```
 
-- `react-ui`: This package contains the user interface, implemented using the React framework.
-- `server-api`: This package contains the main application written in TypeScript with the Fastify framework.
-- `server-worker`: This package contains the logic of accepting flow jobs and executing them using the engine.
+- `web`: This package contains the user interface, implemented using the React framework.
+- `api`: This package contains the main application written in TypeScript with the Fastify framework.
+- `worker`: This package contains the logic of accepting flow jobs and executing them using the engine.
 - `server-sandbox`: This package contains the sandbox execution environment, including process isolation, pool management, and WebSocket communication between the worker and engine.
-- `server-shared`: This package contains the shared logic between worker and app.
-- `engine`: This package contains the logic for flow execution within the sandbox.
+- `common`: This package contains the shared logic between worker and app.
+- `engine`: This package contains the logic for flow execution within the sandbox. Located under `server/engine`.
 - `pieces`: This package contains the implementation of triggers and actions for third-party apps.
 - `shared`: This package contains shared data models and helper functions used by the other packages.
 - `ee`: This package contains features that are only available in the paid edition.

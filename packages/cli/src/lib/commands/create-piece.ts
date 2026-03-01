@@ -64,6 +64,8 @@ const scaffoldPiece = async (
     name: packageName,
     version: '0.0.1',
     type: 'commonjs',
+    main: './dist/src/index.js',
+    types: './dist/src/index.d.ts',
     dependencies: {
       '@activepieces/pieces-common': 'workspace:*',
       '@activepieces/pieces-framework': 'workspace:*',
@@ -71,7 +73,7 @@ const scaffoldPiece = async (
       tslib: '2.6.2',
     },
     scripts: {
-      build: 'tsc -p tsconfig.lib.json',
+      build: 'tsc -p tsconfig.lib.json && cp package.json dist/',
       lint: "eslint 'src/**/*.ts'",
     },
   };
@@ -94,9 +96,7 @@ const scaffoldPiece = async (
     },
     files: [],
     include: [],
-    references: [
-      { path: './tsconfig.lib.json' },
-    ],
+    references: [{ path: './tsconfig.lib.json' }],
   };
   await writeFile(
     path.join(baseDir, 'tsconfig.json'),
@@ -110,7 +110,7 @@ const scaffoldPiece = async (
       rootDir: '.',
       baseUrl: '.',
       paths: {},
-      outDir: `../../../../dist/packages/pieces/${pieceType}/${pieceName}`,
+      outDir: './dist',
       declaration: true,
       types: ['node'],
     },
@@ -195,8 +195,10 @@ export const createPieceCommand = new Command('create')
         type: 'input',
         name: 'packageName',
         message: 'Enter the package name:',
-        default: (answers: Record<string, string>) => `@activepieces/piece-${answers.pieceName}`,
-        when: (answers: Record<string, string>) => answers.pieceName !== undefined,
+        default: (answers: Record<string, string>) =>
+          `@activepieces/piece-${answers.pieceName}`,
+        when: (answers: Record<string, string>) =>
+          answers.pieceName !== undefined,
       },
       {
         type: 'list',

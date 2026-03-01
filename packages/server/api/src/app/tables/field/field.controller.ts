@@ -1,4 +1,4 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'

@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-common'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'

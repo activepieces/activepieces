@@ -1,4 +1,4 @@
-import { ConnectSecretManagerRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/ee-shared'
+import { ConnectSecretManagerRequest, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { awsProvider } from './aws-provider'
 import { CYBERARK_PROVIDER_METADATA, cyberarkConjurProvider } from './cyberark-conjur-provider'

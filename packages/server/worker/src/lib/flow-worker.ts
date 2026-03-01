@@ -1,6 +1,6 @@
 import path from 'path'
 import { createSandbox, createSandboxPool, createSandboxWebsocketServer, isolateProcess, SandboxMount, simpleProcess } from '@activepieces/sandbox'
-import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-shared'
+import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-common'
 import { ApEnvironment, ExecutionMode, WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'

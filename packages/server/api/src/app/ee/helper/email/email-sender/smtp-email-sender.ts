@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'

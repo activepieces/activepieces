@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { CreateSandboxProcessParams, SandboxLogger } from '../src/lib/types'
 
 const mockExecPromise = vi.fn().mockResolvedValue({ stdout: '', stderr: '' })
-vi.mock('@activepieces/server-shared', () => ({
+vi.mock('@activepieces/server-common', () => ({
     execPromise: (...args: unknown[]) => mockExecPromise(...args),
 }))
 
