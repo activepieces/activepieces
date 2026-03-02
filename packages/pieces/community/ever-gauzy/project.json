@@ -1,0 +1,59 @@
+{
+  "name": "pieces-ever-gauzy",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/ever-gauzy/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "generatorOptions": {
+        "packageRoot": "dist/{projectRoot}",
+        "currentVersionResolver": "git-tag"
+      }
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/ever-gauzy",
+        "tsConfig": "packages/pieces/community/ever-gauzy/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/ever-gauzy/package.json",
+        "main": "packages/pieces/community/ever-gauzy/src/index.ts",
+        "assets": [
+          "packages/pieces/community/ever-gauzy/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/ever-gauzy",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  }
+}

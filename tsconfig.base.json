@@ -382,7 +382,11 @@
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
+      "@activepieces/piece-ever-gauzy": [
+        "packages/pieces/community/ever-gauzy/src/index.ts"
+      ],
       "@activepieces/piece-exa": ["packages/pieces/community/exa/src/index.ts"],
+
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
