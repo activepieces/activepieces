@@ -162,7 +162,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             return null
         }
 
-        const owner = isNil(connection.ownerId) ? null : await userService.getMetaInformation({
+        const owner = isNil(connection.ownerId) ? null : await userService(log).getMetaInformation({
             id: connection.ownerId,
         })
         return {
@@ -355,7 +355,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
-        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
+        const platformAdmins = (await userService(log).getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
             firstName: user.identity.firstName,
             lastName: user.identity.lastName,
             email: user.identity.email,

@@ -20,6 +20,7 @@ import {
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -35,7 +36,7 @@ import { UserEntity, UserSchema } from './user-entity'
 
 export const userRepo = repoFactory(UserEntity)
 
-export const userService = {
+export const userService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<User> {
         const isActive = params.isActive ?? true
         const user: NewUser = {
@@ -60,7 +61,7 @@ export const userService = {
                 platformRole: PlatformRole.MEMBER,
             })
 
-            await projectService.create({
+            await projectService(log).create({
                 displayName: identity.firstName + '\'s Project',
                 ownerId: newUser.id,
                 platformId,
@@ -87,7 +88,7 @@ export const userService = {
             })
         }
 
-        const platform = await platformService.getOneOrThrow(user.platformId)
+        const platform = await platformService(log).getOneOrThrow(user.platformId)
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -173,7 +174,7 @@ export const userService = {
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
 
-        await platformProjectService(system.globalLogger()).deletePersonalProjectForUser({
+        await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,
             platformId,
         })
@@ -202,7 +203,7 @@ export const userService = {
     },
     async getMetaInformation({ id }: IdParams): Promise<UserWithMetaInformation> {
         const user = await userRepo().findOneByOrFail({ id })
-        const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+        const identity = await userIdentityService(log).getBasicInformation(user.identityId)
         return {
             id: user.id,
             email: identity.email,
@@ -233,7 +234,7 @@ export const userService = {
     isUserPrivileged(user: User): boolean {
         return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     },
-}
+})
 
 
 async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {

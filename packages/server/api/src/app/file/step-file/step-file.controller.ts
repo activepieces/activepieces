@@ -46,7 +46,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', UpsertStepFileRequest, async (request) => {
-        const platformId = await projectService.getPlatformId(request.principal.projectId)
+        const platformId = await projectService(request.log).getPlatformId(request.principal.projectId)
         return stepFileService(request.log).saveAndEnrich({
             fileName: request.body.fileName,
             flowId: request.body.flowId,

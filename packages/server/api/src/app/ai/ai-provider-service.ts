@@ -41,7 +41,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             provider: AIProviderName.ACTIVEPIECES,
         })
 
-        if (flagService.aiCreditsEnabled() && !activepiecesExists) {
+        if (flagService(log).aiCreditsEnabled() && !activepiecesExists) {
             await aiProviderRepo().save({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),

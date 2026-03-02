@@ -67,7 +67,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
-        const user = await userService.getOneOrFail({ id: request.principal.id })
+        const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
         return authenticationService(request.log).switchPlatform({
             identityId: user.identityId,
             platformId: request.body.platformId,

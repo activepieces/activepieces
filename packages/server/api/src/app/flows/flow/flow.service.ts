@@ -204,7 +204,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            const migratedVersion = await flowVersionMigrationService.migrate(flow.version)
+            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version)
             return {
                 ...flow,
                 version: migratedVersion,
@@ -229,7 +229,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         if (isNil(flow)) {
             return null
         }
-        const projectExists = await projectService.exists({
+        const projectExists = await projectService(log).exists({
             projectId: flow.projectId,
         })
         if (!projectExists) {
@@ -238,7 +238,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return flow
     },
     async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
-        const projectExists = await projectService.exists({
+        const projectExists = await projectService(log).exists({
             projectId,
         })
         if (!projectExists) {
@@ -271,7 +271,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        const projectExists = await projectService.exists({
+        const projectExists = await projectService(log).exists({
             projectId,
         })
         if (isNil(flow) || !projectExists) {
@@ -545,7 +545,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })))
     },
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
-        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
+        const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
         const flows = await flowRepo().findBy({
             projectId: In(projectIds),
         })

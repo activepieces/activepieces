@@ -15,6 +15,7 @@ import { ActivepiecesError,
     UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
@@ -25,23 +26,23 @@ import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
-export const platformService = {
+export const platformService = (log: FastifyBaseLogger) => ({
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
-        const users = await userService.getByIdentityId({ identityId: params.identityId })
+        const users = await userService(log).getByIdentityId({ identityId: params.identityId })
 
         const platformsWithProjects = await Promise.all(users.map(async (user) => {
             if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
                 return null
             }
-            const hasProjects = await projectService.userHasProjects({
+            const hasProjects = await projectService(log).userHasProjects({
                 platformId: user.platformId,
                 userId: user.id,
-                isPrivileged: userService.isUserPrivileged(user),
+                isPrivileged: userService(log).isUserPrivileged(user),
             })
             return hasProjects ? user.platformId : null
         }))
 
-        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => platformService.getOneWithPlanOrThrow(platformId)))
+        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => this.getOneWithPlanOrThrow(platformId)))
         return platforms
     },
     async create(params: AddParams): Promise<Platform> {
@@ -73,7 +74,7 @@ export const platformService = {
         }
 
         const savedPlatform = await platformRepo().save(newPlatform)
-        await userService.addOwnerToPlatform({
+        await userService(log).addOwnerToPlatform({
             id: ownerId,
             platformId: savedPlatform.id,
         })
@@ -117,7 +118,7 @@ export const platformService = {
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
         if (!isNil(params.plan)) {
-            await platformPlanService(system.globalLogger()).update({
+            await platformPlanService(log).update({
                 platformId: params.id,
                 ...params.plan,
             })
@@ -149,23 +150,23 @@ export const platformService = {
         }
         return {
             ...platform,
-            usage: await getUsage(platform),
-            plan: await getPlan(platform),
+            usage: await getUsage(log, platform),
+            plan: await getPlan(log, platform),
         }
     },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<Omit<PlatformWithoutSensitiveData, 'usage'>> {
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
-            plan: await getPlan(platform),
+            plan: await getPlan(log, platform),
         }
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
-            usage: await getUsage(platform),
-            plan: await getPlan(platform),
+            usage: await getUsage(log, platform),
+            plan: await getPlan(log, platform),
         }
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
@@ -173,17 +174,17 @@ export const platformService = {
             id,
         })
     },
-}
+})
 
-async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
+async function getUsage(log: FastifyBaseLogger, platform: Platform): Promise<PlatformUsage | undefined> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return undefined
     }
-    return platformPlanService(system.globalLogger()).getUsage(platform.id)
+    return platformPlanService(log).getUsage(platform.id)
 }
 
-async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
+async function getPlan(log: FastifyBaseLogger, platform: Platform): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
@@ -192,7 +193,7 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             stripeSubscriptionEndDate: 0,
         }
     }
-    return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
+    return platformPlanService(log).getOrCreateForPlatform(platform.id)
 }
 
 type AddParams = {
