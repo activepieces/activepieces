@@ -128,11 +128,11 @@ describe('Flow Version API', () => {
             const step1 = allSteps.find(s => s.name === 'step_1')
             expect((step1?.settings.input as Record<string, unknown>)[AgentPieceProps.AI_PROVIDER_MODEL]).toEqual(targetModel)
 
-            // step_2 uses input.provider / input.model directly — should be untouched
+            // step_2 uses input.provider / input.model directly
             const step2 = allSteps.find(s => s.name === 'step_2')
             const step2Input = step2?.settings.input as Record<string, unknown>
-            expect(step2Input.provider).toBe(sourceModel.provider)
-            expect(step2Input.model).toBe(sourceModel.model)
+            expect(step2Input.provider).toBe(targetModel.provider)
+            expect(step2Input.model).toBe(targetModel.model)
 
             // Flow publishedVersionId should point to the new version
             const updatedFlow = await databaseConnection()
