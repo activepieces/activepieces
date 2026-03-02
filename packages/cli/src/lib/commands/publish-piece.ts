@@ -14,7 +14,7 @@ async function publishPiece(
     failOnError: boolean,}
 ) {
     const pieceFolder = await findPiece(pieceName);
-    assertPieceExists(pieceFolder)
+    assertPieceExists(pieceFolder, pieceName)
     await publishPieceFromFolder({
         pieceFolder,
         apiUrl,

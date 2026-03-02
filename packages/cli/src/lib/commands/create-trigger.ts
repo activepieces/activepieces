@@ -94,7 +94,7 @@ const createTrigger = async (pieceName: string, displayTriggerName: string, trig
     const triggerTemplate = createTriggerTemplate(displayTriggerName, triggerDescription, triggerTechnique)
     const triggerName = displayNameToKebabCase(displayTriggerName)
     const pieceFolder = await findPiece(pieceName);
-    assertPieceExists(pieceFolder)
+    assertPieceExists(pieceFolder, pieceName)
     console.log(chalk.blue(`Piece path: ${pieceFolder}`))
 
     const triggersFolder = join(pieceFolder, 'src', 'lib', 'triggers')

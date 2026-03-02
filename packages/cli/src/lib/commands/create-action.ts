@@ -35,7 +35,7 @@ const createAction = async (pieceName: string, displayActionName: string, action
   const actionTemplate = createActionTemplate(displayActionName, actionDescription)
   const actionName = displayNameToKebabCase(displayActionName)
   const pieceFolder = await findPiece(pieceName);
-  assertPieceExists(pieceFolder)
+  assertPieceExists(pieceFolder, pieceName)
   console.log(chalk.blue(`Piece path: ${pieceFolder}`))
   const actionsFolder = join(pieceFolder, 'src', 'lib', 'actions')
   const actionPath = join(actionsFolder, `${actionName}.ts`)
