@@ -1,8 +1,8 @@
 {
-  "Chainalysis Screening API allows you to check if a blockchain address is sanctioned.": "Chainalysis Screening API allows you to check if a blockchain address is sanctioned.",
+  "Chainalysis Screening API allows you to check if a blockchain address is sanctioned.": "Chainalysis Screening API 允许您检查区块链地址是否被制裁。",
   "API Key for Chainalysis Screening API": "API Key for Chainalysis Screening API",
-  "Check Address Sanctions": "Check Address Sanctions",
-  "Check if an address is sanctioned": "Check if an address is sanctioned",
-  "Address": "Address",
-  "Address to check for sanctions": "Address to check for sanctions"
+  "Check Address Sanctions": "检查地址制裁",
+  "Check if an address is sanctioned": "检查地址是否已被批准",
+  "Address": "地址",
+  "Address to check for sanctions": "检查制裁情况的地址"
 }
