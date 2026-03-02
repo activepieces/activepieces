@@ -20,6 +20,7 @@ import {
 import { useContext, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { userApi } from '@/api/user-api';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,14 +43,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import {
+  platformAnalyticsHooks,
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
-} from '@/features/platform-admin/lib/refresh-analytics-context';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userApi } from '@/lib/user-api';
-import { downloadFile, formatUtils } from '@/lib/utils';
+} from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
+import { downloadFile } from '@/lib/dom-utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { TimeSavedFilterContent } from '../impact/components/time-saved-filter-content';
 import {

@@ -21,15 +21,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { InviteUserDialog, projectMembersHooks } from '@/features/members';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  getProjectName,
-  projectCollectionUtils,
-} from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { ApProjectDisplay } from '../ap-project-display';

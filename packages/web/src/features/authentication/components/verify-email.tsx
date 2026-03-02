@@ -5,13 +5,13 @@ import { MailCheck, MailX } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { Card } from '@/components/ui/card';
 import { FullLogo } from '@/components/ui/full-logo';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
 
 const VerifyEmail = () => {
   const [isExpired, setIsExpired] = useState(false);

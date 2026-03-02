@@ -1,6 +1,6 @@
 import { toPng } from 'html-to-image';
 
-import { downloadFile } from '@/lib/utils';
+import { downloadFile } from '@/lib/dom-utils';
 
 export type TimeUnit = 'Sec' | 'Min' | 'Hrs';
 

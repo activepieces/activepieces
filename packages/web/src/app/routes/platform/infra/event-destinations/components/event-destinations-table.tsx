@@ -6,7 +6,7 @@ import { Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import EventDestinationActions from './event-destination-actions';
 

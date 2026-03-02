@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import * as RippleHook from 'use-ripple-hook';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { colorsUtils } from '@/lib/color-util';
+import { colorsUtils } from '@/lib/color-utils';
 
 type Theme = 'dark' | 'light' | 'system';
 

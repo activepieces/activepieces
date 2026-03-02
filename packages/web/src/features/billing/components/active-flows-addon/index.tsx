@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { useManagePlanDialogStore } from '../../lib/active-flows-addon-dialog-state';
+import { useManagePlanDialogStore } from '../../stores/active-flows-addon-dialog-state';
 
 type BusinessActiveFlowsProps = {
   platformSubscription: PlatformBillingInformation;

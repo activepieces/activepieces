@@ -7,9 +7,11 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { ConnectGitDialog } from '@/features/project-releases/components/connect-git-dialog';
-import { gitSyncApi } from '@/features/project-releases/lib/git-sync-api';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import {
+  gitSyncApi,
+  ConnectGitDialog,
+  gitSyncHooks,
+} from '@/features/project-releases';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 

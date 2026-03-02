@@ -9,20 +9,16 @@ import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
+  piecesHooks,
   PieceSelectorTabType,
   usePieceSelectorTabs,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
-import {
-  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
-  pieceSelectorUtils,
-} from '@/features/pieces/lib/piece-selector-utils';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { useIsMobile } from '@/hooks/use-mobile';
-import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
-} from '@/lib/types';
+  PIECE_SELECTOR_ELEMENTS_HEIGHTS,
+  pieceSelectorUtils,
+} from '@/features/pieces';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { cn } from '../../../lib/utils';
 import { useBuilderStateContext } from '../builder-hooks';

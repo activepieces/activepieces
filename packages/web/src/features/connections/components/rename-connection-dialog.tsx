@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { appConnectionsMutations } from '../lib/app-connections-hooks';
+import { appConnectionsMutations } from '../hooks/app-connections-hooks';
 
 const RenameConnectionSchema = Type.Object({
   displayName: Type.String(),

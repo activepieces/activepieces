@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
-import { tablesApi } from '../lib/tables-api';
+import { tablesApi } from '../api/tables-api';
 
 type RenameTableDialogProps = {
   tableName: string;

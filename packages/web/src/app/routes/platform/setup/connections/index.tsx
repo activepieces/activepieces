@@ -38,16 +38,16 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import {
+  EditGlobalConnectionDialog,
   globalConnectionsMutations,
   globalConnectionsQueries,
-} from '@/features/connections/lib/global-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/lib/utils';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+  appConnectionUtils,
+} from '@/features/connections';
+import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [

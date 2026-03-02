@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 
-import { billingMutations } from '../../lib/billing-hooks';
+import { billingMutations } from '../../hooks/billing-hooks';
 
 interface PurchaseAICreditsDialogProps {
   isOpen: boolean;

@@ -8,8 +8,7 @@ import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { ApForm } from '@/features/forms/components/ap-form';
-import { humanInputApi } from '@/features/forms/lib/human-input-api';
+import { humanInputApi, ApForm } from '@/features/forms';
 
 import NotFoundPage from '../404-page';
 

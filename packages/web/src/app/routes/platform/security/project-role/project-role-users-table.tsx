@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export const ProjectRoleUsersTable = () => {

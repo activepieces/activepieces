@@ -4,10 +4,10 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FROM_QUERY_PARAM,

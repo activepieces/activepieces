@@ -13,7 +13,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn, isStepFileUrl } from '@/lib/utils';
+import { isStepFileUrl } from '@/lib/dom-utils';
+import { cn } from '@/lib/utils';
 
 import { Button } from './ui/button';
 

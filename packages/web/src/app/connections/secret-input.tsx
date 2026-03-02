@@ -21,7 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
+import { secretManagersHooks } from '@/features/secret-managers';
 import { cn } from '@/lib/utils';
 
 type SecretInputProps = Omit<InputProps, 'value' | 'onChange'> & {

@@ -10,6 +10,7 @@ import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
+import { RightSideBarType } from '@/app/builder/types';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
@@ -17,9 +18,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { RightSideBarType } from '@/lib/types';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 

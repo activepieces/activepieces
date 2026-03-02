@@ -18,15 +18,14 @@ import { memoryRouter } from '@/app/guards';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { managedAuthApi } from '@/features/authentication';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { managedAuthApi } from '@/lib/managed-auth-api';
+import { combinePaths, parentWindow } from '@/lib/dom-utils';
 import {
-  combinePaths,
   determineDefaultRoute,
-  parentWindow,
   routesThatRequireProjectId,
-} from '@/lib/utils';
+} from '@/lib/route-utils';
 
 const notifyVendorPostAuthentication = () => {
   const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {

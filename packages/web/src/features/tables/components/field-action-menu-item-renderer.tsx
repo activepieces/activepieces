@@ -5,7 +5,7 @@ import { useContext } from 'react';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
-import { FieldHeaderContext } from '../lib/utils';
+import { FieldHeaderContext } from '../utils/utils';
 
 import { useTableState } from './ap-table-state-provider';
 import RenameFieldPopoverContent from './rename-field-popovercontent';

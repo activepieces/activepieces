@@ -25,11 +25,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
-import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
+import { globalConnectionsQueries } from '@/features/connections';
+import { EditProjectDialog, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils, validationUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';

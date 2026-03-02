@@ -45,20 +45,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
-import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import {
+  EditGlobalConnectionDialog,
+  RenameConnectionDialog,
   appConnectionsMutations,
   appConnectionsQueries,
-} from '@/features/connections/lib/app-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/lib/utils';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+  appConnectionUtils,
+} from '@/features/connections';
+import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();
