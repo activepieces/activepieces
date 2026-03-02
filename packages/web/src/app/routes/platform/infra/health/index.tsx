@@ -5,9 +5,9 @@ import { Cpu, HardDrive, MemoryStick, Package } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
+import { healthApi } from '@/api/health-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { healthApi } from '@/lib/health-api';
 
 import { CheckItem } from './check-item';
 

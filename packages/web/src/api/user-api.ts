@@ -1,6 +1,6 @@
 import { UpdateMeResponse, UserWithBadges } from '@activepieces/shared';
 
-import { api } from './api';
+import { api } from '@/lib/api';
 
 export const userApi = {
   getUserById(id: string) {

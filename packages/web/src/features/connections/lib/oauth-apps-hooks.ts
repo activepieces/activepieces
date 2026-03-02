@@ -8,9 +8,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { PiecesOAuth2AppsMap } from '@/features/connections/lib/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
 
 import { oauthAppsApi } from './api/oauth-apps';
 

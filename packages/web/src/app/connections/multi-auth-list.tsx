@@ -24,12 +24,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatUtils } from '@/lib/format-utils';
 import {
   OAuth2App,
   PiecesOAuth2AppsMap,
   oauth2Utils,
-} from '@/lib/oauth2-utils';
+} from '@/features/connections/lib/oauth2-utils';
+import { formatUtils } from '@/lib/format-utils';
 
 export function MutliAuthList({
   pieceAuth,
