@@ -7,7 +7,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/shared": "workspace:*",
-    "basic-ftp": "5.0.5",
+    "basic-ftp": "5.2.0",
     "dayjs": "1.11.9",
     "ssh2": "1.16.0",
     "ssh2-sftp-client": "9.1.0",
