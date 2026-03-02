@@ -62,9 +62,11 @@ export const flowRunLogsController: FastifyPluginAsyncTypebox = async (app) => {
         const logs = await flowRunLogsService(request.log).getLogs(decodedToken)
         if (isNil(logs)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: decodedToken.logsFileId,
+                    entityType: 'file',
+                    entityId: decodedToken.logsFileId,
+                    message: 'Logs file not found',
                 },
             })
         }

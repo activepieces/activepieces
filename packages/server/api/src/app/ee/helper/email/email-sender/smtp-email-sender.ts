@@ -39,7 +39,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
     
                 if (!smtpEmailSender(log).isSmtpConfigured()) {
-                    log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
+                    log.error({ emailSubject }, '[smtpEmailSender#send] SMTP is not configured')
                     return
                 }
     

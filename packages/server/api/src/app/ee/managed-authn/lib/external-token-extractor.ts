@@ -52,7 +52,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                 }
             }
             catch (error) {
-                log.error({ name: 'ExternalTokenExtractor#extract', error })
+                log.error({ err: error }, '[externalTokenExtractor#extract] Failed to extract external token')
 
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_BEARER_TOKEN,
