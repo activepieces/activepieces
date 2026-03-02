@@ -11,7 +11,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
 import { inputClass } from '@/components/ui/input';
-import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
+import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';

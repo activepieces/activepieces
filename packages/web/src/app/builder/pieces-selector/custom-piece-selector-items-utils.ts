@@ -3,8 +3,8 @@ import { FlowOperationType } from '@activepieces/shared';
 import {
   PieceSelectorOperation,
   PieceSelectorPieceItem,
-} from '@/features/pieces/types';
-import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
+  pieceSelectorUtils,
+} from '@/features/pieces';
 
 import { BuilderState } from '../builder-hooks';
 

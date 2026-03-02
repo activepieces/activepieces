@@ -15,11 +15,11 @@ import {
   PieceSelectorItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-} from '@/features/pieces/types';
-import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
-import { CORE_ACTIONS_METADATA } from '@/features/pieces/utils/step-utils';
+  pieceSelectorUtils,
+  CORE_ACTIONS_METADATA,
+  usePieceSearchContext,
+} from '@/features/pieces';
 
-import { usePieceSearchContext } from '../../../features/pieces/stores/piece-search-context';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import GenericActionOrTriggerItem from './generic-piece-selector-item';

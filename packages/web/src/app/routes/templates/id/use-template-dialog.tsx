@@ -30,11 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { flowHooks } from '@/features/flows/hooks/flow-hooks';
-import { foldersApi } from '@/features/folders/api/folders-api';
-import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
-import { templatesTelemetryApi } from '@/features/templates/api/templates-telemetry-api';
+import { flowHooks } from '@/features/flows';
+import { foldersApi, foldersHooks } from '@/features/folders';
+import { projectCollectionUtils } from '@/features/projects';
+import { templatesTelemetryApi } from '@/features/templates';
 import { authenticationSession } from '@/lib/authentication-session';
 
 type UseTemplateDialogProps = {

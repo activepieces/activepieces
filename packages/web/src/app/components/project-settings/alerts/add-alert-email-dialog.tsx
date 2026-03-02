@@ -24,7 +24,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { alertMutations } from '@/features/alerts/hooks/alert-hooks';
+import { alertMutations } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/format-utils';
 

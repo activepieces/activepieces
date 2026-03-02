@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { flowHooks } from '@/features/flows/hooks/flow-hooks';
+import { flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { useBuilderStateContext } from '../builder-hooks';

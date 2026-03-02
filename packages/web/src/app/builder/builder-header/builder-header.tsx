@@ -32,12 +32,9 @@ import {
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
-import { flowHooks } from '@/features/flows/hooks/flow-hooks';
-import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
-import {
-  getProjectName,
-  projectCollectionUtils,
-} from '@/features/projects/stores/project-collection';
+import { flowHooks } from '@/features/flows';
+import { foldersHooks } from '@/features/folders';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

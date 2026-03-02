@@ -13,4 +13,4 @@ const PieceDisplayName = ({ pieceName, fallback }: PieceDisplayNameProps) => {
   return <span>{pieceModel?.displayName || fallback || pieceName}</span>;
 };
 
-export default PieceDisplayName;
+export { PieceDisplayName };

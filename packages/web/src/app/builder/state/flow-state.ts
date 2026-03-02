@@ -17,13 +17,12 @@ import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
 
 import { RightSideBarType } from '@/app/builder/types';
-import { flowsApi } from '@/features/flows/api/flows-api';
-import { sampleDataHooks } from '@/features/flows/hooks/sample-data-hooks';
+import { flowsApi, sampleDataHooks } from '@/features/flows';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
-} from '@/features/pieces/types';
-import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
+  pieceSelectorUtils,
+} from '@/features/pieces';
 import { PromiseQueue } from '@/lib/promise-queue';
 
 import { BuilderState } from '../builder-hooks';

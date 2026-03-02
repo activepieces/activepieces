@@ -1,7 +1,7 @@
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
 import { TriggerTestStrategy } from '@activepieces/shared';
 
-import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
+import { pieceSelectorUtils } from '@/features/pieces';
 
 export type TestType =
   | 'mcp-tool'

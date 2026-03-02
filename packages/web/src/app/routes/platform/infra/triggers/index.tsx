@@ -20,9 +20,8 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { triggerRunHooks } from '@/features/flows/api/trigger-run-api';
-import PieceDisplayName from '@/features/pieces/components/piece-display-name';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { triggerRunHooks } from '@/features/flows';
+import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { StatusProgressBar, type DayStatus } from './status-progress-bar';

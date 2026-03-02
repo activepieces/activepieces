@@ -7,7 +7,7 @@ import {
   FlowTriggerType,
 } from '@activepieces/shared';
 
-import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
+import { pieceSelectorUtils } from '@/features/pieces';
 
 import {
   DataSelectorTreeNode,

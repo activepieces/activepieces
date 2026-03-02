@@ -30,8 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { appConnectionsQueries } from '@/features/connections/hooks/app-connections-hooks';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { appConnectionsQueries } from '@/features/connections';
+import { piecesHooks } from '@/features/pieces';
 import {
   useAuthorization,
   useIsPlatformAdmin,

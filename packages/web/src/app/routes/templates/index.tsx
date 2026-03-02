@@ -12,9 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
-import { flowHooks } from '@/features/flows/hooks/flow-hooks';
-import { templatesTelemetryApi } from '@/features/templates/api/templates-telemetry-api';
-import { templatesHooks } from '@/features/templates/hooks/templates-hook';
+import { flowHooks } from '@/features/flows';
+import { templatesTelemetryApi, templatesHooks } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { AllCategoriesView } from './all-categories-view';

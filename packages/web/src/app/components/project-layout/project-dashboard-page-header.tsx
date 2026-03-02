@@ -21,12 +21,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members/components/invite-user/invite-user-dialog';
-import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
-import {
-  getProjectName,
-  projectCollectionUtils,
-} from '@/features/projects/stores/project-collection';
+import { InviteUserDialog, projectMembersHooks } from '@/features/members';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

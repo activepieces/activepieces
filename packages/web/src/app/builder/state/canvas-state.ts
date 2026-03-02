@@ -2,7 +2,7 @@ import { FlowTriggerType, isNil } from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 
 import { RightSideBarType } from '@/app/builder/types';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';

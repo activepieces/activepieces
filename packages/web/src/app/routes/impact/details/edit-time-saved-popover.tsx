@@ -10,9 +10,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { flowsApi } from '@/features/flows/api/flows-api';
-import { analyticsApi } from '@/features/platform-admin/api/analytics-api';
-import { RefreshAnalyticsContext } from '@/features/platform-admin/stores/refresh-analytics-context';
+import { flowsApi } from '@/features/flows';
+import {
+  analyticsApi,
+  RefreshAnalyticsContext,
+} from '@/features/platform-admin';
 
 import { hmsToSeconds, secondsToHMS } from '../lib/impact-utils';
 

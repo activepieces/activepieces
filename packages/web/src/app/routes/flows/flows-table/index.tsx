@@ -11,14 +11,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { DataTable, DataTableFilters } from '@/components/ui/data-table';
-import { appConnectionsQueries } from '@/features/connections/hooks/app-connections-hooks';
-import { flowsApi } from '@/features/flows/api/flows-api';
-import { useFlowsBulkActions } from '@/features/flows/hooks/use-flows-bulk-actions';
-import {
-  FolderFilterList,
-  folderIdParamName,
-} from '@/features/folders/components/folder-filter-list';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { appConnectionsQueries } from '@/features/connections';
+import { flowsApi, useFlowsBulkActions } from '@/features/flows';
+import { FolderFilterList, folderIdParamName } from '@/features/folders';
+import { piecesHooks } from '@/features/pieces';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';

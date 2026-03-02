@@ -15,7 +15,7 @@ import {
 } from '@/components/custom/card-list';
 import { Button } from '@/components/ui/button';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
+import { flowRunsApi } from '@/features/flow-runs';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { SidebarHeader } from '../sidebar-header';

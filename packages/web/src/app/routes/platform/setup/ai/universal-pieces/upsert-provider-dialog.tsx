@@ -44,10 +44,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
+import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
+import { aiProviderApi } from '@/features/platform-admin';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
-import { SUPPORTED_AI_PROVIDERS } from '../../../../../../features/agents/ai-providers';
 
 import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 

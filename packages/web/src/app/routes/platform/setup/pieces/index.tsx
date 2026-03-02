@@ -27,10 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LockedAlert } from '@/components/ui/locked-alert';
-import { oauthAppsQueries } from '@/features/connections/hooks/oauth-apps-hooks';
-import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { oauthAppsQueries } from '@/features/connections';
+import { InstallPieceDialog, PieceIcon, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const PlatformPiecesPage = () => {

@@ -7,8 +7,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useEmbedding } from '@/components/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
-import { projectHooks } from '@/features/projects/stores/project-collection';
+import { PurchaseExtraFlowsDialog } from '@/features/billing';
+import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { authenticationSession } from '../../../lib/authentication-session';

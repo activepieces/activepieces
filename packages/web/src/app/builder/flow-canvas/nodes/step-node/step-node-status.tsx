@@ -2,8 +2,7 @@ import { t } from 'i18next';
 import { useMemo } from 'react';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../../builder-hooks';

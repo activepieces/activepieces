@@ -20,7 +20,7 @@ import {
 } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
-import { formUtils } from '../../../features/pieces/utils/form-utils';
+import { formUtils } from '@/features/pieces';
 const numberReplacement = 'anyOf[0]items';
 const stringReplacement = 'properties.';
 const createUpdatedSchemaKey = (propertyKey: string) => {

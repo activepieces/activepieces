@@ -1,8 +1,7 @@
 import { Navigate } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
-import { Error } from '@/features/billing/components/error';
-import { Success } from '@/features/billing/components/success';
+import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
 

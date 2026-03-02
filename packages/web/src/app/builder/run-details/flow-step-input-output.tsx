@@ -16,9 +16,8 @@ import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AgentTimeline } from '@/features/agents/agent-timeline';
-import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { AgentTimeline } from '@/features/agents';
+import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 

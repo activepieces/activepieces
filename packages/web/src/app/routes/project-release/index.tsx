@@ -36,8 +36,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-releases/api/project-release-api';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import { projectReleaseApi } from '@/features/project-releases';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 

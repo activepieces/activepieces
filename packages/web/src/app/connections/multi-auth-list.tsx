@@ -28,7 +28,7 @@ import {
   OAuth2App,
   PiecesOAuth2AppsMap,
   oauth2Utils,
-} from '@/features/connections/utils/oauth2-utils';
+} from '@/features/connections';
 import { formatUtils } from '@/lib/format-utils';
 
 export function MutliAuthList({

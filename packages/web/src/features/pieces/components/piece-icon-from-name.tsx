@@ -33,4 +33,4 @@ const PieceIconWithPieceName = ({
   );
 };
 
-export default PieceIconWithPieceName;
+export { PieceIconWithPieceName };

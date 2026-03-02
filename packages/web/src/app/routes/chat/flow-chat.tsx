@@ -12,14 +12,15 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ChatDrawerSource } from '@/app/builder/types';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { ChatInput, ChatMessage } from '@/features/chat/chat-input';
-import { ChatIntro } from '@/features/chat/chat-intro';
-import { ImageDialog } from '@/features/chat/chat-message/image-dialog';
 import {
+  ChatInput,
+  ChatMessage,
+  ChatIntro,
+  ImageDialog,
   ChatMessageList,
   Messages,
-} from '@/features/chat/chat-message-list/index';
-import { humanInputApi } from '@/features/forms/api/human-input-api';
+} from '@/features/chat';
+import { humanInputApi } from '@/features/forms';
 import { cn } from '@/lib/utils';
 
 import NotFoundPage from '../404-page';

@@ -33,22 +33,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { flowsApi } from '@/features/flows/api/flows-api';
-import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
-import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
-import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
-import { flowHooks } from '@/features/flows/hooks/flow-hooks';
-import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
-import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
-import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
+import {
+  flowsApi,
+  ChangeOwnerDialog,
+  ImportFlowDialog,
+  RenameFlowDialog,
+  flowHooks,
+  MoveFlowDialog,
+  ShareTemplateDialog,
+} from '@/features/flows';
+import { projectMembersHooks } from '@/features/members';
+import {
+  PublishedNeededTooltip,
+  PushToGitDialog,
+  gitSyncHooks,
+} from '@/features/project-releases';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-
-import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
-import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 
 type FlowActionMenuProps = {
   flow: PopulatedFlow;

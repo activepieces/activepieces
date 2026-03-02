@@ -18,7 +18,7 @@ import { memoryRouter } from '@/app/guards';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTheme } from '@/components/theme-provider';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { managedAuthApi } from '@/features/authentication/api/managed-auth-api';
+import { managedAuthApi } from '@/features/authentication';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { combinePaths, parentWindow } from '@/lib/dom-utils';

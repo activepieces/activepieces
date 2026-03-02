@@ -24,9 +24,7 @@ import {
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LockedAlert } from '@/components/ui/locked-alert';
-import { piecesApi } from '@/features/pieces/api/pieces-api';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { piecesApi, PieceIcon, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';

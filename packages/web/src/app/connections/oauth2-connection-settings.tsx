@@ -26,10 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  OAuth2App,
-  oauth2Utils,
-} from '@/features/connections/utils/oauth2-utils';
+import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';

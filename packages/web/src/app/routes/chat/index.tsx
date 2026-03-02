@@ -6,8 +6,8 @@ import { useSearchParam } from 'react-use';
 
 import { ChatDrawerSource } from '@/app/builder/types';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { Messages } from '@/features/chat/chat-message-list';
-import { flowHooks } from '@/features/flows/hooks/flow-hooks';
+import { Messages } from '@/features/chat';
+import { flowHooks } from '@/features/flows';
 
 import { ChatNotFound, FlowChat } from './flow-chat';
 

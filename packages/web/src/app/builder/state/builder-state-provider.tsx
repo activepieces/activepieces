@@ -9,7 +9,7 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { useSocket } from '@/components/socket-provider';
-import { projectHooks } from '@/features/projects/stores/project-collection';
+import { projectHooks } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 type BuilderStateProviderProps = Omit<

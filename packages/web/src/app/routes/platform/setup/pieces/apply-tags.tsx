@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { piecesTagsApi } from '@/features/platform-admin/api/pieces-tags';
+import { piecesTagsApi } from '@/features/platform-admin';
 
 type ApplyTagsProps = {
   selectedPieces: PieceMetadataModelSummary[];

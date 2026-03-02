@@ -3,11 +3,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
+import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
+import { aiProviderApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
-import { SUPPORTED_AI_PROVIDERS } from '../../../../../features/agents/ai-providers';
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './universal-pieces/ai-provider-card';

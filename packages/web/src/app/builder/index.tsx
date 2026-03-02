@@ -20,7 +20,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';

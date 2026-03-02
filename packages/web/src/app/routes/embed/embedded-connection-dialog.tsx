@@ -16,11 +16,11 @@ import { useEffect, useRef, useState } from 'react';
 import { memoryRouter } from '@/app/guards';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { oauthAppsQueries } from '@/features/connections/hooks/oauth-apps-hooks';
+import { oauthAppsQueries } from '@/features/connections';
+import { piecesHooks } from '@/features/pieces';
 import { parentWindow } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
-import { piecesHooks } from '../../../features/pieces/hooks/pieces-hooks';
 import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';
 
 const extractIdFromQueryParams = () => {

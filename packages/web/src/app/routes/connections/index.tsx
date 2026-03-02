@@ -45,15 +45,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
-import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import {
+  EditGlobalConnectionDialog,
+  RenameConnectionDialog,
   appConnectionsMutations,
   appConnectionsQueries,
-} from '@/features/connections/hooks/app-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/utils/utils';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+  appConnectionUtils,
+} from '@/features/connections';
+import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';

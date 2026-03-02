@@ -1,6 +1,6 @@
 import { PageTitle } from '@/app/components/page-title';
-import { VerifyEmail } from '@/features/authentication/components/verify-email';
-import { AcceptInvitation } from '@/features/members/components/accept-invitation';
+import { VerifyEmail } from '@/features/authentication';
+import { AcceptInvitation } from '@/features/members';
 
 import { ChangePasswordPage } from './change-password';
 import { ResetPasswordPage } from './forget-password';

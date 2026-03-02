@@ -8,9 +8,11 @@ import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { projectReleaseApi } from '@/features/project-releases/api/project-release-api';
-import { ConnectGitDialog } from '@/features/project-releases/components/connect-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
+import {
+  projectReleaseApi,
+  ConnectGitDialog,
+  gitSyncHooks,
+} from '@/features/project-releases';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { CreateReleaseDialog } from './create-release-dialog';

@@ -20,7 +20,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { secretManagersHooks } from '@/features/secret-managers/hooks/secret-managers-hooks';
+import { secretManagersHooks } from '@/features/secret-managers';
 import { api } from '@/lib/api';
 
 type ConnectSecretManagerDialogProps = {

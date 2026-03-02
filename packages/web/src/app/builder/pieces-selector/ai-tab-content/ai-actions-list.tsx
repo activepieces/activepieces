@@ -13,10 +13,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-} from '@/features/pieces/types';
+  usePieceSearchContext,
+} from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { usePieceSearchContext } from '../../../../features/pieces/stores/piece-search-context';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { convertStepMetadataToPieceSelectorItems } from '../piece-actions-or-triggers-list';
 

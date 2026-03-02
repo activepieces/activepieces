@@ -6,14 +6,16 @@ import 'react-data-grid/lib/styles.css';
 import { useNavigate } from 'react-router-dom';
 
 import { useTheme } from '@/components/theme-provider';
-import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
-import { ApTableHeader } from '@/features/tables/components/ap-table-header';
-import { useTableState } from '@/features/tables/components/ap-table-state-provider';
 import {
+  ApTableFooter,
+  ApTableHeader,
+  useTableState,
   useTableColumns,
   mapRecordsToRows,
-} from '@/features/tables/components/table-columns';
-import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/types/types';
+  Row,
+  ROW_HEIGHT_MAP,
+  RowHeight,
+} from '@/features/tables';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

@@ -15,7 +15,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
 import { flowCanvasConsts } from './consts';

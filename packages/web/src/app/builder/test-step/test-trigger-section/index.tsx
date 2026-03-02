@@ -5,8 +5,8 @@ import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ChatDrawerSource } from '@/app/builder/types';
-import { triggerEventHooks } from '@/features/flows/hooks/trigger-event-hooks';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { triggerEventHooks } from '@/features/flows';
+import { piecesHooks } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';

@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { apiKeyApi } from '@/features/platform-admin/api/api-key-api';
+import { apiKeyApi } from '@/features/platform-admin';
 
 type NewApiKeyDialogProps = {
   children: React.ReactNode;

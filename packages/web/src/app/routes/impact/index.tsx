@@ -23,9 +23,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks } from '@/features/platform-admin/hooks/analytics-hooks';
-import { RefreshAnalyticsContext } from '@/features/platform-admin/stores/refresh-analytics-context';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import {
+  platformAnalyticsHooks,
+  RefreshAnalyticsContext,
+} from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
 
 import { ProjectSelect } from './components/project-select';
 import { FlowsDetails } from './details';

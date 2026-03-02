@@ -10,8 +10,8 @@ import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
-import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
-import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { FlowStatusToggle } from '@/features/flows';
+import { PieceIconList } from '@/features/pieces';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;

@@ -30,9 +30,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
-import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
-import { flowsApi } from '@/features/flows/api/flows-api';
+import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
+import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';

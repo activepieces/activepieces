@@ -23,11 +23,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { projectMembersApi } from '@/features/members/api/project-members-api';
-import { userInvitationApi } from '@/features/members/api/user-invitation';
-import { RoleSelector } from '@/features/members/components/role-selector';
-import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import {
+  projectMembersApi,
+  userInvitationApi,
+  RoleSelector,
+} from '@/features/members';
+import { projectRoleApi } from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/format-utils';
 

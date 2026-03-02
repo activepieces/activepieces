@@ -25,10 +25,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   appConnectionsMutations,
   appConnectionsQueries,
-} from '@/features/connections/hooks/app-connections-hooks';
-import { flowsApi } from '@/features/flows/api/flows-api';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+} from '@/features/connections';
+import { flowsApi } from '@/features/flows';
+import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 type ReplaceConnectionsDialogProps = {

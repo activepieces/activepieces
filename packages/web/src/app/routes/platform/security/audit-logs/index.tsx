@@ -38,8 +38,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { auditEventsApi } from '@/features/platform-admin/api/audit-events-api';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import { auditEventsApi } from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { formatUtils } from '@/lib/format-utils';

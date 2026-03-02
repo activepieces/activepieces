@@ -10,7 +10,7 @@ import { t } from 'i18next';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AgentTimeline } from '@/features/agents/agent-timeline';
+import { AgentTimeline } from '@/features/agents';
 
 export const isRunAgent = (step?: Step | null) => {
   return (

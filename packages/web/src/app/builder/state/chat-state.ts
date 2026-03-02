@@ -2,7 +2,7 @@ import { apId } from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 
 import { ChatDrawerSource } from '@/app/builder/types';
-import { Messages } from '@/features/chat/chat-message-list';
+import { Messages } from '@/features/chat';
 
 import { BuilderState } from '../builder-hooks';
 

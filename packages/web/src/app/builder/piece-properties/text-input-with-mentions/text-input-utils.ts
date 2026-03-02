@@ -7,7 +7,7 @@ import {
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
-import { StepMetadata } from '@/features/pieces/types';
+import { StepMetadata } from '@/features/pieces';
 
 const removeQuotes = (text: string) => {
   if (
