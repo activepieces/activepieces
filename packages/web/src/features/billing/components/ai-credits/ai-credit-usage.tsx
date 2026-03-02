@@ -19,6 +19,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { isRunningCloudInDevMode } from '@/lib/api';
 
 import { billingMutations } from '../../lib/billing-hooks';
 
@@ -32,7 +33,6 @@ interface AiCreditUsageProps {
 export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const queryClient = useQueryClient();
   const { plan, usage } = platformSubscription;
-
   const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
   const [isAutoTopUpDialogOpen, setIsAutoTopUpDialogOpen] = useState(false);
   const [isAutoTopUpEditing, setIsAutoTopUpEditing] = useState(false);
@@ -40,7 +40,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const planIncludedCredits = plan.includedAiCredits;
   const totalCreditsUsed = usage.totalAiCreditsUsed;
   const creditsRemaining = usage.aiCreditsRemaining;
-
+  const isCloud = window.location.hostname.includes('cloud.activepieces.com');
   const autoTopUpState =
     plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED;
 
@@ -66,6 +66,9 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
     setIsAutoTopUpDialogOpen(true);
   };
 
+  if (!isCloud && !isRunningCloudInDevMode) {
+    return null;
+  }
   return (
     <Card className="w-full">
       <CardHeader className="border-b">

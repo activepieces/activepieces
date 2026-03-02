@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-smtp",
-  "version": "0.3.12",
+  "version": "0.4.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
