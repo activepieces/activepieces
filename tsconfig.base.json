@@ -219,6 +219,9 @@
       "@activepieces/piece-chatbase": [
         "packages/pieces/community/chatbase/src/index.ts"
       ],
+      "@activepieces/piece-chatwoot": [
+      "packages/pieces/community/chatwoot/src/index.ts"
+      ],
       "@activepieces/piece-checkout": [
         "packages/pieces/community/checkout/src/index.ts"
       ],
@@ -251,6 +254,9 @@
       ],
       "@activepieces/piece-close": [
         "packages/pieces/community/close/src/index.ts"
+      ],
+      "@activepieces/piece-cohere": [
+      "packages/pieces/community/cohere/src/index.ts"
       ],
       "@activepieces/piece-cloudconvert": [
         "packages/pieces/community/cloudconvert/src/index.ts"
