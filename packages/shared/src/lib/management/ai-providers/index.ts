@@ -209,6 +209,7 @@ export const UpdateAIProviderRequest = Type.Object({
 export type UpdateAIProviderRequest = Static<typeof UpdateAIProviderRequest>
 
 
+
 export const GetProviderConfigResponse = Type.Object({
     provider: Type.Enum(AIProviderName),
     config: AIProviderConfig,

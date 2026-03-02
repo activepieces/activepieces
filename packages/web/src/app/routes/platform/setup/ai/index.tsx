@@ -1,8 +1,10 @@
 import { PlatformRole, ApFlagId } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { ArrowLeftRight } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { Button } from '@/components/ui/button';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -11,6 +13,7 @@ import { SUPPORTED_AI_PROVIDERS } from '../../../../../features/agents/ai-provid
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
+import { MigrateFlowsDialog } from './universal-pieces/migrate-flows-dialog';
 
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({
@@ -49,7 +52,16 @@ export default function AIProvidersPage() {
                   'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
                 )
           }
-        ></DashboardPageHeader>
+        >
+          {allowWrite && providers && providers.length > 0 && (
+            <MigrateFlowsDialog providers={providers}>
+              <Button variant="outline" size="sm">
+                <ArrowLeftRight className="w-4 h-4 mr-2" />
+                {t('Migrate Flows')}
+              </Button>
+            </MigrateFlowsDialog>
+          )}
+        </DashboardPageHeader>
         <div className="flex flex-col gap-4">
           {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
             const config = providers?.find(
