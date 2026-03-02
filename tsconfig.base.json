@@ -1047,6 +1047,9 @@
       "@activepieces/piece-square": [
         "packages/pieces/community/square/src/index.ts"
       ],
+      "@activepieces/piece-ssh-executor": [
+        "packages/pieces/community/ssh-executor/src/index.ts"
+      ],
       "@activepieces/piece-stability-ai": [
         "packages/pieces/community/stability-ai/src/index.ts"
       ],
