@@ -1,27 +1,47 @@
 import { Permission } from '@activepieces/shared';
+import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { ApTableStateProvider } from '@/features/tables';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
+import { LoadingScreen } from '../../components/ui/loading-screen';
 import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
-import { AppConnectionsPage } from './connections';
-import { FlowsPage } from './flows';
-import { FlowBuilderPage } from './flows/id';
-import AnalyticsPage from './impact';
-import LeaderboardPage from './leaderboard';
-import { ProjectReleasesPage } from './project-release';
-import ViewRelease from './project-release/view-release';
-import { RunsPage } from './runs';
-import { FlowRunPage } from './runs/id';
-import { ApTablesPage } from './tables';
-import { ApTableEditorPage } from './tables/id';
+const FlowsPage = React.lazy(() =>
+  import('./flows').then((m) => ({ default: m.FlowsPage })),
+);
+const FlowBuilderPage = React.lazy(() =>
+  import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
+);
+const AnalyticsPage = React.lazy(() => import('./impact'));
+const LeaderboardPage = React.lazy(() => import('./leaderboard'));
+const ProjectReleasesPage = React.lazy(() =>
+  import('./project-release').then((m) => ({
+    default: m.ProjectReleasesPage,
+  })),
+);
+const ViewRelease = React.lazy(() => import('./project-release/view-release'));
+const RunsPage = React.lazy(() =>
+  import('./runs').then((m) => ({ default: m.RunsPage })),
+);
+const FlowRunPage = React.lazy(() =>
+  import('./runs/id').then((m) => ({ default: m.FlowRunPage })),
+);
+const AppConnectionsPage = React.lazy(() =>
+  import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
+);
+const ApTablesPage = React.lazy(() =>
+  import('./tables').then((m) => ({ default: m.ApTablesPage })),
+);
+const ApTableEditorPage = React.lazy(() =>
+  import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
+);
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -33,6 +53,10 @@ const SettingsRerouter = () => {
   );
 };
 
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
+}
+
 export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.flows,
@@ -40,7 +64,9 @@ export const projectRoutes = [
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_FLOW}>
           <PageTitle title="Flows">
-            <FlowsPage />
+            <SuspenseWrapper>
+              <FlowsPage />
+            </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
@@ -52,7 +78,9 @@ export const projectRoutes = [
       <RoutePermissionGuard permission={Permission.READ_FLOW}>
         <PageTitle title="Builder">
           <BuilderLayout>
-            <FlowBuilderPage />
+            <SuspenseWrapper>
+              <FlowBuilderPage />
+            </SuspenseWrapper>
           </BuilderLayout>
         </PageTitle>
       </RoutePermissionGuard>
@@ -68,7 +96,9 @@ export const projectRoutes = [
       <RoutePermissionGuard permission={Permission.READ_RUN}>
         <PageTitle title="Flow Run">
           <BuilderLayout>
-            <FlowRunPage />
+            <SuspenseWrapper>
+              <FlowRunPage />
+            </SuspenseWrapper>
           </BuilderLayout>
         </PageTitle>
       </RoutePermissionGuard>
@@ -80,7 +110,9 @@ export const projectRoutes = [
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Runs">
-            <RunsPage />
+            <SuspenseWrapper>
+              <RunsPage />
+            </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
@@ -91,7 +123,9 @@ export const projectRoutes = [
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Releases">
-          <ViewRelease />
+          <SuspenseWrapper>
+            <ViewRelease />
+          </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>
     ),
@@ -102,7 +136,9 @@ export const projectRoutes = [
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Tables">
-            <ApTablesPage />
+            <SuspenseWrapper>
+              <ApTablesPage />
+            </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
@@ -115,7 +151,9 @@ export const projectRoutes = [
         <PageTitle title="Table">
           <BuilderLayout>
             <ApTableStateProvider>
-              <ApTableEditorPage />
+              <SuspenseWrapper>
+                <ApTableEditorPage />
+              </SuspenseWrapper>
             </ApTableStateProvider>
           </BuilderLayout>
         </PageTitle>
@@ -128,7 +166,9 @@ export const projectRoutes = [
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_APP_CONNECTION}>
           <PageTitle title="Connections">
-            <AppConnectionsPage />
+            <SuspenseWrapper>
+              <AppConnectionsPage />
+            </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
@@ -139,7 +179,9 @@ export const projectRoutes = [
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Releases">
-          <ProjectReleasesPage />
+          <SuspenseWrapper>
+            <ProjectReleasesPage />
+          </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>
     ),
@@ -157,7 +199,9 @@ export const projectRoutes = [
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Impact">
-          <AnalyticsPage />
+          <SuspenseWrapper>
+            <AnalyticsPage />
+          </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>
     ),
@@ -167,7 +211,9 @@ export const projectRoutes = [
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Leaderboard">
-          <LeaderboardPage />
+          <SuspenseWrapper>
+            <LeaderboardPage />
+          </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>
     ),

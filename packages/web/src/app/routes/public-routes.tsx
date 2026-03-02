@@ -1,16 +1,30 @@
+import React, { Suspense } from 'react';
+
 import { PageTitle } from '@/app/components/page-title';
 
+import { LoadingScreen } from '../../components/ui/loading-screen';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 
 import NotFoundPage from './404-page';
 import AuthenticatePage from './authenticate';
-import { ChatPage } from './chat';
 import { EmbedPage } from './embed';
 import { EmbeddedConnectionDialog } from './embed/embedded-connection-dialog';
-import { FormPage } from './forms';
 import { RedirectPage } from './redirect';
-import { TemplatesPage } from './templates';
+
+const ChatPage = React.lazy(() =>
+  import('./chat').then((m) => ({ default: m.ChatPage })),
+);
+const FormPage = React.lazy(() =>
+  import('./forms').then((m) => ({ default: m.FormPage })),
+);
+const TemplatesPage = React.lazy(() =>
+  import('./templates').then((m) => ({ default: m.TemplatesPage })),
+);
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
+}
 
 export const publicRoutes = [
   {
@@ -30,7 +44,9 @@ export const publicRoutes = [
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Templates">
-          <TemplatesPage />
+          <SuspenseWrapper>
+            <TemplatesPage />
+          </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>
     ),
@@ -43,7 +59,9 @@ export const publicRoutes = [
     path: '/forms/:flowId',
     element: (
       <PageTitle title="Forms">
-        <FormPage />
+        <SuspenseWrapper>
+          <FormPage />
+        </SuspenseWrapper>
       </PageTitle>
     ),
   },
@@ -51,7 +69,9 @@ export const publicRoutes = [
     path: '/chats/:flowId',
     element: (
       <PageTitle title="Chats">
-        <ChatPage />
+        <SuspenseWrapper>
+          <ChatPage />
+        </SuspenseWrapper>
       </PageTitle>
     ),
   },

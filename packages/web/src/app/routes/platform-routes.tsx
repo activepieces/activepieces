@@ -1,29 +1,77 @@
+import React, { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { Error, Success } from '@/features/billing';
 
+import { LoadingScreen } from '../../components/ui/loading-screen';
 import { PlatformLayout } from '../components/platform-layout';
 
-import SettingsBilling from './platform/billing';
-import EventDestinationsPage from './platform/infra/event-destinations';
-import SettingsHealthPage from './platform/infra/health';
-import TriggerHealthPage from './platform/infra/triggers';
-import SettingsWorkersPage from './platform/infra/workers';
-import ProjectsPage from './platform/projects';
-import { ApiKeysPage } from './platform/security/api-keys';
-import AuditLogsPage from './platform/security/audit-logs';
-import { ProjectRolePage } from './platform/security/project-role';
-import { ProjectRoleUsersTable } from './platform/security/project-role/project-role-users-table';
-import SecretManagersPage from './platform/security/secret-managers';
-import { SigningKeysPage } from './platform/security/signing-keys';
-import { SSOPage } from './platform/security/sso';
-import AIProvidersPage from './platform/setup/ai';
-import { BrandingPage } from './platform/setup/branding';
-import { GlobalConnectionsTable } from './platform/setup/connections';
-import { PlatformPiecesPage } from './platform/setup/pieces';
-import { PlatformTemplatesPage } from './platform/setup/templates';
-import UsersPage from './platform/users';
+const SettingsBilling = React.lazy(() => import('./platform/billing'));
+const EventDestinationsPage = React.lazy(
+  () => import('./platform/infra/event-destinations'),
+);
+const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
+const TriggerHealthPage = React.lazy(() => import('./platform/infra/triggers'));
+const SettingsWorkersPage = React.lazy(
+  () => import('./platform/infra/workers'),
+);
+const ProjectsPage = React.lazy(() => import('./platform/projects'));
+const ApiKeysPage = React.lazy(() =>
+  import('./platform/security/api-keys').then((m) => ({
+    default: m.ApiKeysPage,
+  })),
+);
+const AuditLogsPage = React.lazy(
+  () => import('./platform/security/audit-logs'),
+);
+const ProjectRolePage = React.lazy(() =>
+  import('./platform/security/project-role').then((m) => ({
+    default: m.ProjectRolePage,
+  })),
+);
+const ProjectRoleUsersTable = React.lazy(() =>
+  import('./platform/security/project-role/project-role-users-table').then(
+    (m) => ({ default: m.ProjectRoleUsersTable }),
+  ),
+);
+const SecretManagersPage = React.lazy(
+  () => import('./platform/security/secret-managers'),
+);
+const SigningKeysPage = React.lazy(() =>
+  import('./platform/security/signing-keys').then((m) => ({
+    default: m.SigningKeysPage,
+  })),
+);
+const SSOPage = React.lazy(() =>
+  import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
+);
+const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
+const BrandingPage = React.lazy(() =>
+  import('./platform/setup/branding').then((m) => ({
+    default: m.BrandingPage,
+  })),
+);
+const GlobalConnectionsTable = React.lazy(() =>
+  import('./platform/setup/connections').then((m) => ({
+    default: m.GlobalConnectionsTable,
+  })),
+);
+const PlatformPiecesPage = React.lazy(() =>
+  import('./platform/setup/pieces').then((m) => ({
+    default: m.PlatformPiecesPage,
+  })),
+);
+const PlatformTemplatesPage = React.lazy(() =>
+  import('./platform/setup/templates').then((m) => ({
+    default: m.PlatformTemplatesPage,
+  })),
+);
+const UsersPage = React.lazy(() => import('./platform/users'));
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
+}
 
 export const platformRoutes = [
   {
@@ -41,7 +89,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Projects">
-          <ProjectsPage />
+          <SuspenseWrapper>
+            <ProjectsPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -51,7 +101,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Users">
-          <UsersPage />
+          <SuspenseWrapper>
+            <UsersPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -71,7 +123,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="AI">
-          <AIProvidersPage />
+          <SuspenseWrapper>
+            <AIProvidersPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -81,7 +135,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Pieces">
-          <PlatformPiecesPage />
+          <SuspenseWrapper>
+            <PlatformPiecesPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -91,7 +147,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Connections">
-          <GlobalConnectionsTable />
+          <SuspenseWrapper>
+            <GlobalConnectionsTable />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -101,7 +159,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Templates">
-          <PlatformTemplatesPage />
+          <SuspenseWrapper>
+            <PlatformTemplatesPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -111,7 +171,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Branding">
-          <BrandingPage />
+          <SuspenseWrapper>
+            <BrandingPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -121,7 +183,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
-          <SettingsBilling />
+          <SuspenseWrapper>
+            <SettingsBilling />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -161,7 +225,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="API Keys">
-          <ApiKeysPage />
+          <SuspenseWrapper>
+            <ApiKeysPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -171,7 +237,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Secret managers">
-          <SecretManagersPage />
+          <SuspenseWrapper>
+            <SecretManagersPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -181,7 +249,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Audit Logs">
-          <AuditLogsPage />
+          <SuspenseWrapper>
+            <AuditLogsPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -191,7 +261,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Signing Keys">
-          <SigningKeysPage />
+          <SuspenseWrapper>
+            <SigningKeysPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -201,7 +273,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="SSO">
-          <SSOPage />
+          <SuspenseWrapper>
+            <SSOPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -211,7 +285,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Project Roles">
-          <ProjectRolePage />
+          <SuspenseWrapper>
+            <ProjectRolePage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -221,7 +297,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Project Role Users">
-          <ProjectRoleUsersTable />
+          <SuspenseWrapper>
+            <ProjectRoleUsersTable />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -241,7 +319,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Workers">
-          <SettingsWorkersPage />
+          <SuspenseWrapper>
+            <SettingsWorkersPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -251,7 +331,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="System Health">
-          <SettingsHealthPage />
+          <SuspenseWrapper>
+            <SettingsHealthPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -261,7 +343,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Trigger Health">
-          <TriggerHealthPage />
+          <SuspenseWrapper>
+            <TriggerHealthPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
@@ -271,7 +355,9 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Event Streaming">
-          <EventDestinationsPage />
+          <SuspenseWrapper>
+            <EventDestinationsPage />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
