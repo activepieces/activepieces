@@ -11,11 +11,8 @@ type TrendsProps = {
 export function Trends({ report }: TrendsProps) {
   return (
     <div className="space-y-2">
-      <h2 className="text-base font-medium">{t('Trends')}</h2>
-      <div className="grid grid-cols-2 gap-6">
-        <RunsChart report={report} />
-        <TimeSavedChart report={report} />
-      </div>
+      <RunsChart report={report} />
+      <TimeSavedChart report={report} />
     </div>
   );
 }
