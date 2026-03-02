@@ -2,8 +2,8 @@ import {
   ConfigureRepoRequest,
   GitRepo,
   PushGitRepoRequest,
+  SeekPage,
 } from '@activepieces/shared';
-import { SeekPage } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 

@@ -2,8 +2,9 @@ import {
   ListOAuth2AppRequest,
   OAuthApp,
   UpsertOAuth2AppRequest,
+  ApEdition,
+  SeekPage,
 } from '@activepieces/shared';
-import { ApEdition, SeekPage } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 

@@ -25,10 +25,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils, validationUtils } from '@/lib/utils';
 
 import { projectsTableColumns } from './columns';
@@ -41,7 +41,6 @@ export default function ProjectsPage() {
   const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
-  const { data: currentUser } = userHooks.useCurrentUser();
 
   const displayNameFilter = searchParams.get('displayName') || undefined;
   const typeFilter = searchParams.getAll('type');
@@ -65,14 +64,30 @@ export default function ProjectsPage() {
   const [editDialogInitialValues, setEditDialogInitialValues] =
     useState<any>(null);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
-
+  const { data: allGlobalConnectionsPage } =
+    globalConnectionsQueries.useGlobalConnections({
+      request: { limit: 9999 },
+      extraKeys: [],
+    });
+  const allProjectsWithGlobalConnectionsCount = useMemo(() => {
+    return allProjects.map((project) => ({
+      ...project,
+      globalConnectionsCount:
+        allGlobalConnectionsPage?.data?.filter((connection) =>
+          connection.projectIds.includes(project.id),
+        ).length ?? 0,
+    }));
+  }, [allProjects, allGlobalConnectionsPage?.data]);
   const columns = useMemo(
-    () => projectsTableColumns({ platform, currentUserId: currentUser?.id }),
-    [platform, currentUser?.id],
+    () =>
+      projectsTableColumns({
+        platform,
+      }),
+    [platform],
   );
 
   const columnsWithCheckbox: ColumnDef<
-    RowDataWithActions<ProjectWithLimits>
+    RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
   >[] = [
     {
       id: 'select',
@@ -338,7 +353,11 @@ export default function ProjectsPage() {
             },
           ]}
           columns={columnsWithCheckbox}
-          page={{ data: allProjects, next: null, previous: null }}
+          page={{
+            data: allProjectsWithGlobalConnectionsCount,
+            next: null,
+            previous: null,
+          }}
           isLoading={false}
           clientPagination={true}
           bulkActions={bulkActions}

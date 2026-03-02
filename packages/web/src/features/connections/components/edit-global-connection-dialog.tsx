@@ -6,7 +6,9 @@ import { Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { GlobalConnectionWarning } from '@/components/custom/global-connection-utils';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +32,7 @@ import { AssignConnectionToProjectsControl } from './assign-global-connection-to
 const EditGlobalConnectionSchema = Type.Object({
   displayName: Type.String(),
   projectIds: Type.Array(Type.String()),
+  preSelectForNewProjects: Type.Boolean(),
 });
 
 type EditGlobalConnectionSchema = Static<typeof EditGlobalConnectionSchema>;
@@ -38,6 +41,7 @@ type EditGlobalConnectionDialogProps = {
   connectionId: string;
   currentName: string;
   projectIds: string[];
+  preSelectForNewProjects: boolean;
   onEdit: () => void;
   userHasPermissionToEdit: boolean;
 };
@@ -46,6 +50,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   connectionId,
   currentName,
   projectIds,
+  preSelectForNewProjects,
   onEdit,
   userHasPermissionToEdit,
 }) => {
@@ -56,6 +61,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
     defaultValues: {
       displayName: currentName,
       projectIds: projectIds,
+      preSelectForNewProjects: preSelectForNewProjects,
     },
   });
 
@@ -103,11 +109,13 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                   connectionId,
                   displayName: data.displayName,
                   projectIds: data.projectIds,
+                  preSelectForNewProjects: data.preSelectForNewProjects,
                   currentName: currentName,
                 }),
               )}
             >
               <div className="grid space-y-4">
+                <GlobalConnectionWarning />
                 <FormField
                   control={editConnectionForm.control}
                   name="displayName"
@@ -127,6 +135,25 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 <AssignConnectionToProjectsControl
                   control={editConnectionForm.control}
                   name="projectIds"
+                />
+                <FormField
+                  control={editConnectionForm.control}
+                  name="preSelectForNewProjects"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3">
+                      <Checkbox
+                        id="preSelectForNewProjects"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <Label
+                        htmlFor="preSelectForNewProjects"
+                        className="cursor-pointer"
+                      >
+                        {t('Include by default in new projects')}
+                      </Label>
+                    </FormItem>
+                  )}
                 />
                 {editConnectionForm?.formState?.errors?.root?.serverError && (
                   <FormMessage>

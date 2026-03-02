@@ -117,5 +117,7 @@
   "FreeARC Archive": "FreeARCアーカイブ",
   "CD Audio": "CD オーディオ",
   "MPEG Transport Stream": "MPEG転送ストリーム",
-  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container"
+  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container",
+  "Get File Name": "ファイル名を取得",
+  "Get the name of a file": "ファイルの名前を取得します"
 }

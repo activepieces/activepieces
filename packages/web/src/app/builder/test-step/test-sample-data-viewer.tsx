@@ -154,7 +154,7 @@ export const TestSampleDataViewer = React.memo(
                 {lastTestDate &&
                   !errorMessage &&
                   !isTesting &&
-                  formatUtils.formatDate(new Date(lastTestDate))}
+                  formatUtils.formatDateWithTime(new Date(lastTestDate), false)}
                 {errorMessage && !isTesting && (
                   <span>{t('Errors are not saved on refresh')}</span>
                 )}

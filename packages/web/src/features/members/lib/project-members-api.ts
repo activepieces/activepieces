@@ -2,8 +2,8 @@ import {
   ListProjectMembersRequestQuery,
   ProjectMemberWithUser,
   UpdateProjectMemberRoleRequestBody,
+  SeekPage,
 } from '@activepieces/shared';
-import { SeekPage } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 

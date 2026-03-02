@@ -113,7 +113,6 @@ export function ProjectDashboardSidebar() {
     [navigate],
   );
 
-  const ITEM_HEIGHT = state === 'collapsed' ? 40 : 44;
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
@@ -279,7 +278,7 @@ export function ProjectDashboardSidebar() {
                         : 'scrollbar-hover',
                     )}
                     items={displayProjects}
-                    estimateSize={() => ITEM_HEIGHT}
+                    estimateSize={() => 35}
                     getItemKey={(index) => displayProjects[index]?.id ?? index}
                     overscan={10}
                     renderItem={(project) => (

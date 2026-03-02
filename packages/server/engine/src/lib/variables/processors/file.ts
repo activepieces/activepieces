@@ -1,7 +1,6 @@
 import { ApFile } from '@activepieces/pieces-framework'
-import { isNil, isString } from '@activepieces/shared'
+import { isBase64, isNil, isString } from '@activepieces/shared'
 import axios from 'axios'
-import isBase64 from 'is-base64'
 import mime from 'mime-types'
 import { ProcessorFn } from './types'
 

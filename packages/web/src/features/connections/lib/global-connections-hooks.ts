@@ -8,6 +8,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { globalConnectionsApi } from './api/global-connections';
 import {
@@ -23,21 +24,29 @@ type UseGlobalConnectionsProps = {
   gcTime?: number;
 };
 
+const GLOBAL_CONNECTIONS_QUERY_KEY = 'globalConnections';
 export const globalConnectionsQueries = {
+  getGlobalConnectionsQueryKey: (extraKeys: string[]) => [
+    GLOBAL_CONNECTIONS_QUERY_KEY,
+    ...extraKeys,
+  ],
   useGlobalConnections: ({
     request,
     extraKeys,
     staleTime,
     gcTime,
-  }: UseGlobalConnectionsProps) =>
-    useQuery({
-      queryKey: ['globalConnections', ...extraKeys],
+  }: UseGlobalConnectionsProps) => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return useQuery({
+      queryKey: [GLOBAL_CONNECTIONS_QUERY_KEY, ...extraKeys],
       staleTime,
       gcTime,
+      enabled: platform.plan.globalConnectionsEnabled,
       queryFn: () => {
         return globalConnectionsApi.list(request);
       },
-    }),
+    });
+  },
 };
 
 export const globalConnectionsMutations = {
@@ -59,6 +68,7 @@ export const globalConnectionsMutations = {
     editConnectionForm: UseFormReturn<{
       displayName: string;
       projectIds: string[];
+      preSelectForNewProjects: boolean;
     }>,
   ) =>
     useMutation<
@@ -68,6 +78,7 @@ export const globalConnectionsMutations = {
         connectionId: string;
         displayName: string;
         projectIds: string[];
+        preSelectForNewProjects: boolean;
         currentName: string;
       }
     >({
@@ -75,6 +86,7 @@ export const globalConnectionsMutations = {
         connectionId,
         displayName,
         projectIds,
+        preSelectForNewProjects,
         currentName,
       }) => {
         if (
@@ -89,6 +101,7 @@ export const globalConnectionsMutations = {
         return globalConnectionsApi.update(connectionId, {
           displayName,
           projectIds,
+          preSelectForNewProjects,
         });
       },
       onSuccess: () => {
