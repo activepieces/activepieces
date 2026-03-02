@@ -13,7 +13,7 @@ FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
 # [Optional] Uncomment if you want to install more global node modules
 # RUN su node -c "npm install -g <your-package-list-here>"
 
-RUN npm install -g nx
+RUN npm install -g turbo
 RUN apt-get update && apt-get install -y git
 
 RUN apt-get update \

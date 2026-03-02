@@ -269,6 +269,8 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
     }
 
-    await packageManager(log).validate()
-    await registryPieceManager(log).validate()
+    if (environment !== ApEnvironment.TESTING) {
+        await packageManager(log).validate()
+        await registryPieceManager(log).validate()
+    }
 }
