@@ -1,8 +1,8 @@
 import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
-import { ImageWithColorBackground } from '@/components/ui/image-with-color-background';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { ImageWithColorBackground } from '@/components/custom/image-with-color-background';
+import ImageWithFallback from '@/components/custom/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,

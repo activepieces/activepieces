@@ -3,10 +3,10 @@ import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { ApTableStateProvider } from '@/features/tables';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
-import { LoadingScreen } from '../../components/ui/loading-screen';
 import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';

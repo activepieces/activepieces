@@ -15,9 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { useEffectOnce } from 'react-use';
 
 import { memoryRouter } from '@/app/guards';
-import { useEmbedding } from '@/components/embed-provider';
-import { useTheme } from '@/components/theme-provider';
-import { LoadingScreen } from '@/components/ui/loading-screen';
+import { LoadingScreen } from '@/components/custom/loading-screen';
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 import { managedAuthApi } from '@/features/authentication';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

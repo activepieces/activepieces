@@ -14,7 +14,7 @@ import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
 import { RightSideBarType } from '@/app/builder/types';
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
-import { ShowPoweredBy } from '@/components/show-powered-by';
+import { ShowPoweredBy } from '@/components/custom/show-powered-by';
 import {
   ResizableHandle,
   ResizablePanel,

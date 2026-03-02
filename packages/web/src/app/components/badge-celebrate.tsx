@@ -9,7 +9,7 @@ import { Trophy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useSocket } from '@/components/socket-provider';
+import { useSocket } from '@/components/providers/socket-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 

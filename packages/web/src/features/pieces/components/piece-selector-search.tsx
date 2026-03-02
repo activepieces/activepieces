@@ -1,14 +1,13 @@
 import { t } from 'i18next';
 import { ArrowLeftIcon } from 'lucide-react';
 
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { usePieceSearchContext } from '@/features/pieces/stores/piece-search-context';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
 } from '@/features/pieces/stores/piece-selector-tabs-provider';
-
-import { SearchInput } from '../../../components/ui/search-input';
 
 type PiecesSearchInputProps = {
   searchInputRef: React.RefObject<HTMLInputElement>;

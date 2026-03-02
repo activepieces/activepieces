@@ -6,11 +6,11 @@ import { Eye, Pencil, Trash, Users, Tag, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { FormattedDate } from '@/components/custom/formatted-date';
 import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipTrigger,

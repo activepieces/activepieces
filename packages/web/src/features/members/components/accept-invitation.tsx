@@ -4,8 +4,8 @@ import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 import { api } from '../../../lib/api';
 import { userInvitationApi } from '../api/user-invitation';

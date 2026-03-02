@@ -23,9 +23,9 @@ import {
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { CircularIcon } from '@/components/custom/circular-icon';
+import { DataTable } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { workersApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';

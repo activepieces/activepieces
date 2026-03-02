@@ -6,7 +6,8 @@ import { createRoot } from 'react-dom/client';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';
 
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -15,8 +16,6 @@ import {
 } from '@/components/ui/tooltip';
 import { isStepFileUrl } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
-
-import { Button } from './ui/button';
 
 type JsonViewerProps = {
   json: any;

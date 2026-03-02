@@ -14,8 +14,8 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import { memoryRouter } from '@/app/guards';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { oauthAppsQueries } from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
 import { parentWindow } from '@/lib/dom-utils';

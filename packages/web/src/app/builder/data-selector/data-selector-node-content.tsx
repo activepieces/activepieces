@@ -2,10 +2,10 @@ import { flowStructureUtil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
+import { useApRipple } from '@/components/providers/theme-provider';
+import { Button } from '@/components/ui/button';
 import { PieceIcon, stepsHooks } from '@/features/pieces';
 
-import { useApRipple } from '../../../components/theme-provider';
-import { Button } from '../../../components/ui/button';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { DataSelectorTreeNode } from './type';

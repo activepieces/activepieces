@@ -6,8 +6,8 @@ import { createContext, useContext, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { buttonVariants } from '@/components/ui/button';
-import { LoadingScreen } from '@/components/ui/loading-screen';
 import {
   TableState,
   ApTableStore,

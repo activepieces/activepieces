@@ -10,10 +10,18 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { Button } from '../button';
-import { Input } from '../input';
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../tooltip';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export const MarkdownTools = ({ editor }: { editor: Editor }) => {
   const isStrikeActive = editor.isActive('strike');

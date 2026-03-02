@@ -7,8 +7,8 @@ import { Link, useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { buttonVariants } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi, sampleDataHooks } from '@/features/flows';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';

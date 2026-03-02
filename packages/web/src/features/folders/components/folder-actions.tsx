@@ -3,8 +3,8 @@ import { t } from 'i18next';
 import { EllipsisVertical, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,

@@ -8,12 +8,12 @@ import { t } from 'i18next';
 import { CornerUpLeft, Download, Trash2, UploadCloud } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { BulkAction } from '@/components/custom/data-table';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
-import { BulkAction } from '@/components/ui/data-table';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';

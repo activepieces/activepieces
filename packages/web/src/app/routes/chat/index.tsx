@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
 import { ChatDrawerSource } from '@/app/builder/types';
-import { LoadingScreen } from '@/components/ui/loading-screen';
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { Messages } from '@/features/chat';
 import { flowHooks } from '@/features/flows';
 

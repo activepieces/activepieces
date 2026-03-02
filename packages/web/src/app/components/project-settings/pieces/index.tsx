@@ -15,15 +15,15 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { RequestTrial } from '@/app/components/request-trial';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
 import {
   BulkAction,
   DataTable,
   RowDataWithActions,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { LockedAlert } from '@/components/ui/locked-alert';
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LockedAlert } from '@/components/custom/locked-alert';
+import { Button } from '@/components/ui/button';
 import { piecesApi, PieceIcon, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 

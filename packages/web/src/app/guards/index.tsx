@@ -9,7 +9,7 @@ import { authRoutes } from '@/app/routes/auth-routes';
 import { platformRoutes } from '@/app/routes/platform-routes';
 import { projectRoutes } from '@/app/routes/project-routes';
 import { publicRoutes } from '@/app/routes/public-routes';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 
 import { DefaultRoute } from './default-route';
 import { TokenCheckerWrapper } from './project-route-wrapper';

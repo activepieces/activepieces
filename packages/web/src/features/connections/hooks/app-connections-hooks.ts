@@ -17,7 +17,7 @@ import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
 import { api } from '@/lib/api';

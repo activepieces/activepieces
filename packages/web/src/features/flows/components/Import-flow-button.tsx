@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { Import } from 'lucide-react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
