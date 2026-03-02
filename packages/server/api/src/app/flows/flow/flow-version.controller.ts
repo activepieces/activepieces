@@ -1,10 +1,11 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import { FlowVersionMetadata, ListFlowVersionRequest, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FlowVersionMetadata, ListFlowVersionRequest, MigrateFlowsModelRequest, MigrateFlowsModelResponse, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
@@ -25,6 +26,23 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) 
         })
     },
     )
+
+    fastify.post('/versions/migrate-ai-model', MigrateAIModel, async (request) => {
+        const platformId = request.principal.platform.id
+        return flowVersionMigrationService.migrateFlowsModel(platformId, request.body)
+    })
+}
+
+const MigrateAIModel = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        body: MigrateFlowsModelRequest,
+        response: {
+            [StatusCodes.OK]: MigrateFlowsModelResponse,
+        },
+    },
 }
 
 const ListVersionParams = {
