@@ -1665,6 +1665,9 @@
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
       ],
+      "@activepieces/piece-intruder": [
+        "packages/pieces/community/intruder/src/index.ts"
+      ],
       "@activepieces/piece-tidely": [
         "packages/pieces/community/tidely/src/index.ts"
       ],
