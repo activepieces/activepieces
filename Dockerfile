@@ -19,12 +19,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-data \
         procps \
         locales \
-        locales-all \
         unzip \
         curl \
         ca-certificates \
         libcap-dev && \
-    yarn config set python /usr/bin/python3
+    yarn config set python /usr/bin/python3 && \
+    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8
 
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
@@ -46,8 +47,7 @@ RUN --mount=type=cache,target=/root/.npm \
     node-gyp \
     npm@9.9.3 \
     pm2@6.0.10 \
-    typescript@4.9.4 \
-    tsx
+    typescript@4.9.4
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
@@ -59,7 +59,7 @@ FROM base AS build
 WORKDIR /usr/src/app
 
 # Copy dependency files and workspace package.json files for resolution
-COPY .npmrc package.json bun.lock ./
+COPY .npmrc package.json bun.lock bunfig.toml ./
 COPY packages/ ./packages/
 
 # Install all dependencies with frozen lockfile
@@ -69,8 +69,19 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy remaining source code (turbo config, etc.)
 COPY . .
 
-# Build frontend and engine (server runs from source via tsx)
-RUN npx turbo run build --filter=react-ui --filter=@activepieces/engine
+# Build frontend, engine, and server API
+RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api
+
+# Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
+# Then regenerate bun.lock so it matches the trimmed workspace
+RUN rm -rf packages/pieces/core packages/pieces/custom && \
+    find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
+      ! -name slack \
+      ! -name square \
+      ! -name facebook-leads \
+      ! -name intercom \
+      -exec rm -rf {} + && \
+    rm -f bun.lock && bun install
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -93,25 +104,25 @@ RUN mkdir -p \
     /usr/src/app/dist/packages/engine && \
     chmod +x docker-entrypoint.sh
 
-# Copy root config files needed for tsx/tsconfig resolution
+# Copy root config files needed for dependency resolution
 COPY --from=build /usr/src/app/package.json ./
 COPY --from=build /usr/src/app/.npmrc ./
 COPY --from=build /usr/src/app/bun.lock ./
-COPY --from=build /usr/src/app/tsconfig.base.json ./
+COPY --from=build /usr/src/app/bunfig.toml ./
 COPY --from=build /usr/src/app/LICENSE .
 
-# Copy source code and workspace packages
+# Copy workspace package.json files (needed for bun workspace resolution)
 COPY --from=build /usr/src/app/packages ./packages
 
 # Copy built engine
 COPY --from=build /usr/src/app/dist/packages/engine/ ./dist/packages/engine/
 
-# Install production dependencies (creates workspace links)
+# Regenerate lockfile and install production dependencies (pieces were trimmed from workspace)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --production --frozen-lockfile
+    bun install --production
 
 # Copy frontend files to Nginx document root
-COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
+COPY --from=build /usr/src/app/dist/packages/web /usr/share/nginx/html/
 
 LABEL service=activepieces
 

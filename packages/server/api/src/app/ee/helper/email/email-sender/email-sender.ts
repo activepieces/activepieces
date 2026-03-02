@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
@@ -64,6 +64,10 @@ type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
     firstName: string
 }>
 
+type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
+    loginLink: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | ProjectMemberAddedEmailTemplateData
@@ -72,6 +76,7 @@ export type EmailTemplateData =
   | IssueCreatedTemplateData
   | TriggerFailureThresholdTemplateData
   | BadgeAwardedTemplateData
+  | ScimUserWelcomeTemplateData
 
 type SendArgs = {
     emails: string[]

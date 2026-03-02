@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-common'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'

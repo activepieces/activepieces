@@ -1,5 +1,5 @@
 ---
-title: "Workers & Sandboxing" 
+title: "Workers & Sandboxing"
 icon: "gears"
 ---
 
@@ -17,41 +17,63 @@ There are three types of jobs:
 This documentation will not discuss how the engine works other than stating that it takes the jobs and produces the output. Please refer to [engine](./engine) for more information.
 </Tip>
 
-## Sandboxing
+## Sandbox Architecture
+
+The sandbox is a standalone package (`@activepieces/sandbox`) that manages isolated execution environments for the engine. It consists of the following components:
+
+- **Sandbox Pool**: Manages a pool of sandbox instances based on `AP_WORKER_CONCURRENCY`. Sandboxes can be reused across executions (in trusted modes) or shut down after each use (for full isolation).
+- **Sandbox Process**: Each sandbox spawns a child process. The process type depends on the execution mode — either a simple `fork()` or an `isolate` binary for kernel-level isolation.
+- **WebSocket Server**: A Socket.IO server (on port 12345) that handles bidirectional communication between the worker and the engine running inside each sandbox. The engine connects with its `sandboxId` and exchanges operations and results over WebSocket events.
+
+### Execution Flow
+
+<Steps>
+  <Step title="Allocate Sandbox">
+    The worker allocates a sandbox from the pool. If the sandbox is reusable and already running, it is reused directly. If the sandbox generation is stale (e.g., dev pieces changed), it is restarted.
+  </Step>
+  <Step title="Start Sandbox Process">
+    The sandbox spawns a child process (either via `fork()` or the `isolate` binary depending on the execution mode). The child process starts the engine and connects back to the worker via WebSocket.
+  </Step>
+  <Step title="Execute Operation">
+    The worker sends the engine operation (e.g., execute flow, execute trigger) over WebSocket. The engine processes it and sends back the result, along with stdout/stderr output.
+  </Step>
+  <Step title="Release Sandbox">
+    After execution completes (or times out), the sandbox is released back to the pool. In non-reusable modes, the sandbox process is shut down before release.
+  </Step>
+</Steps>
+
+## Execution Modes
 
 Sandbox in Activepieces means in which environment the engine will execute the flow. There are four types of sandboxes, each with different trade-offs:
 
 <Snippet file="execution-mode.mdx" />
 
-
-
-
 ### No Sandboxing & V8 Sandboxing
 
 The difference between the two modes is in the execution of code pieces. For V8 Sandboxing, we use [isolated-vm](https://www.npmjs.com/package/isolated-vm), which relies on V8 isolation to isolate code pieces.
 
-These are the steps that are used to execute the flow:
+In both modes, the sandbox spawns the engine using a simple Node.js `fork()` with memory limits. The engine process stays warm and connected via WebSocket, executing operations as they arrive.
 
 <Steps>
   <Step title="Prepare Code Pieces">
-    If the code doesn't exist, it will be built with bun with the necessary npm packages will be prepared, if possible.
+    If the code doesn't exist, it will be built with bun and the necessary npm packages will be prepared, if possible.
   </Step>
   <Step title="Install Pieces">
     Pieces are npm packages, we use `bun` to install the pieces.
   </Step>
   <Step title="Execution">
-    There is a pool of worker threads kept warm and the engine stays running and listening. Each thread executes one engine operation and sends back the result upon completion.
+    The sandbox allocates a process from the pool. The engine stays running and connected via WebSocket. Each sandbox executes one engine operation at a time and sends back the result upon completion.
   </Step>
 </Steps>
 
 
-#### Security:
+#### Security
 In a self-hosted environment, all piece installations are done by the **platform admin**. It is assumed that the pieces are secure, as they have full access to the machine.
 
 Code pieces provided by the end user are isolated using V8, which restricts the user to browser JavaScript instead of Node.js with npm.
 
 #### Performance
-The flow execution is fast as the javascript can be, although there is overhead in polling from queue and prepare the files first time the flow get executed.
+The flow execution is fast as JavaScript can be, although there is overhead in polling from queue and preparing the files the first time the flow gets executed.
 
 #### Benchmark
 
@@ -59,33 +81,40 @@ TBD
 
 ### Kernel Namespaces Sandboxing
 
-This consists of two steps: the first one is preparing the sandbox, and the other one is the execution part.
+In this mode, the sandbox uses the `isolate` binary to run the engine inside kernel namespaces with full filesystem, memory, and CPU isolation.
 
 #### Prepare the folder
 
-Each flow will have a folder with everything required to execute this flows, which means the **engine**, **code pieces** and **npms**
+Each flow will have a folder with everything required to execute the flow, which means the **engine**, **code pieces** and **npms**.
 
 <Steps>
   <Step title="Prepare Code Pieces">
-If the code doesn't exist, it will be compiled using TypeScript Compiler (tsc) and the necessary npm packages will be prepared, if possible.
+    If the code doesn't exist, it will be compiled and the necessary npm packages will be prepared, if possible.
   </Step>
   <Step title="Install Pieces">
-    Pieces are npm packages, we perform simple check If they don't exist we use `pnpm` to install the pieces.
+    Pieces are npm packages. If they don't exist, we use `bun` to install them.
   </Step>
 </Steps>
 
 #### Execute Flow using Sandbox
 
-In this mode, we use kernel namespaces to isolate everything (file system, memory, CPU). The folder prepared earlier will be bound as a **Read Only** Directory.
+The sandbox uses the `isolate` binary to create an isolated environment with its own namespaces. The prepared folders are mounted as read-only directories inside the sandbox:
 
-Then we use the command line and to spin up the isolation with new node process, something like that.
+- `/root` — Engine and common cache
+- `/codes` — Flow code artifacts
+- `/etc` — System configuration
+- `/node_modules`, `/pieces` — Custom pieces (for dedicated workers)
+
+The `isolate` binary is invoked with flags for namespace isolation, network sharing, and resource limits:
 ```bash
-./isolate node path/to/flow.js --- rest of args
+isolate --dir=/root=<cache> --dir=/codes=<code-cache> --share-net --box-id=<id> --processes --run /usr/bin/node /root/main.js
 ```
+
+The engine inside the sandbox connects back to the worker via WebSocket to receive operations and send results.
 
 #### Security
 
-The flow execution is isolated in their own namespaces, which means pieces are isolated in different process and namespaces, So the user can run bash scripts and use the file system safely as It's limited and will be removed after the execution, in this mode the user can use any **NPM package** in their code piece.
+The flow execution is isolated in its own namespaces, which means pieces run in a separate process with filesystem restrictions. The user can run bash scripts and use the file system safely as it's limited and will be removed after the execution. In this mode, the user can use any **NPM package** in their code piece.
 
 #### Performance
 

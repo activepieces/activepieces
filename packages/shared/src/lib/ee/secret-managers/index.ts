@@ -1,0 +1,72 @@
+import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema, DiscriminatedUnion } from '../../core/common'
+import { AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, HashicorpProviderConfigSchema, SecretManagerProviderId } from './dto'
+
+export * from './dto'
+
+export const SecretManagerConfigSchema = Type.Union([
+    HashicorpProviderConfigSchema,
+    AWSProviderConfigSchema,
+    CyberarkConjurProviderConfigSchema,
+])
+export type SecretManagerConfig = Static<typeof SecretManagerConfigSchema>
+
+
+export const SecretManagerEntitySchema = Type.Object({
+    ...BaseModelSchema,
+    platformId: Type.String(),
+    providerId: Type.String(),
+    auth: SecretManagerConfigSchema,
+})
+
+export type SecretManager = Static<typeof SecretManagerEntitySchema>
+
+export const SecretManagerFieldSchema =  Type.Object({
+    displayName: Type.String(),
+    placeholder: Type.String(),
+    optional: Type.Optional(Type.Boolean()),
+    type: Type.Union([Type.Literal('text'), Type.Literal('password')]),
+})
+
+export const SecretManagerSecretParamSchema = Type.Object({
+    name: Type.String(),
+    displayName: Type.String(),
+    placeholder: Type.String(),
+    optional: Type.Optional(Type.Boolean()),
+    type: Type.Union([Type.Literal('text'), Type.Literal('password')]),
+})
+
+export const SecretManagerProviderMetaDataBaseSchema = Type.Object({
+    id: Type.Enum(SecretManagerProviderId),
+    name: Type.String(),
+    logo: Type.String(),
+    connection: Type.Optional(Type.Object({
+        configured: Type.Boolean(),
+        connected: Type.Boolean(),
+    })),
+})
+
+export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
+    Type.Object({
+        ...SecretManagerProviderMetaDataBaseSchema.properties,
+        id: Type.Literal(SecretManagerProviderId.HASHICORP),
+        fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema),
+        secretParams: Type.Array(SecretManagerSecretParamSchema),
+    }),
+    Type.Object({
+        ...SecretManagerProviderMetaDataBaseSchema.properties,
+        id: Type.Literal(SecretManagerProviderId.AWS),
+        fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema),
+        secretParams: Type.Array(SecretManagerSecretParamSchema),
+    }),
+    Type.Object({
+        ...SecretManagerProviderMetaDataBaseSchema.properties,
+        id: Type.Literal(SecretManagerProviderId.CYBERARK),
+        fields: Type.Record(Type.KeyOf(CyberarkConjurProviderConfigSchema), SecretManagerFieldSchema),
+        secretParams: Type.Array(SecretManagerSecretParamSchema),
+    }),
+])
+
+export type SecretManagerProviderMetaData = Static<typeof SecretManagerProviderMetaDataSchema>
+
+export const SecretManagerFieldsSeparator = '|ap_sep_v1|'

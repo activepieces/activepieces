@@ -1,13 +1,22 @@
 {
   "name": "@activepieces/piece-clickup",
-"version": "0.7.4",
+  "version": "0.7.4",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/shared": "workspace:*"
+    "@activepieces/shared": "workspace:*",
+    "dayjs": "1.11.9",
+    "qs": "6.14.2",
+    "zod": "4.1.13",
+    "tslib": "2.6.2"
+  },
+  "devDependencies": {
+    "@types/qs": "6.14.0"
   }
 }

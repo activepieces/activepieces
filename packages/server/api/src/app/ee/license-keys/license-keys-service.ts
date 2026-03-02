@@ -1,4 +1,4 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-common'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlanName, TeamProjectsLimit, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -137,6 +137,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 licenseKey: key.key,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
+                scimEnabled: key.scimEnabled,
                 environmentsEnabled: key.environmentsEnabled,
                 showPoweredBy: key.showPoweredBy,
                 embeddingEnabled: key.embeddingEnabled,
@@ -156,6 +157,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 projectRolesEnabled: key.projectRolesEnabled,
                 analyticsEnabled: key.analyticsEnabled,
                 eventStreamingEnabled: key.eventStreamingEnabled,
+                secretManagersEnabled: key.secretManagersEnabled,
             },
         })
     },
@@ -163,6 +165,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,
+    scimEnabled: false,
     analyticsEnabled: false,
     environmentsEnabled: false,
     showPoweredBy: false,
@@ -178,4 +181,5 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     customRolesEnabled: false,
     projectRolesEnabled: false,
     eventStreamingEnabled: false,
+    secretManagersEnabled: false,
 }

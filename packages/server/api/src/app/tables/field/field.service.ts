@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, UpdateFieldRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'

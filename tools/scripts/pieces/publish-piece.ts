@@ -6,7 +6,7 @@ import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
 import { isNil } from '@activepieces/shared'
 import chalk from 'chalk'
 import path from 'node:path'
-import { publishNxProject } from '../utils/publish-nx-project'
+import { publishNpmPackage } from '../utils/publish-npm-package'
 
 export const publishPiece = async (name: string): Promise<void> => {
   assert(name, '[publishPiece] parameter "name" is required')
@@ -18,13 +18,12 @@ export const publishPiece = async (name: string): Promise<void> => {
     return
   }
 
-  await exec(`turbo run build --filter=./packages/pieces/community/${name}`)
+  await exec(`turbo run build --filter=@activepieces/piece-${name}`)
 
-  await publishNxProject(directory)
+  await publishNpmPackage(directory)
 
   const { version } = await readPackageJson(directory)
   console.info(chalk.green.bold(`[publishPiece] success, name=${name}, version=${version}`))
-
 }
 
 const main = async (): Promise<void> => {

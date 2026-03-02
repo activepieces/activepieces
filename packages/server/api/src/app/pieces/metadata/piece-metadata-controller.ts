@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -21,7 +21,7 @@ import {
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
-import { EngineHelperPropResult, OperationResponse } from 'server-worker'
+import { EngineHelperPropResult, OperationResponse } from 'worker'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -121,7 +121,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         return pieces
     })
 
-    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync())
+    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
     app.post(
         '/options',
