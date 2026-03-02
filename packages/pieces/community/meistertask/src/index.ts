@@ -14,6 +14,7 @@ import { createTaskLabel } from './lib/actions/create-task-label';
 import { createAttachment } from './lib/actions/create-attachment';
 import { createTask } from './lib/actions/create-task';
 import { updateTask } from './lib/actions/update-task';
+import { listTasks } from './lib/actions/list-tasks'; // [新增] 导入
 import { findAttachment } from './lib/actions/find-attachment';
 import { findLabel } from './lib/actions/find-label';
 import { findPerson } from './lib/actions/find-person';
@@ -33,13 +34,14 @@ export const meistertask = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/meistertask.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['Ani-4x', 'sanket-a11y'],
+  authors: ['Ani-4x', 'sanket-a11y', 'YourGitHubHandle'], // 你可以把最后这个换成你的 GitHub ID
   actions: [
     createLabel,
     createTaskLabel,
     createAttachment,
     createTask,
     updateTask,
+    listTasks, // [新增] 注册
     findAttachment,
     findLabel,
     findPerson,
