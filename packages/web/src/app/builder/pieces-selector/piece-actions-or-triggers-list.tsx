@@ -9,7 +9,7 @@ import { MoveLeft } from 'lucide-react';
 import React from 'react';
 
 import { CardList } from '@/components/custom/card-list';
-import { useTelemetry } from '@/components/telemetry-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   PieceSelectorItem,

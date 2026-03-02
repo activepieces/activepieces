@@ -16,7 +16,8 @@ import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { TagInput } from '@/components/custom/tag-input';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,7 +31,6 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TagInput } from '@/components/ui/tag-input';
 import {
   Tooltip,
   TooltipContent,

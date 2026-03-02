@@ -3,10 +3,10 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Mail, Tag, Hash, Shield, Clock, Activity, Info } from 'lucide-react';
 
-import { RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
-import { FormattedDate } from '@/components/ui/formatted-date';
+import { RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
+import { FormattedDate } from '@/components/custom/formatted-date';
 import {
   Tooltip,
   TooltipContent,

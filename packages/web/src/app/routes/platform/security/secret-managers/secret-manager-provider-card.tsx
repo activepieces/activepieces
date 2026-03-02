@@ -2,7 +2,7 @@ import { SecretManagerProviderMetaData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CircleAlert, Pencil, RefreshCcw, Trash } from 'lucide-react';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {

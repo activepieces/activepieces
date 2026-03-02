@@ -11,11 +11,11 @@ import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

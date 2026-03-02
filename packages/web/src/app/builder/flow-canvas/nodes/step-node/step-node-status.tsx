@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { useMemo } from 'react';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { cn } from '@/lib/utils';
 

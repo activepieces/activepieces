@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,

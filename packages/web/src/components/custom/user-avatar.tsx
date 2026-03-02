@@ -1,9 +1,12 @@
 import { isNil } from '@activepieces/shared';
 import Avatar from 'boring-avatars';
 
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-
-import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 type UserAvatarProps = {
   name: string;

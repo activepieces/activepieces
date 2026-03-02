@@ -1,4 +1,4 @@
-import { FullLogo } from '@/components/ui/full-logo';
+import { FullLogo } from '@/components/custom/full-logo';
 import { ResetPasswordForm } from '@/features/authentication';
 
 const ResetPasswordPage = () => {

@@ -2,7 +2,7 @@ import { StepOutputStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
 
-import { LoadingSpinner } from '@/components/ui/spinner';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import {
   Tooltip,
   TooltipContent,

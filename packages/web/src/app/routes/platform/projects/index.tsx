@@ -12,14 +12,14 @@ import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
-} from '@/components/ui/data-table';
+} from '@/components/custom/data-table';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Tooltip,
   TooltipContent,

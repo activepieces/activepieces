@@ -19,7 +19,7 @@ import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { useTelemetry } from '@/components/telemetry-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import {
   StepMetadataWithSuggestions,

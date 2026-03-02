@@ -23,16 +23,16 @@ import {
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   flowsApi,
   ChangeOwnerDialog,

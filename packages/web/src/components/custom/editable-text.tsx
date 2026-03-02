@@ -1,7 +1,11 @@
 import { isNil } from '@activepieces/shared';
 import { useState, useRef, useCallback } from 'react';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type EditableTextProps = {
   value: string | undefined;

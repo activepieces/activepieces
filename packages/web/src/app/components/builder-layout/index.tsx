@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';

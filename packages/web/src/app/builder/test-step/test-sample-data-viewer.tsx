@@ -9,9 +9,9 @@ import { t } from 'i18next';
 import React, { useContext } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
-import { JsonViewer } from '@/components/json-viewer';
+import { JsonViewer } from '@/components/custom/json-viewer';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';

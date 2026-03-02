@@ -8,9 +8,9 @@ import { t } from 'i18next';
 import { Users } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { DataTable } from '@/components/custom/data-table';
+import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
 import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableInputPopover } from '@/components/ui/data-table/data-table-input-popover';
 import {
   InviteUserDialog,
   projectMembersHooks,

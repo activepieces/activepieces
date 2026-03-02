@@ -3,11 +3,15 @@ import { SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
-import { Badge } from '../badge';
-import { Button } from '../button';
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { SearchInput } from '../search-input';
-import { Separator } from '../separator';
+import { SearchInput } from '@/components/custom/search-input';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 
 type DataTableInputPopoverProps = {
   title?: string;

@@ -12,14 +12,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { SearchInput } from '@/components/custom/search-input';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { SearchInput } from '@/components/ui/search-input';
 import {
   Sidebar,
   SidebarContent,
