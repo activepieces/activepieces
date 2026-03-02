@@ -9,7 +9,7 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { userInvitationsHooks } from '@/features/members/lib/user-invitations-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { EmailStatusType } from './types';
 

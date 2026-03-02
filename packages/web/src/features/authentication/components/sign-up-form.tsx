@@ -35,8 +35,9 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
-import { cn, formatUtils } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import { passwordValidation } from '../lib/password-validation-utils';
 

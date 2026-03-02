@@ -29,7 +29,8 @@ import { globalConnectionsQueries } from '@/features/connections/lib/global-conn
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils, validationUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';

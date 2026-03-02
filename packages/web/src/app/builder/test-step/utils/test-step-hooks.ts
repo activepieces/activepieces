@@ -18,7 +18,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { wait } from '@/lib/utils';
+import { wait } from '@/lib/dom-utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 

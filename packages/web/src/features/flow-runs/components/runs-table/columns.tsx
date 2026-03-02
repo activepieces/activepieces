@@ -32,7 +32,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 type SelectedRow = {
   id: string;

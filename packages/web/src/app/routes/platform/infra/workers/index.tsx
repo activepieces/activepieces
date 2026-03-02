@@ -28,7 +28,8 @@ import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { workersApi } from '@/features/platform-admin/lib/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn, useTimeAgo } from '@/lib/utils';
+import { useTimeAgo } from '@/hooks/use-time-ago';
+import { cn } from '@/lib/utils';
 
 import { WorkerConfigsModal } from './worker-configs-dialog';
 

@@ -23,8 +23,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 
 import { FlowCard } from './flow-card';
 import { PieceCard } from './piece-card';

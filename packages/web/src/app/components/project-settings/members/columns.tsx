@@ -29,7 +29,7 @@ import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 export type MemberRowData =
   | {

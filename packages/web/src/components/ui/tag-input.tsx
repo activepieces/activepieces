@@ -3,7 +3,8 @@
 import { XIcon } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
-import { cn, formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { Badge } from './badge';
 import { Button } from './button';

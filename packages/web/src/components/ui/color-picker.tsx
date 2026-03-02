@@ -11,7 +11,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useForwardedRef, cn } from '@/lib/utils';
+import { useForwardedRef } from '@/hooks/use-forwarded-ref';
+import { cn } from '@/lib/utils';
 
 interface ColorPickerProps {
   value: string;
