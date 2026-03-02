@@ -11,18 +11,18 @@ export const ONEPASSWORD_PROVIDER_METADATA: SecretManagerProviderMetaData = {
         serviceAccountToken: {
             displayName: 'Service Account Token',
             placeholder: 'ops_...',
-            type: 'password',
+            type: 'text',
         },
     },
-    secretParams: {
-        path: {
+    secretParams: [
+        {
+            name: 'path',
             displayName: 'Secret Reference',
             placeholder: 'op://vault/item/field',
             type: 'text',
         },
-    },
+    ],
 }
-
 async function buildClient(config: OnePasswordProviderConfig) {
     return createClient({
         auth: config.serviceAccountToken,

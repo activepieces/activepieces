@@ -66,6 +66,12 @@ export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
         fields: Type.Record(Type.KeyOf(CyberarkConjurProviderConfigSchema), SecretManagerFieldSchema),
         secretParams: Type.Array(SecretManagerSecretParamSchema),
     }),
+    Type.Object({
+        ...SecretManagerProviderMetaDataBaseSchema.properties,
+        id: Type.Literal(SecretManagerProviderId.ONEPASSWORD),
+        fields: Type.Record(Type.KeyOf(OnePasswordProviderConfigSchema), SecretManagerFieldSchema),
+        secretParams: Type.Array(SecretManagerSecretParamSchema),
+    }),
 ])
 
 export type SecretManagerProviderMetaData = Static<typeof SecretManagerProviderMetaDataSchema>
