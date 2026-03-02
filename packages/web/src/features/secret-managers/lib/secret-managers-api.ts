@@ -14,9 +14,12 @@ export const secretManagersApi = {
     );
   },
   connect(config: ConnectSecretManagerRequest) {
-    return api.post<void>('/v1/secret-managers/connect', config);
+    return api.post<void>('/v1/secret-managers', config);
   },
   disconnect(request: DisconnectSecretManagerRequest) {
-    return api.delete<void>('/v1/secret-managers/disconnect', request);
+    return api.delete<void>('/v1/secret-managers', request);
+  },
+  clearCache() {
+    return api.delete<void>('/v1/secret-managers/cache');
   },
 };

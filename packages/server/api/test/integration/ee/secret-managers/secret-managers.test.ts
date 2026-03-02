@@ -1,11 +1,9 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { apAxios } from '@activepieces/server-common'
-import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
 import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
-import { hashicorpProvider } from '../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup, mockPieceMetadata } from '../../../helpers/mocks'
@@ -13,6 +11,8 @@ import {
     hashicorpMock,
     mockVaultConfig,
 } from './hashicorp-mock'
+import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
+import { validatePathFormat } from 'packages/server/api/src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 
 let app: FastifyInstance | null = null
 let axiosRequestSpy: MockInstance
@@ -65,7 +65,8 @@ describe('Secret Managers API', () => {
             const hashicorp = body.data.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
             expect(hashicorp).toBeDefined()
             expect(hashicorp.name).toBe('Hashicorp Vault')
-            expect(hashicorp.connected).toBe(false)
+            expect(hashicorp.connection.configured).toBe(false)
+            expect(hashicorp.connection.connected).toBe(false)
         })
 
         it('should show connected status after connecting a provider', async () => {
@@ -85,7 +86,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -107,7 +108,8 @@ describe('Secret Managers API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             const hashicorp = body.data.find((p: { id: string }) => p.id === SecretManagerProviderId.HASHICORP)
-            expect(hashicorp.connected).toBe(true)
+            expect(hashicorp.connection.connected).toBe(true)
+            expect(hashicorp.connection.configured).toBe(true)
         })
     })
 
@@ -129,7 +131,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -141,7 +143,7 @@ describe('Secret Managers API', () => {
 
             vaultMock.mockVaultGetSecretSuccess({ 'my-api-key': 'super-secret-value' })
             const result = await secretManagersService(mockLog).resolveString({
-                key: '{{hashicorp:secret/data/keys/my-api-key}}',
+                key: `{{hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-api-key}}`,
                 platformId: mockPlatform.id,
             })
 
@@ -175,7 +177,7 @@ describe('Secret Managers API', () => {
 
             await expect(
                 secretManagersService(mockLog).resolveString({
-                    key: '{{invalid-provider:secret/data/keys/my-key}}',
+                    key: `{{invalid-provider${SecretManagerFieldsSeparator}secret/data/keys/my-key}}`,
                     platformId: mockPlatform.id,
                 }),
             ).rejects.toMatchObject({
@@ -201,7 +203,7 @@ describe('Secret Managers API', () => {
 
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -215,7 +217,7 @@ describe('Secret Managers API', () => {
 
             await expect(
                 secretManagersService(mockLog).resolveString({
-                    key: '{{hashicorp:secret/data/keys/nonexistent}}',
+                    key: `{{hashicorp${SecretManagerFieldsSeparator}secret/data/keys/nonexistent}}`,
                     platformId: mockPlatform.id,
                 }),
             ).rejects.toMatchObject({
@@ -243,7 +245,7 @@ describe('Secret Managers API', () => {
             // Connect first
             await app?.inject({
                 method: 'POST',
-                url: '/v1/secret-managers/connect',
+                url: '/v1/secret-managers',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -254,7 +256,7 @@ describe('Secret Managers API', () => {
             })
             const secretValue = 'super-secret-value'
             const secretKey = 'my-api-key'
-            const secretPath = `{{hashicorp:secret/data/keys/${secretKey}}}`
+            const secretPath = `{{hashicorp${SecretManagerFieldsSeparator}secret/data/keys/${secretKey}}}`
             vaultMock.mockVaultGetSecretSuccess({ [secretKey]: secretValue })
             const mockUpsertAppConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 externalId: 'test-app-connection-with-metadata',
@@ -300,12 +302,12 @@ describe('Secret Managers API', () => {
     describe('HashiCorp Provider - Path Resolution', () => {
         it('should resolve valid path format', async () => {
             await expect(
-                hashicorpProvider(mockLog).validatePathFormat('hashicorp:secret/data/keys/my-key'),
+               validatePathFormat('hashicorp:secret/data/keys/my-key'),
             ).resolves.not.toThrow()
         })
         it('should throw error for path with less than 3 parts', async () => {
             await expect(
-                hashicorpProvider(mockLog).validatePathFormat('secret/key'),
+               validatePathFormat('secret/key'),
             ).rejects.toMatchObject({
                 error: expect.objectContaining({
                     code: ErrorCode.VALIDATION,
@@ -314,7 +316,7 @@ describe('Secret Managers API', () => {
         })
         it('should throw error for key without colon separator', async () => {
             await expect(
-                hashicorpProvider(mockLog).validatePathFormat('hashicorp'),
+               validatePathFormat('hashicorp'),
             ).rejects.toMatchObject({
                 error: expect.objectContaining({
                     code: ErrorCode.VALIDATION,

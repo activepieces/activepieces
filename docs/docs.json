@@ -78,6 +78,14 @@
                     "admin-guide/guides/structure-projects",
                     "admin-guide/guides/manage-pieces",
                     "admin-guide/guides/sso",
+                  {
+                     "group": "SCIM",
+                     "icon": "users",
+                     "pages": [
+                        "admin-guide/guides/scim/overview",
+                        "admin-guide/guides/scim/providers/okta"
+                     ]
+                  },
                     "admin-guide/guides/manage-oauth2",
                     "admin-guide/guides/setup-ai-providers",
                     {
@@ -85,6 +93,7 @@
                       "icon": "key",
                       "pages": [
                         "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/aws",
                         "admin-guide/guides/secret-managers/hashicorp",
                         "admin-guide/guides/secret-managers/cyberark-conjur"
                       ]

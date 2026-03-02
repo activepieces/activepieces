@@ -15,7 +15,6 @@ import {
     assertNotNullOrUndefined,
     Cell,
     ColorName,
-
     CustomDomain,
     CustomDomainStatus,
     EventDestinationScope,
@@ -253,6 +252,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
+        scimEnabled: platformPlan?.scimEnabled ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
