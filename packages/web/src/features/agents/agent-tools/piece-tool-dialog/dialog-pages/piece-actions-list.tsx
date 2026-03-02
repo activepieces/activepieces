@@ -8,7 +8,7 @@ import { useDebounce } from 'use-debounce';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { sanitizeToolName } from '../../componenets/piece-tool';
+import { sanitizeToolName } from '@activepieces/shared';
 import { usePieceToolsDialogStore } from '../../stores/pieces-tools';
 
 interface PieceActionsDialogProps {

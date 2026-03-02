@@ -19,7 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { sanitizeToolName } from '@/features/agents/agent-tools/componenets/piece-tool';
+import { sanitizeToolName } from '@activepieces/shared';
 import { PieceActionsList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
 import { PiecesList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
 import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
@@ -95,7 +95,7 @@ export function AgentPieceDialog({
         const action = piece.suggestedActions?.find(
           (a) =>
             sanitizeToolName(`${piece.pieceName}-${a.name}`) ===
-            editingPieceTool.toolName,
+            sanitizeToolName(editingPieceTool.toolName),
         );
 
         if (action) {

@@ -9,7 +9,7 @@ import { create } from 'zustand';
 
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 
-import { sanitizeToolName } from '../componenets/piece-tool';
+import { sanitizeToolName } from '@activepieces/shared';
 
 type SelectedDialogPage = 'pieces-list' | 'actions-list' | 'action-inputs';
 
