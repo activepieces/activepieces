@@ -2,10 +2,7 @@ export { AgentTimeline } from './agent-timeline';
 export { AddToolDropdown } from './agent-tools/add-agent-tool-dropwdown';
 export { AgentFlowToolComponent } from './agent-tools/componenets/flow-tool';
 export { AgentMcpToolComponent } from './agent-tools/componenets/mcp-tool';
-export {
-  AgentPieceToolComponent,
-  sanitizeToolName,
-} from './agent-tools/componenets/piece-tool';
+export { AgentPieceToolComponent } from './agent-tools/componenets/piece-tool';
 export { AgentFlowToolDialog } from './agent-tools/flow-tool-dialog';
 export { AgentMcpDialog } from './agent-tools/mcp-tool-dialog';
 export { ConnectionDropdown } from './agent-tools/piece-tool-dialog/connection-select';
