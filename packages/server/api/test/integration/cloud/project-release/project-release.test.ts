@@ -1,3 +1,4 @@
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     CreateProjectReleaseRequestBody,
     ProjectReleaseType,
@@ -5,9 +6,7 @@ import {
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
+import { db } from '../../../helpers/db'
 import {
     createMockApiKey,
     mockAndSaveBasicSetup,
@@ -16,23 +15,19 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
-
 describe('Create Project Release', () => {
     it('Fails if projectId does not match', async () => {
         const { mockPlatform } = await mockAndSaveBasicSetup()
         const apiKey = createMockApiKey({
             platformId: mockPlatform.id,
         })
-        await databaseConnection().getRepository('api_key').save([apiKey])
+        await db.save('api_key', apiKey)
 
         const request: CreateProjectReleaseRequestBody = {
             name: faker.animal.bird(),

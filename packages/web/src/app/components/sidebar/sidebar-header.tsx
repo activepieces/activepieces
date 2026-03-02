@@ -45,7 +45,7 @@ function SidebarLogoFull({ linkTo }: { linkTo?: string }) {
   return (
     <SidebarMenuButton
       onClick={() => navigate(linkTo || '/')}
-      className="h-10! group-data-[collapsible=icon]:h-10! justify-center items-center"
+      className="h-10! group-data-[collapsible=icon]:h-10! justify-start items-center"
     >
       <img
         src={branding.logos.fullLogoUrl}

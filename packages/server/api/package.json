@@ -112,7 +112,6 @@
     "@types/content-disposition": "0.5.9",
     "@types/decompress": "4.2.4",
     "@types/deep-equal": "1.0.1",
-    "@types/is-base64": "1.1.1",
     "@types/jsonwebtoken": "9.0.10",
     "@types/mime-types": "2.1.1",
     "@types/mustache": "4.2.4",

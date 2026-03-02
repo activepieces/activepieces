@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react';
 import React from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -16,6 +16,7 @@ export type MetricCardProps = {
   description: string;
   subtitle?: string;
   iconColor: string;
+  iconBgColor: string;
 };
 
 export const MetricCard = ({
@@ -25,45 +26,54 @@ export const MetricCard = ({
   description,
   subtitle,
   iconColor,
+  iconBgColor,
 }: MetricCardProps) => {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center space-x-2">
-          <CardTitle className="text-md font-medium">{title}</CardTitle>
+    <Card className="p-5">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">
+            {title}
+          </span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-muted-foreground" />
+              <Info className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">{description}</TooltipContent>
           </Tooltip>
+          <div
+            className={`size-8 rounded-full ${iconBgColor} flex items-center justify-center shrink-0 ml-auto`}
+          >
+            <Icon className={`size-4 ${iconColor}`} />
+          </div>
         </div>
-        <Icon className={`h-5 w-5 ${iconColor}`} />
-      </CardHeader>
-      <CardContent>
-        <div className="text-xl font-bold">{value}</div>
-        {subtitle && (
-          <div className="text-sm text-muted-foreground mt-2">{subtitle}</div>
-        )}
-      </CardContent>
+        <div className="flex flex-col gap-1">
+          <div className="text-2xl font-bold text-foreground">{value}</div>
+          {subtitle && (
+            <div className="text-sm text-muted-foreground">{subtitle}</div>
+          )}
+        </div>
+      </div>
     </Card>
   );
 };
 
 export const MetricCardSkeleton = () => {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-4 w-4 rounded-full" />
+    <Card className="p-5">
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3.5 w-3.5 rounded-full" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-4 w-36" />
+          </div>
         </div>
-        <Skeleton className="h-5 w-5" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-8 w-20 mb-2" />
-        <Skeleton className="h-4 w-32" />
-      </CardContent>
+        <Skeleton className="size-9 rounded-full shrink-0" />
+      </div>
     </Card>
   );
 };

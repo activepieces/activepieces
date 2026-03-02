@@ -1,30 +1,31 @@
-import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, UpsertGlobalConnectionRequestBody, SecretManagerProviderId, SecretManagerFieldsSeparator } from '@activepieces/shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { apAxios } from '@activepieces/server-common'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
 import { appConnectionService } from '../../../../src/app/app-connection/app-connection-service/app-connection-service'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { validatePathFormat } from '../../../../src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
-import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup, mockPieceMetadata } from '../../../helpers/mocks'
 import {
     hashicorpMock,
     mockVaultConfig,
 } from './hashicorp-mock'
+import { AppConnectionScope, AppConnectionType, ErrorCode, PrincipalType, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
+import { validatePathFormat } from 'packages/server/api/src/app/ee/secret-managers/secret-manager-providers/hashicorp-provider'
 
 let app: FastifyInstance | null = null
 let axiosRequestSpy: MockInstance
 let vaultMock: ReturnType<typeof hashicorpMock>
 let mockLog: FastifyBaseLogger
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
     mockLog = app!.log!
-}, 50000)
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
 
 beforeEach(() => {
     axiosRequestSpy = vi.spyOn(apAxios, 'request')
@@ -34,14 +35,6 @@ beforeEach(() => {
 afterEach(() => {
     axiosRequestSpy.mockRestore()
 })
-
-afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-})
-
-
-
 describe('Secret Managers API', () => {
 
     describe('List Secret Managers', () => {
@@ -232,7 +225,7 @@ describe('Secret Managers API', () => {
                     code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 }),
             })
-        }),
+        })
         it('should not allow persisting resolved secrets in the database', async () => {
             const pieceMetadata = await mockPieceMetadata(mockLog)
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({

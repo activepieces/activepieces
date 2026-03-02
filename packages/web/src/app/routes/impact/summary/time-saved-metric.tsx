@@ -25,7 +25,7 @@ export const TimeSavedMetric = ({
   );
   const atLeastOneTimeSavedSet = flowsWithTimeSaved.length > 0;
 
-  const minutesSaved = atLeastOneTimeSavedSet
+  const totalSeconds = atLeastOneTimeSavedSet
     ? flowsWithTimeSaved.reduce((acc, flow) => {
         const totalRuns =
           report?.runs
@@ -34,7 +34,8 @@ export const TimeSavedMetric = ({
         return acc + (flow.timeSavedPerRun ?? 0) * totalRuns;
       }, 0)
     : 0;
-  const equivalentWorkdays = Math.round(minutesSaved / 8 / 60);
+  const totalMinutes = Math.round(totalSeconds / 60);
+  const equivalentWorkdays = Math.round(totalSeconds / 3600 / 8);
 
   if (isLoading) {
     return <MetricCardSkeleton />;
@@ -49,10 +50,11 @@ export const TimeSavedMetric = ({
         description={t(
           'Estimated hours saved through automation in the last 3 months. Each automated task saves valuable employee time that can be redirected to high-impact work.',
         )}
-        subtitle={t('Equivalent to {days} workdays saved', {
+        subtitle={t('{days} workdays saved', {
           days: 'N/A',
         })}
-        iconColor="text-emerald-600"
+        iconColor="text-emerald-500"
+        iconBgColor="bg-emerald-500/10"
       />
     );
   }
@@ -61,14 +63,13 @@ export const TimeSavedMetric = ({
     <MetricCard
       icon={Clock}
       title={t('Time Saved')}
-      value={formatUtils.formatToHoursAndMinutes(minutesSaved)}
-      description={t(
-        'Estimated hours saved through automation in the last 3 months. Each automated task saves valuable employee time that can be redirected to high-impact work.',
-      )}
-      subtitle={t('Equivalent to {days} workdays saved', {
+      value={`${formatUtils.formatNumber(totalMinutes)} mins`}
+      description={t('Total time saved by automation')}
+      subtitle={t('{days} workdays saved', {
         days: equivalentWorkdays.toLocaleString(),
       })}
-      iconColor="text-emerald-600"
+      iconColor="text-emerald-500"
+      iconBgColor="bg-emerald-500/10"
     />
   );
 };
