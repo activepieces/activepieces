@@ -1,0 +1,15 @@
+{
+  "name": "@activepieces/piece-google-vertexai",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "dependencies": {
+    "@activepieces/pieces-common": "workspace:*",
+    "@activepieces/pieces-framework": "workspace:*",
+    "@activepieces/shared": "workspace:*",
+    "google-auth-library": "8.9.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "lint": "eslint 'src/**/*.ts'"
+  }
+}
