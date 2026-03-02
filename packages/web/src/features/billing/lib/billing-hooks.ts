@@ -97,7 +97,7 @@ export const billingMutations = {
         });
         toast.success(t('Auto top-up config saved'));
       },
-      onError: (error) => {
+      onError: () => {
         toast.error(t('Auto top-up config change failed'));
         internalErrorToast();
       },
