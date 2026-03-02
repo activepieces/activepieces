@@ -105,9 +105,7 @@ export function EditTimeSavedPopover({
                 inputMode="numeric"
                 placeholder="hh"
                 value={hms.hours}
-                onChange={(e) =>
-                  handleInputChange(e.target.value, 'hours', 99)
-                }
+                onChange={(e) => handleInputChange(e.target.value, 'hours', 99)}
                 onKeyDown={handleKeyDown}
                 className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
                 maxLength={2}

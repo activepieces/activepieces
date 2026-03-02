@@ -429,10 +429,10 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={t('Search owners...')}
-            value={filters.ownerFilter.searchQuery}
-            onChange={(e) =>
-              filters.updateOwnerFilter({ searchQuery: e.target.value })
-            }
+              value={filters.ownerFilter.searchQuery}
+              onChange={(e) =>
+                filters.updateOwnerFilter({ searchQuery: e.target.value })
+              }
               className="pl-8 h-8"
             />
           </div>
