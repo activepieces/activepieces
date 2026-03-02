@@ -226,7 +226,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     }: ResumeWebhookParams): Promise<FlowRun | null> {
         log.info({
             runId: flowRunId,
-        }, '[FlowRunService#resume] adding flow run to queue')
+        }, '[flowRunService#resume] Adding flow run to queue')
 
         const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
 
