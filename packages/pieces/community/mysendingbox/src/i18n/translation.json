@@ -1,9 +1,6 @@
 {
-  "Create beautiful online forms and surveys with unlimited fields and submissions": "Create beautiful online forms and surveys with unlimited fields and submissions",
-  "Base URL": "Base URL",
   "API Key": "API Key",
-  "Default value is 'https://api.opnform.com'.": "Default value is 'https://api.opnform.com'.",
-  "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)",
+  "\nMySendingBox API keyis available under the developer portal.\n(https://app.mysendingbox.fr/account/keys)": "\nMySendingBox API keyis available under the developer portal.\n(https://app.mysendingbox.fr/account/keys)",
   "Custom API Call": "Custom API Call",
   "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
   "Method": "Method",
@@ -26,11 +23,5 @@
   "None": "None",
   "JSON": "JSON",
   "Form Data": "Form Data",
-  "Raw": "Raw",
-  "New Submission": "New Submission",
-  "Triggers when Opnform receives a new submission.": "Triggers when Opnform receives a new submission.",
-  "Workspace": "Workspace",
-  "Form": "Form",
-  "Workspace Name": "Workspace Name",
-  "Form Name": "Form Name"
+  "Raw": "Raw"
 }
