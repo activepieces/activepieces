@@ -85,9 +85,11 @@ export const searchAnalytics = createAction({
         endDate: dayjs(context.propsValue.endDate).format('YYYY-MM-DD'),
         dimensions: context.propsValue.dimensions as string[],
         dimensionFilterGroups: filters.map((filter: any) => ({
-          dimension: filter.dimension,
-          operator: filter.operator,
-          expression: filter.expression,
+          filters : [{
+            dimension: filter.dimension,
+            operator: filter.operator,
+            expression: filter.expression,
+          }]
         })),
         aggregationType: context.propsValue.aggregationType,
         rowLimit: context.propsValue.rowLimit,
