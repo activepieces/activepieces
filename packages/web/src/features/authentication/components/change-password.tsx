@@ -7,6 +7,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,7 +23,6 @@ import { PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
 import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
 import { HttpError } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
 
 const ChangePasswordForm = () => {
   const navigate = useNavigate();

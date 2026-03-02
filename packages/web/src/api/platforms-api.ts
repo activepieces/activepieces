@@ -3,8 +3,8 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 
-import { api } from './api';
-import { authenticationSession } from './authentication-session';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const platformApi = {
   deleteAccount() {

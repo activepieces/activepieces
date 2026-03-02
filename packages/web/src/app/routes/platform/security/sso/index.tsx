@@ -5,6 +5,7 @@ import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import React from 'react';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
@@ -14,7 +15,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformApi } from '@/lib/platforms-api';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 

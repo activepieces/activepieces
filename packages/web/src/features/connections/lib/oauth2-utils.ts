@@ -1,4 +1,4 @@
-import { OAuth2Property } from '@activepieces/pieces-framework';
+import { OAuth2Property, OAuth2Props } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
@@ -14,7 +14,7 @@ import {
   LOGIN_QUERY_PARAM,
   PROVIDER_NAME_QUERY_PARAM,
   STATE_QUERY_PARAM,
-} from './navigation-utils';
+} from '@/lib/navigation-utils';
 
 let currentPopup: Window | null = null;
 
@@ -135,23 +135,7 @@ function getCode(redirectUrl: string): Promise<string> {
   });
 }
 
-type OAuth2PopupParams = {
-  authUrl: string;
-  clientId: string;
-  redirectUrl: string;
-  scope: string;
-  prompt?: 'none' | 'consent' | 'login' | 'omit';
-  pkce: boolean;
-  pkceMethod?: 'plain' | 'S256';
-  extraParams?: Record<string, string>;
-};
-
-type OAuth2PopupResponse = {
-  code: string;
-  codeChallenge: string | undefined;
-};
-
-function getGrantType(property: OAuth2Property<any>) {
+function getGrantType(property: OAuth2Property<OAuth2Props>) {
   if (
     isNil(property.grantType) ||
     property.grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
@@ -178,6 +162,13 @@ function getPredefinedOAuth2App(
   return null;
 }
 
+export const oauth2Utils = {
+  openOAuth2Popup,
+  useThirdPartyLogin,
+  getGrantType,
+  getPredefinedOAuth2App,
+};
+
 export type OAuth2App =
   | {
       oauth2Type:
@@ -199,9 +190,18 @@ export type PiecesOAuth2AppsMap = Record<
   | undefined
 >;
 
-export const oauth2Utils = {
-  openOAuth2Popup,
-  useThirdPartyLogin,
-  getGrantType,
-  getPredefinedOAuth2App,
+type OAuth2PopupParams = {
+  authUrl: string;
+  clientId: string;
+  redirectUrl: string;
+  scope: string;
+  prompt?: 'none' | 'consent' | 'login' | 'omit';
+  pkce: boolean;
+  pkceMethod?: 'plain' | 'S256';
+  extraParams?: Record<string, string>;
+};
+
+type OAuth2PopupResponse = {
+  code: string;
+  codeChallenge: string | undefined;
 };

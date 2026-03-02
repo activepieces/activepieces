@@ -1,6 +1,6 @@
 import { GetSystemHealthChecksResponse } from '@activepieces/shared';
 
-import { api } from './api';
+import { api } from '@/lib/api';
 
 export const healthApi = {
   getSystemHealthChecks(): Promise<GetSystemHealthChecksResponse> {
