@@ -296,28 +296,29 @@ describe('Secret Managers API', () => {
                 type: AppConnectionType.SECRET_TEXT,
                 secret_text: secretPath,
             })
-        }),
-        describe('HashiCorp Provider - Path Resolution', () => {
-            it('should resolve valid path format', async () => {
-                await validatePathFormat(`hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-key`)
+        })
+    })
+
+    describe('HashiCorp Provider - Path Resolution', () => {
+        it('should resolve valid path format', async () => {
+            await validatePathFormat(`hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-key`)
+        })
+        it('should throw error for path with less than 3 parts', async () => {
+            await expect(
+                validatePathFormat('secret/key'),
+            ).rejects.toMatchObject({
+                error: expect.objectContaining({
+                    code: ErrorCode.VALIDATION,
+                }),
             })
-            it('should throw error for path with less than 3 parts', async () => {
-                await expect(
-                    validatePathFormat('secret/key'),
-                ).rejects.toMatchObject({
-                    error: expect.objectContaining({
-                        code: ErrorCode.VALIDATION,
-                    }),
-                })
-            })
-            it('should throw error for key without colon separator', async () => {
-                await expect(
-                    validatePathFormat('hashicorp'),
-                ).rejects.toMatchObject({
-                    error: expect.objectContaining({
-                        code: ErrorCode.VALIDATION,
-                    }),
-                })
+        })
+        it('should throw error for key without colon separator', async () => {
+            await expect(
+                validatePathFormat('hashicorp'),
+            ).rejects.toMatchObject({
+                error: expect.objectContaining({
+                    code: ErrorCode.VALIDATION,
+                }),
             })
         })
     })
