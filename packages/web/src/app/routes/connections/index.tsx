@@ -58,7 +58,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();

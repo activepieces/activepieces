@@ -33,7 +33,8 @@ import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { downloadFile, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { downloadFile } from '@/lib/dom-utils';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';

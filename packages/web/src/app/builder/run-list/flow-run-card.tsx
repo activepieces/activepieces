@@ -35,7 +35,8 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn, formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 type FlowRunCardProps = {
   run: FlowRun;

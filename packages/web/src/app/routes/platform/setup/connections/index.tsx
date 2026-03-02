@@ -47,7 +47,7 @@ import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [

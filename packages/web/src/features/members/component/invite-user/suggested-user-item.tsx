@@ -4,7 +4,8 @@ import { Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CommandItem } from '@/components/ui/command';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { cn, formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { EmailStatusType } from './types';
 import { SuggestedUser } from './use-user-suggestions';

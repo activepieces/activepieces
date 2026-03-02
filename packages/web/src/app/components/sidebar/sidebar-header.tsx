@@ -16,7 +16,7 @@ import { PlatformSwitcher } from '@/features/projects/components/platform-switch
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { determineDefaultRoute } from '@/lib/utils';
+import { determineDefaultRoute } from '@/lib/route-utils';
 
 function SidebarLogoCollapsed({ linkTo }: { linkTo?: string }) {
   const branding = flagsHooks.useWebsiteBranding();

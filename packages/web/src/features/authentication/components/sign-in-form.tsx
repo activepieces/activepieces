@@ -23,8 +23,8 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 
 import { CheckEmailNote } from './check-email-note';
 

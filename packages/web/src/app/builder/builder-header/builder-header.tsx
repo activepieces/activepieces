@@ -41,8 +41,9 @@ import {
 } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { RightSideBarType } from '@/lib/types';
-import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';

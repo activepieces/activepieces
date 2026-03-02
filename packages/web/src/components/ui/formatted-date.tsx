@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 type FormattedDateProps = {
   date: Date;

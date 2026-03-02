@@ -21,9 +21,9 @@ import {
 } from '@/components/ui/resizable-panel';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useElementSize } from '@/hooks/use-element-size';
 import { RightSideBarType } from '@/lib/types';
-
-import { cn, useElementSize } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';

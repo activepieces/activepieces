@@ -51,7 +51,7 @@ const ApTableActionsMenu = ({
 
   const exportTemplate = async () => {
     const tableTemplate = await tablesApi.getTemplate(table.id);
-    const { downloadFile } = await import('@/lib/utils');
+    const { downloadFile } = await import('@/lib/dom-utils');
     downloadFile({
       obj: JSON.stringify(tableTemplate, null, 2),
       fileName: tableTemplate.name,

@@ -19,7 +19,7 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { validationUtils } from '@/lib/utils';
+import { validationUtils } from '@/lib/validation-utils';
 
 import { foldersApi } from '../lib/folders-api';
 

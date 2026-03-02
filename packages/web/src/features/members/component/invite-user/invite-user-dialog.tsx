@@ -43,7 +43,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { HttpError } from '@/lib/api';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { userInvitationsHooks } from '../../lib/user-invitations-hooks';
 

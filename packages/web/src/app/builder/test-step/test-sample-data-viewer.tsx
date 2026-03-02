@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 

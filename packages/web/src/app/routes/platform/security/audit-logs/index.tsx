@@ -42,7 +42,7 @@ import { auditEventsApi } from '@/features/platform-admin/lib/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();

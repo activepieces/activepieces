@@ -40,7 +40,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { TimeSavedFilterContent } from '../components/time-saved-filter-content';
 import { exportFlowDetailsCsv } from '../lib/impact-utils';

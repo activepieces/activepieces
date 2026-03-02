@@ -39,7 +39,7 @@ import {
   getProjectName,
   projectCollectionUtils,
 } from '@/hooks/project-collection';
-import { downloadFile } from '@/lib/utils';
+import { downloadFile } from '@/lib/dom-utils';
 
 import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';
