@@ -40,7 +40,9 @@ const formatError = (
     case ErrorCode.ENTITY_NOT_FOUND:
       if (error.params.entityType === 'flow') {
         return (
-          <span>The chat flow you are trying to access no longer exists.</span>
+          <span>
+            The chat flow you are trying to access no longer exists.
+          </span>
         );
       }
       return <span>Something went wrong. Please try again.</span>;
