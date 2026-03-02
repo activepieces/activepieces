@@ -16,8 +16,7 @@ afterAll(async () => {
 })
 describe('Project Worker API', () => {
     describe('Get worker project endpoint', () => {
-        it('Returns worker project', async () => {
-            // arrange
+        it('should return worker project with correct id', async () => {
             const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockToken = await generateMockToken({
@@ -29,7 +28,6 @@ describe('Project Worker API', () => {
                 projectId: mockProject.id,
             })
 
-            // act
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/worker/project',
@@ -38,10 +36,18 @@ describe('Project Worker API', () => {
                 },
             })
 
-            // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
             expect(responseBody?.id).toBe(mockProject.id)
+        })
+
+        it('should reject request without authorization', async () => {
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/worker/project',
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })

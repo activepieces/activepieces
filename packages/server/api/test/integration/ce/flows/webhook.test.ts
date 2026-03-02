@@ -16,9 +16,40 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 describe('Webhook Service', () => {
+    it('should accept webhook for enabled flow', async () => {
+        const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+            status: FlowStatus.ENABLED,
+        })
+        await db.save('flow', [mockFlow])
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+        })
+        await db.save('flow_version', [mockFlowVersion])
+        await db.update('flow', mockFlow.id, {
+            publishedVersionId: mockFlowVersion.id,
+        })
+        const mockToken = await generateMockToken({
+            type: PrincipalType.USER,
+            platform: {
+                id: mockPlatform.id,
+            },
+            id: mockOwner.id,
+        })
+        const response = await app?.inject({
+            method: 'POST',
+            url: `/v1/webhooks/${mockFlow.id}`,
+            headers: {
+                authorization: `Bearer ${mockToken}`,
+            },
+            body: { test: true },
+        })
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('should return GONE if the flow is not found', async () => {
-        const { mockOwner } = await mockAndSaveBasicSetup()
-        const { mockPlatform } = await mockAndSaveBasicSetup()
+        const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
         const mockToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockOwner.id,
@@ -35,10 +66,9 @@ describe('Webhook Service', () => {
             },
         })
         expect(response?.statusCode).toBe(StatusCodes.GONE)
-    }),
+    })
     it('should return NOT FOUND if the flow is disabled', async () => {
-        const { mockProject, mockPlatform } = await mockAndSaveBasicSetup()
-        const { mockOwner } = await mockAndSaveBasicSetup()
+        const { mockProject, mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
             status: FlowStatus.DISABLED,

@@ -223,7 +223,7 @@ describe('Secret Managers API', () => {
                     code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 }),
             })
-        }),
+        })
         it('should not allow persisting resolved secrets in the database', async () => {
             const pieceMetadata = await mockPieceMetadata(mockLog)
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
@@ -294,28 +294,31 @@ describe('Secret Managers API', () => {
                 type: AppConnectionType.SECRET_TEXT,
                 secret_text: secretPath,
             })
-        }),
-        describe('HashiCorp Provider - Path Resolution', () => {
-            it('should resolve valid path format', async () => {
-                await hashicorpProvider(mockLog).validatePathFormat('hashicorp:secret/data/keys/my-key')
+        })
+    })
+
+    describe('HashiCorp Provider - Path Resolution', () => {
+        it('should resolve valid path format', async () => {
+            await expect(
+                hashicorpProvider(mockLog).validatePathFormat('hashicorp:secret/data/keys/my-key'),
+            ).resolves.not.toThrow()
+        })
+        it('should throw error for path with less than 3 parts', async () => {
+            await expect(
+                hashicorpProvider(mockLog).validatePathFormat('secret/key'),
+            ).rejects.toMatchObject({
+                error: expect.objectContaining({
+                    code: ErrorCode.VALIDATION,
+                }),
             })
-            it('should throw error for path with less than 3 parts', async () => {
-                await expect(
-                    hashicorpProvider(mockLog).validatePathFormat('secret/key'),
-                ).rejects.toMatchObject({
-                    error: expect.objectContaining({
-                        code: ErrorCode.VALIDATION,
-                    }),
-                })
-            })
-            it('should throw error for key without colon separator', async () => {
-                await expect(
-                    hashicorpProvider(mockLog).validatePathFormat('hashicorp'),
-                ).rejects.toMatchObject({
-                    error: expect.objectContaining({
-                        code: ErrorCode.VALIDATION,
-                    }),
-                })
+        })
+        it('should throw error for key without colon separator', async () => {
+            await expect(
+                hashicorpProvider(mockLog).validatePathFormat('hashicorp'),
+            ).rejects.toMatchObject({
+                error: expect.objectContaining({
+                    code: ErrorCode.VALIDATION,
+                }),
             })
         })
     })
