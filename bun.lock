@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -474,7 +473,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.1.14",
+      "version": "0.1.15",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7504,7 +7503,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.39.0",
+      "version": "0.40.1",
       "dependencies": {
         "@sinclair/typebox": "0.34.11",
         "deepmerge-ts": "7.1.0",
