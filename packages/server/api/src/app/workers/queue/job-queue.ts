@@ -1,4 +1,4 @@
-import { apDayjsDuration, AppSystemProp, getPlatformQueueName, memoryLock, QueueName } from '@activepieces/server-shared'
+import { apDayjsDuration, AppSystemProp, getPlatformQueueName, memoryLock, QueueName } from '@activepieces/server-common'
 import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, WorkerJobType } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'

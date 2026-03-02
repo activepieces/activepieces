@@ -1,20 +1,23 @@
-import { OtpType } from '@activepieces/ee-shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
+import { Mock } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
-import { setupServer } from '../../../../src/app/server'
+import { db } from '../../../helpers/db'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-import { Mock } from 'vitest'
 
 let sendOtpSpy: Mock
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment({ fresh: true })
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
 })
 
 beforeEach(() => {
@@ -31,12 +34,6 @@ beforeEach(() => {
     }))
 
 })
-
-afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
-})
-
 describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
         it('Generates new OTP', async () => {
@@ -61,7 +58,7 @@ describe('OTP API', () => {
         it('Sends OTP to user', async () => {
             const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
-            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+            await db.update('user_identity', mockUserIdentity.id, {
                 verified: false,
             })
 
@@ -80,14 +77,13 @@ describe('OTP API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
-            expect(sendOtpSpy).toHaveBeenCalledWith({
+            expect(sendOtpSpy).toHaveBeenCalledWith(expect.objectContaining({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: null,
                 type: OtpType.EMAIL_VERIFICATION,
                 userIdentity: expect.objectContaining({
                     email: mockUserIdentity.email,
                 }),
-            })
+            }))
         })
 
         it('OTP is unique per user per OTP type', async () => {

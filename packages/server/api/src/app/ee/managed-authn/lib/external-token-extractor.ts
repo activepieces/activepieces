@@ -1,5 +1,4 @@
-import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
-import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId } from '@activepieces/shared'
+import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId, SigningKey, SigningKeyId } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'

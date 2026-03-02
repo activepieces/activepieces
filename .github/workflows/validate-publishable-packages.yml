@@ -34,4 +34,4 @@ jobs:
         run: npm install -g bun && bun install
 
       - name: validate publishable packages
-        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/validate-publishable-packages.ts
+        run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/validate-publishable-packages.ts

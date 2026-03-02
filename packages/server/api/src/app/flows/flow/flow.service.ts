@@ -1,4 +1,4 @@
-import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
+import { apDayjs, apDayjsDuration } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,

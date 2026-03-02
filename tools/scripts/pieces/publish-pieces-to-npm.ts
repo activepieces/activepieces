@@ -1,6 +1,6 @@
 import { publishNpmPackage } from '../utils/publish-npm-package'
 import { findAllPiecesDirectoryInSource } from '../utils/piece-script-utils'
-import { chunk } from '../../../packages/shared/src/lib/common/utils/utils'
+import { chunk } from '../../../packages/shared/src/lib/core/common/utils/utils'
 
 function getChangedPiecePaths(): string[] | null {
   const changedPieces = process.env['CHANGED_PIECES']

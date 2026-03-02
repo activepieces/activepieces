@@ -1,4 +1,4 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { CancelTestTriggerRequestBody, PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { testTriggerService } from '../../trigger/test-trigger/test-trigger-service'

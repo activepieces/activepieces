@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
@@ -135,6 +135,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
         'trigger-failure': `[ACTION REQUIRED] ${vars.flowName} trigger is failing`,
+        'scim-user-welcome': 'Welcome! Your account has been created',
     }
 
     return templateToSubject[templateName]

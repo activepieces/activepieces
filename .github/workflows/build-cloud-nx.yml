@@ -64,7 +64,7 @@ jobs:
           fi
 
       - name: Lint core projects
-        run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=server-api --filter=react-ui --filter=@activepieces/server-shared --filter=server-worker --filter=@activepieces/ee-shared --filter=ee-embed-sdk
+        run: npx turbo run lint --filter=@activepieces/shared --filter=@activepieces/engine --filter=api --filter=web --filter=@activepieces/server-common --filter=worker --filter=ee-embed-sdk
 
 
       - name: Lint all pieces projects
@@ -72,7 +72,7 @@ jobs:
         run: npx turbo run lint --filter='@activepieces/piece-*'
 
       - name: Build core projects
-        run: npx turbo run build --filter=react-ui --filter=server-api --filter=@activepieces/engine --filter=@activepieces/piece-http --filter=@activepieces/piece-data-mapper --filter=@activepieces/piece-approval --filter=@activepieces/piece-webhook
+        run: npx turbo run build --filter=web --filter=api --filter=@activepieces/engine --filter=@activepieces/piece-http --filter=@activepieces/piece-data-mapper --filter=@activepieces/piece-approval --filter=@activepieces/piece-webhook
 
       - name: Build changed pieces projects
         if: steps.extract-pieces.outputs.pieces_filters != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
@@ -101,16 +101,16 @@ jobs:
           npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared &
           pids+=($!)
 
-          npx turbo run test-ce --filter=server-api &
+          npx turbo run test-ce --filter=api &
           pids+=($!)
 
-          npx turbo run test-ee --filter=server-api &
+          npx turbo run test-ee --filter=api &
           pids+=($!)
 
-          npx turbo run test-cloud --filter=server-api &
+          npx turbo run test-cloud --filter=api &
           pids+=($!)
 
-          npx turbo run check-migrations --filter=server-api &
+          npx turbo run check-migrations --filter=api &
           pids+=($!)
 
           status=0

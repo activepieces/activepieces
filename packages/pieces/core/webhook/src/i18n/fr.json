@@ -10,7 +10,7 @@
   "Markdown": "Markdown",
   "**Respond and Wait for Next Webhook**<br> \n            Check the response header (x-activepieces-resume-webhook-url) for the next webhook URL and call it to resume the flow. <br>\n            ": "**Répondre et attendre le prochain Webhook**<br> \n            Vérifier le Header de réponse (x-activepieces-resume-webhook-url) pour le prochain webhook URL et appelez-le pour reprendre le Flow. <br>\n            ",
   "JSON": "JSON",
-  "Raw": "Brute",
+  "Raw": "Brut",
   "Redirect": "Rediriger",
   "Stop": "Arrêter",
   "Respond and Continue": "Répondre et continuer",
