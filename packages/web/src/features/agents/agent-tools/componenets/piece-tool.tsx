@@ -1,4 +1,4 @@
-import { AgentPieceTool } from '@activepieces/shared';
+import { AgentPieceTool, sanitizeToolName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
 import { useMemo } from 'react';
@@ -19,10 +19,6 @@ import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
-
-export function sanitizeToolName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
-}
 
 type AgentPieceToolProps = {
   disabled?: boolean;
@@ -103,7 +99,7 @@ export const AgentPieceToolComponent = ({
               (action) =>
                 sanitizeToolName(
                   `${pieceMetadata.pieceName}-${action.name}`,
-                ) === tool.toolName,
+                ) === sanitizeToolName(tool.toolName),
             )?.displayName;
             return (
               <div
