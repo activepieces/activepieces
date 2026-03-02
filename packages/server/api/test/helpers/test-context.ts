@@ -13,6 +13,7 @@ import { FastifyInstance, InjectOptions } from 'fastify'
 import { generateMockToken } from './auth'
 import { db } from './db'
 import {
+    createMockApiKey,
     createMockProjectMember,
     mockAndSaveBasicSetup,
     mockBasicUser,
@@ -79,6 +80,24 @@ export async function createMemberContext(
     })
 }
 
+export async function createServiceContext(
+    app: FastifyInstance,
+    parentCtx: TestContext,
+): Promise<TestContext> {
+    const mockApiKey = createMockApiKey({
+        platformId: parentCtx.platform.id,
+    })
+    await db.save('api_key', mockApiKey)
+
+    return buildContext(app, {
+        userIdentity: parentCtx.userIdentity,
+        user: parentCtx.user,
+        platform: parentCtx.platform,
+        project: parentCtx.project,
+        token: mockApiKey.value,
+    })
+}
+
 function buildContext(app: FastifyInstance, data: ContextData): TestContext {
     const makeRequest = (method: string) => {
         return (url: string, bodyOrQuery?: Record<string, unknown>, opts?: RequestOptions) => {
@@ -126,7 +145,7 @@ function buildContext(app: FastifyInstance, data: ContextData): TestContext {
     }
 }
 
-type TestContextParams = {
+export type TestContextParams = {
     platform?: Partial<Platform>
     plan?: Partial<PlatformPlan>
     project?: Partial<Project>

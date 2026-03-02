@@ -1,6 +1,6 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
-import { createTestContext } from '../../../../helpers/test-context'
+import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 
 let app: FastifyInstance | null = null
 
@@ -11,9 +11,10 @@ beforeAll(async () => {
 afterAll(async () => {
     await teardownTestEnvironment()
 })
-describe('List flow runs endpoint', () => {
+
+describeWithAuth('List flow runs endpoint', () => app!, (setup) => {
     it('should return empty list with correct structure', async () => {
-        const ctx = await createTestContext(app!)
+        const ctx = await setup()
 
         const response = await ctx.get('/v1/flow-runs', {
             projectId: ctx.project.id,

@@ -13,6 +13,7 @@ import {
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { describeWithAuth } from '../../../helpers/describe-with-auth'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -27,9 +28,9 @@ afterAll(async () => {
 })
 
 describe('AppConnection CE API', () => {
-    describe('POST /v1/app-connections (Create)', () => {
+    describeWithAuth('POST /v1/app-connections (Create)', () => app!, (setup) => {
         it('should create a SECRET_TEXT connection', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockPiece = createMockPieceMetadata({
                 platformId: ctx.platform.id,
@@ -61,7 +62,7 @@ describe('AppConnection CE API', () => {
         })
 
         it('should create a NO_AUTH connection', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockPiece = createMockPieceMetadata({
                 platformId: ctx.platform.id,
@@ -89,7 +90,7 @@ describe('AppConnection CE API', () => {
         })
 
         it('should upsert on duplicate externalId', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockPiece = createMockPieceMetadata({
                 platformId: ctx.platform.id,
@@ -131,9 +132,9 @@ describe('AppConnection CE API', () => {
         })
     })
 
-    describe('POST /v1/app-connections/:id (Update)', () => {
+    describeWithAuth('POST /v1/app-connections/:id (Update)', () => app!, (setup) => {
         it('should update display name', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockPiece = createMockPieceMetadata({
                 platformId: ctx.platform.id,
@@ -166,7 +167,7 @@ describe('AppConnection CE API', () => {
         })
 
         it('should return 404 for non-existent connection', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
             const nonExistentId = apId()
 
             const response = await ctx.post(`/v1/app-connections/${nonExistentId}`, {
@@ -177,9 +178,9 @@ describe('AppConnection CE API', () => {
         })
     })
 
-    describe('GET /v1/app-connections (List)', () => {
+    describeWithAuth('GET /v1/app-connections (List)', () => app!, (setup) => {
         it('should list connections', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockPiece = createMockPieceMetadata({
                 platformId: ctx.platform.id,
@@ -212,7 +213,7 @@ describe('AppConnection CE API', () => {
         })
 
         it('should filter by pieceName', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockPieceA = createMockPieceMetadata({
                 name: 'piece-a-filter',
@@ -261,7 +262,9 @@ describe('AppConnection CE API', () => {
             expect(body.data).toHaveLength(1)
             expect(body.data[0].pieceName).toBe(mockPieceA.name)
         })
+    })
 
+    describe('GET /v1/app-connections (Isolation)', () => {
         it('should isolate connections between projects', async () => {
             const ctx1 = await createTestContext(app!)
             const ctx2 = await createTestContext(app!)
@@ -295,9 +298,9 @@ describe('AppConnection CE API', () => {
         })
     })
 
-    describe('DELETE /v1/app-connections/:id', () => {
+    describeWithAuth('DELETE /v1/app-connections/:id', () => app!, (setup) => {
         it('should delete a connection', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockPiece = createMockPieceMetadata({
                 platformId: ctx.platform.id,
@@ -324,7 +327,7 @@ describe('AppConnection CE API', () => {
         })
 
         it('should return 404 for non-existent connection', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
             const nonExistentId = apId()
 
             const response = await ctx.delete(`/v1/app-connections/${nonExistentId}`)

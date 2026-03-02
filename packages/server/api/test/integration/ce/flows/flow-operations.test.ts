@@ -20,6 +20,7 @@ import {
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { describeWithAuth } from '../../../helpers/describe-with-auth'
 
 let app: FastifyInstance | null = null
 
@@ -32,9 +33,9 @@ afterAll(async () => {
 })
 
 describe('Flow Operations API', () => {
-    describe('GET /v1/flows/:id', () => {
+    describeWithAuth('GET /v1/flows/:id', () => app!, (setup) => {
         it('should get a flow by id', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockFlow = createMockFlow({ projectId: ctx.project.id })
             await db.save('flow', mockFlow)
@@ -53,13 +54,15 @@ describe('Flow Operations API', () => {
         })
 
         it('should return 404 for non-existent flow', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const response = await ctx.get('/v1/flows/nonExistentId12345678')
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
+    })
 
+    describe('GET /v1/flows/:id (Cross-project)', () => {
         it('should deny access for flow in another project', async () => {
             const ctx1 = await createTestContext(app!)
             const ctx2 = await createTestContext(app!)
@@ -76,9 +79,9 @@ describe('Flow Operations API', () => {
         })
     })
 
-    describe('GET /v1/flows/count', () => {
+    describeWithAuth('GET /v1/flows/count', () => app!, (setup) => {
         it('should count flows in project', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockFlow1 = createMockFlow({ projectId: ctx.project.id })
             const mockFlow2 = createMockFlow({ projectId: ctx.project.id })
@@ -98,9 +101,9 @@ describe('Flow Operations API', () => {
         })
     })
 
-    describe('DELETE /v1/flows/:id', () => {
+    describeWithAuth('DELETE /v1/flows/:id', () => app!, (setup) => {
         it('should delete a flow', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const mockFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
             await db.save('flow', mockFlow)
@@ -120,13 +123,15 @@ describe('Flow Operations API', () => {
         })
 
         it('should return 404 when deleting non-existent flow', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const response = await ctx.delete('/v1/flows/nonExistentId12345678')
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
+    })
 
+    describe('DELETE /v1/flows/:id (Cross-project)', () => {
         it('should deny deleting flow from another project', async () => {
             const ctx1 = await createTestContext(app!)
             const ctx2 = await createTestContext(app!)
@@ -143,9 +148,9 @@ describe('Flow Operations API', () => {
         })
     })
 
-    describe('POST /v1/flows/:id CHANGE_NAME', () => {
+    describeWithAuth('POST /v1/flows/:id CHANGE_NAME', () => app!, (setup) => {
         it('should rename a flow', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const createResponse = await ctx.post('/v1/flows', {
                 displayName: 'Original Name',
@@ -258,9 +263,9 @@ describe('Flow Operations API', () => {
         })
     })
 
-    describe('POST /v1/flows/:id ADD_ACTION', () => {
+    describeWithAuth('POST /v1/flows/:id ADD_ACTION', () => app!, (setup) => {
         it('should add code action after trigger', async () => {
-            const ctx = await createTestContext(app!)
+            const ctx = await setup()
 
             const createResponse = await ctx.post('/v1/flows', {
                 displayName: 'test flow',

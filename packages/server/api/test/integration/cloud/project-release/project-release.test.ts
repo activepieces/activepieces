@@ -1,8 +1,6 @@
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     apId,
-    CreateProjectReleaseRequestBody,
-    PopulatedFlow,
     ProjectReleaseType,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -10,12 +8,10 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
 import {
-    createMockApiKey,
     createMockFile,
     createMockProjectRelease,
-    mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
+import { createServiceContext, createTestContext } from '../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 
@@ -30,27 +26,17 @@ afterAll(async () => {
 describe('Project Release API', () => {
     describe('POST /v1/project-releases (Create)', () => {
         it('should fail if projectId does not match', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
-            const apiKey = createMockApiKey({
-                platformId: mockPlatform.id,
+            const userCtx = await createTestContext(app!, {
+                project: { releasesEnabled: true },
             })
-            await db.save('api_key', apiKey)
+            const serviceCtx = await createServiceContext(app!, userCtx)
 
-            const request: CreateProjectReleaseRequestBody = {
+            const response = await serviceCtx.post('/v1/project-releases', {
                 name: faker.animal.bird(),
                 description: faker.lorem.sentence(),
                 selectedFlowsIds: [],
                 projectId: faker.string.uuid(),
                 type: ProjectReleaseType.GIT,
-            }
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-releases',
-                body: request,
-                headers: {
-                    authorization: `Bearer ${apiKey.value}`,
-                },
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
