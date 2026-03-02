@@ -52,7 +52,7 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
         })
     },
     async getPieceTriggerByName({ pieceName, pieceVersion, triggerName, projectId }: GetPieceTriggerByNameParams): Promise<TriggerBase | null> {
-        const platformId = await projectService(log).getPlatformId(projectId)
+        const platformId = await projectService.getPlatformId(projectId)
         const piece = await pieceMetadataService(log).get({
             platformId,
             name: pieceName,
