@@ -3,8 +3,8 @@ import {
   EventDestination,
   TestPlatformEventDestinationRequestBody,
   UpdatePlatformEventDestinationRequestBody,
+  SeekPage,
 } from '@activepieces/shared';
-import { SeekPage } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { createCollection, useLiveQuery } from '@tanstack/react-db';
 import { QueryClient, useMutation } from '@tanstack/react-query';
