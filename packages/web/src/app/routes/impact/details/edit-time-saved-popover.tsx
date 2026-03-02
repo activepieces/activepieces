@@ -28,18 +28,14 @@ export function EditTimeSavedPopover({
   children,
 }: EditTimeSavedPopoverProps) {
   const { setTimeSavedPerRunOverride } = useContext(RefreshAnalyticsContext);
-  const [isOpen, setIsOpen] = useState(false);
-  const [hours, setHours] = useState('');
-  const [mins, setMins] = useState('');
-  const [secs, setSecs] = useState('');
   const previousValueRef = useRef<number | null | undefined>(currentValue);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [hms, setHms] = useState({ hours: '', mins: '', secs: '' });
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      const hms = secondsToHMS(currentValue);
-      setHours(hms.hours);
-      setMins(hms.mins);
-      setSecs(hms.secs);
+      setHms(secondsToHMS(currentValue));
       previousValueRef.current = currentValue;
     }
     setIsOpen(open);
@@ -75,7 +71,7 @@ export function EditTimeSavedPopover({
   });
 
   const handleSave = () => {
-    mutate(hmsToSeconds(hours, mins, secs));
+    mutate(hmsToSeconds(hms.hours, hms.mins, hms.secs));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -85,13 +81,13 @@ export function EditTimeSavedPopover({
 
   const handleInputChange = (
     value: string,
-    setter: (val: string) => void,
+    field: keyof typeof hms,
     max: number,
   ) => {
     const numericValue = value.replace(/\D/g, '');
     const num = parseInt(numericValue, 10);
     if (numericValue === '' || (num >= 0 && num <= max)) {
-      setter(numericValue);
+      setHms((prev) => ({ ...prev, [field]: numericValue }));
     }
   };
 
@@ -108,9 +104,9 @@ export function EditTimeSavedPopover({
                 type="text"
                 inputMode="numeric"
                 placeholder="hh"
-                value={hours}
+                value={hms.hours}
                 onChange={(e) =>
-                  handleInputChange(e.target.value, setHours, 99)
+                  handleInputChange(e.target.value, 'hours', 99)
                 }
                 onKeyDown={handleKeyDown}
                 className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
@@ -127,8 +123,8 @@ export function EditTimeSavedPopover({
                 type="text"
                 inputMode="numeric"
                 placeholder="mm"
-                value={mins}
-                onChange={(e) => handleInputChange(e.target.value, setMins, 59)}
+                value={hms.mins}
+                onChange={(e) => handleInputChange(e.target.value, 'mins', 59)}
                 onKeyDown={handleKeyDown}
                 className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
                 maxLength={2}
@@ -143,8 +139,8 @@ export function EditTimeSavedPopover({
                 type="text"
                 inputMode="numeric"
                 placeholder="ss"
-                value={secs}
-                onChange={(e) => handleInputChange(e.target.value, setSecs, 59)}
+                value={hms.secs}
+                onChange={(e) => handleInputChange(e.target.value, 'secs', 59)}
                 onKeyDown={handleKeyDown}
                 className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
                 maxLength={2}

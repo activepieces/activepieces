@@ -16,7 +16,6 @@ type TimeSavedFilterContentProps = {
   unitMax: TimeUnit;
   onCycleUnitMax: () => void;
   onApply: () => void;
-  /** When provided, renders a "Clear filter" link at the bottom of the popover */
   onClear?: () => void;
 };
 

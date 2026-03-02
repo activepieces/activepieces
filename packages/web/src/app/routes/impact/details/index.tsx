@@ -376,13 +376,13 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-4" align="start">
         <TimeSavedFilterContent
-          draftMin={filters.draftTimeSavedMin}
-          onMinChange={filters.setDraftTimeSavedMin}
-          unitMin={filters.draftTimeUnitMin}
+          draftMin={filters.draftTimeSaved.min}
+          onMinChange={(v) => filters.updateDraftTimeSaved({ min: v })}
+          unitMin={filters.draftTimeSaved.unitMin}
           onCycleUnitMin={filters.cycleDraftTimeUnitMin}
-          draftMax={filters.draftTimeSavedMax}
-          onMaxChange={filters.setDraftTimeSavedMax}
-          unitMax={filters.draftTimeUnitMax}
+          draftMax={filters.draftTimeSaved.max}
+          onMaxChange={(v) => filters.updateDraftTimeSaved({ max: v })}
+          unitMax={filters.draftTimeSaved.unitMax}
           onCycleUnitMax={filters.cycleDraftTimeUnitMax}
           onApply={filters.applyTimeSavedFilter}
           onClear={filters.clearTimeSavedFilter}
@@ -395,8 +395,8 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
 function OwnerFilter({ filters }: { filters: FiltersReturn }) {
   return (
     <Popover
-      open={filters.ownerPopoverOpen}
-      onOpenChange={filters.setOwnerPopoverOpen}
+      open={filters.ownerFilter.popoverOpen}
+      onOpenChange={(open) => filters.updateOwnerFilter({ popoverOpen: open })}
     >
       <PopoverTrigger asChild>
         <Button variant="outline" className="gap-2 font-normal border-dashed">
@@ -429,8 +429,10 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={t('Search owners...')}
-              value={filters.ownerSearchQuery}
-              onChange={(e) => filters.setOwnerSearchQuery(e.target.value)}
+            value={filters.ownerFilter.searchQuery}
+            onChange={(e) =>
+              filters.updateOwnerFilter({ searchQuery: e.target.value })
+            }
               className="pl-8 h-8"
             />
           </div>
@@ -443,7 +445,7 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
               className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
             >
               <Checkbox
-                checked={filters.selectedOwnerIds.includes(owner.id)}
+                checked={filters.ownerFilter.selectedIds.includes(owner.id)}
                 className="pointer-events-none"
               />
               <ApAvatar id={owner.id} size="small" hideHover={true} />
@@ -456,10 +458,10 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
             </div>
           )}
         </div>
-        {filters.selectedOwnerIds.length > 0 && (
+        {filters.ownerFilter.selectedIds.length > 0 && (
           <div className="p-2 border-t">
             <button
-              onClick={() => filters.setSelectedOwnerIds([])}
+              onClick={() => filters.updateOwnerFilter({ selectedIds: [] })}
               className="w-full text-center text-sm text-primary hover:underline"
             >
               {t('Clear all')}
