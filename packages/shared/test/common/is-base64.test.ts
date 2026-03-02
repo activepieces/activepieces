@@ -62,6 +62,15 @@ describe('isBase64', () => {
         })
     })
 
+    describe('large files', () => {
+        it('should return true for a valid base64 string larger than 5MB', () => {
+            const sixMB = 6 * 1024 * 1024
+            const largeBase64 = Buffer.alloc(sixMB).toString('base64')
+            expect(largeBase64.length).toBeGreaterThan(sixMB)
+            expect(isBase64(largeBase64)).toBe(true)
+        })
+    })
+
     describe('non-string inputs', () => {
         it('should return false for null', () => {
             expect(isBase64(null)).toBe(false)
