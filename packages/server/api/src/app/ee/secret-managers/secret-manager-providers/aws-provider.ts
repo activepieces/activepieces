@@ -24,13 +24,14 @@ export const AWS_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             type: 'text',
         },
     },
-    secretParams: {
-        path: {
+    secretParams: [
+        {
+            name: 'path',
             displayName: 'Secret Path',
             placeholder: 'secret-name:secret-json-key',
             type: 'text',
         },
-    },
+    ],
 }
 
 
@@ -120,19 +121,19 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
     },
 
 })
-
+// secretParam has path which is in the format of secretName:secretJsonKey
 const validatePathFormat = (path: string): { secretName: string, secretJsonKey: string } => {
-    const colonIndex = path.indexOf(':')
-    if (colonIndex === -1) {
+    const separatorIndex = path.indexOf(':')
+    if (separatorIndex === -1) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
-                message: 'Wrong key format. Should be secretName:secretJsonKey',
+                message: `Wrong key format. Should be secretName:secretJsonKey, got ${path}`,
             },
         })
     }
     return {
-        secretName: path.slice(0, colonIndex),
-        secretJsonKey: path.slice(colonIndex + 1),
+        secretName: path.slice(0, separatorIndex),
+        secretJsonKey: path.slice(separatorIndex + 1),
     }
 }

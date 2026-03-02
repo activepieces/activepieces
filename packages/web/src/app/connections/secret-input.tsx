@@ -86,10 +86,8 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     const getSecretParamsForProvider = (
       providerId: SecretManagerProviderId | null,
     ) =>
-      Object.entries(
-        secretManagers?.find((provider) => provider.id === providerId)
-          ?.secretParams ?? {},
-      );
+      secretManagers?.find((provider) => provider.id === providerId)
+        ?.secretParams ?? [];
 
     const [showSecretManagerInput, setShowSecretInput] = useState(false);
 
@@ -109,7 +107,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       fieldValues: Record<string, string>,
     ): string => {
       const values = getSecretParamsForProvider(providerId).map(
-        ([fieldKey]) => fieldValues[fieldKey] || '',
+        (param) => fieldValues[param.name] || '',
       );
       const parts = [providerId, ...values].join(SecretManagerFieldsSeparator);
       return `{{${parts}}}`;
@@ -131,8 +129,8 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       (newProvider: SecretManagerProviderId) => {
         setSelectedProvider(newProvider);
         const newFieldValues: Record<string, string> = {};
-        getSecretParamsForProvider(newProvider).forEach(([field]) => {
-          newFieldValues[field] = '';
+        getSecretParamsForProvider(newProvider).forEach((param) => {
+          newFieldValues[param.name] = '';
         });
         setFieldValues(newFieldValues);
         const newValue = buildSecretValue(newProvider, newFieldValues);
@@ -188,12 +186,12 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
                 ))}
               </SelectContent>
             </Select>
-            {currentFields.map(([fieldKey, { placeholder }]) => (
+            {currentFields.map((param) => (
               <Input
-                key={fieldKey}
-                placeholder={placeholder}
-                value={fieldValues[fieldKey] || ''}
-                onChange={(e) => handleFieldChange(fieldKey, e.target.value)}
+                key={param.name}
+                placeholder={param.placeholder}
+                value={fieldValues[param.name] || ''}
+                onChange={(e) => handleFieldChange(param.name, e.target.value)}
                 disabled={disabled}
                 type="text"
               />

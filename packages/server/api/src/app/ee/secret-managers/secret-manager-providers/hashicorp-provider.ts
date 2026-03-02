@@ -30,13 +30,14 @@ export const HASHICORP_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             type: 'password',
         },
     },
-    secretParams: {
-        path: {
+    secretParams: [
+        {
+            name: 'path',
             displayName: 'Secret Path',
             placeholder: 'eg: secret/data/keys/my-key',
             type: 'text',
         },
-    },
+    ],
 }
 
 export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.HASHICORP> => ({

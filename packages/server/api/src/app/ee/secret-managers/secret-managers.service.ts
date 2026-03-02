@@ -170,7 +170,7 @@ function handleResolveError(error: unknown, throwOnFailure: boolean, originalVal
 }
 
 /**
- * takes key in the format of {{providerId:secret-path}}
+ * takes key in the format of {{providerId|ap_sep_v1|secret-path}}
  * returns trimmed key in the format of providerId:secret-path
  */
 const trimKeyBraces = (key: string) => {
@@ -187,7 +187,7 @@ const trimKeyBraces = (key: string) => {
 }
 
 /**
- * key is {{providerId:secret-path}}
+ * key is {{providerId|ap_sep_v1|secret-path}}
  * returns providerId and path
  */
 const extractProviderIdAndPathFromKey = (key: string): {

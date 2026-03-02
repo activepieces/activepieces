@@ -30,13 +30,14 @@ export const CYBERARK_PROVIDER_METADATA: SecretManagerProviderMetaData = {
             type: 'password',
         },
     },
-    secretParams: {
-        secretKey: {
+    secretParams: [
+        {
+            name: 'secretKey',
             displayName: 'Secret key',
             placeholder: 'Your Conjur Secret Key',
             type: 'text',
         },
-    },
+    ],
 }
 
 export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerProvider<SecretManagerProviderId.CYBERARK> => ({
