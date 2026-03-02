@@ -7,6 +7,7 @@ import axios from 'axios'
 import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
+import { buildWorkspaceVersionMap, resolveWorkspaceDependencies } from '../../../../../tools/scripts/utils/workspace-utils';
 
 export const piecesPath = () => path.join(cwd(), 'packages', 'pieces')
 export const customPiecePath = () => path.join(piecesPath(), 'custom')
@@ -51,10 +52,12 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     const packageJson = await readPackageJson(pieceFolder);
 
     await buildPackage(packageJson.name);
-     
+
     const compiledPath = `packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}/dist`;
 
     await copyFile(path.join(pieceFolder, 'package.json'), path.join(compiledPath, 'package.json'));
+
+    resolveWorkspaceDepsInPackageJson(path.join(compiledPath, 'package.json'), cwd());
 
     const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
     const tarFileName = JSON.parse(stdout)[0].filename;
@@ -175,3 +178,12 @@ export const assertPieceExists = async (pieceName: string | null) => {
   export const removeStartingSlashes = (str: string) => {
     return str.startsWith('/') ? str.slice(1) : str;
   }
+
+function resolveWorkspaceDepsInPackageJson(packageJsonPath: string, rootDir: string): void {
+    const versionMap = buildWorkspaceVersionMap(rootDir)
+    const json = JSON.parse(fs.readFileSync(packageJsonPath).toString())
+    json.dependencies = resolveWorkspaceDependencies(json.dependencies, versionMap)
+    json.devDependencies = resolveWorkspaceDependencies(json.devDependencies, versionMap)
+    json.peerDependencies = resolveWorkspaceDependencies(json.peerDependencies, versionMap)
+    fs.writeFileSync(packageJsonPath, JSON.stringify(json, null, 2))
+}
