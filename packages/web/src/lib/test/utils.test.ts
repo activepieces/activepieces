@@ -270,4 +270,3 @@ describe('validationUtils.isValidationError', () => {
     expect(validationUtils.isValidationError(error)).toBe(false);
   });
 });
-
