@@ -131,12 +131,16 @@ export const addTextToPdf = createAction({
         if (item.applyToAllPages) {
           targetPages.push(...pages);
         } else {
-          const pageNum = Number(item.pageNumber ?? 1); 
-          const pageIndex = pageNum - 1;
+					if (item.pageNumber === undefined) {
+						throw new Error(
+							`Page Number is required when "Apply to all pages?" is not checked for text "${cleanTextSample}...".`
+						);
+					}
+          const pageIndex = Number(item.pageNumber) - 1;
           
           if (pageIndex < 0 || pageIndex >= totalPages) {
             throw new Error(
-              `You requested Page ${pageNum} for text "${cleanTextSample}...", but this document only has ${totalPages} page(s).`
+              `You requested Page ${item.pageNumber} for text "${cleanTextSample}...", but this document only has ${totalPages} page(s).`
             );
           }
           targetPages.push(pages[pageIndex]);
