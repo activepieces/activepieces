@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion } from '../../core/common/base-model'
+import { DiscriminatedUnion } from '../../core/common'
 
 export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',
@@ -19,12 +19,6 @@ export const HashicorpProviderConfigSchema = Type.Object({
 })
 export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchema>
 
-export const HashicorpGetSecretRequestSchema = Type.Object({
-    path: Type.String(),
-})
-export type HashicorpGetSecretRequest = Static<typeof HashicorpGetSecretRequestSchema>
-
-
 /**
  * AWS Provider Config
  */
@@ -32,13 +26,10 @@ export type HashicorpGetSecretRequest = Static<typeof HashicorpGetSecretRequestS
 export const AWSProviderConfigSchema = Type.Object({
     accessKeyId: Type.String(),
     secretAccessKey: Type.String(),
+    region: Type.String(),
 })
 export type AWSProviderConfig = Static<typeof AWSProviderConfigSchema>
 
-export const AWSGetSecretRequestSchema = Type.Object({
-    path: Type.String(),
-})
-export type AWSGetSecretRequest = Static<typeof AWSGetSecretRequestSchema>
 
 /**
  * Cyberark Conjur Provider Config
@@ -51,12 +42,6 @@ export const CyberarkConjurProviderConfigSchema = Type.Object({
     apiKey: Type.String(),
 })
 export type CyberarkConjurProviderConfig = Static<typeof CyberarkConjurProviderConfigSchema>
-
-export const CyberarkConjurGetSecretRequestSchema = Type.Object({
-    secretKey: Type.String(),
-})
-export type CyberarkConjurGetSecretRequest = Static<typeof CyberarkConjurGetSecretRequestSchema>
-
 
 export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId', [
     Type.Object({

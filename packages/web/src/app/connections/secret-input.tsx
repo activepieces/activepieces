@@ -1,8 +1,11 @@
-import { SecretManagerProviderId } from '@activepieces/shared';
+import {
+  SecretManagerProviderId,
+  SecretManagerFieldsSeparator,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { KeyRound } from 'lucide-react';
 import * as React from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input, InputProps } from '@/components/ui/input';
@@ -80,30 +83,34 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       connectedOnly: true,
     });
 
-    const getSecretParamsForProvider = (providerId: SecretManagerProviderId) =>
-      Object.entries(
-        secretManagers?.find((provider) => provider.id === providerId)
-          ?.secretParams ?? {},
-      );
+    const getSecretParamsForProvider = (
+      providerId: SecretManagerProviderId | null,
+    ) =>
+      secretManagers?.find((provider) => provider.id === providerId)
+        ?.secretParams ?? [];
 
     const [showSecretManagerInput, setShowSecretInput] = useState(false);
 
     const [selectedProvider, setSelectedProvider] =
-      useState<SecretManagerProviderId>(
-        secretManagers && secretManagers.length > 0
-          ? secretManagers[0].id
-          : SecretManagerProviderId.HASHICORP,
-      );
+      useState<SecretManagerProviderId | null>(null);
+
+    useEffect(() => {
+      if (secretManagers && secretManagers.length > 0) {
+        setSelectedProvider(secretManagers[0].id);
+      }
+    }, [secretManagers]);
+
     const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 
     const buildSecretValue = (
-      providerId: SecretManagerProviderId,
+      providerId: SecretManagerProviderId | null,
       fieldValues: Record<string, string>,
     ): string => {
       const values = getSecretParamsForProvider(providerId).map(
-        ([fieldKey]) => fieldValues[fieldKey] || '',
+        (param) => fieldValues[param.name] || '',
       );
-      return `{{${providerId}:${values.join(':')}}}`;
+      const parts = [providerId, ...values].join(SecretManagerFieldsSeparator);
+      return `{{${parts}}}`;
     };
 
     const toggleSecretManager = useCallback(() => {
@@ -122,8 +129,8 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       (newProvider: SecretManagerProviderId) => {
         setSelectedProvider(newProvider);
         const newFieldValues: Record<string, string> = {};
-        getSecretParamsForProvider(newProvider).forEach(([field]) => {
-          newFieldValues[field] = '';
+        getSecretParamsForProvider(newProvider).forEach((param) => {
+          newFieldValues[param.name] = '';
         });
         setFieldValues(newFieldValues);
         const newValue = buildSecretValue(newProvider, newFieldValues);
@@ -154,7 +161,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
       [selectedProvider, showSecretManagerInput],
     );
 
-    if (showSecretManagerInput) {
+    if (selectedProvider && showSecretManagerInput) {
       return (
         <div className={cn('flex flex-col gap-2', className)}>
           <div className="flex items-center gap-2">
@@ -179,12 +186,12 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
                 ))}
               </SelectContent>
             </Select>
-            {currentFields.map(([fieldKey, { placeholder }]) => (
+            {currentFields.map((param) => (
               <Input
-                key={fieldKey}
-                placeholder={placeholder}
-                value={fieldValues[fieldKey] || ''}
-                onChange={(e) => handleFieldChange(fieldKey, e.target.value)}
+                key={param.name}
+                placeholder={param.placeholder}
+                value={fieldValues[param.name] || ''}
+                onChange={(e) => handleFieldChange(param.name, e.target.value)}
                 disabled={disabled}
                 type="text"
               />
@@ -197,7 +204,7 @@ const SecretInput = React.forwardRef<HTMLInputElement, SecretInputProps>(
     return (
       <div className={cn('flex items-center gap-2', className)}>
         {secretManagers &&
-          secretManagers?.length > 0 &&
+          secretManagers.length > 0 &&
           allowTogglingSecretManagerMode && (
             <SecretManagerToggleButton
               isActive={false}

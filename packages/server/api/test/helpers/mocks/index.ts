@@ -15,7 +15,6 @@ import {
     assertNotNullOrUndefined,
     Cell,
     ColorName,
-
     CustomDomain,
     CustomDomainStatus,
     EventDestinationScope,

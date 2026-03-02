@@ -1,10 +1,15 @@
 import { SecretManagerProviderMetaData } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Pencil, Trash } from 'lucide-react';
+import { CircleAlert, Pencil, RefreshCcw, Trash } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
@@ -16,15 +21,32 @@ type SecretManagerProviderCardProps = {
 const SecretManagerProviderCard = ({
   provider,
 }: SecretManagerProviderCardProps) => {
-  const { mutate: disconnect, isPending } =
+  const { mutate: disconnect, isPending: isDisconnecting } =
     secretManagersHooks.useDisconnectSecretManager();
+  const { mutate: clearCache, isPending: isClearingCache } =
+    secretManagersHooks.useClearCache();
 
   return (
     <Card className="w-full flex justify-between items-center px-4 py-4">
       <div className="flex gap-8 items-center">
         <img className="w-10" src={provider.logo} alt={provider.name} />
         <div>
-          <div className="text-lg">{provider.name}</div>
+          <div className="text-lg flex items-center gap-2">
+            {provider.name}
+            {provider.connection?.configured &&
+              !provider.connection?.connected && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CircleAlert className="size-4 text-destructive" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t(
+                      'Your configuration is not working, please try reconnecting',
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+          </div>
           <div className="text-sm text-muted-foreground">
             {t('Configure credentials for {managerName} secret manager.', {
               managerName: provider.name,
@@ -35,22 +57,41 @@ const SecretManagerProviderCard = ({
       <div className="flex gap-2">
         <ConnectSecretManagerDialog manager={provider}>
           <Button variant={'ghost'} size={'sm'}>
-            {provider.connected ? <Pencil className="size-4" /> : t('Connect')}
+            {provider.connection?.configured ? (
+              <Pencil className="size-4" />
+            ) : (
+              t('Connect')
+            )}
           </Button>
         </ConnectSecretManagerDialog>
-        {provider.connected && (
-          <ConfirmationDeleteDialog
-            title={t('Disconnect Secret Manager')}
-            message={t(
-              'Are you sure you want to disconnect this secret manager?',
-            )}
-            entityName={provider.name}
-            mutationFn={async () => disconnect({ providerId: provider.id })}
-          >
-            <Button variant={'ghost'} size={'sm'} loading={isPending}>
-              <Trash className="size-4 text-destructive" />
-            </Button>
-          </ConfirmationDeleteDialog>
+        {provider.connection?.configured && (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={'ghost'}
+                  size={'sm'}
+                  loading={isClearingCache}
+                  onClick={() => clearCache()}
+                >
+                  <RefreshCcw className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('Clear Cache')}</TooltipContent>
+            </Tooltip>
+            <ConfirmationDeleteDialog
+              title={t('Disconnect Secret Manager')}
+              message={t(
+                'Are you sure you want to disconnect this secret manager?',
+              )}
+              entityName={provider.name}
+              mutationFn={async () => disconnect({ providerId: provider.id })}
+            >
+              <Button variant={'ghost'} size={'sm'} loading={isDisconnecting}>
+                <Trash className="size-4 text-destructive" />
+              </Button>
+            </ConfirmationDeleteDialog>
+          </>
         )}
       </div>
     </Card>
