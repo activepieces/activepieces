@@ -14,8 +14,8 @@ import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { signingKeyApi } from '@/features/platform-admin/api/signing-key-api';
 import { NewSigningKeyDialog } from '@/features/platform-admin/components/new-signing-key-dialog';
-import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const SigningKeysPage = () => {

@@ -35,8 +35,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { gitSyncApi } from '@/features/project-releases/lib/git-sync-api';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { gitSyncApi } from '@/features/project-releases/api/git-sync-api';
+import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 

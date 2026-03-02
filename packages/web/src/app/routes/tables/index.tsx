@@ -29,10 +29,10 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { tablesApi } from '@/features/tables/api/tables-api';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
-import { tableHooks } from '@/features/tables/lib/table-hooks';
-import { tablesApi } from '@/features/tables/lib/tables-api';
+import { tableHooks } from '@/features/tables/hooks/table-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';

@@ -43,11 +43,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
+import { platformAnalyticsHooks } from '@/features/platform-admin/hooks/analytics-hooks';
 import {
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
-} from '@/features/platform-admin/lib/refresh-analytics-context';
+} from '@/features/platform-admin/stores/refresh-analytics-context';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { downloadFile } from '@/lib/dom-utils';
 import { formatUtils } from '@/lib/format-utils';

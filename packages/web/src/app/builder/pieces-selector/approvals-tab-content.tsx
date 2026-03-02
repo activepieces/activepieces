@@ -1,12 +1,12 @@
 import { FlowActionType, FlowOperationType, isNil } from '@activepieces/shared';
 
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { stepUtils } from '@/features/pieces/lib/step-utils';
+} from '@/features/pieces/stores/piece-selector-tabs-provider';
+import { stepUtils } from '@/features/pieces/utils/step-utils';
 import { PieceSelectorOperation } from '@/lib/types';
 
 import { useBuilderStateContext } from '../builder-hooks';

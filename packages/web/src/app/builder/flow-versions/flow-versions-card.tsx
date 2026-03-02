@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { OverwriteDraftDialog } from './overwrite-draft-dialog';

@@ -22,8 +22,8 @@ import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-t
 import {
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+} from '@/features/pieces/stores/piece-selector-tabs-provider';
+import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
@@ -31,7 +31,7 @@ import { PieceSelectorOperation } from '@/lib/types';
 import {
   PieceSearchProvider,
   usePieceSearchContext,
-} from '../../../features/pieces/lib/piece-search-context';
+} from '../../../features/pieces/stores/piece-search-context';
 
 import { AITabContent } from './ai-tab-content';
 import { ApprovalsTabContent } from './approvals-tab-content';

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { piecesTagsApi } from '@/features/platform-admin/lib/pieces-tags';
+import { piecesTagsApi } from '@/features/platform-admin/api/pieces-tags';
 
 type CreateTagDialogProps = {
   onTagCreated: (tag: Tag) => void;

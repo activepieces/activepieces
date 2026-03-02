@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { ConnectionDropdown } from '@/features/agents/agent-tools/piece-tool-dialog/connection-select';
 import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 

@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
+import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 

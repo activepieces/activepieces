@@ -16,9 +16,9 @@ import {
 import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
 
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { flowsApi } from '@/features/flows/api/flows-api';
+import { sampleDataHooks } from '@/features/flows/hooks/sample-data-hooks';
+import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
   PieceSelectorItem,

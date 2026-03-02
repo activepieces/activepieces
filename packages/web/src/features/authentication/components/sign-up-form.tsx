@@ -39,7 +39,7 @@ import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
-import { passwordValidation } from '../lib/password-validation-utils';
+import { passwordValidation } from '../utils/password-validation-utils';
 
 type SignUpSchema = {
   email: string;

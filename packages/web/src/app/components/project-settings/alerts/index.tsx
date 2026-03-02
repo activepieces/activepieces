@@ -20,7 +20,7 @@ import {
 import {
   alertQueries,
   alertMutations,
-} from '@/features/alerts/lib/alert-hooks';
+} from '@/features/alerts/hooks/alert-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';

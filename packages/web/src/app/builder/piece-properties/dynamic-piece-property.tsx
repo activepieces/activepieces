@@ -11,8 +11,8 @@ import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { formUtils } from '@/features/pieces/lib/form-utils';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { formUtils } from '@/features/pieces/utils/form-utils';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';

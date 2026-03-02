@@ -10,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
+import { secretManagersHooks } from '@/features/secret-managers/hooks/secret-managers-hooks';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
 

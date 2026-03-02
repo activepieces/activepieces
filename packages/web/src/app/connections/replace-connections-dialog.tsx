@@ -25,10 +25,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   appConnectionsMutations,
   appConnectionsQueries,
-} from '@/features/connections/lib/app-connections-hooks';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+} from '@/features/connections/hooks/app-connections-hooks';
+import { flowsApi } from '@/features/flows/api/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { cn } from '@/lib/utils';
 
 type ReplaceConnectionsDialogProps = {

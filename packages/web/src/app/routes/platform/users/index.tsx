@@ -15,8 +15,8 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
-import { userInvitationApi } from '@/features/members/lib/user-invitation';
+import { userInvitationApi } from '@/features/members/api/user-invitation';
+import { InviteUserDialog } from '@/features/members/components/invite-user/invite-user-dialog';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 import { DeleteUserAction } from './actions/delete-user-action';

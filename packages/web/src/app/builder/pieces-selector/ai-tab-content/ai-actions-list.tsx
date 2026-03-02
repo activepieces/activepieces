@@ -16,7 +16,7 @@ import {
   StepMetadataWithSuggestions,
 } from '@/lib/types';
 
-import { usePieceSearchContext } from '../../../../features/pieces/lib/piece-search-context';
+import { usePieceSearchContext } from '../../../../features/pieces/stores/piece-search-context';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { convertStepMetadataToPieceSelectorItems } from '../piece-actions-or-triggers-list';
 

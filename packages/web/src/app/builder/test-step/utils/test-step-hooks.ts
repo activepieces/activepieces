@@ -14,8 +14,8 @@ import { t } from 'i18next';
 import { useFormContext } from 'react-hook-form';
 
 import { internalErrorToast } from '@/components/ui/sonner';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
+import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
+import { triggerEventsApi } from '@/features/flows/api/trigger-events-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { wait } from '@/lib/dom-utils';

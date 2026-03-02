@@ -42,8 +42,8 @@ import { EditGlobalConnectionDialog } from '@/features/connections/components/ed
 import {
   globalConnectionsMutations,
   globalConnectionsQueries,
-} from '@/features/connections/lib/global-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/lib/utils';
+} from '@/features/connections/hooks/global-connections-hooks';
+import { appConnectionUtils } from '@/features/connections/utils/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

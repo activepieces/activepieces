@@ -9,9 +9,9 @@ import { useRef } from 'react';
 
 import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
+import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
 import { ChatDrawerSource } from '@/lib/types';
 
 import { AboveTriggerButton } from './above-trigger-button';

@@ -23,10 +23,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { RoleSelector } from '@/features/members/component/role-selector';
-import { projectMembersApi } from '@/features/members/lib/project-members-api';
-import { userInvitationApi } from '@/features/members/lib/user-invitation';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+import { projectMembersApi } from '@/features/members/api/project-members-api';
+import { userInvitationApi } from '@/features/members/api/user-invitation';
+import { RoleSelector } from '@/features/members/components/role-selector';
+import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/format-utils';

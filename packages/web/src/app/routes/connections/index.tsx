@@ -50,10 +50,10 @@ import { RenameConnectionDialog } from '@/features/connections/components/rename
 import {
   appConnectionsMutations,
   appConnectionsQueries,
-} from '@/features/connections/lib/app-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/lib/utils';
+} from '@/features/connections/hooks/app-connections-hooks';
+import { appConnectionUtils } from '@/features/connections/utils/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';

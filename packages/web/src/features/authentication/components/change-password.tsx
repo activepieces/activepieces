@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
-import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
+import { passwordValidation } from '@/features/authentication/utils/password-validation-utils';
 import { HttpError } from '@/lib/api';
 
 const ChangePasswordForm = () => {

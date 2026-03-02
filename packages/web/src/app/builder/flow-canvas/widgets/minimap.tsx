@@ -2,7 +2,7 @@ import { flowStructureUtil, isNil, Step } from '@activepieces/shared';
 import { MiniMap, MiniMapNodeProps } from '@xyflow/react';
 
 import { useTheme } from '@/components/theme-provider';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import { colorsUtils } from '@/lib/color-utils';
 import { StepMetadata } from '@/lib/types';
 

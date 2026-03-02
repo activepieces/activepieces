@@ -6,7 +6,7 @@ import {
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';

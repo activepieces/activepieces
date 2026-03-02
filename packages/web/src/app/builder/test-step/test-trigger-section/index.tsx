@@ -4,8 +4,8 @@ import { t } from 'i18next';
 import React, { useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { triggerEventHooks } from '@/features/flows/hooks/trigger-event-hooks';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { ChatDrawerSource } from '@/lib/types';
 
 import { useBuilderStateContext } from '../../builder-hooks';

@@ -19,7 +19,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useElementSize } from '@/hooks/use-element-size';
 import { RightSideBarType } from '@/lib/types';

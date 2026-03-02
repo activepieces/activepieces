@@ -21,8 +21,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { InviteUserDialog } from '@/features/members/components/invite-user/invite-user-dialog';
+import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

@@ -7,7 +7,7 @@ import { FieldValues, UseFormReturn, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';

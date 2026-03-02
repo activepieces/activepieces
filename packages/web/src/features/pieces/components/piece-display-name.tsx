@@ -1,4 +1,4 @@
-import { piecesHooks } from '../lib/pieces-hooks';
+import { piecesHooks } from '../hooks/pieces-hooks';
 
 type PieceDisplayNameProps = {
   pieceName: string;

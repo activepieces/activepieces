@@ -2,11 +2,11 @@ import { t } from 'i18next';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { usePieceSearchContext } from '@/features/pieces/lib/piece-search-context';
+import { usePieceSearchContext } from '@/features/pieces/stores/piece-search-context';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
+} from '@/features/pieces/stores/piece-selector-tabs-provider';
 
 import { SearchInput } from '../../../components/ui/search-input';
 

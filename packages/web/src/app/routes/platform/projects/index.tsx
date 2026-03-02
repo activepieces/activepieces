@@ -25,7 +25,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
+import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';

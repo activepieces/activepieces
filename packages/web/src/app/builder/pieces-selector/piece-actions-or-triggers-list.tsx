@@ -11,15 +11,15 @@ import React from 'react';
 import { CardList } from '@/components/custom/card-list';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { CORE_ACTIONS_METADATA } from '@/features/pieces/lib/step-utils';
+import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
+import { CORE_ACTIONS_METADATA } from '@/features/pieces/utils/step-utils';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
 
-import { usePieceSearchContext } from '../../../features/pieces/lib/piece-search-context';
+import { usePieceSearchContext } from '../../../features/pieces/stores/piece-search-context';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import GenericActionOrTriggerItem from './generic-piece-selector-item';

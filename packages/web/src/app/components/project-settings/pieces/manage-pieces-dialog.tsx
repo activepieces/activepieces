@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 
 import { MultiSelectPieceProperty } from '../../../../components/custom/multi-select-piece-property';
-import { piecesHooks } from '../../../../features/pieces/lib/pieces-hooks';
+import { piecesHooks } from '../../../../features/pieces/hooks/pieces-hooks';
 import { authenticationSession } from '../../../../lib/authentication-session';
 
 type ManagePiecesDialogProps = {

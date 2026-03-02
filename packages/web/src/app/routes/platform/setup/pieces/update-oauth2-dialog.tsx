@@ -26,7 +26,7 @@ import {
 import {
   oauthAppsMutations,
   oauthAppsQueries,
-} from '@/features/connections/lib/oauth-apps-hooks';
+} from '@/features/connections/hooks/oauth-apps-hooks';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;

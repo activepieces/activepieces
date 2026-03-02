@@ -20,11 +20,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
-import { tablesApi } from '../lib/tables-api';
-import { tablesUtils } from '../lib/utils';
+import { tablesApi } from '../api/tables-api';
+import { tablesUtils } from '../utils/utils';
 
 import { ImportTableDialog } from './import-table-dialog';
 import RenameTableDialog from './rename-table-dialog';

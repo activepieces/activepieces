@@ -36,9 +36,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MessageTooltip } from '@/components/ui/message-tooltip';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
+import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';

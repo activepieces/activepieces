@@ -27,8 +27,8 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
-import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
+import { projectReleaseApi } from '@/features/project-releases/api/project-release-api';
+import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 

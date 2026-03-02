@@ -7,8 +7,8 @@ import {
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { extractPieceNamesAndCoreMetadata } from '@/features/pieces/lib/step-utils';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { extractPieceNamesAndCoreMetadata } from '@/features/pieces/utils/step-utils';
 import { colorsUtils } from '@/lib/color-utils';
 import { StepMetadata } from '@/lib/types';
 

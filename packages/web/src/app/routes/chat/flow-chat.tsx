@@ -18,7 +18,7 @@ import {
   ChatMessageList,
   Messages,
 } from '@/features/chat/chat-message-list/index';
-import { humanInputApi } from '@/features/forms/lib/human-input-api';
+import { humanInputApi } from '@/features/forms/api/human-input-api';
 import { ChatDrawerSource } from '@/lib/types';
 import { cn } from '@/lib/utils';
 

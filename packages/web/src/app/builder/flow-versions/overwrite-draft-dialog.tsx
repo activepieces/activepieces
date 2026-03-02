@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { RightSideBarType } from '@/lib/types';
 

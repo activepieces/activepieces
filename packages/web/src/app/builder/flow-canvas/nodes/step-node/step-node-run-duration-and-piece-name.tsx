@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { formatUtils } from '@/lib/format-utils';
 
 const StepNodeRunDuration = ({ duration }: { duration: number }) => {

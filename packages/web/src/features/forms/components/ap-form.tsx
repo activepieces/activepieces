@@ -36,7 +36,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 
 import { Checkbox } from '../../../components/ui/checkbox';
-import { humanInputApi } from '../lib/human-input-api';
+import { humanInputApi } from '../api/human-input-api';
 
 type ApFormProps = {
   form: FormResponse;

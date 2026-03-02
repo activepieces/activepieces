@@ -26,7 +26,7 @@ import { CircularIcon } from '@/components/custom/circular-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { workersApi } from '@/features/platform-admin/lib/workers-api';
+import { workersApi } from '@/features/platform-admin/api/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';

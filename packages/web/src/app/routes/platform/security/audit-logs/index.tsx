@@ -38,7 +38,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { auditEventsApi } from '@/features/platform-admin/lib/audit-events-api';
+import { auditEventsApi } from '@/features/platform-admin/api/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';

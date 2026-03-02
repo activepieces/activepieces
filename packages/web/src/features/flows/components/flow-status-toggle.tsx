@@ -18,8 +18,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { flowHooks } from '../lib/flow-hooks';
-import { flowsUtils } from '../lib/flows-utils';
+import { flowHooks } from '../hooks/flow-hooks';
+import { flowsUtils } from '../utils/flows-utils';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;

@@ -21,7 +21,7 @@ import { SubscriptionInfo } from '@/features/billing/components/subscription-inf
 import {
   billingMutations,
   billingQueries,
-} from '@/features/billing/lib/billing-hooks';
+} from '@/features/billing/hooks/billing-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 

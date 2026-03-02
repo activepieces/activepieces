@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
-import { stepsHooks } from '../../../features/pieces/lib/steps-hooks';
+import { stepsHooks } from '../../../features/pieces/hooks/steps-hooks';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { DataSelectorTreeNode } from './type';

@@ -6,11 +6,11 @@ import {
 } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+} from '@/features/pieces/stores/piece-selector-tabs-provider';
 import { PieceSelectorOperation } from '@/lib/types';
 
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';

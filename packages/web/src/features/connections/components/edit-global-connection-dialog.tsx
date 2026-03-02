@@ -25,7 +25,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { globalConnectionsMutations } from '../lib/global-connections-hooks';
+import { globalConnectionsMutations } from '../hooks/global-connections-hooks';
 
 import { AssignConnectionToProjectsControl } from './assign-global-connection-to-projects';
 

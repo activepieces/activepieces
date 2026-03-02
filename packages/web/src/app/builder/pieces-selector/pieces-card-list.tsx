@@ -8,15 +8,15 @@ import React, { useState } from 'react';
 import { CardListItemSkeleton } from '@/components/custom/card-list';
 import { Separator } from '@/components/ui/separator';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
-} from '@/features/pieces/lib/piece-selector-tabs-provider';
+} from '@/features/pieces/stores/piece-selector-tabs-provider';
 import {
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
   pieceSelectorUtils,
-} from '@/features/pieces/lib/piece-selector-utils';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+} from '@/features/pieces/utils/piece-selector-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   PieceSelectorOperation,

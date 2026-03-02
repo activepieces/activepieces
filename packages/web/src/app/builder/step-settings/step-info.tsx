@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import {
   PieceStepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,

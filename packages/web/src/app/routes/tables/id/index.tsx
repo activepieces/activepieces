@@ -13,7 +13,7 @@ import {
   useTableColumns,
   mapRecordsToRows,
 } from '@/features/tables/components/table-columns';
-import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
+import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/types/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

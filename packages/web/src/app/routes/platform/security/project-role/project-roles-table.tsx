@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';

@@ -5,7 +5,7 @@ import { RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { piecesApi } from '@/features/pieces/api/pieces-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 const SyncPiecesButton = () => {

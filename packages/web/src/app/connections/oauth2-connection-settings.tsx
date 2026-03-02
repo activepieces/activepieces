@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import {
   OAuth2App,
   oauth2Utils,
-} from '@/features/connections/lib/oauth2-utils';
+} from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';

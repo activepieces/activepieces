@@ -20,7 +20,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { triggerRunHooks } from '@/features/flows/lib/trigger-run-api';
+import { triggerRunHooks } from '@/features/flows/api/trigger-run-api';
 import PieceDisplayName from '@/features/pieces/components/piece-display-name';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { cn } from '@/lib/utils';

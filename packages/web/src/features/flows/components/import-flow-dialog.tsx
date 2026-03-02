@@ -37,14 +37,14 @@ import {
 } from '@/components/ui/select';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { foldersApi } from '@/features/folders/lib/folders-api';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { foldersApi } from '@/features/folders/api/folders-api';
+import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { FormError } from '../../../components/ui/form';
-import { flowHooks } from '../lib/flow-hooks';
-import { templateUtils } from '../lib/template-parser';
+import { flowHooks } from '../hooks/flow-hooks';
+import { templateUtils } from '../utils/template-parser';
 
 export type ImportFlowDialogProps =
   | {

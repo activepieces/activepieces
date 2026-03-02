@@ -33,7 +33,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { templatesApi } from '@/features/templates/lib/templates-api';
+import { templatesApi } from '@/features/templates/api/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { CreateTemplateDialog } from './create-template-dialog';

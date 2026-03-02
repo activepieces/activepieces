@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
 
 const initialPermissions = [
   {

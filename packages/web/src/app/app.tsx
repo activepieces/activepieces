@@ -16,8 +16,8 @@ import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { internalErrorToast, Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
-import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { useManagePlanDialogStore } from '@/features/billing/stores/active-flows-addon-dialog-state';
+import { RefreshAnalyticsProvider } from '@/features/platform-admin/stores/refresh-analytics-context';
 import { api } from '@/lib/api';
 
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
