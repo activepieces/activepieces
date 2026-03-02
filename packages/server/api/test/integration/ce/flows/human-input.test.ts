@@ -98,14 +98,14 @@ describe('Human Input API', () => {
             )
         })
 
-        it('should return 400 for non-existent flow', async () => {
+        it('should return 404 for non-existent flow', async () => {
             const nonExistentId = apId()
             const response = await app?.inject({
                 method: 'GET',
                 url: `/v1/human-input/form/${nonExistentId}`,
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
 
         it('should return error for flow without form trigger', async () => {
@@ -129,7 +129,7 @@ describe('Human Input API', () => {
                 url: `/v1/human-input/form/${mockFlow.id}`,
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 
@@ -191,14 +191,14 @@ describe('Human Input API', () => {
             )
         })
 
-        it('should return 400 for non-existent flow', async () => {
+        it('should return 404 for non-existent flow', async () => {
             const nonExistentId = apId()
             const response = await app?.inject({
                 method: 'GET',
                 url: `/v1/human-input/chat/${nonExistentId}`,
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 })
