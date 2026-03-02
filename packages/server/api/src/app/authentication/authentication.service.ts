@@ -29,7 +29,9 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 ...params,
                 verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
             })
-            return createUserAndPlatform(userIdentity, log)
+            const response = await createUserAndPlatform(userIdentity, log)
+            log.info({ email: params.email, provider: params.provider }, 'User signed up and platform created')
+            return response
         }
 
         await authenticationUtils(log).assertUserIsInvitedToPlatformOrProject({
@@ -49,6 +51,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             user,
         })
 
+        log.info({ email: params.email, platformId: params.platformId }, 'User signed up to existing platform')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId: params.platformId,
@@ -79,6 +82,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             platformId,
         })
         assertNotNullOrUndefined(user, 'User not found')
+        log.info({ email: params.email, platformId }, 'User signed in with password')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
@@ -141,6 +145,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         assertNotNullOrUndefined(platform, 'Platform not found')
         const user = await getUserForPlatform(params.identityId, platform, log)
+        log.info({ userId: user.id, platformId: platform.id }, 'User switched platform')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId: platform.id,

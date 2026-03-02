@@ -79,6 +79,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: savedPlatform.id,
         })
 
+        log.info({ platformId: savedPlatform.id, ownerId }, 'Platform created')
         return savedPlatform
     },
     async getAll(): Promise<Platform[]> {
@@ -123,6 +124,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 ...params.plan,
             })
         }
+        log.info({ platformId: params.id }, 'Platform updated')
         return platformRepo().save(updatedPlatform)
     },
     async getOneOrThrow(id: PlatformId): Promise<Platform> {

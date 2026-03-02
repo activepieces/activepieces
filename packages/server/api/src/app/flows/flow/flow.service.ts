@@ -81,9 +81,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
             .catch((e) =>
-                log.error({ err: e }, '[flowService#create] Failed to track project telemetry'),
+                log.error({ err: e }, 'Failed to track project telemetry'),
             )
 
+        log.info({ flowId: savedFlow.id, projectId, displayName: request.displayName }, 'Flow created')
         return {
             ...savedFlow,
             version: savedFlowVersion,
@@ -361,6 +362,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     projectId,
                     newStatus: operation.request.status ?? FlowStatus.ENABLED,
                 })
+                log.info({ flowId: id, status: operation.request.status ?? FlowStatus.ENABLED }, 'Flow version published and status change requested')
                 break
             }
 
@@ -373,6 +375,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     projectId,
                     newStatus: operation.request.status,
                 })
+                log.info({ flowId: id, status: operation.request.status }, 'Flow status change requested')
                 break
             }
 
@@ -380,6 +383,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
+                log.info({ flowId: id, folderId: operation.request.folderId }, 'Flow moved to folder')
                 break
             }
 
@@ -532,6 +536,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
+        log.info({ flowId: id, projectId }, 'Flow deletion requested')
     },
 
     async getAllEnabled(): Promise<PopulatedFlow[]> {

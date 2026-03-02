@@ -114,6 +114,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             ...(projectIds ? { projectIds: ArrayContains(projectIds) } : {}),
             scope,
         })
+        log.info({ connectionId: newId, pieceName, platformId, isNew: isNil(existingConnection) }, 'App connection upserted')
         return this.removeSensitiveData(updatedConnection)
     },
     async update(params: UpdateParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -241,6 +242,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             userId,
         })
 
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length }, 'App connection replaced')
         await this.delete({
             id: sourceAppConnection.id,
             platformId,
@@ -256,6 +258,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: params.scope,
             ...(params.projectId ? { projectIds: ArrayContains([params.projectId]) } : {}),
         })
+        log.info({ connectionId: params.id, platformId: params.platformId }, 'App connection deleted')
     },
 
     async list({
@@ -522,8 +525,8 @@ const engineValidateAuth = async (
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         log.error(
-            engineResponse,
-            '[AppConnectionService#engineValidateAuth] engineResponse',
+            { engineResponse },
+            'Engine validate auth failed',
         )
         throw new ActivepiecesError({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
