@@ -1,6 +1,6 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -7268,6 +7268,7 @@
       "name": "api",
       "version": "0.0.1",
       "dependencies": {
+        "@1password/sdk": "0.4.0",
         "@activepieces/engine": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7343,6 +7344,7 @@
         "mime-types": "2.1.35",
         "mustache": "4.2.0",
         "nanoid": "3.3.8",
+        "node-cache": "5.1.2",
         "node-cron": "3.0.3",
         "nodemailer": "7.0.11",
         "object-sizeof": "2.6.3",
@@ -7669,6 +7671,10 @@
     "rollup": "npm:@rollup/wasm-node",
   },
   "packages": {
+    "@1password/sdk": ["@1password/sdk@0.4.0", "", { "dependencies": { "@1password/sdk-core": "0.4.0" } }, "sha512-RIypujc9R/UeUaobjyClTYokqRFpcaIkHq+EO/X9XoHId98Vg+SbjwGV+yygRC4MyHwYNo1KP1iEbZcqJ4ZTdw=="],
+
+    "@1password/sdk-core": ["@1password/sdk-core@0.4.0", "", {}, "sha512-vjeI1o4wiONY+t1naA4dtUp6HktdLH1D2S+tN1Lh4l41S9XIUHxrljov9B5u6G+VHr7f2MUoxmzXA9zT3aokQQ=="],
+
     "@activepieces/cli": ["@activepieces/cli@workspace:packages/cli"],
 
     "@activepieces/engine": ["@activepieces/engine@workspace:packages/server/engine"],

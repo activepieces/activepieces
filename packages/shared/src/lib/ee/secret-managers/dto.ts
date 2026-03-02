@@ -5,6 +5,7 @@ export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',
     AWS = 'aws',
     CYBERARK = 'cyberark-conjur',
+    ONEPASSWORD = 'onepassword',
 }
 
 /**
@@ -43,6 +44,15 @@ export const CyberarkConjurProviderConfigSchema = Type.Object({
 })
 export type CyberarkConjurProviderConfig = Static<typeof CyberarkConjurProviderConfigSchema>
 
+/**
+ * 1Password Provider Config
+ */
+
+export const OnePasswordProviderConfigSchema = Type.Object({
+    serviceAccountToken: Type.String(),
+})
+export type OnePasswordProviderConfig = Static<typeof OnePasswordProviderConfigSchema>
+
 export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId', [
     Type.Object({
         providerId: Type.Literal(SecretManagerProviderId.HASHICORP),
@@ -55,6 +65,10 @@ export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId'
     Type.Object({
         providerId: Type.Literal(SecretManagerProviderId.CYBERARK),
         config: CyberarkConjurProviderConfigSchema,
+    }),
+    Type.Object({
+        providerId: Type.Literal(SecretManagerProviderId.ONEPASSWORD),
+        config: OnePasswordProviderConfigSchema,
     }),
 ])
 
