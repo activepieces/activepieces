@@ -22,7 +22,7 @@ export const secretManagersHooks = {
         const secretManagers = await secretManagersApi.list();
         if (connectedOnly) {
           return secretManagers.data.filter(
-            (secretManager) => secretManager.connected,
+            (secretManager) => secretManager.connection?.connected,
           );
         }
         return secretManagers.data;
@@ -55,6 +55,16 @@ export const secretManagersHooks = {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
         toast.success(t('Disconnected successfully'));
+      },
+    });
+  },
+  useClearCache: () => {
+    const queryClient = useQueryClient();
+    return useMutation<void, Error, void>({
+      mutationFn: secretManagersApi.clearCache,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['secret-managers'] });
+        toast.success(t('Cache cleared successfully'));
       },
     });
   },
