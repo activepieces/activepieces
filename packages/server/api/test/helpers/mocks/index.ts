@@ -18,6 +18,7 @@ import {
 
     CustomDomain,
     CustomDomainStatus,
+    EventDestinationScope,
     Field,
     FieldType,
     File,
@@ -33,6 +34,7 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    Folder,
     GitBranchType,
     GitRepo,
     InvitationStatus,
@@ -798,6 +800,45 @@ export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<Pie
     await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
     pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
     return mockPieceMetadata
+}
+
+export const createMockFolder = (folder?: Partial<Folder>): Folder => {
+    return {
+        id: folder?.id ?? apId(),
+        created: folder?.created ?? faker.date.recent().toISOString(),
+        updated: folder?.updated ?? faker.date.recent().toISOString(),
+        projectId: folder?.projectId ?? apId(),
+        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
+    }
+}
+
+export const createMockEventDestination = (eventDestination?: Partial<{
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+}>): {
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+} => {
+    return {
+        id: eventDestination?.id ?? apId(),
+        created: eventDestination?.created ?? faker.date.recent().toISOString(),
+        updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
+        platformId: eventDestination?.platformId ?? apId(),
+        events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
+        url: eventDestination?.url ?? faker.internet.url(),
+        scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
+    }
 }
 
 type CreateMockPlatformWithOwnerParams = {

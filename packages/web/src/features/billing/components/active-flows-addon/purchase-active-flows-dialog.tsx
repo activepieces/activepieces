@@ -1,8 +1,8 @@
 import {
   ApSubscriptionStatus,
   PRICE_PER_EXTRA_ACTIVE_FLOWS,
+  PlatformPlan,
 } from '@activepieces/shared';
-import { PlatformPlan } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Zap, Info, Loader2 } from 'lucide-react';

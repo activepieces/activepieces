@@ -27,7 +27,7 @@ export const PageHeader = ({
 
   return (
     <div
-      className={`flex items-center justify-between py-3 w-full px-4 ${
+      className={`flex items-center justify-between py-3 w-full ${
         showBorder ? 'border-b' : ''
       } ${className}`}
     >

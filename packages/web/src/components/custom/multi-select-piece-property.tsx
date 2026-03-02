@@ -32,6 +32,7 @@ type MultiSelectPiecePropertyProps = {
     value: unknown;
     label: string;
   }[];
+  itemExtraContent?: (index: number) => React.ReactNode;
 };
 
 const MultiSelectPieceProperty = ({
@@ -46,6 +47,7 @@ const MultiSelectPieceProperty = ({
   loading,
   refreshOnSearch,
   cachedOptions = [],
+  itemExtraContent,
 }: MultiSelectPiecePropertyProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const filteredOptions = options
@@ -90,6 +92,10 @@ const MultiSelectPieceProperty = ({
       value={selectedIndicies}
       onValueChange={sendChanges}
       disabled={disabled}
+      items={options.map((opt, index) => ({
+        value: String(index),
+        label: opt.label,
+      }))}
       onSearch={(searchTerm) => {
         setSearchTerm(searchTerm ?? '');
         if (refreshOnSearch) {
@@ -140,7 +146,12 @@ const MultiSelectPieceProperty = ({
                   key={opt.originalIndex}
                   value={String(opt.originalIndex)}
                 >
-                  {opt.label}
+                  <div className="flex items-center justify-between  w-full min-w-0">
+                    <span className="truncate min-w-0">{opt.label}</span>
+                    <div className="mr-2">
+                      {itemExtraContent?.(opt.originalIndex)}
+                    </div>
+                  </div>
                 </MultiSelectItem>
               ))}
               {filteredOptions.length === 0 && (
