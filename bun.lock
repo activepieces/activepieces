@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -7328,7 +7327,6 @@
         "mime-types": "2.1.35",
         "mustache": "4.2.0",
         "nanoid": "3.3.8",
-        "node-cache": "5.1.2",
         "node-cron": "3.0.3",
         "nodemailer": "7.0.11",
         "object-sizeof": "2.6.3",
