@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
 import { HttpError } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
 
 const FormSchema = Type.Object({
   email: Type.String({

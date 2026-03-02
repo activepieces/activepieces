@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api } from '@/lib/api';
 
 export type FlagsMap = Record<string, boolean | string | object | undefined>;
 export const flagsApi = {

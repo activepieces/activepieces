@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Eye, EyeOff, Pin, PinOff } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -10,7 +11,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformApi } from '@/lib/platforms-api';
 
 type PieceActionsProps = {
   pieceName: string;

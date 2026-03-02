@@ -6,14 +6,13 @@ import {
 import { t } from 'i18next';
 import React from 'react';
 
+import { authenticationApi } from '@/api/authentication-api';
+import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
+import SamlIcon from '@/assets/img/custom/auth/saml.svg';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
-
-import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
-import SamlIcon from '../../../assets/img/custom/auth/saml.svg';
-import { flagsHooks } from '../../../hooks/flags-hooks';
-import { authenticationApi } from '../../../lib/authentication-api';
-import { oauth2Utils } from '../../../lib/oauth2-utils';
+import { oauth2Utils } from '@/features/connections/lib/oauth2-utils';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;

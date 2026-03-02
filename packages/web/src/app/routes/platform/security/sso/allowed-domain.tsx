@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,7 +23,6 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { platformApi } from '@/lib/platforms-api';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;

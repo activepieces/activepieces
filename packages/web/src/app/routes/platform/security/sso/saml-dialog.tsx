@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +27,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformApi } from '@/lib/platforms-api';
 
 type ConfigureSamlDialogProps = {
   platform: PlatformWithoutSensitiveData;

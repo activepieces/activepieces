@@ -47,8 +47,11 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
 import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
 import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
+import {
+  oauth2Utils,
+  PiecesOAuth2AppsMap,
+} from '@/features/connections/lib/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { oauth2Utils, PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
 
 import { newConnectionUtils } from '../../features/connections/lib/utils';
 import { formUtils } from '../../features/pieces/lib/form-utils';
