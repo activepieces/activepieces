@@ -105,7 +105,7 @@ jobs:
 
       - name: update pieces metadata
         if: steps.changed.outputs.has_changes == 'true'
-        run: npx ts-node -r tsconfig-paths/register -r ./tools/scripts/fix-dts-require.js -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/framework
+        run: npx ts-node -r tsconfig-paths/register -r  -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}
           NODE_OPTIONS: "--max-old-space-size=8192"

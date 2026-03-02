@@ -336,6 +336,7 @@ import { AddEventStreaming1769084311004 } from './migration/postgres/17690843110
 import { RemoveOperatorRole1769613456917 } from './migration/postgres/1769613456917-RemoveOperatorRole'
 import { AddSecretManagersEntity1770717998442 } from './migration/postgres/1770717998442-AddSecretManagersEntity'
 import { AddSecretManagersFlag1771167183104 } from './migration/postgres/1771167183104-AddSecretManagersFlag'
+import { AddPreSelectForNewProjectsToAppConnection1772027509095 } from './migration/postgres/1772027509095-AddPreSelectForNewProjectsToAppConnection'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -688,6 +689,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveOperatorRole1769613456917,
         AddSecretManagersEntity1770717998442,
         AddSecretManagersFlag1771167183104,
+        AddPreSelectForNewProjectsToAppConnection1772027509095,
     ]
     return migrations
 }

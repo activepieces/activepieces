@@ -64,7 +64,8 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
 
-            const filteredPieces = [...cachedPieces, ...translatedDevPieces].filter((piece) =>
+            const devPieceNames = new Set(translatedDevPieces.map((p) => p.name))
+            const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces].filter((piece) =>
                 filterPieceBasedOnType(platformId, piece),
             )
             return lastVersionOfEachPiece(filteredPieces)

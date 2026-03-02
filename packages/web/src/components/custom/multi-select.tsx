@@ -53,7 +53,7 @@ interface MultiSelectContextValue {
 
   maxCount?: number;
 
-  itemCache: Map<string, MultiSelectOptionItem>;
+  items: MultiSelectOptionItem[];
 }
 
 const MultiSelectContext = React.createContext<
@@ -84,6 +84,7 @@ type MultiSelectProps = React.ComponentPropsWithoutRef<
   filter?: boolean | ((keyword: string, current: string) => boolean);
   disabled?: boolean;
   maxCount?: number;
+  items?: MultiSelectOptionItem[];
 };
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -99,21 +100,20 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   filter,
   disabled,
   maxCount,
+  items = [],
   ...popoverProps
 }) => {
-  const itemCache = React.useRef(
-    new Map<string, MultiSelectOptionItem>(),
-  ).current;
-
   const handleValueChange = React.useCallback(
     (state: string[]) => {
       if (onValueChangeProp) {
-        const items = state.map((value) => itemCache.get(value)!);
+        const resolved = state.map(
+          (v) => items.find((item) => String(item.value) === v) ?? { value: v },
+        );
 
-        onValueChangeProp(state, items);
+        onValueChangeProp(state, resolved);
       }
     },
-    [onValueChangeProp],
+    [onValueChangeProp, items],
   );
 
   const [value, setValue] = useControllableState({
@@ -168,7 +168,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
       maxCount,
       onSelect: handleSelect,
       onDeselect: handleDeselect,
-      itemCache,
+      items,
     };
   }, [
     value,
@@ -179,7 +179,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     maxCount,
     handleSelect,
     handleDeselect,
-    itemCache,
+    items,
   ]);
 
   return (
@@ -290,8 +290,7 @@ const MultiSelectValue = React.forwardRef<
     { className, placeholder, maxDisplay, maxItemLength, ...props },
     forwardRef,
   ) => {
-    const { value, itemCache, onDeselect, disabled } = useMultiSelect();
-    const [firstRendered, setFirstRendered] = React.useState(false);
+    const { value, items, onDeselect, disabled } = useMultiSelect();
 
     const remainingPiecesCount =
       maxDisplay && value.length > maxDisplay ? value.length - maxDisplay : 0;
@@ -299,11 +298,7 @@ const MultiSelectValue = React.forwardRef<
       ? value.slice(0, maxDisplay)
       : value;
 
-    React.useLayoutEffect(() => {
-      setFirstRendered(true);
-    }, []);
-
-    if (!value.length || !firstRendered) {
+    if (!value.length) {
       return (
         <span className="pointer-events-none text-muted-foreground opacity-80">
           {placeholder}
@@ -322,7 +317,7 @@ const MultiSelectValue = React.forwardRef<
           ref={forwardRef}
         >
           {renderItems.map((value) => {
-            const item = itemCache.get(value);
+            const item = items.find((i) => String(i.value) === value);
             const content = item?.label || value;
             const child =
               maxItemLength &&
@@ -335,10 +330,13 @@ const MultiSelectValue = React.forwardRef<
               <Badge
                 variant="outline"
                 key={value}
-                className={cn('pr-1.5 group/multi-select-badge rounded-full', {
-                  'cursor-pointer': !disabled,
-                  'cursor-not-allowed opacity-80': disabled,
-                })}
+                className={cn(
+                  'pr-1.5 items-center justify-center group/multi-select-badge rounded-full',
+                  {
+                    'cursor-pointer': !disabled,
+                    'cursor-not-allowed opacity-80': disabled,
+                  },
+                )}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -435,7 +433,7 @@ const MultiSelectContent = React.forwardRef<
         sideOffset={4}
         collisionPadding={10}
         className={cn(
-          'z-50 w-full rounded-md border bg-background p-0 text-foreground shadow-md outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+          'z-50 rounded-md border bg-background p-0 text-foreground shadow-md outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         )}
         style={
           {
@@ -448,15 +446,13 @@ const MultiSelectContent = React.forwardRef<
             '--radix-select-trigger-width': 'var(--radix-popper-anchor-width)',
             '--radix-select-trigger-height':
               'var(--radix-popper-anchor-height)',
+            width: 'var(--radix-popper-anchor-width)',
           } as any
         }
         {...props}
       >
         <Command
-          className={cn(
-            'px-1 max-h-96 w-full min-w-(--radix-select-trigger-width)',
-            className,
-          )}
+          className={cn('px-1 max-h-96 w-full', className)}
           shouldFilter={!context.onSearch}
         >
           {children}
@@ -495,7 +491,6 @@ const MultiSelectItem = React.forwardRef<
       maxCount,
       onSelect,
       onDeselect,
-      itemCache,
     } = useMultiSelect();
 
     const item = React.useMemo(() => {
@@ -510,12 +505,6 @@ const MultiSelectItem = React.forwardRef<
 
     const selected = Boolean(value && contextValue.includes(value));
 
-    React.useEffect(() => {
-      if (value) {
-        itemCache.set(value, item!);
-      }
-    }, [selected, value, item]);
-
     const disabled = Boolean(
       disabledProp ||
         (!selected && maxCount && contextValue.length >= maxCount),
@@ -526,7 +515,6 @@ const MultiSelectItem = React.forwardRef<
         onDeselectProp?.(value!, item!);
         onDeselect(value!, item!);
       } else {
-        itemCache.set(value!, item!);
         onSelectProp?.(value!, item!);
         onSelect(value!, item!);
       }
@@ -545,10 +533,12 @@ const MultiSelectItem = React.forwardRef<
         onSelect={!disabled && value ? handleClick : undefined}
         ref={forwardedRef}
       >
-        <span className="mr-2 whitespace-nowrap overflow-hidden text-ellipsis">
-          {children || label || value}
-        </span>
-        {selected ? <Check className="h-4 w-4 ml-auto shrink-0" /> : null}
+        <div className="flex items-center justify-between w-full min-w-0">
+          <span className="truncate min-w-0 grow">
+            {children || label || value}
+          </span>
+          {selected ? <Check className="h-4 w-4 shrink-0" /> : null}
+        </div>
       </CommandItem>
     );
   },
