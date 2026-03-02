@@ -51,8 +51,8 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     const packageJson = await readPackageJson(pieceFolder);
 
     await buildPackage(packageJson.name);
-
-    const compiledPath = `dist/packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}`;
+     
+    const compiledPath = `packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}/dist`;
 
     await copyFile(path.join(pieceFolder, 'package.json'), path.join(compiledPath, 'package.json'));
 
