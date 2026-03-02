@@ -4,6 +4,7 @@
   "private": true,
   "type": "commonjs",
   "dependencies": {
+    "@1password/sdk": "0.4.0",
     "@activepieces/engine": "workspace:*",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
@@ -79,6 +80,7 @@
     "mime-types": "2.1.35",
     "mustache": "4.2.0",
     "nanoid": "3.3.8",
+    "node-cache": "5.1.2",
     "node-cron": "3.0.3",
     "nodemailer": "7.0.11",
     "object-sizeof": "2.6.3",

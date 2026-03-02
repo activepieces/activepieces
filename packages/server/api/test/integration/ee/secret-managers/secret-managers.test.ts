@@ -301,13 +301,11 @@ describe('Secret Managers API', () => {
 
     describe('HashiCorp Provider - Path Resolution', () => {
         it('should resolve valid path format', async () => {
-            await expect(
-               validatePathFormat('hashicorp:secret/data/keys/my-key'),
-            ).resolves.not.toThrow()
+            await validatePathFormat(`hashicorp${SecretManagerFieldsSeparator}secret/data/keys/my-key`)
         })
         it('should throw error for path with less than 3 parts', async () => {
             await expect(
-               validatePathFormat('secret/key'),
+                validatePathFormat('secret/key'),
             ).rejects.toMatchObject({
                 error: expect.objectContaining({
                     code: ErrorCode.VALIDATION,
@@ -316,7 +314,7 @@ describe('Secret Managers API', () => {
         })
         it('should throw error for key without colon separator', async () => {
             await expect(
-               validatePathFormat('hashicorp'),
+                validatePathFormat('hashicorp'),
             ).rejects.toMatchObject({
                 error: expect.objectContaining({
                     code: ErrorCode.VALIDATION,
