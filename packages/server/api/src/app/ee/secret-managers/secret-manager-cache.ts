@@ -1,6 +1,6 @@
 import { apDayjsDuration, redisHelper } from '@activepieces/server-common'
-import { EncryptedObject, encryptUtils } from 'src/app/helper/encryption'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
+import { EncryptedObject, encryptUtils } from '../../helper/encryption'
 
 const ONE_HOUR_SECONDS = apDayjsDuration(1, 'hour').asSeconds()
 
