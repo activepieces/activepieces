@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
 import { FeatureStatus } from './features-status';

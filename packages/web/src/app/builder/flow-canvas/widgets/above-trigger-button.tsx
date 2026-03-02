@@ -7,7 +7,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn, isMac } from '@/lib/utils';
+import { isMac } from '@/lib/dom-utils';
+import { cn } from '@/lib/utils';
 
 type AboveTriggerButtonProps = {
   onClick: () => void;

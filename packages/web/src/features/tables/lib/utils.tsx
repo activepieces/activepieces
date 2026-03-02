@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
 import { createContext, ReactNode } from 'react';
 
-import { downloadFile } from '@/lib/utils';
+import { downloadFile } from '@/lib/dom-utils';
 
 import { ClientField, ClientRecordData } from './store/ap-tables-client-state';
 

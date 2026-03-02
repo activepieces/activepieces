@@ -21,8 +21,8 @@ import {
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 
 import { flowsTableColumns } from './columns';
 

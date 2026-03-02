@@ -20,7 +20,7 @@ import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { isRunAgent } from '../test-step/agent-test-step';

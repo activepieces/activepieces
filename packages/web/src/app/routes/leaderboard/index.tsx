@@ -48,8 +48,9 @@ import {
   RefreshAnalyticsProvider,
 } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { projectCollectionUtils } from '@/hooks/project-collection';
+import { downloadFile } from '@/lib/dom-utils';
+import { formatUtils } from '@/lib/format-utils';
 import { userApi } from '@/lib/user-api';
-import { downloadFile, formatUtils } from '@/lib/utils';
 
 import { TimeSavedFilterContent } from '../impact/components/time-saved-filter-content';
 import {

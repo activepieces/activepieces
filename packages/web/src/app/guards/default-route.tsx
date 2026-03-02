@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { determineDefaultRoute } from '@/lib/utils';
+import { determineDefaultRoute } from '@/lib/route-utils';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();

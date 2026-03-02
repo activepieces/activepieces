@@ -41,8 +41,8 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 
 import { runsTableColumns } from './columns';
 import {

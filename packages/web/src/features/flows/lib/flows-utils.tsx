@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
-import { downloadFile } from '@/lib/utils';
+import { downloadFile } from '@/lib/dom-utils';
 
 import { flowsApi } from './flows-api';
 
