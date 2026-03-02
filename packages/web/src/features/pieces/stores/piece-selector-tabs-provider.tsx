@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 
-import { StepMetadataWithSuggestions } from '@/lib/types';
+import { StepMetadataWithSuggestions } from '@/features/pieces/types';
 
 export enum PieceSelectorTabType {
   EXPLORE = 'EXPLORE',

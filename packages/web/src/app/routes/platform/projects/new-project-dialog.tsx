@@ -27,8 +27,8 @@ import { Label } from '@/components/ui/label';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;

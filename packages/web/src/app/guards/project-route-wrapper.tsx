@@ -4,7 +4,7 @@ import React from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import {
   FROM_QUERY_PARAM,
   useDefaultRedirectPath,

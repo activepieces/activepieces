@@ -13,8 +13,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { StepMetadata } from '../../../lib/types';
 import { piecesHooks } from '../hooks/pieces-hooks';
+import { StepMetadata } from '../types';
 import { extractPieceNamesAndCoreMetadata } from '../utils/step-utils';
 
 import { PieceIcon } from './piece-icon';

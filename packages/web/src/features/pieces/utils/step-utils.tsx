@@ -17,13 +17,13 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { piecesApi } from '../api/pieces-api';
 import {
   PieceStepMetadata,
   PrimitiveStepMetadata,
   StepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
-} from '../../../lib/types';
-import { piecesApi } from '../api/pieces-api';
+} from '../types';
 
 export const CORE_STEP_METADATA: Record<
   Exclude<FlowActionType, FlowActionType.PIECE> | FlowTriggerType.EMPTY,

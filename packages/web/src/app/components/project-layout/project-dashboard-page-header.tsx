@@ -23,13 +23,13 @@ import {
 } from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/members/components/invite-user/invite-user-dialog';
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import {
   getProjectName,
   projectCollectionUtils,
-} from '@/hooks/project-collection';
+} from '@/features/projects/stores/project-collection';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 import { ApProjectDisplay } from '../ap-project-display';

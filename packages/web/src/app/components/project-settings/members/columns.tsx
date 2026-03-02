@@ -27,8 +27,8 @@ import { projectMembersApi } from '@/features/members/api/project-members-api';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { RoleSelector } from '@/features/members/components/role-selector';
 import { projectRoleApi } from '@/features/platform-admin/api/project-role-api';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/format-utils';
 
 export type MemberRowData =

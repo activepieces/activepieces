@@ -18,6 +18,7 @@ import {
 } from 'react-router-dom';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { RightSideBarType } from '@/app/builder/types';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -33,16 +34,15 @@ import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   getProjectName,
   projectCollectionUtils,
-} from '@/hooks/project-collection';
+} from '@/features/projects/stores/project-collection';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
-import { RightSideBarType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 import FlowActionMenu from '../../components/flow-actions-menu';

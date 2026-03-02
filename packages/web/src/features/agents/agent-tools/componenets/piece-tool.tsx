@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
-import { PieceStepMetadataWithSuggestions } from '@/lib/types';
+import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
 
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
 

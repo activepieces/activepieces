@@ -2,8 +2,11 @@ import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import {
+  PieceSelectorItem,
+  StepMetadataWithSuggestions,
+} from '@/features/pieces/types';
 import { PIECE_SELECTOR_ELEMENTS_HEIGHTS } from '@/features/pieces/utils/piece-selector-utils';
-import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
 import { cn } from '@/lib/utils';
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;

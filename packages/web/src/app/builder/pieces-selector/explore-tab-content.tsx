@@ -11,7 +11,7 @@ import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
 } from '@/features/pieces/stores/piece-selector-tabs-provider';
-import { PieceSelectorOperation } from '@/lib/types';
+import { PieceSelectorOperation } from '@/features/pieces/types';
 
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 

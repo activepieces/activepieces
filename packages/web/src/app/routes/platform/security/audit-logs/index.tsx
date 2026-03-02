@@ -39,9 +39,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { auditEventsApi } from '@/features/platform-admin/api/audit-events-api';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/format-utils';
 
 export default function AuditLogsPage() {

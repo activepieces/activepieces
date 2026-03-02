@@ -48,7 +48,7 @@ import {
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
 } from '@/features/platform-admin/stores/refresh-analytics-context';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { downloadFile } from '@/lib/dom-utils';
 import { formatUtils } from '@/lib/format-utils';
 

@@ -2,7 +2,7 @@ import { ProjectReleaseType } from '@activepieces/shared';
 import { ReactNode, useState } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 
 import { ProjectSelectionDialog } from './selection-release-dialog/project-dialog';
 

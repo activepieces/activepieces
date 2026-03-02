@@ -14,15 +14,15 @@ import {
   usePieceSelectorTabs,
 } from '@/features/pieces/stores/piece-selector-tabs-provider';
 import {
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+  CategorizedStepMetadataWithSuggestions,
+} from '@/features/pieces/types';
+import {
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
   pieceSelectorUtils,
 } from '@/features/pieces/utils/piece-selector-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  PieceSelectorOperation,
-  StepMetadataWithSuggestions,
-  CategorizedStepMetadataWithSuggestions,
-} from '@/lib/types';
 
 import { cn } from '../../../lib/utils';
 import { useBuilderStateContext } from '../builder-hooks';

@@ -23,10 +23,10 @@ import {
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
 } from '@/features/pieces/stores/piece-selector-tabs-provider';
+import { PieceSelectorOperation } from '@/features/pieces/types';
 import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { PieceSelectorOperation } from '@/lib/types';
 
 import {
   PieceSearchProvider,

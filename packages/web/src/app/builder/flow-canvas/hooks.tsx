@@ -14,13 +14,13 @@ import { ImperativePanelHandle } from 'react-resizable-panels';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
+import { RightSideBarType } from '@/app/builder/types';
 import { useEmbedding } from '@/components/embed-provider';
 import { useSocket } from '@/components/socket-provider';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { RightSideBarType } from '@/lib/types';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';

@@ -3,8 +3,8 @@ import { MiniMap, MiniMapNodeProps } from '@xyflow/react';
 
 import { useTheme } from '@/components/theme-provider';
 import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
+import { StepMetadata } from '@/features/pieces/types';
 import { colorsUtils } from '@/lib/color-utils';
-import { StepMetadata } from '@/lib/types';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 

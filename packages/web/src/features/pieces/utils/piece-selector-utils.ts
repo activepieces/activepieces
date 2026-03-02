@@ -29,7 +29,7 @@ import {
   PieceSelectorOperation,
   PieceSelectorPieceItem,
   PieceStepMetadataWithSuggestions,
-} from '@/lib/types';
+} from '@/features/pieces/types';
 
 import { formUtils } from './form-utils';
 const defaultCode = `export const code = async (inputs) => {

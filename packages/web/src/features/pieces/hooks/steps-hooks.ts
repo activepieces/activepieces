@@ -11,11 +11,11 @@ import { useTranslation } from 'react-i18next';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { piecesApi } from '../api/pieces-api';
 import {
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
   StepMetadataWithSuggestions,
-} from '../../../lib/types';
-import { piecesApi } from '../api/pieces-api';
+} from '../types';
 import {
   CORE_ACTIONS_METADATA,
   CORE_STEP_METADATA,

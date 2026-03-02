@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/tooltip';
 import { platformAnalyticsHooks } from '@/features/platform-admin/hooks/analytics-hooks';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/stores/refresh-analytics-context';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 
 import { ProjectSelect } from './components/project-select';
 import { FlowsDetails } from './details';

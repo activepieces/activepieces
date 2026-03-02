@@ -37,9 +37,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { templatesTelemetryApi } from '@/features/templates/api/templates-telemetry-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 

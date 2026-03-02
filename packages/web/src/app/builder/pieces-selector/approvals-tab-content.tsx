@@ -6,8 +6,8 @@ import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
 } from '@/features/pieces/stores/piece-selector-tabs-provider';
+import { PieceSelectorOperation } from '@/features/pieces/types';
 import { stepUtils } from '@/features/pieces/utils/step-utils';
-import { PieceSelectorOperation } from '@/lib/types';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

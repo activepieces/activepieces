@@ -22,7 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { formUtils } from '../../../features/pieces/utils/form-utils';

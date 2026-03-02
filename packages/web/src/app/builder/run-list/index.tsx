@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { RightSideBarType } from '@/app/builder/types';
 import {
   CardListEmpty,
   CardListItemSkeleton,
@@ -16,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { RightSideBarType } from '@/lib/types';
 
 import { SidebarHeader } from '../sidebar-header';
 

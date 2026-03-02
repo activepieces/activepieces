@@ -16,15 +16,15 @@ import {
 import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
 
+import { RightSideBarType } from '@/app/builder/types';
 import { flowsApi } from '@/features/flows/api/flows-api';
 import { sampleDataHooks } from '@/features/flows/hooks/sample-data-hooks';
-import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
-  RightSideBarType,
-} from '@/lib/types';
+} from '@/features/pieces/types';
+import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';

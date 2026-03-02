@@ -21,13 +21,13 @@ import { useTranslation } from 'react-i18next';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
-} from '@/lib/types';
+} from '@/features/pieces/types';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
 import {

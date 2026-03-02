@@ -33,8 +33,8 @@ import {
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { foldersApi } from '@/features/folders/api/folders-api';
 import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { templatesTelemetryApi } from '@/features/templates/api/templates-telemetry-api';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 
 type UseTemplateDialogProps = {

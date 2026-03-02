@@ -8,8 +8,8 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+import { projectHooks } from '@/features/projects/stores/project-collection';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-collection';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';

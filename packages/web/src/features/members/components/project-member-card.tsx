@@ -4,8 +4,8 @@ import { Trash } from 'lucide-react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Button } from '../../../components/ui/button';

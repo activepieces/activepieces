@@ -2,7 +2,10 @@ import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
+import {
+  PieceSelectorItem,
+  StepMetadataWithSuggestions,
+} from '@/features/pieces/types';
 
 type AIActionItemProps = {
   item: PieceSelectorItem;

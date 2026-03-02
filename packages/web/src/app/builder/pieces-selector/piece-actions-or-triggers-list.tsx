@@ -11,13 +11,13 @@ import React from 'react';
 import { CardList } from '@/components/custom/card-list';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
-import { CORE_ACTIONS_METADATA } from '@/features/pieces/utils/step-utils';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-} from '@/lib/types';
+} from '@/features/pieces/types';
+import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
+import { CORE_ACTIONS_METADATA } from '@/features/pieces/utils/step-utils';
 
 import { usePieceSearchContext } from '../../../features/pieces/stores/piece-search-context';
 import { useBuilderStateContext } from '../builder-hooks';

@@ -23,7 +23,7 @@ import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import {
   PieceStepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
-} from '@/lib/types';
+} from '@/features/pieces/types';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

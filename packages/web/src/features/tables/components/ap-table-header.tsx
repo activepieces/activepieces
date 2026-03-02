@@ -34,11 +34,11 @@ import {
 import EditableText from '@/components/ui/editable-text';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   getProjectName,
   projectCollectionUtils,
-} from '@/hooks/project-collection';
+} from '@/features/projects/stores/project-collection';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { downloadFile } from '@/lib/dom-utils';
 
 import { tablesApi } from '../api/tables-api';
