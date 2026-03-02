@@ -1,0 +1,7 @@
+{
+  "name": "@activepieces/piece-pcloud",
+  "version": "0.1.0",
+  "dependencies": {
+    "form-data": "^4.0.0"
+  }
+}
