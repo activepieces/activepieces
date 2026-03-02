@@ -9,14 +9,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    testTimeout: 250000,
-    hookTimeout: 250000,
+    testTimeout: 60000,
+    hookTimeout: 60000,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
     setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
   },
