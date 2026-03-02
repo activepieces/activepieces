@@ -32,10 +32,12 @@ export function useDetailsFilters(
   const [searchQuery, setSearchQuery] = useState('');
   const [showMyFlowsOnly, setShowMyFlowsOnly] = useState(false);
 
-  const [appliedTimeSaved, setAppliedTimeSaved] =
-    useState<TimeSavedRangeState>(DEFAULT_TIME_SAVED_RANGE);
-  const [draftTimeSaved, setDraftTimeSaved] =
-    useState<TimeSavedRangeState>(DEFAULT_TIME_SAVED_RANGE);
+  const [appliedTimeSaved, setAppliedTimeSaved] = useState<TimeSavedRangeState>(
+    DEFAULT_TIME_SAVED_RANGE,
+  );
+  const [draftTimeSaved, setDraftTimeSaved] = useState<TimeSavedRangeState>(
+    DEFAULT_TIME_SAVED_RANGE,
+  );
   const [timeSavedPopoverOpen, setTimeSavedPopoverOpen] = useState(false);
 
   const [ownerFilter, setOwnerFilter] = useState<OwnerFilterState>({
