@@ -45,11 +45,6 @@ describe('colorsUtils.parseToHsl', () => {
 });
 
 describe('colorsUtils.hexToHslString', () => {
-  it('returns formatted HSL string', () => {
-    const result = colorsUtils.hexToHslString('#FF0000');
-    expect(result).toMatch(/^\d+\.\d+\s\d+\.\d+%\s\d+\.\d+%$/);
-  });
-
   it('formats pure red correctly', () => {
     const result = colorsUtils.hexToHslString('#FF0000');
     expect(result).toBe('0.0 100.0% 50.0%');

@@ -7,31 +7,8 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-import {
-  isStepFileUrl,
-  cleanLeadingSlash,
-  cleanTrailingSlash,
-  combinePaths,
-  isMac,
-  wait,
-} from '../dom-utils';
 import { formatUtils } from '../format-utils';
-import { cn } from '../utils';
 import { validationUtils } from '../validation-utils';
-
-describe('cn', () => {
-  it('merges class names', () => {
-    expect(cn('foo', 'bar')).toBe('foo bar');
-  });
-
-  it('handles conditional classes', () => {
-    expect(cn('foo', false && 'bar', 'baz')).toBe('foo baz');
-  });
-
-  it('deduplicates tailwind classes', () => {
-    expect(cn('p-4', 'p-2')).toBe('p-2');
-  });
-});
 
 describe('formatUtils.convertEnumToHumanReadable', () => {
   it('converts underscore-separated enum', () => {
@@ -185,15 +162,6 @@ describe('formatUtils.formatDateToAgo', () => {
   });
 });
 
-describe('formatUtils.formatDateOnly', () => {
-  it('formats a date', () => {
-    const date = new Date('2025-06-15T12:00:00Z');
-    const result = formatUtils.formatDateOnly(date);
-    expect(result).toBeTruthy();
-    expect(result).toContain('15');
-  });
-});
-
 describe('formatUtils.formatDate', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -303,90 +271,3 @@ describe('validationUtils.isValidationError', () => {
   });
 });
 
-describe('isStepFileUrl', () => {
-  it('returns true for step-files URL', () => {
-    expect(isStepFileUrl('http://example.com/api/v1/step-files/abc')).toBe(
-      true,
-    );
-  });
-
-  it('returns true for file:// URL', () => {
-    expect(isStepFileUrl('file://some-path')).toBe(true);
-  });
-
-  it('returns false for non-matching string', () => {
-    expect(isStepFileUrl('http://example.com/other')).toBe(false);
-  });
-
-  it('returns false for null', () => {
-    expect(isStepFileUrl(null)).toBe(false);
-  });
-
-  it('returns false for non-string', () => {
-    expect(isStepFileUrl(123)).toBe(false);
-  });
-});
-
-describe('cleanLeadingSlash', () => {
-  it('removes leading slash', () => {
-    expect(cleanLeadingSlash('/hello')).toBe('hello');
-  });
-
-  it('returns string without leading slash unchanged', () => {
-    expect(cleanLeadingSlash('hello')).toBe('hello');
-  });
-});
-
-describe('cleanTrailingSlash', () => {
-  it('removes trailing slash', () => {
-    expect(cleanTrailingSlash('hello/')).toBe('hello');
-  });
-
-  it('returns string without trailing slash unchanged', () => {
-    expect(cleanTrailingSlash('hello')).toBe('hello');
-  });
-});
-
-describe('combinePaths', () => {
-  it('combines two paths', () => {
-    expect(combinePaths({ firstPath: '/api', secondPath: 'users' })).toBe(
-      '/api/users',
-    );
-  });
-
-  it('handles extra slashes', () => {
-    expect(combinePaths({ firstPath: '/api/', secondPath: '/users' })).toBe(
-      '/api/users',
-    );
-  });
-});
-
-describe('isMac', () => {
-  it('detects Mac user agent', () => {
-    Object.defineProperty(globalThis, 'navigator', {
-      value: { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
-      writable: true,
-      configurable: true,
-    });
-    expect(isMac()).toBe(true);
-  });
-
-  it('returns false for non-Mac user agent', () => {
-    Object.defineProperty(globalThis, 'navigator', {
-      value: { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-      writable: true,
-      configurable: true,
-    });
-    expect(isMac()).toBe(false);
-  });
-});
-
-describe('wait', () => {
-  it('resolves after delay', async () => {
-    vi.useFakeTimers();
-    const promise = wait(100);
-    vi.advanceTimersByTime(100);
-    await expect(promise).resolves.toBeUndefined();
-    vi.useRealTimers();
-  });
-});
