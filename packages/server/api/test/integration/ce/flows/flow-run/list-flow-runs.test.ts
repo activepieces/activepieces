@@ -12,16 +12,16 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 describe('List flow runs endpoint', () => {
-    it('should return 200', async () => {
-        // arrange
+    it('should return empty list with correct structure', async () => {
         const ctx = await createTestContext(app!)
 
-        // act
         const response = await ctx.get('/v1/flow-runs', {
             projectId: ctx.project.id,
         })
 
-        // assert
         expect(response?.statusCode).toBe(200)
+        const body = response?.json()
+        expect(body.data).toEqual([])
+        expect(body.cursor).toBeUndefined()
     })
 })

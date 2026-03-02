@@ -54,7 +54,7 @@ describe('Authentication API', () => {
         })
     })
 
-    it('fails to sign up invited user platform if no project exist', async () => {
+    it('should fail signup on custom domain when no project exists', async () => {
     // arrange
 
         const { mockPlatform } = await mockAndSaveBasicSetup({

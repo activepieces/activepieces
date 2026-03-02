@@ -25,8 +25,7 @@ afterAll(async () => {
 })
 describe('Flow API for Worker', () => {
     describe('Get Flow from Worker', () => {
-        it('List other flow for another project', async () => {
-            // arrange
+        it('should deny worker access to flow from another project', async () => {
             const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
 
             const mockProject2 = createMockProject({
@@ -61,5 +60,4 @@ describe('Flow API for Worker', () => {
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
-
 })
