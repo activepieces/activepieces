@@ -15,16 +15,30 @@ export const setPublicAccess = createAction({
       description: 'The ID of the file or folder to update permissions for',
       required: true,
     }),
+    role: Property.StaticDropdown({
+      displayName: 'Role',
+      description: 'The role to assign for public access',
+      options: {
+        options: [
+          { label: 'Reader', value: 'reader' },
+          { label: 'Commenter', value: 'commenter' },
+          { label: 'Editor', value: 'writer' },
+        ],
+      },
+      defaultValue: 'reader',
+      required: true,
+    }),
   },
   async run(context) {
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth);
 
     const fileId = context.propsValue.fileId;
+    const role = context.propsValue.role;
 
     const drive = google.drive({ version: 'v3', auth: authClient });
     const permission = {
-      role: 'reader',
+      role: role,
       type: 'anyone',
     };
     const res = await drive.permissions.create({
