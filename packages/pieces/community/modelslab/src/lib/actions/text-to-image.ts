@@ -4,7 +4,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { modelsLabAuth } from '../..';
+import { modelsLabAuth } from '../common/auth';
 
 const FETCH_BASE = 'https://modelslab.com/api/v6/images/fetch';
 const MAX_POLLS = 12;
@@ -22,10 +22,10 @@ async function pollForResult(apiKey: string, requestId: string): Promise<string[
     const { body } = await httpClient.sendRequest<{
       status: string;
       output?: string[];
-      messege?: string;
+      message?: string;
     }>(req);
     if (body.status === 'success' && body.output) return body.output;
-    if (body.status === 'error') throw new Error(body.messege || 'Generation failed');
+    if (body.status === 'error') throw new Error(body.message || 'Generation failed');
   }
   throw new Error('ModelsLab image generation timed out.');
 }
@@ -104,7 +104,7 @@ export const textToImage = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth.props.api_key;
+    const apiKey = context.auth.secret_text;
     const {
       prompt, negative_prompt, model_id, width, height,
       num_inference_steps, guidance_scale, samples, seed, safety_checker,
@@ -136,10 +136,10 @@ export const textToImage = createAction({
       status: string;
       output?: string[];
       id?: string;
-      messege?: string;
+      message?: string;
     }>(req);
 
-    if (body.status === 'error') throw new Error(body.messege || 'ModelsLab API error');
+    if (body.status === 'error') throw new Error(body.message || 'ModelsLab API error');
     if (body.status === 'processing' && body.id) {
       return { images: await pollForResult(apiKey, body.id) };
     }

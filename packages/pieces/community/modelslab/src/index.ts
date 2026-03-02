@@ -1,22 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { modelsLabAuth } from './lib/common/auth';
 import { textToImage } from './lib/actions/text-to-image';
-
-export const modelsLabAuth = PieceAuth.CustomAuth({
-  description: `Get your API key at https://modelslab.com/account/api-key`,
-  props: {
-    api_key: Property.ShortText({
-      displayName: 'API Key',
-      required: true,
-    }),
-  },
-  required: true,
-});
 
 export const modelsLab = createPiece({
   displayName: 'ModelsLab',
@@ -27,15 +12,6 @@ export const modelsLab = createPiece({
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['adhikjoshi'],
   auth: modelsLabAuth,
-  actions: [
-    textToImage,
-    createCustomApiCallAction({
-      baseUrl: () => 'https://modelslab.com/api/v6',
-      auth: modelsLabAuth,
-      authMapping: async (auth) => ({
-        'Content-Type': 'application/json',
-      }),
-    }),
-  ],
+  actions: [textToImage],
   triggers: [],
 });
