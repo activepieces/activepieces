@@ -154,7 +154,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,
-                    platformId: await projectService.getPlatformId(oldFlowRun.projectId),
+                    platformId: await projectService(log).getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
                     synchronousHandlerId: undefined,
@@ -232,9 +232,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: flowRunId,
+                    entityType: 'flow_run',
+                    entityId: flowRunId,
+                    message: 'Flow run not found',
                 },
             })
         }
@@ -242,7 +244,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         const pauseMetadata = flowRun.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
-        const platformId = await projectService.getPlatformId(flowRun.projectId)
+        const platformId = await projectService(log).getPlatformId(flowRun.projectId)
         if (matchRequestId || !checkRequestId) {
             return addToQueue({
                 payload,
@@ -346,7 +348,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService.getPlatformId(projectId),
+            platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
@@ -371,7 +373,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: undefined,
             httpRequestId: undefined,
-            platformId: await projectService.getPlatformId(projectId),
+            platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             sampleData: undefined,
@@ -390,9 +392,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: params.id,
+                    entityType: 'flow_run',
+                    entityId: params.id,
+                    message: 'Flow run not found',
                 },
             })
         }
@@ -441,7 +445,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await addToQueue({
             payload,
             flowRun,
-            platformId: await projectService.getPlatformId(flowRun.projectId),
+            platformId: await projectService(log).getPlatformId(flowRun.projectId),
             synchronousHandlerId,
             httpRequestId: requestId,
             executeTrigger: false,

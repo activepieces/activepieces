@@ -78,11 +78,11 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             const piece = appWebhooks[pieceUrl]
             if (isNil(piece)) {
                 throw new ActivepiecesError({
-                    code: ErrorCode.PIECE_NOT_FOUND,
+                    code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        pieceName: pieceUrl,
-                        pieceVersion: 'latest',
-                        message: 'Pieces is not found in app event routing',
+                        entityType: 'piece',
+                        entityId: pieceUrl,
+                        message: 'Piece is not found in app event routing',
                     },
                 })
             }
@@ -129,7 +129,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     return
                 }
                 const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
-                const platformId = await projectService.getPlatformId(listener.projectId)
+                const platformId = await projectService(request.log).getPlatformId(listener.projectId)
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.ONE_TIME,
