@@ -1,6 +1,7 @@
 import { Template } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,7 @@ type CategorySectionProps = {
   onTemplateSelect: (template: Template) => void;
 };
 
-export const CategorySection = ({
+export const CategorySection = React.memo(({
   category,
   templates,
   onCategorySelect,
@@ -39,7 +40,7 @@ export const CategorySection = ({
         className="w-full"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">{category}</h2>
+          <h2 className="text-xl font-medium">{category}</h2>
           <div className="flex items-center">
             <Button
               variant="ghost"
@@ -81,4 +82,6 @@ export const CategorySection = ({
       </Carousel>
     </div>
   );
-};
+});
+
+CategorySection.displayName = 'CategorySection';
