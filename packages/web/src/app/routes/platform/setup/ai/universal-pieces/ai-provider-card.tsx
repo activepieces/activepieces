@@ -4,12 +4,12 @@ import { Pencil, Trash } from 'lucide-react';
 
 import {
   Item,
-  ItemMedia,
   ItemContent,
   ItemTitle,
   ItemDescription,
   ItemActions,
 } from '@/components/custom/item';
+import { ItemMediaImage } from '@/components/custom/item-media-image';
 import { Button } from '@/components/ui/button';
 import { AiProviderInfo } from '@/features/agents';
 
@@ -36,9 +36,7 @@ const AIProviderCard = ({
 
   return (
     <Item variant="outline">
-      <ItemMedia variant="image">
-        {logoUrl && <img src={logoUrl} alt="icon" />}
-      </ItemMedia>
+      {logoUrl && <ItemMediaImage src={logoUrl} alt={providerInfo.name} />}
       <ItemContent>
         <ItemTitle>{providerConfig?.name ?? providerInfo.name}</ItemTitle>
         {allowWrite && (

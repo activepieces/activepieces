@@ -76,15 +76,33 @@
   --color-primary:  hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
+  --color-success-50: hsl(var(--success-50));
   --color-success-100: hsl(var(--success-100));
+  --color-success-200: hsl(var(--success-200));
   --color-success-300: hsl(var(--success-300));
+  --color-success-400: hsl(var(--success-400));
+  --color-success-500: hsl(var(--success-500));
+  --color-success-600: hsl(var(--success-600));
+  --color-success-700: hsl(var(--success-700));
+  --color-success-800: hsl(var(--success-800));
+  --color-success-900: hsl(var(--success-900));
+  --color-success-950: hsl(var(--success-950));
   --color-success: hsl(var(--success));
 
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
 
+  --color-destructive-50: hsl(var(--destructive-50));
   --color-destructive-100: hsl(var(--destructive-100));
+  --color-destructive-200: hsl(var(--destructive-200));
   --color-destructive-300: hsl(var(--destructive-300));
+  --color-destructive-400: hsl(var(--destructive-400));
+  --color-destructive-500: hsl(var(--destructive-500));
+  --color-destructive-600: hsl(var(--destructive-600));
+  --color-destructive-700: hsl(var(--destructive-700));
+  --color-destructive-800: hsl(var(--destructive-800));
+  --color-destructive-900: hsl(var(--destructive-900));
+  --color-destructive-950: hsl(var(--destructive-950));
   --color-destructive: hsl(var(--destructive));
 
   --color-muted: var(--muted);
@@ -331,13 +349,33 @@
     --primary-300: 257 74% 25%;
     --primary-foreground: 210 20% 98%;
 
-    --success-100: 148 48% 80%;
-    --success: 148 48% 46%;
-    --success-300: 148 48% 10%;
+    /* Success — Emerald */
+    --success-50: 152 81% 96%;
+    --success-100: 149 80% 90%;
+    --success-200: 156 84% 80%;
+    --success-300: 161 71% 67%;
+    --success-400: 160 60% 52%;
+    --success-500: 160 84% 39%;
+    --success-600: 161 94% 30%;
+    --success-700: 163 88% 24%;
+    --success-800: 163 88% 20%;
+    --success-900: 164 86% 17%;
+    --success-950: 166 92% 10%;
+    --success: var(--success-500);
 
-    --destructive-100: 0 84.2% 90%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-300: 0 84.2% 40%;
+    /* Destructive — Rose */
+    --destructive-50: 356 100% 97%;
+    --destructive-100: 356 100% 95%;
+    --destructive-200: 353 98% 90%;
+    --destructive-300: 353 96% 82%;
+    --destructive-400: 351 95% 72%;
+    --destructive-500: 350 89% 60%;
+    --destructive-600: 347 77% 50%;
+    --destructive-700: 345 83% 41%;
+    --destructive-800: 343 80% 35%;
+    --destructive-900: 342 75% 30%;
+    --destructive-950: 341 84% 17%;
+    --destructive: var(--destructive-500);
 
     --warning-100: 51.72, 93.55%, 93.92%;
     --warning: 47 96% 53%;
@@ -383,13 +421,8 @@
   --primary-300: 210 100% 85%;
   --primary-foreground: 210 90% 98%;
 
-  --success-100: 140 60% 40%;
-  --success: 140 80% 50%;
-  --success-300: 140 90% 85%;
-
-  --destructive-100: 0 70% 38%;
-  --destructive: 0 80% 50%;
-  --destructive-300: 0 85% 88%;
+  --success: var(--success-400);
+  --destructive: var(--destructive-400);
 
   --warning-100: 40 90% 50%;
   --warning: 40 100% 45%;

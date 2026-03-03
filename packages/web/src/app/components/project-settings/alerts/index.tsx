@@ -84,7 +84,7 @@ export const AlertsSettings = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-accent rounded-md flex items-center justify-center">
-                        <Bell className="w-4 h-4 text-red-600" />
+                        <Bell className="w-4 h-4 text-destructive-600" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">
@@ -97,11 +97,11 @@ export const AlertsSettings = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 hover:bg-red-50"
+                          className="h-8 w-8 p-0 hover:bg-destructive-50"
                           onClick={() => deleteAlert(alert)}
                           disabled={writeAlertPermission === false}
                         >
-                          <Trash className="w-4 h-4 text-red-500" />
+                          <Trash className="w-4 h-4 text-destructive" />
                         </Button>
                       </TooltipTrigger>
                       {writeAlertPermission === false && (

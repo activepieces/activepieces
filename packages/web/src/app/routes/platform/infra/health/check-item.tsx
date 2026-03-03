@@ -51,12 +51,12 @@ const CheckItem = ({
       {!loading && (
         <ItemActions>
           {isChecked ? (
-            <div className="text-green-700 flex items-center gap-2">
+            <div className="text-success-700 flex items-center gap-2">
               <CheckCircle size={18} />
               {t('Passed')}
             </div>
           ) : (
-            <div className="text-destructive-300 flex items-center gap-2">
+            <div className="text-destructive-700 flex items-center gap-2">
               <XCircle size={18} />
               {t('Needs Attention')}
             </div>

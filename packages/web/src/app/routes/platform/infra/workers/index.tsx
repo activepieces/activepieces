@@ -158,14 +158,14 @@ export default function WorkersPage() {
               return (
                 <div
                   className={cn('flex gap-1 items-center p-2 capitalize', {
-                    'text-success-300': status === WorkerMachineStatus.ONLINE,
-                    'text-danger-300': status === WorkerMachineStatus.OFFLINE,
+                    'text-success-700': status === WorkerMachineStatus.ONLINE,
+                    'text-destructive': status === WorkerMachineStatus.OFFLINE,
                   })}
                 >
                   {status === WorkerMachineStatus.ONLINE ? (
                     <Server size={14} />
                   ) : (
-                    <ServerOff className="text-red-500" />
+                    <ServerOff className="text-destructive" />
                   )}
                   {t(status.toLowerCase())}
                 </div>

@@ -5,12 +5,12 @@ import { CircleAlert, Pencil, RefreshCcw, Trash } from 'lucide-react';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   Item,
-  ItemMedia,
   ItemContent,
   ItemTitle,
   ItemDescription,
   ItemActions,
 } from '@/components/custom/item';
+import { ItemMediaImage } from '@/components/custom/item-media-image';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -35,9 +35,7 @@ const SecretManagerProviderCard = ({
 
   return (
     <Item variant="outline">
-      <ItemMedia variant="icon">
-        <img className="size-6 rounded-sm" src={provider.logo} alt={provider.name} />
-      </ItemMedia>
+      <ItemMediaImage src={provider.logo} alt={provider.name} />
       <ItemContent>
         <ItemTitle>
           {provider.name}

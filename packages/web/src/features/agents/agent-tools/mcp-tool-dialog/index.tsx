@@ -211,7 +211,7 @@ export function AgentMcpDialog({
                           key={index}
                           className="flex items-center gap-2 p-2 rounded bg-muted/50"
                         >
-                          <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                          <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
                           <span className="text-sm font-medium">{tool}</span>
                         </div>
                       ))}
