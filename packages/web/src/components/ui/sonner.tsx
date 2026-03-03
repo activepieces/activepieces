@@ -42,12 +42,12 @@ function Toaster({ ...props }: ToasterProps) {
       toastOptions={{
         classNames: {
           toast: `
-            data-[type=error]:text-destructive-300!
+            data-[type=error]:text-destructive-700!
             data-[type=warning]:text-warning-700!
             data-[type=success]:text-success-300!
           `,
           description: `
-            data-[type=error]:text-destructive-300!
+            data-[type=error]:text-destructive-700!
             data-[type=warning]:text-warning-700!
             data-[type=success]:text-success-300!
           `,
