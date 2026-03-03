@@ -203,7 +203,7 @@ export function PlatformSidebar() {
               className="h-5 w-5 object-contain"
             />
           </Link>
-          <h1 className="truncate font-semibold">{branding.websiteName}</h1>
+          <h1 className="truncate text-sm font-medium">{branding.websiteName}</h1>
         </div>
       </SidebarHeader>
       <div className="flex-1 overflow-y-auto scrollbar-hover">

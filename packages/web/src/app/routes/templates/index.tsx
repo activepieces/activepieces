@@ -95,7 +95,7 @@ const TemplatesPage = () => {
     <div>
       <div>
         <div className="sticky top-0 z-10 bg-background mb-6 pt-4">
-          <div className="flex flex-row w-full justify-between gap-2">
+          <div className="flex flex-row w-full justify-between gap-1">
             <ApSidebarToggle />
             <InputWithIcon
               icon={<Search className="text-gray-500 w-4 h-4" />}

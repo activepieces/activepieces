@@ -11,10 +11,8 @@ import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -97,13 +95,11 @@ export const ProjectDashboardPageHeader = ({
   };
 
   const titleContent = (
-    <div className="flex items-center gap-2">
-      <ApSidebarToggle />
-      <Separator orientation="vertical" className="h-5 mr-2" />
+    <div className="flex items-center gap-1">
       <ApProjectDisplay
         title={getProjectName(project)}
         maxLengthToNotShowTooltip={30}
-        titleClassName="text-base"
+        titleClassName="text-sm font-medium"
         projectType={project.type}
       />
       {project.type === ProjectType.PERSONAL && (
@@ -178,6 +174,7 @@ export const ProjectDashboardPageHeader = ({
         title={titleContent}
         description={description}
         rightContent={rightContent}
+        showSidebarToggle={true}
         className="min-w-full px-4"
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />

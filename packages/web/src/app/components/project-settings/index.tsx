@@ -223,7 +223,7 @@ export function ProjectSettingsDialog({
                 title={form.watch('projectName') ?? project.displayName}
                 icon={form.watch('icon') ?? project.icon}
                 containerClassName="px-3 my-4"
-                titleClassName="text-md font-bold"
+                titleClassName="text-sm font-medium"
                 maxLengthToNotShowTooltip={18}
                 projectType={project.type}
               />

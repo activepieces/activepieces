@@ -105,7 +105,7 @@ export const BuilderHeader = () => {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   onClick={goToFlowsPage}
-                  className="cursor-pointer text-base"
+                  className="cursor-pointer text-sm"
                 >
                   {getProjectName(project)}
                 </BreadcrumbLink>
@@ -117,7 +117,7 @@ export const BuilderHeader = () => {
             <BreadcrumbItem>
               <BreadcrumbPage>
                 <div
-                  className={cn('flex items-center gap-1 text-base', {
+                  className={cn('flex items-center gap-1 text-sm', {
                     'max-w-[500px]': !isEditingFlowName,
                   })}
                 >
