@@ -6,7 +6,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -87,7 +87,6 @@ export const AllowedDomainDialog = ({
       <DialogTrigger asChild>
         <Button
           size={'sm'}
-          className="w-32"
           variant={'basic'}
           onClick={() => setOpen(true)}
         >
@@ -114,7 +113,7 @@ export const AllowedDomainDialog = ({
             <div className="flex flex-col gap-1">
               <div className="text-muted-foreground text-sm">
                 {t(
-                  'Enter the allowed domains for the users to authenticate with, Empty list will allow all domains.',
+                  'Enter the allowed domains for the users to authenticate with. An empty list will allow all domains.',
                 )}
               </div>
             </div>
@@ -128,6 +127,7 @@ export const AllowedDomainDialog = ({
                       <Input
                         {...field}
                         id={`allowedAuthDomains.${index}`}
+                        placeholder={t('example.com')}
                         className="rounded-sm"
                       />
                       <Button
@@ -150,6 +150,7 @@ export const AllowedDomainDialog = ({
               variant="outline"
               size="sm"
             >
+              <Plus className="size-4" />
               {t('Add Domain')}
             </Button>
             {form?.formState?.errors?.root?.serverError && (

@@ -82,7 +82,7 @@ export const NewOAuth2Dialog = ({
         {connected ? (
           <Button
             size={'sm'}
-            className="w-32 text-destructive"
+            className="text-destructive"
             variant={'basic'}
             loading={isPending}
             onClick={(e) => {
@@ -99,7 +99,6 @@ export const NewOAuth2Dialog = ({
         ) : (
           <Button
             size={'sm'}
-            className="w-32"
             variant={'basic'}
             onClick={() => setOpen(true)}
           >

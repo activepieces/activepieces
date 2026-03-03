@@ -28,8 +28,6 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
         transparent:
           'text-primary enabled:hover:bg-transparent',
-        'outline-primary':
-          'text-primary font-medium enabled:hover:bg-primary/10 enabled:hover:border-primary enabled:hover:font-semibold',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

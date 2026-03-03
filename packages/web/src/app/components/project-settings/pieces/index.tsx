@@ -149,7 +149,7 @@ const PiecesSettings = () => {
           button={
             <RequestTrial
               featureKey="ENTERPRISE_PIECES"
-              buttonVariant="outline-primary"
+              buttonVariant="basic"
             />
           }
         />

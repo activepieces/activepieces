@@ -118,23 +118,21 @@ const ConnectSecretManagerForm = ({
             rules={{ required: !field.optional }}
             name={`config.${fieldId}`}
             render={({ field: formField }) => (
-              <FormItem className="grid space-y-3">
-                <Label htmlFor="fieldName">
+              <FormItem className="grid space-y-4">
+                <Label htmlFor={fieldId}>
                   {field.displayName}
                   {!field.optional && (
-                    <span className="text-red-500 ml-1">*</span>
+                    <span className="text-destructive-300 ml-1">*</span>
                   )}
                 </Label>
-                <div className="flex gap-2 items-center justify-center">
-                  <Input
-                    {...formField}
-                    required={!field.optional}
-                    id={fieldId}
-                    placeholder={field.placeholder}
-                    className="rounded-sm"
-                    type={field.type}
-                  />
-                </div>
+                <Input
+                  {...formField}
+                  required={!field.optional}
+                  id={fieldId}
+                  placeholder={field.placeholder}
+                  className="rounded-sm"
+                  type={field.type}
+                />
                 <FormMessage />
               </FormItem>
             )}

@@ -2,8 +2,15 @@ import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
+import {
+  Item,
+  ItemMedia,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+} from '@/components/custom/item';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { AiProviderInfo } from '@/features/agents';
 
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
@@ -28,60 +35,54 @@ const AIProviderCard = ({
   const logoUrl = providerInfo.logoUrl;
 
   return (
-    <Card className="w-full px-5 py-4">
-      <div className="flex w-full gap-2 justify-center items-center">
-        <div className="flex flex-col gap-2 text-center mr-2">
-          {logoUrl && <img src={logoUrl} alt="icon" width={32} height={32} />}
-        </div>
-        <div className="flex grow flex-col">
-          <div className="text-lg flex items-center">
-            {providerConfig?.name ?? providerInfo.name}
-          </div>
-          {allowWrite && (
-            <div className="text-sm text-muted-foreground">
-              {t('Configure credentials for {providerName} AI provider.', {
-                providerName: providerInfo.name,
-              })}
-            </div>
-          )}
-        </div>
+    <Item variant="outline">
+      <ItemMedia variant="image">
+        {logoUrl && <img src={logoUrl} alt="icon" />}
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>{providerConfig?.name ?? providerInfo.name}</ItemTitle>
         {allowWrite && (
-          <div className="flex flex-row justify-center items-center gap-1">
-            <UpsertAIProviderDialog
-              key={providerConfig?.id ?? providerInfo.provider}
-              providerId={providerConfig?.id}
-              config={providerConfig?.config}
-              provider={providerInfo.provider}
-              defaultDisplayName={providerConfig?.name ?? providerInfo.name}
-              onSave={onSave}
-            >
-              {providerConfig ? (
-                <Button variant={'ghost'} size={'sm'}>
-                  <Pencil className="size-4" />
-                </Button>
-              ) : (
-                <Button variant={'outline-primary'} size={'sm'}>
-                  {t('Enable')}
-                </Button>
-              )}
-            </UpsertAIProviderDialog>
-            {providerConfig && (
-              <div className="gap-2 flex">
-                <Button
-                  variant={'ghost'}
-                  size={'sm'}
-                  onClick={() => onDelete(providerConfig.id)}
-                  loading={isDeleting}
-                  disabled={isDeleting}
-                >
-                  <Trash className="size-4 text-destructive" />
-                </Button>
-              </div>
-            )}
-          </div>
+          <ItemDescription>
+            {t('Configure credentials for {providerName} AI provider.', {
+              providerName: providerInfo.name,
+            })}
+          </ItemDescription>
         )}
-      </div>
-    </Card>
+      </ItemContent>
+      {allowWrite && (
+        <ItemActions>
+          <UpsertAIProviderDialog
+            key={providerConfig?.id ?? providerInfo.provider}
+            providerId={providerConfig?.id}
+            config={providerConfig?.config}
+            provider={providerInfo.provider}
+            defaultDisplayName={providerConfig?.name ?? providerInfo.name}
+            onSave={onSave}
+          >
+            {providerConfig ? (
+              <Button variant={'ghost'} size={'sm'}>
+                <Pencil className="size-4" />
+              </Button>
+            ) : (
+              <Button variant={'basic'} size={'sm'}>
+                {t('Enable')}
+              </Button>
+            )}
+          </UpsertAIProviderDialog>
+          {providerConfig && (
+            <Button
+              variant={'ghost'}
+              size={'sm'}
+              onClick={() => onDelete(providerConfig.id)}
+              loading={isDeleting}
+              disabled={isDeleting}
+            >
+              <Trash className="size-4 text-destructive" />
+            </Button>
+          )}
+        </ItemActions>
+      )}
+    </Item>
   );
 };
 

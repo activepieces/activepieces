@@ -17,7 +17,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const FromSchema = Type.Object({
@@ -73,9 +72,6 @@ export const AppearanceSection = () => {
 
   return (
     <>
-      <Separator className="my-2" />
-      <div className="text-lg font-bold">{t('Appearance')}</div>
-
       <div className="grid gap-4">
         <Form {...form}>
           <form
