@@ -1,20 +1,24 @@
 import {
+    ActivepiecesError,
     AgentPieceProps,
     AgentProviderModelSchema,
     apId,
+    ErrorCode,
     flowStructureUtil,
     FlowVersion,
     FlowVersionState,
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
     MigrateFlowsModelRequest,
-    MigrateFlowsModelResponse,
     PlatformId,
     sanitizeObjectForPostgresql,
     spreadIfDefined,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../helper/system/system'
+import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
 import { flowVersionBackupService } from './flow-version-backup.service'
@@ -50,7 +54,36 @@ export const flowVersionMigrationService = {
         return migratedFlowVersion
     },
 
-    async migrateFlowsModel(platformId: PlatformId, { projectIds, sourceModel, targetModel }: MigrateFlowsModelRequest): Promise<MigrateFlowsModelResponse> {
+    async enqueueMigrateFlowsModel(platformId: PlatformId, request: MigrateFlowsModelRequest, reqLog: FastifyBaseLogger): Promise<void> {
+        const jobId = `migrate-flow-model-${platformId}`
+        const existingJob = await systemJobsSchedule(reqLog).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
+        const SKIP_JOB_STATES = ['active', 'delayed', 'waiting']
+        if (existingJob && SKIP_JOB_STATES.includes(await existingJob.getState())) {
+            throw new ActivepiecesError({
+                code: ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS,
+                params: { jobId },
+            })
+        }
+        await systemJobsSchedule(reqLog).upsertJob({
+            job: {
+                name: SystemJobName.MIGRATE_FLOWS_MODEL,
+                data: { jobId, platformId, request },
+                jobId,
+            },
+            schedule: {
+                type: 'one-time',
+                date: dayjs(),
+            },
+            customConfig: {
+                removeOnComplete: true,
+                removeOnFail: true,
+            },
+        })
+    },
+
+    async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
+        const { jobId, platformId, request: { projectIds, sourceModel, targetModel } } = data
+
         const queryBuilder = flowVersionRepo()
             .createQueryBuilder('fv')
             .innerJoin('flow', 'f', 'f.id = fv."flowId"')
@@ -73,7 +106,6 @@ export const flowVersionMigrationService = {
             let hasChanges = false
 
             const updatedVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-
                 if (!flowStructureUtil.isAgentPiece(step)) {
                     return step
                 }
@@ -87,7 +119,6 @@ export const flowVersionMigrationService = {
                     provider = runAgentObject?.provider
                 }
 
-              
                 if (provider === sourceModel.provider && model === sourceModel.model) {
                     hasChanges = true
                     const clonedStep = JSON.parse(JSON.stringify(step))
@@ -116,6 +147,11 @@ export const flowVersionMigrationService = {
             }
         }
 
-        return { updatedFlows }
+        log.info({ platformId, updatedFlows }, 'Flow model migration completed')
+
+        const job = await systemJobsSchedule(log).getJob<SystemJobName.MIGRATE_FLOWS_MODEL>(jobId)
+        if (job) {
+            await job.updateData({ ...data, updatedFlows })
+        }
     },
 }

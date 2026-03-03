@@ -1,5 +1,5 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import { FlowVersionMetadata, ListFlowVersionRequest, MigrateFlowsModelRequest, MigrateFlowsModelResponse, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FlowVersionMetadata, ListFlowVersionRequest, MigrateFlowsModelRequest, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
@@ -24,13 +24,14 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) 
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             cursorRequest: request.query.cursor ?? null,
         })
-    },
-    )
-
-    fastify.post('/versions/migrate-ai-model', MigrateAIModel, async (request) => {
-        const platformId = request.principal.platform.id
-        return flowVersionMigrationService.migrateFlowsModel(platformId, request.body)
     })
+
+    fastify.post('/versions/migrate-ai-model', MigrateAIModel, async (request, reply) => {
+        const platformId = request.principal.platform.id
+        await flowVersionMigrationService.enqueueMigrateFlowsModel(platformId, request.body, request.log)
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
 }
 
 const MigrateAIModel = {
@@ -39,9 +40,6 @@ const MigrateAIModel = {
     },
     schema: {
         body: MigrateFlowsModelRequest,
-        response: {
-            [StatusCodes.OK]: MigrateFlowsModelResponse,
-        },
     },
 }
 
@@ -54,7 +52,7 @@ const ListVersionParams = {
                 paramKey: 'flowId',
                 entityField: 'id',
             },
-        }),
+        }), 
     },
     schema: {
         params: Type.Object({

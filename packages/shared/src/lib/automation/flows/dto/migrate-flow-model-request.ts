@@ -13,8 +13,3 @@ export const MigrateFlowsModelRequest = Type.Object({
     targetModel: AgentProviderModelSchema,
 })
 export type MigrateFlowsModelRequest = Static<typeof MigrateFlowsModelRequest>
-
-export const MigrateFlowsModelResponse = Type.Object({
-    updatedFlows: Type.Number(),
-})
-export type MigrateFlowsModelResponse = Static<typeof MigrateFlowsModelResponse>

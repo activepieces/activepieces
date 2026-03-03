@@ -99,7 +99,7 @@ export type ApErrorParams =
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
     | InvalidAIProviderCredentialsParams
-
+    | MigrateFlowModelJobAlreadyExistsParams
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -534,6 +534,10 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
     httpErrorResponse: string
 }>
 
+export type MigrateFlowModelJobAlreadyExistsParams = BaseErrorParams<ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS, {
+    jobId: string;
+}>
+
 export enum ErrorCode {
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
     MACHINE_NOT_AVAILABLE = 'MACHINE_NOT_AVAILABLE',
@@ -610,5 +614,6 @@ export enum ErrorCode {
     SECRET_MANAGER_GET_SECRET_FAILED = 'SECRET_MANAGER_GET_SECRET_FAILED',
     SECRET_MANAGER_KEY_NOT_SECRET = 'SECRET_MANAGER_KEY_NOT_SECRET',
     INVALID_AI_PROVIDER_CREDENTIALS = 'INVALID_AI_PROVIDER_CREDENTIALS',
+    MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS = 'MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS',
 }
 

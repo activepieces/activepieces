@@ -1,16 +1,12 @@
 import {
-  AIProviderModelType,
   AIProviderName,
   AIProviderWithoutSensitiveData,
+  ErrorCode,
   MigrateFlowsModelRequest,
-  MigrateFlowsModelResponse,
-  ProjectWithLimits,
-  SeekPage,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowLeftRight } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -38,9 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { api } from '@/lib/api';
+import {  projectCollectionUtils } from '@/hooks/project-collection';
+import { toast } from 'sonner';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 
 type MigrateFlowsDialogProps = {
   children: React.ReactNode;
@@ -61,7 +59,6 @@ const ModelSelect = ({
     queryFn: () => aiProviderApi.listModelsForProvider(provider!),
     enabled: !!provider,
   });
-
 
   return (
     <Select
@@ -99,7 +96,7 @@ export const MigrateFlowsDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="flex flex-col">
         <MigrateFlowsDialogContent
           key={open ? 'open' : 'closed'}
           providers={providers}
@@ -117,84 +114,45 @@ const MigrateFlowsDialogContent = ({
   providers: AIProviderWithoutSensitiveData[];
   setOpen: (val: boolean) => void;
 }) => {
-  const [result, setResult] = useState<MigrateFlowsModelResponse | null>(null);
-
+  const queryClient = useQueryClient();
   const form = useForm<MigrateFlowsModelRequest>({
     resolver: typeboxResolver(MigrateFlowsModelRequest),
     defaultValues: {
       projectIds: [],
-      sourceModel: {
-        provider: AIProviderName.ACTIVEPIECES,
-        model: '',
-      },
-      targetModel: {
-        provider: AIProviderName.ACTIVEPIECES,
-        model: '',
-      },
+      sourceModel: { provider: AIProviderName.ACTIVEPIECES, model: '' },
+      targetModel: { provider: AIProviderName.ACTIVEPIECES, model: '' },
     },
   });
 
   const sourceProvider = form.watch('sourceModel.provider');
   const targetProvider = form.watch('targetModel.provider');
 
-  const { data: projectsResponse, isLoading: isLoadingProjects } = useQuery({
-    queryKey: ['platform-projects-migrate-dialog'],
-    queryFn: () =>
-      api.get<SeekPage<ProjectWithLimits>>('/v1/projects', { limit: 10000 }),
-  });
-  const projects = projectsResponse?.data ?? [];
+  const { data: projects } = projectCollectionUtils.useAll();
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: MigrateFlowsModelRequest) =>
       aiProviderApi.migrateFlows(data),
-    onSuccess: (data) => setResult(data),
-    onError: () => {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['migration-jobs'] });
+      setOpen(false);
+      toast.success(t('Migration job enqueued. Will continue in background.'));
+    },
+    onError: (error) => {
+      if (api.isApError(error, ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS)) {
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: t('A migration job is already running. try again later after it completes.'),
+        });
+        return;
+      }
       form.setError('root.serverError', {
-        type: 'manual',
-        message: t('Migration failed. Please try again.'),
-      });
+          type: 'manual',
+          message: t('Migration failed. Please try again.'),
+        });
     },
   });
 
-  const providerDisplayName = (p: AIProviderName) =>
-    SUPPORTED_AI_PROVIDERS.find((sp) => sp.provider === p)?.name ?? p;
-
-  if (result) {
-    return (
-      <>
-        <DialogHeader>
-          <DialogTitle>{t('Migration Complete')}</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-3 py-4">
-          {result.updatedFlows === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t('No flows matched the source model. Nothing was changed.')}
-            </p>
-          ) : (
-            <>
-              <p className="text-sm">
-                {result.updatedFlows} {t('flow(s) were successfully migrated.')}
-              </p>
-              <div className="flex items-center gap-2 rounded-md border p-3 bg-muted text-sm">
-                <span className="font-medium">
-                  {providerDisplayName(form.getValues('sourceModel.provider'))}{' '}
-                  / {form.getValues('sourceModel.model')}
-                </span>
-                <ArrowLeftRight className="w-4 h-4 shrink-0 text-muted-foreground" />
-                <span className="font-medium">
-                  {providerDisplayName(form.getValues('targetModel.provider'))}{' '}
-                  / {form.getValues('targetModel.model')}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-        <DialogFooter>
-          <Button onClick={() => setOpen(false)}>{t('Close')}</Button>
-        </DialogFooter>
-      </>
-    );
-  }
+ 
 
   return (
     <>
@@ -219,9 +177,8 @@ const MigrateFlowsDialogContent = ({
                     value: p.id,
                     label: p.displayName,
                   }))}
-                  loading={isLoadingProjects}
                   onChange={(value) =>
-                    field.onChange((value ?? []) as string[])
+                    field.onChange(value?.map((v) => `${v}`) ?? [])
                   }
                   initialValues={(field.value ?? []) as string[]}
                   showDeselect={(field.value?.length ?? 0) > 0}
@@ -339,10 +296,20 @@ const MigrateFlowsDialogContent = ({
             >
               {t('Cancel')}
             </Button>
-            <Button type="submit" loading={isPending} disabled={isPending}>
+            <ConfirmationDeleteDialog
+              title={t('Confirm Migration')}
+              message={
+                t('Are you sure you want to migrate all flows to the target model?')
+              }
+              mutationFn={() => form.handleSubmit((data) => mutate(data))()}
+              buttonText={t('Migrate')}
+              entityName={t('Migration')}>
+            <Button loading={isPending} disabled={isPending}>
               {t('Migrate')}
             </Button>
+            </ConfirmationDeleteDialog>
           </DialogFooter>
+        
         </form>
       </Form>
     </>
