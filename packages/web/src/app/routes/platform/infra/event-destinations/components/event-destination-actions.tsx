@@ -60,7 +60,7 @@ const EventDestinationActions = ({
             isDanger
           >
             <DropdownMenuItem
-              className="text-destructive"
+              variant="destructive"
               onSelect={(e) => {
                 e.preventDefault();
               }}
