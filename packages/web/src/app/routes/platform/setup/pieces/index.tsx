@@ -8,7 +8,6 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Package,
-  Tag,
   Hash,
   GitBranch,
   Tags,
@@ -53,18 +52,18 @@ const PlatformPiecesPage = () => {
     useMemo(
       () => [
         {
-          accessorKey: 'name',
-          size: 80,
+          accessorKey: 'displayName',
+          size: 240,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
-              title={t('Piece')}
+              title={t('Name')}
               icon={Puzzle}
             />
           ),
           cell: ({ row }) => {
             return (
-              <div className="text-left">
+              <div className="flex items-center gap-2 w-fit">
                 <PieceIcon
                   circle={true}
                   size={'md'}
@@ -73,22 +72,9 @@ const PlatformPiecesPage = () => {
                   logoUrl={row.original.logoUrl}
                   showTooltip={false}
                 />
+                <span>{row.original.displayName}</span>
               </div>
             );
-          },
-        },
-        {
-          accessorKey: 'displayName',
-          size: 180,
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('Display Name')}
-              icon={Tag}
-            />
-          ),
-          cell: ({ row }) => {
-            return <div className="text-left">{row.original.displayName}</div>;
           },
         },
         {

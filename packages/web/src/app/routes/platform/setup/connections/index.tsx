@@ -10,7 +10,6 @@ import {
   Trash,
   Globe,
   Search,
-  Tag,
   Activity,
   Clock,
   FolderOpen,
@@ -85,28 +84,14 @@ const GlobalConnectionsTable = () => {
     unknown
   >[] = [
     {
-      accessorKey: 'pieceName',
-      size: 150,
+      accessorKey: 'displayName',
+      size: 260,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('Piece')}
+          title={t('Name')}
           icon={Puzzle}
         />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <PieceIconWithPieceName pieceName={row.original.pieceName} />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'displayName',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return (
@@ -114,7 +99,13 @@ const GlobalConnectionsTable = () => {
             title={t('External ID')}
             text={row.original.externalId || ''}
           >
-            <div className="text-left">{row.original.displayName}</div>
+            <div className="flex items-center gap-2 w-fit">
+              <PieceIconWithPieceName
+                pieceName={row.original.pieceName}
+                showTooltip={false}
+              />
+              <span>{row.original.displayName}</span>
+            </div>
           </CopyTextTooltip>
         );
       },

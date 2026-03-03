@@ -10,7 +10,6 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Globe,
-  Tag,
   Replace,
   Trash2,
   Plus,
@@ -150,7 +149,7 @@ function AppConnectionsPage() {
           type: 'input',
           title: t('Name'),
           accessorKey: 'displayName',
-          icon: Tag,
+          icon: Puzzle,
         },
       ],
       4,
@@ -163,37 +162,37 @@ function AppConnectionsPage() {
   >[] = ownerColumnHooks.useOwnerColumn<AppConnectionWithoutSensitiveData>(
     [
       {
-        accessorKey: 'pieceName',
-        size: 150,
+        accessorKey: 'displayName',
+        size: 280,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t('Piece')}
+            title={t('Name')}
             icon={Puzzle}
           />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              <PieceIconWithPieceName pieceName={row.original.pieceName} />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'displayName',
-        size: 200,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
         ),
         cell: ({ row }) => {
           const isPlatformConnection = row.original.scope === 'PLATFORM';
           return (
             <div className="flex items-center gap-2">
+              <CopyTextTooltip
+                title={t('External ID')}
+                text={row.original.externalId || ''}
+              >
+                <div className="flex items-center gap-2 w-fit">
+                  <PieceIconWithPieceName
+                    pieceName={row.original.pieceName}
+                    showTooltip={false}
+                  />
+                  <span className="truncate max-w-[120px] 2xl:max-w-[250px]">
+                    {row.original.displayName}
+                  </span>
+                </div>
+              </CopyTextTooltip>
               {isPlatformConnection && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Globe className="w-4 h-4" />
+                    <Globe className="w-4 h-4 shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
@@ -204,15 +203,6 @@ function AppConnectionsPage() {
                   </TooltipContent>
                 </Tooltip>
               )}
-
-              <CopyTextTooltip
-                title={t('External ID')}
-                text={row.original.externalId || ''}
-              >
-                <div className="text-left truncate max-w-[120px] 2xl:max-w-[250px]">
-                  {row.original.displayName}
-                </div>
-              </CopyTextTooltip>
             </div>
           );
         },
