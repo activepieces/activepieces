@@ -1,4 +1,4 @@
-import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, apId, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, ProjectLeaderboardItem, RunEnvironment, UserLeaderboardItem, UserWithMetaInformation } from '@activepieces/shared'
+import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, apId, FlowStatus, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, ProjectLeaderboardItem, RunEnvironment, UserLeaderboardItem, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
@@ -138,6 +138,7 @@ async function listFlows(platformId: PlatformId, log: FastifyBaseLogger): Promis
         cursorRequest: null,
         versionState: FlowVersionState.DRAFT,
         includeTriggerSource: false,
+        status: [FlowStatus.ENABLED],
     })
     const projects = await listProjects(platformId)
         

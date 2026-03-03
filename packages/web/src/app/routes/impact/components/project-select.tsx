@@ -59,7 +59,7 @@ export function ProjectSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-auto gap-2 font-normal"
+          className="w-auto gap-2 font-normal h-8"
         >
           {selectedProject?.type === ProjectType.TEAM ? (
             <Avatar
