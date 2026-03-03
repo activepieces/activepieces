@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
-import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import { 
   httpClient, 
   HttpMethod,
@@ -13,19 +14,26 @@ export const createWorkbook = createAction({
   displayName: 'Create Workbook',
   description: 'Create a new workbook at the specified location',
   props: {
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
     name: Property.ShortText({
       displayName: "Name",
       description: "The name of the new workbook",
       required: true
     }),
-    parentFolder: excelCommon.parent_folder
   },
   async run(context) {
-    const { name, parentFolder } = context.propsValue
+    const { storageSource, siteId, documentId, name } = context.propsValue;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${excelCommon.baseUrl}/${parentFolder === 'root' ? '' : 'items/'}${parentFolder}/children`,
+      url: `${drivePath}/root/children`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth['access_token'],

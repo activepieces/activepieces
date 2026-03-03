@@ -37,6 +37,17 @@ export async function getLastUsedRow(
 	return lastRow;
 }
 
+export function getDrivePath(storageSource: string, siteId?: string, documentId?: string): string {
+	if (storageSource === 'onedrive') {
+		return '/me/drive';
+	}
+	// for sharepoint ensure siteId and documentId are provided
+	if (!siteId || !documentId) {
+		throw new Error('please select SharePoint site and document library.');
+	}
+	return `/sites/${siteId}/drives/${documentId}`;
+}
+
 export async function getHeaders(
 	accessToken: string,
 	drivePath: string,

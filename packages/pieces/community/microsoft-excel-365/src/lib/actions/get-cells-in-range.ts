@@ -5,7 +5,8 @@ import {
   AuthenticationType
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
-import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 
 export const getRangeAction = createAction({
   auth: excelAuth,
@@ -13,8 +14,11 @@ export const getRangeAction = createAction({
   displayName: 'Get Cells in Range',
   description: 'Retrieve the values in a given cell range (e.g., “A1:C10”).',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     range: Property.ShortText({
       displayName: 'Range',
       description:
@@ -23,8 +27,13 @@ export const getRangeAction = createAction({
     })
   },
   async run(context) {
-    const { workbook_id, worksheet_id, range } = context.propsValue;
+    const { storageSource, siteId, documentId, workbookId, worksheetId, range } = context.propsValue;
     const { access_token } = context.auth;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     if (!/^[A-Z]+[1-9][0-9]*(:[A-Z]+[1-9][0-9]*)?$/.test(range as string)) {
       throw new Error(
@@ -34,7 +43,7 @@ export const getRangeAction = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/range(address='${range}')`,
+      url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: access_token

@@ -5,6 +5,8 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import { excelCommon } from '../common/common';
 
 export const createTableAction = createAction({
@@ -13,8 +15,11 @@ export const createTableAction = createAction({
   description: 'Create a table in a worksheet',
   displayName: 'Create Table',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     selectRange: Property.Dropdown({
       auth: excelAuth,
       displayName: 'Select Range',
@@ -53,16 +58,20 @@ export const createTableAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
+    const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
     const selectRange = propsValue['selectRange'];
     const hasHeaders = propsValue['hasHeaders'];
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     let range: string | undefined;
     if (selectRange === 'auto') {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`,
+        url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth['access_token'],
@@ -78,7 +87,7 @@ export const createTableAction = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/add`,
+      url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/add`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],

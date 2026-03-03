@@ -5,7 +5,8 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
-import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 
 export const getWorkbooksAction = createAction({
   auth: excelAuth,
@@ -13,6 +14,9 @@ export const getWorkbooksAction = createAction({
   description: 'Retrieve a list of workbooks',
   displayName: 'Get Workbooks',
   props: {
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
     limit: Property.Number({
       displayName: 'Limit',
       description:
@@ -21,7 +25,14 @@ export const getWorkbooksAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
+    const { storageSource, siteId, documentId } = propsValue;
     const limit = propsValue['limit'];
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     const queryParams: any = {}
 
@@ -31,7 +42,7 @@ export const getWorkbooksAction = createAction({
 
     const request = {
       method: HttpMethod.GET,
-      url: `${excelCommon.baseUrl}/root/search(q='.xlsx')`,
+      url: `${drivePath}/root/search(q='.xlsx')`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN as const,
         token: auth['access_token'],

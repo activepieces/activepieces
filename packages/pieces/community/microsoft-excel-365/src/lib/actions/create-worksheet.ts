@@ -1,5 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import { excelCommon } from '../common/common';
 import {
   httpClient,
@@ -22,7 +24,10 @@ export const createWorksheetAction = createAction({
   description:
     'Add a new worksheet (tab) to an existing workbook with optional default headers.',
   props: {
-    workbook_id: excelCommon.workbook_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
     name: Property.ShortText({
       displayName: 'Worksheet Name',
       description:
@@ -37,14 +42,19 @@ export const createWorksheetAction = createAction({
     })
   },
   async run(context) {
-    const { workbook_id, name, headers } = context.propsValue;
+    const { storageSource, siteId, documentId, workbookId, name, headers } = context.propsValue;
     const { access_token } = context.auth;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     // Step 1: Create the new worksheet
     const createWorksheetResponse =
       await httpClient.sendRequest<CreateWorksheetResponse>({
         method: HttpMethod.POST,
-        url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/add`,
+        url: `${drivePath}/items/${workbookId}/workbook/worksheets/add`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: access_token
@@ -68,7 +78,7 @@ export const createWorksheetAction = createAction({
       // Add the header values to the first row of the new worksheet
       await httpClient.sendRequest({
         method: HttpMethod.PATCH,
-        url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${newWorksheetName}/range(address='${address}')`,
+        url: `${drivePath}/items/${workbookId}/workbook/worksheets/${newWorksheetName}/range(address='${address}')`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: access_token
@@ -81,7 +91,7 @@ export const createWorksheetAction = createAction({
       // Create a table from the newly added header range
       const createTableResponse = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${newWorksheetName}/tables/add`,
+        url: `${drivePath}/items/${workbookId}/workbook/worksheets/${newWorksheetName}/tables/add`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: access_token

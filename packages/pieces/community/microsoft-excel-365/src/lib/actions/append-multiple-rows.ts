@@ -1,7 +1,6 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
 import { WorkbookRange } from '@microsoft/microsoft-graph-types';
-import { excelAuth } from '../../index';
 import {
 	createMSGraphClient,
 	getHeaders,
@@ -9,6 +8,7 @@ import {
 	numberToColumnName,
 } from '../common/helpers';
 import { commonProps } from '../common/props';
+import { excelAuth } from '../auth';
 
 export enum FilterOperator {
 	TEXT_CONTAINS = 'TEXT_CONTAINS',
@@ -48,7 +48,7 @@ export const appendMultipleRowsAction = createAction({
 		documentId: commonProps.documentId,
 		workbookId: commonProps.workbookId,
 		worksheetId: commonProps.worksheetId,
-		values: commonProps.worksheetValues(true),
+		values: commonProps.worksheetMultiValues,
 		// values: Property.DynamicProperties({
 		// 	auth: excelAuth,
 		// 	displayName: 'Values',

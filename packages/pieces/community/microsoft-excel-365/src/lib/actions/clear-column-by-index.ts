@@ -5,6 +5,8 @@ import {
   AuthenticationType
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import { excelCommon } from '../common/common';
 
 export const clearColumnAction = createAction({
@@ -13,8 +15,11 @@ export const clearColumnAction = createAction({
   displayName: 'Clear Column by Index',
   description: 'Clear contents/formatting of a column by its index.',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     column_index: Property.Number({
       displayName: 'Column Index',
       description:
@@ -45,9 +50,14 @@ export const clearColumnAction = createAction({
     })
   },
   async run(context) {
-    const { workbook_id, worksheet_id, column_index, applyTo } =
+    const { storageSource, siteId, documentId, workbookId, worksheetId, column_index, applyTo } =
       context.propsValue;
     const { access_token } = context.auth;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     if (
       typeof column_index !== 'number' ||
@@ -65,7 +75,7 @@ export const clearColumnAction = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/range(address='${columnAddress}')/clear`,
+      url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${columnAddress}')/clear`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: access_token

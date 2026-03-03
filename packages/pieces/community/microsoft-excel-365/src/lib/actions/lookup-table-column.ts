@@ -5,6 +5,8 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import { excelCommon } from '../common/common';
 
 export const lookupTableColumnAction = createAction({
@@ -13,9 +15,12 @@ export const lookupTableColumnAction = createAction({
   description: 'Lookup a value in a table column in a worksheet',
   displayName: 'Lookup Table Column',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
-    table_id: excelCommon.table_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
+    tableId: commonProps.tableId,
     lookup_column: Property.ShortText({
       displayName: 'Lookup Column',
       description: 'The column name to lookup the value in',
@@ -34,14 +39,17 @@ export const lookupTableColumnAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableName = propsValue['table_id'];
+    const { storageSource, siteId, documentId, workbookId, worksheetId, tableId } = propsValue;
     const lookupColumn = propsValue['lookup_column'];
     const lookupValue = propsValue['lookup_value'];
     const returnAllMatches = propsValue['return_all_matches'];
 
-    const rowsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/rows`;
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+    const rowsUrl = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`;
     const rowsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: rowsUrl,
@@ -51,7 +59,7 @@ export const lookupTableColumnAction = createAction({
       },
     });
 
-    const columnsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/columns`;
+    const columnsUrl = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`;
     const columnsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: columnsUrl,

@@ -5,6 +5,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import { excelAuth } from '../auth';
 import {
   httpClient,
@@ -24,14 +26,15 @@ interface Worksheet {
 
 async function getWorksheets(
   auth: OAuth2PropertyValue,
-  workbookId: string
+  workbookId: string,
+  drivePath: string
 ): Promise<Worksheet[]> {
   if (!workbookId) return [];
 
   try {
     const response = await httpClient.sendRequest<{ value: Worksheet[] }>({
       method: HttpMethod.GET,
-      url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets`,
+      url: `${drivePath}/items/${workbookId}/workbook/worksheets`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.access_token
@@ -43,10 +46,12 @@ async function getWorksheets(
   }
 }
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof excelAuth>, { workbook_id: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof excelAuth>, { storageSource: string; siteId?: string; documentId?: string; workbookId: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, store }) => {
-    const worksheets = await getWorksheets(auth, propsValue.workbook_id);
+    const { storageSource, siteId, documentId, workbookId } = propsValue;
+    const drivePath = getDrivePath(storageSource, siteId, documentId);
+    const worksheets = await getWorksheets(auth, workbookId, drivePath);
 
     const storedWorksheetIds = await store.get<string[]>('worksheet_ids') ?? [];
 
@@ -70,7 +75,10 @@ export const newWorksheetTrigger = createTrigger({
   displayName: 'New Worksheet',
   description: 'Fires when a new worksheet is created in a workbook.',
   props: {
-    workbook_id: excelCommon.workbook_id
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId
   },
   type: TriggerStrategy.POLLING,
   sampleData: {
@@ -83,6 +91,10 @@ export const newWorksheetTrigger = createTrigger({
   },
 
   onEnable: async (context) => {
+    const { storageSource, siteId, documentId } = context.propsValue as any;
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
       store: context.store,

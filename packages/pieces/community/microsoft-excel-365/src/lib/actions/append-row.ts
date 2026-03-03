@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { objectToArray } from '../common/common';
 import { commonProps } from '../common/props';
 import { createMSGraphClient, getLastUsedRow, numberToColumnName } from '../common/helpers';
@@ -17,7 +17,7 @@ export const appendRowAction = createAction({
 		workbookId: commonProps.workbookId,
 		worksheetId: commonProps.worksheetId,
 		isFirstRowHeaders: commonProps.isFirstRowHeaders,
-		values: commonProps.worksheetValues(),
+		values: commonProps.worksheetValues,
 	},
 	async run({ propsValue, auth }) {
 		const { workbookId, worksheetId, storageSource, siteId, documentId } = propsValue;

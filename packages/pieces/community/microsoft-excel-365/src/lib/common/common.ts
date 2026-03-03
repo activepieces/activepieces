@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 import { excelAuth } from '../auth';
+import { getDrivePath } from './helpers';
 
 export const excelCommon = {
 	baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',
@@ -167,20 +168,24 @@ export const excelCommon = {
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
-		refreshers: ['workbook_id', 'worksheet_id', 'table_id'],
-		props: async ({ auth, workbook_id, worksheet_id, table_id }) => {
+		refreshers: ['storageSource','siteId','documentId','workbook_id', 'worksheet_id', 'table_id'],
+		props: async ({ auth, storageSource, siteId, documentId, workbook_id, worksheet_id, table_id }) => {
 			if (
 				!auth ||
 				(workbook_id ?? '').toString().length === 0 ||
 				(worksheet_id ?? '').toString().length === 0 ||
-				(worksheet_id ?? '').toString().length === 0
+				(table_id ?? '').toString().length === 0
 			) {
 				return {};
 			}
 
+			if (storageSource === 'sharepoint' && (!siteId || !documentId)) return {};
+
 			const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+			const drivePath = getDrivePath(storageSource as string, siteId as string, documentId as string);
 
 			const headers = await excelCommon.getTableHeaders(
+				drivePath,
 				workbook_id as unknown as string,
 				authProp['access_token'],
 				worksheet_id as unknown as string,
@@ -255,6 +260,7 @@ export const excelCommon = {
 		return response.body.values?.[0] ?? [];
 	},
 	getTableHeaders: async function (
+		drivePath: string,
 		workbookId: string,
 		accessToken: string,
 		worksheetId: string,
@@ -262,7 +268,7 @@ export const excelCommon = {
 	) {
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.GET,
-			url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
+			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,
@@ -321,13 +327,15 @@ export const excelCommon = {
 	getAllRows: async function (
 		workbookId: string,
 		worksheetId: string,
-		accessToken: string
+		accessToken: string,
+		drivePath?: string
 	): Promise<(string | number | boolean)[][]> {
+		const basePath = drivePath || excelCommon.baseUrl;
 		const response = await httpClient.sendRequest<{
 			values: (string | number | boolean)[][];
 		}>({
 			method: HttpMethod.GET,
-			url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+			url: `${basePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: accessToken,

@@ -5,7 +5,8 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
-import { excelCommon } from '../common/common';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 
 export const clearWorksheetAction = createAction({
   auth: excelAuth,
@@ -13,8 +14,11 @@ export const clearWorksheetAction = createAction({
   description: 'Clear a worksheet',
   displayName: 'Clear Worksheet',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
     range: Property.ShortText({
       displayName: 'Range',
       description:
@@ -23,11 +27,15 @@ export const clearWorksheetAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
+    const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
     const range = propsValue['range'];
 
-    let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
+
+    let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
 
     // If range is not provided, clear the entire worksheet
     if (!range) {

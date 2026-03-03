@@ -6,6 +6,8 @@ import {
   HttpError
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
+import { commonProps } from '../common/props';
+import { getDrivePath } from '../common/helpers';
 import { excelCommon } from '../common/common';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,9 +18,12 @@ export const getRowAction = createAction({
   displayName: 'Get Row by ID',
   description: '  Retrieve the entire content of a row by its row ID.',
   props: {
-    workbook_id: excelCommon.workbook_id,
-    worksheet_id: excelCommon.worksheet_id,
-    table_id: excelCommon.table_id,
+    storageSource: commonProps.storageSource,
+    siteId: commonProps.siteId,
+    documentId: commonProps.documentId,
+    workbookId: commonProps.workbookId,
+    worksheetId: commonProps.worksheetId,
+    tableId: commonProps.tableId,
     row_id: Property.Number({
       displayName: 'Row ID (Index)',
       description:
@@ -27,8 +32,13 @@ export const getRowAction = createAction({
     })
   },
   async run(context) {
-    const { workbook_id, table_id, row_id } = context.propsValue;
+    const { storageSource, siteId, documentId, workbookId, tableId, row_id } = context.propsValue;
     const { access_token } = context.auth;
+
+    if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+      throw new Error('please select SharePoint site and document library.');
+    }
+    const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
     const maxRetries = 3;
     let attempt = 0;
@@ -37,7 +47,7 @@ export const getRowAction = createAction({
       try {
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/tables/${table_id}/rows/itemAt(index=${row_id})`,
+          url: `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/rows/itemAt(index=${row_id})`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: access_token
