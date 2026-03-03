@@ -123,8 +123,6 @@ export const ProjectRoleDialog = ({
     }
     return projectRole.permissions;
   });
-  console.log();
-
   const { mutate } = useMutation({
     mutationFn: async () => {
       if (mode === 'create') {
@@ -248,60 +246,69 @@ export const ProjectRoleDialog = ({
               {t('Permissions')}
             </span>
             <div className="overflow-y-auto p-2 rounded-md">
-              <ScrollArea className="h-[70vh] pr-4">
-                {initialPermissions.map((permission, index) => (
-                  <div
-                    key={permission.name}
-                    className={`w-full flex flex-col justify-between py-2 ${
-                      index !== initialPermissions.length - 1 ? 'border-b' : ''
-                    }`}
-                  >
-                    <div className="w-full flex flex-row justify-between">
-                      <span className="font-bold text-foreground">
-                        {permission.name}
-                      </span>
-                      <div className="flex bg-accent rounded-sm space-x-2">
-                        {!permission.disableNone && (
+              <ScrollArea className="h-[55vh] pr-4">
+                <div className="grid grid-cols-2 gap-x-6">
+                  {initialPermissions.map((permission) => (
+                    <div
+                      key={permission.name}
+                      className="flex flex-col justify-between py-3 border-b last:border-b-0"
+                    >
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <span className="font-semibold text-sm text-foreground">
+                          {permission.name}
+                        </span>
+                        <div className="flex bg-accent rounded-sm">
+                          {!permission.disableNone && (
+                            <Button
+                              className="h-9 px-4"
+                              variant={getButtonVariant(
+                                permission.name,
+                                'None',
+                              )}
+                              onClick={() =>
+                                handlePermissionChange(permission.name, 'None')
+                              }
+                              disabled={disabled}
+                            >
+                              {t('None')}
+                            </Button>
+                          )}
+                          {!permission.disableRead && (
+                            <Button
+                              className="h-9 px-4"
+                              variant={getButtonVariant(
+                                permission.name,
+                                'Read',
+                              )}
+                              onClick={() =>
+                                handlePermissionChange(permission.name, 'Read')
+                              }
+                              disabled={disabled}
+                            >
+                              {t('Read')}
+                            </Button>
+                          )}
                           <Button
                             className="h-9 px-4"
-                            variant={getButtonVariant(permission.name, 'None')}
+                            variant={getButtonVariant(
+                              permission.name,
+                              'Write',
+                            )}
                             onClick={() =>
-                              handlePermissionChange(permission.name, 'None')
+                              handlePermissionChange(permission.name, 'Write')
                             }
                             disabled={disabled}
                           >
-                            {t('None')}
+                            {t('Write')}
                           </Button>
-                        )}
-                        {!permission.disableRead && (
-                          <Button
-                            className="h-9 px-4"
-                            variant={getButtonVariant(permission.name, 'Read')}
-                            onClick={() =>
-                              handlePermissionChange(permission.name, 'Read')
-                            }
-                            disabled={disabled}
-                          >
-                            {t('Read')}
-                          </Button>
-                        )}
-                        <Button
-                          className="h-9 px-4"
-                          variant={getButtonVariant(permission.name, 'Write')}
-                          onClick={() =>
-                            handlePermissionChange(permission.name, 'Write')
-                          }
-                          disabled={disabled}
-                        >
-                          {t('Write')}
-                        </Button>
+                        </div>
                       </div>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {permission.description}
+                      </span>
                     </div>
-                    <span className="text-sm text-accent-foreground">
-                      {permission.description}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </ScrollArea>
             </div>
           </div>

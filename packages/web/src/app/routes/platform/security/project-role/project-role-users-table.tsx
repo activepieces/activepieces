@@ -118,7 +118,7 @@ export const ProjectRoleUsersTable = () => {
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
-      <div className="flex-colw-full">
+      <div className="flex-col w-full">
         <DashboardPageHeader
           title={`${projectRole?.name} ${t('Role')} ${t('Users')}`}
           description={t('View the users assigned to this role')}
