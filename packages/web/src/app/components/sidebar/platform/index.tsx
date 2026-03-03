@@ -189,9 +189,9 @@ export function PlatformSidebar() {
   ];
 
   return (
-    <Sidebar className="py-1 pl-1 border-r-0!">
-      <SidebarHeader className="px-3">
-        <div className="w-full pb-2 flex items-center gap-2">
+    <Sidebar className="border-r-0!">
+      <SidebarHeader className="pb-0">
+        <div className="w-full flex items-center gap-2">
           <Link
             to={defaultRoute}
             className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
@@ -206,13 +206,13 @@ export function PlatformSidebar() {
         </div>
       </SidebarHeader>
       <div className="flex-1 overflow-y-auto scrollbar-hover">
-        <SidebarContent className="px-1 gap-0">
+        <SidebarContent className="gap-0">
           <SidebarGroup className="cursor-default shrink-0">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuButton
-                  onClick={() => navigate('/')}
-                  className="py-5 px-2"
+                  onClick={() => navigate(defaultRoute)}
+                  className="px-2"
                 >
                   <ArrowLeftIcon className="size-4" />
                   {t('Exit platform admin')}
@@ -244,7 +244,7 @@ export function PlatformSidebar() {
         </SidebarContent>
       </div>
 
-      <SidebarFooter className="px-3">
+      <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>

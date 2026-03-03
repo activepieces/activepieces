@@ -316,7 +316,10 @@ function Sidebar({
           variant === 'floating' || variant === 'inset'
             ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
-          side === 'left' ? 'border-r' : 'border-l',
+          !hoverMode && (side === 'left' ? 'border-r' : 'border-l'),
+          hoverMode &&
+            isHoverExpanded &&
+            (side === 'left' ? 'border-r' : 'border-l'),
           !hoverMode &&
             state === 'collapsed' &&
             collapsible === 'icon' &&

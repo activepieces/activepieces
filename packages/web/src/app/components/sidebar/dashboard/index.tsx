@@ -10,6 +10,7 @@ import { Search, Plus } from 'lucide-react';
 
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
+import { ShieldIcon } from '@/components/icons/shield';
 import { TrophyIcon } from '@/components/icons/trophy';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -43,6 +44,7 @@ import {
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { projectCollectionUtils } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -311,6 +313,7 @@ export function ProjectDashboardSidebar({ className }: { className?: string } = 
         </SidebarContent>
         <SidebarFooter>
           {state === 'expanded' && <DelayedSidebarUsageLimits />}
+          <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>
@@ -331,4 +334,27 @@ function DelayedSidebarUsageLimits() {
       <SidebarUsageLimits />
     </div>
   ) : null;
+}
+
+function SidebarPlatformAdminLink() {
+  const showPlatformAdmin = useIsPlatformAdmin();
+  const { embedState } = useEmbedding();
+
+  if (embedState.isEmbedded || !showPlatformAdmin) {
+    return null;
+  }
+
+  return (
+    <SidebarMenu>
+      <ApSidebarItem
+        type="link"
+        to="/platform/projects"
+        label={t('Platform Admin')}
+        icon={ShieldIcon}
+        isSubItem={false}
+        show={true}
+        hasPermission={true}
+      />
+    </SidebarMenu>
+  );
 }

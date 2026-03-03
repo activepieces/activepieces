@@ -4,12 +4,10 @@ import { t } from 'i18next';
 import {
   ChevronsUpDown,
   LogOut,
-  Shield,
   UserCogIcon,
   UserPlus,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -30,10 +28,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { InviteUserDialog } from '@/features/members';
-import {
-  useIsPlatformAdmin,
-  useAuthorization,
-} from '@/hooks/authorization-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -46,13 +41,11 @@ export function SidebarUser() {
   const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
-  const location = useLocation();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
   const { checkAccess } = useAuthorization();
   const canInviteUsers = checkAccess(Permission.WRITE_INVITATION);
-  const isInPlatformAdmin = location.pathname.startsWith('/platform');
   const isCollapsed = state === 'collapsed';
 
   if (!user || embedState.isEmbedded) {
@@ -122,8 +115,6 @@ export function SidebarUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {!isInPlatformAdmin && <SidebarPlatformAdminButton />}
-
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
                 <UserCogIcon className="w-4 h-4 mr-2" />
@@ -155,26 +146,3 @@ export function SidebarUser() {
   );
 }
 
-function SidebarPlatformAdminButton() {
-  const showPlatformAdminDashboard = useIsPlatformAdmin();
-  const { embedState } = useEmbedding();
-  const navigate = useNavigate();
-
-  if (embedState.isEmbedded || !showPlatformAdminDashboard) {
-    return null;
-  }
-
-  return (
-    <DropdownMenuGroup>
-      <DropdownMenuItem
-        onClick={() => navigate('/platform/projects')}
-        className="w-full flex items-center justify-center relative"
-      >
-        <div className={`w-full flex items-center gap-2`}>
-          <Shield className="size-4" />
-          <span className={`text-sm`}>{t('Platform Admin')}</span>
-        </div>
-      </DropdownMenuItem>
-    </DropdownMenuGroup>
-  );
-}
