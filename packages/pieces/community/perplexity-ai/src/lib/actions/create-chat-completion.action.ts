@@ -1,4 +1,4 @@
-import { perplexityAiAuth } from '../../';
+import { perplexityAiAuth } from '../auth';
 import {
   createAction,
   Property,

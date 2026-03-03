@@ -1,5 +1,4 @@
-import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
-import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId } from '@activepieces/shared'
+import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId, SigningKey, SigningKeyId } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
@@ -53,7 +52,7 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                 }
             }
             catch (error) {
-                log.error({ name: 'ExternalTokenExtractor#extract', error })
+                log.error({ err: error }, '[externalTokenExtractor#extract] Failed to extract external token')
 
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_BEARER_TOKEN,

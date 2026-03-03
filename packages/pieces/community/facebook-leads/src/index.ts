@@ -1,21 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newLead } from './lib/triggers/new-lead';
+import { facebookLeadsAuth } from './lib/auth';
 import crypto from 'node:crypto';
 
-export const facebookLeadsAuth = PieceAuth.OAuth2({
-	description: '',
-	authUrl: 'https://graph.facebook.com/oauth/authorize',
-	tokenUrl: 'https://graph.facebook.com/oauth/access_token',
-	required: true,
-	scope: [
-		'pages_show_list',
-		'pages_manage_ads',
-		'leads_retrieval',
-		'pages_manage_metadata',
-		'business_management',
-	],
-});
 
 export const facebookLeads = createPiece({
 	displayName: 'Facebook Leads',

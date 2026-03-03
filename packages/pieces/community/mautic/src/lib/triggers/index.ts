@@ -1,5 +1,5 @@
 import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
-import { mauticAuth } from '../../index';
+import { mauticAuth } from '../auth';
 import { Property, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 
 const contactTestData = {

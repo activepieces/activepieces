@@ -1,4 +1,4 @@
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { excelCommon } from '../common/common';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';

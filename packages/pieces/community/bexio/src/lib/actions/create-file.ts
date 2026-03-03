@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { bexioAuth } from '../../index';
+import { bexioAuth } from '../auth';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { bexioCommon } from '../common/index';
 import FormData from 'form-data';

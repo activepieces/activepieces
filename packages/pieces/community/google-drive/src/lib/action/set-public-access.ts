@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { downloadFileFromDrive } from '../common/get-file-content';

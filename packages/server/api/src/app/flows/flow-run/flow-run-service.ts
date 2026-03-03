@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -226,15 +226,17 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     }: ResumeWebhookParams): Promise<FlowRun | null> {
         log.info({
             runId: flowRunId,
-        }, '[FlowRunService#resume] adding flow run to queue')
+        }, '[flowRunService#resume] Adding flow run to queue')
 
         const flowRun = await queryBuilderForFlowRun(flowRunRepo()).where({ id: flowRunId }).getOne()
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: flowRunId,
+                    entityType: 'flow_run',
+                    entityId: flowRunId,
+                    message: 'Flow run not found',
                 },
             })
         }
@@ -390,9 +392,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: params.id,
+                    entityType: 'flow_run',
+                    entityId: params.id,
+                    message: 'Flow run not found',
                 },
             })
         }

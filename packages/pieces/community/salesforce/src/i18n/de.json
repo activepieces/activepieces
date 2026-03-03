@@ -161,6 +161,7 @@
   "New Outbound Message": "Neue ausgehende Nachricht",
   "New Record": "Neuer Datensatz",
   "New or Updated File": "Neue oder aktualisierte Datei",
+  "New Case in Queue": "Neuer Fall in der Warteschlange",
   "Fires when a new Attachment or File is added to any Case record.": "Feuert ab, wenn ein neuer Anhang oder Datei zu jedem Fall Datensatz hinzugefügt wird.",
   "Fires when a new Contact record is created in Salesforce.": "Feuer, wenn ein neuer Kontakt-Datensatz in Salesforce erstellt wird.",
   "Fires when a tracked field is updated on a specified object.": "Feuert ab, wenn ein getragenes Feld auf ein bestimmtes Objekt aktualisiert wird.",
@@ -169,6 +170,9 @@
   "Fires when a new outbound message is received from Salesforce.": "Feuert ab, wenn eine neue ausgehende Nachricht von Salesforce empfangen wird.",
   "Triggers when there is new record": "Auslöser wenn neuer Datensatz vorhanden ist",
   "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.": "Feuer, wenn eine Datei (ContentDocument) erstellt oder aktualisiert wird. Feuert nicht auf klassische Anhänge oder Notizen.",
+  "Triggers when a new Case record is assigned to a specified queue.": "Wird ausgelöst, wenn ein neuer Case Datensatz einer angegebenen Warteschlange zugewiesen wird.",
   "Conditions (Advanced)": "Bedingungen (Fortgeschritten)",
-  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Geben Sie eine SOQL-Abfrage ein, wo Klausel i. e. IsDeleted = TRUE ein."
+  "Case Queue": "Fallwarteschlange",
+  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Geben Sie eine SOQL-Abfrage ein, wo Klausel i. e. IsDeleted = TRUE ein.",
+  "The queue to monitor for new cases.": "Die Warteschlange für neue Fälle."
 }

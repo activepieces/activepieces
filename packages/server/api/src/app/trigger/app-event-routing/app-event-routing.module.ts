@@ -6,7 +6,7 @@ import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
     rejectedPromiseHandler,
     securityAccess,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -78,11 +78,11 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             const piece = appWebhooks[pieceUrl]
             if (isNil(piece)) {
                 throw new ActivepiecesError({
-                    code: ErrorCode.PIECE_NOT_FOUND,
+                    code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        pieceName: pieceUrl,
-                        pieceVersion: 'latest',
-                        message: 'Pieces is not found in app event routing',
+                        entityType: 'piece',
+                        entityId: pieceUrl,
+                        message: 'Piece is not found in app event routing',
                     },
                 })
             }

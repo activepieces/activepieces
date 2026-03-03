@@ -1,4 +1,4 @@
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';

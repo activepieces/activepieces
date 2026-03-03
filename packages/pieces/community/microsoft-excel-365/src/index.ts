@@ -1,5 +1,8 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
+import {
+  createPiece,
+  OAuth2PropertyValue,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 
 import { addWorksheetAction } from './lib/actions/add-worksheet';
@@ -39,6 +42,9 @@ import { updatedRowTrigger } from './lib/trigger/updated-row';
 import { appendMultipleRowsAction } from './lib/actions/append-multiple-rows';
 import { findWorkbookAction } from './lib/actions/find-workbooks';
 import { findWorksheetAction } from './lib/actions/find-worksheets';
+import { getWorksheetColumnsAction } from './lib/actions/get-wroksheet-columns';
+import { excelAuth } from './lib/auth';
+import { excelCommon } from './lib/common/common';
 import { getWorksheetColumnsAction } from './lib/actions/get-wroksheet-columns';
 import { excelCommon } from './lib/common/common';
 

@@ -21,28 +21,7 @@ import { changeCredentialsBulk } from './lib/actions/change-credentials-bulk';
 import { setNextPasswordBulk } from './lib/actions/set-next-password-bulk';
 import { changeCredentialsInVaultBulk } from './lib/actions/change-credentials-in-vault-bulk';
 import { reconcileCredentialsBulk } from './lib/actions/reconcile-credentials-bulk';
-
-export const cyberarkAuth = PieceAuth.CustomAuth({
-  description: 'CyberArk PVWA Authentication',
-  props: {
-    serverUrl: Property.ShortText({
-      displayName: 'PVWA Server URL',
-      description: 'The PVWA server URL (e.g., https://pvwa-server)',
-      required: true
-    }),
-    username: Property.ShortText({
-      displayName: 'Username',
-      description: 'CyberArk username',
-      required: true
-    }),
-    password: Property.ShortText({
-      displayName: 'Password',
-      description: 'CyberArk password',
-      required: true
-    })
-  },
-  required: true
-});
+import { cyberarkAuth } from './lib/auth';
 
 export const cyberark = createPiece({
   displayName: 'CyberArk',
