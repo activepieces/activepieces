@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-common'
+import { apDayjs, AppSystemProp } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -13,6 +13,7 @@ import {
     FlowRunId,
     FlowRunStatus,
     FlowVersionId,
+    isFlowRunStateTerminal,
     isNil,
     LATEST_JOB_DATA_SCHEMA_VERSION,
     PauseMetadata,
@@ -131,6 +132,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             id: flowRunId,
             projectId,
         })
+
+        const redisFailedJobRetentionDays = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS)
+        if (
+            isFlowRunStateTerminal({ status: oldFlowRun.status, ignoreInternalError: false }) &&
+            isOutsideRetentionWindow(oldFlowRun.finishTime, redisFailedJobRetentionDays)
+        ) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+                params: {
+                    flowRunId: oldFlowRun.id,
+                    failedJobRetentionDays: redisFailedJobRetentionDays,
+                },
+            })
+        }
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
@@ -653,7 +668,10 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-
+function isOutsideRetentionWindow(finishTime: FlowRun['finishTime'], retentionDays: number): boolean {
+    if (!finishTime) return false
+    return apDayjs(finishTime).add(retentionDays, 'day').isBefore(apDayjs())
+}
 
 type CreateParams = {
     projectId: ProjectId

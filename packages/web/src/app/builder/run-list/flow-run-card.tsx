@@ -1,4 +1,5 @@
 import {
+  ErrorCode,
   FlowRetryStrategy,
   FlowRun,
   FlowRunStatus,
@@ -6,6 +7,7 @@ import {
   isFlowRunStateTerminal,
   Permission,
   PopulatedFlow,
+  ApErrorParams,
 } from '@activepieces/shared';
 import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
@@ -13,6 +15,7 @@ import { t } from 'i18next';
 import { Eye, Repeat } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -36,6 +39,8 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -86,6 +91,21 @@ const FlowRunCard = React.memo(
       onSuccess: ({ run }) => {
         refetchRuns();
         navigate(`/runs/${run.id}`);
+      },
+      onError: (error: unknown) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (apError.code === ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION) {
+            toast.error(t('Retry failed'), {
+              description: t('Retry is only available for {failedJobRetentionDays} after a run fails.', {
+                failedJobRetentionDays: apError.params.failedJobRetentionDays,
+              }),
+              duration: 5000,
+            });
+          }
+        } else {
+          internalErrorToast();
+        }
       },
     });
 

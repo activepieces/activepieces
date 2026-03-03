@@ -1,10 +1,12 @@
 import {
+  ErrorCode,
   FlowRetryStrategy,
   FlowRun,
   FlowRunStatus,
   isFailedState,
   isFlowRunStateTerminal,
   Permission,
+  ApErrorParams,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import {
   BulkAction,
@@ -49,6 +52,8 @@ import {
   RetriedRunsSnackbar,
   RUN_IDS_QUERY_PARAM,
 } from './retried-runs-snackbar';
+import { api } from '@/lib/api';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 type SelectedRow = {
   id: string;
@@ -201,6 +206,21 @@ export const RunsTable = () => {
           [RUN_IDS_QUERY_PARAM]: runsIds,
           [LIMIT_QUERY_PARAM]: runsIds.length.toString(),
         });
+      }
+    },
+    onError: (error) => {
+      if (api.isError(error)) {
+        const apError = error.response?.data as ApErrorParams;
+        if (apError.code === ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION) {
+          toast.error(t('Retry failed'), {
+            description: t('Retry is only available for {failedJobRetentionDays} after a run fails.', {
+              failedJobRetentionDays: apError.params.failedJobRetentionDays,
+            }),
+            duration: 5000,
+          });
+        }
+      } else {
+        internalErrorToast();
       }
     },
   });

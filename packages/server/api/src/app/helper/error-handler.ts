@@ -43,6 +43,7 @@ export const errorHandler = async (
             [ErrorCode.MCP_PIECE_REQUIRES_CONNECTION]: StatusCodes.BAD_REQUEST,
             [ErrorCode.MCP_PIECE_CONNECTION_MISMATCH]: StatusCodes.BAD_REQUEST,
             [ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS]: StatusCodes.UNPROCESSABLE_ENTITY,
+            [ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION]: StatusCodes.BAD_REQUEST,
         }
         const statusCode =
       statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST

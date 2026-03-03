@@ -1,3 +1,4 @@
+import type { FlowRunId } from '../../automation/flow-run/flow-run'
 import type { FlowId } from '../../automation/flows/flow'
 import type { FlowVersionId } from '../../automation/flows/flow-version'
 import type { PlatformUsageMetric } from '../../management/platform'
@@ -31,6 +32,7 @@ export type ApErrorParams =
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
     | InvalidBearerTokenParams
@@ -166,6 +168,14 @@ export type SystemInvalidErrorParams = BaseErrorParams<
 ErrorCode.SYSTEM_PROP_INVALID,
 {
     prop: string
+}
+>
+
+export type FlowRunRetryOutsideRetentionErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
+{
+    flowRunId: FlowRunId
+    failedJobRetentionDays: number
 }
 >
 
@@ -484,6 +494,7 @@ export enum ErrorCode {
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_IN_USE = 'FLOW_IN_USE',
+    FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',
