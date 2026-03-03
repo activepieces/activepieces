@@ -13,7 +13,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider hoverMode={true} defaultOpen={false}>
-      {!embedState.isEmbedded && <ProjectDashboardSidebar />}
+      {!embedState.isEmbedded && <ProjectDashboardSidebar className="border-r" />}
       <SidebarInset>
         {children}
         {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}

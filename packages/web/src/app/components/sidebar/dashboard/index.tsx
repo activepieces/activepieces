@@ -6,7 +6,11 @@ import {
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
+
+import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
+import { TrophyIcon } from '@/components/icons/trophy';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -50,7 +54,7 @@ import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
-export function ProjectDashboardSidebar() {
+export function ProjectDashboardSidebar({ className }: { className?: string } = {}) {
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -131,7 +135,7 @@ export function ProjectDashboardSidebar() {
     to: '/templates',
     label: t('Explore'),
     show: true,
-    icon: Compass,
+    icon: CompassIcon,
     hasPermission: true,
     isSubItem: false,
     onClick: handleExploreClick,
@@ -141,7 +145,7 @@ export function ProjectDashboardSidebar() {
     type: 'link',
     to: '/impact',
     label: t('Impact'),
-    icon: LineChart,
+    icon: ChartLineIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
@@ -151,7 +155,7 @@ export function ProjectDashboardSidebar() {
     type: 'link',
     to: '/leaderboard',
     label: t('Leaderboard'),
-    icon: Trophy,
+    icon: TrophyIcon,
     show: true,
     hasPermission: true,
     isSubItem: false,
@@ -163,7 +167,7 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar collapsible="icon" className="max-h-[100vh]">
+      <Sidebar collapsible="icon" className={cn('max-h-[100vh]', className)}>
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">

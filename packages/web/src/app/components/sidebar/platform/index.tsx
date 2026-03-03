@@ -1,26 +1,25 @@
 import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ArrowLeft,
-  Palette,
-  LayoutGrid,
-  Server,
-  Users,
-  Bot,
-  Unplug,
-  Puzzle,
-  Receipt,
-  SquareDashedBottomCode,
-  LogIn,
-  KeyRound,
-  FileJson2,
-  Settings2,
-  FileHeart,
-  MousePointerClick,
-  Webhook,
-} from 'lucide-react';
-import { ComponentType, SVGProps } from 'react';
+import { ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+
+import { ArrowLeftIcon } from '@/components/icons/arrow-left';
+import { BotIcon } from '@/components/icons/bot';
+import { FileHeartIcon } from '@/components/icons/file-heart';
+import { FileJson2Icon } from '@/components/icons/file-json2';
+import { KeyRoundIcon } from '@/components/icons/key-round';
+import { LayoutGridIcon } from '@/components/icons/layout-grid';
+import { LogInIcon } from '@/components/icons/log-in';
+import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
+import { PaletteIcon } from '@/components/icons/palette';
+import { PuzzleIcon } from '@/components/icons/puzzle';
+import { ReceiptIcon } from '@/components/icons/receipt';
+import { ServerIcon } from '@/components/icons/server';
+import { Settings2Icon } from '@/components/icons/settings2';
+import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
+import { UnplugIcon } from '@/components/icons/unplug';
+import { UsersIcon } from '@/components/icons/users';
+import { WebhookIcon } from '@/components/icons/webhook';
 
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -57,36 +56,36 @@ export function PlatformSidebar() {
     {
       to: '/platform/setup/ai',
       label: t('AI'),
-      icon: Bot,
+      icon: BotIcon,
     },
     {
       to: '/platform/setup/branding',
       label: t('Branding'),
-      icon: Palette,
+      icon: PaletteIcon,
       locked: !platform.plan.customAppearanceEnabled,
     },
     {
       to: '/platform/setup/connections',
       label: t('Global Connections'),
-      icon: Unplug,
+      icon: UnplugIcon,
       locked: !platform.plan.globalConnectionsEnabled,
     },
     {
       to: '/platform/setup/pieces',
       label: t('Pieces'),
-      icon: Puzzle,
+      icon: PuzzleIcon,
       locked: !platform.plan.managePiecesEnabled,
     },
     {
       to: '/platform/setup/templates',
       label: t('Templates'),
-      icon: LayoutGrid,
+      icon: LayoutGridIcon,
       locked: !platform.plan.manageTemplatesEnabled,
     },
     {
       to: '/platform/setup/billing',
       label: t('Billing'),
-      icon: Receipt,
+      icon: ReceiptIcon,
       locked: edition === ApEdition.COMMUNITY,
     },
   ].filter((item) => !(item.label === t('AI') && isEmbeddingEnabled));
@@ -96,7 +95,7 @@ export function PlatformSidebar() {
     items: {
       to: string;
       label: string;
-      icon?: ComponentType<SVGProps<SVGSVGElement>>;
+      icon?: ComponentType<{ className?: string }>;
       locked?: boolean;
     }[];
   }[] = [
@@ -106,13 +105,13 @@ export function PlatformSidebar() {
         {
           to: '/platform/projects',
           label: t('Projects'),
-          icon: LayoutGrid,
+          icon: LayoutGridIcon,
           locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
         },
         {
           to: '/platform/users',
           label: t('Users'),
-          icon: Users,
+          icon: UsersIcon,
         },
       ],
     },
@@ -126,37 +125,37 @@ export function PlatformSidebar() {
         {
           to: '/platform/security/audit-logs',
           label: t('Audit Logs'),
-          icon: SquareDashedBottomCode,
+          icon: SquareDashedBottomCodeIcon,
           locked: !platform.plan.auditLogEnabled,
         },
         {
           to: '/platform/security/sso',
           label: t('Single Sign On'),
-          icon: LogIn,
+          icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
         },
         {
           to: '/platform/security/signing-keys',
           label: t('Signing Keys'),
-          icon: KeyRound,
+          icon: KeyRoundIcon,
           locked: !platform.plan.embeddingEnabled,
         },
         {
           to: '/platform/security/project-roles',
           label: t('Project Roles'),
-          icon: Settings2,
+          icon: Settings2Icon,
           locked: !platform.plan.projectRolesEnabled,
         },
         {
           to: '/platform/security/api-keys',
           label: t('API Keys'),
-          icon: FileJson2,
+          icon: FileJson2Icon,
           locked: !platform.plan.apiKeysEnabled,
         },
         {
           to: '/platform/security/secret-managers',
           label: t('Secret Managers'),
-          icon: KeyRound,
+          icon: KeyRoundIcon,
           locked: !platform.plan.secretManagersEnabled,
         },
       ],
@@ -167,22 +166,22 @@ export function PlatformSidebar() {
         {
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
-          icon: Server,
+          icon: ServerIcon,
         },
         {
           to: '/platform/infrastructure/health',
           label: t('Health'),
-          icon: FileHeart,
+          icon: FileHeartIcon,
         },
         {
           to: '/platform/infrastructure/triggers',
           label: t('Triggers'),
-          icon: MousePointerClick,
+          icon: MousePointerClickIcon,
         },
         {
           to: '/platform/infrastructure/event-destinations',
           label: t('Event Streaming'),
-          icon: Webhook,
+          icon: WebhookIcon,
           locked: !platform.plan.eventStreamingEnabled,
         },
       ],
@@ -190,7 +189,7 @@ export function PlatformSidebar() {
   ];
 
   return (
-    <Sidebar className="p-1" variant="inset">
+    <Sidebar className="py-1 pl-1 border-r-0!">
       <SidebarHeader className="px-3">
         <div className="w-full pb-2 flex items-center gap-2">
           <Link
@@ -215,7 +214,7 @@ export function PlatformSidebar() {
                   onClick={() => navigate('/')}
                   className="py-5 px-2"
                 >
-                  <ArrowLeft />
+                  <ArrowLeftIcon className="size-4" />
                   {t('Exit platform admin')}
                 </SidebarMenuButton>
               </SidebarMenu>

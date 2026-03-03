@@ -1,9 +1,11 @@
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
-import { Compass, LineChart, Trophy } from 'lucide-react';
-import React, { ComponentType, SVGProps } from 'react';
+import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
+import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
@@ -19,7 +21,7 @@ import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header'
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
   label: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  icon: ComponentType<{ className?: string }>;
   hasPermission: boolean;
   show: boolean;
 };
@@ -55,21 +57,21 @@ export function ProjectDashboardLayout({
       to: '/templates',
       label: t('Explore'),
       show: !isEmbedded,
-      icon: Compass,
+      icon: CompassIcon,
       hasPermission: true,
     },
     {
       to: '/impact',
       label: t('Impact'),
       show: !isEmbedded,
-      icon: LineChart,
+      icon: ChartLineIcon,
       hasPermission: true,
     },
     {
       to: '/leaderboard',
       label: t('Leaderboard'),
       show: !isEmbedded,
-      icon: Trophy,
+      icon: TrophyIcon,
       hasPermission: true,
     },
   ];
@@ -81,16 +83,18 @@ export function ProjectDashboardLayout({
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
       <SidebarProvider hoverMode={true}>
-        {!isEmbedded && <ProjectDashboardSidebar />}
-        <SidebarInset className={`relative overflow-auto gap-4`}>
-          <div className="flex flex-col">
-            {!hideHeader && (
-              <>
-                <ProjectDashboardLayoutHeader key={currentProjectId} />
-                <Separator className="mb-5" />
-              </>
-            )}
-            <div className="px-4"> {children} </div>
+        {!isEmbedded && <ProjectDashboardSidebar className="border-r-0!" />}
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
+          <div className="flex-1 flex flex-col p-2 pt-2 pb-2 overflow-hidden">
+            <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border">
+              {!hideHeader && (
+                <>
+                  <ProjectDashboardLayoutHeader key={currentProjectId} />
+                  <Separator className="mb-5" />
+                </>
+              )}
+              <div className="flex-1 overflow-auto scrollbar-none px-4"> {children} </div>
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>
