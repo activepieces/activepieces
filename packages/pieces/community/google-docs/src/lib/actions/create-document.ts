@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { docsCommon } from '../common';
-import { googleDocsAuth } from '../..';
+import { googleDocsAuth } from '../auth';
 
 export const createDocument = createAction({
   auth: googleDocsAuth,

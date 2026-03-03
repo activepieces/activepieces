@@ -1,5 +1,4 @@
-import { rolePermissions } from '@activepieces/ee-shared'
-import { DefaultProjectRole, ProjectRole, RoleType } from '@activepieces/shared'
+import { DefaultProjectRole, ProjectRole, rolePermissions, RoleType } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectRoleEntity } from '../../ee/projects/project-role/project-role.entity'
 import { system } from '../../helper/system/system'
@@ -11,7 +10,6 @@ const projectMemberRoleRepo = repoFactory(ProjectRoleEntity)
 const roleIds: Record<DefaultProjectRole, string> = {
     [DefaultProjectRole.ADMIN]: '461ueYHzMykyk5dIL8HzQ',
     [DefaultProjectRole.EDITOR]: 'sjWe85TwaFYxyhn2AgOha', 
-    [DefaultProjectRole.OPERATOR]: '3Wl9IAw5aM0HLafHgMYkb',
     [DefaultProjectRole.VIEWER]: 'aJVBSSJ3YqZ7r1laFjM0a',
 }
 

@@ -1,12 +1,12 @@
-import { exceptionHandler, pinoLogging } from '@activepieces/server-shared'
+import { exceptionHandler, pinoLogging } from '@activepieces/server-common'
 import { ActivepiecesError, BeginExecuteFlowOperation, ConsumeJobResponse, ConsumeJobResponseStatus, EngineResponseStatus, ErrorCode, ExecuteFlowJobData, ExecutionType, FlowExecutionState, flowExecutionStateKey, FlowRunStatus, FlowStatus, FlowVersion, isNil, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
-import { operationHandler } from '../../compute/operation-handler'
-import { sandboxSockerHandler } from '../../compute/sandbox-socket-handlers'
+import { operationHandler } from '../../execution/operation-handler'
+import { sandboxEventHandlers } from '../../execution/sandbox-event-handlers'
 import { runsMetadataQueue } from '../../flow-worker'
 import { workerRedisConnections } from '../../utils/worker-redis'
 
@@ -82,7 +82,7 @@ async function setRunFailedStatus(
     log: FastifyBaseLogger,
     status: FlowRunStatus,
 ): Promise<void> {
-    await sandboxSockerHandler(log).uploadRunLogs({
+    await sandboxEventHandlers(log).uploadRunLogs({
         finishTime: dayjs().toISOString(),
         status,
         httpRequestId: jobData.httpRequestId,

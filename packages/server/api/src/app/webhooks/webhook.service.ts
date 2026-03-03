@@ -1,4 +1,4 @@
-import { pinoLogging } from '@activepieces/server-shared'
+import { pinoLogging } from '@activepieces/server-common'
 import { apId, EngineHttpResponse, EventPayload, FlowRun, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'

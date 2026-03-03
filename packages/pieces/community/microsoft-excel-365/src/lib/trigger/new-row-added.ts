@@ -11,7 +11,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { excelAuth } from '../..';
+import { excelAuth } from '../auth';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof excelAuth>,

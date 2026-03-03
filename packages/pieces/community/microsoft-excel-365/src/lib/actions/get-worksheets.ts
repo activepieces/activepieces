@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { excelCommon } from '../common/common';
 
 export const getWorksheetsAction = createAction({

@@ -1,4 +1,4 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
@@ -100,9 +100,7 @@ function createTransportConfig(
             }
         }
         case McpProtocol.STREAMABLE_HTTP: {
-            const sessionId = crypto.randomUUID()
             return new StreamableHTTPClientTransport(url, {
-                sessionId,
                 requestInit: {
                     headers,
                 },

@@ -2,7 +2,7 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
-import { AppSystemProp, RedisType } from '@activepieces/server-shared'
+import { AppSystemProp, RedisType } from '@activepieces/server-common'
 import {
     assertNotNullOrUndefined,
     isNil,

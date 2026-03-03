@@ -1,13 +1,9 @@
 import {
-    ProjectMember,
-    ProjectMemberId,
-    ProjectMemberWithUser,
-} from '@activepieces/ee-shared'
-import {
     ActivepiecesError,
     ApEdition,
-    ApId,
     apId,
+
+    ApId,
     Cursor,
     DefaultProjectRole,
     ErrorCode,
@@ -15,11 +11,13 @@ import {
     PlatformId,
     PlatformRole,
     ProjectId,
+    ProjectMember,
+    ProjectMemberId,
+    ProjectMemberWithUser,
     ProjectRole,
     SeekPage,
     UserId,
-    UserStatus,
-} from '@activepieces/shared'
+    UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal } from 'typeorm'
@@ -144,7 +142,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.ADMIN, platformId: project.platformId })
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.OPERATOR) {
-            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.OPERATOR, platformId: project.platformId })
+            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.EDITOR, platformId: project.platformId })
         }
         const member = await repo().findOneBy({
             projectId,

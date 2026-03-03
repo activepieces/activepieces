@@ -7,7 +7,7 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { asanaAuth } from '../..';
+import { asanaAuth } from '../auth';
 
 export const asanaCommon = {
   workspace: Property.Dropdown({

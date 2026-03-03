@@ -1,4 +1,4 @@
-import { googleSlidesAuth } from '../../index';
+import { googleSlidesAuth } from '../auth';
 import { createAction, DynamicPropsValue, Property } from "@activepieces/pieces-framework";
 import { getSlide, PageElement, batchUpdate, TableCell, TextElement } from '../commons/common';
 import { google } from 'googleapis';

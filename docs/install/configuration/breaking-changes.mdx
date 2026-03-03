@@ -4,10 +4,24 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.78.1
+
+### What has changed?
+- The Platform `Operator` role can now edit all projects.
+
+### Do you need to take action?
+- Only if you want to restrict Operators from having editor access to every project. Review your Operator permissions as needed.
+
 ## 0.78.0
 ### What has changed?
 
-- Templates no longer include a `usageCount` field in API responses or the database.
+- The `usageCount` field has been removed from both the template API responses and the database—it's no longer available.
+- The Todos feature is now deprecated and will not be supported going forward.
+
+### Do you need to take action?
+
+- If you're using the Todos feature, update your flows to use the new approvals channels available from the approvals tab in the piece selector.
+
 
 ## 0.77.0
 ### What has changed?

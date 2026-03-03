@@ -1,5 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import {
+import { ApplicationEventName,
     FlowRun,
     isFlowRunStateTerminal,
 } from '@activepieces/shared'

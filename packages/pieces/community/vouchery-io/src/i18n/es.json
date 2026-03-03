@@ -34,6 +34,7 @@
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
+  "Follow redirects": "Seguir redirecciones",
   "Select the campaign": "Seleccione la campaña",
   "The code for the voucher": "El código del cupón",
   "The date and time when the voucher expires": "La fecha y hora en que el cupón expira",

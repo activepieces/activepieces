@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleCalendarCommon } from '../common';
 import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../auth';
 
 export const getEvents = createAction({
   auth: googleCalendarAuth,
