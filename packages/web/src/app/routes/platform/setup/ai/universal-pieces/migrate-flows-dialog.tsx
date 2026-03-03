@@ -62,8 +62,6 @@ const ModelSelect = ({
     enabled: !!provider,
   });
 
-  const textModels =
-    models?.filter((m) => m.type === AIProviderModelType.TEXT) ?? [];
 
   return (
     <Select
@@ -77,12 +75,12 @@ const ModelSelect = ({
         />
       </SelectTrigger>
       <SelectContent>
-        {textModels.map((m) => (
+        {models?.map((m) => (
           <SelectItem key={m.id} value={m.id}>
             {m.name}
           </SelectItem>
         ))}
-        {!isLoading && textModels.length === 0 && provider && (
+        {!isLoading && models?.length === 0 && provider && (
           <div className="px-2 py-1.5 text-sm text-muted-foreground">
             {t('No models available')}
           </div>
@@ -126,11 +124,11 @@ const MigrateFlowsDialogContent = ({
     defaultValues: {
       projectIds: [],
       sourceModel: {
-        provider: undefined as unknown as AIProviderName,
+        provider: AIProviderName.ACTIVEPIECES,
         model: '',
       },
       targetModel: {
-        provider: undefined as unknown as AIProviderName,
+        provider: AIProviderName.ACTIVEPIECES,
         model: '',
       },
     },
