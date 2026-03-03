@@ -1,3 +1,5 @@
+import { promisify } from 'node:util'
+import { gzip as gzipCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
 import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
@@ -10,6 +12,7 @@ import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 
 
+const gzip = promisify(gzipCallback)
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
@@ -110,12 +113,13 @@ export const progressService = {
         }
         await lock.runExclusive(async () => {
             const { flowExecutorContext, engineConstants } = updateParams
-            const executionState = await logSerializer.serialize({
-                executionState: {   
+            const serialized = await logSerializer.serialize({
+                executionState: {
                     steps: flowExecutorContext.steps,
                     tags: Array.from(flowExecutorContext.tags),
                 },
             })
+            const executionState = await gzip(serialized)
            
             const logsUploadUrl = engineConstants.logsUploadUrl
             if (isNil(logsUploadUrl)) {
