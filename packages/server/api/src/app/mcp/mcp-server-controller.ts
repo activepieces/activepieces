@@ -37,9 +37,8 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
         const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
         const authHeader = req.headers['authorization']
-        const query = req.query as Record<string, string | undefined>
         const tokenFromHeader = validateAuthorizationHeader(authHeader, mcp)
-        const tokenFromQuery = query.token === mcp.token
+        const tokenFromQuery = validateTokenFromQuery(req.query, mcp)
         if (!tokenFromHeader && !tokenFromQuery) {
             return reply.status(401).send({
                 error: 'Unauthorized',
@@ -93,6 +92,12 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
     const [type, token] = authHeader?.split(' ') ?? []
     return type === 'Bearer' && token === mcp.token
+}
+
+function validateTokenFromQuery(query: unknown, mcp: PopulatedMcpServer) {
+    const queryParams = query as Record<string, string | undefined>
+    const token = queryParams.token
+    return token === mcp.token
 }
 
 function createTransportConfig(
