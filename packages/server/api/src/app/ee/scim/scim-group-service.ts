@@ -283,7 +283,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        await platformProjectService(log).hardDelete({
+        await platformProjectService(log).markForDeletion({
             id: projectId,
             platformId,
         })
