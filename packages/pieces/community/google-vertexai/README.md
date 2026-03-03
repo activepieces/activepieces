@@ -30,9 +30,8 @@ This piece uses **Service Account Authentication** for secure access to Google V
    - Click "Create Credentials" > "Service Account"
    - Give it a name (e.g., "activepieces-vertexai")
    - Click "Create and Continue"
-   - Grant the following roles:
+   - Grant the following role:
      - **Vertex AI User** - to use Vertex AI models
-     - **Editor** (or more restricted permissions as needed)
    - Click "Continue" and then "Done"
 
 4. **Create and Download Service Account Key**
@@ -92,14 +91,14 @@ Make custom authenticated requests directly to the Vertex AI API for advanced us
 
 ## Available Models
 
-Common Vertex AI models you can use:
-- `gemini-pro` - Large language model for text generation
-- `gemini-pro-vision` - Multimodal model with vision capabilities
-- `gemini-2.5-flash` - Faster, optimized model
-- `text-bison` - Specialized for text tasks
-- `code-bison` - Optimized for code generation
+Common Gemini models available on Vertex AI:
+- `gemini-2.5-flash` - Fast, cost-efficient model with thinking support
+- `gemini-2.5-pro` - Most capable model for complex reasoning tasks
+- `gemini-2.0-flash` - Balanced speed and capability
+- `gemini-1.5-flash` - Fast and versatile
+- `gemini-1.5-pro` - Best performing 1.5 generation model
 
-For the full list of available models, check the [Vertex AI documentation](https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models).
+For the full list of available models, check the [Vertex AI documentation](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models).
 
 ## Common Use Cases
 

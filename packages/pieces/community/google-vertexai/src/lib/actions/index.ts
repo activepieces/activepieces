@@ -1,2 +1,3 @@
 export { generateContent } from './generate-content';
-export { rawRequest } from './raw-request';
+export { generateImage } from './generate-image';
+export { customApiCall } from './raw-request';

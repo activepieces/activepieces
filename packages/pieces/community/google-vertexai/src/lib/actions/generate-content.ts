@@ -1,7 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from '@activepieces/pieces-common';
+import {
+  GenerateContentConfig,
+  GoogleGenAI,
+  Part,
+  ThinkingConfig,
+  ThinkingLevel,
+} from '@google/genai';
 import { vertexAiAuth, GoogleVertexAIAuthValue } from '../auth';
-import { getCachedAccessToken } from '../common/auth';
+import { getVertexAIModelOptions, getVertexAILocationOptions } from '../common';
 
 export const generateContent = createAction({
   auth: vertexAiAuth,
@@ -9,21 +15,32 @@ export const generateContent = createAction({
   displayName: 'Generate Content',
   description: 'Call a Gemini model on Vertex AI to generate a text response.',
   props: {
-    location: Property.ShortText({
+    location: Property.Dropdown({
       displayName: 'Location',
-      description: 'Google Cloud region where your Vertex AI resources are hosted (e.g., us-central1).',
-      required: false,
+      description: 'Google Cloud region where your Vertex AI resources are hosted.',
+      required: true,
+      refreshers: [],
       defaultValue: 'us-central1',
+      auth: vertexAiAuth,
+      options: async ({ auth }) =>
+        getVertexAILocationOptions(auth as GoogleVertexAIAuthValue | undefined),
     }),
-    model: Property.ShortText({
+    model: Property.Dropdown({
       displayName: 'Model',
-      description: 'Vertex AI model to use (e.g., gemini-2.5-flash, gemini-3-flash-preview).',
-      required: false,
+      description: 'Gemini model to use for content generation.',
+      required: true,
+      refreshers: ['location'],
       defaultValue: 'gemini-2.5-flash',
+      auth: vertexAiAuth,
+      options: async ({ auth, location }) =>
+        getVertexAIModelOptions(
+          auth as GoogleVertexAIAuthValue | undefined,
+          location as string | undefined
+        ),
     }),
     systemMessage: Property.LongText({
       displayName: 'System Message',
-      description: 'Instructions that guide the model\'s behavior throughout the conversation.',
+      description: "Instructions that guide the model's behavior throughout the conversation.",
       required: false,
     }),
     userMessage: Property.LongText({
@@ -33,12 +50,14 @@ export const generateContent = createAction({
     }),
     imageUrls: Property.Array({
       displayName: 'Image URLs',
-      description: 'Public image URLs to include in the request (https://...). The model will see these images alongside the user message.',
+      description:
+        'Public image URLs to include alongside the user message. The model will analyze these images.',
       required: false,
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
-      description: 'Controls randomness. Lower values are more deterministic (0–2). Leave empty to use the model default.',
+      description:
+        'Controls randomness. Lower values are more deterministic (0–2). Leave empty to use the model default.',
       required: false,
     }),
     maxOutputTokens: Property.Number({
@@ -47,115 +66,123 @@ export const generateContent = createAction({
       required: false,
     }),
     thinkingLevel: Property.StaticDropdown({
-      displayName: 'Thinking Level (Gemini 3+)',
-      description: 'Controls how much the model thinks before responding. Use with Gemini 3 and later models. Ignored if Thinking Budget is set.',
+      displayName: 'Thinking Level',
+      description:
+        'Controls how much the model thinks before responding. Supported on Gemini 2.5 and later models.',
       required: false,
       options: {
         options: [
-          { label: 'None (disabled)', value: 'NONE' },
-          { label: 'Minimal', value: 'MINIMAL' },
-          { label: 'Default', value: 'DEFAULT' },
-          { label: 'Maximum', value: 'MAXIMUM' },
+          { label: 'Low', value: ThinkingLevel.LOW },
+          { label: 'Medium', value: ThinkingLevel.MEDIUM },
+          { label: 'High', value: ThinkingLevel.HIGH },
         ],
       },
     }),
     thinkingBudget: Property.Number({
-      displayName: 'Thinking Budget (Gemini 2.5 and earlier)',
-      description: 'Number of tokens the model can use for its internal reasoning before responding. Use with Gemini 2.5 and earlier models.',
+      displayName: 'Thinking Budget (tokens)',
+      description:
+        'Maximum number of tokens the model can use for internal reasoning. Set to 0 to disable thinking. Supported on Gemini 2.5 and later models.',
       required: false,
     }),
     includeThoughts: Property.Checkbox({
-      displayName: 'Include Thoughts in Response (Gemini 2.5 and earlier)',
-      description: 'When enabled, the model\'s reasoning tokens are returned alongside the final response. Use with Gemini 2.5 and earlier models.',
+      displayName: 'Include Thoughts in Response',
+      description:
+        "When enabled, the model's reasoning is returned alongside the final response. Supported on Gemini 2.5 and later models.",
       required: false,
       defaultValue: false,
     }),
   },
   async run(context) {
     const {
-      location, model, systemMessage, userMessage, imageUrls,
-      temperature, maxOutputTokens,
-      thinkingLevel, thinkingBudget, includeThoughts,
+      location,
+      model,
+      systemMessage,
+      userMessage,
+      imageUrls,
+      temperature,
+      maxOutputTokens,
+      thinkingLevel,
+      thinkingBudget,
+      includeThoughts,
     } = context.propsValue;
     const auth = context.auth as GoogleVertexAIAuthValue;
 
-    const { accessToken, projectId } = await getCachedAccessToken(
-      auth.props.serviceAccountJson,
-      context.store
-    );
+    const rawCredentials = JSON.parse(auth.props.serviceAccountJson);
+    const credentials = {
+      ...rawCredentials,
+      private_key: rawCredentials.private_key?.replace(/\\n/g, '\n'),
+    };
 
-    const url = `https://aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
+    const ai = new GoogleGenAI({
+      vertexai: true,
+      project: credentials.project_id,
+      location: location,
+      googleAuthOptions: {
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+      },
+    });
 
-    const parts: Record<string, unknown>[] = [{ text: userMessage }];
+    const parts: Part[] = [{ text: userMessage }];
 
     for (const imageUrl of (imageUrls as string[] | undefined) ?? []) {
       try {
-        const headResponse = await fetch(imageUrl, { method: 'HEAD' });
-        const mimeType = headResponse.headers.get('content-type') ?? 'image/jpeg';
-        parts.push({ fileData: { mimeType, fileUri: imageUrl } });
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          throw new Error(`HTTP ${imageResponse.status} ${imageResponse.statusText}`);
+        }
+        const arrayBuffer = await imageResponse.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = imageResponse.headers.get('content-type') ?? 'image/jpeg';
+        parts.push({ inlineData: { data: base64, mimeType } });
       } catch (err) {
         throw new Error(
-          `Failed to resolve image URL (${imageUrl}): ${err instanceof Error ? err.message : String(err)}`
+          `Failed to fetch image (${imageUrl}): ${err instanceof Error ? err.message : String(err)}`
         );
       }
     }
 
-    const requestBody: Record<string, unknown> = {
-      contents: [{ role: 'user', parts }],
-    };
+    const config: GenerateContentConfig = {};
 
     if (systemMessage) {
-      requestBody['systemInstruction'] = {
-        parts: [{ text: systemMessage }],
-      };
+      config.systemInstruction = systemMessage;
     }
-
-    const generationConfig: Record<string, unknown> = {};
-
     if (temperature !== undefined && temperature !== null) {
-      generationConfig['temperature'] = temperature;
+      config.temperature = temperature;
     }
     if (maxOutputTokens !== undefined && maxOutputTokens !== null) {
-      generationConfig['maxOutputTokens'] = maxOutputTokens;
+      config.maxOutputTokens = maxOutputTokens;
     }
 
-    const versionMatch = (model ?? '').match(/gemini-(\d+)/i);
-    const geminiMajorVersion = versionMatch ? parseInt(versionMatch[1], 10) : 0;
-    const isGemini3Plus = geminiMajorVersion >= 3;
+    const thinkingConfig: ThinkingConfig = {};
+    let hasThinkingConfig = false;
 
-    if (isGemini3Plus) {
-      if (thinkingLevel) {
-        generationConfig['thinkingConfig'] = { thinkingLevel };
-      }
-    } else {
-      const hasThinkingBudget = thinkingBudget !== undefined && thinkingBudget !== null;
-      if (hasThinkingBudget || includeThoughts) {
-        const thinkingConfig: Record<string, unknown> = {};
-        if (hasThinkingBudget) {
-          thinkingConfig['thinkingBudget'] = thinkingBudget;
-        }
-        if (includeThoughts) {
-          thinkingConfig['includeThoughts'] = true;
-        }
-        generationConfig['thinkingConfig'] = thinkingConfig;
-      }
+    if (thinkingLevel) {
+      thinkingConfig.thinkingLevel = thinkingLevel as ThinkingLevel;
+      hasThinkingConfig = true;
+    }
+    if (thinkingBudget !== undefined && thinkingBudget !== null) {
+      thinkingConfig.thinkingBudget = thinkingBudget;
+      hasThinkingConfig = true;
+    }
+    if (includeThoughts) {
+      thinkingConfig.includeThoughts = true;
+      hasThinkingConfig = true;
+    }
+    if (hasThinkingConfig) {
+      config.thinkingConfig = thinkingConfig;
     }
 
-    if (Object.keys(generationConfig).length > 0) {
-      requestBody['generationConfig'] = generationConfig;
-    }
+    const response = await ai.models.generateContent({
+      model,
+      contents: [{ role: 'user', parts }],
+      config,
+    });
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url,
-      body: requestBody,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
-      },
+    return {
+      text: response.text,
+      candidates: response.candidates,
+      usageMetadata: response.usageMetadata,
     };
-
-    const response = await httpClient.sendRequest(request);
-    return response.body;
   },
 });

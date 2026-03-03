@@ -1,79 +1,31 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { GoogleAuth } from 'google-auth-library';
 import { vertexAiAuth, GoogleVertexAIAuthValue } from '../auth';
-import { getCachedAccessToken } from '../common/auth';
 
-const HTTP_METHODS = [
-  { label: 'GET', value: HttpMethod.GET },
-  { label: 'POST', value: HttpMethod.POST },
-  { label: 'PUT', value: HttpMethod.PUT },
-  { label: 'PATCH', value: HttpMethod.PATCH },
-  { label: 'DELETE', value: HttpMethod.DELETE },
-];
+function parseRawCredentials(auth: GoogleVertexAIAuthValue) {
+  const raw = JSON.parse(auth.props.serviceAccountJson);
+  return { ...raw, private_key: raw.private_key?.replace(/\\n/g, '\n') };
+}
 
-export const rawRequest = createAction({
+export const customApiCall = createCustomApiCallAction({
   auth: vertexAiAuth,
-  name: 'raw_request',
-  displayName: 'Raw API Request',
-  description:
-    'Make a custom HTTP request to the Vertex AI API with automatic authentication',
-  props: {
-    method: Property.StaticDropdown({
-      displayName: 'HTTP Method',
-      description: 'The HTTP method for the request',
-      required: true,
-      options: {
-        disabled: false,
-        options: HTTP_METHODS,
-      },
-    }),
-    url: Property.ShortText({
-      displayName: 'URL',
-      description:
-        'The full URL for the API request (e.g., https://aiplatform.googleapis.com/v1/...)',
-      required: true,
-    }),
-    body: Property.Json({
-      displayName: 'Request Body',
-      description: 'The JSON request body (optional)',
-      required: false,
-    }),
-  },
-  async run(context) {
-    const { method, url, body } = context.propsValue;
-    const auth = context.auth as GoogleVertexAIAuthValue;
-
-    const { accessToken } = await getCachedAccessToken(
-      auth.props.serviceAccountJson,
-      context.store
-    );
-
-    const request: HttpRequest = {
-      method: method as HttpMethod,
-      url,
-      body: body || undefined,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: accessToken,
-      },
-    };
-
-    const response = await httpClient.sendRequest(request);
-
-    if (response.status >= 200 && response.status < 300) {
-      return response.body;
+  baseUrl: (auth) => {
+    try {
+      const credentials = parseRawCredentials(auth as GoogleVertexAIAuthValue);
+      return `https://aiplatform.googleapis.com/v1/projects/${credentials.project_id}`;
+    } catch {
+      return 'https://aiplatform.googleapis.com/v1';
     }
-
-    throw new Error(
-      `API request failed with status ${response.status}: ${JSON.stringify(response.body)}`
-    );
+  },
+  authMapping: async (auth) => {
+    const credentials = parseRawCredentials(auth as GoogleVertexAIAuthValue);
+    const googleAuth = new GoogleAuth({
+      credentials,
+      projectId: credentials.project_id,
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+    });
+    const accessToken = await googleAuth.getAccessToken();
+    if (!accessToken) throw new Error('Failed to obtain access token');
+    return { Authorization: `Bearer ${accessToken}` };
   },
 });
