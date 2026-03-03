@@ -1,8 +1,8 @@
 import { Template } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Card, CardContent } from '@/components/ui/card';
-import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { PieceIconList } from '@/features/pieces';
 import { useGradientFromPieces } from '@/features/templates';
 

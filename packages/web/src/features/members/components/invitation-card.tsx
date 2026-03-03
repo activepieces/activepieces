@@ -2,12 +2,12 @@ import { Permission, UserInvitation } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { UserAvatar } from '@/components/custom/user-avatar';
+import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
-import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
-import { Button } from '../../../components/ui/button';
 import { userInvitationApi } from '../api/user-invitation';
 import { userInvitationsHooks } from '../hooks/user-invitations-hooks';
 

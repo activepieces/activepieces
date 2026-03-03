@@ -6,7 +6,7 @@ import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { MarkdownInput } from '@/components/ui/markdown-input';
+import { MarkdownInput } from '@/components/custom/markdown-input';
 import {
   Tooltip,
   TooltipContent,

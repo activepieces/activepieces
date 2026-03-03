@@ -1,8 +1,8 @@
 import React, { Suspense } from 'react';
 
 import { PageTitle } from '@/app/components/page-title';
+import { LoadingScreen } from '@/components/custom/loading-screen';
 
-import { LoadingScreen } from '../../components/ui/loading-screen';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { TemplateDetailsWrapper } from '../guards/template-details-wrapper';
 

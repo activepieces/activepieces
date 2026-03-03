@@ -7,8 +7,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
+import { ColorPicker } from '@/components/custom/color-picker';
 import { Button } from '@/components/ui/button';
-import { ColorPicker } from '@/components/ui/color-picker';
 import {
   Form,
   FormField,

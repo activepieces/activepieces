@@ -30,9 +30,9 @@ import {
   DataTable,
   DataTableFilters,
   LIMIT_QUERY_PARAM,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/custom/formatted-date';
 import {
   Tooltip,
   TooltipContent,

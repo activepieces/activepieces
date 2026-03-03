@@ -1,9 +1,7 @@
 import { CheckIcon, ListFilterIcon } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-
-import { Badge } from '../badge';
-import { Button } from '../button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -12,10 +10,15 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '../command';
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { ScrollArea } from '../scroll-area';
-import { Separator } from '../separator';
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 type DataTableSelectPopoverProps = {
   title?: string;

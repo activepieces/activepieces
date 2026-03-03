@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';
 
-import { useTheme } from './theme-provider';
-import { Button } from './ui/button';
+import { useTheme } from '@/components/providers/theme-provider';
+import { Button } from '@/components/ui/button';
 
 interface SimpleJsonViewerProps {
   data: any;

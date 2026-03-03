@@ -15,9 +15,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
-import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,

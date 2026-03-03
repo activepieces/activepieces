@@ -10,9 +10,9 @@ import { Wand } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   ActiveFlowAddon,
   AICreditUsage,

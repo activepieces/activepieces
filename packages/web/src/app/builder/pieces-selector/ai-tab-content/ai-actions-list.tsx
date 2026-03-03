@@ -8,7 +8,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { useTelemetry } from '@/components/telemetry-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   PieceSelectorOperation,

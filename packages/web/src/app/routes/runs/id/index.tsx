@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
-import { LoadingSpinner } from '@/components/ui/spinner';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { flowRunsApi } from '@/features/flow-runs';
 import { flowsApi, sampleDataHooks } from '@/features/flows';
 

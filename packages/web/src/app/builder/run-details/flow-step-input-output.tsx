@@ -13,7 +13,7 @@ import { Info, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
-import { JsonViewer } from '@/components/json-viewer';
+import { JsonViewer } from '@/components/custom/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';

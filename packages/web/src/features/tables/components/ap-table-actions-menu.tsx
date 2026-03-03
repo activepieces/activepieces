@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,

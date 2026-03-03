@@ -22,13 +22,13 @@ import { toast } from 'sonner';
 
 import { userApi } from '@/api/user-api';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { SearchInput } from '@/components/ui/search-input';
 import {
   Select,
   SelectContent,

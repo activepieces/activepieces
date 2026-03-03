@@ -3,13 +3,12 @@
 import { XIcon } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { InputProps } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
-
-import { Badge } from './badge';
-import { Button } from './button';
-import type { InputProps } from './input';
-import { ScrollArea } from './scroll-area';
 
 type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: ReadonlyArray<string>;

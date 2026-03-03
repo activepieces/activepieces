@@ -10,11 +10,12 @@ import { t } from 'i18next';
 import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
-import { RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
@@ -22,7 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   projectMembersApi,
   userInvitationApi,

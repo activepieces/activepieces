@@ -8,7 +8,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { JsonViewer } from '@/components/json-viewer';
+import { JsonViewer } from '@/components/custom/json-viewer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents';
 

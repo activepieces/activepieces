@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
-import { LoadingScreen } from '@/components/ui/loading-screen';
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { humanInputApi, ApForm } from '@/features/forms';
 
 import NotFoundPage from '../404-page';

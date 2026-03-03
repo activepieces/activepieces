@@ -3,13 +3,15 @@ import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-
-import { useEmbedding } from '../embed-provider';
-
-import { Button } from './button';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 const HomeButtonWrapper = ({ children }: { children: React.ReactNode }) => {
   const { embedState } = useEmbedding();

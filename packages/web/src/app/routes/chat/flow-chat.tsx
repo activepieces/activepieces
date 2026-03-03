@@ -11,7 +11,7 @@ import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 
 import { ChatDrawerSource } from '@/app/builder/types';
-import { LoadingScreen } from '@/components/ui/loading-screen';
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import {
   ChatInput,
   ChatMessage,

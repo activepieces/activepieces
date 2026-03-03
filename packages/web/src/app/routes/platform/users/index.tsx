@@ -13,8 +13,8 @@ import { toast } from 'sonner';
 import { platformUserApi } from '@/api/platform-user-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DataTable } from '@/components/custom/data-table';
 import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
 import { userInvitationApi, InviteUserDialog } from '@/features/members';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 

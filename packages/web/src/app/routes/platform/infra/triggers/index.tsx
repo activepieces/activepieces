@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { DataTable } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipTrigger,

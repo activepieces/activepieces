@@ -15,8 +15,8 @@ import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { RightSideBarType } from '@/app/builder/types';
-import { useEmbedding } from '@/components/embed-provider';
-import { useSocket } from '@/components/socket-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { useSocket } from '@/components/providers/socket-provider';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';

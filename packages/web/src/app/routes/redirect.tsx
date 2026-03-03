@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { authenticationApi } from '@/api/authentication-api';
-import { LoadingScreen } from '@/components/ui/loading-screen';
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';

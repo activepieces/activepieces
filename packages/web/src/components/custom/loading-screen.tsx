@@ -1,6 +1,5 @@
-import { cn } from '../../lib/utils';
-
-import { LoadingSpinner } from './spinner';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { cn } from '@/lib/utils';
 
 type LoadingScreenProps = {
   brightSpinner?: boolean;

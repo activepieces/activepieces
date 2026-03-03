@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { ChevronsUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   SidebarHeader,

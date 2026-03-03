@@ -19,8 +19,10 @@ import {
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { RightSideBarType } from '@/app/builder/types';
+import EditableText from '@/components/custom/editable-text';
+import { HomeButton } from '@/components/custom/home-button';
 import { PageHeader } from '@/components/custom/page-header';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,8 +32,6 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
-import EditableText from '@/components/ui/editable-text';
-import { HomeButton } from '@/components/ui/home-button';
 import { flowHooks } from '@/features/flows';
 import { foldersHooks } from '@/features/folders';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';

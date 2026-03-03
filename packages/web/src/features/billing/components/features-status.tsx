@@ -5,7 +5,7 @@ import {
 import { t } from 'i18next';
 import { Check, Lock } from 'lucide-react';
 
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 
 const LICENSE_PROPS_MAP = {
   environmentsEnabled: {

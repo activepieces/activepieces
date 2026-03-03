@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 
+import { TimePicker } from '@/components/custom/time-picker';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -18,10 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-
-import { Separator } from './separator';
-import { TimePicker } from './time-picker';
 
 export type PresetKey =
   | '7days'

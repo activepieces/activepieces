@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { SocketProvider } from '@/components/socket-provider';
-import { useTelemetry } from '@/components/telemetry-provider';
+import { SocketProvider } from '@/components/providers/socket-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

@@ -1,9 +1,9 @@
 import { t } from 'i18next';
 import { Mail } from 'lucide-react';
 
+import { UserAvatar } from '@/components/custom/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { CommandItem } from '@/components/ui/command';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 

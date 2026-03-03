@@ -17,17 +17,17 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
 import {
   BulkAction,
   DataTable,
   RowDataWithActions,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
-import { LoadingScreen } from '@/components/ui/loading-screen';
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { FormattedDate } from '@/components/custom/formatted-date';
+import { LoadingScreen } from '@/components/custom/loading-screen';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { Button } from '@/components/ui/button';
 import { PushToGitDialog } from '@/features/project-releases';
 import { projectCollectionUtils } from '@/features/projects';
 import {

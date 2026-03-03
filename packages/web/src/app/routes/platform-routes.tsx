@@ -2,9 +2,9 @@ import React, { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { Error, Success } from '@/features/billing';
 
-import { LoadingScreen } from '../../components/ui/loading-screen';
 import { PlatformLayout } from '../components/platform-layout';
 
 const SettingsBilling = React.lazy(() => import('./platform/billing'));

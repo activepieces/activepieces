@@ -9,8 +9,8 @@ import { CheckIcon, Link2, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
-import { DataTable, DataTableFilters } from '@/components/ui/data-table';
+import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { appConnectionsQueries } from '@/features/connections';
 import { flowsApi, useFlowsBulkActions } from '@/features/flows';
 import { FolderFilterList, folderIdParamName } from '@/features/folders';

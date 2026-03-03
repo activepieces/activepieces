@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { History, Link2, Package, Table2, Workflow } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectCollectionUtils } from '@/features/projects';

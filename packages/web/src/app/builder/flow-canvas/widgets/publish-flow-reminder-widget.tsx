@@ -11,8 +11,8 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { RightSideBarType } from '@/app/builder/types';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,

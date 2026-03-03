@@ -6,10 +6,10 @@ import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { authenticationApi } from '@/api/authentication-api';
+import { FullLogo } from '@/components/custom/full-logo';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Card } from '@/components/ui/card';
-import { FullLogo } from '@/components/ui/full-logo';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 
