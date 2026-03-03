@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { templatesApi } from '../lib/templates-api';
+import { templatesApi } from '../api/templates-api';
 
 export const templatesHooks = {
   useTemplateCategories: () => {

@@ -23,10 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  oauthAppsMutations,
-  oauthAppsQueries,
-} from '@/features/connections/lib/oauth-apps-hooks';
+import { oauthAppsMutations, oauthAppsQueries } from '@/features/connections';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;

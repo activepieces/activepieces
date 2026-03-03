@@ -17,25 +17,27 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
 import {
   BulkAction,
   DataTable,
   RowDataWithActions,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
-import { LoadingScreen } from '@/components/ui/loading-screen';
-import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
-import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
-import { tableHooks } from '@/features/tables/lib/table-hooks';
-import { tablesApi } from '@/features/tables/lib/tables-api';
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { FormattedDate } from '@/components/custom/formatted-date';
+import { LoadingScreen } from '@/components/custom/loading-screen';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { Button } from '@/components/ui/button';
+import { PushToGitDialog } from '@/features/project-releases';
+import { projectCollectionUtils } from '@/features/projects';
+import {
+  tablesApi,
+  ApTableActionsMenu,
+  ImportTableDialog,
+  tableHooks,
+} from '@/features/tables';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 const ApTablesPage = () => {

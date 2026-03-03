@@ -1,4 +1,4 @@
-import { AgentTool, isNil } from '@activepieces/shared';
+import { AgentTool, isNil, createToolName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
@@ -19,12 +19,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { sanitizeToolName } from '@/features/agents/agent-tools/componenets/piece-tool';
-import { PieceActionsList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
-import { PiecesList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
-import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadataWithSuggestions } from '@/lib/types';
+import {
+  PieceActionsList,
+  PiecesList,
+  usePieceToolsDialogStore,
+} from '@/features/agents';
+import {
+  stepsHooks,
+  PieceStepMetadataWithSuggestions,
+} from '@/features/pieces';
 
 import { PredefinedInputsForm } from './predefined-inputs-form';
 
@@ -83,7 +86,6 @@ export function AgentPieceDialog({
 
   useEffect(() => {
     if (!showAddPieceDialog) return;
-
     if (!isNil(editingPieceTool) && pieceMetadata.length > 0) {
       const piece = pieceMetadata.find(
         (p) => p.pieceName === editingPieceTool.pieceMetadata.pieceName,
@@ -91,13 +93,12 @@ export function AgentPieceDialog({
 
       if (piece) {
         handlePieceSelect(piece);
-
-        const action = piece.suggestedActions?.find(
-          (a) =>
-            sanitizeToolName(`${piece.pieceName}-${a.name}`) ===
-            editingPieceTool.toolName,
-        );
-
+        const action = piece.suggestedActions?.find((a) => {
+          return (
+            createToolName(`${piece.pieceName}-${a.name}`) ===
+            editingPieceTool.toolName
+          );
+        });
         if (action) {
           handleActionSelect(action);
         }
@@ -109,7 +110,6 @@ export function AgentPieceDialog({
 
   const handleSave = () => {
     const newTool = createNewPieceTool();
-
     if (isNil(newTool)) return;
 
     if (!isNil(editingPieceTool)) {

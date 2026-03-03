@@ -12,24 +12,24 @@ import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
-} from '@/components/ui/data-table';
+} from '@/components/custom/data-table';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { globalConnectionsQueries } from '@/features/connections/lib/global-connections-hooks';
-import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
+import { globalConnectionsQueries } from '@/features/connections';
+import { EditProjectDialog, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils, validationUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
 import { NewProjectDialog } from './new-project-dialog';

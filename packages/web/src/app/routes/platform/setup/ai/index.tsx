@@ -5,11 +5,11 @@ import { ArrowLeftRight } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
-import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
+import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
+import { aiProviderApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
-import { SUPPORTED_AI_PROVIDERS } from '../../../../../features/agents/ai-providers';
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { MigrateFlowsDialog } from './model-migration/migrate-flows-dialog';

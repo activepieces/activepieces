@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { stepsHooks } from '@/features/pieces';
 
 import {
   useCursorPosition,

@@ -10,6 +10,8 @@ import { Trash, CopyPlus, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import EditableText from '@/components/custom/editable-text';
+import { Button } from '@/components/ui/button';
 import {
   Sortable,
   SortableDragHandle,
@@ -17,8 +19,6 @@ import {
 } from '@/components/ui/sortable';
 
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
-import { Button } from '../../../../components/ui/button';
-import EditableText from '../../../../components/ui/editable-text';
 import { Separator } from '../../../../components/ui/separator';
 import {
   Tooltip,

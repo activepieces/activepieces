@@ -8,9 +8,8 @@ import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { authenticationSession } from '@/lib/authentication-session';
-
-import { platformApi } from '../lib/platforms-api';
 
 import { flagsHooks } from './flags-hooks';
 

@@ -10,9 +10,9 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ArrayInput } from '@/components/custom/array-input';
+import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { GenericPropertiesForm } from './generic-properties-form';

@@ -18,9 +18,9 @@ import {
   Link2,
 } from 'lucide-react';
 
-import { RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
+import { RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/custom/formatted-date';
 
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
