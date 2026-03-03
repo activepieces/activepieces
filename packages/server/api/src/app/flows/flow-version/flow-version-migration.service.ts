@@ -83,68 +83,80 @@ export const flowVersionMigrationService = {
 
     async migrateFlowsModelHandler(data: SystemJobData<SystemJobName.MIGRATE_FLOWS_MODEL>): Promise<void> {
         const { jobId, platformId, request: { projectIds, sourceModel, targetModel } } = data
-
-        const queryBuilder = flowVersionRepo()
-            .createQueryBuilder('fv')
-            .innerJoin('flow', 'f', 'f.id = fv."flowId"')
-            .innerJoin('project', 'p', 'p.id = f."projectId"')
-            .where('p."platformId" = :platformId', { platformId })
-            .andWhere(`fv.id = (
-                SELECT fv2.id FROM flow_version fv2
-                WHERE fv2."flowId" = f.id
-                ORDER BY fv2.created DESC LIMIT 1
-            )`)
-
-        if (!isNil(projectIds) && projectIds.length > 0) {
-            queryBuilder.andWhere('f."projectId" IN (:...projectIds)', { projectIds })
-        }
-
-        const flowVersions = await queryBuilder.getMany()
+        const BATCH_SIZE = 100
+        let offset = 0
         let updatedFlows = 0
 
-        for (const flowVersion of flowVersions) {
-            let hasChanges = false
+        while (true) {
+            const queryBuilder = flowVersionRepo()
+                .createQueryBuilder('fv')
+                .innerJoin('flow', 'f', 'f.id = fv."flowId"')
+                .innerJoin('project', 'p', 'p.id = f."projectId"')
+                .where('p."platformId" = :platformId', { platformId })
+                .andWhere(`fv.id = (
+                    SELECT fv2.id FROM flow_version fv2
+                    WHERE fv2."flowId" = f.id
+                    ORDER BY fv2.created DESC LIMIT 1
+                )`)
+                .orderBy('f.id', 'ASC')
 
-            const updatedVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-                if (!flowStructureUtil.isAgentPiece(step)) {
-                    return step
-                }
-                const input = step.settings?.input as Record<string, unknown> | undefined
-                let model = input?.model as string | undefined
-                let provider = input?.provider as string | undefined
-
-                if (step.settings.actionName === 'run_agent') {
-                    const runAgentObject = input?.[AgentPieceProps.AI_PROVIDER_MODEL] as AgentProviderModelSchema | undefined
-                    model = runAgentObject?.model
-                    provider = runAgentObject?.provider
-                }
-
-                if (provider === sourceModel.provider && model === sourceModel.model) {
-                    hasChanges = true
-                    const clonedStep = JSON.parse(JSON.stringify(step))
-                    clonedStep.settings.input['model'] = targetModel.model
-                    clonedStep.settings.input['provider'] = targetModel.provider
-                    if (step.settings.actionName === 'run_agent') {
-                        clonedStep.settings.input[AgentPieceProps.AI_PROVIDER_MODEL] = targetModel
-                    }
-                    return clonedStep
-                }
-                return step
-            })
-
-            if (hasChanges) {
-                const newVersion = sanitizeObjectForPostgresql({
-                    ...updatedVersion,
-                    id: apId(),
-                    state: FlowVersionState.LOCKED,
-                    created: dayjs().toISOString(),
-                    updated: dayjs().toISOString(),
-                })
-                await flowVersionRepo().save(newVersion)
-                await flowRepo().update(newVersion.flowId, { publishedVersionId: newVersion.id })
-                await flowExecutionCache(log).invalidate(newVersion.flowId)
-                updatedFlows++
+            if (!isNil(projectIds) && projectIds.length > 0) {
+                queryBuilder.andWhere('f."projectId" IN (:...projectIds)', { projectIds })
             }
+            queryBuilder.limit(BATCH_SIZE).offset(offset)
+
+            const flowVersions = await queryBuilder.getMany()
+
+            if (flowVersions.length === 0) {
+                break
+            }
+
+            await Promise.all(flowVersions.map(async (flowVersion) => {
+                let hasChanges = false
+
+                const updatedVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+                    if (!flowStructureUtil.isAgentPiece(step)) {
+                        return step
+                    }
+                    const input = step.settings?.input as Record<string, unknown> | undefined
+                    let model = input?.model as string | undefined
+                    let provider = input?.provider as string | undefined
+
+                    if (step.settings.actionName === 'run_agent') {
+                        const runAgentObject = input?.[AgentPieceProps.AI_PROVIDER_MODEL] as AgentProviderModelSchema | undefined
+                        model = runAgentObject?.model
+                        provider = runAgentObject?.provider
+                    }
+
+                    if (provider === sourceModel.provider && model === sourceModel.model) {
+                        hasChanges = true
+                        const clonedStep = JSON.parse(JSON.stringify(step))
+                        clonedStep.settings.input['model'] = targetModel.model
+                        clonedStep.settings.input['provider'] = targetModel.provider
+                        if (step.settings.actionName === 'run_agent') {
+                            clonedStep.settings.input[AgentPieceProps.AI_PROVIDER_MODEL] = targetModel
+                        }
+                        return clonedStep
+                    }
+                    return step
+                })
+
+                if (hasChanges) {
+                    const newVersion = sanitizeObjectForPostgresql({
+                        ...updatedVersion,
+                        id: apId(),
+                        state: FlowVersionState.LOCKED,
+                        created: dayjs().toISOString(),
+                        updated: dayjs().toISOString(),
+                    })
+                    await flowVersionRepo().save(newVersion)
+                    await flowRepo().update(newVersion.flowId, { publishedVersionId: newVersion.id })
+                    await flowExecutionCache(log).invalidate(newVersion.flowId)
+                    updatedFlows++
+                }
+            }))
+
+            offset += flowVersions.length
         }
 
         log.info({ platformId, updatedFlows }, 'Flow model migration completed')

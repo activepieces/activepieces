@@ -3,7 +3,6 @@ import {
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
   MigrateFlowsModelRequest,
-  MigrateFlowsModelResponse,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
 
@@ -25,9 +24,7 @@ export const aiProviderApi = {
   delete(provider: string) {
     return api.delete(`/v1/ai-providers/${provider}`);
   },
-  migrateFlows(
-    request: MigrateFlowsModelRequest,
-  ): Promise<MigrateFlowsModelResponse> {
+  migrateFlows(request: MigrateFlowsModelRequest): Promise<void> {
     return api.post('/v1/flows/versions/migrate-ai-model', request);
   },
 };

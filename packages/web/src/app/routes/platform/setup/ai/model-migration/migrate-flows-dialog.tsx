@@ -5,7 +5,7 @@ import {
   MigrateFlowsModelRequest,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -114,7 +114,6 @@ const MigrateFlowsDialogContent = ({
   providers: AIProviderWithoutSensitiveData[];
   setOpen: (val: boolean) => void;
 }) => {
-  const queryClient = useQueryClient();
   const form = useForm<MigrateFlowsModelRequest>({
     resolver: typeboxResolver(MigrateFlowsModelRequest),
     defaultValues: {
@@ -133,7 +132,6 @@ const MigrateFlowsDialogContent = ({
     mutationFn: (data: MigrateFlowsModelRequest) =>
       aiProviderApi.migrateFlows(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['migration-jobs'] });
       setOpen(false);
       toast.success(t('Migration job enqueued. Will continue in background.'));
     },
