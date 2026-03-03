@@ -7,7 +7,7 @@ export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
  * Normalizes a string for use as an agent tool name: safe characters only,
  * collapsed underscores, max 60 chars, lowercase, and appends '_mcp'.
  */
-export function sanitizeToolName(name: string): string {
+export function createToolName(name: string): string {
     return String(name)
         .replace(/[^a-zA-Z0-9_-]/g, '_')
         .replace(/_+/g, '_')

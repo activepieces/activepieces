@@ -1,4 +1,4 @@
-import { AgentTool, isNil, sanitizeToolName } from '@activepieces/shared';
+import { AgentTool, isNil, createToolName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
@@ -86,7 +86,6 @@ export function AgentPieceDialog({
 
   useEffect(() => {
     if (!showAddPieceDialog) return;
-
     if (!isNil(editingPieceTool) && pieceMetadata.length > 0) {
       const piece = pieceMetadata.find(
         (p) => p.pieceName === editingPieceTool.pieceMetadata.pieceName,
@@ -94,13 +93,12 @@ export function AgentPieceDialog({
 
       if (piece) {
         handlePieceSelect(piece);
-
-        const action = piece.suggestedActions?.find(
-          (a) =>
-            sanitizeToolName(`${piece.pieceName}-${a.name}`) ===
-            sanitizeToolName(editingPieceTool.toolName),
-        );
-
+        const action = piece.suggestedActions?.find((a) => {
+          return (
+            createToolName(`${piece.pieceName}-${a.name}`) ===
+            editingPieceTool.toolName
+          );
+        });
         if (action) {
           handleActionSelect(action);
         }
@@ -112,7 +110,6 @@ export function AgentPieceDialog({
 
   const handleSave = () => {
     const newTool = createNewPieceTool();
-
     if (isNil(newTool)) return;
 
     if (!isNil(editingPieceTool)) {

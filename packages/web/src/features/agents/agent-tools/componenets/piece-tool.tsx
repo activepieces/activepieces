@@ -1,4 +1,4 @@
-import { AgentPieceTool, sanitizeToolName } from '@activepieces/shared';
+import { AgentPieceTool, createToolName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
 import { useMemo } from 'react';
@@ -97,9 +97,8 @@ export const AgentPieceToolComponent = ({
           {tools.map((tool) => {
             const toolName = pieceMetadata.suggestedActions?.find(
               (action) =>
-                sanitizeToolName(
-                  `${pieceMetadata.pieceName}-${action.name}`,
-                ) === sanitizeToolName(tool.toolName),
+                createToolName(`${pieceMetadata.pieceName}-${action.name}`) ===
+                createToolName(tool.toolName),
             )?.displayName;
             return (
               <div
