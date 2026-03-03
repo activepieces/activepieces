@@ -2,7 +2,6 @@
 @import "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
 
-
 /* inter-regular - latin */
 @font-face {
   font-display: swap; 
@@ -94,12 +93,17 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
 
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--foreground);
+
+  --color-card: var(--background);
+  --color-card-foreground: var(--foreground);
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-xs: calc(var(--radius) - 8px);
   --radius-xss: calc(var(--radius) - 10px);
-
 
   --text-xss: 0.65rem;
   --text-3xl: 1.75rem;
@@ -168,7 +172,7 @@
       width: 100%;
     }
   }
- 
+
   @keyframes slide-in-from-bottom {
     0% {
       transform: translateY(100%);
@@ -195,7 +199,6 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
-
 
 }
 
@@ -307,7 +310,7 @@
     --background: theme('colors.white');
     --foreground: theme('colors.neutral.950');
     --popover: theme('colors.white');
-  
+
     --secondary: theme('colors.black');
     --secondary-foreground: theme('colors.white');
 
@@ -328,7 +331,6 @@
     --primary-300: 257 74% 25%;
     --primary-foreground: 210 20% 98%;
 
-
     --success-100: 148 48% 80%;
     --success: 148 48% 46%;
     --success-300: 148 48% 10%;
@@ -336,7 +338,7 @@
     --destructive-100: 0 84.2% 90%;
     --destructive: 0 84.2% 60.2%;
     --destructive-300: 0 84.2% 40%;
-    
+
     --warning-100: 51.72, 93.55%, 93.92%;
     --warning: 47 96% 53%;
     --warning-300: 28 80% 31%;
@@ -349,7 +351,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    
+
     --sidebar-background: theme('colors.neutral.50');
     --sidebar-foreground: theme('colors.neutral.950');
     --sidebar-primary: 257 74% 57%;
@@ -419,7 +421,6 @@
   --builder-background: hsla(0, 0%, 9%, 1);
   --builder-background-pattern: hsla(0, 0%, 45%, 1);
 }
-
 
 }
 
@@ -499,8 +500,6 @@
   height: 0;
   pointer-events: none;
 }
-
-
 
 .note-node,.note-drag-overlay {
   ::-webkit-scrollbar {

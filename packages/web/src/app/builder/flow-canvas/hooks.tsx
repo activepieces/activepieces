@@ -10,7 +10,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
-import { ImperativePanelHandle } from 'react-resizable-panels';
+import { PanelImperativeHandle } from 'react-resizable-panels';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -27,14 +27,15 @@ import { textMentionUtils } from '../piece-properties/text-input-with-mentions/t
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 
 export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
-  const handleRef = useRef<ImperativePanelHandle>(null);
+  const handleRef = useRef<PanelImperativeHandle>(null);
   const sidebarClosed = sidebarValue === RightSideBarType.NONE;
   useEffect(() => {
-    const sidebarSize = handleRef.current?.getSize() ?? 0;
+    const sidebarSize =
+      handleRef.current?.getSize()?.asPercentage ?? 0;
     if (sidebarClosed) {
-      handleRef.current?.resize(0);
+      handleRef.current?.resize('0%');
     } else if (sidebarSize === 0) {
-      handleRef.current?.resize(25);
+      handleRef.current?.resize('25%');
     }
   }, [handleRef, sidebarValue, sidebarClosed]);
   return handleRef;
@@ -149,7 +150,7 @@ const useIsFocusInsideListMapperModeInput = ({
   setIsFocusInsideListMapperModeInput,
   isFocusInsideListMapperModeInput,
 }: {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   setIsFocusInsideListMapperModeInput: (
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
@@ -202,7 +203,7 @@ export const useFocusOnStep = () => {
 };
 
 export const useResizeCanvas = (
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
 ) => {
   const containerSizeRef = useRef({

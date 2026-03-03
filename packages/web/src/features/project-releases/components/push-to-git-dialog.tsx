@@ -11,7 +11,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       props.type === 'flow'
         ? PushFlowsGitRepoRequest
         : PushTablesGitRepoRequest,
-    ),
+    ) as Resolver<PushGitRepoRequest>,
   });
 
   const { mutate, isPending } = useMutation({

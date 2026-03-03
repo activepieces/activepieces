@@ -1,6 +1,5 @@
-import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Plus, TrashIcon } from 'lucide-react';
+import { GripVertical, Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -123,7 +122,7 @@ const ArrayInput = React.memo(
                     disabled={disabled}
                     className={cn('shrink-0 size-8', thinInputs && 'size-7')}
                   >
-                    <DragHandleDots2Icon
+                    <GripVertical
                       className="size-4"
                       aria-hidden="true"
                     />

@@ -3,8 +3,8 @@ import {
   FlowRunStatus,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
-import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
+import { CircleHelp } from 'lucide-react';
 
 import { flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -60,7 +60,7 @@ const RunInfoWidget = () => {
   const [run] = useBuilderStateContext((state) => [state.run]);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
-    : { variant: 'default' as const, Icon: QuestionMarkIcon };
+    : { variant: 'default' as const, Icon: CircleHelp };
   const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
     ApFlagId.FLOW_RUN_TIME_SECONDS,
   );

@@ -31,8 +31,9 @@ export const UNSAVED_CHANGES_TOAST = {
   duration: Infinity,
 };
 
-const Toaster = ({ ...props }: ToasterProps) => {
+function Toaster({ ...props }: ToasterProps) {
   const { theme } = useTheme();
+
   return (
     <Sonner
       theme={theme as ToasterProps['theme']}
@@ -71,6 +72,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
       {...props}
     />
   );
-};
+}
 
 export { Toaster };

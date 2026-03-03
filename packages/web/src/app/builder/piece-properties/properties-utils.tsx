@@ -7,7 +7,6 @@ import { isNil, PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ControllerRenderProps,
-  FieldValues,
   UseFormReturn,
 } from 'react-hook-form';
 
@@ -334,7 +333,7 @@ export type SelectGenericFormComponentForPropertyParams = {
   useMentionTextInput: boolean;
   disabled: boolean;
   dynamicInputModeToggled: boolean;
-  form: UseFormReturn<FieldValues, any, undefined>;
+  form: UseFormReturn;
   propertySettings: Record<string, PropertySettings> | null;
   enableMarkdownForInputWithMention?: boolean;
   dynamicPropsInfo:

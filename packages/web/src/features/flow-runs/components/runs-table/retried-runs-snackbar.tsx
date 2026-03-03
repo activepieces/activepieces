@@ -1,5 +1,5 @@
-import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
+import { Info } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { LIMIT_QUERY_PARAM } from '@/components/custom/data-table';
@@ -24,7 +24,7 @@ export const RetriedRunsSnackbar = ({
     <div className="fixed bottom-5 p-4 left-1/2 transform -translate-x-1/2  w-[480px]  animate-slide-in-from-bottom  bg-background shadow-lg border rounded-lg z-9999">
       <div className="flex items-center justify-between animate-fade">
         <div className="flex items-center gap-2">
-          <InfoCircledIcon className="size-5" />
+          <Info className="size-5" />
           {t('runsRetriedNote', {
             runsCount: retriedRunsIds.length,
           })}
