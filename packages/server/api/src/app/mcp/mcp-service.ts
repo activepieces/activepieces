@@ -52,7 +52,17 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
         buildServer: async ({ mcp }: BuildServerRequest): Promise<McpServer> => {
             const server = new McpServer({
                 name: 'Activepieces',
+                title: 'Activepieces',
                 version: '1.0.0',
+                websiteUrl: 'https://activepieces.com',
+                description: 'Automation and workflow MCP server by Activepieces',
+                icons: [
+                    {
+                        src: 'https://cdn.activepieces.com/pieces/activepieces.png',
+                        mimeType: 'image/png',
+                        sizes: ['48x48', '96x96'],
+                    },
+                ],
             })
             const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
             for (const flow of enabledFlows) {
