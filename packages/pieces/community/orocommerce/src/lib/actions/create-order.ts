@@ -27,11 +27,6 @@ export const createOrderAction = createAction({
   props: {
     // -- Required relationships ------------------------------------------------
     customer: customerRequiredDropdown,
-    customerId: Property.ShortText({
-      displayName: 'Customer: Raw ID',
-      description: 'Overrides the Customer dropdown. Paste an ID from a previous step.',
-      required: false,
-    }),
 
     // -- Optional attributes ---------------------------------------------------
     currency: Property.ShortText({
@@ -88,59 +83,14 @@ export const createOrderAction = createAction({
 
     // -- Optional relationships ------------------------------------------------
     customerUser: customerUserDropdown(false),
-    customerUserId: Property.ShortText({
-      displayName: 'Customer User: Raw ID',
-      description: 'Overrides the Customer User dropdown.',
-      required: false,
-    }),
     organization: organizationDropdown,
-    organizationId: Property.ShortText({
-      displayName: 'Organization: Raw ID',
-      description: 'Overrides the Organization dropdown.',
-      required: false,
-    }),
     owner: userDropdown,
-    ownerId: Property.ShortText({
-      displayName: 'Owner: Raw ID',
-      description: 'Overrides the Owner dropdown.',
-      required: false,
-    }),
     website: websiteDropdown,
-    websiteId: Property.ShortText({
-      displayName: 'Website: Raw ID',
-      description: 'Overrides the Website dropdown.',
-      required: false,
-    }),
     internalStatus: orderInternalStatusDropdown,
-    internalStatusId: Property.ShortText({
-      displayName: 'Internal Status: Raw ID',
-      description: 'Overrides the Internal Status dropdown (e.g. order_internal_status.open).',
-      required: false,
-    }),
     paymentTerm: paymentTermDropdown,
-    paymentTermId: Property.ShortText({
-      displayName: 'Payment Term: Raw ID',
-      description: 'Overrides the Payment Term dropdown.',
-      required: false,
-    }),
     warehouse: warehouseDropdown,
-    warehouseId: Property.ShortText({
-      displayName: 'Warehouse: Raw ID',
-      description: 'Overrides the Warehouse dropdown.',
-      required: false,
-    }),
     parent: orderDropdown,
-    parentId: Property.ShortText({
-      displayName: 'Parent Order: Raw ID',
-      description: 'Overrides the Parent Order dropdown. Paste an order ID from a previous step.',
-      required: false,
-    }),
     status: orderStatusDropdown,
-    statusId: Property.ShortText({
-      displayName: 'Status: Raw ID',
-      description: 'Overrides the Status dropdown. Only applied when "Enable External Status Management" is on.',
-      required: false,
-    }),
 
     // -- Billing Address -------------------------------------------------------
     billingAddressLabel: Property.ShortText({
@@ -181,21 +131,11 @@ export const createOrderAction = createAction({
       required: false,
     }),
     billingAddressCountry: buildCountryDropdown(false, 'Billing: Country'),
-    billingAddressCountryId: Property.ShortText({
-      displayName: 'Billing: Country Raw ID',
-      description: 'Overrides the Billing Country dropdown (ISO-3166 2-letter code, e.g. US).',
-      required: false,
-    }),
     billingAddressRegion: buildRegionDropdown(
       'billingAddressCountry',
       false,
       'Billing: Region / State'
     ),
-    billingAddressRegionId: Property.ShortText({
-      displayName: 'Billing: Region Raw ID',
-      description: 'Overrides the Billing Region dropdown (ISO 3166-2 code, e.g. US-NY).',
-      required: false,
-    }),
     billingAddressCustomRegion: Property.ShortText({
       displayName: 'Billing: Custom Region',
       description: 'Free-text region for countries without predefined regions.',
@@ -241,21 +181,11 @@ export const createOrderAction = createAction({
       required: false,
     }),
     shippingAddressCountry: buildCountryDropdown(false, 'Shipping: Country'),
-    shippingAddressCountryId: Property.ShortText({
-      displayName: 'Shipping: Country Raw ID',
-      description: 'Overrides the Shipping Country dropdown (ISO-3166 2-letter code, e.g. US).',
-      required: false,
-    }),
     shippingAddressRegion: buildRegionDropdown(
       'shippingAddressCountry',
       false,
       'Shipping: Region / State'
     ),
-    shippingAddressRegionId: Property.ShortText({
-      displayName: 'Shipping: Region Raw ID',
-      description: 'Overrides the Shipping Region dropdown (ISO 3166-2 code, e.g. US-NY).',
-      required: false,
-    }),
     shippingAddressCustomRegion: Property.ShortText({
       displayName: 'Shipping: Custom Region',
       description: 'Free-text region for countries without predefined regions.',
@@ -345,12 +275,6 @@ export const createOrderAction = createAction({
                 required: true,
                 options: { disabled: false, options: unitOptions },
               }),
-              productUnitRawId: Property.ShortText({
-                displayName: 'Product Unit: Raw ID',
-                description:
-                  'Overrides the Product Unit dropdown (e.g. "piece", "kg").',
-                required: false,
-              }),
               quantity: Property.Number({
                 displayName: 'Quantity',
                 description: 'Quantity of the product ordered.',
@@ -407,11 +331,6 @@ export const createOrderAction = createAction({
                 required: false,
                 options: { disabled: false, options: warehouseOptions },
               }),
-              warehouseId: Property.ShortText({
-                displayName: 'Warehouse: Raw ID',
-                description: 'Overrides the Warehouse dropdown.',
-                required: false,
-              }),
             },
           }),
         };
@@ -425,14 +344,6 @@ export const createOrderAction = createAction({
 
   async run(context) {
     const p = context.propsValue;
-
-    // raw ID takes priority over dropdown selection when both are present
-    const resolve = (rawId: string | null | undefined, dropdownVal: unknown): string | null => {
-      const raw = rawId?.trim();
-      if (raw) return raw;
-      if (dropdownVal != null && String(dropdownVal).trim()) return String(dropdownVal).trim();
-      return null;
-    };
 
     const included: Record<string, unknown>[] = [];
     const relationships: Record<string, unknown> = {};
@@ -495,8 +406,8 @@ export const createOrderAction = createAction({
       street2:      p.billingAddressStreet2,
       city:         p.billingAddressCity,
       postalCode:   p.billingAddressPostalCode,
-      country:      resolve(p.billingAddressCountryId, p.billingAddressCountry),
-      region:       resolve(p.billingAddressRegionId,  p.billingAddressRegion),
+      country:      p.billingAddressCountry,
+      region:       p.billingAddressRegion,
       customRegion: p.billingAddressCustomRegion,
     });
     if (billingAdded) {
@@ -516,8 +427,8 @@ export const createOrderAction = createAction({
       street2:      p.shippingAddressStreet2,
       city:         p.shippingAddressCity,
       postalCode:   p.shippingAddressPostalCode,
-      country:      resolve(p.shippingAddressCountryId, p.shippingAddressCountry),
-      region:       resolve(p.shippingAddressRegionId,  p.shippingAddressRegion),
+      country:      p.shippingAddressCountry,
+      region:       p.shippingAddressRegion,
       customRegion: p.shippingAddressCustomRegion,
     });
     if (shippingAdded) {
@@ -534,9 +445,7 @@ export const createOrderAction = createAction({
     const lineItemsRelData = rawItems.map((item, index) => {
       const lid = `li_${index + 1}`;
 
-      const productUnitId = (item['productUnitRawId'] as string | undefined)?.trim()
-                         || (item['productUnit']      as string | undefined)
-                         || 'piece';
+      const productUnitId = item['productUnit'] as string | undefined;
 
       const liAttributes: Record<string, unknown> = {
         productSku:         String(item['productSku'] ?? ''),
@@ -593,53 +502,53 @@ export const createOrderAction = createAction({
     if (p.shippingMethodType)                   attributes['shippingMethodType']           = p.shippingMethodType;
     if (p.disablePromotions)                    attributes['disablePromotions']            = p.disablePromotions;
 
-    // -- Order relationships — each resolved via raw ID → dropdown fallback --
-    const customerId = resolve(p.customerId, p.customer);
+    // -- Order relationships --
+    const customerId = p.customer;
     if (customerId) {
       relationships['customer'] = { data: { type: 'customers', id: customerId } };
     }
 
-    const customerUserId = resolve(p.customerUserId, p.customerUser);
+    const customerUserId = p.customerUser;
     if (customerUserId) {
       relationships['customerUser'] = { data: { type: 'customerusers', id: customerUserId } };
     }
 
-    const organizationId = resolve(p.organizationId, p.organization);
+    const organizationId = p.organization;
     if (organizationId) {
       relationships['organization'] = { data: { type: 'organizations', id: organizationId } };
     }
 
-    const ownerId = resolve(p.ownerId, p.owner);
+    const ownerId = p.owner;
     if (ownerId) {
       relationships['owner'] = { data: { type: 'users', id: ownerId } };
     }
 
-    const websiteId = resolve(p.websiteId, p.website);
+    const websiteId = p.website;
     if (websiteId) {
       relationships['website'] = { data: { type: 'websites', id: websiteId } };
     }
 
-    const internalStatusId = resolve(p.internalStatusId, p.internalStatus);
+    const internalStatusId = p.internalStatus;
     if (internalStatusId) {
       relationships['internalStatus'] = { data: { type: 'orderinternalstatuses', id: internalStatusId } };
     }
 
-    const paymentTermId = resolve(p.paymentTermId, p.paymentTerm);
+    const paymentTermId = p.paymentTerm;
     if (paymentTermId) {
       relationships['paymentTerm'] = { data: { type: 'paymentterms', id: paymentTermId } };
     }
 
-    const warehouseId = resolve(p.warehouseId, p.warehouse);
+    const warehouseId = p.warehouse;
     if (warehouseId) {
       relationships['warehouse'] = { data: { type: 'warehouses', id: warehouseId } };
     }
 
-    const parentId = resolve(p.parentId, p.parent);
+    const parentId = p.parent;
     if (parentId) {
       relationships['parent'] = { data: { type: 'orders', id: parentId } };
     }
 
-    const statusId = resolve(p.statusId, p.status);
+    const statusId = p.status;
     if (statusId) {
       relationships['status'] = { data: { type: 'orderstatuses', id: statusId } };
     }

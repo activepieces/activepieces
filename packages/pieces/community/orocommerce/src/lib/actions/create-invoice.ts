@@ -35,18 +35,7 @@ export const createInvoiceAction = createAction({
       required: true,
     }),
     customer: customerDropdown,
-    customerId: Property.ShortText({
-      displayName: 'Customer: Raw ID',
-      description:
-        'Overrides the Customer dropdown. Paste an ID from a previous step.',
-      required: false,
-    }),
     customerUser: customerUserDropdown(false),
-    customerUserId: Property.ShortText({
-      displayName: 'Customer User: Raw ID',
-      description: 'Overrides the Customer User dropdown.',
-      required: false,
-    }),
     refCustomerId: Property.Number({
       displayName: 'External Customer ID',
       description:
@@ -121,24 +110,8 @@ export const createInvoiceAction = createAction({
       required: false,
     }),
     owner: userDropdown,
-    ownerId: Property.ShortText({
-      displayName: 'Owner: Raw ID',
-      description: 'Overrides the Owner dropdown.',
-      required: false,
-    }),
     website: websiteDropdown,
-    websiteId: Property.ShortText({
-      displayName: 'Website: Raw ID',
-      description: 'Overrides the Website dropdown.',
-      required: false,
-    }),
     internalStatus: invoiceInternalStatusDropdown,
-    internalStatusId: Property.ShortText({
-      displayName: 'Internal Status: Raw ID',
-      description:
-        'Overrides the Internal Status dropdown (e.g. draft, open, paid).',
-      required: false,
-    }),
 
     // -- Line Items ------------------------------------------------------------
     // DynamicProperties lets us load product units once as StaticDropdown.
@@ -202,18 +175,6 @@ export const createInvoiceAction = createAction({
   async run(context) {
     const p = context.propsValue;
 
-    // raw ID takes priority over dropdown selection when both are present
-    const resolve = (
-      rawId: string | null | undefined,
-      dropdownVal: unknown
-    ): string | null => {
-      const raw = rawId?.trim();
-      if (raw) return raw;
-      if (dropdownVal != null && String(dropdownVal).trim())
-        return String(dropdownVal).trim();
-      return null;
-    };
-
     // -- Build included line items with string IDs --------------------------
     // DynamicProperties wraps the array in an object keyed by "lineItems"
     const dynamicValue = (p.lineItems ?? {}) as Record<string, unknown>;
@@ -268,38 +229,38 @@ export const createInvoiceAction = createAction({
       lineItems: { data: lineItemsRelData },
     };
 
-    const customerId = resolve(p.customerId, p.customer);
+    const customerId = p.customer;
     if (customerId) {
       relationships['customer'] = {
         data: { type: 'customers', id: customerId },
       };
     }
 
-    const customerUserId = resolve(p.customerUserId, p.customerUser);
+    const customerUserId = p.customerUser;
     if (customerUserId) {
       relationships['customer_user'] = {
         data: { type: 'customerusers', id: customerUserId },
       };
     }
 
-    const organizationId = resolve(p.organizationId, p.organization);
+    const organizationId = p.organization;
     if (organizationId) {
       relationships['organization'] = {
         data: { type: 'organizations', id: organizationId },
       };
     }
 
-    const ownerId = resolve(p.ownerId, p.owner);
+    const ownerId = p.owner;
     if (ownerId) {
       relationships['owner'] = { data: { type: 'users', id: ownerId } };
     }
 
-    const websiteId = resolve(p.websiteId, p.website);
+    const websiteId = p.website;
     if (websiteId) {
       relationships['website'] = { data: { type: 'websites', id: websiteId } };
     }
 
-    const internalStatusId = resolve(p.internalStatusId, p.internalStatus);
+    const internalStatusId = p.internalStatus;
     if (internalStatusId) {
       relationships['internal_status'] = {
         data: { type: 'invoiceinternalstatuses', id: internalStatusId },
