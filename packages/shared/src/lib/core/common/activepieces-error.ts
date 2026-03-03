@@ -535,7 +535,7 @@ export type InvalidAIProviderCredentialsParams = BaseErrorParams<ErrorCode.INVAL
 }>
 
 export type MigrateFlowModelJobAlreadyExistsParams = BaseErrorParams<ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS, {
-    jobId: string;
+    jobId: string
 }>
 
 export enum ErrorCode {

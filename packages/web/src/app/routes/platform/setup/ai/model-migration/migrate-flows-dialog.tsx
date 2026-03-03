@@ -9,8 +9,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,10 +37,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { api } from '@/lib/api';
-import {  projectCollectionUtils } from '@/hooks/project-collection';
-import { toast } from 'sonner';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 
 type MigrateFlowsDialogProps = {
   children: React.ReactNode;
@@ -136,21 +136,23 @@ const MigrateFlowsDialogContent = ({
       toast.success(t('Migration job enqueued. Will continue in background.'));
     },
     onError: (error) => {
-      if (api.isApError(error, ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS)) {
+      if (
+        api.isApError(error, ErrorCode.MIGRATE_FLOW_MODEL_JOB_ALREADY_EXISTS)
+      ) {
         form.setError('root.serverError', {
           type: 'manual',
-          message: t('A migration job is already running. try again later after it completes.'),
+          message: t(
+            'A migration job is already running. try again later after it completes.',
+          ),
         });
         return;
       }
       form.setError('root.serverError', {
-          type: 'manual',
-          message: t('Migration failed. Please try again.'),
-        });
+        type: 'manual',
+        message: t('Migration failed. Please try again.'),
+      });
     },
   });
-
- 
 
   return (
     <>
@@ -296,18 +298,18 @@ const MigrateFlowsDialogContent = ({
             </Button>
             <ConfirmationDeleteDialog
               title={t('Confirm Migration')}
-              message={
-                t('Are you sure you want to migrate all flows to the target model?')
-              }
+              message={t(
+                'Are you sure you want to migrate all flows to the target model?',
+              )}
               mutationFn={() => form.handleSubmit((data) => mutate(data))()}
               buttonText={t('Migrate')}
-              entityName={t('Migration')}>
-            <Button loading={isPending} disabled={isPending}>
-              {t('Migrate')}
-            </Button>
+              entityName={t('Migration')}
+            >
+              <Button loading={isPending} disabled={isPending}>
+                {t('Migrate')}
+              </Button>
             </ConfirmationDeleteDialog>
           </DialogFooter>
-        
         </form>
       </Form>
     </>

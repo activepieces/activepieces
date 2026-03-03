@@ -12,8 +12,8 @@ import { userHooks } from '@/hooks/user-hooks';
 import { SUPPORTED_AI_PROVIDERS } from '../../../../../features/agents/ai-providers';
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
-import { AIProviderCard } from './universal-pieces/ai-provider-card';
 import { MigrateFlowsDialog } from './model-migration/migrate-flows-dialog';
+import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({
