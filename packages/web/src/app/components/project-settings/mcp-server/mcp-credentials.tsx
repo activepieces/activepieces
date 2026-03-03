@@ -23,7 +23,8 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
     mcpHooks.useRotateMcpToken(currentProjectId!);
 
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const serverUrl = `${publicUrl}api/v1/projects/${currentProjectId}/mcp-server/http`;
+  const baseUrl = publicUrl?.replace(/\/$/, '') ?? '';
+  const serverUrl = `${baseUrl}/api/v1/projects/${currentProjectId}/mcp-server/http`;
 
   const maskToken = (tokenValue: string) => {
     if (tokenValue.length <= 8) return '••••••••';
@@ -37,6 +38,21 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
         headers: {
           Authorization: `Bearer ${mcpServer?.token ?? ''}`,
         },
+      },
+    },
+  };
+
+  const claudeDesktopConfiguration = {
+    mcpServers: {
+      activepieces: {
+        command: 'npx',
+        args: [
+          '-y',
+          'mcp-remote',
+          serverUrl,
+          '--header',
+          `Authorization: Bearer ${mcpServer?.token ?? 'YOUR_TOKEN'}`,
+        ],
       },
     },
   };
@@ -106,12 +122,22 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
         </p>
       </div>
 
-      {/* JSON Configuration */}
+      {/* JSON Configuration (Cursor / URL + headers) */}
       <CollapsibleJson
         json={jsonConfiguration}
         label={t('MCP Client Configuration (JSON)')}
         description={t(
-          'Copy this configuration to your MCP client settings file (e.g., Cursor).',
+          'Copy to your MCP client (e.g. Cursor) if it supports url + headers. Use the Server URL above; it must end with /http (not /sse).',
+        )}
+        defaultOpen={false}
+      />
+
+      {/* Claude Desktop (mcp-remote) */}
+      <CollapsibleJson
+        json={claudeDesktopConfiguration}
+        label={t('Claude Desktop (mcp-remote)')}
+        description={t(
+          'Copy into your Claude Desktop config file (e.g. claude_desktop_config.json).',
         )}
         defaultOpen={false}
       />

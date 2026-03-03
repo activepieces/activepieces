@@ -1,6 +1,6 @@
 import { rejectedPromiseHandler } from '@activepieces/server-common'
 import { apId, createToolName, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
@@ -119,6 +119,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 })
             }
 
+            registerEmptyResourcesAndPrompts(server)
             return server
         },
     }
@@ -166,6 +167,27 @@ function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
 
     return property.required ? schema : schema.nullish()
 }
+
+/**
+ * Registers resources/list and prompts/list so they return empty lists.
+ * 
+ * - Resources: register a resource template with an empty list.
+ * - Prompts: register an empty prompt so the handler is set and returns [].
+ * 
+ * Claude Desktop (mcp-remote) does not support prompts/list, so we register an empty prompt.
+ */
+function registerEmptyResourcesAndPrompts(server: McpServer): void {
+    server.registerResource(
+        '_',
+        new ResourceTemplate('activepieces://empty', {
+            list: async () => ({ resources: [] }),
+        }),
+        {},
+        async () => ({ contents: [] }),
+    )
+    server.registerPrompt('_', {}, () => ({ messages: [] }))
+}
+
 
 
 type BuildServerRequest = {
