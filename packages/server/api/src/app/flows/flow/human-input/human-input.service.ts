@@ -38,9 +38,10 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         const flow = await getPopulatedFlowById(log, flowId, useDraft)
         if (!isFormTrigger(flow)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_FORM_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    flowId,
+                    entityType: 'flow_form',
+                    entityId: flowId,
                     message: 'Flow form not found in draft version of flow.',
                 },
             })
@@ -65,9 +66,10 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
             || flow.version.trigger.settings.triggerName !== 'chat_submission'
             || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_FORM_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    flowId,
+                    entityType: 'flow_form',
+                    entityId: flowId,
                     message: 'Flow chat ui not found in draft version of flow.',
                 },
             })

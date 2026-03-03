@@ -44,7 +44,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         }
         const project = await projectService.getOne(projectId)
         this.trackUser(project!.ownerId, event).catch((e) =>
-            log.error(e, '[Telemetry#trackProject] this.trackUser'),
+            log.error({ err: e }, '[telemetry#trackProject] Failed to track user'),
         )
     },
     isEnabled: () => telemetryEnabled,

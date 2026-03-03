@@ -6,9 +6,10 @@ import {
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn, formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';
 import { useBuilderStateContext } from '../../builder-hooks';

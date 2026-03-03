@@ -77,7 +77,7 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
             if (!response.ok) {
-                log.warn({ name: piece.name, version: piece.version, status: response.status }, 'Error reading piece metadata')
+                log.warn({ pieceName: piece.name, version: piece.version, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
                 return
             }
             const pieceMetadata = await response.json()

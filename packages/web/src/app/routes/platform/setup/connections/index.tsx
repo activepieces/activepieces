@@ -24,9 +24,6 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
-import { DefaultTag } from '@/components/custom/global-connection-utils';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -34,20 +31,23 @@ import {
   DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { FormattedDate } from '@/components/custom/formatted-date';
+import { DefaultTag } from '@/components/custom/global-connection-utils';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { Button } from '@/components/ui/button';
 import {
+  EditGlobalConnectionDialog,
   globalConnectionsMutations,
   globalConnectionsQueries,
-} from '@/features/connections/lib/global-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/lib/utils';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+  appConnectionUtils,
+} from '@/features/connections';
+import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [

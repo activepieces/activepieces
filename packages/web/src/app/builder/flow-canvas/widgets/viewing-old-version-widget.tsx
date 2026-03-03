@@ -3,7 +3,7 @@ import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowHooks } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';

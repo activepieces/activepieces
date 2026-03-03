@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowsApi } from '@/features/flows/api/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { useFlowToolDialogStore } from '../stores/flows-tools';

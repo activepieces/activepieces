@@ -11,7 +11,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
 const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
-    log.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
+    log.error({ message }, '[licenseKeysService#handleUnexpectedSecretsManagerError] Unexpected error from secret manager')
     throw new Error(message)
 }
 

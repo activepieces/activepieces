@@ -26,9 +26,6 @@ import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -36,29 +33,31 @@ import {
   DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { FormattedDate } from '@/components/custom/formatted-date';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
-import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import {
+  EditGlobalConnectionDialog,
+  RenameConnectionDialog,
   appConnectionsMutations,
   appConnectionsQueries,
-} from '@/features/connections/lib/app-connections-hooks';
-import { appConnectionUtils } from '@/features/connections/lib/utils';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+  appConnectionUtils,
+} from '@/features/connections';
+import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();

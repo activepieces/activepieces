@@ -11,7 +11,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

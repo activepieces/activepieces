@@ -8,9 +8,9 @@ import {
   BuilderStore,
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
-import { useSocket } from '@/components/socket-provider';
+import { useSocket } from '@/components/providers/socket-provider';
+import { projectHooks } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-collection';
 
 type BuilderStateProviderProps = Omit<
   React.PropsWithChildren<BuilderInitialState>,

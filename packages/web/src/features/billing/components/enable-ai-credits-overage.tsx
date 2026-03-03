@@ -4,7 +4,7 @@ import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-import { billingMutations } from '../lib/billing-hooks';
+import { billingMutations } from '../hooks/billing-hooks';
 
 interface EnableAIOverageDialogProps {
   isOpen?: boolean;

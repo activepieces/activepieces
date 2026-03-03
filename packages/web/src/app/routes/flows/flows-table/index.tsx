@@ -9,20 +9,16 @@ import { CheckIcon, Link2, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
-import { DataTable, DataTableFilters } from '@/components/ui/data-table';
-import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
-import {
-  FolderFilterList,
-  folderIdParamName,
-} from '@/features/folders/component/folder-filter-list';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { appConnectionsQueries } from '@/features/connections';
+import { flowsApi, useFlowsBulkActions } from '@/features/flows';
+import { FolderFilterList, folderIdParamName } from '@/features/folders';
+import { piecesHooks } from '@/features/pieces';
 import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 
 import { flowsTableColumns } from './columns';
 
