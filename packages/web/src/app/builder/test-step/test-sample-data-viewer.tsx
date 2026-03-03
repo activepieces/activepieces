@@ -96,8 +96,9 @@ export const TestSampleDataViewer = React.memo(
     } = props;
     const isFailed =
       isRunAgent(currentStep) &&
-      (sampleData as AgentResult | undefined)?.status ===
-        AgentTaskStatus.FAILED;
+      ((sampleData as AgentResult | undefined)?.status ===
+        AgentTaskStatus.FAILED ||
+        !isNil(errorMessage));
 
     return (
       <>
@@ -133,7 +134,7 @@ export const TestSampleDataViewer = React.memo(
                   </>
                 )}
 
-                {errorMessage && !isTesting && (
+                {errorMessage && !isTesting && !isRunAgent(currentStep) && (
                   <>
                     <StepStatusIcon status={StepOutputStatus.FAILED} size="5" />
                     <span>{t('Testing Failed')}</span>
@@ -197,7 +198,7 @@ const TestSampleDataViewerContent = ({
   if (isTesting && !isRunAgent(currentStep)) {
     return <StepOutputSkeleton className="px-1 " />;
   }
-  if (isRunAgent(currentStep)) {
+  if (isRunAgent(currentStep) && !errorMessage) {
     return (
       <AgentTestStep
         agentResult={getAgentResult(sampleData)}
