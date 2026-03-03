@@ -57,7 +57,7 @@ export function PlatformSidebar() {
   const setupItems = [
     {
       to: '/platform/setup/ai',
-      label: t('AI'),
+      label: t('AI Providers'),
       icon: BotIcon,
     },
     {
@@ -90,7 +90,7 @@ export function PlatformSidebar() {
       icon: ReceiptIcon,
       locked: edition === ApEdition.COMMUNITY,
     },
-  ].filter((item) => !(item.label === t('AI') && isEmbeddingEnabled));
+  ].filter((item) => !(item.label === t('AI Providers') && isEmbeddingEnabled));
 
   const groups: {
     label: string;
