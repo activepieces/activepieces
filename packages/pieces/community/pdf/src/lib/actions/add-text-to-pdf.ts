@@ -88,7 +88,7 @@ export const addTextToPdf = createAction({
         distanceFromTop: number;
         font: StandardFonts;
         fontSize: number;
-        lineSpacing: number;
+        lineSpacing?: number;
       }>;
 
       const pdfDoc = await PDFDocument.load(file.data as any); 
@@ -101,10 +101,11 @@ export const addTextToPdf = createAction({
 				const cleanText = item.text.replace(/\r\n|\r/g, '\n');
         const lines = cleanText.split('\n');
         const cleanTextSample = cleanText.substring(0, 15);
+        const lineSpacing = item.lineSpacing ?? 1.15;
 
-        if (item.lineSpacing <= 0) {
+        if (lineSpacing <= 0) {
           throw new Error(
-            `Line Spacing must be a positive number greater than 0. You provided ${item.lineSpacing} for text "${cleanTextSample}..."`
+            `Line Spacing must be a positive number greater than 0. You provided ${lineSpacing} for text "${cleanTextSample}..."`
           );
         }
 
@@ -114,7 +115,7 @@ export const addTextToPdf = createAction({
 					);
 				}
 
-        const actualLineHeight = item.fontSize * item.lineSpacing;
+        const actualLineHeight = item.fontSize * lineSpacing;
 
         const fontEnum = item.font;
         if (!embeddedFonts[fontEnum]) {

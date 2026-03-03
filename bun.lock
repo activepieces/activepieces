@@ -4767,7 +4767,7 @@
     },
     "packages/pieces/community/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
