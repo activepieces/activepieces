@@ -1,6 +1,6 @@
 import { AgentToolType } from '@activepieces/shared';
 import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
-import { Accordion } from '@radix-ui/react-accordion';
+import { Accordion } from '@/components/ui/accordion';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';

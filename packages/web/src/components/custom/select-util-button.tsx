@@ -1,8 +1,7 @@
-import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { LucideIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const SelectUtilButton = ({
   onClick,

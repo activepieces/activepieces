@@ -1,8 +1,7 @@
 'use client';
 
 // Used form here https://github.com/shadcn-ui/ui/pull/2773/files
-import * as PopoverPrimitive from '@radix-ui/react-popover';
-import { Primitive } from '@radix-ui/react-primitive';
+import { Popover as PopoverPrimitive } from 'radix-ui';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { t } from 'i18next'; // Use t function from react-i18next
 import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
@@ -130,7 +129,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
   const handleSelect = React.useCallback(
     (value: string, item: MultiSelectOptionItem) => {
-      setValue((prev) => {
+      setValue((prev: string[]) => {
         if (prev?.includes(value)) {
           return prev;
         }
@@ -145,7 +144,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
   const handleDeselect = React.useCallback(
     (value: string, item: MultiSelectOptionItem) => {
-      setValue((prev) => {
+      setValue((prev: string[]) => {
         if (!prev || !prev.includes(value)) {
           return prev;
         }
@@ -195,11 +194,9 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
 MultiSelect.displayName = 'MultiSelect';
 
-type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.button>;
+type MultiSelectTriggerElement = HTMLButtonElement;
 
-type MultiSelectTriggerProps = ComponentPropsWithoutRef<
-  typeof Primitive.button
-> & {
+type MultiSelectTriggerProps = ComponentPropsWithoutRef<'button'> & {
   showDeselect?: boolean;
   onDeselect?: () => void;
   showRefresh?: boolean;
@@ -276,14 +273,14 @@ const MultiSelectTrigger = React.forwardRef<
 MultiSelectTrigger.displayName = 'MultiSelectTrigger';
 
 interface MultiSelectValueProps
-  extends ComponentPropsWithoutRef<typeof Primitive.div> {
+  extends ComponentPropsWithoutRef<'div'> {
   placeholder?: string;
   maxDisplay?: number;
   maxItemLength?: number;
 }
 
 const MultiSelectValue = React.forwardRef<
-  React.ElementRef<typeof Primitive.div>,
+  HTMLDivElement,
   MultiSelectValueProps
 >(
   (
@@ -413,7 +410,7 @@ const MultiSelectContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const context = useMultiSelect();
 
-  const fragmentRef = React.useRef<DocumentFragment>();
+  const fragmentRef = React.useRef<DocumentFragment>(null);
 
   if (!fragmentRef.current && typeof window !== 'undefined') {
     fragmentRef.current = document.createDocumentFragment();

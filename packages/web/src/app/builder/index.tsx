@@ -67,6 +67,11 @@ const BuilderPage = () => {
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
+  useEffect(() => {
+    const handlePointerUp = () => setIsDraggingHandle(false);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => window.removeEventListener('pointerup', handlePointerUp);
+  }, []);
   const rightHandleRef = flowCanvasHooks.useAnimateSidebar(rightSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
@@ -89,8 +94,8 @@ const BuilderPage = () => {
       <div className="z-40">
         <BuilderHeader />
       </div>
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
+      <ResizablePanelGroup orientation="horizontal">
+        <ResizablePanel defaultSize="100%" id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
             <CursorPositionProvider>
               <FlowCanvas
@@ -125,19 +130,18 @@ const BuilderPage = () => {
         <ResizableHandle
           disabled={rightSidebar === RightSideBarType.NONE}
           withHandle={rightSidebar !== RightSideBarType.NONE}
-          onDragging={setIsDraggingHandle}
+          onPointerDown={() => setIsDraggingHandle(true)}
           className={
             rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
           }
         />
 
         <ResizablePanel
-          ref={rightHandleRef}
+          panelRef={rightHandleRef}
           id="right-sidebar"
-          defaultSize={0}
-          minSize={0}
-          maxSize={60}
-          order={3}
+          defaultSize="0%"
+          minSize={rightSidebar === RightSideBarType.NONE ? '0%' : '400px'}
+          maxSize="60%"
           className={cn('min-w-0 bg-background z-30', {
             [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,

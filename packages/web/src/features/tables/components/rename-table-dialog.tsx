@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
@@ -45,8 +45,8 @@ const RenameTableDialog = ({
     resolver: zodResolver(
       z.object({
         name: z.string().min(1, { message: t('Name is required') }),
-      }),
-    ),
+      }) as never,
+    ) as Resolver<{ name: string }>,
   });
   const [showRenameTableDialog, setShowRenameTableDialog] = useState(false);
   const { mutate: renameTable, isPending: isRenamingTable } = useMutation({

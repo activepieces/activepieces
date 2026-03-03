@@ -31,7 +31,7 @@ import {
   type SortableContextProps,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Slot, type SlotProps } from '@radix-ui/react-slot';
+import { Slot } from 'radix-ui';
 import * as React from 'react';
 
 import { Button, type ButtonProps } from '@/components/ui/button';
@@ -236,32 +236,8 @@ function useSortableItem() {
   return context;
 }
 
-interface SortableItemProps extends SlotProps {
-  /**
-   * The unique identifier of the item.
-   * @example "item-1"
-   * @type UniqueIdentifier
-   */
-  value: UniqueIdentifier;
-
-  /**
-   * Specifies whether the item should act as a trigger for the drag-and-drop action.
-   * @default false
-   * @type boolean | undefined
-   */
-  asTrigger?: boolean;
-
-  /**
-   * Merges the item's props into its immediate child.
-   * @default false
-   * @type boolean | undefined
-   */
-  asChild?: boolean;
-}
-
 /** Child must be a div */
-const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
-  ({ value, asTrigger, asChild, className, ...props }, ref) => {
+function SortableItem({ value, asTrigger, asChild, className, ref, ...props }: SortableItemProps) {
     const {
       attributes,
       listeners,
@@ -285,7 +261,7 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
       transition,
     };
 
-    const Comp = asChild ? Slot : 'div';
+    const Comp = asChild ? Slot.Root : 'div';
 
     return (
       <SortableItemContext.Provider value={context}>
@@ -304,18 +280,9 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         />
       </SortableItemContext.Provider>
     );
-  },
-);
-SortableItem.displayName = 'SortableItem';
-
-interface SortableDragHandleProps extends ButtonProps {
-  withHandle?: boolean;
 }
 
-const SortableDragHandle = React.forwardRef<
-  HTMLButtonElement,
-  SortableDragHandleProps
->(({ className, ...props }, ref) => {
+function SortableDragHandle({ className, ref, ...props }: SortableDragHandleProps) {
   const { attributes, listeners, isDragging } = useSortableItem();
 
   return (
@@ -332,7 +299,16 @@ const SortableDragHandle = React.forwardRef<
       {...props}
     />
   );
-});
-SortableDragHandle.displayName = 'SortableDragHandle';
+}
 
 export { Sortable, SortableDragHandle, SortableItem, SortableOverlay };
+
+interface SortableItemProps extends React.ComponentProps<'div'> {
+  value: UniqueIdentifier;
+  asTrigger?: boolean;
+  asChild?: boolean;
+}
+
+interface SortableDragHandleProps extends ButtonProps {
+  withHandle?: boolean;
+}

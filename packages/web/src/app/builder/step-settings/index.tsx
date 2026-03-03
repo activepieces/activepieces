@@ -7,9 +7,10 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { TObject } from '@sinclair/typebox';
 import deepEqual from 'deep-equal';
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, ResolverOptions, ResolverResult } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
@@ -78,7 +79,14 @@ const StepSettingsContainer = () => {
       keepDirtyValues: true,
     },
     resolver: async (values, context, options) => {
-      const result = await typeboxResolver(formSchema)(
+      const resolverFn = typeboxResolver(
+        formSchema as TObject,
+      ) as unknown as (
+        values: FlowAction | FlowTrigger,
+        context: unknown,
+        options: ResolverOptions<FlowAction | FlowTrigger>,
+      ) => Promise<ResolverResult<FlowAction | FlowTrigger>>;
+      const result = await resolverFn(
         values,
         context,
         options,
@@ -198,7 +206,7 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <ResizablePanelGroup direction="vertical">
+          <ResizablePanelGroup orientation="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="w-full my-2 px-3">
@@ -271,8 +279,10 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={height}
-                  onResize={(size) => setHeight(size)}
+                  defaultSize={`${height}%`}
+                  onResize={(panelSize) =>
+                    setHeight(panelSize.asPercentage)
+                  }
                   className="min-h-[130px]"
                 >
                   <ScrollArea

@@ -7,7 +7,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 
 import { platformUserApi } from '@/api/platform-user-api';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,9 @@ export const UpdateUserDialog = ({
       role,
       externalId,
     },
-    resolver: typeboxResolver(UpdateUserRequestBody),
+    resolver: typeboxResolver(
+      UpdateUserRequestBody,
+    ) as unknown as Resolver<{ role: PlatformRole; externalId?: string }>,
   });
   const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
     {

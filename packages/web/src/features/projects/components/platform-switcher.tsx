@@ -1,5 +1,5 @@
-import { CheckIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
+import { Check } from 'lucide-react';
 import * as React from 'react';
 
 import {
@@ -49,7 +49,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
             className="text-sm p-2 break-all cursor-pointer"
           >
             {platform.name}
-            <CheckIcon
+            <Check
               className={cn(
                 'ml-auto h-4 w-4 shrink-0',
                 currentPlatform?.id === platform.id

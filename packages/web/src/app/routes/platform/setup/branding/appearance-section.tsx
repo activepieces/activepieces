@@ -168,7 +168,7 @@ export const AppearanceSection = () => {
                     <div className="flex flex-row gap-2 items-center">
                       <ColorPicker
                         value={field.value as string}
-                        onChange={(color) => field.onChange(color)}
+                        onChange={(color: string) => field.onChange(color)}
                         className="flex flex-row gap-2 items-center"
                       ></ColorPicker>
                       <FormMessage />

@@ -6,10 +6,9 @@ import {
   supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, HistoryIcon } from 'lucide-react';
+import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -182,7 +181,7 @@ export const BuilderHeader = () => {
           className="gap-2 px-2"
           onClick={() => openNewWindow(supportUrl)}
         >
-          <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
+          <CircleHelp className="w-4 h-4"></CircleHelp>
           {t('Support')}
         </Button>
       )}

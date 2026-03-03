@@ -1,5 +1,4 @@
 import { ApFlagId, Permission, PopulatedMcpServer } from '@activepieces/shared';
-import { ReloadIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
@@ -91,7 +90,7 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
             hasPermission={checkAccess(Permission.WRITE_MCP)}
             icon={
               isRotating ? (
-                <ReloadIcon className="h-4 w-4 animate-spin" />
+                <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )
