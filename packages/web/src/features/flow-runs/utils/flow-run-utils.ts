@@ -157,12 +157,16 @@ export const flowRunUtils = {
     }
   },
 
-  getStatusContainerClassName(variant: 'default' | 'success' | 'error') {
+  getStatusContainerClassName(
+    variant: 'default' | 'success' | 'error' | 'warning',
+  ) {
     return cn('text-xs   border rounded-md leading-none', {
       'text-green-800 bg-green-50 border-green-200 dark:text-green-200 dark:bg-green-900 dark:border-green-800':
         variant === 'success',
       'text-red-800 bg-red-50  border-red-200 dark:text-red-200 dark:bg-red-900 dark:border-red-800':
         variant === 'error',
+      'text-amber-800 bg-amber-50 border-amber-200 dark:text-amber-600 dark:bg-amber-950 dark:border-amber-900':
+        variant === 'warning',
       'bg-background  border-border text-foreground': variant === 'default',
     });
   },

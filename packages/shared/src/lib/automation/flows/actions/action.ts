@@ -25,6 +25,7 @@ const commonActionProps = {
     valid: Type.Boolean({}),
     displayName: Type.String({}),
     skip: Type.Optional(Type.Boolean({})),
+    lastUpdatedDate: Type.String(),
 }
 const commonActionSettings = {
     sampleData: Type.Optional(SampleDataSetting),

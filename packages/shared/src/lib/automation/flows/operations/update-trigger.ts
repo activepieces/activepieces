@@ -14,6 +14,7 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
         name,
         valid: false,
         nextAction,
+        lastUpdatedDate: new Date().toISOString(),
     }
     let trigger: FlowTrigger
     switch (request.type) {

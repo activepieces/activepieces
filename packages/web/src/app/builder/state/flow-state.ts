@@ -390,6 +390,7 @@ export const createFlowState = (
                 customLogoUrl,
               },
               valid: defaultValues.valid,
+              lastUpdatedDate: defaultValues.lastUpdatedDate,
             },
           });
           removeStepTestListener(operation.stepName);

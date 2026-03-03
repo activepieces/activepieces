@@ -18,6 +18,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             name: request.name,
             valid: false,
             skip: request.skip,
+            lastUpdatedDate: new Date().toISOString(),
             settings: {
                 ...stepToUpdate.settings,
                 customLogoUrl: request.settings.customLogoUrl,

@@ -30,6 +30,7 @@ const commonProps = {
     valid: Type.Boolean({}),
     displayName: Type.String({}),
     nextAction: Type.Optional(Type.Any()),
+    lastUpdatedDate: Type.String(),
 }
 
 

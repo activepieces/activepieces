@@ -315,5 +315,6 @@ StepSettingsContainer.displayName = 'StepSettingsContainer';
 export { StepSettingsContainer };
 const stripSampleData = (step: FlowAction | FlowTrigger) => {
   const { sampleData: _, ...settingsWithoutSampleData } = step.settings;
-  return { ...step, settings: settingsWithoutSampleData };
+  const { lastUpdatedDate: __, ...stepWithoutMetadata } = step;
+  return { ...stepWithoutMetadata, settings: settingsWithoutSampleData };
 };

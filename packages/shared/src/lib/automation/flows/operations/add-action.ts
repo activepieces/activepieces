@@ -20,6 +20,7 @@ function createAction(request: UpdateActionRequest, {
         name: request.name,
         valid: false,
         skip: request.skip,
+        lastUpdatedDate: new Date().toISOString(),
         settings: {
             ...request.settings,
             customLogoUrl: request.settings.customLogoUrl,

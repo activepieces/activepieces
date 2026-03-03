@@ -68,6 +68,7 @@ function clone(step: FlowAction, oldNameToNewName: Record<string, string>): Flow
             sampleData: {},
         }
     }
+    step.lastUpdatedDate = new Date().toISOString()
     return step
 }
 
