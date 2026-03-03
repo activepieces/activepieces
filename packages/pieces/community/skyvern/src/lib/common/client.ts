@@ -35,7 +35,7 @@ export async function skyvernApiCall<T extends HttpMessageBody>({
 
 	const request: HttpRequest = {
 		method,
-		url: BASE_URL + resourceUri,
+		url: (process.env['SKYVERN_BASE_URL'] || BASE_URL) + resourceUri,
 		headers: {
 			'x-api-key': apiKey,
 		},
