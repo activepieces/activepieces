@@ -11,7 +11,8 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { t } from 'i18next';
-import React, { useState, useEffect } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -85,6 +86,7 @@ interface DataTableProps<
   initialSorting?: SortingState;
   clientPagination?: boolean;
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
+  virtualizeRows?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -120,6 +122,7 @@ export function DataTable<
   initialSorting = [],
   clientPagination = false,
   getRowClassName,
+  virtualizeRows = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -225,14 +228,16 @@ export function DataTable<
   const table = useReactTable({
     data: tableData,
     columns,
-    manualPagination: !clientPagination,
+    manualPagination: virtualizeRows ? false : !clientPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    ...(clientPagination && { getPaginationRowModel: getPaginationRowModel() }),
+    ...((clientPagination || virtualizeRows) && {
+      getPaginationRowModel: getPaginationRowModel(),
+    }),
     getRowId: () => apId(),
     initialState: {
       pagination: {
-        pageSize: parseInt(startingLimit),
+        pageSize: virtualizeRows ? tableData.length || 1000 : parseInt(startingLimit),
       },
       columnVisibility,
       sorting: initialSorting,
@@ -290,8 +295,18 @@ export function DataTable<
     table.toggleAllRowsSelected(false);
   };
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const rows = table.getRowModel().rows;
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => 53,
+    overscan: 15,
+    enabled: virtualizeRows,
+  });
+
   return (
-    <div>
+    <div className={virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined}>
       {((filters && filters.length > 0) || bulkActions.length > 0) && (
         <DataTableToolbar>
           <div className="w-full flex items-center justify-between">
@@ -324,9 +339,15 @@ export function DataTable<
         </DataTableToolbar>
       )}
 
-      <div className="rounded-md mt-0 overflow-hidden">
+      <div
+        ref={scrollContainerRef}
+        className={cn('rounded-md mt-0', {
+          'overflow-hidden': !virtualizeRows,
+          'flex-1 min-h-0 overflow-auto': virtualizeRows,
+        })}
+      >
         <Table className="table-fixed">
-          <TableHeader>
+          <TableHeader className={virtualizeRows ? 'sticky top-0 z-10 bg-background' : undefined}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
@@ -362,83 +383,198 @@ export function DataTable<
                   <DataTableSkeleton />
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row, rowIndex) => (
-                <TableRow
-                  className={cn(
-                    'cursor-pointer',
-                    {
-                      'hover:bg-background cursor-default': isNil(onRowClick),
-                    },
-                    getRowClassName?.(row.original, rowIndex),
+            ) : rows.length ? (
+              virtualizeRows ? (
+                <>
+                  {virtualizer.getVirtualItems().length > 0 && (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          height: virtualizer.getVirtualItems()[0].start,
+                        }}
+                      />
+                    </tr>
                   )}
-                  onClick={(e) => {
-                    // Check if the clicked cell is not clickable
-                    const clickedCellIndex = (e.target as HTMLElement).closest(
-                      'td',
-                    )?.cellIndex;
-                    if (
-                      clickedCellIndex !== undefined &&
-                      columns[clickedCellIndex]?.notClickable
-                    ) {
-                      return; // Don't trigger onRowClick for not clickable columns
-                    }
-                    onRowClick?.(row.original, e.ctrlKey, e);
-                  }}
-                  onAuxClick={(e) => {
-                    // Similar check for auxiliary click (e.g., middle mouse button)
-                    const clickedCellIndex = (e.target as HTMLElement).closest(
-                      'td',
-                    )?.cellIndex;
-                    if (
-                      clickedCellIndex !== undefined &&
-                      columns[clickedCellIndex]?.notClickable
-                    ) {
-                      return;
-                    }
-                    onRowClick?.(row.original, true, e);
-                  }}
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const size = cell.column.columnDef.size;
+                  {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const row = rows[virtualRow.index];
+                    const rowIndex = virtualRow.index;
                     return (
-                      <TableCell
-                        key={cell.id}
-                        style={
-                          size
-                            ? { width: size, minWidth: size, maxWidth: size }
-                            : undefined
-                        }
+                      <TableRow
+                        key={row.id}
+                        data-index={virtualRow.index}
+                        className={cn(
+                          'cursor-pointer',
+                          {
+                            'hover:bg-background cursor-default':
+                              isNil(onRowClick),
+                          },
+                          getRowClassName?.(row.original, rowIndex),
+                        )}
+                        onClick={(e) => {
+                          const clickedCellIndex = (
+                            e.target as HTMLElement
+                          ).closest('td')?.cellIndex;
+                          if (
+                            clickedCellIndex !== undefined &&
+                            columns[clickedCellIndex]?.notClickable
+                          ) {
+                            return;
+                          }
+                          onRowClick?.(row.original, e.ctrlKey, e);
+                        }}
+                        onAuxClick={(e) => {
+                          const clickedCellIndex = (
+                            e.target as HTMLElement
+                          ).closest('td')?.cellIndex;
+                          if (
+                            clickedCellIndex !== undefined &&
+                            columns[clickedCellIndex]?.notClickable
+                          ) {
+                            return;
+                          }
+                          onRowClick?.(row.original, true, e);
+                        }}
+                        data-state={row.getIsSelected() && 'selected'}
                       >
-                        <div
-                          className={cn('flex w-full items-center', {
-                            'justify-end': cell.column.id === 'actions',
-                            'justify-start': cell.column.id !== 'actions',
-                          })}
-                        >
-                          <div
-                            className="w-full"
-                            onClick={(e) => {
-                              if (cell.column.id === 'select') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                return;
+                        {row.getVisibleCells().map((cell) => {
+                          const size = cell.column.columnDef.size;
+                          return (
+                            <TableCell
+                              key={cell.id}
+                              style={
+                                size
+                                  ? {
+                                      width: size,
+                                      minWidth: size,
+                                      maxWidth: size,
+                                    }
+                                  : undefined
                               }
-                            }}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
+                            >
+                              <div
+                                className={cn('flex w-full items-center', {
+                                  'justify-end': cell.column.id === 'actions',
+                                  'justify-start':
+                                    cell.column.id !== 'actions',
+                                })}
+                              >
+                                <div
+                                  className="w-full"
+                                  onClick={(e) => {
+                                    if (cell.column.id === 'select') {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      return;
+                                    }
+                                  }}
+                                >
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext(),
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
                     );
                   })}
-                </TableRow>
-              ))
+                  {virtualizer.getVirtualItems().length > 0 && (
+                    <tr>
+                      <td
+                        colSpan={columns.length}
+                        style={{
+                          height:
+                            virtualizer.getTotalSize() -
+                            (virtualizer.getVirtualItems().at(-1)?.end ?? 0),
+                        }}
+                      />
+                    </tr>
+                  )}
+                </>
+              ) : (
+                rows.map((row, rowIndex) => (
+                  <TableRow
+                    className={cn(
+                      'cursor-pointer',
+                      {
+                        'hover:bg-background cursor-default':
+                          isNil(onRowClick),
+                      },
+                      getRowClassName?.(row.original, rowIndex),
+                    )}
+                    onClick={(e) => {
+                      const clickedCellIndex = (
+                        e.target as HTMLElement
+                      ).closest('td')?.cellIndex;
+                      if (
+                        clickedCellIndex !== undefined &&
+                        columns[clickedCellIndex]?.notClickable
+                      ) {
+                        return;
+                      }
+                      onRowClick?.(row.original, e.ctrlKey, e);
+                    }}
+                    onAuxClick={(e) => {
+                      const clickedCellIndex = (
+                        e.target as HTMLElement
+                      ).closest('td')?.cellIndex;
+                      if (
+                        clickedCellIndex !== undefined &&
+                        columns[clickedCellIndex]?.notClickable
+                      ) {
+                        return;
+                      }
+                      onRowClick?.(row.original, true, e);
+                    }}
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const size = cell.column.columnDef.size;
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          style={
+                            size
+                              ? {
+                                  width: size,
+                                  minWidth: size,
+                                  maxWidth: size,
+                                }
+                              : undefined
+                          }
+                        >
+                          <div
+                            className={cn('flex w-full items-center', {
+                              'justify-end': cell.column.id === 'actions',
+                              'justify-start': cell.column.id !== 'actions',
+                            })}
+                          >
+                            <div
+                              className="w-full"
+                              onClick={(e) => {
+                                if (cell.column.id === 'select') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  return;
+                                }
+                              }}
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))
+              )
             ) : (
               <TableRow className="hover:bg-background">
                 <TableCell
@@ -462,7 +598,7 @@ export function DataTable<
           </TableBody>
         </Table>
       </div>
-      {!hidePagination && (
+      {!hidePagination && !virtualizeRows && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <p className="text-sm font-medium">Rows per page</p>
           <Select

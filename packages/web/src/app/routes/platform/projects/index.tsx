@@ -5,13 +5,15 @@ import {
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import {
   DataTable,
   RowDataWithActions,
@@ -312,13 +314,9 @@ export default function ProjectsPage() {
           description={t('Manage your automation projects')}
         >
           <NewProjectDialog>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New Project')}
-            </Button>
+            </AnimatedIconButton>
           </NewProjectDialog>
         </DashboardPageHeader>
         <DataTable

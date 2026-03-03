@@ -2,12 +2,14 @@ import { SigningKey } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Key, Plus, Trash, Hash, Tag, Clock } from 'lucide-react';
+import { Key, Trash, Hash, Tag, Clock } from 'lucide-react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -93,10 +95,9 @@ const SigningKeysPage = () => {
           }
         >
           <NewSigningKeyDialog onCreate={() => refetch()}>
-            <Button size="sm" className="flex items-center gap-2">
-              <Plus className="size-4" />
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New Signing Key')}
-            </Button>
+            </AnimatedIconButton>
           </NewSigningKeyDialog>
         </DashboardPageHeader>
         <DataTable

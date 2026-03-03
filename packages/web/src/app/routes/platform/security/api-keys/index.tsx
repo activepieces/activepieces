@@ -1,23 +1,39 @@
 import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Key, Plus, Trash, Hash, Tag, Clock } from 'lucide-react';
+import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
-import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { FormattedDate } from '@/components/custom/formatted-date';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/custom/item';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { formatUtils } from '@/lib/format-utils';
 
 const ApiKeysPage = () => {
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['api-keys'],
@@ -26,74 +42,8 @@ const ApiKeysPage = () => {
     queryFn: () => apiKeyApi.list(),
   });
 
-  const columns: ColumnDef<RowDataWithActions<ApiKeyResponseWithoutValue>>[] = [
-    {
-      accessorKey: 'id',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Id')} icon={Hash} />
-      ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.id}</div>;
-      },
-    },
-    {
-      accessorKey: 'displayName',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Display Name')}
-          icon={Tag}
-        />
-      ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.displayName}</div>;
-      },
-    },
-    {
-      accessorKey: 'created',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Created')}
-          icon={Clock}
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <FormattedDate date={new Date(row.original.created)} />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'lastUsedAt',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Last Used')}
-          icon={Clock}
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {row.original.lastUsedAt ? (
-              <FormattedDate date={new Date(row.original.lastUsedAt)} />
-            ) : (
-              t('Never')
-            )}
-          </div>
-        );
-      },
-    },
-  ];
+  const keys: ApiKeyResponseWithoutValue[] = data?.data ?? [];
 
-  const { platform } = platformHooks.useCurrentPlatform();
   return (
     <LockedFeatureGuard
       featureKey="API"
@@ -104,60 +54,84 @@ const ApiKeysPage = () => {
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/api-keys.mp4"
     >
-      <div className="flex-col w-full">
-        <DashboardPageHeader
-          title={t('API Keys')}
-          description={t('Mange API keys')}
-        >
+      <CenteredPage
+        title={t('API Keys')}
+        description={t('Manage API keys to access Activepieces APIs.')}
+        actions={
           <NewApiKeyDialog
             onCreate={() =>
               queryClient.invalidateQueries({ queryKey: ['api-keys'] })
             }
           >
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
-              {t('New Api Key')}
-            </Button>
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+              {t('New API Key')}
+            </AnimatedIconButton>
           </NewApiKeyDialog>
-        </DashboardPageHeader>
-        <DataTable
-          emptyStateTextTitle={t('No API keys found')}
-          emptyStateTextDescription={t(
-            'Start by creating an API key to communicate with Activepieces APIs',
-          )}
-          emptyStateIcon={<Key className="size-14" />}
-          page={data}
-          isLoading={isLoading}
-          columns={columns}
-          actions={[
-            (row) => {
-              return (
-                <div className="flex items-end justify-end">
-                  <ConfirmationDeleteDialog
-                    title={t('Delete API Key')}
-                    message={t('Are you sure you want to delete this API key?')}
-                    entityName={t('API Key')}
-                    mutationFn={async () => {
-                      await apiKeyApi.delete(row.id);
-                      refetch();
-                    }}
-                    onError={() => {
-                      internalErrorToast();
-                    }}
-                  >
-                    <Button variant="ghost" className="size-8 p-0">
-                      <Trash className="size-4 text-destructive" />
-                    </Button>
-                  </ConfirmationDeleteDialog>
-                </div>
-              );
-            },
-          ]}
-        />
-      </div>
+        }
+      >
+        {isLoading && <SkeletonList numberOfItems={3} className="w-full h-[72px]" />}
+
+        {!isLoading && keys.length === 0 && (
+          <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+            <Key className="size-10" />
+            <p className="text-sm">{t('No API keys yet. Create one to get started.')}</p>
+          </div>
+        )}
+
+        {!isLoading && keys.length > 0 && (
+          <ItemGroup className="gap-2">
+            {keys.map((apiKey) => (
+              <Item key={apiKey.id} variant="outline" size="sm">
+                <ItemMedia variant="icon">
+                  <Key />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>{apiKey.displayName}</ItemTitle>
+                  <ItemDescription className='text-xs'>
+                    <span className="font-mono">sk-...{apiKey.truncatedValue}</span>
+                    {' · '}
+                    {t('Created')} {formatUtils.formatDateToAgo(new Date(apiKey.created))}
+                    {apiKey.lastUsedAt ? (
+                      <> · {t('Last used')} {formatUtils.formatDateToAgo(new Date(apiKey.lastUsedAt))}</>
+                    ) : (
+                      <> · {t('Never used')}</>
+                    )}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <DropdownMenu modal={true}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="size-8 p-0">
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <ConfirmationDeleteDialog
+                        title={t('Revoke API Key')}
+                        message={t('Are you sure you want to revoke this API key? Any integrations using it will stop working.')}
+                        entityName={t('API Key')}
+                        mutationFn={async () => {
+                          await apiKeyApi.delete(apiKey.id);
+                          refetch();
+                        }}
+                        onError={() => internalErrorToast()}
+                      >
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          <Trash className="size-4 mr-2 text-destructive" />
+                          {t('Revoke API Key')}
+                        </DropdownMenuItem>
+                      </ConfirmationDeleteDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ItemActions>
+              </Item>
+            ))}
+          </ItemGroup>
+        )}
+      </CenteredPage>
     </LockedFeatureGuard>
   );
 };

@@ -5,7 +5,6 @@ import { t } from 'i18next';
 import {
   FileText,
   Pencil,
-  Plus,
   Trash,
   Tag,
   Clock,
@@ -17,6 +16,8 @@ import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import {
   DataTable,
   RowDataWithActions,
@@ -214,13 +215,9 @@ const PlatformTemplatesPage = () => {
           title={t('Templates')}
         >
           <CreateTemplateDialog onDone={() => refetch()}>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New Template')}
-            </Button>
+            </AnimatedIconButton>
           </CreateTemplateDialog>
         </DashboardPageHeader>
         <DataTable

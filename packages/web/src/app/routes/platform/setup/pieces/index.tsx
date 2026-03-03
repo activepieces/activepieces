@@ -178,7 +178,7 @@ const PlatformPiecesPage = () => {
           />
         </div>
       </DashboardPageHeader>
-      <div className="mx-auto w-full flex-col">
+      <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
         {!isEnabled && (
           <LockedAlert
             title={t('Control Pieces')}
@@ -216,6 +216,8 @@ const PlatformPiecesPage = () => {
           isLoading={isLoading}
           selectColumn={true}
           onSelectedRowsChange={setSelectedPieces}
+          virtualizeRows={true}
+          hidePagination={true}
         />
       </div>
     </>

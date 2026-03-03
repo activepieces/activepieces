@@ -11,9 +11,6 @@ function ItemMediaImage({ src, alt }: ItemMediaImageProps) {
   return (
     <ItemMedia
       variant="icon"
-      className={
-        backgroundColor ? '!bg-transparent !border-transparent' : undefined
-      }
       style={backgroundColor ? { backgroundColor } : undefined}
     >
       <img src={src} alt={alt} className="size-6" />

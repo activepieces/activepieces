@@ -36,6 +36,8 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   EditGlobalConnectionDialog,
@@ -300,9 +302,9 @@ const GlobalConnectionsTable = () => {
               refetchGlobalConnections();
             }}
           >
-            <Button variant="default" size="sm">
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New Connection')}
-            </Button>
+            </AnimatedIconButton>
           </NewConnectionDialog>
         </DashboardPageHeader>
         <DataTable

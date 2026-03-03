@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { Button } from '@/components/ui/button';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import {
   Tooltip,
   TooltipContent,
@@ -45,10 +45,14 @@ const ProjectRolePage = () => {
           {!platform.plan.customRolesEnabled && (
             <Tooltip>
               <TooltipTrigger>
-                <Button size="sm" className="flex items-center gap-2" disabled>
-                  <Plus className="size-4" />
+                <AnimatedIconButton
+                  icon={PlusIcon}
+                  iconSize={16}
+                  size="sm"
+                  disabled
+                >
                   {t('New Role')}
-                </Button>
+                </AnimatedIconButton>
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 {t('Contact sales to unlock custom roles')}
@@ -61,10 +65,9 @@ const ProjectRolePage = () => {
               onSave={() => refetch()}
               platformId={platform.id}
             >
-              <Button size="sm" className="flex items-center gap-2">
-                <Plus className="size-4" />
+              <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
                 {t('New Role')}
-              </Button>
+              </AnimatedIconButton>
             </ProjectRoleDialog>
           )}
         </DashboardPageHeader>

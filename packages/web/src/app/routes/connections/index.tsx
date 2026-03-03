@@ -12,7 +12,6 @@ import {
   Globe,
   Replace,
   Trash2,
-  Plus,
   Clock,
   Activity,
   Workflow,
@@ -38,6 +37,8 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -400,12 +401,14 @@ function AppConnectionsPage() {
                     refetch();
                   }}
                 >
-                  <Button
-                    variant="default"
+                  <AnimatedIconButton
+                    icon={PlusIcon}
+                    iconSize={16}
+                    size="sm"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
-                    <Plus className="h-4 w-4" /> {t('New Connection')}
-                  </Button>
+                    {t('New Connection')}
+                  </AnimatedIconButton>
                 </NewConnectionDialog>
               </PermissionNeededTooltip>
             </div>

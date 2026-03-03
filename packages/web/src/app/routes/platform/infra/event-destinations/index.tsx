@@ -1,9 +1,9 @@
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { Button } from '@/components/ui/button';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { EventDestinationDialog } from './components/event-destination-dialog';
@@ -33,13 +33,9 @@ const EventDestinationsPage = () => {
           description={t('Configure event destinations for your platform')}
         >
           <EventDestinationDialog destination={null}>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New Destination')}
-            </Button>
+            </AnimatedIconButton>
           </EventDestinationDialog>
         </DashboardPageHeader>
         <EventDestinationsTable destinations={destinations} />
