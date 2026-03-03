@@ -7,7 +7,7 @@ export class ChangeProjectUniqueConstraintToPartialIndex1729098769827 implements
     name = 'ChangeProjectUniqueConstraintToPartialIndex1729098769827'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({ name: this.name }, 'Up')
+        log.info('[changeProjectUniqueConstraintToPartialIndex1729098769827#up]')
         await queryRunner.query(`
           DROP INDEX "idx_project_platform_id_external_id";
         `)
@@ -20,9 +20,7 @@ export class ChangeProjectUniqueConstraintToPartialIndex1729098769827 implements
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'down')
+        log.info('[changeProjectUniqueConstraintToPartialIndex1729098769827#down]')
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id";
         `)

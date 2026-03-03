@@ -5,7 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 
-import { bubbleAuth } from '../../index';
+import { bubbleAuth } from '../auth';
 import { bubbleCommon } from '../common';
 
 export const bubbleListThingsAction = createAction({

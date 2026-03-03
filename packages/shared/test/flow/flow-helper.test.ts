@@ -14,7 +14,7 @@ import {
     RouterExecutionType,
     StepLocationRelativeToParent,
 } from '../../src'
-import { _getImportOperations } from '../../src/lib/flows/operations/import-flow'
+import { _getImportOperations } from '../../src/lib/automation/flows/operations/import-flow'
 
 const flowVersionWithBranching: FlowVersion = {
     id: 'pj0KQ7Aypoa9OQGHzmKDl',

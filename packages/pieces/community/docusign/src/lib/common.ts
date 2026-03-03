@@ -1,5 +1,6 @@
 import { ApiClient } from 'docusign-esign';
-import { docusignAuth, DocusignAuthType } from '../index';
+import { docusignAuth } from './auth';
+import { DocusignAuthType } from '../index';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 export async function createApiClient(

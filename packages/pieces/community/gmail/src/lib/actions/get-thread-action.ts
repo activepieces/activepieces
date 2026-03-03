@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { GmailRequests } from '../common/data';
 import { GmailMessageFormat } from '../common/models';
-import { gmailAuth } from '../../';
+import { gmailAuth } from '../auth';
 
 export const gmailGetThread = createAction({
   auth: gmailAuth,

@@ -1,6 +1,6 @@
 import { readdir, rm } from 'fs/promises'
 import path from 'path'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-common'
 import { FastifyBaseLogger } from 'fastify'
 
 export const LATEST_CACHE_VERSION = 'v7'

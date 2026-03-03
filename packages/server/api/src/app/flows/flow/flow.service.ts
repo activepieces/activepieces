@@ -1,4 +1,4 @@
-import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
+import { apDayjs, apDayjsDuration } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     apId,
@@ -81,7 +81,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
             .catch((e) =>
-                log.error(e, '[FlowService#create] telemetry.trackProject'),
+                log.error({ err: e }, '[flowService#create] Failed to track project telemetry'),
             )
 
         return {

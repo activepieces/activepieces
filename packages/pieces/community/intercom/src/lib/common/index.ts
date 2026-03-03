@@ -5,7 +5,7 @@ import {
   OAuth2Props,
   Property,
 } from '@activepieces/pieces-framework';
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 
 export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
   const client = new IntercomClient({

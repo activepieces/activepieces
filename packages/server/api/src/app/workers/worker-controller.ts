@@ -1,4 +1,4 @@
-import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, securityAccess, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, securityAccess, SubmitPayloadsRequest } from '@activepieces/server-common'
 import { ExecutionType, FileType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'

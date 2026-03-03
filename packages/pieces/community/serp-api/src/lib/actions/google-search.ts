@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { serpApiAuth } from '../../index';
+import { serpApiAuth } from '../auth';
 import { COUNTRY_OPTIONS } from '../constants/countries';
 import { GOOGLE_DOMAIN_OPTIONS } from '../constants/google-domains';
 import { LANGUAGE_OPTIONS } from '../constants/languages';

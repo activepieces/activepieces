@@ -1,4 +1,4 @@
-import { azureOpenaiAuth } from '../../';
+import { azureOpenaiAuth } from '../auth';
 import {
     Property,
     StoreScope,

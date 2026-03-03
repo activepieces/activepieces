@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
+import { googleSearchConsoleAuth } from '../auth';
+import { createAuthClient } from '../../';
 import { commonProps } from '../common';
 import dayjs from 'dayjs';
 

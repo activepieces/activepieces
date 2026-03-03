@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, pollingHelper } from '@activepieces/pieces-common';
-import { firecrawlAuth } from '../../index';
+import { firecrawlAuth } from '../auth';
 import { forJsonOutputFormat, polling, FIRECRAWL_API_BASE_URL } from '../common/common';
 
 export const extract = createAction({

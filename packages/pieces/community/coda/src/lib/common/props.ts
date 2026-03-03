@@ -1,6 +1,6 @@
 import { DropdownOption, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { codaClient, CodaTableColumn } from './types';
-import { codaAuth } from '../..';
+import { codaAuth } from '../auth';
 
 export const docIdDropdown = Property.Dropdown({
 	auth: codaAuth,

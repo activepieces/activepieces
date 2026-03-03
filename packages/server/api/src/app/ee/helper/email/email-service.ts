@@ -1,5 +1,4 @@
-import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { system } from '../../../helper/system/system'
@@ -67,6 +66,34 @@ export const emailService = (log: FastifyBaseLogger) => ({
                 vars: {
                     projectName,
                     role,
+                    loginLink,
+                },
+            },
+        })
+    },
+
+    async sendScimUserWelcome({ email, platformId }: SendScimUserWelcomeArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
+            return
+        }
+
+        log.info({
+            message: '[emailService#sendScimUserWelcome] sending welcome email',
+            email,
+            platformId,
+        })
+
+        const loginLink = await domainHelper.getPublicUrl({
+            platformId,
+            path: 'sign-in',
+        })
+
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'scim-user-welcome',
+                vars: {
                     loginLink,
                 },
             },
@@ -233,6 +260,11 @@ type SendOtpArgs = {
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
+}
+
+type SendScimUserWelcomeArgs = {
+    email: string
+    platformId: string
 }
 
 type IssueCreatedArgs = {

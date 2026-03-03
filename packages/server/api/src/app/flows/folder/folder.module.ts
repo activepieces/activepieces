@@ -1,6 +1,5 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import {
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
+import { ApplicationEventName,
     CreateFolderRequest,
     DeleteFolderRequest,
     ListFolderRequest,

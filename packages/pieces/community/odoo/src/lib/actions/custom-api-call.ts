@@ -2,7 +2,7 @@ import {
   createAction,
   Property,
 } from '@activepieces/pieces-framework';
-import { odooAuth } from '../../index';
+import { odooAuth } from '../auth';
 import Odoo from '../../commom/index';
 
 export const customOdooApiCall = createAction({

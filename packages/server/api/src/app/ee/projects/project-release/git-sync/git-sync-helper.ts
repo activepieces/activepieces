@@ -1,8 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { GitRepo } from '@activepieces/ee-shared'
-import { fileSystemUtils } from '@activepieces/server-shared'
-import { AppConnectionScope, ConnectionState, FlowState, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
+import { fileSystemUtils } from '@activepieces/server-common'
+import { AppConnectionScope, ConnectionState, FlowState, GitRepo, PopulatedFlow, PopulatedTable, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SimpleGit } from 'simple-git'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
@@ -22,7 +21,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             }
         }
         catch (error) {
-            log.error(`Failed to read flow files: ${error}`)
+            log.error({ err: error }, '[gitSyncHelper#getStateFromGit] Failed to read flow files')
             throw error
         }
     },
@@ -35,7 +34,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             await fs.writeFile(flowJsonPath, JSON.stringify(flowState, null, 2))
         }
         catch (error) {
-            log.error(`Failed to write flow file ${fileName}: ${error}`)
+            log.error({ err: error, fileName }, '[gitSyncHelper#upsertFlowToGit] Failed to write flow file')
             throw error
         }
     },

@@ -8,15 +8,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 import { googleTasksCommon } from './lib/common';
 import { newTaskTrigger } from './lib/triggers/new-task';
-
-export const googleTasksAuth = PieceAuth.OAuth2({
-  description: '',
-
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: ['https://www.googleapis.com/auth/tasks'],
-});
+import { googleTasksAuth } from './lib/auth';
 
 export const googleTasks = createPiece({
   minimumSupportedRelease: '0.30.0',

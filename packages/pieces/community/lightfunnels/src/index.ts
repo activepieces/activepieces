@@ -12,14 +12,7 @@ import { createCustomer } from './lib/actions/create-customer';
 import { getCustomer } from './lib/actions/get-customer';
 import { listCustomers } from './lib/actions/list-customers';
 import { getFunnel } from './lib/actions/get-funnel';
-
-export const lightfunnelsAuth = PieceAuth.OAuth2({
-  grantType: OAuth2GrantType.AUTHORIZATION_CODE,
-  authUrl: 'https://app.lightfunnels.com/admin/oauth',
-  tokenUrl: 'https://services.lightfunnels.com/oauth/access',
-  required: true,
-  scope: ['products,orders,customers,funnels'],
-});
+import { lightfunnelsAuth } from './lib/auth';
 
 export const lightfunnels = createPiece({
   displayName: 'Lightfunnels',

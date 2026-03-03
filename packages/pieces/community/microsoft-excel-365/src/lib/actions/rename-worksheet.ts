@@ -4,7 +4,7 @@ import {
   HttpMethod,
   AuthenticationType
 } from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { excelCommon } from '../common/common';
 
 const namingRules = `

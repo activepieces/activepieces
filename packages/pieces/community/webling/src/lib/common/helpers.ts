@@ -1,4 +1,4 @@
-import { weblingAuth } from '../../index';
+import { weblingAuth } from '../auth';
 import {
   httpClient,
   HttpMethod,

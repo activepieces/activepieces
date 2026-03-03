@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { discourseAuth } from '../../index';
+import { discourseAuth } from '../auth';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 

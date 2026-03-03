@@ -127,6 +127,9 @@
   "New Label": "Nouveau libellé",
   "New Milestone": "Nouveau jalon",
   "New Release": "Nouvelle version",
+  "New Commit": "New Commit",
+  "New Review Request": "New Review Request",
+  "New Mention": "New Mention",
   "Triggers when there is activity on a pull request.": "Déclenche lorsqu'il y a une activité sur une demande de pulling.",
   "Trigger when there is activity relating to repository stars.": "Déclencher lorsqu'il y a une activité liée aux étoiles du référentiel.",
   "Triggers when there is activity relating to an issue.": "Déclenche lorsqu'il y a une activité liée à un problème.",
@@ -137,5 +140,8 @@
   "Triggers when a new collaborator is added to a repository.": "Déclenche lorsqu'un nouveau collaborateur est ajouté à un dépôt.",
   "Triggers when a new label is created in a repository.": "Déclenche lorsqu'un nouveau label est créé dans un référentiel.",
   "Triggers when a new milestone is created.": "Déclenche quand un nouveau jalon est créé.",
-  "Triggers when a new release is added.": "Déclenche quand une nouvelle version est ajoutée."
+  "Triggers when a new release is added.": "Déclenche quand une nouvelle version est ajoutée.",
+  "Triggers when a new commit is pushed.": "Triggers when a new commit is pushed.",
+  "Triggers when you are requested to review a pull request.": "Triggers when you are requested to review a pull request.",
+  "Triggers when you are mentioned in a comment.": "Triggers when you are mentioned in a comment."
 }

@@ -2,7 +2,7 @@ import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pi
 
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Team, Channel, Chat, ConversationMember } from '@microsoft/microsoft-graph-types';
-import { microsoftTeamsAuth } from '../../';
+import { microsoftTeamsAuth } from '../auth';
 
 export const microsoftTeamsCommon = {
 	teamId: Property.Dropdown({

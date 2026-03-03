@@ -1,6 +1,5 @@
-import { ApSubscriptionStatus, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler, securityAccess } from '@activepieces/server-shared'
-import { isNil, PlanName } from '@activepieces/shared'
+import { AppSystemProp, exceptionHandler, securityAccess } from '@activepieces/server-common'
+import { ApSubscriptionStatus, isNil, PlanName, STANDARD_CLOUD_PLAN } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -115,14 +114,13 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         break
                     }
                     default:
-                        request.log.info(`Unhandled webhook event type: ${webhook.type}`)
+                        request.log.info({ webhookType: webhook.type }, '[stripeBillingController#webhook] Unhandled webhook event type')
                         break
                 }
                 return await reply.status(StatusCodes.OK).send({ received: true })
             }
             catch (err) {
-                request.log.error(err)
-                request.log.warn('⚠️  Webhook signature verification failed.')
+                request.log.error({ err }, '[stripeBillingController#webhook] Webhook signature verification failed')
                 exceptionHandler.handle(err, request.log)
                 return reply
                     .status(StatusCodes.BAD_REQUEST)

@@ -15,14 +15,20 @@ import {
   ToolCallType,
 } from '@activepieces/shared';
 
+export type ToolKeyToAgentTool = Record<string, AgentTool>;
+
 export const agentOutputBuilder = (prompt: string) => {
   let status: AgentTaskStatus = AgentTaskStatus.IN_PROGRESS;
   const steps: AgentStepBlock[] = [];
   let structuredOutput: Record<string, unknown> | undefined = undefined;
+  let toolKeyToAgentTool: ToolKeyToAgentTool = {};
 
   return {
     setStatus(_status: AgentTaskStatus) {
       status = _status;
+    },
+    setToolMap(map: ToolKeyToAgentTool) {
+      toolKeyToAgentTool = map;
     },
     setStructuredOutput(output: Record<string, unknown>) {
       structuredOutput = output;
@@ -51,12 +57,7 @@ export const agentOutputBuilder = (prompt: string) => {
       }
       (steps[steps.length - 1] as MarkdownContentBlock).markdown += markdown;
     },
-    startToolCall({
-      toolName,
-      toolCallId,
-      input,
-      agentTools,
-    }: StartToolCallParams) {
+    startToolCall({ toolName, toolCallId, input }: StartToolCallParams) {
       const baseTool: ToolCallBase = {
         toolName,
         toolCallId,
@@ -66,12 +67,7 @@ export const agentOutputBuilder = (prompt: string) => {
         output: undefined,
         startTime: new Date().toISOString(),
       };
-      const metadata = getToolMetadata({
-        toolName,
-        baseTool,
-        tools: agentTools,
-      });
-      steps.push(metadata);
+      steps.push(getToolMetadata({ toolName, baseTool, toolKeyToAgentTool }));
     },
     finishToolCall({ toolCallId, output }: FinishToolCallParams) {
       const toolIdx = steps.findIndex(
@@ -140,7 +136,6 @@ type StartToolCallParams = {
   toolName: string;
   toolCallId: string;
   input: Record<string, unknown>;
-  agentTools: AgentTool[];
 };
 
 type FinishParams = {
@@ -149,21 +144,20 @@ type FinishParams = {
 
 function getToolMetadata({
   toolName,
-  tools,
   baseTool,
-}: GetToolMetadaParams): ToolCallContentBlock {
-  const tool = tools.find((tool) => tool.toolName === toolName);
+  toolKeyToAgentTool,
+}: GetToolMetadataParams): ToolCallContentBlock {
+  const tool = toolKeyToAgentTool[toolName];
   assertNotNullOrUndefined(tool, `Tool ${toolName} not found`);
 
   switch (tool.type) {
     case AgentToolType.PIECE: {
-      const pieceMetadata = tool.pieceMetadata;
-      assertNotNullOrUndefined(pieceMetadata, 'Piece metadata is required');
+      assertNotNullOrUndefined(tool.pieceMetadata, 'Piece metadata is required');
       return {
         ...baseTool,
         toolCallType: ToolCallType.PIECE,
-        pieceName: pieceMetadata.pieceName,
-        pieceVersion: pieceMetadata.pieceVersion,
+        pieceName: tool.pieceMetadata.pieceName,
+        pieceVersion: tool.pieceMetadata.pieceVersion,
         actionName: tool.pieceMetadata.actionName,
       };
     }
@@ -173,24 +167,23 @@ function getToolMetadata({
         ...baseTool,
         toolCallType: ToolCallType.FLOW,
         displayName: tool.toolName,
-        externalFlowId: tool.externalFlowId
+        externalFlowId: tool.externalFlowId,
       };
     }
     case AgentToolType.MCP: {
-      assertNotNullOrUndefined(tool.serverUrl, 'Mcp server URL is required');
+      assertNotNullOrUndefined(tool.serverUrl, 'MCP server URL is required');
       return {
         ...baseTool,
         toolCallType: ToolCallType.MCP,
-        displayName: tool.toolName,
+        displayName: toolName,
         serverUrl: tool.serverUrl,
-        
       };
     }
   }
 }
 
-type GetToolMetadaParams = {
-    toolName: string;
-    tools: AgentTool[];
-    baseTool: ToolCallBase;
-}
+type GetToolMetadataParams = {
+  toolName: string;
+  toolKeyToAgentTool: ToolKeyToAgentTool;
+  baseTool: ToolCallBase;
+};

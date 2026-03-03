@@ -16,7 +16,7 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
     name = 'AIProviderRefactorSqlite1748824241409'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info('AIProviderRefactorSqlite1748824241409 up: started')
+        log.info('[AIProviderRefactorSqlite1748824241409#up] started')
 
     
         // Create backup table first
@@ -24,7 +24,7 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
             CREATE TABLE "ai_provider_backup" AS 
             SELECT * FROM "ai_provider"
         `)
-        log.info('Created backup table ai_provider_backup')
+        log.info('[AIProviderRefactorSqlite1748824241409#up] Created backup table ai_provider_backup')
 
         try {
             const aiProviders = await queryRunner.query(`
@@ -69,19 +69,19 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
                     `, [JSON.stringify(encryptedNewConfig), provider.id])
                     
                     successCount++
-                    log.info(`Successfully migrated provider ${provider.id} (${providerType})`)
+                    log.info({ providerId: provider.id, providerType }, '[AIProviderRefactorSqlite1748824241409#up] Successfully migrated provider')
                 }
                 catch (error) {
                     errorCount++
-                    log.error({ 
-                        error,
+                    log.error({
+                        err: error,
                         providerId: provider.id,
-                    }, 'Failed to transform config for provider')
+                    }, '[AIProviderRefactorSqlite1748824241409#up] Failed to transform config for provider')
                     throw new Error(`Migration failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`)
                 }
             }
 
-            log.info(`Migration completed successfully: ${successCount} providers migrated, ${errorCount} errors`)
+            log.info({ successCount, errorCount }, '[AIProviderRefactorSqlite1748824241409#up] Migration completed successfully')
 
             // Only proceed with schema changes if all data migrations succeeded
             await queryRunner.query('DROP INDEX IF EXISTS "idx_ai_provider_platform_id_provider"')
@@ -92,13 +92,13 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
             `)
 
             await queryRunner.query('DROP TABLE "ai_provider_backup"')
-            log.info('Dropped backup table after successful migration')
+            log.info('[AIProviderRefactorSqlite1748824241409#up] Dropped backup table after successful migration')
 
         }
         catch (error) {
-            log.error({ 
-                error,
-            }, 'Migration failed, restoring from backup:')
+            log.error({
+                err: error,
+            }, '[AIProviderRefactorSqlite1748824241409#up] Migration failed, restoring from backup')
                 
             // Restore from backup
             await queryRunner.query('DROP TABLE "ai_provider"')
@@ -107,18 +107,18 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
             throw error instanceof Error ? error : new Error(String(error))
         }
 
-        log.info('AIProviderRefactorSqlite1748824241409 up: finished')
+        log.info('[AIProviderRefactorSqlite1748824241409#up] finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        log.info('AIProviderRefactorSqlite1748824241409 down: started')
+        log.info('[AIProviderRefactorSqlite1748824241409#down] started')
 
         // Create backup table first
         await queryRunner.query(`
             CREATE TABLE "ai_provider_backup" AS 
             SELECT * FROM "ai_provider"
         `)
-        log.info('Created backup table ai_provider_backup')
+        log.info('[AIProviderRefactorSqlite1748824241409#down] Created backup table ai_provider_backup')
 
         try {
             const aiProviders = await queryRunner.query(`
@@ -160,21 +160,21 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
                     `, [JSON.stringify(encryptedOldConfig), provider.id])
                     
                     successCount++
-                    log.info(`Successfully rolled back provider ${provider.id} (${providerType})`)
+                    log.info({ providerId: provider.id, providerType }, '[AIProviderRefactorSqlite1748824241409#down] Successfully rolled back provider')
                 }
                 catch (error) {
                     errorCount++
-                    log.error({ 
-                        error,
+                    log.error({
+                        err: error,
                         providerId: provider.id,
-                    }, 'Failed to reverse transform config for provider')
+                    }, '[AIProviderRefactorSqlite1748824241409#down] Failed to reverse transform config for provider')
                     
                     // Don't use a fallback - keep original data and fail the migration
                     throw new Error(`Rollback failed for provider ${provider.id}: ${error instanceof Error ? error.message : String(error)}`)
                 }
             }
 
-            log.info(`Rollback completed successfully: ${successCount} providers rolled back, ${errorCount} errors`)
+            log.info({ successCount, errorCount }, '[AIProviderRefactorSqlite1748824241409#down] Rollback completed successfully')
 
             await queryRunner.query('DROP INDEX IF EXISTS "idx_ai_provider_platform_id_provider"')
             await queryRunner.query('ALTER TABLE "ai_provider" ADD COLUMN "baseUrl" varchar NOT NULL DEFAULT ""')
@@ -184,13 +184,13 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
             `)
 
             await queryRunner.query('DROP TABLE "ai_provider_backup"')
-            log.info('Dropped backup table after successful rollback')
+            log.info('[AIProviderRefactorSqlite1748824241409#down] Dropped backup table after successful rollback')
 
         }
         catch (error) {
-            log.error({ 
-                error,
-            }, 'Rollback failed, restoring from backup:')
+            log.error({
+                err: error,
+            }, '[AIProviderRefactorSqlite1748824241409#down] Rollback failed, restoring from backup')
             
             await queryRunner.query('DROP TABLE "ai_provider"')
             await queryRunner.query('ALTER TABLE "ai_provider_backup" RENAME TO "ai_provider"')
@@ -198,6 +198,6 @@ export class AIProviderRefactorSqlite1748824241409 implements MigrationInterface
             throw error instanceof Error ? error : new Error(String(error))
         }
 
-        log.info('AIProviderRefactorSqlite1748824241409 down: finished')
+        log.info('[AIProviderRefactorSqlite1748824241409#down] finished')
     }
 }

@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { hashiCorpVaultAuth } from '../../index';
+import { hashiCorpVaultAuth } from '../auth';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 export interface VaultAuthResult {

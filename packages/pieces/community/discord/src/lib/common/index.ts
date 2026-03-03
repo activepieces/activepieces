@@ -1,7 +1,7 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Channel, Guild } from '../common/models';
 import { Property } from '@activepieces/pieces-framework';
-import { discordAuth } from '../..';
+import { discordAuth } from '../auth';
 
 export interface Member {
   user: {

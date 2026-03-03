@@ -1,5 +1,5 @@
 import { docsCommon } from '../common';
-import { googleDocsAuth } from '../..';
+import { googleDocsAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 
 export const appendText = createAction({

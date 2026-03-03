@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { nitfyCommon, callNitfyApi } from '../common';
-import { niftyAuth } from '../../index';
+import { niftyAuth } from '../auth';
 
 export const createTask = createAction({
   name: 'create_task',

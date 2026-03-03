@@ -1,7 +1,7 @@
 import {
     networkUtils,
     rejectedPromiseHandler,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import {
     FlowId,
     FlowVersion,

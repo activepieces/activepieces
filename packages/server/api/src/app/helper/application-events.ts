@@ -1,6 +1,5 @@
-import { ApplicationEvent } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { apId, isNil, PrincipalType } from '@activepieces/shared'
+import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-common'
+import { apId, ApplicationEvent, isNil, PrincipalType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { Clean } from '@sinclair/typebox/value'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
@@ -64,7 +63,7 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
                 })
             }
         }).catch((error) => {
-            log.error(error)
+            log.error({ err: error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
         })
     },
 })

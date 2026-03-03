@@ -1,6 +1,6 @@
 {
   "AI-powered search and content extraction from the web.": "AIを駆使した検索とWebからのコンテンツ抽出。",
-  "Obtain your API key from [Dashboard Setting](https://dashboard.exa.ai/api-keys).": "[ダッシュボード設定](https://dashboard.exa.ai/api-keys)からAPIキーを取得します。",
+  "\nObtain your API key from [Dashboard Setting](https://dashboard.exa.ai/api-keys).\n": "\n[ダッシュボード設定](https://dashboard.exa.ai/api-keys)からAPIキーを取得します。\n",
   "Get Contents": "内容を取得",
   "Ask AI": "AIに聞く",
   "Perform Search": "検索を実行",

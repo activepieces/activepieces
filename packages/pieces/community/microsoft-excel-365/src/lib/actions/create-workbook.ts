@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { excelCommon } from '../common/common';
 import { 
   httpClient, 

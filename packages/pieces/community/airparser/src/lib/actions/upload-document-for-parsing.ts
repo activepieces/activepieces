@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
-import { airparserAuth } from '../../index';
+import { airparserAuth } from '../auth';
 import { BASE_URL } from '../common';
 import { inboxIdDropdown } from '../common/props';
 

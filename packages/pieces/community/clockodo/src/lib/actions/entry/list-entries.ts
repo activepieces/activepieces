@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient, reformatDateTime } from '../../common';
 import { BillableType, EntryListFilter } from '../../common/models/entry';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 function calculateBillable(
   billable?: boolean,

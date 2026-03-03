@@ -1,6 +1,6 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient, AuthenticationType } from "@activepieces/pieces-common";
-import { chatflyAuth } from "../../index";
+import { chatflyAuth } from '../auth';
 
 export const sendMessageAction = createAction({
   auth: chatflyAuth,

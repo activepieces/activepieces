@@ -1,4 +1,5 @@
-import { apId, FilteredPieceBehavior,
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { apId, ApEdition, FilteredPieceBehavior,
     PlanName,
     PlatformRole,
     PrincipalType,
@@ -7,25 +8,20 @@ import { apId, FilteredPieceBehavior,
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { initializeDatabase } from '../../../../src/app/database'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../src/app/server'
+import { system } from '../../../../src/app/helper/system/system'
+import { db } from '../../../helpers/db'
 import { generateMockToken } from '../../../helpers/auth'
 import { checkIfSolutionExistsInDb, createMockSolutionAndSave, createMockUser, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
-
 describe('Platform API', () => {
     describe('update platform endpoint', () => {
         it('patches a platform by id', async () => {
@@ -250,7 +246,10 @@ describe('Platform API', () => {
         })
     }),
     describe('delete platform endpoint', () => {
+        const isCloud = system.getEdition() === ApEdition.CLOUD
+
         it('deletes a platform by id', async () => {
+            if (!isCloud) return
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
@@ -264,11 +263,11 @@ describe('Platform API', () => {
                     },
                 },
             )
-          
+
             const ownerSolution = await createMockSolutionAndSave({ projectId: firstAccount.mockProject.id, platformId: firstAccount.mockPlatform.id, userId: firstAccount.mockOwner.id })
-          
+
             const secondSolution = await createMockSolutionAndSave({ projectId: secondAccount.mockProject.id, platformId: secondAccount.mockPlatform.id, userId: secondAccount.mockOwner.id })
-          
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: firstAccount.mockOwner.id,
@@ -291,6 +290,7 @@ describe('Platform API', () => {
             expect(ownerSolutionExists).toBe(false)
         }),
         it('fails if platform is not eligible for deletion', async () => {
+            if (!isCloud) return
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
@@ -300,7 +300,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
             // act
@@ -316,6 +316,7 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.UNPROCESSABLE_ENTITY)
         }),
         it('fails if user is not owner', async () => {
+            if (!isCloud) return
             // arrange
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
@@ -332,7 +333,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -349,6 +350,7 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         }),
         it('doesn\'t delete user identity if it has other users', async () => {
+            if (!isCloud) return
             // arrange
             const firstAccount = await mockAndSaveBasicSetup( {
                 plan: {
@@ -365,7 +367,7 @@ describe('Platform API', () => {
                 platformRole: PlatformRole.ADMIN,
                 identityId: firstAccount.mockUserIdentity.id,
             })
-            await databaseConnection().getRepository('user').save(secondUser)
+            await db.save('user', secondUser)
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: firstAccount.mockOwner.id,
@@ -381,7 +383,7 @@ describe('Platform API', () => {
             })
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const userIdentityExists = await databaseConnection().getRepository('user_identity').findOneBy({ id: firstAccount.mockUserIdentity.id })
+            const userIdentityExists = await db.findOneBy('user_identity', { id: firstAccount.mockUserIdentity.id })
             expect(userIdentityExists).not.toBeNull()
         })
     })
@@ -416,7 +418,7 @@ describe('Platform API', () => {
                 platformRole: PlatformRole.MEMBER,
             },
         })
-        await databaseConnection().getRepository('user').save(mockUser)
+        await db.save('user', mockUser)
         const testToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockUser.id,

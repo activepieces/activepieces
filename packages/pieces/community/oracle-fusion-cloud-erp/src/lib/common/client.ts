@@ -7,7 +7,7 @@ import {
     HttpHeaders,
 } from '@activepieces/pieces-common';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
-import { oracleFusionCloudErpAuth } from '../../index';
+import { oracleFusionCloudErpAuth } from '../auth';
 
 type OracleAuthValue = PiecePropValueSchema<typeof oracleFusionCloudErpAuth>;
 

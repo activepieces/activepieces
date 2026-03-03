@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import { z } from 'zod';
-import { googleGeminiAuth } from '../../index';
+import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
 

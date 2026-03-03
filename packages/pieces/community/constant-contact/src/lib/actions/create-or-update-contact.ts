@@ -8,7 +8,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { constantContactAuth } from '../../';
+import { constantContactAuth } from '../auth';
 
 export const createOrUpdateContact = createAction({
   auth: constantContactAuth,

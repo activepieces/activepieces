@@ -1,4 +1,4 @@
-import { pipedriveAuth } from '../../index';
+import { pipedriveAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { labelIdsProp, personIdProp } from '../common/props';
 import {

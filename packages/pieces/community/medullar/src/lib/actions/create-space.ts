@@ -1,4 +1,4 @@
-import { medullarAuth } from '../../index';
+import { medullarAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { medullarCommon, getUser } from '../common';

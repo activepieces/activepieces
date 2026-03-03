@@ -1,5 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
+import { googleSearchConsoleAuth } from '../auth';
+import { createAuthClient } from '../../';
 
 export const listSites = createAction({
   auth: googleSearchConsoleAuth,

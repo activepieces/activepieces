@@ -5,7 +5,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import qs from 'qs';
-import { clickupAuth } from '../../..';
+import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon, listTags } from '../../common';
 import { ClickupTask } from '../../common/models';
 

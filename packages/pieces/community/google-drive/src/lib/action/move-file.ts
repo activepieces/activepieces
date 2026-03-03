@@ -1,4 +1,4 @@
-import { googleDriveAuth } from '../../';
+import { googleDriveAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { common } from '../common';
 import { google } from 'googleapis';

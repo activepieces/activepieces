@@ -1,5 +1,5 @@
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { customerIOAuth } from '../../index';
+import { customerIOAuth } from '../auth';
 import { customerIOCommon } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 

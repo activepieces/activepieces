@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { instabaseAuth } from '../../index';
+import { instabaseAuth } from '../auth';
 import { makeInstabaseApiCall } from '../common';
 
 interface ConverseWithDocumentResponse {

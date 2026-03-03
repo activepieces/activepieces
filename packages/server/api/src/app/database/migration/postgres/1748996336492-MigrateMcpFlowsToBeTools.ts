@@ -72,7 +72,7 @@ export class MigrateMcpFlowsToBeTools1748996336492 implements MigrationInterface
             await AddMcpFlowTools(queryRunner, mcp.id, mcp.projectId)
         }
 
-        log.info(`Migration MigrateMcpFlowsToBeTools1748996336492 completed successfully. Added ${totalFlows} MCP flow tools`)
+        log.info({ totalFlows }, '[MigrateMcpFlowsToBeTools1748996336492#up] Migration completed successfully')
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
@@ -103,7 +103,7 @@ async function AddMcpFlowTools(queryRunner: QueryRunner, mcpId: string, projectI
 
     const populatedFlowsCount = populatedFlows.filter((flow) => flow !== null).length
     totalFlows += populatedFlowsCount
-    log.info(`Adding ${populatedFlowsCount} MCP flow tools out of ${flows.length} flows for MCP ${mcpId} and project ${projectId}`)
+    log.info({ populatedFlowsCount, totalFlows: flows.length, mcpId, projectId }, '[AddMcpFlowTools] Adding MCP flow tools')
 
     await Promise.all(populatedFlows.map(async (flow: Flow | null) => {
         if (isNil(flow)) {

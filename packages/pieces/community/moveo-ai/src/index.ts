@@ -2,12 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { moveoTriggers } from './lib/triggers';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-
-export const moveoAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Generate an API key in Deploy → Developer Tools → API Keys.',
-  required: true,
-});
+import { moveoAuth } from './lib/auth';
 
 export const moveoAi = createPiece({
   displayName: 'Moveo',

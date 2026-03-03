@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { tableauAuth } from '../../index';
+import { tableauAuth } from '../auth';
 import { createWebhook, deleteWebhook, WebhookData } from '../common';
 
 export const workbookRefreshEventTrigger = createTrigger({

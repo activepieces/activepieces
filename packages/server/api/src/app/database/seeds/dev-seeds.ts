@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEdition, ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
@@ -46,16 +46,16 @@ const seedDevUser = async (): Promise<void> => {
         provider: UserIdentityProvider.EMAIL,
     })
 
-    log.info({ name: 'seedDevUser' }, `email=${DEV_EMAIL} pass=${DEV_PASSWORD}`)
+    log.info({ email: DEV_EMAIL, password: DEV_PASSWORD }, '[devSeeds#seedDevUser] Dev user created')
 }
 const seedDevData = async (): Promise<void> => {
     if (currentEnvIsNotDev()) {
-        log.info({ name: 'seedDevData' }, 'skip: not in development environment')
+        log.info('[devSeeds#seedDevData] Skipping, not in development environment')
         return
     }
 
     if (await devDataAlreadySeeded()) {
-        log.info({ name: 'seedDevData' }, 'skip: already seeded')
+        log.info('[devSeeds#seedDevData] Skipping, already seeded')
         return
     }
 

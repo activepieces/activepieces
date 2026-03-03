@@ -5,7 +5,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
-import { slackAuth } from '../../';
+import { slackAuth } from '../auth';
 
 export const newMention = createTrigger({
   auth: slackAuth,

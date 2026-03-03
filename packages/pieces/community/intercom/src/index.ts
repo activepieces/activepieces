@@ -1,9 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
 	OAuth2PropertyValue,
-	PieceAuth,
 	createPiece,
-	Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendMessageAction } from './lib/actions/send-message.action';
@@ -47,37 +45,7 @@ import { leadConvertedToUserTrigger } from './lib/triggers/lead-converted-to-use
 import { newUserTrigger } from './lib/triggers/new-user';
 import { tagAddedToUserTrigger } from './lib/triggers/tag-added-to-user';
 import { contactUpdatedTrigger } from './lib/triggers/contact-updated';
-
-const description = `
-Please follow the instructions to create Intercom Oauth2 app.
-
-1.Log in to your Intercom account and navigate to **Settings > Integrations > Developer Hub**.
-2.Click on **Create a new app** and select the appropriate workspace.
-3.In **Authentication** section, add Redirect URL.
-4.In **Webhooks** section, select the events you want to receive.
-5.Go to the **Basic Information** section and copy the Client ID and Client Secret.
-`;
-
-export const intercomAuth = PieceAuth.OAuth2({
-	authUrl: 'https://app.{region}.com/oauth',
-	tokenUrl: 'https://api.{region}.io/auth/eagle/token',
-	required: true,
-	description,
-	scope: [],
-	props: {
-		region: Property.StaticDropdown({
-			displayName: 'Region',
-			required: true,
-			options: {
-				options: [
-					{ label: 'US', value: 'intercom' },
-					{ label: 'EU', value: 'eu.intercom' },
-					{ label: 'AU', value: 'au.intercom' },
-				],
-			},
-		}),
-	},
-});
+import { intercomAuth } from './lib/auth';
 
 export const intercom = createPiece({
 	displayName: 'Intercom',

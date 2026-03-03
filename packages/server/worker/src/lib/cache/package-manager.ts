@@ -4,7 +4,7 @@ import {
     execPromise,
     fileSystemUtils,
     spawnWithKill,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import { tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -17,7 +17,6 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
         const args = [
             '--ignore-scripts',
-            '--linker isolated',
         ]
         const filters: string[] = filtersPath
             .map(sanitizeFilterPath)

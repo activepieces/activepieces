@@ -1,6 +1,6 @@
 import { createAction, Property, ApFile } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { instabaseAuth } from '../../index';
+import { instabaseAuth } from '../auth';
 import FormData from 'form-data';
 
 interface FileObject {

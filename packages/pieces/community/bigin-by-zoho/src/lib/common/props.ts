@@ -1,7 +1,7 @@
 import { Property } from "@activepieces/pieces-framework";
 import { biginApiService } from "./request";
 import { handleDropdownError } from "./helpers";
-import { biginAuth } from "../..";
+import { biginAuth } from '../auth';
 
 export const usersDropdown = Property.Dropdown({
   auth: biginAuth,

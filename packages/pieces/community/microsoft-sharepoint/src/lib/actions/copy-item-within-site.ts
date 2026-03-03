@@ -1,4 +1,4 @@
-import { microsoftSharePointAuth } from '../../';
+import { microsoftSharePointAuth } from '../auth';
 import {
   createAction,
   Property,

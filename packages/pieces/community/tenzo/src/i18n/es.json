@@ -1,0 +1,15 @@
+{
+  "Extract data and insights from the Tenzo platform for sales, forecasting, and analytics.": "Extraer datos y puntos de vista de la plataforma Tenzo para ventas, previsión y análisis.",
+  "New Daily Forecast": "Nueva predicción diaria",
+  "New Summary Payments": "Nuevo Resumen de Pagos",
+  "New Summary Sales": "Nuevo resumen de ventas",
+  "Triggers when there is a new daily forecast for a selected location.": "Dispara cuando hay una nueva previsión diaria para una ubicación seleccionada.",
+  "Triggers when there is new daily sales and payments data.": "Dispara cuando hay nuevos datos diarios de ventas y pagos.",
+  "Triggers when there is new daily sales data.": "Se activa cuando hay nuevos datos de ventas diarias.",
+  "Location": "Ubicación",
+  "Area": "Área",
+  "Include Deleted": "Incluye borrado",
+  "Select the location to filter data": "Seleccione la ubicación para filtrar datos",
+  "Select the area to filter data": "Seleccione el área para filtrar datos",
+  "Include data that has been deleted": "Incluye datos que han sido eliminados"
+}

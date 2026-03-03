@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getAuthToken } from './auth-helper';
-import { cyberarkAuth } from '../..';
+import { cyberarkAuth } from '../auth';
 
 export const accountIdDropdown = Property.Dropdown({
   auth: cyberarkAuth,

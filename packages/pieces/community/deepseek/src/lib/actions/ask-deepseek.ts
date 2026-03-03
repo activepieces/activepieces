@@ -1,4 +1,4 @@
-import { deepseekAuth } from '../../index';
+import { deepseekAuth } from '../auth';
 import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
 import OpenAI from 'openai';
 import { baseUrl } from '../common/common';

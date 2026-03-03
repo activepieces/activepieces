@@ -1,7 +1,7 @@
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { GmailRequests } from './data';
 import { GmailLabel } from './models';
-import { gmailAuth } from '../..';
+import { gmailAuth } from '../auth';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 

@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { clarifaiAuth } from '../..';
+import { clarifaiAuth } from '../auth';
 import {
   HttpMethod,
   HttpRequest,

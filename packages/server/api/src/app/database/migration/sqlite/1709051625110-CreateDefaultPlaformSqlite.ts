@@ -8,9 +8,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
     name = 'CreateDefaultPlaformSqlite1709051625110'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
+        log.info('[CreateDefaultPlaformSqlite1709051625110#up]')
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
@@ -768,9 +766,9 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
 
 }
 async function migrateProjects(queryRunner: QueryRunner) {
-    log.info('CreateDefaultPlatform1705967115116 up')
+    log.info('[CreateDefaultPlaformSqlite1709051625110#migrateProjects] started')
     const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
-    log.info(`Found ${standaloneProjects.length} standalone projects`)
+    log.info({ count: standaloneProjects.length }, '[CreateDefaultPlaformSqlite1709051625110#migrateProjects] Found standalone projects')
     for (const project of standaloneProjects) {
         const ownerId = project.ownerId
         const platformId = apId()
@@ -846,5 +844,5 @@ async function migrateProjects(queryRunner: QueryRunner) {
         await queryRunner.query(`update "project" set "platformId" = '${platformId}' where "id" = '${project.id}'`)
         await queryRunner.query(`update "user" set "platformId" = '${platformId}' where "id" = '${ownerId}'`)
     }
-    log.info('CreateDefaultPlatform1705967115116 up done')
+    log.info('[CreateDefaultPlaformSqlite1709051625110#migrateProjects] finished')
 }

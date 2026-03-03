@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { createTask, googleTasksCommon, Task, TaskStatus } from '../common';
-import { googleTasksAuth } from '../../';
+import { googleTasksAuth } from '../auth';
 
 export const googleTasksAddNewTaskAction = createAction({
   auth: googleTasksAuth,

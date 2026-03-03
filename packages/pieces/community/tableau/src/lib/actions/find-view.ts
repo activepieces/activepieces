@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { tableauAuth } from '../../index';
+import { tableauAuth } from '../auth';
 import { getAuthToken, buildTableauUrl, getTableauHeaders } from '../common';
 
 function ensureString(body: any): string {

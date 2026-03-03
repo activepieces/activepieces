@@ -1,4 +1,4 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -101,9 +101,11 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: req.params.id,
+                    entityType: 'flow_run',
+                    entityId: req.params.id,
+                    message: 'Flow run not found',
                 },
             })
         }

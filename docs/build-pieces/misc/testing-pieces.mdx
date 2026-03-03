@@ -1,0 +1,86 @@
+---
+title: 'Testing Pieces'
+icon: 'flask-vial'
+description: 'How to add unit tests to your pieces'
+---
+
+Testing pieces is **optional** but recommended for complex logic. Pieces can be tested using [Vitest](https://vitest.dev/) with the `createMockActionContext` helper from the framework.
+
+For a full working example, see the [text-helper piece tests on GitHub](https://github.com/activepieces/activepieces/tree/main/packages/pieces/core/text-helper/test).
+
+## Setup
+
+### 1. Add vitest to your piece
+
+Add `vitest` as a dev dependency in your piece's `package.json` and add a `test` script:
+
+```json
+{
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "3.0.8"
+  }
+}
+```
+
+### 2. Create a vitest config
+
+Create `vitest.config.ts` in your piece root:
+
+```typescript
+import path from 'path'
+import { defineConfig } from 'vitest/config'
+
+const repoRoot = path.resolve(__dirname, '../../../..')
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+  },
+  resolve: {
+    alias: {
+      '@activepieces/shared': path.resolve(repoRoot, 'packages/shared/src/index.ts'),
+      '@activepieces/pieces-framework': path.resolve(repoRoot, 'packages/pieces/framework/src/index.ts'),
+      '@activepieces/pieces-common': path.resolve(repoRoot, 'packages/pieces/common/src/index.ts'),
+    },
+  },
+})
+```
+
+### 3. Write tests
+
+Create a `test/` directory and add `.test.ts` files:
+
+```typescript
+import { createMockActionContext } from '@activepieces/pieces-framework';
+import { myAction } from '../src/lib/actions/my-action';
+
+describe('myAction', () => {
+  test('does something', async () => {
+    const ctx = createMockActionContext({
+      propsValue: {
+        inputField: 'test value',
+      },
+    });
+
+    const result = await myAction.run(ctx);
+    expect(result).toBe('expected output');
+  });
+});
+```
+
+### 4. Run tests
+
+```bash
+# Run tests for a specific piece
+npx turbo test --filter=@activepieces/piece-text-helper
+
+# Run tests directly from the piece directory
+cd packages/pieces/core/text-helper
+npx vitest run
+```

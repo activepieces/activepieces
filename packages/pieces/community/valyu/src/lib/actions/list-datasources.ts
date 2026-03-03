@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { valyuAuth } from '../../index';
+import { valyuAuth } from '../auth';
 
 export const listDatasourcesAction = createAction({
   name: 'list_datasources',

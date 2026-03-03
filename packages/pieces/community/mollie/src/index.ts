@@ -15,12 +15,7 @@ import { mollieNewPayment } from './lib/triggers/new-payment';
 import { mollieNewRefund } from './lib/triggers/new-refund';
 import { mollieNewChargeback } from './lib/triggers/new-chargeback';
 import { PieceCategory } from '@activepieces/shared';
-
-export const mollieAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Enter your Mollie API key (starts with live_ or test_)',
-  required: true,
-});
+import { mollieAuth } from './lib/auth';
 
 export const mollie = createPiece({
   displayName: 'Mollie',

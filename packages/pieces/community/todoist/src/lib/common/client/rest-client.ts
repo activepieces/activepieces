@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { isNotUndefined, pickBy } from '@activepieces/shared';
 import {
+  TodoistCompletedTask,
   TodoistCreateTaskRequest,
   TodoistProject,
   TodoistSection,
@@ -13,42 +14,52 @@ import {
   TodoistUpdateTaskRequest,
 } from '../models';
 
-const API = 'https://api.todoist.com/rest/v2';
+const API = 'https://api.todoist.com/api/v1';
+
+type PaginatedResponse<T> = {
+  results: T[];
+  next_cursor: string | null;
+};
+
+async function fetchAllPages<T>(
+  token: string,
+  url: string,
+  baseParams: Record<string, string | undefined> = {},
+): Promise<T[]> {
+  const items: T[] = [];
+  let cursor: string | null = null;
+
+  do {
+    const queryParams = pickBy(
+      { ...baseParams, cursor: cursor ?? undefined },
+      isNotUndefined,
+    );
+
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url,
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token },
+      queryParams,
+    };
+
+    const response = await httpClient.sendRequest<PaginatedResponse<T>>(request);
+    items.push(...response.body.results);
+    cursor = response.body.next_cursor;
+  } while (cursor);
+
+  return items;
+}
 
 export const todoistRestClient = {
   projects: {
     async list({ token }: ProjectsListParams): Promise<TodoistProject[]> {
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${API}/projects`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token,
-        },
-      };
-
-      const response = await httpClient.sendRequest<TodoistProject[]>(request);
-      return response.body;
+      return fetchAllPages<TodoistProject>(token, `${API}/projects`);
     },
   },
 
   sections: {
-    async list(params: SectionsListPrams): Promise<TodoistSection[]> {
-      const qs: Record<string, any> = {};
-      if (params.project_id) qs['project_id'] = params.project_id;
-
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${API}/sections`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: params.token,
-        },
-        queryParams: qs,
-      };
-
-      const response = await httpClient.sendRequest<TodoistSection[]>(request);
-      return response.body;
+    async list({ token, project_id }: SectionsListParams): Promise<TodoistSection[]> {
+      return fetchAllPages<TodoistSection>(token, `${API}/sections`, { project_id });
     },
   },
 
@@ -76,10 +87,7 @@ export const todoistRestClient = {
       const request: HttpRequest<TodoistCreateTaskRequest> = {
         method: HttpMethod.POST,
         url: `${API}/tasks`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token,
-        },
+        authentication: { type: AuthenticationType.BEARER_TOKEN, token },
         body,
       };
 
@@ -99,10 +107,7 @@ export const todoistRestClient = {
       const request: HttpRequest<TodoistUpdateTaskRequest> = {
         method: HttpMethod.POST,
         url: `${API}/tasks/${params.task_id}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: params.token,
-        },
+        authentication: { type: AuthenticationType.BEARER_TOKEN, token: params.token },
         body,
       };
 
@@ -110,42 +115,44 @@ export const todoistRestClient = {
       return response.body;
     },
 
-    async list({
-      token,
-      project_id,
-      filter,
-    }: TasksListParams): Promise<TodoistTask[]> {
-      const queryParams = {
-        filter,
-        project_id,
-      };
-
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${API}/tasks`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token,
-        },
-        queryParams: pickBy(queryParams, isNotUndefined),
-      };
-
-      const response = await httpClient.sendRequest<TodoistTask[]>(request);
-      return response.body;
+    async list({ token, project_id, filter }: TasksListParams): Promise<TodoistTask[]> {
+      return fetchAllPages<TodoistTask>(token, `${API}/tasks`, { project_id, filter });
     },
 
     async close({ token, task_id }: { token: string; task_id: string }) {
       const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `${API}/tasks/${task_id}/close`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token,
-        },
+        authentication: { type: AuthenticationType.BEARER_TOKEN, token },
       };
 
       const response = await httpClient.sendRequest(request);
       return response.body;
+    },
+
+    async listCompleted({ token, since, until, project_id }: CompletedListParams): Promise<TodoistCompletedTask[]> {
+      const tasks: TodoistCompletedTask[] = [];
+      let cursor: string | null = null;
+
+      do {
+        const queryParams = pickBy(
+          { since, until, project_id, limit: '200', cursor: cursor ?? undefined },
+          isNotUndefined,
+        );
+
+        const request: HttpRequest = {
+          method: HttpMethod.GET,
+          url: `${API}/tasks/completed`,
+          authentication: { type: AuthenticationType.BEARER_TOKEN, token },
+          queryParams,
+        };
+
+        const response = await httpClient.sendRequest<{ items: TodoistCompletedTask[]; next_cursor: string | null }>(request);
+        tasks.push(...response.body.items);
+        cursor = response.body.next_cursor;
+      } while (cursor);
+
+      return tasks;
     },
   },
 };
@@ -154,7 +161,7 @@ type ProjectsListParams = {
   token: string;
 };
 
-type SectionsListPrams = {
+type SectionsListParams = {
   token: string;
   project_id?: string;
 };
@@ -172,6 +179,13 @@ type TasksListParams = {
   token: string;
   project_id?: string | undefined;
   filter?: string | undefined;
+};
+
+type CompletedListParams = {
+  token: string;
+  since: string;
+  until: string;
+  project_id?: string | undefined;
 };
 
 const dueDateParams = (dueDate?: string) => {

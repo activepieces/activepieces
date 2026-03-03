@@ -161,6 +161,7 @@
   "New Outbound Message": "Nieuw uitgaande bericht",
   "New Record": "Nieuwe Record",
   "New or Updated File": "Nieuw of bijgewerkt bestand",
+  "New Case in Queue": "Nieuwe Geval in de wachtrij",
   "Fires when a new Attachment or File is added to any Case record.": "Vuurt wanneer een nieuwe bijlage of bestand is toegevoegd aan een zaak record.",
   "Fires when a new Contact record is created in Salesforce.": "Vuurt wanneer een nieuw Contact record wordt aangemaakt in Salesforce.",
   "Fires when a tracked field is updated on a specified object.": "Vuurt wanneer een bijgehouden veld wordt bijgewerkt op een bepaald object.",
@@ -169,6 +170,9 @@
   "Fires when a new outbound message is received from Salesforce.": "Vuurt af wanneer een nieuw uitgaande bericht wordt ontvangen van Salesforce.",
   "Triggers when there is new record": "Triggert wanneer er een nieuw record is",
   "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.": "Vuurt wanneer een bestand (ContentDocument) is gemaakt of bijgewerkt. Vuurt niet voor klassieke bijlagen of notities.",
+  "Triggers when a new Case record is assigned to a specified queue.": "Triggert wanneer een nieuwe Geval record is toegewezen aan een opgegeven wachtrij.",
   "Conditions (Advanced)": "Voorwaarden (Geavanceerd)",
-  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Voer een SOQL query in waar clausule i is. Verwijderd = TRUE"
+  "Case Queue": "Geval Wachtrij",
+  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Voer een SOQL query in waar clausule i is. Verwijderd = TRUE",
+  "The queue to monitor for new cases.": "De wachtrij om nieuwe zaken te monitoren."
 }

@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import {
     AP_MAXIMUM_PROFILE_PICTURE_SIZE,
     ApId,

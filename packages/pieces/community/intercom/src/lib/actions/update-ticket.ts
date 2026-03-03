@@ -1,4 +1,4 @@
-import { intercomAuth } from '../../index';
+import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps, intercomClient } from '../common';
 import { ticketIdProp, ticketPropertiesProp, ticketTypeIdProp } from '../common/props';

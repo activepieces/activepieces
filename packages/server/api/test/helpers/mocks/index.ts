@@ -1,33 +1,23 @@
-import {
-    ApiKey,
-    ApplicationEvent,
-    ApplicationEventName,
-    CustomDomain,
-    CustomDomainStatus,
-    GitBranchType,
-    GitRepo,
-    KeyAlgorithm,
-    OAuthApp,
-    OtpModel,
-    OtpState,
-    OtpType,
-    ProjectMember,
-    SigningKey,
-} from '@activepieces/ee-shared'
-import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-shared'
+import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
+import { apDayjs } from '@activepieces/server-common'
 import {
     AiCreditsAutoTopUpState,
     AIProvider,
     AIProviderName,
     apId,
+    ApiKey,
     AppConnection,
     AppConnectionScope,
     AppConnectionStatus,
     AppConnectionType,
+    ApplicationEvent,
+    ApplicationEventName,
     assertNotNullOrUndefined,
     Cell,
     ColorName,
+    CustomDomain,
+    CustomDomainStatus,
+    EventDestinationScope,
     Field,
     FieldType,
     File,
@@ -43,8 +33,16 @@ import {
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
+    Folder,
+    GitBranchType,
+    GitRepo,
     InvitationStatus,
     InvitationType,
+    KeyAlgorithm,
+    OAuthApp,
+    OtpModel,
+    OtpState,
+    OtpType,
     PackageType,
     PiecesFilterType,
     PieceType,
@@ -53,6 +51,7 @@ import {
     PlatformRole,
     Project,
     ProjectIcon,
+    ProjectMember,
     ProjectPlan,
     ProjectRelease,
     ProjectReleaseType,
@@ -61,6 +60,7 @@ import {
     Record,
     RoleType,
     RunEnvironment,
+    SigningKey,
     Table,
     TeamProjectsLimit,
     Template,
@@ -70,11 +70,11 @@ import {
     UserIdentity,
     UserIdentityProvider,
     UserInvitation,
-    UserStatus,
-} from '@activepieces/shared'
+    UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderSchema } from '../../../src/app/ai/ai-provider-entity'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
@@ -82,6 +82,7 @@ import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oaut
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
+import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
@@ -250,6 +251,8 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
         stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
+        secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
+        scimEnabled: platformPlan?.scimEnabled ?? false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -786,6 +789,56 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
+}
+
+export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
+    const { mockPlatform } = await mockAndSaveBasicSetup()
+    const mockPieceMetadata = createMockPieceMetadata({
+        platformId: mockPlatform.id,
+        packageType: PackageType.REGISTRY,
+    })
+    await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
+    pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
+    return mockPieceMetadata
+}
+
+export const createMockFolder = (folder?: Partial<Folder>): Folder => {
+    return {
+        id: folder?.id ?? apId(),
+        created: folder?.created ?? faker.date.recent().toISOString(),
+        updated: folder?.updated ?? faker.date.recent().toISOString(),
+        projectId: folder?.projectId ?? apId(),
+        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
+    }
+}
+
+export const createMockEventDestination = (eventDestination?: Partial<{
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+}>): {
+    id: string
+    created: string
+    updated: string
+    platformId: string
+    events: ApplicationEventName[]
+    url: string
+    scope: EventDestinationScope
+} => {
+    return {
+        id: eventDestination?.id ?? apId(),
+        created: eventDestination?.created ?? faker.date.recent().toISOString(),
+        updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
+        platformId: eventDestination?.platformId ?? apId(),
+        events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
+        url: eventDestination?.url ?? faker.internet.url(),
+        scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
+    }
 }
 
 type CreateMockPlatformWithOwnerParams = {

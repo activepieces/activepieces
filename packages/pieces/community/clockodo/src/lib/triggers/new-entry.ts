@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { currentYear } from '../common';
 import { ClockodoClient } from '../common/client';
-import { clockodoAuth } from '../../';
+import { clockodoAuth } from '../auth';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof clockodoAuth>, unknown> = {
   strategy: DedupeStrategy.LAST_ITEM,

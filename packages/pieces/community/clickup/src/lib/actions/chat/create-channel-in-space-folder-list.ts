@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { callClickUpApi3, clickupCommon } from '../../common';
-import { clickupAuth } from '../../..';
+import { clickupAuth } from '../../auth';
 import { createAction } from '@activepieces/pieces-framework';
 
 export const createClickupChannelInSpaceFolderOrList = createAction({

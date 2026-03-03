@@ -27,7 +27,7 @@ export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
             ALTER COLUMN "slug" SET NOT NULL
         `)
 
-        log.info({ name: this.name }, 'up')
+        log.info('[addSlugToGitRepo1709151540095#up]')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -38,7 +38,7 @@ export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
             ALTER TABLE "git_repo" DROP COLUMN "slug"
         `)
 
-        log.info({ name: this.name }, 'down')
+        log.info('[addSlugToGitRepo1709151540095#down]')
     }
 
 }

@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, HttpClient } from '@activepieces/pieces-common';
 import {
   ValidateEmailProps,
   ValidatedMailsValidationResponse,
@@ -125,7 +125,7 @@ function asStatus(value: unknown): 'valid' | 'invalid' | 'unknown' {
 export async function executeValidateEmailRequest(
   propsValue: ValidateEmailProps,
   apiKey: string,
-  requestSender = httpClient.sendRequest
+  requestSender: HttpClient['sendRequest'] = httpClient.sendRequest
 ): Promise<ValidatedMailsValidationResponse> {
   const sanitizedEmail = sanitizeEmail(propsValue.email);
   assertEmailInput(sanitizedEmail);

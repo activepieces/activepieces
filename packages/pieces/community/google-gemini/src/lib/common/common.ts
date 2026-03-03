@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { googleGeminiAuth } from '../..';
+import { googleGeminiAuth } from '../auth';
 export const defaultLLM = 'gemini-1.5-flash';
 
 export const allowedLLMs = [

@@ -1,4 +1,4 @@
-import { comfyIcuAuth } from '../../index';
+import { comfyIcuAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { comfyIcuApiCall, commonProps } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';

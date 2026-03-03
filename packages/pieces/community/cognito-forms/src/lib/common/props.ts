@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { makeRequest } from './index';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { cognitoFormsAuth } from '../..';
+import { cognitoFormsAuth } from '../auth';
 
 export const formIdDropdown = Property.Dropdown({
   auth: cognitoFormsAuth,

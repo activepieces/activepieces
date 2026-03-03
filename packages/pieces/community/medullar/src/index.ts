@@ -6,12 +6,7 @@ import { askSpace } from './lib/actions/ask-space';
 import { deleteSpace } from './lib/actions/delete-space';
 import { renameSpace } from './lib/actions/rename-space';
 import { PieceCategory } from '@activepieces/shared';
-
-export const medullarAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.',
-});
+import { medullarAuth } from './lib/auth';
 
 export const medullar = createPiece({
   displayName: 'Medullar',

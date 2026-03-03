@@ -11,6 +11,7 @@ import {
   McpProperty,
   McpPropertyType,
   AgentFlowTool,
+  sanitizeToolName,
 } from '@activepieces/shared';
 import { z, ZodObject } from 'zod';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -107,8 +108,9 @@ export const agentUtils = {
           mcpPropertyToSchema(prop),
         ]),
       )
+      const sanitizedName = sanitizeToolName(tool.toolName)
       return {
-        name: tool.toolName,
+        name: sanitizedName,
         description: toolDescription,
         inputSchema: z.object(inputSchema),
         execute: async (_inputs: unknown) => {

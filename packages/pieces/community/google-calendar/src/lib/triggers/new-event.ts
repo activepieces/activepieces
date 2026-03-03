@@ -4,7 +4,7 @@ import {
   OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { googleCalendarAuth } from '../../';
+import { googleCalendarAuth } from '../auth';
 import { googleCalendarCommon } from '../common';
 import { stopWatchEvent, watchEvent, getLatestEvent } from '../common/helper';
 import { GoogleWatchResponse, GoogleCalendarEvent } from '../common/types';

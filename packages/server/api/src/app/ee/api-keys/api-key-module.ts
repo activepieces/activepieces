@@ -1,9 +1,8 @@
+import { securityAccess } from '@activepieces/server-common'
 import {
+    ApId,
     ApiKeyResponseWithoutValue,
-    ApiKeyResponseWithValue,
-    CreateApiKeyRequest } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { ApId, assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
+    ApiKeyResponseWithValue, assertNotNullOrUndefined, CreateApiKeyRequest, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,

@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { tarventAuth } from '../../';
+import { tarventAuth } from '../auth';
 import { TarventClient } from './client';
 
 export function makeClient(auth: AppConnectionValueForAuthProperty<typeof tarventAuth>) {

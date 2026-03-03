@@ -1,7 +1,8 @@
 {
   "Create beautiful online forms and surveys with unlimited fields and submissions": "Maak prachtige online formulieren en enquêtes met onbeperkte velden en inzendingen",
-  "Base URL (Default: https://api.opnform.com)": "Basis-URL (standaard: https://api.opnform.com)",
+  "Base URL": "Basis URL",
   "API Key": "API Sleutel",
+  "Default value is 'https://api.opnform.com'.": "Standaardwaarde is 'https://api.opnform.com'.",
   "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "Gebruik uw Opnform API-sleutel. [Klik hier voor het maken van API-sleutel](https://opnform.com/home?user-settings=access-tokens)",
   "Custom API Call": "Custom API Call",
   "Make a custom API call to a specific endpoint": "Maak een aangepaste API call naar een specifiek eindpunt",

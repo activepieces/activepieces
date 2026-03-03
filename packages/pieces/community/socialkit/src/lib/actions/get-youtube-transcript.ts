@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { socialkitAuth } from '../..';
+import { socialkitAuth } from '../auth';
 const socialkitApiUrl = 'https://api.socialkit.dev';
 
 export const getYoutubeTranscript = createAction({

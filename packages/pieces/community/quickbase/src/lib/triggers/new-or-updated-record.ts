@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, createTrigger, StaticPropsValue, TriggerStrategy } from "@activepieces/pieces-framework";
-import { quickbaseAuth } from "../..";
+import { quickbaseAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { QuickbaseClient } from "../common/client";
 import { QuickbaseRecordResponse, QuickbaseField } from "../common/types";

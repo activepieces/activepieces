@@ -5,7 +5,7 @@ import {
   ImageFormat,
 } from '@aws-sdk/client-bedrock-runtime';
 import { ModelModality } from '@aws-sdk/client-bedrock';
-import { awsBedrockAuth } from '../../index';
+import { awsBedrockAuth } from '../auth';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,

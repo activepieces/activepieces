@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { checkEmail } from '../common/send-utils';
-import { mailerooAuth } from '../..';
+import { mailerooAuth } from '../auth';
 
 export const verifyEmail = createAction({
   auth: mailerooAuth,

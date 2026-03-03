@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { flowluAuth } from '../../../';
+import { flowluAuth } from '../../auth';
 import { makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
 

@@ -1,7 +1,8 @@
 {
   "Create beautiful online forms and surveys with unlimited fields and submissions": "無制限のフィールドと提出で美しいオンラインフォームとアンケートを作成します",
-  "Base URL (Default: https://api.opnform.com)": "ベース URL (デフォルト: https://api.opnform.com)",
+  "Base URL": "ベースURL",
   "API Key": "API キー",
+  "Default value is 'https://api.opnform.com'.": "デフォルト値は 'https://api.opnform.com' です。",
   "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)": "Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)",
   "Custom API Call": "カスタムAPI通話",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",

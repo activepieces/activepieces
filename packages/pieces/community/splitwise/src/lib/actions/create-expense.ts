@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { splitwiseAuth } from '../../index';
+import { splitwiseAuth } from '../auth';
 import { splitwiseApi } from '../common/api';
 
 export const createExpenseAction = createAction({

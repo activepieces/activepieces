@@ -6,7 +6,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../auth';
 
 export const wooCreateCustomer = createAction({
   name: 'Create Customer',

@@ -5,7 +5,7 @@ import {
   makeClient,
   reformatDate,
 } from '../../common';
-import { clockodoAuth } from '../../../';
+import { clockodoAuth } from '../../auth';
 
 export default createAction({
   auth: clockodoAuth,

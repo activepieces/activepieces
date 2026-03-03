@@ -13,12 +13,7 @@ import { SERVICE_ACCOUNTS_ACTIONS } from './lib/actions/service-accounts';
 import { SHORTLINKS_ACTIONS } from './lib/actions/shortlinks';
 import { UNIT_ACTIONS } from './lib/actions/unit';
 import { USER_ACTIONS } from './lib/actions/users';
-
-export const zooAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'Your Zoo API Key (Bearer Token).',
-});
+import { zooAuth } from './lib/auth';
 
 export const textToCad = createPiece({
   displayName: 'Zoo',

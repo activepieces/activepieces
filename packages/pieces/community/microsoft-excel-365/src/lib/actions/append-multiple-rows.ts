@@ -11,7 +11,7 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { excelAuth } from '../../index';
+import { excelAuth } from '../auth';
 import { excelCommon } from '../common/common';
 import { isEmpty, MarkdownVariant } from '@activepieces/shared';
 import { Client } from '@microsoft/microsoft-graph-client';

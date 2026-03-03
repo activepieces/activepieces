@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { cognitoFormsAuth } from '../../index';
+import { cognitoFormsAuth } from '../auth';
 import { formFields, formIdDropdown } from '../common/props';
 
 export const createEntryAction = createAction({

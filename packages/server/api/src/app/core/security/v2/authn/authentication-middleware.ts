@@ -1,4 +1,4 @@
-import { RouteKind } from '@activepieces/server-shared'
+import { RouteKind } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { authenticateOrThrow } from './authenticate'

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { scrapelessApiAuth } from '../../index';
+import { scrapelessApiAuth } from '../auth';
 import { proxyCountryOptions } from '../constants';
 import { createScrapelessClient } from '../services/scrapeless-api-client';
 

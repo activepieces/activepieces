@@ -127,6 +127,9 @@
   "New Label": "Nieuw label",
   "New Milestone": "Nieuwe mijlpaal",
   "New Release": "Nieuwe release",
+  "New Commit": "Nieuwe Commit",
+  "New Review Request": "Nieuw beoordelingsverzoek",
+  "New Mention": "Nieuwe vermelding",
   "Triggers when there is activity on a pull request.": "Triggert wanneer er activiteit is op een pull-aanvraag.",
   "Trigger when there is activity relating to repository stars.": "Trigger wanneer er activiteit is met betrekking tot repository sterren.",
   "Triggers when there is activity relating to an issue.": "Triggert wanneer er activiteit is gerelateerd aan een probleem.",
@@ -137,5 +140,8 @@
   "Triggers when a new collaborator is added to a repository.": "Triggert wanneer een nieuwe medewerker is toegevoegd aan een repository.",
   "Triggers when a new label is created in a repository.": "Triggert wanneer een nieuw label wordt aangemaakt in een repository.",
   "Triggers when a new milestone is created.": "Triggert wanneer een nieuwe mijlpaal is aangemaakt.",
-  "Triggers when a new release is added.": "Triggert wanneer een nieuwe versie wordt toegevoegd."
+  "Triggers when a new release is added.": "Triggert wanneer een nieuwe versie wordt toegevoegd.",
+  "Triggers when a new commit is pushed.": "Triggert wanneer een nieuwe commit wordt pusht.",
+  "Triggers when you are requested to review a pull request.": "Triggers wanneer je gevraagd wordt een pull-aanvraag te bekijken.",
+  "Triggers when you are mentioned in a comment.": "Triggert wanneer u in een opmerking wordt genoemd."
 }

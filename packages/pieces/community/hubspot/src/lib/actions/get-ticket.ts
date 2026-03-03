@@ -4,7 +4,7 @@ import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/shared';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 
 export const getTicketAction = createAction({
 	auth: hubspotAuth,

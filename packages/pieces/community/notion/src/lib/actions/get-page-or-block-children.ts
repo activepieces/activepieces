@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { NotionToMarkdown } from 'notion-to-md';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 import { Client, collectPaginatedAPI, isFullBlock } from '@notionhq/client';
 import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 

@@ -1,4 +1,4 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType } from '@activepieces/server-common'
 import { ApEnvironment } from '@activepieces/shared'
 import { DataSource, EntityMetadata, MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
@@ -121,12 +121,12 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         entity: EntityMetadata,
     ): Promise<void> {
         const tableName = entity.tableName
-        log.info(`[MigrateSqliteToPglite] Migrating table: ${tableName}`)
+        log.info({ tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Migrating table')
 
         // Get SQLite column names for this table
         const sqliteColumns = await this.getSqliteColumnNames(sqliteDataSource, tableName)
         if (sqliteColumns.length === 0) {
-            log.info(`[MigrateSqliteToPglite] Table ${tableName} does not exist in SQLite, skipping`)
+            log.info({ tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Table does not exist in SQLite, skipping')
             return
         }
 
@@ -136,18 +136,18 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         }
         catch (error) {
             if (error instanceof Error && error.message.includes('no such table')) {
-                log.info(`[MigrateSqliteToPglite] Table ${tableName} does not exist in SQLite, skipping`)
+                log.info({ tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Table does not exist in SQLite, skipping')
                 return
             }
             throw error
         }
 
         if (rows.length === 0) {
-            log.info(`[MigrateSqliteToPglite] Table ${tableName} is empty, skipping`)
+            log.info({ tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Table is empty, skipping')
             return
         }
 
-        log.info(`[MigrateSqliteToPglite] Copying ${rows.length} rows from ${tableName}`)
+        log.info({ rowCount: rows.length, tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Copying rows')
 
         const transformedRows = rows.map((row) => this.transformRowForPostgres(row, entity, sqliteColumns))
 
@@ -161,7 +161,7 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
             await this.insertBatchRaw(queryRunner, tableName, batch, sqliteColumns, entity)
         }
 
-        log.info(`[MigrateSqliteToPglite] Successfully migrated ${rows.length} rows to ${tableName}`)
+        log.info({ rowCount: rows.length, tableName }, '[MigrateSqliteToPglite1765308234291#copyTableData] Successfully migrated rows')
     }
 
     private async getSqliteColumnNames(sqliteDataSource: DataSource, tableName: string): Promise<string[]> {

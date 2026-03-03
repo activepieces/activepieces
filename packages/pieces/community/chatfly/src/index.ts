@@ -1,12 +1,7 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { sendMessageAction } from "./lib/actions/send-message";
 import { PieceCategory } from "@activepieces/shared";
-
-export const chatflyAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: 'Enter your ChatFly API key',
-  required: true,
-});
+import { chatflyAuth } from './lib/auth';
 
 export const chatfly = createPiece({
   displayName: "Chatfly",

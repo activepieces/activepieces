@@ -21,20 +21,7 @@ import { eventStartTimeBefore } from './lib/triggers/event-start-time-before';
 import { newEventMatchingSearch } from './lib/triggers/new-event-matching-search';
 import { eventCancelled } from './lib/triggers/event-cancelled';
 import { newCalendar } from './lib/triggers/new-calendar';
-
-export const googleCalendarAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  pkce: true,
-  scope: [
-    'https://www.googleapis.com/auth/calendar.events',
-    'https://www.googleapis.com/auth/calendar.readonly',
-    // TODO: Add the scope after Google App Verification
-    // 'https://www.googleapis.com/auth/calendar.calendarlist'
-  ],
-});
+import { googleCalendarAuth } from './lib/auth';
 
 export const googleCalendar = createPiece({
   minimumSupportedRelease: '0.30.0',

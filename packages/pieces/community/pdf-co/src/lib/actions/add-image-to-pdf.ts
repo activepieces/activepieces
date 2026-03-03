@@ -6,7 +6,7 @@ import {
 	PdfCoImageAnnotation,
 	PdfCoAddImagesRequestBody,
 } from '../common/types';
-import { pdfCoAuth } from '../../index';
+import { pdfCoAuth } from '../auth';
 import { BASE_URL, commonProps } from '../common/props';
 
 export const addImageToPdf = createAction({

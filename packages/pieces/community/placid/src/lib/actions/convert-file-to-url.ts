@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { placidAuth } from '../../index';
+import { placidAuth } from '../auth';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { PLACID_BASE_URL } from '../common';
 import FormData from 'form-data';

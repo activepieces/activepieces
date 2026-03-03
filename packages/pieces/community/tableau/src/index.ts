@@ -14,6 +14,7 @@ import { viewDeletedTrigger } from './lib/triggers/view-deleted';
 import { labelEventTrigger } from './lib/triggers/label-events';
 import { newJobTrigger } from './lib/triggers/new-job';
 import { listExtractRefreshTasksTrigger } from './lib/triggers/list-extract-refresh-tasks';
+import { tableauAuth } from './lib/auth';
 
 const markdown = `
 ## Tableau Authentication Setup
@@ -41,73 +42,6 @@ Choose **either** Username/Password **or** Personal Access Token:
 
 **Security Note:** Personal Access Tokens are recommended for production use as they provide better security and can be revoked individually.
 `;
-
-export const tableauAuth = PieceAuth.CustomAuth({
-  description: markdown,
-  required: true,
-  props: {
-    serverUrl: Property.ShortText({
-      displayName: 'Server URL',
-      description: 'Your Tableau Server or Tableau Cloud URL (e.g., https://10az.online.tableau.com)',
-      required: true,
-    }),
-    apiVersion: Property.ShortText({
-      displayName: 'API Version',
-      description: 'Tableau REST API version (e.g., 3.19, 3.20, 3.26). Check your Tableau server documentation for supported versions. Use 3.26 for most Tableau Cloud instances.',
-      required: true,
-      defaultValue: '3.26',
-    }),
-    siteContentUrl: Property.ShortText({
-      displayName: 'Site Content URL',
-      description: 'Your Tableau site name (leave empty for default site)',
-      required: false,
-    }),
-    // Username/Password authentication
-    username: Property.ShortText({
-      displayName: 'Username',
-      description: 'Your Tableau username (email for Tableau Cloud, or domain\\username for Server)',
-      required: false,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      description: 'Your Tableau password',
-      required: false,
-    }),
-    // PAT authentication
-    personalAccessTokenName: Property.ShortText({
-      displayName: 'Personal Access Token Name',
-      description: 'Name of your Personal Access Token',
-      required: false,
-    }),
-    personalAccessTokenSecret: PieceAuth.SecretText({
-      displayName: 'Personal Access Token Secret',
-      description: 'Secret value of your Personal Access Token',
-      required: false,
-    }),
-  },
-  validate: async ({ auth }) => {
-    const hasUsernamePassword = auth.username && auth.password;
-    const hasPersonalAccessToken = auth.personalAccessTokenName && auth.personalAccessTokenSecret;
-
-    if (!hasUsernamePassword && !hasPersonalAccessToken) {
-      return {
-        valid: false,
-        error: 'Either Username/Password or Personal Access Token must be provided.',
-      };
-    }
-
-    if (hasUsernamePassword && hasPersonalAccessToken) {
-      return {
-        valid: false,
-        error: 'Please provide either Username/Password OR Personal Access Token, not both.',
-      };
-    }
-
-    return {
-      valid: true,
-    };
-  },
-});
 
 export const tableau = createPiece({
   displayName: "Tableau",

@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from './models';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 
 export const notionCommon = {
   baseUrl: 'https://api.notion.com/v1',

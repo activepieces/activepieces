@@ -1,6 +1,5 @@
-import { ApplicationEventName, ProjectMemberWithUser } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-common'
+import { ApId, ApplicationEventName, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectMemberWithUser, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { applicationEvents } from '../../../helper/application-events'

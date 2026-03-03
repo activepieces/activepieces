@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
-import { filloutFormsAuth } from '../../index';
+import { filloutFormsAuth } from '../auth';
 
 export const findFormByTitle = createAction({
   auth: filloutFormsAuth,

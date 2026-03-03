@@ -1,12 +1,11 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
+    AppConnectionScope,
     ConnectionKeyId,
     GetOrDeleteConnectionFromTokenRequest,
     ListConnectionKeysRequest,
-    UpsertConnectionFromToken,
-    UpsertSigningKeyConnection,
-} from '@activepieces/ee-shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
-import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
+    PrincipalType,
+    UpsertConnectionFromToken, UpsertSigningKeyConnection } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

@@ -1,48 +1,28 @@
-import { PrincipalType } from '@activepieces/shared'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { FastifyInstance } from 'fastify'
-import { initializeDatabase } from '../../../../../src/app/database'
-import { databaseConnection } from '../../../../../src/app/database/database-connection'
-import { setupServer } from '../../../../../src/app/server'
-import { generateMockToken } from '../../../../helpers/auth'
-import { mockAndSaveBasicSetup } from '../../../../helpers/mocks'
+import { describeWithAuth } from '../../../../helpers/describe-with-auth'
+
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+    app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+    await teardownTestEnvironment()
 })
 
-describe('List flow runs endpoint', () => {
-    it('should return 200', async () => {
-        // arrange
-        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
+describeWithAuth('List flow runs endpoint', () => app!, (setup) => {
+    it('should return empty list with correct structure', async () => {
+        const ctx = await setup()
 
-        const testToken = await generateMockToken({
-            type: PrincipalType.USER,
-            id: mockOwner.id,
-            platform: {
-                id: mockPlatform.id,
-            },
+        const response = await ctx.get('/v1/flow-runs', {
+            projectId: ctx.project.id,
         })
 
-        // act
-        const response = await app?.inject({
-            method: 'GET',
-            url: '/v1/flow-runs',
-            headers: {
-                authorization: `Bearer ${testToken}`,
-            },
-            query: {
-                projectId: mockProject.id,
-            },
-        })
-
-        // assert
         expect(response?.statusCode).toBe(200)
+        const body = response?.json()
+        expect(body.data).toEqual([])
+        expect(body.cursor).toBeUndefined()
     })
 })
