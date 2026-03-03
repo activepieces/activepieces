@@ -9,9 +9,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
+
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -37,17 +40,18 @@ const ConnectSecretManagerDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {t('Connect')}
+          <DialogTitle>{t('Connect')} {manager.name}</DialogTitle>
+          <DialogDescription>
             <a
               href={`https://activepieces.com/docs/admin-guide/guides/secret-managers/${manager.id}`}
               target="_blank"
-              className="text-primary underline"
               rel="noreferrer"
+              className="text-primary inline-flex items-center gap-1 hover:underline"
             >
-              {manager.name}
+              <ExternalLink className="size-3" />
+              {t('View docs')}
             </a>
-          </DialogTitle>
+          </DialogDescription>
         </DialogHeader>
 
         <ConnectSecretManagerForm

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Info } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -22,9 +22,8 @@ export const WorkerConfigsModal: React.FC<Props> = ({ workerProps }) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
-          <Info size={14} />
-          {t('Configs')}
+        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground" title={t('Configs')}>
+          <SlidersHorizontal size={14} />
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[95vw] max-w-[600px] max-h-[80vh]">

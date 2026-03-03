@@ -230,9 +230,11 @@
 }
 
 @utility scrollbar-hover {
+  /* Firefox — thin track, hidden by default, visible on hover */
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 
+  /* Chromium / WebKit (Chrome, Edge, Safari) */
   &::-webkit-scrollbar {
     width: 8px;
   }
@@ -241,78 +243,86 @@
     background: transparent;
   }
 
+  /*
+   * Transparent border + background-clip: content-box creates a 2px inset on
+   * each side, making the visible thumb ~4px wide and visually "floating" —
+   * matching the macOS overlay scrollbar look on all platforms.
+   */
   &::-webkit-scrollbar-thumb {
     background-color: transparent;
     border-radius: 9999px;
-    transition: opacity 0.2s;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background-color 0.2s;
   }
 
   &:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.35);
   }
 
   .group:hover &::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.35);
   }
 
   .dark &:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.35);
   }
 
   .dark .group:hover &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.35);
   }
 
+  /* Firefox hover */
   &:hover {
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
   }
 
   .dark &:hover {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
   }
 
   .group:hover & {
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
   }
 
   .dark .group:hover & {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
   }
 }
 
 @utility group {
   &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.35);
   }
 
   .dark &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.35);
   }
 
   &:hover .scrollbar-hover {
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
   }
 
   .dark &:hover .scrollbar-hover {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
   }
 }
 
 @utility dark {
   & .scrollbar-hover:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.35);
   }
 
   & .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.35);
   }
 
   & .scrollbar-hover:hover {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
   }
 
   & .group:hover .scrollbar-hover {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
   }
 }
 
