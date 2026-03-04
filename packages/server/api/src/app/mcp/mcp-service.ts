@@ -76,10 +76,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
 
                 server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {
 
-                    const originalParams = Object.fromEntries(Object.entries(args).map(([key, value]) => [mcpInputs.find((property) => property.name === key)?.name || key, value]))
                     const returnsResponse = mcpTrigger.input?.returnsResponse
-
-
                     const response = await webhookService.handleWebhook({
                         data: () => {
                             return Promise.resolve({
@@ -94,7 +91,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                         async: !returnsResponse,
                         flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
                         saveSampleData: false,
-                        payload: originalParams,
+                        payload: args,
                         execute: true,
                         failParentOnFailure: false,
                     })

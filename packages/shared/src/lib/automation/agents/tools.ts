@@ -3,11 +3,6 @@ import { DiscriminatedUnion } from '../../core/common'
 
 export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
 
-export { mcpToolNameUtils } from './mcp-tool-name-util'
-import { mcpToolNameUtils } from './mcp-tool-name-util'
-export const createToolName = mcpToolNameUtils.createToolName
-export const createPieceToolName = mcpToolNameUtils.createPieceToolName
-
 export enum FieldControlMode {
     AGENT_DECIDE = 'agent-decide',
     CHOOSE_YOURSELF = 'choose-yourself',

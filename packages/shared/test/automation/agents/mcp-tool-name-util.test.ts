@@ -4,54 +4,58 @@ const { createToolName, createPieceToolName } = mcpToolNameUtils
 
 describe('createToolName', () => {
     it('replaces special characters with underscores', () => {
-        expect(createToolName('hello world!')).toBe('hello_world__mcp')
+        expect(createToolName('hello world!')).toBe('hello_world_jzwpy2_mcp')
     })
 
     it('collapses multiple underscores into one', () => {
-        expect(createToolName('hello   world')).toBe('hello_world_mcp')
+        expect(createToolName('hello   world')).toBe('hello_world_jzwpy2_mcp')
     })
 
     it('converts to lowercase', () => {
-        expect(createToolName('HelloWorld')).toBe('helloworld_mcp')
+        expect(createToolName('HelloWorld')).toBe('helloworld_xxkdhh_mcp')
     })
 
     it('appends _mcp suffix', () => {
-        expect(createToolName('my_tool')).toBe('my_tool_mcp')
+        expect(createToolName('my_tool')).toBe('my_tool_m2ch2u_mcp')
     })
 
-    it('is idempotent (does not double-append _mcp)', () => {
-        expect(createToolName('my_tool_mcp')).toBe('my_tool_mcp')
-    })
-
-    it('truncates to 60 chars before appending _mcp', () => {
+    it('truncates long names and appends hash + _mcp within 64 chars', () => {
         const longName = 'a'.repeat(70)
         const result = createToolName(longName)
-        expect(result).toBe('a'.repeat(60) + '_mcp')
+        expect(result).toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_omppph_mcp')
+        expect(result.length).toBeLessThanOrEqual(64)
     })
 
-    it('truncates and still appends _mcp when truncated result ends with _mcp', () => {
-        // 56 a's + '_mcp' = 60 chars, so after slice(0,60) it ends with _mcp
-        const name = 'a'.repeat(56) + '_mcp_extra'
-        const result = createToolName(name)
-        expect(result.endsWith('_mcp')).toBe(true)
+    it('never exceeds 64 characters for very long inputs', () => {
+        const result = createToolName('a'.repeat(100))
         expect(result.length).toBeLessThanOrEqual(64)
+    })
+
+    it('collision resistance: names sharing first 53+ chars produce different results', () => {
+        const name1 = 'a'.repeat(55) + 'b'
+        const name2 = 'a'.repeat(55) + 'c'
+        const result1 = createToolName(name1)
+        const result2 = createToolName(name2)
+        // Same truncated prefix but different hashes
+        expect(result1.slice(0, 53)).toBe(result2.slice(0, 53))
+        expect(result1).not.toBe(result2)
     })
 })
 
 describe('createPieceToolName', () => {
     it('strips @scope/piece- prefix', () => {
-        expect(createPieceToolName('@activepieces/piece-slack', 'send_message')).toBe('slack-send_message_mcp')
+        expect(createPieceToolName('@activepieces/piece-slack', 'send_message')).toBe('slack-send_message_pqyv3q_mcp')
     })
 
     it('strips plain piece- prefix', () => {
-        expect(createPieceToolName('piece-github', 'create_issue')).toBe('github-create_issue_mcp')
+        expect(createPieceToolName('piece-github', 'create_issue')).toBe('github-create_issue_gmsjqn_mcp')
     })
 
     it('handles names without piece- prefix', () => {
-        expect(createPieceToolName('slack', 'send_message')).toBe('slack-send_message_mcp')
+        expect(createPieceToolName('slack', 'send_message')).toBe('slack-send_message_pqyv3q_mcp')
     })
 
     it('normalizes the combined name correctly', () => {
-        expect(createPieceToolName('@activepieces/piece-google-sheets', 'insert_row')).toBe('google-sheets-insert_row_mcp')
+        expect(createPieceToolName('@activepieces/piece-google-sheets', 'insert_row')).toBe('google-sheets-insert_row_q388b6_mcp')
     })
 })
