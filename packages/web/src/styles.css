@@ -540,8 +540,16 @@
     --tw-enter-translate-x: initial !important;
   }
   [data-state="closed"] {
-    --tw-exit-translate-y: initial !important;  
+    --tw-exit-translate-y: initial !important;
     --tw-exit-translate-x: initial !important;
+  }
+
+  /* Restore slide animation for Sheet panels (overrides the broad reset above) */
+  [data-slot="sheet-content"][data-state="open"] {
+    --tw-enter-translate-x: 100% !important;
+  }
+  [data-slot="sheet-content"][data-state="closed"] {
+    --tw-exit-translate-x: 100% !important;
   }
 }
 

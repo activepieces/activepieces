@@ -147,7 +147,7 @@ export default function TriggerHealthPage() {
   const columns = [
     {
       accessorKey: 'pieceDisplayName',
-      size: 200,
+      size: 220,
       header: ({ column }: any) => (
         <DataTableColumnHeader column={column} title="Piece" icon={Puzzle} />
       ),
@@ -203,7 +203,7 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'lastResults',
-      size: 200,
+      size: 190,
       header: ({ column }: any) => (
         <DataTableColumnHeader
           column={column}
@@ -217,11 +217,11 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last24Hours',
-      size: 120,
+      size: 70,
       header: ({ column }: any) => (
         <DataTableColumnHeader
           column={column}
-          title="Last 24 Hours"
+          title="24H"
           icon={Clock}
         />
       ),
@@ -231,11 +231,11 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last7Days',
-      size: 120,
+      size: 65,
       header: ({ column }: any) => (
         <DataTableColumnHeader
           column={column}
-          title="Last 7 Days"
+          title="7D"
           icon={Calendar}
         />
       ),
@@ -245,11 +245,11 @@ export default function TriggerHealthPage() {
     },
     {
       accessorKey: 'last14Days',
-      size: 120,
+      size: 65,
       header: ({ column }: any) => (
         <DataTableColumnHeader
           column={column}
-          title="Last 14 Days"
+          title="14D"
           icon={Calendar}
         />
       ),

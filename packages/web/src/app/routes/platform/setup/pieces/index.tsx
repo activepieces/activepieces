@@ -10,7 +10,6 @@ import {
   Package,
   Hash,
   GitBranch,
-  Tags,
   Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -53,7 +52,7 @@ const PlatformPiecesPage = () => {
       () => [
         {
           accessorKey: 'displayName',
-          size: 240,
+          size: 300,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
@@ -63,7 +62,7 @@ const PlatformPiecesPage = () => {
           ),
           cell: ({ row }) => {
             return (
-              <div className="flex items-center gap-2 w-fit">
+              <div className="flex items-center gap-2">
                 <PieceIcon
                   circle={true}
                   size={'md'}
@@ -72,14 +71,23 @@ const PlatformPiecesPage = () => {
                   logoUrl={row.original.logoUrl}
                   showTooltip={false}
                 />
-                <span>{row.original.displayName}</span>
+                <div className="flex flex-col gap-0.5">
+                  <span>{row.original.displayName}</span>
+                  {row.original.tags && row.original.tags.length > 0 && (
+                    <div className="flex gap-1">
+                      {row.original.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-xs py-0 px-1.5">{tag}</Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           },
         },
         {
           accessorKey: 'packageName',
-          size: 200,
+          size: 250,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
@@ -93,7 +101,7 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'version',
-          size: 100,
+          size: 80,
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
@@ -106,29 +114,8 @@ const PlatformPiecesPage = () => {
           },
         },
         {
-          accessorKey: 'tags',
-          size: 150,
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('Tags')}
-              icon={Tags}
-            />
-          ),
-          cell: ({ row }) => {
-            return (
-              <div className="text-left">
-                <div className="flex gap-2">
-                  {row.original.tags?.map((tag) => (
-                    <Badge key={tag}>{tag}</Badge>
-                  ))}
-                </div>
-              </div>
-            );
-          },
-        },
-        {
           id: 'actions',
+          size: 80,
           cell: ({ row }) => {
             return (
               <div className="flex justify-end">
