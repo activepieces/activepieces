@@ -1,0 +1,34 @@
+include-pre-releases: true
+exclude-labels:
+  - 'skip-changelog'
+  - 'release'
+  - 'pre-release'
+categories:
+  - title: "🔌 Pieces"
+    labels:
+      - "🧩 area/third-party-pieces"
+      - "🧩 area/core-pieces"
+  - title: "⛓️‍💥 Breaking Changes"
+    labels:
+      - "⛓️‍💥 breaking-change"
+  - title: "✨ Exciting New Features"
+    labels:
+      - "🌟 feature"
+  - title: "🐞 Bug Fixes"
+    labels:
+      - "🐛 bug"
+  - title: "🎨 Enhancements & Polish"
+    labels:
+      - "✨ polishing"
+  - title: "📚 Documentation"
+    labels:
+      - "📚 documentation"
+  - title: "🧹 Maintenance"
+    labels:
+      - "🧹 clean up"
+
+template: |
+  $CHANGES
+
+  ## Thanks ❤️
+  $CONTRIBUTORS
