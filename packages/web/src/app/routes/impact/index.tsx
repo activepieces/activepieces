@@ -106,14 +106,14 @@ export default function ImpactPage() {
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                {t('View impact analytics and metrics')}
+                {t('View impact analytics and metrics for the active flows.')}
               </TooltipContent>
             </Tooltip>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 px-3 h-8 py-1 border border-dashed rounded-md text-sm text-muted-foreground">
             <span>
               {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
               {t('Refreshes daily')}
@@ -147,7 +147,7 @@ export default function ImpactPage() {
             value={selectedTimePeriod}
             onValueChange={handleTimePeriodChange}
           >
-            <SelectTrigger className="w-auto gap-2">
+            <SelectTrigger className="w-auto gap-2 h-8">
               <Calendar className="h-4 w-4" />
               <SelectValue />
             </SelectTrigger>

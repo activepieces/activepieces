@@ -6,6 +6,7 @@ import { imageToPdf } from './lib/actions/image-to-pdf';
 import { pdfPageCount } from './lib/actions/pdf-page-count';
 import { extractPdfPages } from './lib/actions/extract-pdf-pages';
 import { mergePdfs } from './lib/actions/merge-pdfs';
+import { addTextToPdf } from './lib/actions/add-text-to-pdf';
 
 export const PDF = createPiece({
   displayName: 'PDF',
@@ -18,6 +19,7 @@ export const PDF = createPiece({
     'AbdulTheActivepiecer',
     'jmgb27',
     'danielpoonwj',
+    'bertrandong',
   ],
   actions: [
     extractText,
@@ -27,6 +29,7 @@ export const PDF = createPiece({
     pdfPageCount,
     extractPdfPages,
     mergePdfs,
+    addTextToPdf
   ],
   triggers: [],
 });

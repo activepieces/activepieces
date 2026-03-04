@@ -29,8 +29,8 @@ export const secondsToHMS = (
   const s = totalSeconds % 60;
   return {
     hours: h > 0 ? h.toString() : '',
-    mins: m > 0 || h > 0 ? m.toString() : '',
-    secs: s > 0 || m > 0 || h > 0 ? s.toString() : '',
+    mins: m > 0 || h > 0 ? m.toString().padStart(2, '0') : '',
+    secs: s > 0 || m > 0 || h > 0 ? s.toString().padStart(2, '0') : '',
   };
 };
 
