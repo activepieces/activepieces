@@ -21,11 +21,16 @@ export const triggerUtils = (log: FastifyBaseLogger) => ({
         })
         if (isNil(pieceTrigger)) {
             throw new ActivepiecesError({
-                code: ErrorCode.PIECE_TRIGGER_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    pieceName: flowVersion.trigger.settings.pieceName,
-                    pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                    triggerName: flowVersion.trigger.settings.triggerName,
+                    entityType: 'piece_trigger',
+                    entityId: flowVersion.trigger.settings.triggerName,
+                    message: `Trigger not found for piece ${flowVersion.trigger.settings.pieceName}@${flowVersion.trigger.settings.pieceVersion}`,
+                    extra: {
+                        pieceName: flowVersion.trigger.settings.pieceName,
+                        pieceVersion: flowVersion.trigger.settings.pieceVersion,
+                        triggerName: flowVersion.trigger.settings.triggerName,
+                    },
                 },
             })
         }

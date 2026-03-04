@@ -2,8 +2,8 @@ import {
   ApplicationEvent,
   ApplicationEventName,
   summarizeApplicationEvent,
+  isNil,
 } from '@activepieces/shared';
-import { isNil } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -30,19 +30,19 @@ import {
   DataTable,
   DataTableFilters,
   LIMIT_QUERY_PARAM,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { FormattedDate } from '@/components/ui/formatted-date';
+} from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/custom/formatted-date';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { auditEventsApi } from '@/features/platform-admin/lib/audit-events-api';
+import { auditEventsApi } from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();

@@ -5,13 +5,13 @@ import { EllipsisVertical, Tag, Blocks, Clock, ToggleLeft } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import FlowActionMenu from '@/app/components/flow-actions-menu';
+import { RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
+import { FormattedDate } from '@/components/custom/formatted-date';
 import { Button } from '@/components/ui/button';
-import { RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
-import { FormattedDate } from '@/components/ui/formatted-date';
-import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
-import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { FlowStatusToggle } from '@/features/flows';
+import { PieceIconList } from '@/features/pieces';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;

@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 
 export const NoteFooter = ({ creatorId, isDragging }: NoteFooterProps) => {
   const {

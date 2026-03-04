@@ -3,12 +3,12 @@ import { t } from 'i18next';
 import { History, Link2, Package, Table2, Workflow } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';

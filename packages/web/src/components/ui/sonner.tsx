@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 
 export const INTERNAL_ERROR_MESSAGE =
   'An unexpected error occurred. Please try again in a moment.';

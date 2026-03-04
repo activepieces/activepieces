@@ -9,17 +9,17 @@ import { MoveLeft } from 'lucide-react';
 import React from 'react';
 
 import { CardList } from '@/components/custom/card-list';
-import { useTelemetry } from '@/components/telemetry-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { CORE_ACTIONS_METADATA } from '@/features/pieces/lib/step-utils';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
-} from '@/lib/types';
+  pieceSelectorUtils,
+  CORE_ACTIONS_METADATA,
+  usePieceSearchContext,
+} from '@/features/pieces';
 
-import { usePieceSearchContext } from '../../../features/pieces/lib/piece-search-context';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import GenericActionOrTriggerItem from './generic-piece-selector-item';

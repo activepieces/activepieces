@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { MailCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { authenticationApi } from '@/lib/authentication-api';
+import { authenticationApi } from '@/api/authentication-api';
 
 const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
   const { mutate: resendVerification } = useMutation({

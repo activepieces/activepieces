@@ -2,9 +2,9 @@ import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 
+import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
 import { TextInputWithMentions } from './text-input-with-mentions';

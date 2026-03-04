@@ -27,12 +27,22 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.get('/http', StreamableHttpRequestRequest, async (_req, reply) => {
+        return reply.status(405).send({
+            error: 'Method Not Allowed',
+            message: 'Use POST with Authorization: Bearer <token> for MCP requests.',
+        })
+    })
+
     app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
         const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
         const authHeader = req.headers['authorization']
-        if (!validateAuthorizationHeader(authHeader, mcp)) {
+        const tokenFromHeader = validateAuthorizationHeader(authHeader, mcp)
+        const tokenFromQuery = validateTokenFromQuery(req.query, mcp)
+        if (!tokenFromHeader && !tokenFromQuery) {
             return reply.status(401).send({
                 error: 'Unauthorized',
+                message: 'Missing or invalid token. Use Authorization: Bearer <token> or add ?token=<token> to the URL (for clients that cannot send headers).',
             })
         }
         const { server } = await mcpServerService(req.log).buildServer({
@@ -82,6 +92,12 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
     const [type, token] = authHeader?.split(' ') ?? []
     return type === 'Bearer' && token === mcp.token
+}
+
+function validateTokenFromQuery(query: unknown, mcp: PopulatedMcpServer) {
+    const queryParams = query as Record<string, string | undefined>
+    const token = queryParams.token
+    return token === mcp.token
 }
 
 function createTransportConfig(

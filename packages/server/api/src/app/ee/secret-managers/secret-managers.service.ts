@@ -1,7 +1,8 @@
-import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ConnectSecretManagerRequest, ErrorCode, isEnumValue, isNil, isObject, isString, SecretManagerConfig, SecretManagerFieldsSeparator, SecretManagerProviderId, SecretManagerProviderMetaData, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { encryptUtils } from '../../helper/encryption'
+import { secretManagerCache } from './secret-manager-cache'
 import { secretManagerProvider, secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { SecretManagerEntity } from './secret-manager.entity'
 
@@ -15,19 +16,40 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             },
         })
         const providers = await Promise.all(secretManagerProvidersMetadata().map(async (metadata) => {
-            const provider = secretManagerProvider(log, metadata.id)
             const savedConfig = secretManagers.find(secretManager => secretManager.providerId === metadata.id)?.auth
             const decryptedConfig = savedConfig ? await encryptUtils.decryptObject<SecretManagerConfig>(savedConfig) : undefined
-            const isConnected = !isNil(decryptedConfig) && Boolean(await provider.checkConnection(decryptedConfig).catch(() => false))
+        
             return {
                 ...metadata,
-                connected: isConnected,
+                connection: {
+                    configured: !isNil(savedConfig),
+                    connected: await secretManagersService(log).checkConnection(decryptedConfig, metadata.id, platformId),
+                },
             }
         }))
         return {
             data: providers,
             next: null,
             previous: null,
+        }
+    },
+    checkConnection: async (config: SecretManagerConfig | undefined, providerId: SecretManagerProviderId, platformId: string) => {
+        if (isNil(config)) {
+            return false
+        }
+        else {
+            const cached = await secretManagerCache.getConnectionStatus(platformId, providerId)
+            if (cached !== undefined) {
+                return cached
+            }
+            else {
+                const provider = secretManagerProvider(log, providerId)
+                const connected = Boolean(await provider.checkConnection(config).catch(() => false))
+                if (connected) {
+                    await secretManagerCache.setConnectionStatus(platformId, providerId, true)
+                }
+                return connected
+            }
         }
     },
     connect: async (request: ConnectSecretManagerRequest & { platformId: string }) => {
@@ -42,6 +64,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 { platformId: request.platformId, providerId: request.providerId },
                 { auth: encryptedConfig },
             )
+            await secretManagerCache.invalidatePlatformEntries(request.platformId)
             return
         }
         await secretManagerRepository().save({
@@ -50,6 +73,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             providerId: request.providerId,
             auth: encryptedConfig,
         })
+        await secretManagerCache.invalidatePlatformEntries(request.platformId)
     },
 
     getSecret: async (request: { path: string, platformId: string, providerId: SecretManagerProviderId }) => {
@@ -68,7 +92,13 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return provider.getSecret(request, decryptedConfig) 
+        const cached = await secretManagerCache.getSecretValue(request.platformId, request.providerId, request.path)
+        if (cached !== undefined) {
+            return cached
+        }
+        const secret = await provider.getSecret(request, decryptedConfig)
+        await secretManagerCache.setSecretValue(request.platformId, request.providerId, request.path, secret)
+        return secret
     },
 
     async resolveString({ key, platformId, throwOnFailure = true }: { key: string, platformId: string, throwOnFailure?: boolean }) {
@@ -118,6 +148,7 @@ export const secretManagersService = (log: FastifyBaseLogger) => ({
             platformId,
             providerId,
         })
+        await secretManagerCache.invalidatePlatformEntries(platformId)
     },
 })
 
@@ -139,7 +170,7 @@ function handleResolveError(error: unknown, throwOnFailure: boolean, originalVal
 }
 
 /**
- * takes key in the format of {{providerId:secret-path}}
+ * takes key in the format of {{providerId|ap_sep_v1|secret-path}}
  * returns trimmed key in the format of providerId:secret-path
  */
 const trimKeyBraces = (key: string) => {
@@ -156,7 +187,7 @@ const trimKeyBraces = (key: string) => {
 }
 
 /**
- * key is {{providerId:secret-path}}
+ * key is {{providerId|ap_sep_v1|secret-path}}
  * returns providerId and path
  */
 const extractProviderIdAndPathFromKey = (key: string): {
@@ -164,9 +195,9 @@ const extractProviderIdAndPathFromKey = (key: string): {
     path: string
 } => {
     const keyWithoutBraces = trimKeyBraces(key)
-    const splits = keyWithoutBraces.split(':')
+    const splits = keyWithoutBraces.split(SecretManagerFieldsSeparator)
     const providerId = splits[0]
-    const path = splits[1]
+    const path = splits.slice(1).join(SecretManagerFieldsSeparator)
     if (!isEnumValue(SecretManagerProviderId, providerId)) {
         throw new ActivepiecesError({
             code: ErrorCode.SECRET_MANAGER_KEY_NOT_SECRET,

@@ -1,7 +1,10 @@
 import { FlowOperationType } from '@activepieces/shared';
 
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
+import {
+  PieceSelectorOperation,
+  PieceSelectorPieceItem,
+  pieceSelectorUtils,
+} from '@/features/pieces';
 
 import { BuilderState } from '../builder-hooks';
 

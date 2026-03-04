@@ -105,5 +105,7 @@
   "FreeARC Archive": "FreeARC Archive",
   "CD Audio": "CD Audio",
   "MPEG Transport Stream": "MPEG Transport Stream",
-  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container"
+  "Opus Audio in Ogg Container": "Opus Audio in Ogg Container",
+  "Get File Name": "Get File Name",
+  "Get the name of a file": "Get the name of a file"
 }

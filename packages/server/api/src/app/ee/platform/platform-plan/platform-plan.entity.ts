@@ -97,6 +97,9 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         ssoEnabled: {
             type: Boolean,
         },
+        scimEnabled: {
+            type: Boolean,
+        },
         licenseKey: {
             type: String,
             nullable: true,

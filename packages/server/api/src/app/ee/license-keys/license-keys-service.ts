@@ -11,7 +11,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
 const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
-    log.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
+    log.error({ message }, '[licenseKeysService#handleUnexpectedSecretsManagerError] Unexpected error from secret manager')
     throw new Error(message)
 }
 
@@ -137,6 +137,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 licenseKey: key.key,
                 licenseExpiresAt: key.expiresAt,
                 ssoEnabled: key.ssoEnabled,
+                scimEnabled: key.scimEnabled,
                 environmentsEnabled: key.environmentsEnabled,
                 showPoweredBy: key.showPoweredBy,
                 embeddingEnabled: key.embeddingEnabled,
@@ -164,6 +165,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,
+    scimEnabled: false,
     analyticsEnabled: false,
     environmentsEnabled: false,
     showPoweredBy: false,

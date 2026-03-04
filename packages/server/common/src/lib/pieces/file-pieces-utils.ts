@@ -68,7 +68,7 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
         }
         catch (e) {
             const err = e as Error
-            log.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
+            log.warn({ err }, '[filePieceMetadataService#loadDistPiecesMetadata] Failed to load pieces from folder')
             return []
         }
     },

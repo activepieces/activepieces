@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Input } from '@/components/ui/input';
 
-import { FieldsMapping } from '../lib/utils';
+import { FieldsMapping } from '../utils/utils';
 
 const FieldsMappingControl = ({
   onChange,

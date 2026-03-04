@@ -38,7 +38,8 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn, determineDefaultRoute } from '@/lib/utils';
+import { determineDefaultRoute } from '@/lib/route-utils';
+import { cn } from '@/lib/utils';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';

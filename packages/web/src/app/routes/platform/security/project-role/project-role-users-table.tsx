@@ -1,5 +1,8 @@
-import { ProjectMemberWithUser } from '@activepieces/shared';
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
+import {
+  ProjectMemberWithUser,
+  assertNotNullOrUndefined,
+  isNil,
+} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -8,6 +11,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -16,9 +21,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+import { projectRoleApi } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export const ProjectRoleUsersTable = () => {

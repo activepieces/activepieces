@@ -1,5 +1,5 @@
-import { OtpType } from '@activepieces/shared';
 import {
+  OtpType,
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
@@ -13,6 +13,7 @@ import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -33,12 +34,12 @@ import { CheckEmailNote } from '@/features/authentication/components/check-email
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
-import { cn, formatUtils } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
-import { passwordValidation } from '../lib/password-validation-utils';
+import { passwordValidation } from '../utils/password-validation-utils';
 
 type SignUpSchema = {
   email: string;

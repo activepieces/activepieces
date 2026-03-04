@@ -3,8 +3,8 @@ import {
   GitPushOperationType,
   PushEverythingGitRepoRequest,
   PushGitRepoRequest,
+  assertNotNullOrUndefined,
 } from '@activepieces/shared';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -35,8 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { gitSyncApi } from '@/features/project-releases/lib/git-sync-api';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { gitSyncApi, gitSyncHooks } from '@/features/project-releases';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 

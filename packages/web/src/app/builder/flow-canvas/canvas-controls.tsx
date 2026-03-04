@@ -18,7 +18,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { isMac } from '@/lib/utils';
+import { isMac } from '@/lib/dom-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { NoteDragOverlayMode } from '../state/notes-state';

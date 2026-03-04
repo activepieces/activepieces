@@ -57,11 +57,12 @@ export const pieceLoader = {
 
         if (isNil(pieceAction)) {
             throw new ActivepiecesError({
-                code: ErrorCode.STEP_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    pieceName,
-                    pieceVersion,
-                    stepName: actionName,
+                    entityType: 'step',
+                    entityId: actionName,
+                    message: `Action not found for piece ${pieceName}@${pieceVersion}`,
+                    extra: { pieceName, pieceVersion },
                 },
             })
         }
@@ -79,11 +80,12 @@ export const pieceLoader = {
 
         if (isNil(actionOrTrigger)) {
             throw new ActivepiecesError({
-                code: ErrorCode.STEP_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    pieceName,
-                    pieceVersion,
-                    stepName: actionOrTriggerName,
+                    entityType: 'step',
+                    entityId: actionOrTriggerName,
+                    message: `Step not found for piece ${pieceName}@${pieceVersion}`,
+                    extra: { pieceName, pieceVersion },
                 },
             })
         }
@@ -92,12 +94,12 @@ export const pieceLoader = {
 
         if (isNil(property)) {
             throw new ActivepiecesError({
-                code: ErrorCode.CONFIG_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    pieceName,
-                    pieceVersion,
-                    stepName: actionOrTriggerName,
-                    configName: propertyName,
+                    entityType: 'config',
+                    entityId: propertyName,
+                    message: `Config not found for step ${actionOrTriggerName} in piece ${pieceName}@${pieceVersion}`,
+                    extra: { pieceName, pieceVersion, stepName: actionOrTriggerName },
                 },
             })
         }

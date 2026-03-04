@@ -18,12 +18,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import {
+  PieceIcon,
+  stepsHooks,
   PieceStepMetadata,
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
-} from '@/lib/types';
+} from '@/features/pieces';
 
 import { useBuilderStateContext } from '../builder-hooks';
 

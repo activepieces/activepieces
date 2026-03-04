@@ -3,8 +3,6 @@ import {
   PushGitRepoRequest,
   PushFlowsGitRepoRequest,
   PushTablesGitRepoRequest,
-} from '@activepieces/shared';
-import {
   assertNotNullOrUndefined,
   PopulatedFlow,
   Table,
@@ -36,8 +34,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { gitSyncApi } from '../lib/git-sync-api';
-import { gitSyncHooks } from '../lib/git-sync-hooks';
+import { gitSyncApi } from '../api/git-sync-api';
+import { gitSyncHooks } from '../hooks/git-sync-hooks';
 
 type PushToGitDialogProps =
   | {
