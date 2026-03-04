@@ -67,6 +67,9 @@ const StepSettingsContainer = () => {
     step: selectedStep,
   });
 
+  const selectedStepRef = useRef(selectedStep);
+  selectedStepRef.current = selectedStep;
+
   const currentValuesRef = useRef<FlowAction | FlowTrigger>(selectedStep);
   const form = useForm<FlowAction | FlowTrigger>({
     mode: 'all',
@@ -96,10 +99,17 @@ const StepSettingsContainer = () => {
       ) {
         return result;
       }
-      if (deepEqual(cleanedNewValues, cleanedCurrentValues)) {
+      if (
+        deepEqual(
+          stripSampleData(cleanedNewValues),
+          stripSampleData(cleanedCurrentValues),
+        )
+      ) {
         return result;
       }
       const valid = Object.keys(result.errors).length === 0;
+      const latestSampleData = selectedStepRef.current.settings.sampleData;
+      cleanedNewValues.settings.sampleData = latestSampleData;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
@@ -303,3 +313,7 @@ const StepSettingsContainer = () => {
 };
 StepSettingsContainer.displayName = 'StepSettingsContainer';
 export { StepSettingsContainer };
+const stripSampleData = (step: FlowAction | FlowTrigger) => {
+  const { sampleData: _, ...settingsWithoutSampleData } = step.settings;
+  return { ...step, settings: settingsWithoutSampleData };
+};
