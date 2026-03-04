@@ -166,7 +166,7 @@ const PlatformTemplatesPage = () => {
   const bulkActions: BulkAction<Template>[] = useMemo(
     () => [
       {
-        render: (_, resetSelection) => (
+        render: (_selectedRows: RowDataWithActions<Template>[], resetSelection: () => void) => (
           <div onClick={(e) => e.stopPropagation()}>
             <ConfirmationDeleteDialog
               title={t('Delete Templates')}
@@ -192,6 +192,15 @@ const PlatformTemplatesPage = () => {
           </div>
         ),
       },
+      {
+        render: () => (
+          <CreateTemplateDialog onDone={() => refetch()}>
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+              {t('New Template')}
+            </AnimatedIconButton>
+          </CreateTemplateDialog>
+        ),
+      },
     ],
     [selectedRows, bulkDeleteMutation],
   );
@@ -213,13 +222,7 @@ const PlatformTemplatesPage = () => {
             'Convert the most common automations into reusable templates',
           )}
           title={t('Templates')}
-        >
-          <CreateTemplateDialog onDone={() => refetch()}>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Template')}
-            </AnimatedIconButton>
-          </CreateTemplateDialog>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No templates found')}
           emptyStateTextDescription={t(

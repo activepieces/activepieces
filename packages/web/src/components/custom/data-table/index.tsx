@@ -350,7 +350,7 @@ export function DataTable<
         })}
       >
         <Table className="table-fixed">
-          <TableHeader className={virtualizeRows ? 'sticky top-0 z-10 bg-muted/70' : undefined}>
+          <TableHeader className={cn('border-t', virtualizeRows ? 'sticky top-0 z-10 bg-background' : 'bg-background')}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {

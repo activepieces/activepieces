@@ -150,21 +150,7 @@ const PlatformPiecesPage = () => {
       <DashboardPageHeader
         description={t('Manage the pieces that are available to your users')}
         title={t('Pieces')}
-      >
-        <div className="flex gap-3">
-          <ApplyTags
-            selectedPieces={selectedPieces}
-            onApplyTags={() => {
-              refetchPieces();
-            }}
-          ></ApplyTags>
-          <SyncPiecesButton />
-          <InstallPieceDialog
-            onInstallPiece={() => refetchPieces()}
-            scope={PieceScope.PLATFORM}
-          />
-        </div>
-      </DashboardPageHeader>
+      />
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
         {!isEnabled && (
           <LockedAlert
@@ -201,6 +187,17 @@ const PlatformPiecesPage = () => {
             previous: null,
           }}
           isLoading={isLoading}
+          bulkActions={[
+            {
+              render: () => (
+                <div className="flex gap-3">
+                  <ApplyTags selectedPieces={selectedPieces} onApplyTags={() => refetchPieces()} />
+                  <SyncPiecesButton />
+                  <InstallPieceDialog onInstallPiece={() => refetchPieces()} scope={PieceScope.PLATFORM} />
+                </div>
+              ),
+            },
+          ]}
           selectColumn={true}
           onSelectedRowsChange={setSelectedPieces}
           virtualizeRows={true}

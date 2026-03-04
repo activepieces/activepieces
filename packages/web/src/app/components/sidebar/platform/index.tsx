@@ -11,6 +11,7 @@ import {
 import { BotIcon } from '@/components/icons/bot';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
+import { FrameIcon } from '@/components/icons/frame';
 import { KeyRoundIcon } from '@/components/icons/key-round';
 import { LayoutGridIcon } from '@/components/icons/layout-grid';
 import { LogInIcon } from '@/components/icons/log-in';
@@ -90,6 +91,12 @@ export function PlatformSidebar() {
       icon: ReceiptIcon,
       locked: edition === ApEdition.COMMUNITY,
     },
+    {
+      to: '/platform/security/signing-keys',
+      label: t('Embedding'),
+      icon: FrameIcon,
+      locked: !platform.plan.embeddingEnabled,
+    },
   ].filter((item) => !(item.label === t('AI Providers') && isEmbeddingEnabled));
 
   const groups: {
@@ -135,12 +142,6 @@ export function PlatformSidebar() {
           label: t('Single Sign On'),
           icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
-        },
-        {
-          to: '/platform/security/signing-keys',
-          label: t('Signing Keys'),
-          icon: KeyRoundIcon,
-          locked: !platform.plan.embeddingEnabled,
         },
         {
           to: '/platform/security/project-roles',

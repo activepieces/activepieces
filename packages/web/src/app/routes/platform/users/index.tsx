@@ -171,16 +171,7 @@ export default function UsersPage() {
           description={t(
             'Manage, delete, activate and deactivate users on platform',
           )}
-        >
-          <Button
-            className="gap-2"
-            size="sm"
-            onClick={() => setInviteOpen(true)}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('Invite')}</span>
-          </Button>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}
@@ -193,6 +184,16 @@ export default function UsersPage() {
           }}
           hidePagination={true}
           isLoading={isLoading}
+          bulkActions={[
+            {
+              render: () => (
+                <Button className="gap-2" size="sm" onClick={() => setInviteOpen(true)}>
+                  <UserPlus className="w-4 h-4" />
+                  <span className="text-sm font-medium">{t('Invite')}</span>
+                </Button>
+              ),
+            },
+          ]}
           actions={[
             (row) => (
               <UserActions

@@ -237,7 +237,7 @@ const GlobalConnectionsTable = () => {
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
       {
-        render: (_, resetSelection) => {
+        render: (_selectedRows: RowDataWithActions<AppConnectionWithoutSensitiveData>[], resetSelection: () => void) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <ConfirmationDeleteDialog
@@ -274,6 +274,21 @@ const GlobalConnectionsTable = () => {
           );
         },
       },
+      {
+        render: () => (
+          <NewConnectionDialog
+            isGlobalConnection={true}
+            onConnectionCreated={() => {
+              setRefresh(refresh + 1);
+              refetchGlobalConnections();
+            }}
+          >
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+              {t('New Connection')}
+            </AnimatedIconButton>
+          </NewConnectionDialog>
+        ),
+      },
     ],
     [bulkDeleteGlobalConnections, selectedRows, refresh],
   );
@@ -294,19 +309,7 @@ const GlobalConnectionsTable = () => {
             'Manage platform-wide connections to external systems.',
           )}
           title={t('Global Connections')}
-        >
-          <NewConnectionDialog
-            isGlobalConnection={true}
-            onConnectionCreated={() => {
-              setRefresh(refresh + 1);
-              refetchGlobalConnections();
-            }}
-          >
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Connection')}
-            </AnimatedIconButton>
-          </NewConnectionDialog>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No global connections found')}
           emptyStateTextDescription={t(

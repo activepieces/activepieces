@@ -260,7 +260,7 @@ export const platformRoutes = [
     path: '/platform/security/signing-keys',
     element: (
       <PlatformLayout>
-        <PageTitle title="Signing Keys">
+        <PageTitle title="Embedding">
           <SuspenseWrapper>
             <SigningKeysPage />
           </SuspenseWrapper>

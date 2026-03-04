@@ -1,7 +1,7 @@
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Tag, Fingerprint, Shield, Clock, Activity, Info } from 'lucide-react';
+import { Tag, Fingerprint, Shield, Clock, Activity, Info, Mail, Hash } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -37,7 +37,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           ? row.original.data.externalId
           : undefined;
       const email = row.original.data.email;
-      const identity = externalId || (email?.includes('@') ? email : null);
+      const showEmail = email?.includes('@');
 
       return (
         <div className="flex items-center gap-2">
@@ -51,13 +51,20 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
               </TooltipContent>
             </Tooltip>
           )}
-          <div className={isInvitation ? 'text-orange-700' : ''}>
-            {identity ? (
-              <TruncatedColumnTextValue
-                value={identity}
-                className="max-w-[220px] 2xl:max-w-[300px]"
-              />
-            ) : (
+          <div className={`flex flex-col gap-0.5 ${isInvitation ? 'text-orange-700' : ''}`}>
+            {showEmail && (
+              <div className="flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <TruncatedColumnTextValue value={email} className="max-w-[200px] 2xl:max-w-[280px]" />
+              </div>
+            )}
+            {externalId && (
+              <div className="flex items-center gap-1.5">
+                <Hash className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <TruncatedColumnTextValue value={externalId} className="max-w-[200px] 2xl:max-w-[280px]" />
+              </div>
+            )}
+            {!showEmail && !externalId && (
               <span className="text-muted-foreground">-</span>
             )}
           </div>

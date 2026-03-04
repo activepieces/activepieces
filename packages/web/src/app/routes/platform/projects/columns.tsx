@@ -36,7 +36,7 @@ export const projectsTableColumns = ({
   >[] = [
     {
       accessorKey: 'displayName',
-      size: 400,
+      size: 270,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
@@ -110,6 +110,7 @@ export const projectsTableColumns = ({
   if (platform.plan.embeddingEnabled) {
     columns.push({
       accessorKey: 'externalId',
+      size: 150,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
