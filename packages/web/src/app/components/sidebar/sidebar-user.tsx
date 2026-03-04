@@ -62,7 +62,7 @@ export function SidebarUser() {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger className="w-full">
+          <DropdownMenuTrigger asChild className="w-full">
             <SidebarMenuButton className="h-10! pl-1! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-1!">
               <div className="size-6 shrink-0 overflow-hidden flex items-center justify-center rounded-full">
                 <UserAvatar
