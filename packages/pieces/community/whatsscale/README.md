@@ -17,8 +17,17 @@ WhatsScale uses API key authentication. Get your key from [whatsscale.com/dashbo
 | Send a Text to a Channel | Broadcast text to a WhatsApp Channel (dropdown) |
 | Send a Message to a CRM Contact | Send text to a WhatsScale CRM contact (dropdown) |
 
-### Planned (Sprints 3-9)
-- Send Image/Video/Document to Contact, Group, Channel, CRM Contact
+### Send Image
+| Action | Description |
+|--------|-------------|
+| Send an Image to a Contact | Send image to a WhatsApp contact (dropdown) |
+| Send an Image to a Group | Send image to a WhatsApp group (dropdown) |
+| Send an Image to a Channel | Broadcast image to a WhatsApp Channel (dropdown) |
+| Send an Image to a CRM Contact | Send image to a WhatsScale CRM contact (dropdown) |
+| Send an Image (Manual Entry) | Send image by entering phone number or group ID manually |
+
+### Planned (Sprints 4-9)
+- Send Video/Document to Contact, Group, Channel, CRM Contact
 - Send Location, Poll
 - Set Text/Image/Video Story
 - CRM: Create, Get, Find, Update, Delete Contact, Add/Remove Tag, List
