@@ -1,4 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const pdfcrowdAuth = PieceAuth.BasicAuth({
     displayName: 'Pdfcrowd Credentials',
@@ -14,15 +15,16 @@ export const pdfcrowdAuth = PieceAuth.BasicAuth({
     },
     validate: async ({ auth }) => {
         try {
-            const response = await fetch('https://api.pdfcrowd.com/api/info/', {
-                method: 'GET',
+            const credentials = Buffer.from(`${auth.username}:${auth.password}`).toString('base64');
+            const response = await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: 'https://api.pdfcrowd.com/api/info/',
                 headers: {
-                    'Authorization': 'Basic ' + Buffer.from(`${auth.username}:${auth.password}`).toString('base64'),
+                    'Authorization': `Basic ${credentials}`,
                 },
             });
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Invalid credentials' })) as { message?: string };
-                return { valid: false, error: errorData.message || 'Invalid username or API key' };
+            if (response.status >= 400) {
+                return { valid: false, error: 'Invalid username or API key' };
             }
             return { valid: true };
         } catch (e) {
