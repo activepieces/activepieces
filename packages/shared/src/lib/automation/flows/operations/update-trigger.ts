@@ -1,4 +1,5 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
+import dayjs from 'dayjs'
 import { isNil } from '../../../core/common'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
@@ -14,7 +15,7 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
         name,
         valid: false,
         nextAction,
-        lastUpdatedDate: new Date().toISOString(),
+        lastUpdatedDate: dayjs().toISOString(),
     }
     let trigger: FlowTrigger
     switch (request.type) {

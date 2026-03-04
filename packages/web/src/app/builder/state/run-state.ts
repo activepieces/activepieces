@@ -247,29 +247,21 @@ export const createRunState = (
         internalErrorToast();
         return;
       }
-      const clonedStep: FlowAction | FlowTrigger = JSON.parse(
-        JSON.stringify(step),
-      );
-      clonedStep.settings.sampleData = {
-        ...clonedStep.settings.sampleData,
-        lastTestDate: dayjs().toISOString(),
-      };
-      // set the latest test date in the flow version locally
-      if (flowStructureUtil.isAction(step.type)) {
-        set((state) => ({
+
+      set((state) => {
+        return {
           flowVersion: flowOperations.apply(state.flowVersion, {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: clonedStep as FlowAction,
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: step.name,
+              sampleDataSettings: {
+                lastTestDate: dayjs().toISOString(),
+              },
+            },
           }),
-        }));
-      } else {
-        set((state) => ({
-          flowVersion: flowOperations.apply(state.flowVersion, {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: clonedStep as FlowTrigger,
-          }),
-        }));
-      }
+        };
+      });
+
       setSampleDataLocally({
         stepName: step.name,
         type: 'output',
@@ -303,6 +295,15 @@ export const createRunState = (
     setErrorLogs: (stepName: string, error: string | null) => {
       set((state) => {
         return {
+          flowVersion: flowOperations.apply(state.flowVersion, {
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+              stepName: stepName,
+              sampleDataSettings: {
+                lastTestDate: dayjs().toISOString(),
+              },
+            },
+          }),
           errorLogs: {
             ...state.errorLogs,
             [stepName]: error,

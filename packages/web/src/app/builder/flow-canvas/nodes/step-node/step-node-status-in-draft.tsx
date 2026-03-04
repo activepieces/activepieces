@@ -21,9 +21,8 @@ type DraftStepStatus =
   | 'invalid'
   | 'testing'
   | 'failed'
-  | 'stale'
-  | 'tested'
-  | 'untested';
+  | 'needs-test'
+  | 'tested';
 
 const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   const [
@@ -55,14 +54,13 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     if (isSkipped) return 'skipped';
     if (!isStepValid) return 'invalid';
     if (isBeingTested) return 'testing';
-    if (hasError) return 'failed';
-    if (!isNil(lastTestDate)) {
-      if (lastUpdatedDate > lastTestDate) {
-        return 'stale';
-      }
-      return 'tested';
+
+    if (isNil(lastTestDate) || lastUpdatedDate > lastTestDate) {
+      return 'needs-test';
     }
-    return 'untested';
+    if (hasError) return 'failed';
+
+    return 'tested';
   }, [
     isSkipped,
     isStepValid,
@@ -133,7 +131,7 @@ const draftStatusConfig: Record<
       />
     ),
   },
-  stale: {
+  'needs-test': {
     variant: 'default',
     text: t('Test me'),
     icon: <TriangleAlert className="size-3" />,
@@ -148,11 +146,6 @@ const draftStatusConfig: Record<
         hideTooltip={true}
       />
     ),
-  },
-  untested: {
-    variant: 'default',
-    text: t('Test me'),
-    icon: <TriangleAlert className="size-3" />,
   },
 };
 

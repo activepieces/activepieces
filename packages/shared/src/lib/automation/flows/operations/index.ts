@@ -5,7 +5,7 @@ import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceAction
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
-import { SaveSampleDataRequest } from '../sample-data'
+import { SampleDataSetting, SaveSampleDataRequest } from '../sample-data'
 import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
@@ -22,6 +22,7 @@ import { notesOperations } from './notes-operations'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
+import { _updateSampleDataInfo } from './update-sample-data-info'
 import { _updateTrigger } from './update-trigger'
 
 export enum FlowOperationType {
@@ -50,6 +51,7 @@ export enum FlowOperationType {
     UPDATE_NOTE = 'UPDATE_NOTE',
     DELETE_NOTE = 'DELETE_NOTE',
     ADD_NOTE = 'ADD_NOTE',
+    UPDATE_SAMPLE_DATA_INFO = 'UPDATE_SAMPLE_DATA_INFO',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -82,6 +84,12 @@ export const SkipActionRequest = Type.Object({
 })
 
 export type SkipActionRequest = Static<typeof SkipActionRequest>
+
+export const UpdateSampleDataInfoRequest = Type.Object({
+    stepName: Type.String(),
+    sampleDataSettings: Type.Optional(SampleDataSetting),
+})
+export type UpdateSampleDataInfoRequest = Static<typeof UpdateSampleDataInfoRequest>
 
 export const DuplicateBranchRequest = Type.Object({
     branchIndex: Type.Number(),
@@ -421,7 +429,15 @@ export const FlowOperationRequest = Type.Union([
             title: 'Add Note',
         },
     ),
- 
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_SAMPLE_DATA_INFO),
+            request: UpdateSampleDataInfoRequest,
+        },
+        {
+            title: 'Update Sample Data Info',
+        },
+    ),
 ])
 
 
@@ -518,6 +534,10 @@ export const flowOperations = {
             }
             case FlowOperationType.ADD_NOTE: {
                 clonedVersion = notesOperations.addNote(clonedVersion, operation.request)
+                break
+            }
+            case FlowOperationType.UPDATE_SAMPLE_DATA_INFO: {
+                clonedVersion = _updateSampleDataInfo(clonedVersion, operation.request)
                 break
             }
       
