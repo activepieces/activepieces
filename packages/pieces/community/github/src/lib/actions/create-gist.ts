@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { githubAuth } from '../../';
+import { githubAuth } from '../auth';
 import { githubApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -37,8 +37,7 @@ export const githubCreateGistAction = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { description, public: isPublic, filename, content } =
-      propsValue;
+    const { description, public: isPublic, filename, content } = propsValue;
 
     const body = {
       description,
