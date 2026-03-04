@@ -2,10 +2,10 @@ import { t } from 'i18next';
 import { Download, FolderInput, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 type AutomationsSelectionBarProps = {
   selectedCount: number;

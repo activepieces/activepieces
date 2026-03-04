@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
 export function useOwnerOptions() {

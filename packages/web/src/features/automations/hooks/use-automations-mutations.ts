@@ -10,12 +10,12 @@ import { t } from 'i18next';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { foldersApi } from '@/features/folders/lib/folders-api';
-import { tableHooks } from '@/features/tables/lib/table-hooks';
-import { tablesApi } from '@/features/tables/lib/tables-api';
-import { tablesUtils } from '@/features/tables/lib/utils';
+import { flowsApi } from '@/features/flows/api/flows-api';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
+import { foldersApi } from '@/features/folders/api/folders-api';
+import { tablesUtils } from '@/features/tables';
+import { tablesApi } from '@/features/tables/api/tables-api';
+import { tableHooks } from '@/features/tables/hooks/table-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import { SelectedItemsMap, TreeItem } from '../lib/types';

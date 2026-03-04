@@ -10,9 +10,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { foldersApi } from '@/features/folders/lib/folders-api';
-import { tablesApi } from '@/features/tables/lib/tables-api';
+import { flowsApi } from '@/features/flows/api/flows-api';
+import { foldersApi } from '@/features/folders/api/folders-api';
+import { tablesApi } from '@/features/tables/api/tables-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { AutomationsFilters, FolderContent } from '../lib/types';

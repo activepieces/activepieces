@@ -7,7 +7,7 @@ import {
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { t } from 'i18next';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';

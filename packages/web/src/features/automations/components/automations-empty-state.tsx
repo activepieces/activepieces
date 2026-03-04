@@ -18,14 +18,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { TagWithBright } from '@/components/custom/tag-with-bright';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
-import { tableHooks } from '@/features/tables/lib/table-hooks';
+import { tableHooks } from '@/features/tables/hooks/table-hooks';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { useGradientFromPieces } from '@/features/templates/hooks/use-gradient-from-pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';

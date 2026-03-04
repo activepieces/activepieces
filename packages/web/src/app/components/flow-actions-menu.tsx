@@ -34,8 +34,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
+import { RenameDialog } from '@/features/automations/components/rename-dialog';
+import { flowHooks, flowsApi } from '@/features/flows';
 import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
+import { foldersHooks } from '@/features/folders';
+import { projectMembersHooks } from '@/features/members';
+import { gitSyncHooks } from '@/features/project-releases';
 import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -44,12 +50,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowHooks, flowsApi } from '@/features/flows';
-import { foldersHooks } from '@/features/folders';
-import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
-import { RenameDialog } from '@/features/automations/components/rename-dialog';
-import { gitSyncHooks } from '@/features/project-releases';
-import { projectMembersHooks } from '@/features/members';
 
 type FlowActionMenuProps = {
   flow: PopulatedFlow;

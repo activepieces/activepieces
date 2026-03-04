@@ -23,9 +23,9 @@ import {
 } from '@/features/automations/hooks/use-automations-selection';
 import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
 import { TreeItem } from '@/features/automations/lib/types';
-import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { appConnectionsQueries } from '@/features/connections';
+import { projectMembersHooks } from '@/features/members';
+import { piecesHooks } from '@/features/pieces';
 import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
