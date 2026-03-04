@@ -4,41 +4,15 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
-<Update label="March 2026" description="Staging Environment & CI/CD Pipeline">
+<Update label="March 2026" description="Staging Environment & Release Process">
 
-### New staging environment & unified CD pipeline
+### Dedicated staging environment & improved release process
 
-We replaced the old deployment workflows with a single `continuous-delivery.yml` that introduces a staging gate before production.
+All changes now go through a dedicated staging environment before reaching production. Every update is validated internally for a minimum of 16 hours before being promoted, ensuring higher reliability and fewer disruptions for our users.
 
-**What changed:**
-
-- Every merge to `main` now deploys to **staging** (`stg.activepieces.com`) instead of directly to production
-- **Staging freeze at 5 PM UTC** — deploys pause so the content team has a stable environment overnight
-- **Daily promotion at 9 AM UTC** — the frozen staging version is promoted to production (requires reviewer approval via GitHub Environment)
-- **Weekly release on Sundays** — official self-hosted Docker images, git tag, and GitHub release notes are published automatically
-- **Catch-up deploy** — after each promotion, staging is updated to the latest `main`
-
-**New workflows:**
-
-| Workflow | Purpose |
-|---|---|
-| `continuous-delivery.yml` | Staging deploy, daily promotion, weekly release |
-| `emergency-cloud-deploy.yml` | Break-glass direct-to-prod (manual only) |
-| `release-self-hosted.yml` | Build self-hosted release from any branch with a custom tag |
-
-**Deleted workflows:**
-
-| Workflow | Replaced by |
-|---|---|
-| `automate-deploy.yml` | `continuous-delivery.yml` + `emergency-cloud-deploy.yml` |
-| `stg-automate-deploy.yml` | Staging path in `continuous-delivery.yml` |
-| `release.yml` | Weekly release job in `continuous-delivery.yml` |
-| `release-changelog.yml` | Release-drafter called inline in both release workflows |
-| `pre-release-changelog.yml` | No longer needed |
-
-**Docs added:**
-
-- [Release Cycle](/handbook/engineering/onboarding/release-cycle) — explains cutoffs and rationale
-- [Releases & Deployment](/handbook/engineering/playbooks/releases) — updated playbook with all workflow triggers and manual dispatch options
+- **Staging-first deployment** — every change is tested in a production-like environment before going live
+- **Daily production promotions** — only validated, stable builds are promoted to production
+- **Weekly self-hosted releases** — predictable, stable releases published every week for self-hosted customers
+- **Emergency hotfix path** — critical fixes can still be fast-tracked to production when needed
 
 </Update>
