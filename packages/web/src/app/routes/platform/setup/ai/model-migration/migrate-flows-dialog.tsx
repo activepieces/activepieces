@@ -12,7 +12,6 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -36,9 +35,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { api } from '@/lib/api';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { projectCollectionUtils } from '@/features/projects';
+import { aiProviderApi } from '@/features/platform-admin';
 
 type MigrateFlowsDialogProps = {
   children: React.ReactNode;
