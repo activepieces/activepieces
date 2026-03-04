@@ -2,7 +2,7 @@ import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, Pencil, Shield, Trash, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -22,6 +22,7 @@ import { projectRoleApi } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
+import { ProjectRoleUsersSheet } from './project-role-users-table';
 
 interface ProjectRolesListProps {
   projectRoles: SeekPage<ProjectRole> | undefined;
@@ -34,8 +35,9 @@ export const ProjectRolesTable = ({
   isLoading,
   refetch,
 }: ProjectRolesListProps) => {
-  const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
+  const [selectedRole, setSelectedRole] = useState<ProjectRole | null>(null);
+  const [isUsersSheetOpen, setIsUsersSheetOpen] = useState(false);
 
   const { mutate: deleteProjectRole } = useMutation({
     mutationKey: ['delete-project-role'],
@@ -66,6 +68,7 @@ export const ProjectRolesTable = ({
   }
 
   return (
+  <>
     <ItemGroup className="gap-2">
       {roles.map((role) => (
         <Item key={role.id} variant="outline" size="sm">
@@ -87,9 +90,10 @@ export const ProjectRolesTable = ({
               variant="ghost"
               size="sm"
               className="flex items-center gap-1.5 px-2 h-8 text-muted-foreground"
-              onClick={() =>
-                navigate(`/platform/security/project-roles/${role.id}`)
-              }
+              onClick={() => {
+                setSelectedRole(role);
+                setIsUsersSheetOpen(true);
+              }}
             >
               <Users className="size-4" />
               <span className="text-xs">
@@ -134,5 +138,11 @@ export const ProjectRolesTable = ({
         </Item>
       ))}
     </ItemGroup>
+    <ProjectRoleUsersSheet
+      projectRole={selectedRole}
+      isOpen={isUsersSheetOpen}
+      onOpenChange={setIsUsersSheetOpen}
+    />
+  </>
   );
 };

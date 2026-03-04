@@ -30,11 +30,6 @@ const ProjectRolePage = React.lazy(() =>
     default: m.ProjectRolePage,
   })),
 );
-const ProjectRoleUsersTable = React.lazy(() =>
-  import('./platform/security/project-role/project-role-users-table').then(
-    (m) => ({ default: m.ProjectRoleUsersTable }),
-  ),
-);
 const SecretManagersPage = React.lazy(
   () => import('./platform/security/secret-managers'),
 );
@@ -287,18 +282,6 @@ export const platformRoutes = [
         <PageTitle title="Project Roles">
           <SuspenseWrapper>
             <ProjectRolePage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles/:projectRoleId',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Project Role Users">
-          <SuspenseWrapper>
-            <ProjectRoleUsersTable />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
