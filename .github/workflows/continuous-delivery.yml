@@ -200,33 +200,25 @@ jobs:
         if: steps.day-check.outputs.skip == 'false'
         run: '! docker manifest inspect activepieces/activepieces:${{ steps.version.outputs.release }}'
 
-      - name: Publish draft GitHub release
+      - name: Create or update changelog via release-drafter
         if: steps.day-check.outputs.skip == 'false'
+        uses: release-drafter/release-drafter@v5
+        with:
+          commitish: main
+          prerelease: false
+          tag: ${{ steps.version.outputs.release }}
+          name: ${{ steps.version.outputs.release }}
+          version: ${{ steps.version.outputs.release }}
+          latest: true
+          publish: true
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Find the draft release matching this version and publish it
-          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases \
-            --jq '.[] | select(.draft==true and .tag_name=="${{ steps.version.outputs.release }}") | .id')
-          if [ -n "$RELEASE_ID" ]; then
-            gh api repos/${{ github.repository }}/releases/$RELEASE_ID \
-              --method PATCH \
-              -f draft=false \
-              -f tag_name=${{ steps.version.outputs.release }} \
-              -f name=${{ steps.version.outputs.release }}
-            echo "Published release ${{ steps.version.outputs.release }}"
-          else
-            echo "::warning::No draft release found for ${{ steps.version.outputs.release }}. Creating one."
-            gh release create ${{ steps.version.outputs.release }} \
-              --title "${{ steps.version.outputs.release }}" \
-              --generate-notes
-          fi
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create git tag
         if: steps.day-check.outputs.skip == 'false'
         run: |
-          git tag ${{ steps.version.outputs.release }}
-          git push origin ${{ steps.version.outputs.release }}
+          git tag -f ${{ steps.version.outputs.release }}
+          git push origin ${{ steps.version.outputs.release }} --force
 
       - name: Login to Docker Hub
         if: steps.day-check.outputs.skip == 'false'
