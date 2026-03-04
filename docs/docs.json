@@ -485,7 +485,8 @@
                      "handbook/engineering/onboarding/how-we-work",
                      "handbook/engineering/onboarding/on-call",
                      "handbook/engineering/onboarding/downtime-incident",
-                     "handbook/engineering/onboarding/stack"
+                     "handbook/engineering/onboarding/stack",
+                     "handbook/engineering/onboarding/release-cycle"
                   ]
                },
                {

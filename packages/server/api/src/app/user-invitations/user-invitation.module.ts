@@ -156,7 +156,7 @@ async function shouldAutoAcceptInvitation(principal: Principal, request: SendUse
         return false
     }
     
-    const user = await userService.getOneByIdentityIdOnly({ identityId: identity.id })
+    const user = await userService(log).getOneByIdentityIdOnly({ identityId: identity.id })
     return !isNil(user)
 }
 
@@ -164,7 +164,7 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
     fastify: FastifyInstance,
     request: FastifyRequest, reply: FastifyReply, principal: R,
     projectId: string, permission: Permission): Promise<void> {
-    const project = await projectService.getOneOrThrow(projectId)
+    const project = await projectService(request.log).getOneOrThrow(projectId)
     if (isNil(project) || project.platformId !== principal.platform.id) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,

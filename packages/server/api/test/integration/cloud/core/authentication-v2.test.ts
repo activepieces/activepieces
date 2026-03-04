@@ -5,7 +5,7 @@ import {
     Principal,
     PrincipalType,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticateOrThrow } from '../../../../src/app/core/security/v2/authn/authenticate'
 import { generateMockToken } from '../../../helpers/auth'
@@ -16,9 +16,11 @@ import {
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let log: FastifyBaseLogger
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
+    log = app!.log
 })
 
 afterAll(async () => {
@@ -30,7 +32,7 @@ describe('authenticateOrThrow', () => {
             
             const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
-            const principal = await authenticateOrThrow(`Bearer ${mockApiKey.value}`)
+            const principal = await authenticateOrThrow(log,`Bearer ${mockApiKey.value}`)
 
             expect(principal).toEqual({
                 id: mockApiKey.id,
@@ -45,7 +47,7 @@ describe('authenticateOrThrow', () => {
             
             const invalidApiKey = 'sk-invalid-api-key'
 
-            await expect(authenticateOrThrow(`Bearer ${invalidApiKey}`))
+            await expect(authenticateOrThrow(log,`Bearer ${invalidApiKey}`))
                 .rejects.toEqual(
                     new ActivepiecesError({
                         code: ErrorCode.AUTHENTICATION,
@@ -73,7 +75,7 @@ describe('authenticateOrThrow', () => {
 
             const mockAccessToken = await generateMockToken(mockPrincipal)
 
-            const principal = await authenticateOrThrow(`Bearer ${mockAccessToken}`)
+            const principal = await authenticateOrThrow(log,`Bearer ${mockAccessToken}`)
 
             expect(principal).toEqual(
                 expect.objectContaining({
@@ -90,7 +92,7 @@ describe('authenticateOrThrow', () => {
         it('should throw INVALID_BEARER_TOKEN error for invalid access token', async () => {
             const invalidAccessToken = 'invalid-access-token'
 
-            await expect(authenticateOrThrow(`Bearer ${invalidAccessToken}`))
+            await expect(authenticateOrThrow(log,`Bearer ${invalidAccessToken}`))
                 .rejects.toEqual(
                     new ActivepiecesError({
                         code: ErrorCode.INVALID_BEARER_TOKEN,
@@ -119,7 +121,7 @@ describe('authenticateOrThrow', () => {
                 tokenVersion: nanoid(),
             })
 
-            await expect(authenticateOrThrow(`Bearer ${mockAccessToken}`))
+            await expect(authenticateOrThrow(log,`Bearer ${mockAccessToken}`))
                 .rejects.toEqual(
                     new ActivepiecesError({
                         code: ErrorCode.SESSION_EXPIRED,
@@ -133,14 +135,14 @@ describe('authenticateOrThrow', () => {
 
     describe('Anonymous Authentication', () => {
         it('should return UNKNOWN principal when no token is provided', async () => {
-            const principal = await authenticateOrThrow(null)
+            const principal = await authenticateOrThrow(log,null)
 
             expect(principal.type).toBe(PrincipalType.UNKNOWN)
             expect(principal.id).toBeDefined()
         })
 
         it('should return UNKNOWN principal when empty string is provided', async () => {
-            const principal = await authenticateOrThrow('')
+            const principal = await authenticateOrThrow(log,'')
 
             expect(principal.type).toBe(PrincipalType.UNKNOWN)
             expect(principal.id).toBeDefined()

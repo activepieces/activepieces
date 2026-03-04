@@ -49,7 +49,7 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
         const pieceVersion = await pieceMetadataService(log).resolveExactVersion({
             name: FORMS_PIECE_NAME,
             version: flow.version.trigger.settings.pieceVersion,
-            platformId: await projectService.getPlatformId(flow.projectId),
+            platformId: await projectService(log).getPlatformId(flow.projectId),
         })
         const triggerSettings = flow.version.trigger.settings
         return {
@@ -74,8 +74,8 @@ export const humanInputService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const platformId = await projectService.getPlatformId(flow.projectId)
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platformId = await projectService(log).getPlatformId(flow.projectId)
+        const platform = await platformService(log).getOneOrThrow(platformId)
         return {
             id: flow.id,
             title: flow.version.displayName,
