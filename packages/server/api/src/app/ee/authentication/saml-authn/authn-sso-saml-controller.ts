@@ -1,7 +1,7 @@
 import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import { ApplicationEventName, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { applicationEvents } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
@@ -10,13 +10,13 @@ import { authnSsoSamlService } from './authn-sso-saml-service'
 
 export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
-        const { saml, platformId } = await getSamlConfigOrThrow(req)
+        const { saml, platformId } = await getSamlConfigOrThrow(req, req.log)
         const loginResponse = await authnSsoSamlService(req.log).login(platformId, saml)
         return res.redirect(loginResponse.redirectUrl)
     })
 
     app.post('/acs', AcsRequest, async (req, res) => {
-        const { saml, platformId } = await getSamlConfigOrThrow(req)
+        const { saml, platformId } = await getSamlConfigOrThrow(req, req.log)
         const response = await authnSsoSamlService(req.log).acs(platformId, saml, {
             body: req.body,
             query: req.query,
@@ -38,10 +38,10 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
     })
 }
 
-async function getSamlConfigOrThrow(req: FastifyRequest): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
+async function getSamlConfigOrThrow(req: FastifyRequest, log: FastifyBaseLogger): Promise<{ saml: SAMLAuthnProviderConfig, platformId: string }> {
     const platformId = await platformUtils.getPlatformIdForRequest(req)
     assertNotNullOrUndefined(platformId, 'Platform ID is required for SAML authentication')
-    const platform = await platformService.getOneOrThrow(platformId)
+    const platform = await platformService(log).getOneOrThrow(platformId)
     const saml = platform.federatedAuthProviders.saml
     assertNotNullOrUndefined(saml, 'SAML IDP metadata is not configured for this platform')
     return {

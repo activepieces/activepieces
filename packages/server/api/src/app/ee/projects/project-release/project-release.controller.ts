@@ -14,18 +14,19 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
             id: req.params.id,
             projectId: req.projectId,
         })
-        return projectReleaseService.enrich(release)
+        return projectReleaseService.enrich(release, req.log)
     })
 
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
         return projectReleaseService.list({
             projectId: req.projectId,
             request: req.query,
+            log: req.log,
         })
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
         const release = await projectReleaseService.create({
             platformId: req.principal.platform.id,
@@ -45,7 +46,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
         return projectReleaseService.releasePlan(req.projectId, ownerId, req.body, req.log)
     })
