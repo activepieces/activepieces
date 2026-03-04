@@ -4,7 +4,7 @@ import {
     distributedStoreFactory,
     redisConnectionFactory,
     RedisType,
-} from '@activepieces/server-shared'
+} from '@activepieces/server-common'
 import { system } from '../helper/system/system'
 
 export const redisConnections = redisConnectionFactory(() => {

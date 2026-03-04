@@ -51,7 +51,7 @@
   "Finds records in an object using a SOQL WHERE clause.": "Findet Datensätze in einem Objekt unter Verwendung einer SOQL WHERE-Klausel.",
   "Get all attachments (both classic and modern Files) for a record.": "Holen Sie sich alle Anhänge (sowohl klassische als auch moderne Dateien) für einen Datensatz.",
   "Run a salesforce query": "Eine salesforce-Abfrage ausführen",
-  "Execute a Salesforce analytics report.": "Führen Sie einen Salesforce-Analysebericht aus.",
+  "Execute a Salesforce analytics report and return the results as easy-to-use rows.": "Führen Sie einen Salesforce-Analysebericht aus und geben die Ergebnisse als einfach zu bedienende Zeilen zurück.",
   "Sends an email to a Contact or Lead by creating an EmailMessage record.": "Sendet eine E-Mail an einen Kontakt oder eine Lead durch das Erstellen eines E-Mail-Nachrichten-Datensatzes.",
   "Update an existing contact.": "Aktualisiere einen bestehenden Kontakt.",
   "Update an existing lead.": "Vorhandene Leads aktualisieren.",
@@ -133,7 +133,7 @@
   "The value to search for in the selected field.": "Der zu suchende Wert im ausgewählten Feld.",
   "Enter the WHERE clause for your SOQL query. For example: `Name = 'Acme' AND Industry = 'Technology'`. Do not include the 'WHERE' keyword.": "Geben Sie die WHERE-Klausel für Ihre SOQL-Abfrage ein. Zum Beispiel: `Name = 'Acme' AND Industry = 'Technology'`. Geben Sie nicht das Schlüsselwort 'WHERE' ein.",
   "Enter the query": "Abfrage eingeben",
-  "Apply dynamic filters to the report run.": "Dynamische Filter auf den Report anwenden.",
+  "Apply dynamic filters to the report run. Leave empty to use the report's saved filters.": "Dynamische Filter auf den Berichtslauf anwenden. Leer lassen, um die gespeicherten Filter des Berichts zu verwenden.",
   "The content of the email. Can be plain text or HTML.": "Der Inhalt der E-Mail. Kann einfacher Text oder HTML sein.",
   "The ID of a record to relate the email to (e.g., an Account, Opportunity, or Case ID).": "Die ID eines Datensatzes, mit dem die E-Mail in Verbindung gebracht werden soll (z. B. ein Konto, eine Verkaufschance oder eine Fall-ID).",
   "Enter any additional fields to update as a JSON object.": "Geben Sie weitere Felder ein, die als JSON-Objekt aktualisiert werden sollen.",
@@ -161,6 +161,7 @@
   "New Outbound Message": "Neue ausgehende Nachricht",
   "New Record": "Neuer Datensatz",
   "New or Updated File": "Neue oder aktualisierte Datei",
+  "New Case in Queue": "Neuer Fall in der Warteschlange",
   "Fires when a new Attachment or File is added to any Case record.": "Feuert ab, wenn ein neuer Anhang oder Datei zu jedem Fall Datensatz hinzugefügt wird.",
   "Fires when a new Contact record is created in Salesforce.": "Feuer, wenn ein neuer Kontakt-Datensatz in Salesforce erstellt wird.",
   "Fires when a tracked field is updated on a specified object.": "Feuert ab, wenn ein getragenes Feld auf ein bestimmtes Objekt aktualisiert wird.",
@@ -169,6 +170,9 @@
   "Fires when a new outbound message is received from Salesforce.": "Feuert ab, wenn eine neue ausgehende Nachricht von Salesforce empfangen wird.",
   "Triggers when there is new record": "Auslöser wenn neuer Datensatz vorhanden ist",
   "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.": "Feuer, wenn eine Datei (ContentDocument) erstellt oder aktualisiert wird. Feuert nicht auf klassische Anhänge oder Notizen.",
+  "Triggers when a new Case record is assigned to a specified queue.": "Wird ausgelöst, wenn ein neuer Case Datensatz einer angegebenen Warteschlange zugewiesen wird.",
   "Conditions (Advanced)": "Bedingungen (Fortgeschritten)",
-  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Geben Sie eine SOQL-Abfrage ein, wo Klausel i. e. IsDeleted = TRUE ein."
+  "Case Queue": "Fallwarteschlange",
+  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Geben Sie eine SOQL-Abfrage ein, wo Klausel i. e. IsDeleted = TRUE ein.",
+  "The queue to monitor for new cases.": "Die Warteschlange für neue Fälle."
 }

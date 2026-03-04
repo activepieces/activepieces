@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { figmaCommon } from '../common';
 import { figmaGetRequest } from '../common/utils';
-import { figmaAuth } from '../../';
+import { figmaAuth } from '../auth';
 
 export const getFileAction = createAction({
   auth: figmaAuth,

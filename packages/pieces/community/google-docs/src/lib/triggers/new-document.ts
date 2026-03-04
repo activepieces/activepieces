@@ -1,4 +1,4 @@
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	AppConnectionValueForAuthProperty,

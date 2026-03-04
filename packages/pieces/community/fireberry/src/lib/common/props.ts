@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { FireberryClient } from './client';
-import { fireberryAuth } from '../..';
+import { fireberryAuth } from '../auth';
 
 export const objectTypeDropdown = Property.Dropdown({
   displayName: 'Object Type',

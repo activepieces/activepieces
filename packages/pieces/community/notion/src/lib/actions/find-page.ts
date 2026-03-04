@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
+import { notionAuth } from '../auth';
 
 export const findPage = createAction({
   auth: notionAuth,

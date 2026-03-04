@@ -1,6 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { buildFlowOriginContextBlock, slackSendMessage } from '../common/utils';
-import { slackAuth } from '../..';
+import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
+import { slackAuth } from '../auth';
 import {
   assertNotNullOrUndefined,
   ExecutionType,
@@ -55,13 +55,7 @@ export const requestApprovalDirectMessageAction = createAction({
         channel:dmId,
         text: context.propsValue.text,
         blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `${context.propsValue.text}`,
-            },
-          },
+          ...textToSectionBlocks(`${context.propsValue.text}`),
           {
             type: 'actions',
             block_id: 'actions',

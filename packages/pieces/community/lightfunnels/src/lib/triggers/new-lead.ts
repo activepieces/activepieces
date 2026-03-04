@@ -1,5 +1,5 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { lightfunnelsAuth } from '../../index';
+import { lightfunnelsAuth } from '../auth';
 import { lightfunnelsCommon } from '../common/index';
 
 export const newLeadTrigger = createTrigger({
