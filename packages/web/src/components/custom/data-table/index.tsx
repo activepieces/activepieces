@@ -158,6 +158,9 @@ export function DataTable<
       ? columnsWithSelect.concat([
           {
             accessorKey: '__actions',
+            size: 60,
+            minSize: 60,
+            maxSize: 60,
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title="" />
             ),

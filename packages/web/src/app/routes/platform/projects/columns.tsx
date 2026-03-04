@@ -36,6 +36,7 @@ export const projectsTableColumns = ({
   >[] = [
     {
       accessorKey: 'displayName',
+      size: 400,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
@@ -58,17 +59,18 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'users',
+      size: 120,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Active Users')}
           icon={Users}
-          className="w-full !justify-end"
+          className="w-full"
         />
       ),
       cell: ({ row }) => {
         return (
-          <div className="flex justify-end tabular-nums">
+          <div className="text-left tabular-nums">
             <span className="font-medium">
               {row.original.analytics.activeUsers}
             </span>
@@ -81,17 +83,18 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'flows',
+      size: 120,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Active Flows')}
           icon={Workflow}
-          className="w-full !justify-end"
+          className="w-full"
         />
       ),
       cell: ({ row }) => {
         return (
-          <div className="flex justify-end tabular-nums">
+          <div className="text-left tabular-nums">
             <span className="font-medium">
               {row.original.analytics.activeFlows}
             </span>
@@ -127,17 +130,18 @@ export const projectsTableColumns = ({
   if (platform.plan.globalConnectionsEnabled) {
     columns.push({
       accessorKey: 'globalConnectionsCount',
+      size: 135,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Global Connections')}
           icon={Link2}
-          className="w-full !justify-end"
+          className="w-full"
         />
       ),
       cell: ({ row }) => {
         return (
-          <div className="flex justify-end tabular-nums">
+          <div className="text-left tabular-nums">
             {row.original.globalConnectionsCount}
           </div>
         );
@@ -147,6 +151,7 @@ export const projectsTableColumns = ({
 
   columns.push({
     accessorKey: 'createdAt',
+    size: 110,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
