@@ -58,7 +58,9 @@ export const FlowDialogContent = ({
         ...prev,
         {
           externalFlowId: flow.externalId,
-          toolName: mcpToolNameUtils.createToolName(`${flow.version.displayName}_${flow.id}`),
+          toolName: mcpToolNameUtils.createToolName(
+            `${flow.version.displayName}_${flow.id}`,
+          ),
           flowDisplayName: flow.version.displayName,
           type: AgentToolType.FLOW,
         },

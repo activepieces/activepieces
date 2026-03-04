@@ -97,8 +97,10 @@ export const AgentPieceToolComponent = ({
           {tools.map((tool) => {
             const toolName = pieceMetadata.suggestedActions?.find(
               (action) =>
-                mcpToolNameUtils.createPieceToolName(pieceMetadata.pieceName, action.name) ===
-                tool.toolName,
+                mcpToolNameUtils.createPieceToolName(
+                  pieceMetadata.pieceName,
+                  action.name,
+                ) === tool.toolName,
             )?.displayName;
             return (
               <div
