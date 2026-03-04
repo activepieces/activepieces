@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -2903,7 +2902,7 @@
     },
     "packages/pieces/community/google-vertexai": {
       "name": "@activepieces/piece-google-vertexai",
-      "version": "0.0.2",
+      "version": "0.0.1",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4091,7 +4090,7 @@
     },
     "packages/pieces/community/microsoft-excel-365": {
       "name": "@activepieces/piece-microsoft-excel-365",
-      "version": "0.5.0",
+      "version": "0.4.13",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
