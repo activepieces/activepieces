@@ -27,6 +27,11 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             if (preDeletedFlowIds.includes(flow.id)) {
                 continue
             }
+            const flowExists = await flowRepo().existsBy({ id: flow.id })
+            if (!flowExists) {
+                log.info({ flowId: flow.id }, '[hardDeleteProjectHandler] Flow already deleted, skipping preDelete')
+                continue
+            }
             await flowSideEffects(log).preDelete({ flowToDelete: flow })
             await job.updateData({
                 ...data,
