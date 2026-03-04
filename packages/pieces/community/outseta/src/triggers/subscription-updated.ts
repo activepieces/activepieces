@@ -4,6 +4,7 @@ export const subscriptionUpdatedTrigger = createManualWebhookTrigger({
   name: 'subscription_updated',
   displayName: 'Subscription updated',
   description: 'Triggered when a subscription is updated in Outseta',
+  eventType: 'subscription.updated',
   sampleData: {
     subscriptionUid: 'sub_123',
     accountUid: 'acc_123',

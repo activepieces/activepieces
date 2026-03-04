@@ -4,6 +4,7 @@ export const subscriptionCreatedTrigger = createManualWebhookTrigger({
   name: 'subscription_created',
   displayName: 'Subscription created',
   description: 'Triggered when a subscription is created in Outseta',
+  eventType: 'subscription.created',
   sampleData: {
     subscriptionUid: 'sub_123',
     accountUid: 'acc_123',

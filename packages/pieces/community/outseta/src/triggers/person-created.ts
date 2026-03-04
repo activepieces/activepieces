@@ -4,6 +4,7 @@ export const personCreatedTrigger = createManualWebhookTrigger({
   name: 'person_created',
   displayName: 'Person created',
   description: 'Triggered when a person is created in Outseta',
+  eventType: 'person.created',
   sampleData: {
     personUid: 'per_123',
     accountUid: 'acc_123',

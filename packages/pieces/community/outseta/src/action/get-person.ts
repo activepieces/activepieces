@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 
 export const getPersonAction = createAction({
   name: 'get_person',
+  auth: outsetaAuth,
   displayName: 'Get person',
   description: 'Retrieve an Outseta person by its UID',
   props: {
@@ -13,9 +15,9 @@ export const getPersonAction = createAction({
   },
   async run(context) {
     const client = new OutsetaClient({
-      domain: context.auth.domain,
-      apiKey: context.auth.apiKey,
-      apiSecret: context.auth.apiSecret,
+      domain: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
+      apiSecret: context.auth.props.apiSecret,
     });
 
     const person = await client.get<any>(

@@ -4,6 +4,7 @@ export const paymentSucceededTrigger = createManualWebhookTrigger({
   name: 'payment_succeeded',
   displayName: 'Payment succeeded',
   description: 'Triggered when a payment succeeds in Outseta',
+  eventType: 'payment.succeeded',
   sampleData: {
     paymentUid: 'pay_123',
     accountUid: 'acc_123',

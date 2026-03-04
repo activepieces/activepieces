@@ -4,6 +4,7 @@ export const invoicePaidTrigger = createManualWebhookTrigger({
   name: 'invoice_paid',
   displayName: 'Invoice paid',
   description: 'Triggered when an invoice is paid in Outseta',
+  eventType: 'invoice.paid',
   sampleData: {
     invoiceUid: 'inv_123',
     accountUid: 'acc_123',
