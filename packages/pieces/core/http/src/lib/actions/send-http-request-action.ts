@@ -160,28 +160,14 @@ export const httpSendRequestAction = createAction({
               properties: {
                 fieldName: Property.ShortText({
                   displayName: 'Field Name',
-                  required: true
-                }),
-                fieldType: Property.StaticDropdown({
-                  displayName: 'Field Type',
                   required: true,
-                  options: {
-                    disabled: false,
-                    options: [
-                      { label: 'Text', value: 'text' },
-                      { label: 'File', value: 'file' }
-                    ]
-                  }
                 }),
-                textFieldValue: Property.LongText({
-                  displayName: 'Text Field Value',
-                  required: false
+                value: Property.File({
+                  displayName: 'Value',
+                  required: false,
+                  description: 'Enter text or pass a file from a previous step.',
                 }),
-                fileFieldValue: Property.File({
-                  displayName: 'File Field Value',
-                  required: false
-                })
-              }
+              },
             });
             break;
         }
@@ -323,18 +309,19 @@ export const httpSendRequestAction = createAction({
       if (body_type === 'form_data') {
         const formBodyInput = bodyInput as Array<{
           fieldName: string;
-          fieldType: 'text' | 'file';
-          textFieldValue?: string;
-          fileFieldValue?: ApFile;
+          value?: ApFile | string;
         }>;
 
         const formData = new FormData();
 
-        for (const { fieldName, fieldType, textFieldValue, fileFieldValue } of formBodyInput) {
-          if (fieldType === 'text' && !isEmpty(textFieldValue)) {
-            formData.append(fieldName, textFieldValue);
-          } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
-            formData.append(fieldName, fileFieldValue!.data,{filename:fileFieldValue?.filename});
+        for (const { fieldName, value } of formBodyInput) {
+          if (isEmpty(value)) continue;
+          if (typeof value === 'string') {
+            formData.append(fieldName, value);
+          } else {
+            formData.append(fieldName, (value as ApFile).data, {
+              filename: (value as ApFile).filename,
+            });
           }
         }
 

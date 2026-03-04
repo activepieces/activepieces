@@ -11,11 +11,12 @@ import {
 } from '@activepieces/pieces-common';
 import { httpOauth2Auth } from '../..';
 import {
+  ApFile,
   createAction,
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isEmpty } from '@activepieces/shared';
 import FormData from 'form-data';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
@@ -106,9 +107,20 @@ export const httpOauth2RequestAction = createAction({
             });
             break;
           case 'form_data':
-            fields['data'] = Property.Object({
+            fields['data'] = Property.Array({
               displayName: 'Form Data',
               required: true,
+              properties: {
+                fieldName: Property.ShortText({
+                  displayName: 'Field Name',
+                  required: true,
+                }),
+                value: Property.File({
+                  displayName: 'Value',
+                  required: false,
+                  description: 'Enter text or pass a file from a previous step.',
+                }),
+              },
             });
             break;
         }
@@ -199,10 +211,24 @@ export const httpOauth2RequestAction = createAction({
     if (body) {
       const bodyInput = body['data'];
       if (body_type === 'form_data') {
+        const formBodyInput = bodyInput as Array<{
+          fieldName: string;
+          value?: ApFile | string;
+        }>;
+
         const formData = new FormData();
-        for (const key in bodyInput) {
-          formData.append(key, bodyInput[key]);
+
+        for (const { fieldName, value } of formBodyInput) {
+          if (isEmpty(value)) continue;
+          if (typeof value === 'string') {
+            formData.append(fieldName, value);
+          } else {
+            formData.append(fieldName, (value as ApFile).data, {
+              filename: (value as ApFile).filename,
+            });
+          }
         }
+
         request.body = formData;
         request.headers = { ...request.headers, ...formData.getHeaders() };
       } else {
