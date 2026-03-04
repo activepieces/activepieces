@@ -26,13 +26,29 @@ WhatsScale uses API key authentication. Get your key from [whatsscale.com/dashbo
 | Send an Image to a CRM Contact | Send image to a WhatsScale CRM contact (dropdown) |
 | Send an Image (Manual Entry) | Send image by entering phone number or group ID manually |
 
-### Planned (Sprints 4-9)
-- Send Video/Document to Contact, Group, Channel, CRM Contact
+### Send Video
+| Action | Description |
+|--------|-------------|
+| Send a Video to a Contact | Send video to a WhatsApp contact (dropdown) |
+| Send a Video to a Group | Send video to a WhatsApp group (dropdown) |
+| Send a Video to a Channel | Broadcast video to a WhatsApp Channel (dropdown) |
+| Send a Video to a CRM Contact | Send video to a WhatsScale CRM contact (dropdown) |
+| Send a Video (Manual Entry) | Send video by entering phone number or group ID manually |
+
+### Send Document
+| Action | Description |
+|--------|-------------|
+| Send a Document to a Contact | Send document (PDF, DOCX, XLSX, etc.) to a contact (dropdown) |
+| Send a Document to a Group | Send document to a WhatsApp group (dropdown) |
+| Send a Document to a CRM Contact | Send document to a WhatsScale CRM contact (dropdown) |
+
+### Planned (Sprints 5-10)
 - Send Location, Poll
 - Set Text/Image/Video Story
 - CRM: Create, Get, Find, Update, Delete Contact, Add/Remove Tag, List
 - Check WhatsApp Number
 - Make an API Call
+- Triggers: Watch Incoming Messages, Group Messages, Channel Messages
 
 ## Architecture
 
@@ -49,6 +65,14 @@ proxy.whatsscale.com
 ```
 
 All actions communicate through the WhatsScale proxy, which handles authentication, file preparation, and async job polling.
+
+## Media URL Support
+
+All image, video, and document actions support:
+- Direct URLs (JPEG, PNG, MP4, PDF, DOCX, etc.)
+- Google Drive share links
+- Dropbox share links
+- Any publicly accessible URL
 
 ## Links
 
