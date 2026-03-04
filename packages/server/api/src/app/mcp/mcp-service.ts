@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-common'
-import { apId, createToolName, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { apId, mcpToolNameUtils, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -71,7 +71,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
                 
                 const baseName = (mcpTrigger.input?.toolName ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
-                const toolName = createToolName(baseName)
+                const toolName = mcpToolNameUtils.createToolName(baseName)
                 const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
 
                 server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {

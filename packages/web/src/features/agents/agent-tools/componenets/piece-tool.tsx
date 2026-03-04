@@ -1,4 +1,4 @@
-import { AgentPieceTool, createPieceToolName } from '@activepieces/shared';
+import { AgentPieceTool, mcpToolNameUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
 import { useMemo } from 'react';
@@ -97,7 +97,7 @@ export const AgentPieceToolComponent = ({
           {tools.map((tool) => {
             const toolName = pieceMetadata.suggestedActions?.find(
               (action) =>
-                createPieceToolName(pieceMetadata.pieceName, action.name) ===
+                mcpToolNameUtils.createPieceToolName(pieceMetadata.pieceName, action.name) ===
                 tool.toolName,
             )?.displayName;
             return (

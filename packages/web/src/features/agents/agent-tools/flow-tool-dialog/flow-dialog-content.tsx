@@ -1,7 +1,7 @@
 import {
   AgentFlowTool,
   AgentToolType,
-  createToolName,
+  mcpToolNameUtils,
   PopulatedFlow,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -58,7 +58,7 @@ export const FlowDialogContent = ({
         ...prev,
         {
           externalFlowId: flow.externalId,
-          toolName: createToolName(`${flow.version.displayName}_${flow.id}`),
+          toolName: mcpToolNameUtils.createToolName(`${flow.version.displayName}_${flow.id}`),
           flowDisplayName: flow.version.displayName,
           type: AgentToolType.FLOW,
         },

@@ -1,8 +1,7 @@
 import {
     AgentPieceProps,
     AgentToolType,
-    createPieceToolName,
-    createToolName,
+    mcpToolNameUtils,
     FlowActionType,
     flowStructureUtil,
     FlowVersion,
@@ -44,19 +43,19 @@ export const migrateV16AgentPieceToolNames: Migration = {
                 if (tool.type === AgentToolType.PIECE && tool.pieceMetadata?.pieceName != null && tool.pieceMetadata?.actionName != null) {
                     return {
                         ...tool,
-                        toolName: createPieceToolName(tool.pieceMetadata.pieceName, tool.pieceMetadata.actionName),
+                        toolName: mcpToolNameUtils.createPieceToolName(tool.pieceMetadata.pieceName, tool.pieceMetadata.actionName),
                     }
                 }
                 if (tool.type === AgentToolType.FLOW && tool.toolName != null) {
                     const flowDisplayName = tool.flowDisplayName ?? deriveFlowDisplayName(tool.toolName) ?? tool.toolName
                     return {
                         ...tool,
-                        toolName: createToolName(tool.toolName),
+                        toolName: mcpToolNameUtils.createToolName(tool.toolName),
                         flowDisplayName,
                     }
                 }
                 if (tool.type === AgentToolType.MCP && tool.toolName != null) {
-                    return { ...tool, toolName: createToolName(tool.toolName) }
+                    return { ...tool, toolName: mcpToolNameUtils.createToolName(tool.toolName) }
                 }
                 return tool
             })

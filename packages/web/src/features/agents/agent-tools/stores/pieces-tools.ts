@@ -4,7 +4,7 @@ import {
   AgentToolType,
   isNil,
   PredefinedInputsStructure,
-  createPieceToolName,
+  mcpToolNameUtils,
 } from '@activepieces/shared';
 import { create } from 'zustand';
 
@@ -129,7 +129,7 @@ export const usePieceToolsDialogStore = create<PiecesToolDialogsState>(
 
       return {
         type: AgentToolType.PIECE,
-        toolName: createPieceToolName(
+        toolName: mcpToolNameUtils.createPieceToolName(
           selectedPiece.pieceName,
           selectedAction.name,
         ),
