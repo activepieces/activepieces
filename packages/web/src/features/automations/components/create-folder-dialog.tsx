@@ -18,7 +18,7 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { foldersApi } from '@/features/folders/lib/folders-api';
+import { foldersApi } from '@/features/folders/api/folders-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -29,7 +29,6 @@ type CreateFolderDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter folder name'),

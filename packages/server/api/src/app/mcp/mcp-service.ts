@@ -1,6 +1,6 @@
 import { rejectedPromiseHandler } from '@activepieces/server-common'
-import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { apId, createToolName, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
@@ -52,7 +52,17 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
         buildServer: async ({ mcp }: BuildServerRequest): Promise<McpServer> => {
             const server = new McpServer({
                 name: 'Activepieces',
+                title: 'Activepieces',
                 version: '1.0.0',
+                websiteUrl: 'https://activepieces.com',
+                description: 'Automation and workflow MCP server by Activepieces',
+                icons: [
+                    {
+                        src: 'https://cdn.activepieces.com/pieces/activepieces.png',
+                        mimeType: 'image/png',
+                        sizes: ['48x48', '96x96'],
+                    },
+                ],
             })
             const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
             for (const flow of enabledFlows) {
@@ -60,7 +70,8 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 const mcpInputs = mcpTrigger.input?.inputSchema ?? []
                 const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
                 
-                const toolName = (mcpTrigger.input?.toolName ?? flow.version.displayName).toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_') + '_' + flow.id.substring(0, 4)
+                const baseName = (mcpTrigger.input?.toolName ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
+                const toolName = createToolName(baseName)
                 const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
 
                 server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {
@@ -118,6 +129,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 })
             }
 
+            registerEmptyResourcesAndPrompts(server)
             return server
         },
     }
@@ -165,6 +177,27 @@ function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
 
     return property.required ? schema : schema.nullish()
 }
+
+/**
+ * Registers resources/list and prompts/list so they return empty lists.
+ * 
+ * - Resources: register a resource template with an empty list.
+ * - Prompts: register an empty prompt so the handler is set and returns [].
+ * 
+ * Claude Desktop (mcp-remote) does not support prompts/list, so we register an empty prompt.
+ */
+function registerEmptyResourcesAndPrompts(server: McpServer): void {
+    server.registerResource(
+        '_',
+        new ResourceTemplate('activepieces://empty', {
+            list: async () => ({ resources: [] }),
+        }),
+        {},
+        async () => ({ contents: [] }),
+    )
+    server.registerPrompt('_', {}, () => ({ messages: [] }))
+}
+
 
 
 type BuildServerRequest = {

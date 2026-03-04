@@ -14,7 +14,8 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { useTelemetry } from '@/components/telemetry-provider';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,15 +37,14 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { foldersApi } from '@/features/folders/lib/folders-api';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { foldersApi } from '@/features/folders/api/folders-api';
+import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { FormError } from '../../../components/ui/form';
-import { flowHooks } from '../../flows/lib/flow-hooks';
-import { templateUtils } from '../../flows/lib/template-parser';
+import { flowHooks } from '../hooks/flow-hooks';
+import { templateUtils } from '../utils/template-parser';
 
 export type ImportFlowDialogProps =
   | {

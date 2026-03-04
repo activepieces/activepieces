@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { History, Link2, ListTodo, Zap } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

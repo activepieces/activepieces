@@ -13,14 +13,13 @@ import { Info, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { StepOutputSkeleton } from '@/app/components/step-output-skeleton';
-import { JsonViewer } from '@/components/json-viewer';
+import { JsonViewer } from '@/components/custom/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AgentTimeline } from '@/features/agents/agent-timeline';
-import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { AgentTimeline } from '@/features/agents';
+import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { isRunAgent } from '../test-step/agent-test-step';

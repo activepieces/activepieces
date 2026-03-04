@@ -5,7 +5,7 @@ import {
 import { t } from 'i18next';
 import { Check, Lock } from 'lucide-react';
 
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 
 const LICENSE_PROPS_MAP = {
   environmentsEnabled: {
@@ -68,6 +68,10 @@ const LICENSE_PROPS_MAP = {
   eventStreamingEnabled: {
     label: 'Event Streaming',
     description: 'Stream platform events to external destinations',
+  },
+  scimEnabled: {
+    label: 'SCIM',
+    description: 'Synchronize user identities with your company directory',
   },
   secretManagersEnabled: {
     label: 'Secret Managers',

@@ -2,6 +2,7 @@ import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, Trash } from 'lucide-react';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,16 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  alertQueries,
-  alertMutations,
-} from '@/features/alerts/lib/alert-hooks';
+import { alertQueries, alertMutations } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';

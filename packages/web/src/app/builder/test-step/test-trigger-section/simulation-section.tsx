@@ -2,9 +2,9 @@ import { t } from 'i18next';
 import { AlertCircle } from 'lucide-react';
 import React from 'react';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 type SimulationSectionProps = {
   note: React.ReactNode;

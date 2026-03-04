@@ -1,8 +1,8 @@
 import {
-  GitBranchType,
   FlowOperationType,
   FlowVersion,
   FlowVersionState,
+  GitBranchType,
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -24,33 +24,32 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { ImportFlowDialog } from '@/features/automations/components/import-flow-dialog';
-import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
-import { RenameDialog } from '@/features/automations/components/rename-dialog';
 import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
+import { flowHooks, flowsApi } from '@/features/flows';
+import { foldersHooks } from '@/features/folders';
+import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
+import { RenameDialog } from '@/features/automations/components/rename-dialog';
+import { gitSyncHooks } from '@/features/project-releases';
+import { projectMembersHooks } from '@/features/members';
 
 type FlowActionMenuProps = {
   flow: PopulatedFlow;

@@ -13,16 +13,15 @@ import {
 } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { DataTable } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { triggerRunHooks } from '@/features/flows/lib/trigger-run-api';
-import PieceDisplayName from '@/features/pieces/components/piece-display-name';
-import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { triggerRunHooks } from '@/features/flows';
+import { PieceDisplayName, PieceIconWithPieceName } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { StatusProgressBar, type DayStatus } from './status-progress-bar';

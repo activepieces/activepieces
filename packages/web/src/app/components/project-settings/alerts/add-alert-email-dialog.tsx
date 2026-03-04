@@ -24,9 +24,9 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { alertMutations } from '@/features/alerts/lib/alert-hooks';
+import { alertMutations } from '@/features/alerts';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 const FormSchema = Type.Object({
   email: Type.String({

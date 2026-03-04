@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Monitor, Moon, Palette, Sun } from 'lucide-react';
 
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 import { Label } from '@/components/ui/label';
 import {
   Select,

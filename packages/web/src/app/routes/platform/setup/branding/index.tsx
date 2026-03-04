@@ -17,13 +17,16 @@ export const BrandingPage = () => {
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/appearance.mp4"
     >
-      <div className="w-full flex flex-col gap-4">
+      {' '}
+      <>
         <DashboardPageHeader
           title={t('Branding')}
           description={t('Configure the appearance for your platform.')}
         />
-        <AppearanceSection />
-      </div>
+        <div className="w-full flex flex-col gap-4">
+          <AppearanceSection />
+        </div>
+      </>
     </LockedFeatureGuard>
   );
 };

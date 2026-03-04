@@ -8,12 +8,14 @@ import { t } from 'i18next';
 import { Users } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { DataTable } from '@/components/custom/data-table';
+import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
 import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableInputPopover } from '@/components/ui/data-table/data-table-input-popover';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
-import { userInvitationsHooks } from '@/features/members/lib/user-invitations-hooks';
+import {
+  InviteUserDialog,
+  projectMembersHooks,
+  userInvitationsHooks,
+} from '@/features/members';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

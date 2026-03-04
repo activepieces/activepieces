@@ -1,8 +1,8 @@
 import { isNil, UserWithBadges } from '@activepieces/shared';
 import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
+import { userApi } from '@/api/user-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { userApi } from '@/lib/user-api';
 
 export const userHooks = {
   useCurrentUser: () => {

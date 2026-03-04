@@ -68,18 +68,18 @@ const main = async (): Promise<void> => {
     const app = await setupServer()
 
     process.on('SIGINT', async () => {
-        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     process.on('SIGTERM', async () => {
-        await stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
+        await stop(app).catch((e) => system.globalLogger().error({ err: e }, '[main#stop] Failed to stop server'))
     })
 
     await start(app)
 }
 
 main().catch((e) => {
-    system.globalLogger().error(e, '[Main#main]')
+    system.globalLogger().error({ err: e }, '[main#start] Failed to start server')
     process.exit(1)
 })
 

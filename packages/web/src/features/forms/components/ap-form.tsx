@@ -19,7 +19,8 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { ShowPoweredBy } from '@/components/show-powered-by';
+import { ReadMoreDescription } from '@/components/custom/read-more-description';
+import { ShowPoweredBy } from '@/components/custom/show-powered-by';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -30,13 +31,12 @@ import {
   FormItem,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 
 import { Checkbox } from '../../../components/ui/checkbox';
-import { humanInputApi } from '../lib/human-input-api';
+import { humanInputApi } from '../api/human-input-api';
 
 type ApFormProps = {
   form: FormResponse;

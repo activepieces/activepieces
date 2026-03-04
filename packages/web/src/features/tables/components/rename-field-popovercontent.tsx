@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
-import { FieldHeaderContext } from '../lib/utils';
+import { FieldHeaderContext } from '../utils/utils';
 
 import { useTableState } from './ap-table-state-provider';
 
