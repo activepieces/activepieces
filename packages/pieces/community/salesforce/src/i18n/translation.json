@@ -161,6 +161,7 @@
   "New Outbound Message": "New Outbound Message",
   "New Record": "New Record",
   "New or Updated File": "New or Updated File",
+  "New Case in Queue": "New Case in Queue",
   "Fires when a new Attachment or File is added to any Case record.": "Fires when a new Attachment or File is added to any Case record.",
   "Fires when a new Contact record is created in Salesforce.": "Fires when a new Contact record is created in Salesforce.",
   "Fires when a tracked field is updated on a specified object.": "Fires when a tracked field is updated on a specified object.",
@@ -169,6 +170,9 @@
   "Fires when a new outbound message is received from Salesforce.": "Fires when a new outbound message is received from Salesforce.",
   "Triggers when there is new record": "Triggers when there is new record",
   "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.": "Fires when a file (ContentDocument) is created or updated. Does not fire for classic Attachments or Notes.",
+  "Triggers when a new Case record is assigned to a specified queue.": "Triggers when a new Case record is assigned to a specified queue.",
   "Conditions (Advanced)": "Conditions (Advanced)",
-  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Enter a SOQL query where clause i. e. IsDeleted = TRUE"
+  "Case Queue": "Case Queue",
+  "Enter a SOQL query where clause i. e. IsDeleted = TRUE": "Enter a SOQL query where clause i. e. IsDeleted = TRUE",
+  "The queue to monitor for new cases.": "The queue to monitor for new cases."
 }

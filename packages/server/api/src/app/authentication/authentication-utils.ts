@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
@@ -155,7 +155,7 @@ export const authenticationUtils = {
             })
         }
         catch (e) {
-            log.warn({ name: 'AuthenticationService#sendTelemetry', error: e })
+            log.warn({ err: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
         }
     },
 
@@ -182,7 +182,7 @@ export const authenticationUtils = {
             await response.json()
         }
         catch (error) {
-            log.warn(error)
+            log.warn({ err: error }, '[authenticationUtils#saveNewsLetterSubscriber] Failed to save newsletter subscriber')
         }
     },
     async extractUserIdFromRequest(

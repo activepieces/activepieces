@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../auth';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 
 export const getCustomObjectAction = createAction({

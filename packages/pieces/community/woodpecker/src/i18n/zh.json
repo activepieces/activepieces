@@ -46,6 +46,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "失败时没有错误",
   "Timeout (in seconds)": "超时(秒)",
+  "Follow redirects": "Follow redirects",
   "Select the campaign to add prospects to": "Select the campaign to add prospects to",
   "Prospect email address": "Prospect email address",
   "Tags starting with # separated by spaces (e.g. #VC #Startup)": "Tags starting with # separated by spaces (e.g. #VC #Startup)",

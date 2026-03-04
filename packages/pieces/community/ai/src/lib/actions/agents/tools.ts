@@ -2,7 +2,7 @@ import { dynamicTool, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, McpProtocol, createToolName, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
@@ -44,23 +44,31 @@ function createTransportConfig(
 type FlattenedMcpResult = {
   mcpClients: MCPClient[];
   tools: Record<string, Tool>;
+  keyToAgentTool: Record<string, AgentMcpTool>;
 };
 
 function flattenMcpServers(
-    servers: McpServerTools[]
+    servers: McpServerTools[],
+    agentMcpTools: AgentMcpTool[],
   ): FlattenedMcpResult {
     const mcpClients: MCPClient[] = [];
     const tools: Record<string, Tool> = {};
+    const keyToAgentTool: Record<string, AgentMcpTool> = {};
 
     for (const server of servers) {
       mcpClients.push(server.mcpClient);
+      const agentTool = agentMcpTools.find((t) => t.toolName === server.mcpName);
 
       for (const [toolName, fn] of Object.entries(server.tools)) {
-        tools[`${toolName}_${server.mcpName}`] = fn;
+        const key = createToolName(`${toolName}`);
+        tools[key] = fn;
+        if (agentTool) {
+          keyToAgentTool[key] = agentTool;
+        }
       }
     }
 
-    return { mcpClients, tools };
+    return { mcpClients, tools, keyToAgentTool };
 }
 
 async function constructMcpServersTools(
@@ -98,7 +106,7 @@ async function constructMcpServersTools(
 
 export async function constructAgentTools(
   params: ConstructAgentToolParams
-): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[] }> {
+): Promise<{ tools: Record<string, Tool>, mcpClients: MCPClient[], toolKeyToAgentTool: Record<string, AgentTool> }> {
 
     const { outputBuilder, structuredOutput, agentTools, context, model } = params;
     const agentPieceTools = await context.agent.tools({
@@ -111,8 +119,9 @@ export async function constructAgentTools(
       publicUrl: context.server.publicUrl,
       token: context.server.token
     })
-    const mcpServerTools = await constructMcpServersTools(agentTools.filter(tool => tool.type === AgentToolType.MCP))
-    const { mcpClients, tools: mcpTools } = flattenMcpServers(mcpServerTools)
+    const agentMcpTools = agentTools.filter((tool): tool is AgentMcpTool => tool.type === AgentToolType.MCP);
+    const mcpServerTools = await constructMcpServersTools(agentMcpTools)
+    const { mcpClients, tools: mcpTools, keyToAgentTool: mcpKeyToAgentTool } = flattenMcpServers(mcpServerTools, agentMcpTools)
 
     const combinedTools = {
       ...agentPieceTools,
@@ -120,8 +129,16 @@ export async function constructAgentTools(
       ...mcpTools,
     };
 
+    const toolKeyToAgentTool: Record<string, AgentTool> = {};
+    for (const agentTool of agentTools.filter(t => t.type !== AgentToolType.MCP)) {
+      const key = agentTool.type === AgentToolType.FLOW ? createToolName(agentTool.toolName) : agentTool.toolName;
+      toolKeyToAgentTool[key] = agentTool;
+    }
+    Object.assign(toolKeyToAgentTool, mcpKeyToAgentTool);
+
     return {
         mcpClients,
+        toolKeyToAgentTool,
         tools: {
             ...combinedTools,
             [TASK_COMPLETION_TOOL_NAME]: dynamicTool({

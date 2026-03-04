@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
-import { chatbaseAuth } from '../../index';
+import { chatbaseAuth } from '../auth';
 import { makeRequest } from '../common';
 
 export const listChatbotsAction = createAction({

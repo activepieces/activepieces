@@ -1,4 +1,4 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType } from '@activepieces/server-common'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 

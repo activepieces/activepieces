@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { rabbitmqAuth } from '../..';
+import { rabbitmqAuth } from '../auth';
 import { rabbitmqConnect } from '../common';
 
 export const sendMessageToQueue = createAction({

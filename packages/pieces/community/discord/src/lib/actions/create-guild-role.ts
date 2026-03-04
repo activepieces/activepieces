@@ -3,7 +3,7 @@ import {
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
+import { discordAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { discordCommon } from '../common';
 

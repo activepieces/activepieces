@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceApiCall, confluencePaginatedApiCall } from '.';
-import { confluenceAuth } from '../../index';
+import { confluenceAuth } from '../auth';
 import {
 	DropdownOption,
 	DynamicPropsValue,

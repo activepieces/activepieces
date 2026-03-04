@@ -1,21 +1,33 @@
 import { pieceTranslation } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import { ApEnvironment, isNil, LocalesEnum, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
-import { IsNull } from 'typeorm'
+import { In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { pubsub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterPieceBasedOnType, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, sortByNameAndVersionDesc } from './utils'
+import { filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled } from './utils'
 
 const repo = repoFactory(PieceMetadataEntity)
-
-const CACHE_TTL_MS = 5 * 60 * 1000
 
 let cache: LRU<unknown>
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
+
+export const PIECE_METADATA_REFRESH_CHANNEL = 'piece-metadata-refresh'
+
+export enum PieceMetadataRefreshType {
+    CREATE = 'CREATE',
+    DELETE = 'DELETE',
+    UPDATE_USAGE = 'UPDATE_USAGE',
+}
+
+export type PieceMetadataRefreshMessage =
+    | { type: PieceMetadataRefreshType.CREATE, piece: PieceMetadataSchema }
+    | { type: PieceMetadataRefreshType.DELETE, pieces: { name: string, version: string }[] }
+    | { type: PieceMetadataRefreshType.UPDATE_USAGE, piece: { name: string, version: string, platformId?: string, projectUsage: number } }
 
 const CACHE_KEY = {
     list: (locale: LocalesEnum): string => `list:${locale}`,
@@ -27,8 +39,15 @@ export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             const cacheMaxSize = system.getNumberOrThrow(AppSystemProp.PIECES_CACHE_MAX_ENTRIES)
-            cache = lru(cacheMaxSize, CACHE_TTL_MS)
+            cache = lru(cacheMaxSize)
             log.info('[lruPieceCache] LRU piece cache initialized')
+            if (!isTestingEnvironment) {
+                await pubsub.subscribe(PIECE_METADATA_REFRESH_CHANNEL, (message: string) => {
+                    const parsed = JSON.parse(message) as PieceMetadataRefreshMessage
+                    handleRefreshMessage(parsed)
+                    log.debug({ type: parsed.type }, '[lruPieceCache] Handled piece metadata refresh message')
+                })
+            }
         },
 
         async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
@@ -36,8 +55,8 @@ export const pieceCache = (log: FastifyBaseLogger) => {
             const cacheKey = CACHE_KEY.list(locale)
 
             const cachedPieces = await getCachedOrFetch(cacheKey, async () => {
-                const allPieces = await fetchPiecesFromDB()
-                return translateLatestVersionPerPlatform(allPieces, locale)
+                const latestPieces = await fetchLatestPiecesFromDB()
+                return translatePieces(latestPieces, locale)
             })
 
             const devPieces = await loadDevPiecesIfEnabled(log)
@@ -45,7 +64,8 @@ export const pieceCache = (log: FastifyBaseLogger) => {
                 pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: true }),
             )
 
-            const filteredPieces = [...cachedPieces, ...translatedDevPieces].filter((piece) =>
+            const devPieceNames = new Set(translatedDevPieces.map((p) => p.name))
+            const filteredPieces = [...cachedPieces.filter((p) => !devPieceNames.has(p.name)), ...translatedDevPieces].filter((piece) =>
                 filterPieceBasedOnType(platformId, piece),
             )
             return lastVersionOfEachPiece(filteredPieces)
@@ -77,10 +97,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
         async getRegistry(params: GetRegistryParams): Promise<PieceRegistryEntry[]> {
             const { release, platformId } = params
             const cacheKey = CACHE_KEY.registry()
-            const allRegistry = await getCachedOrFetch(cacheKey, async () => {
-                const allPieces = await fetchPiecesFromDB()
-                return allPieces.map(toRegistryEntry)
-            })
+            const allRegistry = await getCachedOrFetch(cacheKey, fetchRegistryFromDB)
 
             const devPieces = (await loadDevPiecesIfEnabled(log)).map(toRegistryEntry)
 
@@ -102,37 +119,48 @@ function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {
     }
 }
 
-function translateLatestVersionPerPlatform(allPieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
+function translatePieces(pieces: PieceMetadataSchema[], locale: LocalesEnum): PieceMetadataSchema[] {
     if (locale === LocalesEnum.ENGLISH) {
-        allPieces.forEach((piece) => {
+        pieces.forEach((piece) => {
             piece.i18n = undefined
         })
-        return allPieces
+        return pieces
     }
 
-    const latestPerPlatform = new Map<string, PieceMetadataSchema>()
-    for (const piece of allPieces) {
-        const key = `${piece.name}:${piece.platformId ?? ''}`
-        if (!latestPerPlatform.has(key)) {
-            latestPerPlatform.set(key, piece)
-        }
-    }
-
-    return allPieces.map((piece) => {
-        const key = `${piece.name}:${piece.platformId ?? ''}`
-        if (latestPerPlatform.get(key) === piece) {
-            const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
-            translated.i18n = undefined
-            return translated
-        }
-        piece.i18n = undefined
-        return piece
+    return pieces.map((piece) => {
+        const translated = pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale, mutate: false })
+        translated.i18n = undefined
+        return translated
     })
 }
 
-async function fetchPiecesFromDB(): Promise<PieceMetadataSchema[]> {
-    const piecesFromDatabase = await repo().find()
-    return piecesFromDatabase.sort(sortByNameAndVersionDesc)
+async function fetchLatestPiecesFromDB(): Promise<PieceMetadataSchema[]> {
+    const allKeys = await repo()
+        .createQueryBuilder('pm')
+        .select(['pm."id"', 'pm."name"', 'pm."version"', 'pm."platformId"'])
+        .getRawMany<PieceKey>()
+
+    const latestIds = pickLatestVersionIds(allKeys)
+    return latestIds.length > 0 ? repo().find({ where: { id: In(latestIds) } }) : []
+}
+
+function pickLatestVersionIds(pieces: PieceKey[]): string[] {
+    const latest = new Map<string, PieceKey>()
+    for (const piece of pieces) {
+        const key = `${piece.name}:${piece.platformId ?? ''}`
+        const existing = latest.get(key)
+        if (isNil(existing) || isNewerVersion(piece.version, existing.version)) {
+            latest.set(key, piece)
+        }
+    }
+    return Array.from(latest.values()).map(p => p.id)
+}
+
+async function fetchRegistryFromDB(): Promise<PieceRegistryEntry[]> {
+    return repo()
+        .createQueryBuilder('pm')
+        .select(['pm."name"', 'pm."version"', 'pm."platformId"', 'pm."pieceType"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
+        .getRawMany<PieceRegistryEntry>()
 }
 
 const inFlightQueries = new Map<string, Promise<unknown>>()
@@ -171,6 +199,45 @@ async function getCachedOrFetch<T>(
     return queryPromise
 }
 
+function handleRefreshMessage(message: PieceMetadataRefreshMessage): void {
+    switch (message.type) {
+        case PieceMetadataRefreshType.CREATE:
+            cache.set(CACHE_KEY.piece(message.piece.name, message.piece.version, message.piece.platformId), message.piece)
+            invalidateAggregateCaches()
+            break
+        case PieceMetadataRefreshType.DELETE:
+            for (const piece of message.pieces) {
+                cache.delete(CACHE_KEY.piece(piece.name, piece.version, undefined))
+            }
+            invalidateAggregateCaches()
+            break
+        case PieceMetadataRefreshType.UPDATE_USAGE: {
+            const { piece } = message
+            const key = CACHE_KEY.piece(piece.name, piece.version, piece.platformId)
+            const cached = cache.get(key) as PieceMetadataSchema | undefined
+            if (!isNil(cached)) {
+                cache.set(key, { ...cached, projectUsage: piece.projectUsage })
+            }
+            break
+        }
+    }
+}
+
+function invalidateAggregateCaches(): void {
+    invalidateKey(CACHE_KEY.registry())
+    for (const locale of Object.values(LocalesEnum)) {
+        invalidateKey(CACHE_KEY.list(locale as LocalesEnum))
+    }
+}
+
+function invalidateKey(cacheKey: string): void {
+    cache.delete(cacheKey)
+    const inFlight = inFlightQueries.get(cacheKey)
+    if (!isNil(inFlight)) {
+        void inFlight.then(() => cache.delete(cacheKey))
+    }
+}
+
 export type PieceRegistryEntry = {
     platformId?: string
     pieceType: PieceType
@@ -194,4 +261,11 @@ type GetListParams = {
 type GetRegistryParams = {
     release: string | undefined
     platformId?: string
+}
+
+type PieceKey = {
+    id: string
+    name: string
+    version: string
+    platformId: string | null
 }

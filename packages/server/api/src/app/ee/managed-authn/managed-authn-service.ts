@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import { cryptoUtils } from '@activepieces/server-shared'
+import { cryptoUtils } from '@activepieces/server-common'
 import {
     AuthenticationResponse,
     isNil,

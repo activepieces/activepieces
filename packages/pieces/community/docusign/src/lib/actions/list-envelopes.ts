@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { docusignAuth, DocusignAuthType } from '../..';
+import { docusignAuth } from '../auth';
+import { DocusignAuthType } from '../..';
 import { createApiClient } from '../common';
 import { Envelope, EnvelopesApi, EnvelopesInformation } from 'docusign-esign';
 

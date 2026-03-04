@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
+import { amazonS3Auth } from '../auth';
 import { createS3 } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
 import mime from 'mime-types';

@@ -1,6 +1,6 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { getCalendars, getColors, getEventsForDropdown } from './helper';
-import { googleCalendarAuth } from '../..';
+import { googleCalendarAuth } from '../auth';
 
 export const googleCalendarCommon = {
   baseUrl: 'https://www.googleapis.com/calendar/v3',
