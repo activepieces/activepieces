@@ -20,18 +20,13 @@ export const updateRowAction = createAction({
 			description: 'The row number to update',
 			required: true,
 		}),
-		first_row_headers: Property.Checkbox({
-			displayName: 'Does the first row contain headers?',
-			description: 'If the first row is headers',
-			required: true,
-			defaultValue: false,
-		}),
+		isFirstRowHeaders: commonProps.isFirstRowHeaders,
 		values: commonProps.worksheetValues,
 	},
 	async run({ propsValue, auth }) {
 		const { storageSource, siteId, documentId, workbookId, worksheetId } = propsValue;
 		const rowNumber = propsValue['row_number'];
-		const values = propsValue.first_row_headers
+		const values = propsValue.isFirstRowHeaders
 			? objectToArray(propsValue['values'])
 			: Object.values(propsValue['values']);
 
