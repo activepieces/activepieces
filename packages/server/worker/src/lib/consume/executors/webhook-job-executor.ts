@@ -52,6 +52,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
 
                 if (isNil(flowVersion)) {
                     span.setAttribute('webhook.flowNotFound', true)
+                    webhookLogger.warn({ flowId: data.flowId, flowVersionId: data.flowVersionIdToRun }, 'Flow version not found for webhook')
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
@@ -85,6 +86,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                 if (status === TriggerRunStatus.INTERNAL_ERROR) {
                     span.setAttribute('webhook.error', true)
                     span.setAttribute('webhook.errorMessage', errorMessage ?? 'unknown')
+                    webhookLogger.error({ flowId: data.flowId, errorMessage }, 'Trigger payload extraction failed')
                     return {
                         status: ConsumeJobResponseStatus.INTERNAL_ERROR,
                         errorMessage,
@@ -101,8 +103,9 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
                     platformId: data.platformId,
                     parentRunId: data.parentRunId,
                     failParentOnFailure: data.failParentOnFailure,
-                })  
+                })
                 span.setAttribute('webhook.runsStarted', true)
+                webhookLogger.info({ flowId: data.flowId, payloadsCount: payloads.length }, 'Webhook processing completed')
                 return {
                     status: ConsumeJobResponseStatus.OK,
                 }
