@@ -116,7 +116,7 @@ const SuggestedTemplateCard = ({
   onSelect,
 }: SuggestedTemplateCardProps) => {
   const hasFlows = template.flows && template.flows.length > 0;
-  const gradient = useGradientFromPieces(
+  const { gradient } = useGradientFromPieces(
     hasFlows ? template.flows![0]?.trigger : undefined,
   );
 

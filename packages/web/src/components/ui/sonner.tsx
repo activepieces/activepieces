@@ -44,12 +44,12 @@ function Toaster({ ...props }: ToasterProps) {
           toast: `
             data-[type=error]:text-destructive-700!
             data-[type=warning]:text-warning-700!
-            data-[type=success]:text-success-300!
+            data-[type=success]:text-success-700!
           `,
           description: `
             data-[type=error]:text-destructive-700!
             data-[type=warning]:text-warning-700!
-            data-[type=success]:text-success-300!
+            data-[type=success]:text-success-700!
           `,
         },
         descriptionClassName: 'text-inherit!',
