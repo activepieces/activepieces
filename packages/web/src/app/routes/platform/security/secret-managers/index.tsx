@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
+import { secretManagersHooks } from '@/features/secret-managers';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import SecretManagerProviderCard from './secret-manager-provider-card';

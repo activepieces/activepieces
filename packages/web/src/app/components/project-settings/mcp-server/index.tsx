@@ -2,15 +2,15 @@ import { McpServerStatus, FlowStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CheckCircle, CircleDot } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldLabel,
-} from '@/components/ui/field';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+} from '@/components/custom/field';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { authenticationSession } from '@/lib/authentication-session';
 

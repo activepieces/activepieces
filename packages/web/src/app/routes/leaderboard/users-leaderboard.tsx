@@ -5,14 +5,15 @@ import { Trophy } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn, formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { RankCell } from './projects-leaderboard';
 

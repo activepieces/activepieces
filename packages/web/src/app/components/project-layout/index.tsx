@@ -4,12 +4,12 @@ import React, { ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
+import { PurchaseExtraFlowsDialog } from '@/features/billing';
+import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-collection';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';

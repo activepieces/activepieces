@@ -19,11 +19,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PieceActionsList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
-import { PiecesList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
-import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { PieceStepMetadataWithSuggestions } from '@/lib/types';
+import {
+  PieceActionsList,
+  PiecesList,
+  usePieceToolsDialogStore,
+} from '@/features/agents';
+import {
+  stepsHooks,
+  PieceStepMetadataWithSuggestions,
+} from '@/features/pieces';
 
 import { PredefinedInputsForm } from './predefined-inputs-form';
 

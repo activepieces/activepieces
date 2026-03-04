@@ -12,11 +12,11 @@ import {
 } from 'react-hook-form';
 
 import { SecretInput } from '@/app/connections/secret-input';
+import { ColorPicker } from '@/components/custom/color-picker';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';

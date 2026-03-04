@@ -10,14 +10,13 @@ import { User, UserPlus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { platformUserApi } from '@/api/platform-user-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DataTable } from '@/components/custom/data-table';
 import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
-import { userInvitationApi } from '@/features/members/lib/user-invitation';
+import { userInvitationApi, InviteUserDialog } from '@/features/members';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
-import { platformUserApi } from '@/lib/platform-user-api';
 
 import { DeleteUserAction } from './actions/delete-user-action';
 import { EditUserAction } from './actions/edit-user-action';

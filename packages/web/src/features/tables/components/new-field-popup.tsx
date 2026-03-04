@@ -17,7 +17,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
-import { tablesUtils } from '@/features/tables/lib/utils';
+import { tablesUtils } from '@/features/tables/utils/utils';
 import { cn } from '@/lib/utils';
 
 type NewFieldDialogProps = {

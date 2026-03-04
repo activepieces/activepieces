@@ -8,7 +8,7 @@ import {
 } from '@activepieces/shared';
 import { create } from 'zustand';
 
-import { PieceStepMetadataWithSuggestions } from '@/lib/types';
+import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
 
 type SelectedDialogPage = 'pieces-list' | 'actions-list' | 'action-inputs';
 

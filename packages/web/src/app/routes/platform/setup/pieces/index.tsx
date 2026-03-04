@@ -23,14 +23,12 @@ import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { LockedAlert } from '@/components/custom/locked-alert';
 import { Badge } from '@/components/ui/badge';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { LockedAlert } from '@/components/ui/locked-alert';
-import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
-import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { oauthAppsQueries } from '@/features/connections';
+import { InstallPieceDialog, PieceIcon, piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const PlatformPiecesPage = () => {

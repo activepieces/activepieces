@@ -25,8 +25,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 

@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { TextWithIcon } from '@/components/custom/text-with-icon';
 import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,6 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
-import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { cn } from '@/lib/utils';
 
 type ArrayInputProps = {

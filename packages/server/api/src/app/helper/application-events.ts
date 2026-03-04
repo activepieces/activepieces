@@ -63,7 +63,7 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
                 })
             }
         }).catch((error) => {
-            log.error(error)
+            log.error({ err: error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
         })
     },
 })

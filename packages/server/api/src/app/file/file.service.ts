@@ -95,9 +95,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const file = await this.getFile(params)
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: params.fileId,
+                    entityType: 'file',
+                    entityId: params.fileId,
+                    message: 'File not found',
                 },
             })
         }
@@ -123,9 +125,11 @@ export const fileService = (log: FastifyBaseLogger) => ({
         })
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: fileId,
+                    entityType: 'file',
+                    entityId: fileId,
+                    message: 'File not found',
                 },
             })
         }

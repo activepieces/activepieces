@@ -6,12 +6,14 @@ import { Plus } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import { AddToolDropdown } from '@/features/agents/agent-tools/add-agent-tool-dropwdown';
-import { AgentFlowToolComponent } from '@/features/agents/agent-tools/componenets/flow-tool';
-import { AgentMcpToolComponent } from '@/features/agents/agent-tools/componenets/mcp-tool';
-import { AgentPieceToolComponent } from '@/features/agents/agent-tools/componenets/piece-tool';
-import { AgentFlowToolDialog } from '@/features/agents/agent-tools/flow-tool-dialog';
-import { AgentMcpDialog } from '@/features/agents/agent-tools/mcp-tool-dialog';
+import {
+  AddToolDropdown,
+  AgentFlowToolComponent,
+  AgentMcpToolComponent,
+  AgentPieceToolComponent,
+  AgentFlowToolDialog,
+  AgentMcpDialog,
+} from '@/features/agents';
 
 import { AgentPieceDialog } from './piece-tool-dialog';
 

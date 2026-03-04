@@ -6,18 +6,18 @@ import { createContext, useContext, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
+import { LoadingScreen } from '@/components/custom/loading-screen';
 import { buttonVariants } from '@/components/ui/button';
-import { LoadingScreen } from '@/components/ui/loading-screen';
 import {
   TableState,
   ApTableStore,
   createApTableStore,
-} from '@/features/tables/lib/store/ap-tables-client-state';
+} from '@/features/tables/stores/store/ap-tables-client-state';
 import { cn } from '@/lib/utils';
 
-import { fieldsApi } from '../lib/fields-api';
-import { recordsApi } from '../lib/records-api';
-import { tablesApi } from '../lib/tables-api';
+import { fieldsApi } from '../api/fields-api';
+import { recordsApi } from '../api/records-api';
+import { tablesApi } from '../api/tables-api';
 
 const TableContext = createContext<ApTableStore | null>(null);
 

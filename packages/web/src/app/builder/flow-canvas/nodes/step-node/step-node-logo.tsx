@@ -1,4 +1,4 @@
-import { ImageWithColorBackground } from '@/components/ui/image-with-color-background';
+import { ImageWithColorBackground } from '@/components/custom/image-with-color-background';
 import { cn } from '@/lib/utils';
 
 const StepNodeLogo = ({
