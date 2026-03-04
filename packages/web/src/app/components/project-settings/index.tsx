@@ -124,7 +124,7 @@ export function ProjectSettingsDialog({
     },
     {
       id: 'alerts' as TabId,
-      label: t('Alerts'),
+      label: t('Alert Emails'),
       icon: <Bell className="w-4 h-4" />,
       disabled:
         project.type !== ProjectType.TEAM ||
@@ -154,7 +154,7 @@ export function ProjectSettingsDialog({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
-        return <GeneralSettings form={form} isSaving={false} />;
+        return <GeneralSettings form={form} />;
       case 'members':
         return <MembersSettings />;
       case 'alerts':
@@ -195,12 +195,11 @@ export function ProjectSettingsDialog({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={false}
           >
             {t('Close')}
           </Button>
           <Button
-            disabled={false}
+            disabled={!form.formState.isDirty}
             size="sm"
             onClick={form.handleSubmit(handleSave)}
           >
