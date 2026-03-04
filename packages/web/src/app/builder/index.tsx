@@ -37,7 +37,6 @@ import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
-const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
@@ -139,11 +138,12 @@ const BuilderPage = () => {
         <ResizablePanel
           panelRef={rightHandleRef}
           id="right-sidebar"
+          collapsible={true}
+          collapsedSize="0%"
           defaultSize="0%"
-          minSize={rightSidebar === RightSideBarType.NONE ? '0%' : '400px'}
+          minSize="400px"
           maxSize="60%"
           className={cn('min-w-0 bg-background z-30', {
-            [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{

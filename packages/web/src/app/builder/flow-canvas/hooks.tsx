@@ -33,7 +33,7 @@ export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
     const sidebarSize =
       handleRef.current?.getSize()?.asPercentage ?? 0;
     if (sidebarClosed) {
-      handleRef.current?.resize('0%');
+      handleRef.current?.collapse();
     } else if (sidebarSize === 0) {
       handleRef.current?.resize('25%');
     }
