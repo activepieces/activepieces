@@ -10,7 +10,6 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Globe,
-  Replace,
   Trash2,
   Clock,
   Activity,
@@ -39,6 +38,7 @@ import { PermissionNeededTooltip } from '@/components/custom/permission-needed-t
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
+import { ReplaceIcon } from '@/components/icons/replace';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -387,13 +387,14 @@ function AppConnectionsPage() {
             refetch();
           }}
         >
-          <Button
+          <AnimatedIconButton
+            icon={ReplaceIcon}
+            iconSize={16}
             variant="outline"
             disabled={!userHasPermissionToWriteAppConnection}
           >
-            <Replace className="h-4 w-4" />
-            <span className="ml-2">{t('Replace')}</span>
-          </Button>
+            {t('Replace')}
+          </AnimatedIconButton>
         </ReplaceConnectionsDialog>
       </PermissionNeededTooltip>,
       <PermissionNeededTooltip
