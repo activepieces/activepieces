@@ -306,7 +306,7 @@ export function DataTable<
   });
 
   return (
-    <div className={virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined}>
+    <div className={cn('-mx-4', virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined)}>
       {((filters && filters.length > 0) || bulkActions.length > 0) && (
         <DataTableToolbar>
           <div className="w-full flex items-center justify-between">
@@ -341,7 +341,7 @@ export function DataTable<
 
       <div
         ref={scrollContainerRef}
-        className={cn('rounded-md mt-0', {
+        className={cn('mt-0', {
           'overflow-hidden': !virtualizeRows,
           'flex-1 min-h-0 overflow-auto': virtualizeRows,
         })}

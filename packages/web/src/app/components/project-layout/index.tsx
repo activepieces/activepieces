@@ -21,7 +21,7 @@ import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header'
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
   label: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string; size?: number }>;
   hasPermission: boolean;
   show: boolean;
 };

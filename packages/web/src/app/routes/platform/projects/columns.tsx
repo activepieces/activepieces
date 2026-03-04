@@ -47,7 +47,7 @@ export const projectsTableColumns = ({
           <div className="text-left flex items-center justify-start ">
             {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
             {isPersonal && <User className="size-4 mr-1.5"></User>}
-            <span>{row.original.displayName}</span>
+            <span className="font-medium">{row.original.displayName}</span>
           </div>
         );
       },
@@ -63,13 +63,18 @@ export const projectsTableColumns = ({
           column={column}
           title={t('Active Users')}
           icon={Users}
+          className="w-full !justify-end"
         />
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">
-            {row.original.analytics.activeUsers} /{' '}
-            {row.original.analytics.totalUsers}
+          <div className="flex justify-end tabular-nums">
+            <span className="font-medium">
+              {row.original.analytics.activeUsers}
+            </span>
+            <span className="text-muted-foreground">
+              {` / ${row.original.analytics.totalUsers}`}
+            </span>
           </div>
         );
       },
@@ -81,30 +86,18 @@ export const projectsTableColumns = ({
           column={column}
           title={t('Active Flows')}
           icon={Workflow}
+          className="w-full !justify-end"
         />
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">
-            {row.original.analytics.activeFlows} /{' '}
-            {row.original.analytics.totalFlows}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'createdAt',
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Created')}
-          icon={Clock}
-        />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <FormattedDate date={new Date(row.original.created)} />
+          <div className="flex justify-end tabular-nums">
+            <span className="font-medium">
+              {row.original.analytics.activeFlows}
+            </span>
+            <span className="text-muted-foreground">
+              {` / ${row.original.analytics.totalFlows}`}
+            </span>
           </div>
         );
       },
@@ -139,15 +132,36 @@ export const projectsTableColumns = ({
           column={column}
           title={t('Global Connections')}
           icon={Link2}
+          className="w-full !justify-end"
         />
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">{row.original.globalConnectionsCount}</div>
+          <div className="flex justify-end tabular-nums">
+            {row.original.globalConnectionsCount}
+          </div>
         );
       },
     });
   }
+
+  columns.push({
+    accessorKey: 'createdAt',
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Created')}
+        icon={Clock}
+      />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          <FormattedDate date={new Date(row.original.created)} />
+        </div>
+      );
+    },
+  });
 
   return columns;
 };

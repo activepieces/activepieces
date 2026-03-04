@@ -6,7 +6,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -39,10 +39,23 @@ import { NewProjectDialog } from './new-project-dialog';
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
+
+  useEffect(() => {
+    if (!searchParams.has('type')) {
+      setSearchParams(
+        (prev) => {
+          const newParams = new URLSearchParams(prev);
+          newParams.set('type', ProjectType.TEAM);
+          return newParams;
+        },
+        { replace: true },
+      );
+    }
+  }, []);
 
   const displayNameFilter = searchParams.get('displayName') || undefined;
   const typeFilter = searchParams.getAll('type');
@@ -201,7 +214,16 @@ export default function ProjectsPage() {
   const bulkActions: BulkAction<ProjectWithLimits>[] = useMemo(
     () => [
       {
-        render: (_, resetSelection) => {
+        render: () => (
+          <NewProjectDialog>
+            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+              {t('New Project')}
+            </AnimatedIconButton>
+          </NewProjectDialog>
+        ),
+      },
+      {
+        render: (_: RowDataWithActions<ProjectWithLimits>[], resetSelection: () => void) => {
           const canDeleteAny = selectedRows.some(
             (row) =>
               row.id !== currentProject?.id &&
@@ -312,13 +334,7 @@ export default function ProjectsPage() {
         <DashboardPageHeader
           title={t('Projects')}
           description={t('Manage your automation projects')}
-        >
-          <NewProjectDialog>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Project')}
-            </AnimatedIconButton>
-          </NewProjectDialog>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No projects found')}
           emptyStateTextDescription={t(

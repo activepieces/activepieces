@@ -1,7 +1,7 @@
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Mail, Tag, Hash, Shield, Clock, Activity, Info } from 'lucide-react';
+import { Tag, Fingerprint, Shield, Clock, Activity, Info } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -21,17 +21,24 @@ type ColumnDefWithAccessorKey = ColumnDef<RowDataWithActions<UserRowData>> & {
 
 export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
   {
-    accessorKey: 'email',
-    size: 200,
+    accessorKey: 'identity',
+    size: 320,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Email')} icon={Mail} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Identity')}
+        icon={Fingerprint}
+      />
     ),
     cell: ({ row }) => {
-      const email =
-        row.original.type === 'user'
-          ? row.original.data.email
-          : row.original.data.email;
       const isInvitation = row.original.type === 'invitation';
+      const externalId =
+        row.original.type === 'user'
+          ? row.original.data.externalId
+          : undefined;
+      const email = row.original.data.email;
+      const identity = externalId || (email?.includes('@') ? email : null);
+
       return (
         <div className="flex items-center gap-2">
           {isInvitation && (
@@ -45,7 +52,14 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
             </Tooltip>
           )}
           <div className={isInvitation ? 'text-orange-700' : ''}>
-            <TruncatedColumnTextValue value={email} />
+            {identity ? (
+              <TruncatedColumnTextValue
+                value={identity}
+                className="max-w-[220px] 2xl:max-w-[300px]"
+              />
+            ) : (
+              <span className="text-muted-foreground">-</span>
+            )}
           </div>
         </div>
       );
@@ -53,7 +67,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
   },
   {
     accessorKey: 'name',
-    size: 150,
+    size: 210,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
     ),
@@ -64,39 +78,19 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       return (
         <TruncatedColumnTextValue
           value={row.original.data.firstName + ' ' + row.original.data.lastName}
+          className="max-w-[160px] 2xl:max-w-[200px]"
         />
       );
     },
   },
   {
-    accessorKey: 'externalId',
-    size: 120,
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title={t('External Id')}
-        icon={Hash}
-      />
-    ),
-    cell: ({ row }) => {
-      if (row.original.type === 'invitation') {
-        return <div className="text-muted-foreground">-</div>;
-      }
-      return <div className="text-left">{row.original.data.externalId}</div>;
-    },
-  },
-  {
     accessorKey: 'role',
-    size: 100,
+    size: 90,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Role')} icon={Shield} />
     ),
     cell: ({ row }) => {
-      const platformRole =
-        row.original.type === 'user'
-          ? row.original.data.platformRole
-          : row.original.data.platformRole;
-
+      const platformRole = row.original.data.platformRole;
       return (
         <div className="text-left">
           {platformRole === PlatformRole.ADMIN
@@ -110,7 +104,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
   },
   {
     accessorKey: 'createdAt',
-    size: 150,
+    size: 130,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -128,7 +122,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
   },
   {
     accessorKey: 'lastActiveDate',
-    size: 150,
+    size: 130,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}

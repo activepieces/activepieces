@@ -18,9 +18,7 @@ import { Button } from '@/components/ui/button';
 import { userInvitationApi, InviteUserDialog } from '@/features/members';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
-import { DeleteUserAction } from './actions/delete-user-action';
-import { EditUserAction } from './actions/edit-user-action';
-import { ToggleUserStatusAction } from './actions/toggle-user-status-action';
+import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
 
 export type UserRowData =
@@ -196,19 +194,14 @@ export default function UsersPage() {
           hidePagination={true}
           isLoading={isLoading}
           actions={[
-            (row) => <EditUserAction row={row} onUpdate={refetch} />,
             (row) => (
-              <ToggleUserStatusAction
-                row={row}
-                isUpdatingStatus={isUpdatingStatus}
-                onToggleStatus={handleToggleStatus}
-              />
-            ),
-            (row) => (
-              <DeleteUserAction
+              <UserActions
                 row={row}
                 isDeleting={isDeleting || isDeletingInvitation}
+                isUpdatingStatus={isUpdatingStatus}
                 onDelete={handleDelete}
+                onToggleStatus={handleToggleStatus}
+                onUpdate={refetch}
               />
             ),
           ]}
