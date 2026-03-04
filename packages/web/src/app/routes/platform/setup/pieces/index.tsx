@@ -190,13 +190,13 @@ const PlatformPiecesPage = () => {
           bulkActions={[
             {
               render: () => (
-                <div className="flex gap-3">
-                  <ApplyTags selectedPieces={selectedPieces} onApplyTags={() => refetchPieces()} />
-                  <SyncPiecesButton />
-                  <InstallPieceDialog onInstallPiece={() => refetchPieces()} scope={PieceScope.PLATFORM} />
-                </div>
+                <ApplyTags selectedPieces={selectedPieces} onApplyTags={() => refetchPieces()} />
               ),
             },
+          ]}
+          toolbarButtons={[
+            <SyncPiecesButton key="sync" />,
+            <InstallPieceDialog key="install" onInstallPiece={() => refetchPieces()} scope={PieceScope.PLATFORM} />,
           ]}
           selectColumn={true}
           onSelectedRowsChange={setSelectedPieces}

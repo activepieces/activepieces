@@ -183,8 +183,8 @@ const PlatformTemplatesPage = () => {
               }}
             >
               {selectedRows.length > 0 && (
-                <Button className="w-full mr-2" size="sm" variant="destructive">
-                  <Trash className="mr-2 w-4" />
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                  <Trash className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}
                 </Button>
               )}
@@ -192,17 +192,19 @@ const PlatformTemplatesPage = () => {
           </div>
         ),
       },
-      {
-        render: () => (
-          <CreateTemplateDialog onDone={() => refetch()}>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Template')}
-            </AnimatedIconButton>
-          </CreateTemplateDialog>
-        ),
-      },
     ],
     [selectedRows, bulkDeleteMutation],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          {t('New Template')}
+        </AnimatedIconButton>
+      </CreateTemplateDialog>,
+    ],
+    [refetch],
   );
 
   const isEnabled = platform.plan.manageTemplatesEnabled;
@@ -234,6 +236,7 @@ const PlatformTemplatesPage = () => {
           hidePagination={true}
           isLoading={isLoading}
           bulkActions={bulkActions}
+          toolbarButtons={toolbarButtons}
           actions={[
             (row) => {
               return (

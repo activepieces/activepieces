@@ -356,10 +356,12 @@ function AppConnectionsPage() {
                   showToast
                 >
                   <Button
-                    variant="destructive"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
                     onClick={() => setShowDeleteDialog(true)}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-4 w-4 mr-1" />
                     {t('Delete')} ({selectedRows.length})
                   </Button>
                 </ConfirmationDeleteDialog>
@@ -368,55 +370,55 @@ function AppConnectionsPage() {
           );
         },
       },
-      {
-        render: () => {
-          return (
-            <div className="flex items-center gap-2">
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteAppConnection}
-              >
-                <ReplaceConnectionsDialog
-                  projectId={projectId}
-                  onConnectionMerged={() => {
-                    setRefresh(refresh + 1);
-                    refetch();
-                  }}
-                >
-                  <Button
-                    variant="outline"
-                    disabled={!userHasPermissionToWriteAppConnection}
-                  >
-                    <Replace className="h-4 w-4" />
-                    <span className="ml-2">{t('Replace')}</span>
-                  </Button>
-                </ReplaceConnectionsDialog>
-              </PermissionNeededTooltip>
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteAppConnection}
-              >
-                <NewConnectionDialog
-                  isGlobalConnection={false}
-                  onConnectionCreated={() => {
-                    setRefresh(refresh + 1);
-                    refetch();
-                  }}
-                >
-                  <AnimatedIconButton
-                    icon={PlusIcon}
-                    iconSize={16}
-                    size="sm"
-                    disabled={!userHasPermissionToWriteAppConnection}
-                  >
-                    {t('New Connection')}
-                  </AnimatedIconButton>
-                </NewConnectionDialog>
-              </PermissionNeededTooltip>
-            </div>
-          );
-        },
-      },
     ],
-    [userHasPermissionToWriteAppConnection, selectedRows, showDeleteDialog],
+    [selectedRows, showDeleteDialog],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <PermissionNeededTooltip
+        key="replace"
+        hasPermission={userHasPermissionToWriteAppConnection}
+      >
+        <ReplaceConnectionsDialog
+          projectId={projectId}
+          onConnectionMerged={() => {
+            setRefresh(refresh + 1);
+            refetch();
+          }}
+        >
+          <Button
+            variant="outline"
+            disabled={!userHasPermissionToWriteAppConnection}
+          >
+            <Replace className="h-4 w-4" />
+            <span className="ml-2">{t('Replace')}</span>
+          </Button>
+        </ReplaceConnectionsDialog>
+      </PermissionNeededTooltip>,
+      <PermissionNeededTooltip
+        key="new"
+        hasPermission={userHasPermissionToWriteAppConnection}
+      >
+        <NewConnectionDialog
+          isGlobalConnection={false}
+          onConnectionCreated={() => {
+            setRefresh(refresh + 1);
+            refetch();
+          }}
+        >
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            size="sm"
+            disabled={!userHasPermissionToWriteAppConnection}
+          >
+            {t('New Connection')}
+          </AnimatedIconButton>
+        </NewConnectionDialog>
+      </PermissionNeededTooltip>,
+    ],
+    [userHasPermissionToWriteAppConnection, refresh],
   );
   return (
     <div className="flex-col w-full">
@@ -433,6 +435,7 @@ function AppConnectionsPage() {
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
       />
     </div>
   );

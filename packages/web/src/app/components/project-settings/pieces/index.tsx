@@ -16,7 +16,6 @@ import { useSearchParams } from 'react-router-dom';
 
 import { RequestTrial } from '@/app/components/request-trial';
 import {
-  BulkAction,
   DataTable,
   RowDataWithActions,
 } from '@/components/custom/data-table';
@@ -127,13 +126,9 @@ const PiecesSettings = () => {
     searchQuery,
   });
 
-  const bulkActions: BulkAction<PieceMetadataModelSummary>[] = useMemo(
+  const toolbarButtons = useMemo(
     () => [
-      {
-        render: () => {
-          return <ManagePiecesDialog onSuccess={() => refetch()} />;
-        },
-      },
+      <ManagePiecesDialog key="manage" onSuccess={() => refetch()} />,
     ],
     [refetch],
   );
@@ -176,7 +171,7 @@ const PiecesSettings = () => {
         }}
         isLoading={isLoading}
         hidePagination={true}
-        bulkActions={platform.plan.managePiecesEnabled ? bulkActions : []}
+        toolbarButtons={platform.plan.managePiecesEnabled ? toolbarButtons : []}
       />
     </div>
   );

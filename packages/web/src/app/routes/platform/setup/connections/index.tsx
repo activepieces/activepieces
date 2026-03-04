@@ -260,12 +260,12 @@ const GlobalConnectionsTable = () => {
               >
                 {selectedRows.length > 0 && (
                   <Button
-                    className="w-full mr-2"
+                    variant="ghost"
                     size="sm"
+                    className="text-destructive hover:text-destructive"
                     disabled={!userHasPermissionToWriteAppConnection}
-                    variant="destructive"
                   >
-                    <Trash className="mr-2 w-4" />
+                    <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -274,23 +274,26 @@ const GlobalConnectionsTable = () => {
           );
         },
       },
-      {
-        render: () => (
-          <NewConnectionDialog
-            isGlobalConnection={true}
-            onConnectionCreated={() => {
-              setRefresh(refresh + 1);
-              refetchGlobalConnections();
-            }}
-          >
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Connection')}
-            </AnimatedIconButton>
-          </NewConnectionDialog>
-        ),
-      },
     ],
-    [bulkDeleteGlobalConnections, selectedRows, refresh],
+    [bulkDeleteGlobalConnections, selectedRows],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <NewConnectionDialog
+        key="new-connection"
+        isGlobalConnection={true}
+        onConnectionCreated={() => {
+          setRefresh(refresh + 1);
+          refetchGlobalConnections();
+        }}
+      >
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          {t('New Connection')}
+        </AnimatedIconButton>
+      </NewConnectionDialog>,
+    ],
+    [refresh],
   );
 
   return (
@@ -323,6 +326,7 @@ const GlobalConnectionsTable = () => {
           selectColumn={true}
           onSelectedRowsChange={setSelectedRows}
           bulkActions={bulkActions}
+          toolbarButtons={toolbarButtons}
         />
       </LockedFeatureGuard>
     </div>

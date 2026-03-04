@@ -79,6 +79,7 @@ interface DataTableProps<
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
   bulkActions?: BulkAction<TData>[];
+  toolbarButtons?: React.ReactNode[];
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
@@ -114,6 +115,7 @@ export function DataTable<
   onSelectedRowsChange,
   hidePagination,
   bulkActions = [],
+  toolbarButtons,
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
@@ -310,7 +312,7 @@ export function DataTable<
 
   return (
     <div className={cn('-mx-4', virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined)}>
-      {((filters && filters.length > 0) || bulkActions.length > 0) && (
+      {((filters && filters.length > 0) || (customFilters && customFilters.length > 0) || (toolbarButtons && toolbarButtons.length > 0)) && (
         <DataTableToolbar>
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -327,16 +329,12 @@ export function DataTable<
                   <React.Fragment key={idx}>{filter}</React.Fragment>
                 ))}
             </div>
-            {bulkActions.length > 0 && (
-              <DataTableBulkActions
-                selectedRows={table
-                  .getSelectedRowModel()
-                  .rows.map((row) => row.original)}
-                actions={bulkActions.map((action) => ({
-                  render: (selectedRows: RowDataWithActions<TData>[]) =>
-                    action.render(selectedRows, resetSelection),
-                }))}
-              />
+            {toolbarButtons && toolbarButtons.length > 0 && (
+              <div className="flex items-center gap-2">
+                {toolbarButtons.map((button, idx) => (
+                  <React.Fragment key={idx}>{button}</React.Fragment>
+                ))}
+              </div>
             )}
           </div>
         </DataTableToolbar>
@@ -659,6 +657,15 @@ export function DataTable<
             {t('Next')}
           </Button>
         </div>
+      )}
+      {bulkActions.length > 0 && (
+        <DataTableBulkActions
+          selectedRows={table
+            .getSelectedRowModel()
+            .rows.map((row) => row.original)}
+          actions={bulkActions}
+          resetSelection={resetSelection}
+        />
       )}
     </div>
   );

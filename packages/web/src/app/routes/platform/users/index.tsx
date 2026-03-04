@@ -184,15 +184,11 @@ export default function UsersPage() {
           }}
           hidePagination={true}
           isLoading={isLoading}
-          bulkActions={[
-            {
-              render: () => (
-                <Button className="gap-2" size="sm" onClick={() => setInviteOpen(true)}>
-                  <UserPlus className="w-4 h-4" />
-                  <span className="text-sm font-medium">{t('Invite')}</span>
-                </Button>
-              ),
-            },
+          toolbarButtons={[
+            <Button key="invite" className="gap-2" size="sm" onClick={() => setInviteOpen(true)}>
+              <UserPlus className="w-4 h-4" />
+              <span className="text-sm font-medium">{t('Invite')}</span>
+            </Button>,
           ]}
           actions={[
             (row) => (

@@ -214,15 +214,6 @@ export default function ProjectsPage() {
   const bulkActions: BulkAction<ProjectWithLimits>[] = useMemo(
     () => [
       {
-        render: () => (
-          <NewProjectDialog>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Project')}
-            </AnimatedIconButton>
-          </NewProjectDialog>
-        ),
-      },
-      {
         render: (_: RowDataWithActions<ProjectWithLimits>[], resetSelection: () => void) => {
           const canDeleteAny = selectedRows.some(
             (row) =>
@@ -258,12 +249,12 @@ export default function ProjectsPage() {
               >
                 {selectedRows.length > 0 && (
                   <Button
-                    className="w-full mr-2"
+                    variant="ghost"
                     size="sm"
-                    variant="destructive"
+                    className="text-destructive hover:text-destructive"
                     disabled={!canDeleteAny}
                   >
-                    <Trash className="mr-2 w-4" />
+                    <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -274,6 +265,17 @@ export default function ProjectsPage() {
       },
     ],
     [selectedRows, currentProject],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <NewProjectDialog key="new-project">
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          {t('New Project')}
+        </AnimatedIconButton>
+      </NewProjectDialog>,
+    ],
+    [],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {
@@ -375,6 +377,7 @@ export default function ProjectsPage() {
           isLoading={false}
           clientPagination={true}
           bulkActions={bulkActions}
+          toolbarButtons={toolbarButtons}
           actions={actions}
         />
         <EditProjectDialog
