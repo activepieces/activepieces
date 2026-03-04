@@ -11,6 +11,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { t } from 'i18next';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -600,31 +601,38 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && !virtualizeRows && (
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value));
-              if (!clientPagination) {
-                setCurrentCursor(undefined);
-              }
-            }}
-          >
-            <SelectTrigger className="h-9 min-w-[70px] w-auto">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 30, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">
+              {t('Rows per page')}
+            </span>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value));
+                if (!clientPagination) {
+                  setCurrentCursor(undefined);
+                }
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 30, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.previousPage();
@@ -638,11 +646,13 @@ export function DataTable<
                 : !previousPageCursor
             }
           >
+            <ChevronLeft className="h-4 w-4" />
             {t('Previous')}
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="gap-1"
             onClick={() => {
               if (clientPagination) {
                 table.nextPage();
@@ -655,6 +665,7 @@ export function DataTable<
             }
           >
             {t('Next')}
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       )}
