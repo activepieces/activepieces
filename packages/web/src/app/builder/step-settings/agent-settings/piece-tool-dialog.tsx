@@ -1,4 +1,4 @@
-import { AgentTool, isNil, createToolName } from '@activepieces/shared';
+import { AgentTool, isNil, mcpToolNameUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
@@ -95,7 +95,7 @@ export function AgentPieceDialog({
         handlePieceSelect(piece);
         const action = piece.suggestedActions?.find((a) => {
           return (
-            createToolName(`${piece.pieceName}-${a.name}`) ===
+            mcpToolNameUtils.createPieceToolName(piece.pieceName, a.name) ===
             editingPieceTool.toolName
           );
         });
