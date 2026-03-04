@@ -1,6 +1,5 @@
 import { exceptionHandler, sleep } from '@activepieces/server-common'
 import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, isNil, PlatformPlan, tryCatch, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
@@ -25,7 +24,6 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
                     fn: async () => {
                         const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-                        await tryResetPlanIncludedCredits(plan, apiKeyHash, log)
                         const autoToppedUp = await tryAutoTopUpPlan(plan, apiKeyHash, log)
 
                         if (autoToppedUp) {
@@ -184,26 +182,6 @@ async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogg
     }
     await distributedStore.put(cacheKey, value, USAGE_CACHE_TTL_SECONDS)
     return value
-}
-
-async function tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<void> {
-    if (dayjs().diff(plan.lastFreeAiCreditsRenewalDate, 'month') < 1) {
-        return
-    }
-
-    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
-
-    const amount = plan.includedAiCredits / CREDIT_PER_DOLLAR
-
-    await openRouterApi.updateKey({
-        hash: apiKeyHash,
-        limit: key.limit! + amount,
-    })
-
-    await platformPlanService(log).update({
-        platformId: plan.platformId,
-        lastFreeAiCreditsRenewalDate: new Date().toISOString(),
-    })
 }
 
 async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<boolean> {

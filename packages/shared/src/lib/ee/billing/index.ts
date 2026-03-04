@@ -75,7 +75,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'standard',
     tablesEnabled: true,
     eventStreamingEnabled: false,
-    includedAiCredits: 200,
+    includedAiCredits: 1000,
     activeFlowsLimit: 10,
     projectsLimit: 1,
     aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,

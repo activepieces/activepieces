@@ -53,8 +53,6 @@ export const PlatformPlan = Type.Object({
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
     includedAiCredits: Type.Number(),
-    lastFreeAiCreditsRenewalDate: Type.Optional(Type.String()),
-    
     tablesEnabled: Type.Boolean(),
     eventStreamingEnabled: Type.Boolean(),
     aiCreditsAutoTopUpState: Type.Enum(AiCreditsAutoTopUpState),
