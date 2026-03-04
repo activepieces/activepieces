@@ -36,7 +36,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             const appConnection = await connectionKeyService(request.log).getConnection(
                 request.query,
             )
-            const platformId = await projectService.getPlatformId(request.query.projectId)
+            const platformId = await projectService(request.log).getPlatformId(request.query.projectId)
             if (appConnection !== null) {
                 await appConnectionService(request.log).delete({
                     scope: AppConnectionScope.PROJECT,

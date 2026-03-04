@@ -37,7 +37,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         const platformRole = request[SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA]?.platformRole ?? PlatformRole.MEMBER
 
         if (!isNil(externalId)) {
-            const existingUser = await userService.getByPlatformAndExternalId({
+            const existingUser = await userService(log).getByPlatformAndExternalId({
                 platformId,
                 externalId,
             })
@@ -63,7 +63,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const existingUserForIdentity = await userService.getOneByIdentityAndPlatform({
+        const existingUserForIdentity = await userService(log).getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
         })
@@ -74,12 +74,12 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        const user = await userService.getOrCreateWithProject({
+        const user = await userService(log).getOrCreateWithProject({
             identity,
             platformId,
         })
 
-        await userService.update({
+        await userService(log).update({
             id: user.id,
             platformId,
             status: active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
@@ -92,7 +92,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             platformId,
         })
 
-        const finalUser = await userService.getOrThrow({ id: user.id })
+        const finalUser = await userService(log).getOrThrow({ id: user.id })
         return toScimUserResource(finalUser, identity.email, identity.firstName, identity.lastName)
     },
 
@@ -101,7 +101,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         userId: string
     }): Promise<ScimUserResource> {
         const { platformId, userId } = params
-        const user = await userService.get({ id: userId })
+        const user = await userService(log).get({ id: userId })
 
         if (isNil(user) || user.platformId !== platformId) {
             throw new ScimError(
@@ -136,7 +136,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                     Resources: [],
                 }
             }
-            const user = await userService.getOneByIdentityAndPlatform({
+            const user = await userService(log).getOneByIdentityAndPlatform({
                 identityId: identity.id,
                 platformId,
             })
@@ -158,7 +158,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const usersPage = await userService.list({
+        const usersPage = await userService(log).list({
             platformId,
             cursorRequest: null,
             limit: count,
@@ -183,7 +183,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         request: ReplaceScimUserRequest
     }): Promise<ScimUserResource> {
         const { platformId, userId, request } = params
-        const user = await userService.get({ id: userId })
+        const user = await userService(log).get({ id: userId })
 
         if (isNil(user) || user.platformId !== platformId) {
             throw new ScimError(
@@ -195,7 +195,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         const active = request.active !== false
         const status = active ? UserStatus.ACTIVE : UserStatus.INACTIVE
 
-        await userService.update({
+        await userService(log).update({
             id: userId,
             platformId,
             status,
@@ -209,7 +209,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         })
         const updatedIdentity = await userIdentityService(log).getBasicInformation(user.identityId)
 
-        const updatedUser = await userService.getOrThrow({ id: userId })
+        const updatedUser = await userService(log).getOrThrow({ id: userId })
         return toScimUserResource(updatedUser, updatedIdentity.email, updatedIdentity.firstName, updatedIdentity.lastName)
     },
 
@@ -219,7 +219,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         request: ScimPatchRequest
     }): Promise<ScimUserResource> {
         const { platformId, userId, request } = params
-        const user = await userService.get({ id: userId })
+        const user = await userService(log).get({ id: userId })
 
         if (isNil(user) || user.platformId !== platformId) {
             throw new ScimError(
@@ -233,7 +233,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             if (op === 'replace') {
                 const value = operation.value as Record<string, unknown>
                 if (!isNil(value)) {
-                    await userService.update({
+                    await userService(log).update({
                         id: userId,
                         platformId,
                         status: isNil(value.active) ? undefined : value.active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
@@ -244,7 +244,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                 // Handle path-based replace (e.g., "active" as path)
                 if (operation.path === 'active') {
                     const active = operation.value as boolean
-                    await userService.update({
+                    await userService(log).update({
                         id: userId,
                         platformId,
                         status: active ? UserStatus.ACTIVE : UserStatus.INACTIVE,
@@ -253,7 +253,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const updatedUser = await userService.getOrThrow({ id: userId })
+        const updatedUser = await userService(log).getOrThrow({ id: userId })
         const identity = await userIdentityService(log).getBasicInformation(updatedUser.identityId)
         return toScimUserResource(updatedUser, identity.email, identity.firstName, identity.lastName)
     },
@@ -263,7 +263,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         userId: string
     }): Promise<void> {
         const { platformId, userId } = params
-        const user = await userService.get({ id: userId })
+        const user = await userService(log).get({ id: userId })
 
         if (isNil(user) || user.platformId !== platformId) {
             throw new ScimError(
@@ -272,7 +272,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        await userService.update({
+        await userService(log).update({
             id: userId,
             platformId,
             status: UserStatus.INACTIVE,

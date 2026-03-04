@@ -48,9 +48,9 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/categories', GetCategoriesParams, async () => {
+    app.get('/categories', GetCategoriesParams, async (request) => {
         if (edition === ApEdition.CLOUD) {
-            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+            return flagService(request.log).getOne(ApFlagId.TEMPLATES_CATEGORIES)
         }
         return communityTemplates.getCategories()
     })
@@ -230,7 +230,7 @@ async function loadCustomTemplatesOrReturnEmpty(
     if (isNil(platformId)) {
         return []
     }
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
     if (!platform.plan.manageTemplatesEnabled) {
         return []
     }

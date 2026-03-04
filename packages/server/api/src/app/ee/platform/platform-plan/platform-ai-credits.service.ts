@@ -42,7 +42,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     },
 
     isEnabled(): boolean {
-        return flagService.aiCreditsEnabled()
+        return flagService(log).aiCreditsEnabled()
     },
 
     async getUsage(platformId: string): Promise<APIKeyUsage> {

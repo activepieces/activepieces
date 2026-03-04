@@ -41,7 +41,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
     })
 
     fastify.get('/:id/template', GetTableTemplateRequestOptions, async (request) => {
-        const userMetadata = request.principal.type === PrincipalType.USER ? await userService.getMetaInformation({ id: request.principal.id }) : null
+        const userMetadata = request.principal.type === PrincipalType.USER ? await userService(request.log).getMetaInformation({ id: request.principal.id }) : null
         return tableService.getTemplate({
             tableId: request.params.id,
             userMetadata,

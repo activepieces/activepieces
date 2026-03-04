@@ -43,7 +43,7 @@ async function getFlowExecutionCache(params: GetParams, log: FastifyBaseLogger):
         exists: true,
         handshakeConfiguration: await handshakeHandler(log).getWebhookHandshakeConfiguration(triggerSource) ?? undefined,
         flow,
-        platformId: await projectService.getPlatformId(flow.projectId),
+        platformId: await projectService(log).getPlatformId(flow.projectId),
     }
 }
 
