@@ -6,7 +6,7 @@ on:
     inputs:
       days:
         description: 'Days to retain runs'
-        default: '30'
+        default: '365'
       minimum_runs:
         description: 'Minimum runs to keep'
         default: '6'
@@ -22,5 +22,5 @@ jobs:
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
-          retain_days: ${{ github.event.inputs.days || '30' }}
+          retain_days: ${{ github.event.inputs.days || '365' }}
           keep_minimum_runs: ${{ github.event.inputs.minimum_runs || '6' }}
