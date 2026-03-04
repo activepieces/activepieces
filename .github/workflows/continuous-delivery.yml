@@ -66,7 +66,9 @@ jobs:
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64
+          platforms: |
+            linux/amd64
+            linux/arm64
           push: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
