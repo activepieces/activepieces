@@ -1,6 +1,7 @@
 import {
   AgentFlowTool,
   AgentToolType,
+  createToolName,
   PopulatedFlow,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -57,7 +58,8 @@ export const FlowDialogContent = ({
         ...prev,
         {
           externalFlowId: flow.externalId,
-          toolName: `${flow.version.displayName}_${flow.id}`,
+          toolName: createToolName(`${flow.version.displayName}_${flow.id}`),
+          flowDisplayName: flow.version.displayName,
           type: AgentToolType.FLOW,
         },
       ];

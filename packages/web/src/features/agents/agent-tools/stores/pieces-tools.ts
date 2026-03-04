@@ -4,7 +4,7 @@ import {
   AgentToolType,
   isNil,
   PredefinedInputsStructure,
-  createToolName,
+  createPieceToolName,
 } from '@activepieces/shared';
 import { create } from 'zustand';
 
@@ -129,8 +129,9 @@ export const usePieceToolsDialogStore = create<PiecesToolDialogsState>(
 
       return {
         type: AgentToolType.PIECE,
-        toolName: createToolName(
-          `${selectedPiece.pieceName}-${selectedAction.name}`,
+        toolName: createPieceToolName(
+          selectedPiece.pieceName,
+          selectedAction.name,
         ),
         pieceMetadata: {
           pieceVersion: selectedPiece.pieceVersion,
