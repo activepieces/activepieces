@@ -15,6 +15,16 @@ If you are on windows, please install [WSL](https://learn.microsoft.com/en-us/wi
 
 ![Fork Repository](/resources/screenshots/fork-repository.jpg)
 
+3. Clone your fork using a shallow clone for faster setup:
+
+```bash
+git clone --depth=1 https://github.com/YOUR_USERNAME/activepieces.git
+```
+
+<Tip>
+Using `--depth=1` reduces the clone size significantly by only fetching the latest commit instead of the full history.
+</Tip>
+
 
 <Tip>
 If you are an enterprise customer and want to use the private pieces feature, you can refer to the tutorial on how to set up a [private fork](../misc/private-fork).
