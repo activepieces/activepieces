@@ -453,7 +453,8 @@
                   "group": "Handbook",
                   "pages": [
                      "handbook/overview",
-                     "handbook/team"
+                     "handbook/team",
+                     "handbook/changelog"
                   ]
                },
                {
