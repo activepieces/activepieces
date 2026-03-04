@@ -1,7 +1,8 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { ApId, CountTablesRequest, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, GitPushOperationType, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate, Table, UpdateTableRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { userService } from '../../user/user-service'
 import { recordSideEffects } from '../record/record-side-effects'
@@ -11,7 +12,7 @@ import { tableService } from './table.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/', CreateRequest, async (request) => {
         return tableService.create({
@@ -166,7 +167,7 @@ const CountTablesRequestOptions = {
         description: 'Count tables',
         querystring: CountTablesRequest,
         response: {
-            [StatusCodes.OK]: Type.Number(),
+            [StatusCodes.OK]: z.number(),
         },
     },
 }
@@ -183,11 +184,11 @@ const DeleteRequest = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete a table',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
@@ -203,7 +204,7 @@ const GetTableByIdRequest = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get a table by id',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -223,8 +224,8 @@ const ExportTableRequest = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Export a table',
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
             [StatusCodes.OK]: ExportTableResponse,
@@ -243,8 +244,8 @@ const CreateTableWebhook = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Create a table webhook',
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: CreateTableWebhookRequest,
     },
@@ -261,9 +262,9 @@ const DeleteTableWebhook = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete a table webhook',
-        params: Type.Object({
-            id: Type.String(),
-            webhookId: Type.String(),
+        params: z.object({
+            id: z.string(),
+            webhookId: z.string(),
         }),
     },
 }
@@ -279,8 +280,8 @@ const UpdateRequest = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Update a table',
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateTableRequest,
     },
@@ -297,11 +298,11 @@ const ClearTableRequest = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Clear all records from a table',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
@@ -319,7 +320,7 @@ const GetTableTemplateRequestOptions = {
         tags: ['tables'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Export table as template',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {

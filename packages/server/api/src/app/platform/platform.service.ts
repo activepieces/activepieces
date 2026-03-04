@@ -2,6 +2,8 @@ import { ActivepiecesError,
     ApEdition,
     apId,
     ErrorCode,
+    FederatedAuthnProviderConfig,
+    FederatedAuthnProviderConfigWithoutSensitiveData,
     FilteredPieceBehavior,
     isNil,
     OPEN_SOURCE_PLAN,
@@ -152,6 +154,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         return {
             ...platform,
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
             usage: await getUsage(log, platform),
             plan: await getPlan(log, platform),
         }
@@ -160,6 +163,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
             plan: await getPlan(log, platform),
         }
     },
@@ -167,6 +171,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const platform = await this.getOneOrThrow(id)
         return {
             ...platform,
+            federatedAuthProviders: stripSensitiveData(platform.federatedAuthProviders),
             usage: await getUsage(log, platform),
             plan: await getPlan(log, platform),
         }
@@ -196,6 +201,14 @@ async function getPlan(log: FastifyBaseLogger, platform: Platform): Promise<Plat
         }
     }
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
+}
+
+function stripSensitiveData(providers: FederatedAuthnProviderConfig): FederatedAuthnProviderConfigWithoutSensitiveData {
+    return {
+        google: providers.google ? { clientId: providers.google.clientId } : null,
+        github: providers.github ? { clientId: providers.github.clientId } : null,
+        saml: providers.saml ? {} : null,
+    }
 }
 
 type AddParams = {

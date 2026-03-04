@@ -3,12 +3,12 @@ import {
   CreatePlatformProjectRequest,
   ProjectWithLimits,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
@@ -87,12 +87,9 @@ const NewProjectForm = ({
     .map((connection) => connection.externalId);
 
   const form = useForm<CreatePlatformProjectRequest>({
-    resolver: typeboxResolver(
-      Type.Object({
-        displayName: Type.String({
-          minLength: 1,
-          errorMessage: t('Name is required'),
-        }),
+    resolver: zodResolver(
+      z.object({
+        displayName: z.string().min(1, t('Name is required')),
       }),
     ),
     defaultValues: {

@@ -6,14 +6,14 @@ import {
     ListConnectionKeysRequest,
     PrincipalType,
     UpsertConnectionFromToken, UpsertSigningKeyConnection } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectService } from '../../project/project-service'
 import { connectionKeyService } from './connection-key.service'
 
-export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
+export const connectionKeyModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(connectionKeyController, {
         prefix: '/v1/connection-keys',
     })
@@ -21,7 +21,7 @@ export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const DEFAULT_LIMIT_SIZE = 10
 
-const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
+const connectionKeyController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.delete(
         '/app-connections',
         {

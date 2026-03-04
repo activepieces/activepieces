@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@activepieces/shared": "workspace:*",
-    "@sinclair/typebox": "0.34.11",
+    "zod": "4.1.13",
     "ai": "^6.0.0",
     "semver": "7.6.0",
     "tslib": "2.6.2"

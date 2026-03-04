@@ -4,8 +4,7 @@ import {
   PackageType,
   PieceScope,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
@@ -13,6 +12,7 @@ import pako from 'pako';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -47,20 +47,13 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
-const FormSchema = Type.Object(
-  {
-    packageType: Type.Enum(PackageType),
-    pieceName: Type.Optional(Type.String()),
-    scope: Type.Enum(PieceScope),
-    pieceVersion: Type.Optional(Type.String()),
-    pieceArchive: Type.Optional(Type.Any()),
-  },
-  {
-    errorMessage: {
-      required: t('Please select a package type'),
-    },
-  },
-);
+const FormSchema = z.object({
+  packageType: z.nativeEnum(PackageType),
+  pieceName: z.string().optional(),
+  scope: z.nativeEnum(PieceScope),
+  pieceVersion: z.string().optional(),
+  pieceArchive: z.unknown().optional(),
+});
 
 type InstallPieceDialogProps = {
   onInstallPiece: () => void;
@@ -78,8 +71,8 @@ const InstallPieceDialog = ({
     ApFlagId.PRIVATE_PIECES_ENABLED,
   );
 
-  const form = useForm<Static<typeof FormSchema>>({
-    resolver: typeboxResolver(FormSchema),
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       scope,
       packageType: PackageType.REGISTRY,

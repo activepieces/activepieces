@@ -1,9 +1,9 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,11 +26,11 @@ import {
 
 import { appConnectionsMutations } from '../hooks/app-connections-hooks';
 
-const RenameConnectionSchema = Type.Object({
-  displayName: Type.String(),
+const RenameConnectionSchema = z.object({
+  displayName: z.string(),
 });
 
-type RenameConnectionSchema = Static<typeof RenameConnectionSchema>;
+type RenameConnectionSchema = z.infer<typeof RenameConnectionSchema>;
 
 type RenameConnectionDialogProps = {
   connectionId: string;
@@ -45,7 +45,7 @@ const RenameConnectionDialog = forwardRef<
 >(({ connectionId, currentName, userHasPermissionToRename, onRename }, _) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameConnectionForm = useForm<RenameConnectionSchema>({
-    resolver: typeboxResolver(RenameConnectionSchema),
+    resolver: zodResolver(RenameConnectionSchema),
     defaultValues: {
       displayName: currentName,
     },

@@ -1,29 +1,25 @@
-import { Static, Type } from '@sinclair/typebox'
-import { AppConnectionWithoutSensitiveData } from '../../automation/app-connection/app-connection'
-import { FlowRun } from '../../automation/flow-run/flow-run'
+import { z } from 'zod'
 import { Flow } from '../../automation/flows/flow'
 import { FlowVersion } from '../../automation/flows/flow-version'
 import { Folder } from '../../automation/flows/folders/folder'
+import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery } from '../../core/common/base-model'
 import { FlowOperationRequest, FlowOperationType } from '../../automation/flows/operations'
-import { ProjectRelease } from '../../automation/project-release/project-release'
-import { BaseModelSchema } from '../../core/common/base-model'
-import { User } from '../../core/user/user'
-import { Project } from '../../management/project/project'
+import { UserWithMetaInformation } from '../../core/user/user'
 import { ProjectRole } from '../../management/project-role/project-role'
 import { SigningKey } from '../signing-key'
-export const ListAuditEventsRequest = Type.Object({
-    limit: Type.Optional(Type.Number()),
-    cursor: Type.Optional(Type.String()),
-    action: Type.Optional(Type.Array(Type.String())),
-    projectId: Type.Optional(Type.Array(Type.String())),
-    userId: Type.Optional(Type.String()),
-    createdBefore: Type.Optional(Type.String()),
-    createdAfter: Type.Optional(Type.String()),
+export const ListAuditEventsRequest = z.object({
+    limit: z.coerce.number().optional(),
+    cursor: z.string().optional(),
+    action: OptionalArrayFromQuery(z.string()),
+    projectId: OptionalArrayFromQuery(z.string()),
+    userId: z.string().optional(),
+    createdBefore: z.string().optional(),
+    createdAfter: z.string().optional(),
 })
 
-export type ListAuditEventsRequest = Static<typeof ListAuditEventsRequest>
+export type ListAuditEventsRequest = z.infer<typeof ListAuditEventsRequest>
 
-const UserMeta = Type.Pick(User, ['email', 'id', 'firstName', 'lastName'])
+const UserMeta = UserWithMetaInformation.pick({ email: true, id: true, firstName: true, lastName: true })
 
 export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
@@ -50,199 +46,230 @@ export enum ApplicationEventName {
 
 const BaseAuditEventProps = {
     ...BaseModelSchema,
-    platformId: Type.String(),
-    projectId: Type.Optional(Type.String()),
-    projectDisplayName: Type.Optional(Type.String()),
-    userId: Type.Optional(Type.String()),
-    userEmail: Type.Optional(Type.String()),
-    ip: Type.Optional(Type.String()),
+    platformId: z.string(),
+    projectId: z.string().optional(),
+    projectDisplayName: z.string().optional(),
+    userId: z.string().optional(),
+    userEmail: z.string().optional(),
+    ip: z.string().optional(),
 }
 
-export const ConnectionEvent = Type.Object({
+export const ConnectionEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Union([
-        Type.Literal(ApplicationEventName.CONNECTION_DELETED),
-        Type.Literal(ApplicationEventName.CONNECTION_UPSERTED),
+    action: z.union([
+        z.literal(ApplicationEventName.CONNECTION_DELETED),
+        z.literal(ApplicationEventName.CONNECTION_UPSERTED),
     ]),
-    data: Type.Object({
-        connection: Type.Pick(AppConnectionWithoutSensitiveData, [
-            'displayName',
-            'externalId',
-            'pieceName',
-            'status',
-            'type',
-            'id',
-            'created',
-            'updated',
-        ]),
-        project: Type.Optional(Type.Pick(Project, ['displayName'])),
+    data: z.object({
+        connection: z.object({
+            displayName: z.string(),
+            externalId: z.string(),
+            pieceName: z.string(),
+            status: z.string(),
+            type: z.string(),
+            id: z.string(),
+            created: DateOrString,
+            updated: DateOrString,
+        }),
+        project: z.object({
+            displayName: z.string(),
+        }).optional(),
     }),
 })
-export type ConnectionEvent = Static<typeof ConnectionEvent>
+export type ConnectionEvent = z.infer<typeof ConnectionEvent>
 
-export const FolderEvent = Type.Object({
+export const FolderEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Union([
-        Type.Literal(ApplicationEventName.FOLDER_UPDATED),
-        Type.Literal(ApplicationEventName.FOLDER_CREATED),
-        Type.Literal(ApplicationEventName.FOLDER_DELETED),
+    action: z.union([
+        z.literal(ApplicationEventName.FOLDER_UPDATED),
+        z.literal(ApplicationEventName.FOLDER_CREATED),
+        z.literal(ApplicationEventName.FOLDER_DELETED),
     ]),
-    data: Type.Object({
-        folder: Type.Pick(Folder, ['id', 'displayName', 'created', 'updated']),
-        project: Type.Optional(Type.Pick(Project, ['displayName'])),
+    data: z.object({
+        folder: Folder.pick({ id: true, displayName: true, created: true, updated: true }),
+        project: z.object({
+            displayName: z.string(),
+        }).optional(),
     }),
 })
 
-export type FolderEvent = Static<typeof FolderEvent>
+export type FolderEvent = z.infer<typeof FolderEvent>
 
-export const FlowRunEvent = Type.Object({
+export const FlowRunEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Union([
-        Type.Literal(ApplicationEventName.FLOW_RUN_STARTED),
-        Type.Literal(ApplicationEventName.FLOW_RUN_FINISHED),
-        Type.Literal(ApplicationEventName.FLOW_RUN_RESUMED),
+    action: z.union([
+        z.literal(ApplicationEventName.FLOW_RUN_STARTED),
+        z.literal(ApplicationEventName.FLOW_RUN_FINISHED),
+        z.literal(ApplicationEventName.FLOW_RUN_RESUMED),
     ]),
-    data: Type.Object({
-        flowRun: Type.Pick(FlowRun, [
-            'id',
-            'startTime',
-            'finishTime',
-            'duration',
-            'triggeredBy',
-            'environment',
-            'flowId',
-            'flowVersionId',
-            'stepNameToTest',
-            'flowDisplayName',
-            'status',
-        ]),
-        project: Type.Optional(Type.Pick(Project, ['displayName'])),
+    data: z.object({
+        flowRun: z.object({
+            id: z.string(),
+            startTime: z.string().optional(),
+            finishTime: z.string().optional(),
+            duration: z.number().optional(),
+            triggeredBy: z.string().optional(),
+            environment: z.string(),
+            flowId: z.string(),
+            flowVersionId: z.string(),
+            stepNameToTest: z.string().optional(),
+            flowDisplayName: z.string().optional(),
+            status: z.string(),
+        }),
+        project: z.object({
+            displayName: z.string(),
+        }).optional(),
     }),
 })
-export type FlowRunEvent = Static<typeof FlowRunEvent>
+export type FlowRunEvent = z.infer<typeof FlowRunEvent>
 
-export const FlowCreatedEvent = Type.Object({
+export const FlowCreatedEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Literal(ApplicationEventName.FLOW_CREATED),
-    data: Type.Object({
-        flow: Type.Pick(Flow, ['id', 'created', 'updated']),
-        project: Type.Optional(Type.Pick(Project, ['displayName'])),
-    }),
-})
-
-export type FlowCreatedEvent = Static<typeof FlowCreatedEvent>
-
-export const FlowDeletedEvent = Type.Object({
-    ...BaseAuditEventProps,
-    action: Type.Literal(ApplicationEventName.FLOW_DELETED),
-    data: Type.Object({
-        flow: Type.Pick(Flow, ['id', 'created', 'updated']),
-        flowVersion: Type.Pick(FlowVersion, [
-            'id',
-            'displayName',
-            'flowId',
-            'created',
-            'updated',
-        ]),
-        project: Type.Optional(Type.Pick(Project, ['displayName'])),
+    action: z.literal(ApplicationEventName.FLOW_CREATED),
+    data: z.object({
+        flow: Flow.pick({ id: true, created: true, updated: true }),
+        project: z.object({
+            displayName: z.string(),
+        }).optional(),
     }),
 })
 
-export type FlowDeletedEvent = Static<typeof FlowDeletedEvent>
+export type FlowCreatedEvent = z.infer<typeof FlowCreatedEvent>
 
-export const FlowUpdatedEvent = Type.Object({
+export const FlowDeletedEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Literal(ApplicationEventName.FLOW_UPDATED),
-    data: Type.Object({
-        flowVersion: Type.Pick(FlowVersion, [
-            'id',
-            'displayName',
-            'flowId',
-            'created',
-            'updated',
-        ]),
+    action: z.literal(ApplicationEventName.FLOW_DELETED),
+    data: z.object({
+        flow: Flow.pick({ id: true, created: true, updated: true }),
+        flowVersion: FlowVersion.pick({
+            id: true,
+            displayName: true,
+            flowId: true,
+            created: true,
+            updated: true,
+        }),
+        project: z.object({
+            displayName: z.string(),
+        }).optional(),
+    }),
+})
+
+export type FlowDeletedEvent = z.infer<typeof FlowDeletedEvent>
+
+export const FlowUpdatedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_UPDATED),
+    data: z.object({
+        flowVersion: FlowVersion.pick({
+            id: true,
+            displayName: true,
+            flowId: true,
+            created: true,
+            updated: true,
+        }),
         request: FlowOperationRequest,
-        project: Type.Optional(Type.Pick(Project, ['displayName'])),
+        project: z.object({
+            displayName: z.string(),
+        }).optional(),
     }),
 })
 
-export type FlowUpdatedEvent = Static<typeof FlowUpdatedEvent>
+export type FlowUpdatedEvent = z.infer<typeof FlowUpdatedEvent>
 
-export const AuthenticationEvent = Type.Object({
+export const AuthenticationEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Union([
-        Type.Literal(ApplicationEventName.USER_SIGNED_IN),
-        Type.Literal(ApplicationEventName.USER_PASSWORD_RESET),
-        Type.Literal(ApplicationEventName.USER_EMAIL_VERIFIED),
+    action: z.union([
+        z.literal(ApplicationEventName.USER_SIGNED_IN),
+        z.literal(ApplicationEventName.USER_PASSWORD_RESET),
+        z.literal(ApplicationEventName.USER_EMAIL_VERIFIED),
     ]),
-    data: Type.Object({
-        user: Type.Optional(UserMeta),
+    data: z.object({
+        user: UserMeta.optional(),
     }),
 })
 
-export type AuthenticationEvent = Static<typeof AuthenticationEvent>
+export type AuthenticationEvent = z.infer<typeof AuthenticationEvent>
 
-export const SignUpEvent = Type.Object({
+export const SignUpEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Literal(ApplicationEventName.USER_SIGNED_UP),
-    data: Type.Object({
-        source: Type.Union([
-            Type.Literal('credentials'),
-            Type.Literal('sso'),
-            Type.Literal('managed'),
+    action: z.literal(ApplicationEventName.USER_SIGNED_UP),
+    data: z.object({
+        source: z.union([
+            z.literal('credentials'),
+            z.literal('sso'),
+            z.literal('managed'),
         ]),
-        user: Type.Optional(UserMeta),
+        user: UserMeta.optional(),
     }),
 })
-export type SignUpEvent = Static<typeof SignUpEvent>
+export type SignUpEvent = z.infer<typeof SignUpEvent>
 
-export const SigningKeyEvent = Type.Object({
+export const SigningKeyEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Union([Type.Literal(ApplicationEventName.SIGNING_KEY_CREATED)]),
-    data: Type.Object({
-        signingKey: Type.Pick(SigningKey, [
-            'id',
-            'created',
-            'updated',
-            'displayName',
-        ]),
+    action: z.union([z.literal(ApplicationEventName.SIGNING_KEY_CREATED)]),
+    data: z.object({
+        signingKey: SigningKey.pick({
+            id: true,
+            created: true,
+            updated: true,
+            displayName: true,
+        }),
     }),
 })
 
-export type SigningKeyEvent = Static<typeof SigningKeyEvent>
+export type SigningKeyEvent = z.infer<typeof SigningKeyEvent>
 
-export const ProjectRoleEvent = Type.Object({
+export const ProjectRoleEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Union([
-        Type.Literal(ApplicationEventName.PROJECT_ROLE_CREATED),
-        Type.Literal(ApplicationEventName.PROJECT_ROLE_UPDATED),
-        Type.Literal(ApplicationEventName.PROJECT_ROLE_DELETED),
+    action: z.union([
+        z.literal(ApplicationEventName.PROJECT_ROLE_CREATED),
+        z.literal(ApplicationEventName.PROJECT_ROLE_UPDATED),
+        z.literal(ApplicationEventName.PROJECT_ROLE_DELETED),
     ]),
-    data: Type.Object({
-        projectRole: Type.Pick(ProjectRole, [
-            'id',
-            'created',
-            'updated',
-            'name',
-            'permissions',
-            'platformId',
-        ]),
+    data: z.object({
+        projectRole: ProjectRole.pick({
+            id: true,
+            created: true,
+            updated: true,
+            name: true,
+            permissions: true,
+            platformId: true,
+        }),
     }),
 })
 
-export type ProjectRoleEvent = Static<typeof ProjectRoleEvent>
+export type ProjectRoleEvent = z.infer<typeof ProjectRoleEvent>
 
-export const ProjectReleaseEvent = Type.Object({
+export const ProjectReleaseEvent = z.object({
     ...BaseAuditEventProps,
-    action: Type.Literal(ApplicationEventName.PROJECT_RELEASE_CREATED),
-    data: Type.Object({
-        release: Type.Pick(ProjectRelease, ['name', 'description', 'type', 'projectId', 'importedByUser']),
+    action: z.literal(ApplicationEventName.PROJECT_RELEASE_CREATED),
+    data: z.object({
+        release: z.object({
+            name: z.string(),
+            description: Nullable(z.string()),
+            type: z.string(),
+            projectId: z.string(),
+            importedByUser: z.object({
+                id: z.string(),
+                email: z.string(),
+                firstName: z.string(),
+                status: z.string(),
+                externalId: Nullable(z.string()),
+                platformId: Nullable(z.string()),
+                platformRole: z.string(),
+                lastName: z.string(),
+                created: DateOrString,
+                updated: DateOrString,
+                lastActiveDate: Nullable(z.string()),
+                imageUrl: Nullable(z.string()),
+            }).optional(),
+        }),
     }),
 })
 
-export type ProjectReleaseEvent = Static<typeof ProjectReleaseEvent>
+export type ProjectReleaseEvent = z.infer<typeof ProjectReleaseEvent>
 
-export const ApplicationEvent = Type.Union([
+export const ApplicationEvent = z.union([
     ConnectionEvent,
     FlowCreatedEvent,
     FlowDeletedEvent,
@@ -256,7 +283,7 @@ export const ApplicationEvent = Type.Union([
     ProjectReleaseEvent,
 ])
 
-export type ApplicationEvent = Static<typeof ApplicationEvent>
+export type ApplicationEvent = z.infer<typeof ApplicationEvent>
 
 export function summarizeApplicationEvent(event: ApplicationEvent) {
     switch (event.action) {

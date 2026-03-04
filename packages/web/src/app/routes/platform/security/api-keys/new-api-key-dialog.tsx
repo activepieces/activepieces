@@ -1,10 +1,10 @@
 import { ApiKeyResponseWithValue } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type, Static } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
@@ -30,14 +30,11 @@ type NewApiKeyDialogProps = {
   children: React.ReactNode;
   onCreate: () => void;
 };
-const FormSchema = Type.Object({
-  displayName: Type.String({
-    minLength: 1,
-    errorMessage: t('Name is required'),
-  }),
+const FormSchema = z.object({
+  displayName: z.string().min(1, t('Name is required')),
 });
 
-type FormSchema = Static<typeof FormSchema>;
+type FormSchema = z.infer<typeof FormSchema>;
 
 export const NewApiKeyDialog = ({
   children,
@@ -48,7 +45,7 @@ export const NewApiKeyDialog = ({
     undefined,
   );
   const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
   });
 
   const { mutate, isPending } = useMutation({

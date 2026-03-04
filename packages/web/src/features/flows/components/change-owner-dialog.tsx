@@ -1,11 +1,11 @@
 import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,13 +29,11 @@ import { projectMembersHooks } from '@/features/members/hooks/project-members-ho
 
 import { flowsApi } from '../api/flows-api';
 
-const ChangeOwnerFormSchema = Type.Object({
-  ownerId: Type.String({
-    errorMessage: t('Please select an owner'),
-  }),
+const ChangeOwnerFormSchema = z.object({
+  ownerId: z.string({ message: t('Please select an owner') }),
 });
 
-type ChangeOwnerFormSchema = Static<typeof ChangeOwnerFormSchema>;
+type ChangeOwnerFormSchema = z.infer<typeof ChangeOwnerFormSchema>;
 
 type ChangeOwnerDialogProps = {
   children: React.ReactNode;
@@ -52,7 +50,7 @@ const ChangeOwnerDialog = ({
   const [isDialogOpened, setIsDialogOpened] = useState(false);
 
   const form = useForm<ChangeOwnerFormSchema>({
-    resolver: typeboxResolver(ChangeOwnerFormSchema),
+    resolver: zodResolver(ChangeOwnerFormSchema),
     defaultValues: {
       ownerId: flow.ownerId ?? '',
     },
