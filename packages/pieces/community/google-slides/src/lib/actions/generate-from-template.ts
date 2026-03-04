@@ -110,7 +110,7 @@ export const generateFromTemplate = createAction({
 
         try {
             const authClient = new OAuth2Client();
-            authClient.setCredentials(context.auth);
+            authClient.setCredentials({ access_token: access_token as string });
             
             const drive = google.drive({ version: 'v3', auth: authClient });
                 
