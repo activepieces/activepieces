@@ -4,7 +4,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../../dist/packages/pieces/community/letta",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"]
   },

@@ -22,12 +22,6 @@ import * as path from 'path';
 
 const CUSTOM_PIECES_DIR = path.resolve(__dirname, '../../packages/pieces/custom');
 
-function getPieceCategory(pieceDir: string): string {
-  if (pieceDir.includes('/pieces/community/')) return 'community';
-  if (pieceDir.includes('/pieces/custom/')) return 'custom';
-  return 'custom';
-}
-
 function getRelativeRoot(pieceDir: string): string {
   const piecesIndex = pieceDir.indexOf('/packages/pieces/');
   if (piecesIndex === -1) {
@@ -39,10 +33,9 @@ function getRelativeRoot(pieceDir: string): string {
 
 function migratePiece(pieceDir: string): void {
   const pieceName = path.basename(pieceDir);
-  const category = getPieceCategory(pieceDir);
   const relativeRoot = getRelativeRoot(pieceDir);
 
-  console.log(`\nMigrating piece: ${pieceName} (${category})`);
+  console.log(`\nMigrating piece: ${pieceName}`);
 
   let changes = 0;
 
@@ -57,13 +50,23 @@ function migratePiece(pieceDir: string): void {
       pkg.scripts = {};
     }
 
-    if (pkg.scripts.build !== 'tsc -p tsconfig.lib.json') {
-      pkg.scripts.build = 'tsc -p tsconfig.lib.json';
+    if (pkg.scripts.build !== 'tsc -p tsconfig.lib.json && cp package.json dist/') {
+      pkg.scripts.build = 'tsc -p tsconfig.lib.json && cp package.json dist/';
       pkgChanged = true;
     }
 
     if (pkg.scripts.lint !== "eslint 'src/**/*.ts'") {
       pkg.scripts.lint = "eslint 'src/**/*.ts'";
+      pkgChanged = true;
+    }
+
+    if (pkg.main !== './src/index.js') {
+      pkg.main = './src/index.js';
+      pkgChanged = true;
+    }
+
+    if (pkg.types !== './src/index.d.ts') {
+      pkg.types = './src/index.d.ts';
       pkgChanged = true;
     }
 
@@ -108,7 +111,7 @@ function migratePiece(pieceDir: string): void {
     }
 
     // Update outDir from old Nx pattern to new Turbo pattern
-    const expectedOutDir = `${relativeRoot}/dist/packages/pieces/${category}/${pieceName}`;
+    const expectedOutDir = './dist';
     if (tsconfig.compilerOptions.outDir !== expectedOutDir) {
       tsconfig.compilerOptions.outDir = expectedOutDir;
       tsconfigChanged = true;
@@ -158,7 +161,7 @@ function migratePiece(pieceDir: string): void {
         rootDir: '.',
         baseUrl: '.',
         paths: {},
-        outDir: `${relativeRoot}/dist/packages/pieces/${category}/${pieceName}`,
+        outDir: './dist',
         declaration: true,
         types: ['node'],
       },

@@ -5,7 +5,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../../dist/packages/pieces/community/actualbudget",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"]
   },

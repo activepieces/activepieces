@@ -5,7 +5,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {},
-    "outDir": "../../../../dist/packages/pieces/community/http-oauth2",
+    "outDir": "./dist",
     "declaration": true,
     "types": ["node"]
   },

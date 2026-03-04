@@ -1,4 +1,4 @@
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils } from '@activepieces/server-common'
 import RateLimitPlugin from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import FastifyPlugin from 'fastify-plugin'

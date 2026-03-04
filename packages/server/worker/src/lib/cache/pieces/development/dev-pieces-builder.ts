@@ -1,6 +1,6 @@
 import { access, copyFile, cp } from 'node:fs/promises'
 import { join, resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-common'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import { FSWatcher, watch } from 'chokidar'
@@ -133,9 +133,7 @@ async function copyI18nToDist(sourceDir: string): Promise<void> {
 }
 
 function getDistDir(sourceDir: string): string {
-    const piecesRoot = resolve('packages', 'pieces')
-    const relativePath = sourceDir.substring(sourceDir.indexOf(piecesRoot) + piecesRoot.length)
-    return join('dist', 'packages', 'pieces', relativePath)
+    return join(sourceDir, 'dist')
 }
 
 type PieceInfo = {
