@@ -1,4 +1,4 @@
-import { piecesHooks } from '../lib/pieces-hooks';
+import { piecesHooks } from '../hooks/pieces-hooks';
 
 import { PieceIcon } from './piece-icon';
 
@@ -33,4 +33,4 @@ const PieceIconWithPieceName = ({
   );
 };
 
-export default PieceIconWithPieceName;
+export { PieceIconWithPieceName };

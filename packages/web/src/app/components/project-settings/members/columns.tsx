@@ -1,5 +1,5 @@
-import { ProjectMemberWithUser } from '@activepieces/shared';
 import {
+  ProjectMemberWithUser,
   Permission,
   UserInvitation,
   UserWithMetaInformation,
@@ -10,11 +10,12 @@ import { t } from 'i18next';
 import { Info, Trash2, User, Shield, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
-import { RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
@@ -22,14 +23,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { RoleSelector } from '@/features/members/component/role-selector';
-import { projectMembersApi } from '@/features/members/lib/project-members-api';
-import { userInvitationApi } from '@/features/members/lib/user-invitation';
-import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
+import {
+  projectMembersApi,
+  userInvitationApi,
+  RoleSelector,
+} from '@/features/members';
+import { projectRoleApi } from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 export type MemberRowData =
   | {

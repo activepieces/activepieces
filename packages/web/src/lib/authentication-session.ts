@@ -6,8 +6,9 @@ import {
 import dayjs from 'dayjs';
 import { jwtDecode } from 'jwt-decode';
 
+import { authenticationApi } from '@/api/authentication-api';
+
 import { ApStorage } from './ap-browser-storage';
-import { authenticationApi } from './authentication-api';
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
 export const authenticationSession = {

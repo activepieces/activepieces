@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
-import { LoadingScreen } from '@/components/ui/loading-screen';
-import { Messages } from '@/features/chat/chat-message-list';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { ChatDrawerSource } from '@/lib/types';
+import { ChatDrawerSource } from '@/app/builder/types';
+import { LoadingScreen } from '@/components/custom/loading-screen';
+import { Messages } from '@/features/chat';
+import { flowHooks } from '@/features/flows';
 
 import { ChatNotFound, FlowChat } from './flow-chat';
 

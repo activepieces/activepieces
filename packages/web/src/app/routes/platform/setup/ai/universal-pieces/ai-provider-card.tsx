@@ -4,8 +4,7 @@ import { Pencil, Trash } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-
-import { AiProviderInfo } from '../../../../../../features/agents/ai-providers';
+import { AiProviderInfo } from '@/features/agents';
 
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
 

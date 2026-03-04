@@ -20,12 +20,10 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { stepsHooks, pieceSelectorUtils, formUtils } from '@/features/pieces';
+import { projectCollectionUtils } from '@/features/projects';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 
-import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
 import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
@@ -69,6 +67,9 @@ const StepSettingsContainer = () => {
     step: selectedStep,
   });
 
+  const selectedStepRef = useRef(selectedStep);
+  selectedStepRef.current = selectedStep;
+
   const currentValuesRef = useRef<FlowAction | FlowTrigger>(selectedStep);
   const form = useForm<FlowAction | FlowTrigger>({
     mode: 'all',
@@ -98,10 +99,17 @@ const StepSettingsContainer = () => {
       ) {
         return result;
       }
-      if (deepEqual(cleanedNewValues, cleanedCurrentValues)) {
+      if (
+        deepEqual(
+          stripSampleData(cleanedNewValues),
+          stripSampleData(cleanedCurrentValues),
+        )
+      ) {
         return result;
       }
       const valid = Object.keys(result.errors).length === 0;
+      const latestSampleData = selectedStepRef.current.settings.sampleData;
+      cleanedNewValues.settings.sampleData = latestSampleData;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
@@ -305,3 +313,7 @@ const StepSettingsContainer = () => {
 };
 StepSettingsContainer.displayName = 'StepSettingsContainer';
 export { StepSettingsContainer };
+const stripSampleData = (step: FlowAction | FlowTrigger) => {
+  const { sampleData: _, ...settingsWithoutSampleData } = step.settings;
+  return { ...step, settings: settingsWithoutSampleData };
+};

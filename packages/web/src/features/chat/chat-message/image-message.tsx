@@ -1,7 +1,7 @@
 import { Download } from 'lucide-react';
 import React from 'react';
 
-import ImageWithFallback from '@/components/ui/image-with-fallback';
+import ImageWithFallback from '@/components/custom/image-with-fallback';
 
 interface ImageMessageProps {
   content: string;

@@ -8,7 +8,7 @@ import CodeMirror, {
 import React, { RefObject, useRef, useState } from 'react';
 import { ControllerRenderProps } from 'react-hook-form';
 
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from '@/components/providers/theme-provider';
 import { cn } from '@/lib/utils';
 
 const styleTheme = EditorView.baseTheme({

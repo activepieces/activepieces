@@ -10,6 +10,8 @@ import { Camera, Mail } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
+import { userApi } from '@/api/user-api';
+import { UserAvatar } from '@/components/custom/user-avatar';
 import { UserBadges } from '@/components/custom/user-badges';
 import {
   Dialog,
@@ -19,9 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
-import { userApi } from '@/lib/user-api';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';

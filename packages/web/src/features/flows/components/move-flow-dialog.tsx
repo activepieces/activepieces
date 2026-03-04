@@ -25,9 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { foldersHooks } from '@/features/folders/hooks/folders-hooks';
 
-import { flowsApi } from '../lib/flows-api';
+import { flowsApi } from '../api/flows-api';
 
 const MoveFlowFormSchema = Type.Object({
   folder: Type.String({

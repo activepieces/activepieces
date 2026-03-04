@@ -3,10 +3,10 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Globe } from 'lucide-react';
 
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import EventDestinationActions from './event-destination-actions';
 

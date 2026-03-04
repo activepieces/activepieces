@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 
 interface PageHeaderProps {
   title: ReactNode;
@@ -27,7 +27,7 @@ export const PageHeader = ({
 
   return (
     <div
-      className={`flex items-center justify-between py-3 w-full px-4 ${
+      className={`flex items-center justify-between py-3 w-full ${
         showBorder ? 'border-b' : ''
       } ${className}`}
     >

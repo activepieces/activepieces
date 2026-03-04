@@ -2,10 +2,10 @@ import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 import { useContext } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
-import { FieldHeaderContext } from '../lib/utils';
+import { FieldHeaderContext } from '../utils/utils';
 
 import { useTableState } from './ap-table-state-provider';
 import RenameFieldPopoverContent from './rename-field-popovercontent';

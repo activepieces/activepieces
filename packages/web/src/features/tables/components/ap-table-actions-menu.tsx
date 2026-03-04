@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,11 +20,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
-import { tablesApi } from '../lib/tables-api';
-import { tablesUtils } from '../lib/utils';
+import { tablesApi } from '../api/tables-api';
+import { tablesUtils } from '../utils/utils';
 
 import { ImportTableDialog } from './import-table-dialog';
 import RenameTableDialog from './rename-table-dialog';
@@ -51,7 +51,7 @@ const ApTableActionsMenu = ({
 
   const exportTemplate = async () => {
     const tableTemplate = await tablesApi.getTemplate(table.id);
-    const { downloadFile } = await import('@/lib/utils');
+    const { downloadFile } = await import('@/lib/dom-utils');
     downloadFile({
       obj: JSON.stringify(tableTemplate, null, 2),
       fileName: tableTemplate.name,

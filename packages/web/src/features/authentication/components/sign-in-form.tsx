@@ -1,5 +1,5 @@
-import { OtpType } from '@activepieces/shared';
 import {
+  OtpType,
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
@@ -15,16 +15,16 @@ import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router-dom';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 
 import { CheckEmailNote } from './check-email-note';
 

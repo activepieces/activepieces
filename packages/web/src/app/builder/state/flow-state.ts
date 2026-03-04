@@ -16,15 +16,14 @@ import {
 import { QueryClient } from '@tanstack/react-query';
 import { StoreApi } from 'zustand';
 
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
-import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { PromiseQueue } from '@/lib/promise-queue';
+import { RightSideBarType } from '@/app/builder/types';
+import { flowsApi, sampleDataHooks } from '@/features/flows';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
-  RightSideBarType,
-} from '@/lib/types';
+  pieceSelectorUtils,
+} from '@/features/pieces';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
@@ -219,7 +218,6 @@ export const createFlowState = (
         switch (operation.type) {
           case FlowOperationType.SAVE_SAMPLE_DATA: {
             flowUpdatesQueue.add(updateRequest);
-
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:

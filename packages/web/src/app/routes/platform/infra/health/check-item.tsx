@@ -8,8 +8,8 @@ import {
   ItemTitle,
   ItemDescription,
   ItemActions,
-} from '@/components/ui/item';
-import { LoadingSpinner } from '@/components/ui/spinner';
+} from '@/components/custom/item';
+import { LoadingSpinner } from '@/components/custom/spinner';
 
 type CheckItemProps = {
   id: string;

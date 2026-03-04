@@ -20,29 +20,29 @@ import {
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { Button } from '@/components/ui/button';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
   DataTable,
   DataTableFilters,
-} from '@/components/ui/data-table';
+} from '@/components/custom/data-table';
+import { MessageTooltip } from '@/components/custom/message-tooltip';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageTooltip } from '@/components/ui/message-tooltip';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
+import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 
 import { runsTableColumns } from './columns';
 import {

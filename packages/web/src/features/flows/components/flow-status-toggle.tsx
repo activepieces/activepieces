@@ -9,7 +9,7 @@ import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
 import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
-import { LoadingSpinner } from '@/components/ui/spinner';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { Switch } from '../../../components/ui/switch';
@@ -18,8 +18,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { flowHooks } from '../lib/flow-hooks';
-import { flowsUtils } from '../lib/flows-utils';
+import { flowHooks } from '../hooks/flow-hooks';
+import { flowsUtils } from '../utils/flows-utils';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;

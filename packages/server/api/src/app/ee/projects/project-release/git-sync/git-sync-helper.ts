@@ -21,7 +21,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             }
         }
         catch (error) {
-            log.error(`Failed to read flow files: ${error}`)
+            log.error({ err: error }, '[gitSyncHelper#getStateFromGit] Failed to read flow files')
             throw error
         }
     },
@@ -34,7 +34,7 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             await fs.writeFile(flowJsonPath, JSON.stringify(flowState, null, 2))
         }
         catch (error) {
-            log.error(`Failed to write flow file ${fileName}: ${error}`)
+            log.error({ err: error, fileName }, '[gitSyncHelper#upsertFlowToGit] Failed to write flow file')
             throw error
         }
     },
