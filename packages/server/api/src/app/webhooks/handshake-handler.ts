@@ -14,7 +14,7 @@ export const handshakeHandler = (log: FastifyBaseLogger) => ({
         }
 
        
-        const platformId = await projectService.getPlatformId(params.projectId)
+        const platformId = await projectService(log).getPlatformId(params.projectId)
 
         const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.HANDSHAKE>>>({
             jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,

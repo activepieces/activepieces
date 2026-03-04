@@ -113,8 +113,6 @@ export const StepSettingsProvider = ({
   };
   return (
     <StepSettingsContext.Provider
-      //need to re-render the form because sample data is changed outside of it, this will be fixed once we refactor the state
-      key={selectedStep.settings.sampleData?.lastTestDate}
       value={{
         selectedStep,
         pieceModel,

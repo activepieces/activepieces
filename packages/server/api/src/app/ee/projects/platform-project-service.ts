@@ -75,9 +75,9 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
     async create(params: CreateProjectParams): Promise<ProjectWithLimits> {
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(params.platformId)
-        const platform = await platformService.getOneOrThrow(params.platformId)
+        const platform = await platformService(log).getOneOrThrow(params.platformId)
         const project = await transaction(async (entityManager) => {
-            const savedProject = await projectService.create({
+            const savedProject = await projectService(log).create({
                 ownerId: platform.ownerId,
                 displayName: params.displayName,
                 platformId: params.platformId,
@@ -120,7 +120,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             return savedProject
         })
 
-        await projectService.callProjectPostCreateHooks(project)
+        await projectService(log).callProjectPostCreateHooks(project)
 
         return this.getWithPlanAndUsageOrThrow(project.id)
     },
@@ -128,11 +128,11 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        const project = await projectService.getOneOrThrow(projectId)
+        const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const { globalConnectionExternalIds, ...rest } = request
         await transaction(async (entityManager) => {
-            await projectService.update(projectId, {
+            await projectService(log).update(projectId, {
                 type: project.type,
                 ...rest,
             }, entityManager)
@@ -178,7 +178,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 }
             }
             if (!isNil(request.plan)) {
-                const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
+                const platform = await platformService(log).getOneWithPlanOrThrow(project.platformId)
                 if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
                     await projectLimitsService(log).upsert(
                         {

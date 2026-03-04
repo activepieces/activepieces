@@ -52,7 +52,7 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): Promise<void> {
-    const user = await userService.getOneOrFail({ id: userId })
+    const user = await userService(log).getOneOrFail({ id: userId })
     const userIdentity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
     if (userIdentity.provider === UserIdentityProvider.JWT) {
         throw new ActivepiecesError({

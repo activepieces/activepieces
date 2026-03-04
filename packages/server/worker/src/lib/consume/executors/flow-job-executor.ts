@@ -141,10 +141,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 const shouldSkip = await shouldSkipDisabledFlow(jobData)
                 if (shouldSkip) {
                     log.info({
-                        message: '[flowJobExecutor] Skipping flow because it is disabled',
                         flowId: jobData.flowId,
                         projectId: jobData.projectId,
-                    })
+                    }, 'Skipping flow execution because flow is disabled')
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
@@ -155,6 +154,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     flowVersionId: jobData.flowVersionId,
                 })
                 if (isNil(flowVersion)) {
+                    log.warn({ flowVersionId: jobData.flowVersionId, runId: jobData.runId }, 'Flow version not found, skipping execution')
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
@@ -174,6 +174,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     flowVersionId: flowVersion.id,
                 })
 
+                log.info({ runId: jobData.runId, flowId: flowVersion.flowId, executionType: jobData.executionType, timeoutInSeconds }, 'Flow execution started')
                 const input = await prepareInput(
                     flowVersion,
                     jobData,
@@ -195,11 +196,13 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 }
                 if (!isNil(delayInSeconds) && delayInSeconds > 0) {
                     span.setAttribute('flow.delayInSeconds', delayInSeconds)
+                    log.info({ runId: jobData.runId, flowId: flowVersion.flowId, delayInSeconds }, 'Flow execution delayed')
                     return {
                         status: ConsumeJobResponseStatus.OK,
                         delayInSeconds,
                     }
                 }
+                log.info({ runId: jobData.runId, flowId: flowVersion.flowId }, 'Flow execution completed')
                 return { status: ConsumeJobResponseStatus.OK }
             }
             catch (e) {
@@ -212,6 +215,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
 
                 if (isTimeoutError) {
                     span.setAttribute('error.type', 'timeout')
+                    log.warn({ runId: jobData.runId, flowId: jobData.flowId, timeoutInSeconds }, 'Flow execution timed out')
                     await handleTimeoutError(jobData, log)
                     return {
                         status: ConsumeJobResponseStatus.OK,
@@ -219,6 +223,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 }
                 else if (isMemoryIssueError) {
                     span.setAttribute('error.type', 'memory')
+                    log.warn({ runId: jobData.runId, flowId: jobData.flowId }, 'Flow execution exceeded memory limit')
                     await handleMemoryIssueError(jobData, log)
                     return {
                         status: ConsumeJobResponseStatus.OK,
@@ -226,6 +231,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 }
                 else {
                     span.recordException(e as Error)
+                    log.error({ runId: jobData.runId, flowId: jobData.flowId, err: e }, 'Flow execution internal error')
                     await handleInternalError(jobData, log)
                     exceptionHandler.handle(e, log)
                     throw e
