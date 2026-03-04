@@ -10,9 +10,9 @@ import { licenseKeysService } from './license-keys-service'
 
 export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, async () => {
-        const platforms = await platformService.getAll()
+        const platforms = await platformService(app.log).getAll()
         for (const platform of platforms) {
-            const platformWithPlan = await platformService.getOneWithPlan(platform.id)
+            const platformWithPlan = await platformService(app.log).getOneWithPlan(platform.id)
             if (isNil(platformWithPlan)) {
                 continue
             }

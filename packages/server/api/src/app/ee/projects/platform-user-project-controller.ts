@@ -8,6 +8,7 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Paginator from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
@@ -21,10 +22,10 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
 
 
     fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
-        const loggedInUser = await userService.getOneOrFail({ id: request.principal.id })
-        const platforms = await getPlatformsForUser(loggedInUser.identityId, request.principal.platform.id)
+        const loggedInUser = await userService(request.log).getOneOrFail({ id: request.principal.id })
+        const platforms = await getPlatformsForUser(loggedInUser.identityId, request.principal.platform.id, request.log)
         const projects = await Promise.all(platforms.map(async (platform) => {
-            const platformUser = await userService.getOneByIdentityAndPlatform({ identityId: loggedInUser.identityId, platformId: platform.id })
+            const platformUser = await userService(request.log).getOneByIdentityAndPlatform({ identityId: loggedInUser.identityId, platformId: platform.id })
             assertNotNullOrUndefined(platformUser, `Platform user not found for platform ${platform.id}`)
             const projects = await platformProjectService(request.log).getForPlatform({
                 platformId: platform.id,
@@ -32,7 +33,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
                 cursorRequest: null,
                 displayName: undefined,
                 limit: Paginator.NO_LIMIT,
-                isPrivileged: userService.isUserPrivileged(platformUser),
+                isPrivileged: userService(request.log).isUserPrivileged(platformUser),
             }).then((projects) => projects.data)
             return {
                 platformName: platform.name,
@@ -44,12 +45,12 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
 
 }
 
-async function getPlatformsForUser(identityId: string, platformId: string) {
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+async function getPlatformsForUser(identityId: string, platformId: string, log: FastifyBaseLogger) {
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
     if (platformUtils.isCustomerOnDedicatedDomain(platform)) {
         return [platform]
     }
-    const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
+    const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
     return platforms.filter((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
 }
 

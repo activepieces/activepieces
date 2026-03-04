@@ -15,17 +15,17 @@ import {
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedStore } from '../database/redis-connections'
-import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
 
 export const projectRepo = repoFactory(ProjectEntity)
 
-export const projectService = {
+export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
         const { callPostCreateHooks = true, entityManager, ...rest } = params
         const icon = this.createProjectIcon()
@@ -134,12 +134,12 @@ export const projectService = {
         return !isNil(project)
     },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
-        const user = await userService.getOneOrFail({ id: userId })
+        const user = await userService(log).getOneOrFail({ id: userId })
         assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
         const projects = await this.getAllForUser({
             platformId: user.platformId,
             userId,
-            isPrivileged: userService.isUserPrivileged(user),
+            isPrivileged: userService(log).isUserPrivileged(user),
         })
         if (isNil(projects) || projects.length === 0) {
             throw new ActivepiecesError({
@@ -212,12 +212,12 @@ export const projectService = {
         return icon
     },
     callProjectPostCreateHooks: async (savedProject: Project)=>{
-        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
+        await projectHooks.get(log).postCreate(savedProject)
         if (!isNil(savedProject.maxConcurrentJobs)) {
             await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), savedProject.maxConcurrentJobs)
         }
     },
-}
+})
 
 
 export async function applyProjectsAccessFilters<T extends ObjectLiteral>(

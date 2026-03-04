@@ -7,7 +7,7 @@ export const projectWorkerController: FastifyPluginAsyncTypebox = async (
 ) => {
     app.get('/', GetWorkerProjectRequest, async (req) => {
         const projectId = req.principal.projectId
-        return projectService.getOneOrThrow(projectId)
+        return projectService(req.log).getOneOrThrow(projectId)
     })
 }
 

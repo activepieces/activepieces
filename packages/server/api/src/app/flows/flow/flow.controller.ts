@@ -97,7 +97,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             }
         },
     }, async (request) => {
-        const userId = await authenticationUtils.extractUserIdFromRequest(request)
+        const userId = await authenticationUtils(request.log).extractUserIdFromRequest(request)
         await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
@@ -154,7 +154,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
-        const userMetadata = request.principal.type === PrincipalType.USER ? await userService.getMetaInformation({ id: request.principal.id }) : null
+        const userMetadata = request.principal.type === PrincipalType.USER ? await userService(request.log).getMetaInformation({ id: request.principal.id }) : null
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
             userMetadata,

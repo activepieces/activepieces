@@ -20,12 +20,12 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithBadges> => {
         const userId = req.params.id
         const platformId = req.principal.platform.id
-        return userService.getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
+        return userService(req.log).getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
     })
 
     app.post('/me', UpdateMeRequest, async (req) => {
         const userId = req.principal.id
-        const user = await userService.getOrThrow({ id: userId })
+        const user = await userService(req.log).getOrThrow({ id: userId })
         const identityId = user.identityId
         const platformId = req.principal.platform.id
 
@@ -47,7 +47,7 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.delete('/me/profile-picture', DeleteProfilePictureRequest, async (req) => {
         const userId = req.principal.id
-        const user = await userService.getOrThrow({ id: userId })
+        const user = await userService(req.log).getOrThrow({ id: userId })
         const identityId = user.identityId
 
         await userIdentityService(app.log).update(identityId, { imageUrl: null })
