@@ -1,8 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getWorksheetAction = createAction({
     auth: excelAuth,
@@ -27,16 +26,12 @@ export const getWorksheetAction = createAction({
 
         // The worksheet_id prop from excelCommon returns the worksheet's name,
         // which can be used to identify it in the API URL as per the documentation ({id|name}).
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: access_token,
-            },
-        });
+        const client = createMSGraphClient(access_token);
+        const response = await client
+            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}`)
+            .get();
 
         // The response body contains the workbookWorksheet object with its metadata.
-        return response.body;
+        return response;
     },
 });

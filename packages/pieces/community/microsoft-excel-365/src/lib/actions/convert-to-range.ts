@@ -1,11 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelAuth } from '../auth';
 
 export const convertToRangeAction = createAction({
@@ -29,15 +24,11 @@ export const convertToRangeAction = createAction({
     }
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/convertToRange`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    const client = createMSGraphClient(auth['access_token']);
+    const response = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/convertToRange`)
+      .post({});
 
-    return response.body;
+    return response;
   },
 });

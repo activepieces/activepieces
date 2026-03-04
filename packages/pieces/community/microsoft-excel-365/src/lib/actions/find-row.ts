@@ -10,7 +10,7 @@ import {
 } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const findRowAction = createAction({
   auth: excelAuth,
@@ -87,52 +87,28 @@ export const findRowAction = createAction({
 
     const sanitizedValue = (lookup_value as string).replace(/'/g, "''");
 
+    const client = createMSGraphClient(access_token);
+
     // Define the URL to clear the filter, which will be used in the 'finally' block
     const clearFilterUrl = `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns/${columnId}/filter/clear`;
 
     try {
       // Step 1: Apply the filter to the specified column
-      await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns/${columnId}/filter/apply`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: access_token
-        },
-        body: {
-          criteria: {
-            criterion1: `=${sanitizedValue}`,
-            filterOn: 'Custom'
-          }
-        }
-      });
+      await client
+        .api(`${drivePath}/items/${workbookId}/workbook/tables/${tableId}/columns/${columnId}/filter/apply`)
+        .post({ criteria: { criterion1: `=${sanitizedValue}`, filterOn: 'Custom' } });
 
       // Step 2: Get the visible rows (i.e., the filtered results)
-      const foundRowsResponse = await httpClient.sendRequest<{
-        value: unknown[];
-      }>({
-        method: HttpMethod.GET,
-        url: `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/range/visibleView/rows`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: access_token
-        }
-      });
+      const foundRowsResponse = await client
+        .api(`${drivePath}/items/${workbookId}/workbook/tables/${tableId}/range/visibleView/rows`)
+        .get();
 
       // The result is the array of rows that matched the filter
-      return foundRowsResponse.body.value;
+      return foundRowsResponse.value;
     } finally {
       // Step 3: Clear the filter to restore the table to its original state.
       // This runs regardless of whether the previous steps succeeded or failed.
-      await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: clearFilterUrl,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: access_token
-        },
-        body: {} // Clear action does not require a body
-      });
+      await client.api(clearFilterUrl).post({});
     }
   }
 });

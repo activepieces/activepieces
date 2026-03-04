@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const clearWorksheetAction = createAction({
   auth: excelAuth,
@@ -44,19 +39,8 @@ export const clearWorksheetAction = createAction({
       url += `range(address = '${range}')/clear`;
     }
 
-    const request = {
-      method: HttpMethod.POST,
-      url: url,
-      body: {
-        applyTo: 'contents',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN as const,
-        token: auth['access_token'],
-      },
-    };
-
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const client = createMSGraphClient(auth['access_token']);
+    await client.api(url).post({ applyTo: 'contents' });
+    return {};
   },
 });

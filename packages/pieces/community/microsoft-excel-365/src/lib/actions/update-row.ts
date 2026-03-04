@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelCommon, objectToArray } from '../common/common';
 
 export const updateRowAction = createAction({
@@ -50,18 +49,11 @@ export const updateRowAction = createAction({
 		const rangeFrom = `A${rowNumber}`;
 		const rangeTo = `${lastUsedColumn}${rowNumber}`;
 
-		const request = {
-			method: HttpMethod.PATCH,
-			url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`,
-			body: requestBody,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN as const,
-				token: auth['access_token'],
-			},
-		};
+		const client = createMSGraphClient(auth['access_token']);
+		const response = await client
+			.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`)
+			.patch(requestBody);
 
-		const response = await httpClient.sendRequest(request);
-
-		return response.body;
+		return response;
 	},
 });

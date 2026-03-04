@@ -1,8 +1,7 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { excelAuth } from '../auth';
 import { commonProps } from "../common/props";
-import { getDrivePath } from "../common/helpers";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { getDrivePath, createMSGraphClient } from "../common/helpers";
 
 export const getWorksheetColumnsAction = createAction({
     displayName: 'Get Worksheet Columns',
@@ -24,16 +23,12 @@ export const getWorksheetColumnsAction = createAction({
         }
         const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-        const response = await httpClient.sendRequest<{ values: Array<Array<string>> }>({
-            method: HttpMethod.GET,
-            url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='A1:ZZ1')/usedRange`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: context.auth.access_token
-            }
-        });
+        const client = createMSGraphClient(context.auth.access_token);
+        const response = await client
+            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='A1:ZZ1')/usedRange`)
+            .get();
 
-        const columns = response.body.values?.[0] ?? []
+        const columns = response.values?.[0] ?? [];
 
         return columns;
 

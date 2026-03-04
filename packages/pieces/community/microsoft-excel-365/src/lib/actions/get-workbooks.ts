@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getWorkbooksAction = createAction({
   auth: excelAuth,
@@ -34,24 +29,15 @@ export const getWorkbooksAction = createAction({
 
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    const queryParams: any = {}
+    const client = createMSGraphClient(auth['access_token']);
+    let apiCall = client.api(`${drivePath}/root/search(q='.xlsx')`);
 
     if (limit !== null && limit !== undefined) {
-      queryParams.$top = limit.toString();
+      apiCall = apiCall.top(limit);
     }
 
-    const request = {
-      method: HttpMethod.GET,
-      url: `${drivePath}/root/search(q='.xlsx')`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN as const,
-        token: auth['access_token'],
-      },
-      queryParams: queryParams,
-    };
-
-    const response = await httpClient.sendRequest(request);
-    const workbooks = response.body['value'].map(
+    const response = await apiCall.get();
+    const workbooks = response.value.map(
       (item: { id: any; name: any; webUrl: any }) => ({
         id: item.id,
         name: item.name,

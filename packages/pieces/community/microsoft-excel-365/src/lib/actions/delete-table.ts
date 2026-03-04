@@ -1,12 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const deleteTableAction = createAction({
   auth: excelAuth,
@@ -29,15 +24,8 @@ export const deleteTableAction = createAction({
     }
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.DELETE,
-      url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
-
-    return response.body;
+    const client = createMSGraphClient(auth['access_token']);
+    await client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}`).delete();
+    return { success: true };
   },
 });

@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType
-} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const clearRangeAction = createAction({
   auth: excelAuth,
@@ -61,19 +56,12 @@ export const clearRangeAction = createAction({
         throw new Error('Invalid range format. Please use A1 notation (e.g., "A1" or "A1:C5").');
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')/clear`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: access_token
-      },
-      body: {
-        applyTo: applyTo
-      }
-    });
+    const client = createMSGraphClient(access_token);
+    await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')/clear`)
+      .post({ applyTo: applyTo });
 
     // A successful request returns a 200 OK with no body.
-    return response.body;
+    return {};
   }
 });

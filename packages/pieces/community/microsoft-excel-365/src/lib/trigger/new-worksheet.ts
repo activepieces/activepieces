@@ -6,12 +6,9 @@ import {
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelAuth } from '../auth';
 import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
   Polling,
   pollingHelper,
   DedupeStrategy
@@ -32,15 +29,11 @@ async function getWorksheets(
   if (!workbookId) return [];
 
   try {
-    const response = await httpClient.sendRequest<{ value: Worksheet[] }>({
-      method: HttpMethod.GET,
-      url: `${drivePath}/items/${workbookId}/workbook/worksheets`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token
-      }
-    });
-    return response.body.value ?? [];
+    const client = createMSGraphClient(auth.access_token);
+    const response = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets`)
+      .get();
+    return response.value ?? [];
   } catch (error) {
     throw new Error(`Failed to fetch worksheets: ${error}`);
   }

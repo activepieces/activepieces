@@ -163,18 +163,18 @@ export const excelCommon = {
 			return properties;
 		},
 	}),
-	table_values: Property.DynamicProperties({
+	tableValues: Property.DynamicProperties({
 		auth: excelAuth,
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
-		refreshers: ['storageSource','siteId','documentId','workbook_id', 'worksheet_id', 'table_id'],
-		props: async ({ auth, storageSource, siteId, documentId, workbook_id, worksheet_id, table_id }) => {
+		refreshers: ['storageSource','siteId','documentId','workbook_id', 'worksheet_id', 'tableId'],
+		props: async ({ auth, storageSource, siteId, documentId, workbook_id, worksheet_id, tableId }) => {
 			if (
 				!auth ||
 				(workbook_id ?? '').toString().length === 0 ||
 				(worksheet_id ?? '').toString().length === 0 ||
-				(table_id ?? '').toString().length === 0
+				(tableId ?? '').toString().length === 0
 			) {
 				return {};
 			}
@@ -189,7 +189,7 @@ export const excelCommon = {
 				workbook_id as unknown as string,
 				authProp['access_token'],
 				worksheet_id as unknown as string,
-				table_id as unknown as string
+				tableId as unknown as string
 			);
 
 			const properties: {

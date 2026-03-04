@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getWorksheetsAction = createAction({
   auth: excelAuth,
@@ -39,20 +38,10 @@ export const getWorksheetsAction = createAction({
 
     const endpoint = `${drivePath}/items/${workbookId}/workbook/worksheets`;
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: endpoint,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    const client = createMSGraphClient(auth['access_token']);
+    const response = await client.api(endpoint).get();
 
-    if (response.status !== 200) {
-      throw new Error(`Failed to retrieve worksheet: ${response.body}`);
-    }
-
-    const worksheets = response.body['value'];
+    const worksheets = response.value;
 
     if (returnAll) {
       return worksheets;

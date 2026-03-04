@@ -7,14 +7,11 @@ import {
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { excelCommon } from '../common/common';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import {
     DedupeStrategy,
     Polling,
     pollingHelper,
-    httpClient,
-    HttpMethod,
-    AuthenticationType
 } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 import { excelAuth } from '../auth';
@@ -27,15 +24,11 @@ interface TableRow {
 // Helper function to get all rows from a specific table
 async function getTableRows(auth: OAuth2PropertyValue, workbookId: string, tableId: string, drivePath: string): Promise<TableRow[]> {
     try {
-        const response = await httpClient.sendRequest<{ value: TableRow[] }>({
-            method: HttpMethod.GET,
-            url: `${drivePath}/items/${workbookId}/workbook/tables/${encodeURIComponent(tableId)}/rows`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: auth.access_token,
-            },
-        });
-        return response.body.value ?? [];
+        const client = createMSGraphClient(auth.access_token);
+        const response = await client
+            .api(`${drivePath}/items/${workbookId}/workbook/tables/${encodeURIComponent(tableId)}/rows`)
+            .get();
+        return response.value ?? [];
     } catch (error) {
         throw new Error(`Failed to fetch table rows: ${error}`);
     }

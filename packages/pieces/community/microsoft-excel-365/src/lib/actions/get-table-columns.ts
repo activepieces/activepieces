@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps } from '../common/props';
 import { excelAuth } from '../auth';
-import { getDrivePath } from '../common/helpers';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getTableColumnsAction = createAction({
   auth: excelAuth,
@@ -35,22 +30,16 @@ export const getTableColumnsAction = createAction({
     }
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    let url = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`;
+    const client = createMSGraphClient(auth['access_token']);
+    let apiCall = client.api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`);
 
     if (limit) {
-      url += `?$top=${limit}`;
+      apiCall = apiCall.top(limit);
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: url,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    const response = await apiCall.get();
 
-    const columnNames = response.body['value'].map(
+    const columnNames = response.value.map(
       (column: { name: any }) => column.name
     );
 

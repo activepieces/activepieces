@@ -1,8 +1,7 @@
 import { excelAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const findWorkbookAction = createAction({
   auth: excelAuth,
@@ -28,18 +27,13 @@ export const findWorkbookAction = createAction({
 
     const fileNameWithExtension = fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`;
 
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${drivePath}/items/root/search(q='.xlsx')?$select=id,name,lastModifiedDateTime,parentReference`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token
-      }
-    }
+    const client = createMSGraphClient(context.auth.access_token);
+    const response = await client
+      .api(`${drivePath}/items/root/search(q='.xlsx')`)
+      .select('id,name,lastModifiedDateTime,parentReference')
+      .get();
 
-    const response = await httpClient.sendRequest<{ value: Array<{ id: string, name: string }> }>(request);
-
-    const result = response.body.value.filter(item => item.name === fileNameWithExtension);
+    const result = response.value.filter((item: { name: string }) => item.name === fileNameWithExtension);
 
 
 

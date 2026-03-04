@@ -1,13 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-  HttpError
-} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelCommon } from '../common/common';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -43,20 +37,16 @@ export const getRowAction = createAction({
     const maxRetries = 3;
     let attempt = 0;
 
+    const client = createMSGraphClient(access_token);
+
     while (attempt < maxRetries) {
       try {
-        const response = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${drivePath}/items/${workbookId}/workbook/tables/${tableId}/rows/itemAt(index=${row_id})`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: access_token
-          }
-        });
-        return response.body;
-      } catch (error) {
-        const httpError = error as HttpError;
-        if (httpError.response?.status === 503 && attempt < maxRetries - 1) {
+        const response = await client
+          .api(`${drivePath}/items/${workbookId}/workbook/tables/${tableId}/rows/itemAt(index=${row_id})`)
+          .get();
+        return response;
+      } catch (error: any) {
+        if (error.statusCode === 503 && attempt < maxRetries - 1) {
           const delayMs = 2 ** attempt * 1000;
           console.warn(
             `Excel API is unavailable (503). Retrying after ${delayMs}ms... (Attempt ${

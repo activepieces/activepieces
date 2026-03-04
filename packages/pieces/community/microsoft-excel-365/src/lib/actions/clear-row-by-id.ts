@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const clearRowAction = createAction({
     auth: excelAuth,
@@ -60,19 +59,12 @@ export const clearRowAction = createAction({
         // Construct the range address for the entire row, e.g., '5:5'
         const rowAddress = `${row_id}:${row_id}`;
 
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/clear`,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: access_token,
-            },
-            body: {
-                applyTo: applyTo,
-            },
-        });
+        const client = createMSGraphClient(access_token);
+        await client
+            .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rowAddress}')/clear`)
+            .post({ applyTo: applyTo });
 
         // A successful request returns a 200 OK with no body.
-        return response.body;
+        return {};
     },
 });

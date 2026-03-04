@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType
-} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 
 export const getRangeAction = createAction({
   auth: excelAuth,
@@ -41,17 +36,13 @@ export const getRangeAction = createAction({
       );
     }
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: access_token
-      }
-    });
+    const client = createMSGraphClient(access_token);
+    const response = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${range}')`)
+      .get();
 
     // The response body contains the workbookRange object with details
     // like values, text, formulas, rowCount, etc.
-    return response.body;
+    return response;
   }
 });

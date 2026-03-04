@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
 import { excelAuth } from '../auth';
 import { commonProps } from '../common/props';
-import { getDrivePath } from '../common/helpers';
+import { getDrivePath, createMSGraphClient } from '../common/helpers';
 import { excelCommon } from '../common/common';
 
 export const lookupTableColumnAction = createAction({
@@ -49,27 +44,17 @@ export const lookupTableColumnAction = createAction({
     }
     const drivePath = getDrivePath(storageSource, siteId as string, documentId as string);
 
-    const rowsUrl = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`;
-    const rowsResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: rowsUrl,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    const client = createMSGraphClient(auth['access_token']);
 
-    const columnsUrl = `${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`;
-    const columnsResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: columnsUrl,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    });
+    const rowsResponse = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`)
+      .get();
 
-    const columns = columnsResponse.body['value'];
+    const columnsResponse = await client
+      .api(`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`)
+      .get();
+
+    const columns = columnsResponse.value;
     const columnIndex = columns.findIndex(
       (column: any) => column.name === lookupColumn
     );
@@ -78,7 +63,7 @@ export const lookupTableColumnAction = createAction({
       throw new Error(`Column "${lookupColumn}" not found in the table.`);
     }
 
-    const rows = rowsResponse.body['value'];
+    const rows = rowsResponse.value;
     const matchedRows = rows.filter(
       (row: any) => row.values[0][columnIndex] === lookupValue
     );
