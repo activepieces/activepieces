@@ -3,6 +3,8 @@ import {
   FlowActionType,
   FlowOperationType,
   FlowRun,
+  FlowTrigger,
+  flowOperations,
   flowStructureUtil,
   FlowVersion,
   isNil,
@@ -12,11 +14,12 @@ import {
   stringifyNullOrUndefined,
   WebsocketClientEvent,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { Socket } from 'socket.io-client';
 import { StoreApi } from 'zustand';
 
 import { internalErrorToast } from '@/components/ui/sonner';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowRunUtils } from '@/features/flow-runs';
 
 import { BuilderState } from '../builder-hooks';
 import { defaultAgentOutput, isRunAgent } from '../test-step/agent-test-step';
@@ -243,6 +246,29 @@ export const createRunState = (
         console.error(`Step ${stepName} not found`);
         internalErrorToast();
         return;
+      }
+      const clonedStep: FlowAction | FlowTrigger = JSON.parse(
+        JSON.stringify(step),
+      );
+      clonedStep.settings.sampleData = {
+        ...clonedStep.settings.sampleData,
+        lastTestDate: dayjs().toISOString(),
+      };
+      // set the latest test date in the flow version locally
+      if (flowStructureUtil.isAction(step.type)) {
+        set((state) => ({
+          flowVersion: flowOperations.apply(state.flowVersion, {
+            type: FlowOperationType.UPDATE_ACTION,
+            request: clonedStep as FlowAction,
+          }),
+        }));
+      } else {
+        set((state) => ({
+          flowVersion: flowOperations.apply(state.flowVersion, {
+            type: FlowOperationType.UPDATE_TRIGGER,
+            request: clonedStep as FlowTrigger,
+          }),
+        }));
       }
       setSampleDataLocally({
         stepName: step.name,

@@ -20,9 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ConnectionDropdown } from '@/features/agents/agent-tools/piece-tool-dialog/connection-select';
-import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import {
+  ConnectionDropdown,
+  usePieceToolsDialogStore,
+} from '@/features/agents';
+import { piecesHooks } from '@/features/pieces';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 

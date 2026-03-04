@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 
 interface PageHeaderProps {
   title: ReactNode;

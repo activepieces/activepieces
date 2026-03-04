@@ -1,5 +1,5 @@
+import { ShortcutProps } from '@/components/custom/shortcut';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { ShortcutProps } from '@/components/ui/shortcut';
 
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 

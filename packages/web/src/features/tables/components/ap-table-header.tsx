@@ -12,9 +12,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import EditableText from '@/components/custom/editable-text';
 import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,18 +32,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import EditableText from '@/components/ui/editable-text';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import {
   getProjectName,
   projectCollectionUtils,
-} from '@/hooks/project-collection';
-import { downloadFile } from '@/lib/utils';
+} from '@/features/projects/stores/project-collection';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { downloadFile } from '@/lib/dom-utils';
 
-import { tablesApi } from '../lib/tables-api';
-import { tablesUtils } from '../lib/utils';
+import { tablesApi } from '../api/tables-api';
+import { tablesUtils } from '../utils/utils';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportTableDialog } from './import-table-dialog';

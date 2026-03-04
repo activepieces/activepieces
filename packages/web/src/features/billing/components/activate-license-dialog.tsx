@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const LicenseKeySchema = Type.Object({

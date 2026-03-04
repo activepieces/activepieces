@@ -58,16 +58,26 @@ export function useDetailsFilters(
 
   const cycleDraftTimeUnitMin = () => {
     const idx = TIME_UNITS.indexOf(draftTimeSaved.unitMin);
-    updateDraftTimeSaved({
-      unitMin: TIME_UNITS[(idx + 1) % TIME_UNITS.length],
-    });
+    const newMinUnit = TIME_UNITS[(idx + 1) % TIME_UNITS.length];
+    const newMinIdx = TIME_UNITS.indexOf(newMinUnit);
+    const maxIdx = TIME_UNITS.indexOf(draftTimeSaved.unitMax);
+    if (newMinIdx > maxIdx) {
+      updateDraftTimeSaved({ unitMin: newMinUnit, unitMax: newMinUnit });
+    } else {
+      updateDraftTimeSaved({ unitMin: newMinUnit });
+    }
   };
 
   const cycleDraftTimeUnitMax = () => {
     const idx = TIME_UNITS.indexOf(draftTimeSaved.unitMax);
-    updateDraftTimeSaved({
-      unitMax: TIME_UNITS[(idx + 1) % TIME_UNITS.length],
-    });
+    const newMaxUnit = TIME_UNITS[(idx + 1) % TIME_UNITS.length];
+    const newMaxIdx = TIME_UNITS.indexOf(newMaxUnit);
+    const minIdx = TIME_UNITS.indexOf(draftTimeSaved.unitMin);
+    if (newMaxIdx < minIdx) {
+      updateDraftTimeSaved({ unitMax: newMaxUnit, unitMin: newMaxUnit });
+    } else {
+      updateDraftTimeSaved({ unitMax: newMaxUnit });
+    }
   };
 
   const handleTimeSavedPopoverOpen = (open: boolean) => {

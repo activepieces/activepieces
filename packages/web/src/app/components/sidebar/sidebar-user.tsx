@@ -11,8 +11,9 @@ import {
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
-import { useTelemetry } from '@/components/telemetry-provider';
+import { UserAvatar } from '@/components/custom/user-avatar';
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { InviteUserDialog } from '@/features/members/component/invite-user/invite-user-dialog';
+import { InviteUserDialog } from '@/features/members';
 import {
   useIsPlatformAdmin,
   useAuthorization,

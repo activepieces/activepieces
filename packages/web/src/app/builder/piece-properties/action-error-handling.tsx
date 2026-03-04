@@ -3,13 +3,13 @@ import { t } from 'i18next';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { ReadMoreDescription } from '@/components/custom/read-more-description';
 import {
   FormField,
   FormItem,
   FormLabel,
   FormControl,
 } from '@/components/ui/form';
-import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
 import { cn, GAP_SIZE_FOR_STEP_SETTINGS } from '@/lib/utils';
 

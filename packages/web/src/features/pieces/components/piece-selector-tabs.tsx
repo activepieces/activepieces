@@ -3,7 +3,7 @@ import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
-} from '../lib/piece-selector-tabs-provider';
+} from '../stores/piece-selector-tabs-provider';
 
 type TabType = {
   value: PieceSelectorTabType;

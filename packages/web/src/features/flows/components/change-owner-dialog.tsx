@@ -25,9 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
+import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 
-import { flowsApi } from '../lib/flows-api';
+import { flowsApi } from '../api/flows-api';
 
 const ChangeOwnerFormSchema = Type.Object({
   ownerId: Type.String({

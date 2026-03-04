@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectReleaseApi } from '@/features/project-releases';
+import { projectCollectionUtils } from '@/features/projects';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
 

@@ -20,14 +20,15 @@ import {
 import { useContext, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { userApi } from '@/api/user-api';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
+import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { SearchInput } from '@/components/ui/search-input';
 import {
   Select,
   SelectContent,
@@ -42,14 +43,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import {
+  platformAnalyticsHooks,
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
-} from '@/features/platform-admin/lib/refresh-analytics-context';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userApi } from '@/lib/user-api';
-import { downloadFile, formatUtils } from '@/lib/utils';
+} from '@/features/platform-admin';
+import { projectCollectionUtils } from '@/features/projects';
+import { downloadFile } from '@/lib/dom-utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { TimeSavedFilterContent } from '../impact/components/time-saved-filter-content';
 import {
@@ -200,6 +201,14 @@ export default function LeaderboardPage() {
     setTimeSavedPopoverOpen(false);
   };
 
+  const hasActiveFilters =
+    searchQuery !== '' || appliedFilter.min !== '' || appliedFilter.max !== '';
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setAppliedFilter(emptyFilter);
+  };
+
   const timeSavedLabel = useMemo(() => {
     if (!appliedFilter.min && !appliedFilter.max) return null;
     const min = appliedFilter.min
@@ -218,21 +227,24 @@ export default function LeaderboardPage() {
 
     const userMap = new Map(analyticsData.users.map((user) => [user.id, user]));
 
-    return usersLeaderboardData.reduce<UserStats[]>((acc, item) => {
-      const user = userMap.get(item.userId);
-      if (!user) return acc;
+    return usersLeaderboardData
+      .reduce<Omit<UserStats, 'rank'>[]>((acc, item) => {
+        const user = userMap.get(item.userId);
+        if (!user) return acc;
 
-      acc.push({
-        id: item.userId,
-        visibleId: item.userId,
-        userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
-        userEmail: user.email,
-        flowCount: item.flowCount ?? 0,
-        minutesSaved: item.minutesSaved ?? 0,
-        badges: badgesMap.get(item.userId),
-      });
-      return acc;
-    }, []);
+        acc.push({
+          id: item.userId,
+          visibleId: item.userId,
+          userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
+          userEmail: user.email,
+          flowCount: item.flowCount ?? 0,
+          minutesSaved: item.minutesSaved ?? 0,
+          badges: badgesMap.get(item.userId),
+        });
+        return acc;
+      }, [])
+      .sort((a, b) => b.minutesSaved - a.minutesSaved)
+      .map((item, index) => ({ ...item, rank: index + 1 }));
   }, [analyticsData?.users, usersLeaderboardData, isLoading, badgesMap]);
 
   const projectsData = useMemo((): ProjectStats[] => {
@@ -240,14 +252,17 @@ export default function LeaderboardPage() {
       return [];
     }
 
-    return projectsLeaderboardData.map((item) => ({
-      id: item.projectId,
-      projectId: item.projectId,
-      projectName: item.projectName,
-      flowCount: item.flowCount ?? 0,
-      minutesSaved: item.minutesSaved ?? 0,
-      iconColor: projectIconMap.get(item.projectId),
-    }));
+    return projectsLeaderboardData
+      .map((item) => ({
+        id: item.projectId,
+        projectId: item.projectId,
+        projectName: item.projectName,
+        flowCount: item.flowCount ?? 0,
+        minutesSaved: item.minutesSaved ?? 0,
+        iconColor: projectIconMap.get(item.projectId),
+      }))
+      .sort((a, b) => b.minutesSaved - a.minutesSaved)
+      .map((item, index) => ({ ...item, rank: index + 1 }));
   }, [projectsLeaderboardData, isLoading, projectIconMap]);
 
   const filteredPeopleData = useMemo(() => {
@@ -260,9 +275,7 @@ export default function LeaderboardPage() {
           p.userEmail.toLowerCase().includes(q),
       );
     }
-    return applyTimeSavedFilter(data, peopleTimeSaved).sort(
-      (a, b) => b.minutesSaved - a.minutesSaved,
-    );
+    return applyTimeSavedFilter(data, peopleTimeSaved);
   }, [peopleData, searchQuery, peopleTimeSaved]);
 
   const filteredProjectsData = useMemo(() => {
@@ -349,7 +362,7 @@ export default function LeaderboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 px-3 py-1 h-8 border border-dashed rounded-md text-sm text-muted-foreground">
               <span>
                 {t('Updated')}{' '}
                 {dayjs(analyticsData?.cachedAt).format('MMM DD, hh:mm A')}
@@ -387,7 +400,7 @@ export default function LeaderboardPage() {
                 setTimePeriod(value as AnalyticsTimePeriod)
               }
             >
-              <SelectTrigger className="w-auto gap-2">
+              <SelectTrigger className="w-auto gap-2 h-8">
                 <Calendar className="h-4 w-4" />
                 <SelectValue />
               </SelectTrigger>
@@ -473,14 +486,11 @@ export default function LeaderboardPage() {
                   />
                 </PopoverContent>
               </Popover>
-              {timeSavedLabel && (
-                <button
-                  onClick={clearTimeSavedFilter}
-                  className="flex items-center gap-1 text-sm text-primary hover:underline"
-                >
-                  <X className="h-3.5 w-3.5" />
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                  <X className="h-4 w-4" />
                   {t('Clear')}
-                </button>
+                </Button>
               )}
             </div>
             <Tooltip>

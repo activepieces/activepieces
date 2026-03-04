@@ -20,7 +20,7 @@ import {
 } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
-import { formUtils } from '../../../features/pieces/lib/form-utils';
+import { formUtils } from '@/features/pieces';
 const numberReplacement = 'anyOf[0]items';
 const stringReplacement = 'properties.';
 const createUpdatedSchemaKey = (propertyKey: string) => {
@@ -113,8 +113,6 @@ export const StepSettingsProvider = ({
   };
   return (
     <StepSettingsContext.Provider
-      //need to re-render the form because sample data is changed outside of it, this will be fixed once we refactor the state
-      key={selectedStep.settings.sampleData?.lastTestDate}
       value={{
         selectedStep,
         pieceModel,
