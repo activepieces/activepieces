@@ -49,5 +49,18 @@ jobs:
 
       - name: Create git tag
         run: |
-          git tag ${{ inputs.tag }}
-          git push origin ${{ inputs.tag }}
+          git tag -f ${{ inputs.tag }}
+          git push origin ${{ inputs.tag }} --force
+
+      - name: Create or update changelog via release-drafter
+        uses: release-drafter/release-drafter@v5
+        with:
+          commitish: ${{ github.ref_name }}
+          prerelease: false
+          tag: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          version: ${{ inputs.tag }}
+          latest: true
+          publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
