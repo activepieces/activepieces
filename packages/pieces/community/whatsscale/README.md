@@ -8,13 +8,17 @@ WhatsScale uses API key authentication. Get your key from [whatsscale.com/dashbo
 
 ## Actions
 
-### Sprint 1 (Current)
+### Send Text
 | Action | Description |
 |--------|-------------|
-| Send a Message (Manual Entry) | Send text by entering phone number or group ID |
+| Send a Message (Manual Entry) | Send text by entering phone number or group ID manually |
+| Send a Message to a Contact | Send text to a WhatsApp contact (dropdown) |
+| Send a Message to a Group | Send text to a WhatsApp group (dropdown) |
+| Send a Text to a Channel | Broadcast text to a WhatsApp Channel (dropdown) |
+| Send a Message to a CRM Contact | Send text to a WhatsScale CRM contact (dropdown) |
 
-### Planned (Sprints 2-9)
-- Send Text/Image/Video/Document to Contact, Group, Channel, CRM Contact
+### Planned (Sprints 3-9)
+- Send Image/Video/Document to Contact, Group, Channel, CRM Contact
 - Send Location, Poll
 - Set Text/Image/Video Story
 - CRM: Create, Get, Find, Update, Delete Contact, Add/Remove Tag, List

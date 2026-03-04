@@ -1,123 +1,201 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TEST_API_KEY, createMockHttpResponse } from '../test-helpers';
+import { whatsscaleProps } from './props';
+import * as clientModule from './client';
 
-const mockSendRequest = vi.fn();
-
-vi.mock('@activepieces/pieces-common', () => ({
-  httpClient: { sendRequest: (...args: unknown[]) => mockSendRequest(...args) },
-  HttpMethod: { GET: 'GET', POST: 'POST' },
+vi.mock('./client', () => ({
+  whatsscaleClient: vi.fn(),
 }));
 
-/**
- * props.ts uses Property.Dropdown which wraps an options() async function.
- * We test the options logic directly by extracting it.
- *
- * The actual signature in props.ts:
- *   options: async ({ auth }) => { ... }
- *   where auth is the PieceAuth context — auth.secret_text is the raw key.
- *
- * It calls: whatsscaleClient(auth.secret_text, HttpMethod.GET, '/make/sessions')
- * which calls: httpClient.sendRequest({ method, url, headers, ... })
- */
+const mockAuth = { secret_text: 'test-api-key' };
+const mockSession = 'test-session';
 
-// Import after mocks
-import { whatsscaleClient } from './client';
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
-/**
- * Replicate the session dropdown options logic from props.ts
- * so we can test it in isolation.
- */
-async function getSessionOptions(auth: { secret_text: string } | undefined) {
-  if (!auth) {
-    return {
-      disabled: true,
-      options: [],
-      placeholder: 'Please connect your account',
-    };
-  }
-  try {
-    const response = await whatsscaleClient(auth.secret_text, 'GET' as any, '/make/sessions');
-    const sessions = response.body as { label: string; value: string }[];
-    if (!sessions || sessions.length === 0) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'No sessions found. Connect WhatsApp at whatsscale.com',
-      };
-    }
-    return {
-      disabled: false,
-      options: sessions,
-    };
-  } catch (e) {
-    return {
-      disabled: true,
-      options: [],
-      placeholder: 'Error loading sessions',
-    };
-  }
-}
+// ─── Contact Dropdown ────────────────────────────────────────────────────────
 
-describe('props.ts — session dropdown', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('calls GET /make/sessions with correct auth', async () => {
-    const sessions = [
-      { label: 'My Session', value: 'user_abc123' },
+describe('contact dropdown', () => {
+  it('loads contacts for the selected session', async () => {
+    const mockContacts = [
+      { label: 'John (+31649931832)', value: '31649931832@c.us' },
     ];
-    mockSendRequest.mockResolvedValueOnce(createMockHttpResponse(sessions));
+    vi.mocked(clientModule.whatsscaleClient).mockResolvedValueOnce({
+      body: mockContacts,
+    } as any);
 
-    await getSessionOptions({ secret_text: TEST_API_KEY });
+    const result = await (whatsscaleProps.contact as any).options({
+      auth: mockAuth,
+      session: mockSession,
+    });
 
-    expect(mockSendRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        method: 'GET',
-        url: 'https://proxy.whatsscale.com/make/sessions',
-        headers: expect.objectContaining({
-          'X-Api-Key': TEST_API_KEY,
-        }),
-      }),
+    expect(clientModule.whatsscaleClient).toHaveBeenCalledWith(
+      'test-api-key',
+      'GET',
+      '/make/contacts',
+      undefined,
+      { session: mockSession },
     );
+    expect(result.disabled).toBe(false);
+    expect(result.options).toEqual(mockContacts);
   });
 
-  it('returns options directly from response', async () => {
-    const sessions = [
-      { label: 'Session 1', value: 'user_111' },
-      { label: 'Session 2', value: 'user_222' },
+  it('returns disabled state when no auth', async () => {
+    const result = await (whatsscaleProps.contact as any).options({
+      auth: null,
+      session: mockSession,
+    });
+    expect(result.disabled).toBe(true);
+    expect(result.placeholder).toBe('Please connect your account');
+  });
+
+  it('returns disabled state when no session', async () => {
+    const result = await (whatsscaleProps.contact as any).options({
+      auth: mockAuth,
+      session: null,
+    });
+    expect(result.disabled).toBe(true);
+    expect(result.placeholder).toBe('Please select a session first');
+  });
+});
+
+// ─── Group Dropdown ──────────────────────────────────────────────────────────
+
+describe('group dropdown', () => {
+  it('loads groups for the selected session', async () => {
+    const mockGroups = [
+      { label: 'My Group', value: '120363318673245672@g.us' },
     ];
-    mockSendRequest.mockResolvedValueOnce(createMockHttpResponse(sessions));
+    vi.mocked(clientModule.whatsscaleClient).mockResolvedValueOnce({
+      body: mockGroups,
+    } as any);
 
-    const result = await getSessionOptions({ secret_text: TEST_API_KEY });
-
-    expect(result).toEqual({
-      disabled: false,
-      options: sessions,
+    const result = await (whatsscaleProps.group as any).options({
+      auth: mockAuth,
+      session: mockSession,
     });
+
+    expect(clientModule.whatsscaleClient).toHaveBeenCalledWith(
+      'test-api-key',
+      'GET',
+      '/make/groups',
+      undefined,
+      { session: mockSession },
+    );
+    expect(result.disabled).toBe(false);
+    expect(result.options).toEqual(mockGroups);
   });
 
-  it('returns disabled state when response is empty array', async () => {
-    mockSendRequest.mockResolvedValueOnce(createMockHttpResponse([]));
-
-    const result = await getSessionOptions({ secret_text: TEST_API_KEY });
-
-    expect(result).toEqual({
-      disabled: true,
-      options: [],
-      placeholder: 'No sessions found. Connect WhatsApp at whatsscale.com',
+  it('returns disabled state when no auth', async () => {
+    const result = await (whatsscaleProps.group as any).options({
+      auth: null,
+      session: mockSession,
     });
+    expect(result.disabled).toBe(true);
+    expect(result.placeholder).toBe('Please connect your account');
+  });
+});
+
+// ─── Channel Dropdown ────────────────────────────────────────────────────────
+
+describe('channel dropdown', () => {
+  it('loads channels for the selected session', async () => {
+    const mockChannels = [
+      { label: 'My Channel', value: '120363318673245672@newsletter' },
+    ];
+    vi.mocked(clientModule.whatsscaleClient).mockResolvedValueOnce({
+      body: mockChannels,
+    } as any);
+
+    const result = await (whatsscaleProps.channel as any).options({
+      auth: mockAuth,
+      session: mockSession,
+    });
+
+    expect(clientModule.whatsscaleClient).toHaveBeenCalledWith(
+      'test-api-key',
+      'GET',
+      '/make/channels',
+      undefined,
+      { session: mockSession },
+    );
+    expect(result.disabled).toBe(false);
+    expect(result.options).toEqual(mockChannels);
   });
 
-  it('returns disabled state on network error', async () => {
-    mockSendRequest.mockRejectedValueOnce(new Error('Network error'));
-
-    const result = await getSessionOptions({ secret_text: TEST_API_KEY });
-
-    expect(result).toEqual({
-      disabled: true,
-      options: [],
-      placeholder: 'Error loading sessions',
+  it('returns disabled state when no auth', async () => {
+    const result = await (whatsscaleProps.channel as any).options({
+      auth: null,
+      session: mockSession,
     });
+    expect(result.disabled).toBe(true);
+    expect(result.placeholder).toBe('Please connect your account');
+  });
+});
+
+// ─── CRM Contact Dropdown ────────────────────────────────────────────────────
+
+describe('crmContact dropdown', () => {
+  it('loads CRM contacts (no session dependency)', async () => {
+    const mockCrmContacts = [
+      {
+        label: 'Jane Doe (+31649931832)',
+        value: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      },
+    ];
+    vi.mocked(clientModule.whatsscaleClient).mockResolvedValueOnce({
+      body: mockCrmContacts,
+    } as any);
+
+    const result = await (whatsscaleProps.crmContact as any).options({
+      auth: mockAuth,
+    });
+
+    expect(clientModule.whatsscaleClient).toHaveBeenCalledWith(
+      'test-api-key',
+      'GET',
+      '/make/crm/contacts',
+    );
+    expect(result.disabled).toBe(false);
+    expect(result.options).toEqual(mockCrmContacts);
+  });
+
+  it('returns disabled state when no auth', async () => {
+    const result = await (whatsscaleProps.crmContact as any).options({
+      auth: null,
+    });
+    expect(result.disabled).toBe(true);
+    expect(result.placeholder).toBe('Please connect your account');
+  });
+});
+
+// ─── CRM Tag Dropdown ────────────────────────────────────────────────────────
+
+describe('crmTag dropdown', () => {
+  it('loads CRM tags', async () => {
+    const mockTags = [{ label: 'vip (5)', value: 'vip' }];
+    vi.mocked(clientModule.whatsscaleClient).mockResolvedValueOnce({
+      body: mockTags,
+    } as any);
+
+    const result = await (whatsscaleProps.crmTag as any).options({
+      auth: mockAuth,
+    });
+
+    expect(clientModule.whatsscaleClient).toHaveBeenCalledWith(
+      'test-api-key',
+      'GET',
+      '/make/crm/tags',
+    );
+    expect(result.disabled).toBe(false);
+    expect(result.options).toEqual(mockTags);
+  });
+
+  it('returns disabled state when no auth', async () => {
+    const result = await (whatsscaleProps.crmTag as any).options({
+      auth: null,
+    });
+    expect(result.disabled).toBe(true);
+    expect(result.placeholder).toBe('Please connect your account');
   });
 });

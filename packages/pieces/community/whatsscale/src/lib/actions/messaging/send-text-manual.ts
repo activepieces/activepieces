@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../../auth';
 import { whatsscaleClient } from '../../common/client';
 import { whatsscaleProps } from '../../common/props';
+import { buildRecipientBody, RecipientType } from '../../common/recipients';
 import { ChatType } from '../../common/types';
 
 export const sendTextManualAction = createAction({
@@ -40,18 +41,17 @@ export const sendTextManualAction = createAction({
     const { session, chatType, recipient, text } = context.propsValue;
     const auth = context.auth.secret_text;
 
-    const suffix = chatType === ChatType.CONTACT ? '@c.us' : '@g.us';
-    const chatId = recipient + suffix;
-
+    const body = buildRecipientBody(
+      RecipientType.MANUAL,
+      session,
+      recipient,
+      chatType as ChatType,
+    );
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
       '/api/sendText',
-      {
-        session,
-        chatId,
-        text,
-      },
+      { ...body, text },
     );
 
     return response.body;
