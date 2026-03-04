@@ -4830,7 +4830,7 @@
     },
     "packages/pieces/community/pdfcrowd": {
       "name": "@activepieces/piece-pdfcrowd",
-      "version": "0.0.3",
+      "version": "0.0.4",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
