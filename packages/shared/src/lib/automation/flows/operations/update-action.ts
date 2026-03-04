@@ -4,6 +4,7 @@ import { FlowAction, FlowActionType, SingleActionSchema } from '../actions/actio
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
+import dayjs from 'dayjs'
 
 const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema)
 
@@ -18,7 +19,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             name: request.name,
             valid: false,
             skip: request.skip,
-            lastUpdatedDate: new Date().toISOString(),
+            lastUpdatedDate: dayjs().toISOString(),
             settings: {
                 ...stepToUpdate.settings,
                 customLogoUrl: request.settings.customLogoUrl,

@@ -7,6 +7,7 @@ import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { system } from '../helper/system/system'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import dayjs from 'dayjs'
 
 const flagRepo = repoFactory(FlagEntity)
 
@@ -54,7 +55,7 @@ export const flagService = {
                 ApFlagId.TEMPLATES_CATEGORIES,
             ]),
         })
-        const now = new Date().toISOString()
+        const now = dayjs().toISOString()
         const created = now
         const updated = now
         const currentVersion = await apVersionUtil.getCurrentRelease()
