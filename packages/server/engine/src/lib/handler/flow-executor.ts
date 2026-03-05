@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, RunSizeExceededError, StepOutputStatus } from '@activepieces/shared'
+import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, LogSizeExceededError, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
@@ -40,7 +40,7 @@ export const flowExecutor = {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
-            await checkLogsSizeExceeded(executionState, trigger, constants)
+            await failIfLogSizeExceeded(executionState, trigger, constants)
             await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
@@ -80,7 +80,7 @@ export const flowExecutor = {
             }).catch(error => {
                 console.error('Error sending update:', error)
             })
-            await checkLogsSizeExceeded(flowExecutionContext, previousAction!, constants)
+            await failIfLogSizeExceeded(flowExecutionContext, previousAction!, constants)
 
             flowExecutionContext = await handler.handle({
                 action: currentAction,
@@ -111,8 +111,8 @@ export const flowExecutor = {
     },
 }
 
-const checkLogsSizeExceeded = async (flowExecutionContext: FlowExecutorContext, action: FlowAction | FlowTrigger, constants: EngineConstants) => {
-    if (loggingUtils.verifyFinalSize(flowExecutionContext.steps) || action.type === FlowActionType.LOOP_ON_ITEMS || action.type === FlowActionType.ROUTER) {
+const failIfLogSizeExceeded = async (flowExecutionContext: FlowExecutorContext, action: FlowAction | FlowTrigger, constants: EngineConstants) => {
+    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps) || action.type === FlowActionType.LOOP_ON_ITEMS || action.type === FlowActionType.ROUTER) {
         return
     }
     flowExecutionContext = flowExecutionContext
@@ -140,5 +140,5 @@ const checkLogsSizeExceeded = async (flowExecutionContext: FlowExecutorContext, 
         engineConstants: constants,
         flowExecutorContext: flowExecutionContext,
     })
-    throw new RunSizeExceededError()
+    throw new LogSizeExceededError()
 }

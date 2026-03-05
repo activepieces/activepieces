@@ -77,7 +77,7 @@ async function prepareInput(
     }
 }
 
-async function setRunFailedStatus(
+async function uploadFailedRunStatus(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
     status: FlowRunStatus,
@@ -97,28 +97,28 @@ async function handleMemoryIssueError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await setRunFailedStatus(jobData, log, FlowRunStatus.MEMORY_LIMIT_EXCEEDED) 
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.MEMORY_LIMIT_EXCEEDED) 
 }
 
 async function handleTimeoutError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await setRunFailedStatus(jobData, log, FlowRunStatus.TIMEOUT) 
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.TIMEOUT) 
 }
 
-async function handleLogsSizeExceededError(
+async function handleLogSizeExceededError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await setRunFailedStatus(jobData, log, FlowRunStatus.LOG_SIZE_EXCEEDED) 
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.LOG_SIZE_EXCEEDED) 
 }
 
 async function handleInternalError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await setRunFailedStatus(jobData, log, FlowRunStatus.INTERNAL_ERROR) 
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.INTERNAL_ERROR) 
 }
 
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({
@@ -208,9 +208,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 const isMemoryIssueError =
                     e instanceof ActivepiecesError &&
                     e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE
-                const isLogsSizeExceededError =
+                const isLogSizeExceededError =
                     e instanceof ActivepiecesError &&
-                    e.error.code === ErrorCode.SANDBOX_LOGS_SIZE_EXCEEDED
+                    e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED
 
                 if (isTimeoutError) {
                     span.setAttribute('error.type', 'timeout')
@@ -226,9 +226,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                         status: ConsumeJobResponseStatus.OK,
                     }
                 }
-                else if (isLogsSizeExceededError) {
-                    span.setAttribute('error.type', 'logsSizeExceeded')
-                    await handleLogsSizeExceededError(jobData, log)
+                else if (isLogSizeExceededError) {
+                    span.setAttribute('error.type', 'logSizeExceeded')
+                    await handleLogSizeExceededError(jobData, log)
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
