@@ -43,7 +43,7 @@ export const UpdateUserDialog = ({
       role,
       externalId,
     },
-    resolver: zodResolver(UpdateUserRequestBody),
+    resolver: zodResolver(UpdateUserRequestBody) as unknown as Resolver<{ role: PlatformRole; externalId?: string }>,
   });
   const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
     {

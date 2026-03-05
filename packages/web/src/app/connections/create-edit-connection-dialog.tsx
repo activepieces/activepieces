@@ -99,7 +99,7 @@ function CreateOrEditConnectionSection({
     },
     mode: 'onChange',
     reValidateMode: 'onChange',
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as unknown as Resolver<ConnectionFormValues>,
   });
 
   const [errorMessage, setErrorMessage] = useState('');
