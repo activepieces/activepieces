@@ -57,6 +57,14 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
     },
   };
 
+  const remote_mcp_server_url = `${serverUrl}?token=${encodeURIComponent(
+    mcpServer?.token ?? '',
+  )}`;
+
+  const customConnectorConfiguration = {
+    remote_mcp_server_url,
+  };
+
   return (
     <div className="space-y-4">
       {/* Base URL Field */}
@@ -138,6 +146,16 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
         label={t('Claude Desktop (mcp-remote)')}
         description={t(
           'Copy into your Claude Desktop config file (e.g. claude_desktop_config.json).',
+        )}
+        defaultOpen={false}
+      />
+
+      {/* Custom Connector (no custom headers) */}
+      <CollapsibleJson
+        json={customConnectorConfiguration}
+        label={t('Claude Custom Connector')}
+        description={t(
+          "Only use connectors from developers you trust. The platform does not control which tools developers make available and cannot verify that they will work as intended or that they won't change.",
         )}
         defaultOpen={false}
       />

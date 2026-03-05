@@ -124,7 +124,7 @@ export class MigrateOldTemplatesToNewSchema1765993826655 implements MigrationInt
             VALUES ${valuesPlaceholders}
         `, flattenedValues)
         
-        logger.info(`Finished migration MigrateOldTemplatesToNewSchema1765993826655, migrated ${flowTemplates.length} flow templates`)
+        logger.info({ migratedCount: flowTemplates.length }, 'Finished migration MigrateOldTemplatesToNewSchema1765993826655')
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {

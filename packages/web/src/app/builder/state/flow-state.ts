@@ -218,7 +218,6 @@ export const createFlowState = (
         switch (operation.type) {
           case FlowOperationType.SAVE_SAMPLE_DATA: {
             flowUpdatesQueue.add(updateRequest);
-
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:
