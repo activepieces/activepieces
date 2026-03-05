@@ -126,9 +126,7 @@ function McpToolTestingDialog({
         <DialogHeader>
           <DialogTitle className="px-0.5">{t('Set Sample Data')}</DialogTitle>
           <DialogDescription className="px-0.5">
-            {t(
-              'Provide sample values for testing this tool trigger.',
-            )}
+            {t('Provide sample values for testing this tool trigger.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -139,7 +137,7 @@ function McpToolTestingDialog({
               const cleanedData = Object.fromEntries(
                 Object.entries(data)
                   .filter(([key, _]) => key.trim() !== '')
-                  .map(([key, value]) => [fixProperty(key), value]),
+                  .map(([key, value]) => [fixProperty(key), value])
               );
               saveMockAsSampleData(cleanedData);
             })}
@@ -174,7 +172,7 @@ function McpToolTestingDialog({
                             )}
                           </div>
                         );
-                      },
+                      }
                     )}
                   </div>
                 ) : (

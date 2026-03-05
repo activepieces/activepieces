@@ -46,7 +46,7 @@ export const NewApiKeyDialog = ({
 }: NewApiKeyDialogProps) => {
   const [open, setOpen] = useState(false);
   const [apiKey, setApiKey] = useState<ApiKeyResponseWithValue | undefined>(
-    undefined,
+    undefined
   );
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
@@ -76,7 +76,9 @@ export const NewApiKeyDialog = ({
           </DialogTitle>
           {!apiKey && (
             <DialogDescription>
-              {t('Create a new API key for programmatic access to the platform.')}
+              {t(
+                'Create a new API key for programmatic access to the platform.'
+              )}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -86,11 +88,11 @@ export const NewApiKeyDialog = ({
               <div className="flex flex-col items-start gap-2">
                 <span className="text-md">
                   {t(
-                    'Please save this secret key somewhere safe and accessible. For security reasons,',
+                    'Please save this secret key somewhere safe and accessible. For security reasons,'
                   )}{' '}
                   <span className="font-semibold">
                     {t(
-                      "you won't be able to view it again after closing this dialog.",
+                      "you won't be able to view it again after closing this dialog."
                     )}
                   </span>
                 </span>

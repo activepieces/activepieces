@@ -132,7 +132,7 @@ export const ProjectRoleDialog = ({
 
   const handlePermissionChange = (permission: string, level: string) => {
     const currentPermission = initialPermissions.find(
-      (p) => p.name === permission,
+      (p) => p.name === permission
     );
     const updatedPermissions = new Set(permissions);
 
@@ -161,7 +161,7 @@ export const ProjectRoleDialog = ({
 
   const getButtonVariant = (permission: string, level: string) => {
     const currentPermission = initialPermissions.find(
-      (p) => p.name === permission,
+      (p) => p.name === permission
     );
     const writePermissions = new Set(currentPermission?.write || []);
     const readPermissions = new Set(currentPermission?.read || []);
@@ -210,12 +210,14 @@ export const ProjectRoleDialog = ({
             {mode === 'create'
               ? t('Create Role')
               : projectRole?.type === RoleType.DEFAULT
-                ? t('View Role: {name}', { name: projectRole?.name })
-                : t('Edit Role: {name}', { name: projectRole?.name })}
+              ? t('View Role: {name}', { name: projectRole?.name })
+              : t('Edit Role: {name}', { name: projectRole?.name })}
           </DialogTitle>
           <DialogDescription>
             {mode === 'create'
-              ? t('Define a custom role with specific permissions for project members.')
+              ? t(
+                  'Define a custom role with specific permissions for project members.'
+                )
               : t('Review and manage permissions for this role.')}
           </DialogDescription>
         </DialogHeader>
@@ -257,7 +259,7 @@ export const ProjectRoleDialog = ({
                               className="h-9 px-4"
                               variant={getButtonVariant(
                                 permission.name,
-                                'None',
+                                'None'
                               )}
                               onClick={() =>
                                 handlePermissionChange(permission.name, 'None')
@@ -272,7 +274,7 @@ export const ProjectRoleDialog = ({
                               className="h-9 px-4"
                               variant={getButtonVariant(
                                 permission.name,
-                                'Read',
+                                'Read'
                               )}
                               onClick={() =>
                                 handlePermissionChange(permission.name, 'Read')

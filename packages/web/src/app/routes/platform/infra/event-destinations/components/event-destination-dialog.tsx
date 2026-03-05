@@ -66,7 +66,7 @@ export const EventDestinationDialog = ({
         toast.error(t('Error'), {
           description: error.message,
         });
-      },
+      }
     );
 
   const handleSubmit = (data: CreatePlatformEventDestinationRequestBody) => {
@@ -120,7 +120,9 @@ export const EventDestinationDialog = ({
           <DialogDescription>
             {destination
               ? t('Update the webhook endpoint and event subscriptions.')
-              : t('Configure a webhook endpoint to receive platform event notifications.')}
+              : t(
+                  'Configure a webhook endpoint to receive platform event notifications.'
+                )}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -173,8 +175,8 @@ export const EventDestinationDialog = ({
                                       ? field.onChange([...field.value, event])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== event,
-                                          ),
+                                            (value) => value !== event
+                                          )
                                         );
                                   }}
                                 />

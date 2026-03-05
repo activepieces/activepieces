@@ -73,10 +73,10 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   const [isEditingTableName, setIsEditingTableName] = useState(false);
   const { project } = projectCollectionUtils.useCurrentProject();
   const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
+    Permission.WRITE_TABLE
   );
   const userHasPermissionToPushToGit = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
+    Permission.WRITE_PROJECT_RELEASE
   );
   const showPushToGit = gitSyncHooks.useShowPushToGit();
 
@@ -180,7 +180,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                     <ConfirmationDeleteDialog
                       title={t('Delete Table')}
                       message={t(
-                        'This will permanently delete the table and all its data.',
+                        'This will permanently delete the table and all its data.'
                       )}
                       entityName={t('table')}
                       buttonText={t('Delete')}
@@ -221,14 +221,12 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
           <ConfirmationDeleteDialog
             title={t('Delete Records')}
-            message={t(
-              'The selected records will be permanently deleted.',
-            )}
+            message={t('The selected records will be permanently deleted.')}
             entityName={selectedRecords.size === 1 ? t('record') : t('records')}
             buttonText={t('Delete')}
             mutationFn={async () => {
               const indices = Array.from(selectedRecords).map((row) =>
-                records.findIndex((r) => r.uuid === row),
+                records.findIndex((r) => r.uuid === row)
               );
               deleteRecords(indices.map((index) => index.toString()));
               setSelectedRecords(new Set());
