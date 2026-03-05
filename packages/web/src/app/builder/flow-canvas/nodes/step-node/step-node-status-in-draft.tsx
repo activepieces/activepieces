@@ -55,7 +55,68 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       flowCanvasUtils.isSkipped(stepName, state.flowVersion.trigger),
     ];
   });
-
+  const draftStatusConfig: Record<
+    DraftStepStatus,
+    {
+      variant: 'default' | 'success' | 'error' | 'warning';
+      text: string;
+      icon: React.ReactNode;
+    }
+  > = {
+    skipped: {
+      variant: 'default',
+      text: t('Skipped'),
+      icon: <RouteOff className="size-3" />,
+    },
+    invalid: {
+      variant: 'warning',
+      text: t('Incomplete'),
+      icon: <InvalidStepIcon className="size-3" />,
+    },
+    testing: {
+      variant: 'default',
+      text: t('Testing...'),
+      icon: (
+        <StepStatusIcon
+          status={StepOutputStatus.RUNNING}
+          size="3"
+          hideTooltip={true}
+        />
+      ),
+    },
+    failed: {
+      variant: 'error',
+      text: t('Failed'),
+      icon: (
+        <StepStatusIcon
+          status={StepOutputStatus.FAILED}
+          size="3"
+          hideTooltip={true}
+        />
+      ),
+    },
+    'needs-test': {
+      variant: 'default',
+      text: t('Test me'),
+      icon: <TriangleAlert className="size-3" />,
+    },
+    untested: {
+      variant: 'default',
+      text: t('Test me'),
+      icon: <TriangleAlert className="size-3" />,
+    },
+    tested: {
+      variant: 'success',
+      text: t('Tested'),
+      icon: (
+        <StepStatusIcon
+          status={StepOutputStatus.SUCCEEDED}
+          size="3"
+          hideTooltip={true}
+        />
+      ),
+    },
+  };
   const status: DraftStepStatus = useMemo(() => {
     if (isSkipped) return 'skipped';
     if (!isStepValid) return 'invalid';
@@ -112,69 +173,6 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       </Tooltip>
     </div>
   );
-};
-
-const draftStatusConfig: Record<
-  DraftStepStatus,
-  {
-    variant: 'default' | 'success' | 'error' | 'warning';
-    text: string;
-    icon: React.ReactNode;
-  }
-> = {
-  skipped: {
-    variant: 'default',
-    text: t('Skipped'),
-    icon: <RouteOff className="size-3" />,
-  },
-  invalid: {
-    variant: 'warning',
-    text: t('Incomplete'),
-    icon: <InvalidStepIcon className="size-3" />,
-  },
-  testing: {
-    variant: 'default',
-    text: t('Testing...'),
-    icon: (
-      <StepStatusIcon
-        status={StepOutputStatus.RUNNING}
-        size="3"
-        hideTooltip={true}
-      />
-    ),
-  },
-  failed: {
-    variant: 'error',
-    text: t('Failed'),
-    icon: (
-      <StepStatusIcon
-        status={StepOutputStatus.FAILED}
-        size="3"
-        hideTooltip={true}
-      />
-    ),
-  },
-  'needs-test': {
-    variant: 'default',
-    text: t('Test me'),
-    icon: <TriangleAlert className="size-3" />,
-  },
-  untested: {
-    variant: 'default',
-    text: t('Test me'),
-    icon: <TriangleAlert className="size-3" />,
-  },
-  tested: {
-    variant: 'success',
-    text: t('Tested'),
-    icon: (
-      <StepStatusIcon
-        status={StepOutputStatus.SUCCEEDED}
-        size="3"
-        hideTooltip={true}
-      />
-    ),
-  },
 };
 
 ApStepNodeStatusInDraft.displayName = 'ApStepNodeStatusInDraft';

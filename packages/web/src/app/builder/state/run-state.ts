@@ -255,7 +255,7 @@ export const createRunState = (
             type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
             request: {
               stepName: step.name,
-              sampleDataSettings: {},
+              sampleDataSettings: step.settings.sampleData ?? {},
             },
           }),
         };
@@ -294,12 +294,16 @@ export const createRunState = (
     setErrorLogs: (stepName: string, error: string | null) => {
       set((state) => {
         // only update the last test date
+        const step = flowStructureUtil.getStep(
+          stepName,
+          state.flowVersion.trigger,
+        );
         return {
           flowVersion: flowOperations.apply(state.flowVersion, {
             type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
             request: {
               stepName: stepName,
-              sampleDataSettings: {},
+              sampleDataSettings: step?.settings.sampleData ?? {},
             },
           }),
           errorLogs: {
