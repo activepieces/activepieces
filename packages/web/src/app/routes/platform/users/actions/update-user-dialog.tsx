@@ -4,12 +4,11 @@ import {
   User,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 
-import { platformUserApi } from '@/api/platform-user-api';
+import { platformUserMutations } from '@/hooks/platform-user-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -48,16 +47,13 @@ export const UpdateUserDialog = ({
       externalId?: string;
     }>,
   });
-  const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
-    {
-      mutationKey: ['update-user'],
-      mutationFn: (request) => platformUserApi.update(userId, request),
-      onSuccess: (user) => {
-        onUpdate(user.platformRole);
-        setOpen(false);
-      },
+  const { mutate, isPending } = platformUserMutations.useUpdateUser({
+    userId,
+    onSuccess: (user) => {
+      onUpdate(user.platformRole);
+      setOpen(false);
     },
-  );
+  });
 
   return (
     <Dialog

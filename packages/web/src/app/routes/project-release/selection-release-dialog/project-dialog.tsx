@@ -1,7 +1,6 @@
-import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
+import { ProjectReleaseType } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { projectReleaseApi } from '@/features/project-releases';
+import { projectReleaseMutations } from '@/features/project-releases';
 import { projectCollectionUtils } from '@/features/projects';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
@@ -49,24 +48,26 @@ export function ProjectSelectionDialog({
   const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
     useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
-  const { mutate: loadSyncPlan, isPending: isDoingDiff } = useMutation({
-    mutationFn: (request: DiffReleaseRequest) =>
-      projectReleaseApi.diff(request),
-    onSuccess: (plan) => {
-      if (
-        (!plan.flows || plan.flows.length === 0) &&
-        (!plan.tables || plan.tables.length === 0)
-      ) {
-        toast(t('No Changes Found'), {
-          description: t('There are no differences to apply'),
-        });
-        return;
-      }
-      setSyncPlan(plan);
-      setOpen(false);
-      setIsCreateReleaseDialogOpen(true);
-    },
-  });
+  const { mutate: loadSyncPlan, isPending: isDoingDiff } =
+    projectReleaseMutations.useDiffRelease({
+      onSuccess: (plan) => {
+        if (
+          (!plan.flows || plan.flows.length === 0) &&
+          (!plan.tables || plan.tables.length === 0)
+        ) {
+          toast(t('No Changes Found'), {
+            description: t('There are no differences to apply'),
+          });
+          return;
+        }
+        setSyncPlan(plan);
+        setOpen(false);
+        setIsCreateReleaseDialogOpen(true);
+      },
+      onError: () => {
+        // error toast is handled by the hook
+      },
+    });
 
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),

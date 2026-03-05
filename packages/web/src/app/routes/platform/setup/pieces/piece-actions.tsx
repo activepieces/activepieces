@@ -1,15 +1,13 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, EyeOff, Pin, PinOff } from 'lucide-react';
-import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 type PieceActionsProps = {
@@ -20,48 +18,15 @@ type PieceActionsProps = {
 const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
-  const { mutate: togglePiece, isPending: isTogglePending } = useMutation({
-    mutationFn: async (piecename: string) => {
-      const newFilteredPieceNames = platform.filteredPieceNames.includes(
-        piecename,
-      )
-        ? platform.filteredPieceNames.filter((name) => name !== piecename)
-        : [...platform.filteredPieceNames, piecename];
-
-      await platformApi.update(
-        {
-          filteredPieceNames: newFilteredPieceNames,
-        },
-        platform.id,
-      );
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), {
-        duration: 3000,
-      });
-    },
+  const { mutate: togglePiece, isPending: isTogglePending } = platformPiecesMutations.useTogglePieceVisibility({
+    platformId: platform.id,
+    filteredPieceNames: platform.filteredPieceNames,
+    refetch,
   });
-
-  const { mutate: togglePin, isPending: isPinPending } = useMutation({
-    mutationFn: async (piecename: string) => {
-      const newPinnedPieces = platform.pinnedPieces.includes(piecename)
-        ? platform.pinnedPieces.filter((name) => name !== piecename)
-        : [...platform.pinnedPieces, piecename];
-
-      await platformApi.update(
-        {
-          pinnedPieces: newPinnedPieces,
-        },
-        platform.id,
-      );
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), {
-        duration: 3000,
-      });
-    },
+  const { mutate: togglePin, isPending: isPinPending } = platformPiecesMutations.useTogglePiecePin({
+    platformId: platform.id,
+    pinnedPieces: platform.pinnedPieces,
+    refetch,
   });
 
   const filtered = platform.filteredPieceNames.includes(pieceName);

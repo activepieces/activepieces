@@ -1,11 +1,10 @@
 import { ApFlagId } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Cpu, HardDrive, MemoryStick, Package } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
-import { healthApi } from '@/api/health-api';
+import { healthQueries } from '@/features/platform-admin';
 import { CenteredPage } from '@/app/components/centered-page';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -18,10 +17,7 @@ export default function SettingsHealthPage() {
   const { data: latestVersion } = flagsHooks.useFlag<string>(
     ApFlagId.LATEST_VERSION,
   );
-  const { data: systemHealth, isPending } = useQuery({
-    queryKey: ['system-health'],
-    queryFn: () => healthApi.getSystemHealthChecks(),
-  });
+  const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
 
   const isVersionUpToDate = React.useMemo(() => {
     if (!currentVersion || !latestVersion) return false;

@@ -4,7 +4,6 @@ import {
   WorkerMachineStatus,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
@@ -27,7 +26,7 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
-import { workersApi } from '@/features/platform-admin';
+import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
@@ -90,14 +89,7 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showDemoData = edition === ApEdition.CLOUD;
-  const { data: workersData, isLoading } = useQuery<WorkerMachineWithStatus[]>({
-    queryKey: ['worker-machines'],
-    staleTime: 0,
-    gcTime: 0,
-    refetchInterval: 5000,
-    queryFn: async () =>
-      showDemoData ? DEMO_WORKERS_DATA : await workersApi.list(),
-  });
+  const { data: workersData, isLoading } = workersQueries.useWorkerMachines(showDemoData, DEMO_WORKERS_DATA);
 
   return (
     <div className="flex flex-col w-full gap-4">

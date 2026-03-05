@@ -1,5 +1,10 @@
-import { GitBranchType, isNil, Permission } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import {
+  GitBranchType,
+  isNil,
+  Permission,
+  PushGitRepoRequest,
+} from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -36,5 +41,24 @@ export const gitSyncHooks = {
       !isNil(gitSync) &&
       gitSync.branchType === GitBranchType.DEVELOPMENT
     );
+  },
+};
+
+export const gitSyncMutations = {
+  usePushToGit: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: async ({
+        gitSyncId,
+        request,
+      }: {
+        gitSyncId: string;
+        request: PushGitRepoRequest;
+      }) => {
+        await gitSyncApi.push(gitSyncId, request);
+      },
+      onSuccess: () => {
+        onSuccess();
+      },
+    });
   },
 };

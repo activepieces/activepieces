@@ -1,27 +1,15 @@
 import { ApFlagId, PieceSyncMode } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { RefreshCcw } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { piecesApi } from '@/features/pieces';
+import { platformPiecesMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 const SyncPiecesButton = () => {
   const { data: piecesSyncMode } = flagsHooks.useFlag<string>(
     ApFlagId.PIECES_SYNC_MODE,
   );
-  const { mutate: syncPieces, isPending } = useMutation({
-    mutationFn: async () => {
-      await piecesApi.syncFromCloud();
-    },
-    onSuccess: () => {
-      toast.success(t('Pieces synced'), {
-        description: t('Pieces have been synced from the activepieces cloud.'),
-      });
-    },
-  });
+  const { mutate: syncPieces, isPending } = platformPiecesMutations.useSyncPieces();
 
   return (
     <>

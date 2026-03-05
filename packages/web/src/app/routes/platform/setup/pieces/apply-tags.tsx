@@ -1,5 +1,4 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
@@ -21,7 +20,7 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { piecesTagsApi } from '@/features/platform-admin';
+import { piecesTagQueries, piecesTagMutations } from '@/features/platform-admin';
 
 type ApplyTagsProps = {
   selectedPieces: PieceMetadataModelSummary[];
@@ -29,13 +28,7 @@ type ApplyTagsProps = {
 };
 
 const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
-  const { data: tags = [] } = useQuery({
-    queryKey: ['tags'],
-    queryFn: async () => {
-      const response = await piecesTagsApi.list({ limit: 100 });
-      return response.data;
-    },
-  });
+  const { data: tags = [] } = piecesTagQueries.useTags();
   const [open, setOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const tagsThatHaveBeenClickedRef = useRef<Set<string>>(new Set());
@@ -52,19 +45,8 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
     );
   }, [selectedPieces, tags]);
 
-  const { mutate: applyTags } = useMutation({
-    mutationFn: async (tags: string[]) => {
-      setSelectedTags(new Set(tags));
-      toast(t('Applying Tags...'), {});
-      await piecesTagsApi.tagPieces({
-        piecesName: selectedPieces.map((piece) => piece.name),
-        tags,
-      });
-    },
-    onSuccess: () => {
-      toast(t('Tags applied.'), {});
-      onApplyTags();
-    },
+  const { mutate: applyTags } = piecesTagMutations.useApplyTags({
+    onSuccess: () => onApplyTags(),
   });
 
   const [tagOptions, setTagOptions] = useState<
@@ -170,7 +152,11 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
               <CommandItem
                 className="justify-center text-center text-primary"
                 onSelect={(e) => {
-                  applyTags(Array.from(selectedTags));
+                  toast(t('Applying Tags...'), {});
+                  applyTags({
+                    piecesName: selectedPieces.map((piece) => piece.name),
+                    tags: Array.from(selectedTags),
+                  });
                   setOpen(false);
                 }}
               >

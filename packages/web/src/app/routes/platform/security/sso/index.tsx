@@ -1,10 +1,8 @@
 import { isNil } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
 import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
@@ -20,6 +18,7 @@ import {
 } from '@/components/custom/item';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
@@ -31,20 +30,11 @@ const SSOPage = () => {
   const samlConnected = !isNil(platform.federatedAuthProviders?.saml);
   const emailAuthEnabled = platform.emailAuthEnabled;
 
-  const { mutate: toggleEmailAuthentication, isPending } = useMutation({
-    mutationFn: async () => {
-      await platformApi.update(
-        {
-          emailAuthEnabled: !platform.emailAuthEnabled,
-        },
-        platform.id,
-      );
-      await refetch();
-    },
+  const { mutate: toggleEmailAuthentication, isPending } = ssoMutations.useUpdatePlatformSso({
+    platformId: platform.id,
+    refetch,
     onSuccess: () => {
-      toast.success(t('Email authentication updated'), {
-        duration: 3000,
-      });
+      toast.success(t('Email authentication updated'), { duration: 3000 });
     },
   });
 
@@ -143,7 +133,7 @@ const SSOPage = () => {
             <ItemActions>
               <Switch
                 checked={emailAuthEnabled}
-                onCheckedChange={() => toggleEmailAuthentication()}
+                onCheckedChange={() => toggleEmailAuthentication({ emailAuthEnabled: !platform.emailAuthEnabled })}
                 disabled={isPending}
               />
             </ItemActions>

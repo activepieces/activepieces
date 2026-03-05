@@ -1,16 +1,12 @@
-import {
-  PlatformWithoutSensitiveData,
-  UpdatePlatformRequestBody,
-} from '@activepieces/shared';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
+import { ssoMutations } from '@/features/platform-admin';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,15 +51,11 @@ export const NewOAuth2Dialog = ({
     resolver: typeboxResolver(OAuth2FormValues),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
-      await platformApi.update(request, platform.id);
-      await refetch();
-    },
+  const { mutate, isPending } = ssoMutations.useUpdatePlatformSso({
+    platformId: platform.id,
+    refetch,
     onSuccess: () => {
-      toast.success(t('Single sign on settings updated'), {
-        duration: 3000,
-      });
+      toast.success(t('Single sign on settings updated'), { duration: 3000 });
       setOpen(false);
     },
   });
