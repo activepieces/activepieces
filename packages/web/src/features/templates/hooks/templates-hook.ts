@@ -13,6 +13,7 @@ export const templatesHooks = {
         const result = await templatesApi.getCategories();
         return (result?.value ?? []) as string[];
       },
+      staleTime: 5 * 60 * 1000,
     });
   },
 

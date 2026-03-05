@@ -271,8 +271,8 @@ export const RunsTable = () => {
             <div onClick={(e) => e.stopPropagation()}>
               <Button
                 disabled={isDisabled}
-                variant="outline"
-                className="h-9 w-full"
+                variant="ghost"
+                size="sm"
                 loading={archiveRuns.isPending}
                 onClick={() => {
                   archiveRuns.mutate({
@@ -322,8 +322,8 @@ export const RunsTable = () => {
                 >
                   <Button
                     disabled={isDisabled}
-                    variant="outline"
-                    className="h-9 w-full"
+                    variant="ghost"
+                    size="sm"
                     loading={cancelRuns.isPending}
                     onClick={() => {
                       cancelRuns.mutate({
@@ -366,7 +366,8 @@ export const RunsTable = () => {
                   <DropdownMenuTrigger asChild disabled={isDisabled}>
                     <Button
                       disabled={isDisabled}
-                      className="h-9 w-full"
+                      variant="ghost"
+                      size="sm"
                       loading={retryRuns.isPending}
                     >
                       <RotateCw className="size-4 mr-1" />

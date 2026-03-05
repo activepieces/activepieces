@@ -110,9 +110,10 @@ async function extractMetaInformation(requestOrMeta: FastifyRequest | MetaInform
             return undefined
         }
         const extractedUserId = await authenticationUtils(log).extractUserIdFromRequest(request)
+        const projectId = request.projectId ?? principal.projectId
         const meta: MetaInformation = {
             platformId: principal.platform.id,
-            projectId: principal.projectId,
+            projectId,
             userId: extractedUserId,
             ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }

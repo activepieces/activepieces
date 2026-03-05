@@ -109,13 +109,9 @@ export const ManagePiecesDialog = React.memo(
               {t('Cancel')}
             </Button>
             <Button
-              disabled={false}
-              loading={false}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                onSuccess();
-                setOpen(false);
                 form.handleSubmit(() => {
                   projectCollectionUtils.update(
                     authenticationSession.getProjectId()!,
@@ -126,6 +122,8 @@ export const ManagePiecesDialog = React.memo(
                       },
                     },
                   );
+                  onSuccess();
+                  setOpen(false);
                 })(e);
               }}
             >

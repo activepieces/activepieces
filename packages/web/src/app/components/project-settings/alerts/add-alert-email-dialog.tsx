@@ -59,7 +59,7 @@ const AddAlertEmailDialog = React.memo(() => {
           <DialogTrigger asChild>
             <Button
               variant="outline"
-              className="mt-4 w-full flex items-center space-x-2"
+              className="w-full flex items-center space-x-2"
               disabled={writeAlertPermission === false}
             >
               <Plus className="size-4" />
@@ -87,7 +87,7 @@ const AddAlertEmailDialog = React.memo(() => {
                   setOpen(true);
                 },
               )}
-              className="gap- grid"
+              className="gap-3 grid"
             >
               <FormField
                 control={form.control}

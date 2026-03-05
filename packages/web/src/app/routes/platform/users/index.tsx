@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { User, UserPlus } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -14,13 +14,12 @@ import { platformUserApi } from '@/api/platform-user-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/custom/data-table';
+import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { userInvitationApi, InviteUserDialog } from '@/features/members';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
-import { DeleteUserAction } from './actions/delete-user-action';
-import { EditUserAction } from './actions/edit-user-action';
-import { ToggleUserStatusAction } from './actions/toggle-user-status-action';
+import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';
 
 export type UserRowData =
@@ -173,16 +172,7 @@ export default function UsersPage() {
           description={t(
             'Manage, delete, activate and deactivate users on platform',
           )}
-        >
-          <Button
-            className="gap-2"
-            size="sm"
-            onClick={() => setInviteOpen(true)}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('Invite')}</span>
-          </Button>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No users found')}
           emptyStateTextDescription={t('Start inviting users to your project')}
@@ -195,20 +185,26 @@ export default function UsersPage() {
           }}
           hidePagination={true}
           isLoading={isLoading}
+          toolbarButtons={[
+            <Button
+              key="invite"
+              className="gap-2"
+              size="sm"
+              onClick={() => setInviteOpen(true)}
+            >
+              <UserRoundPlusIcon size={16} />
+              <span className="text-sm font-medium">{t('Invite')}</span>
+            </Button>,
+          ]}
           actions={[
-            (row) => <EditUserAction row={row} onUpdate={refetch} />,
             (row) => (
-              <ToggleUserStatusAction
-                row={row}
-                isUpdatingStatus={isUpdatingStatus}
-                onToggleStatus={handleToggleStatus}
-              />
-            ),
-            (row) => (
-              <DeleteUserAction
+              <UserActions
                 row={row}
                 isDeleting={isDeleting || isDeletingInvitation}
+                isUpdatingStatus={isUpdatingStatus}
                 onDelete={handleDelete}
+                onToggleStatus={handleToggleStatus}
+                onUpdate={refetch}
               />
             ),
           ]}

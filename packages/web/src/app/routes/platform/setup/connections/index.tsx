@@ -10,7 +10,6 @@ import {
   Trash,
   Globe,
   Search,
-  Tag,
   Activity,
   Clock,
   FolderOpen,
@@ -23,6 +22,7 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
@@ -37,6 +37,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   EditGlobalConnectionDialog,
@@ -85,28 +86,14 @@ const GlobalConnectionsTable = () => {
     unknown
   >[] = [
     {
-      accessorKey: 'pieceName',
-      size: 150,
+      accessorKey: 'displayName',
+      size: 260,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('Piece')}
+          title={t('Name')}
           icon={Puzzle}
         />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <PieceIconWithPieceName pieceName={row.original.pieceName} />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'displayName',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return (
@@ -114,7 +101,14 @@ const GlobalConnectionsTable = () => {
             title={t('External ID')}
             text={row.original.externalId || ''}
           >
-            <div className="text-left">{row.original.displayName}</div>
+            <div className="flex items-center gap-2 w-fit">
+              <PieceIconWithPieceName
+                pieceName={row.original.pieceName}
+                showTooltip={false}
+                size="sm"
+              />
+              <span>{row.original.displayName}</span>
+            </div>
           </CopyTextTooltip>
         );
       },
@@ -244,7 +238,10 @@ const GlobalConnectionsTable = () => {
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
       {
-        render: (_, resetSelection) => {
+        render: (
+          _selectedRows: RowDataWithActions<AppConnectionWithoutSensitiveData>[],
+          resetSelection: () => void,
+        ) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <ConfirmationDeleteDialog
@@ -267,12 +264,12 @@ const GlobalConnectionsTable = () => {
               >
                 {selectedRows.length > 0 && (
                   <Button
-                    className="w-full mr-2"
+                    variant="ghost"
                     size="sm"
+                    className="text-destructive hover:text-destructive"
                     disabled={!userHasPermissionToWriteAppConnection}
-                    variant="destructive"
                   >
-                    <Trash className="mr-2 w-4" />
+                    <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
@@ -282,7 +279,25 @@ const GlobalConnectionsTable = () => {
         },
       },
     ],
-    [bulkDeleteGlobalConnections, selectedRows, refresh],
+    [bulkDeleteGlobalConnections, selectedRows],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <NewConnectionDialog
+        key="new-connection"
+        isGlobalConnection={true}
+        onConnectionCreated={() => {
+          setRefresh(refresh + 1);
+          refetchGlobalConnections();
+        }}
+      >
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          {t('New Connection')}
+        </AnimatedIconButton>
+      </NewConnectionDialog>,
+    ],
+    [refresh],
   );
 
   return (
@@ -301,19 +316,7 @@ const GlobalConnectionsTable = () => {
             'Manage platform-wide connections to external systems.',
           )}
           title={t('Global Connections')}
-        >
-          <NewConnectionDialog
-            isGlobalConnection={true}
-            onConnectionCreated={() => {
-              setRefresh(refresh + 1);
-              refetchGlobalConnections();
-            }}
-          >
-            <Button variant="default" size="sm">
-              {t('New Connection')}
-            </Button>
-          </NewConnectionDialog>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No global connections found')}
           emptyStateTextDescription={t(
@@ -327,6 +330,7 @@ const GlobalConnectionsTable = () => {
           selectColumn={true}
           onSelectedRowsChange={setSelectedRows}
           bulkActions={bulkActions}
+          toolbarButtons={toolbarButtons}
         />
       </LockedFeatureGuard>
     </div>
