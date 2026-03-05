@@ -1,7 +1,5 @@
 # pieces-photoroom
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-photoroom` to build the library.
+Run `turbo run build --filter=@activepieces/piece-photoroom` to build the library.
