@@ -1,4 +1,5 @@
 import {
+	DynamicPropsValue,
 	Property,
 	createAction,
 } from '@activepieces/pieces-framework';
@@ -18,17 +19,21 @@ export const updateRecordAction = createAction({
 			description: 'The ID of the record to update (e.g. recXXXXXXX).',
 			required: true,
 		}),
-		fields: Property.Json({
-			displayName: 'Fields',
-			description:
-				'A JSON object of field name/value pairs to update. Example: { "Status": "Done" }',
-			required: true,
-		}),
+		fields: TeableCommon.fields,
 	},
 	async run(context) {
-		const { table_id, recordId, fields } = context.propsValue;
+		const { table_id, recordId } = context.propsValue;
+		const dynamicFields: DynamicPropsValue = context.propsValue.fields;
+
+		const fields: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(dynamicFields)) {
+			if (value !== undefined && value !== '') {
+				fields[key] = value;
+			}
+		}
+
 		const client = makeClient(context.auth.props);
-		return await client.updateRecord(table_id, recordId, { fields });
+		return await client.updateRecord(table_id, recordId, { record: { fields } });
 	},
 });
 
