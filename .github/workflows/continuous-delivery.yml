@@ -128,7 +128,7 @@ jobs:
       - name: Get staging image tag from Kamal
         id: image
         run: |
-          TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal app version 2>/dev/null | tail -1 | tr -d \"[:space:]\"; exit"' | grep -v "^Identity\|^Warning\|^Connection\|^exit" | tail -1)
+          TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal app version 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta' | head -1)
           echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Deploy App to production
