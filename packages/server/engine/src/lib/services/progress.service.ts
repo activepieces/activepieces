@@ -1,5 +1,5 @@
 import { promisify } from 'node:util'
-import { gzip as gzipCallback } from 'node:zlib'
+import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
 import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
@@ -12,7 +12,7 @@ import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 
 
-const gzip = promisify(gzipCallback)
+const zstdCompress = promisify(zstdCompressCallback)
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
@@ -119,7 +119,7 @@ export const progressService = {
                     tags: Array.from(flowExecutorContext.tags),
                 },
             })
-            const executionState = await gzip(serialized)
+            const executionState = await zstdCompress(serialized)
            
             const logsUploadUrl = engineConstants.logsUploadUrl
             if (isNil(logsUploadUrl)) {
