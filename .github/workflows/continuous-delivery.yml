@@ -13,6 +13,7 @@ on:
         type: choice
         options:
           - deploy-staging         # Re-deploy to staging (e.g., after infra change)
+          - deploy-staging-skip-freeze  # Deploy to staging, ignoring the freeze window
           - promote-to-production  # Hotfix: promote staging to prod immediately
           - weekly-release         # Trigger official release manually
 
@@ -40,7 +41,7 @@ jobs:
     needs: [check-freeze]
     if: |
       (github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy-staging')
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze'))
     runs-on: depot-ubuntu-24.04
     concurrency:
       group: deploy-staging
