@@ -178,7 +178,8 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
                 standardError: stdError,
             },
         }))
-    } else if (isLogSizeExceeded) {
+    }
+    else if (isLogSizeExceeded) {
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED,
             params: {
@@ -186,7 +187,8 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
                 standardError: stdError,
             },
         }))
-    } else {
+    }
+    else {
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_INTERNAL_ERROR,
             params: {
