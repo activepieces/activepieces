@@ -123,7 +123,7 @@ export const AutomationsTableRow = ({
       <div
         className={cn(
           'w-8 shrink-0 flex items-center justify-center',
-          item.type === 'folder' && 'mr-1'
+          item.type === 'folder' && 'mr-1',
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -139,7 +139,7 @@ export const AutomationsTableRow = ({
                     'h-4 w-4',
                     isPinned
                       ? 'text-yellow-500 fill-yellow-500'
-                      : 'text-muted-foreground/40 hover:text-muted-foreground'
+                      : 'text-muted-foreground/40 hover:text-muted-foreground',
                   )}
                 />
               </button>

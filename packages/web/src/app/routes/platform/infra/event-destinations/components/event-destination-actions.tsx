@@ -50,7 +50,7 @@ const EventDestinationActions = ({
           <ConfirmationDeleteDialog
             title={t('Delete Destination')}
             message={t(
-              'Deleting this destination will stop all event notifications to this endpoint.'
+              'Deleting this destination will stop all event notifications to this endpoint.',
             )}
             entityName="destination"
             buttonText={t('Delete')}

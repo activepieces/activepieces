@@ -26,7 +26,7 @@ export function ProjectMemberCard({
   const { refetch } = projectMembersHooks.useProjectMembers();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRemoveMember = checkAccess(
-    Permission.WRITE_PROJECT_MEMBER
+    Permission.WRITE_PROJECT_MEMBER,
   );
   const { project } = projectCollectionUtils.useCurrentProject();
   const deleteMember = async () => {
@@ -70,7 +70,7 @@ export function ProjectMemberCard({
             <ConfirmationDeleteDialog
               title={t('Remove Member')}
               message={t(
-                'This member will lose access to the project immediately.'
+                'This member will lose access to the project immediately.',
               )}
               mutationFn={() => deleteMember()}
               entityName={`${member.user.firstName} ${member.user.lastName}`}

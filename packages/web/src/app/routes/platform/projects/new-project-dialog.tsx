@@ -57,7 +57,7 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
           <DialogTitle>{t('Create Project')}</DialogTitle>
           <DialogDescription>
             {t(
-              'Set up a new project to organize your automations and connections.'
+              'Set up a new project to organize your automations and connections.',
             )}
           </DialogDescription>
         </DialogHeader>
@@ -99,7 +99,7 @@ const NewProjectForm = ({
           minLength: 1,
           errorMessage: t('Name is required'),
         }),
-      })
+      }),
     ),
     defaultValues: {
       globalConnectionExternalIds: preselectedConnectionExternalIds,
@@ -117,7 +117,7 @@ const NewProjectForm = ({
     (error) => {
       console.error(error);
       internalErrorToast();
-    }
+    },
   );
 
   return (

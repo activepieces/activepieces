@@ -137,7 +137,7 @@ function McpToolTestingDialog({
               const cleanedData = Object.fromEntries(
                 Object.entries(data)
                   .filter(([key, _]) => key.trim() !== '')
-                  .map(([key, value]) => [fixProperty(key), value])
+                  .map(([key, value]) => [fixProperty(key), value]),
               );
               saveMockAsSampleData(cleanedData);
             })}
@@ -172,7 +172,7 @@ function McpToolTestingDialog({
                             )}
                           </div>
                         );
-                      }
+                      },
                     )}
                   </div>
                 ) : (
