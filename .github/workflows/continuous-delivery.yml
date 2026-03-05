@@ -40,8 +40,9 @@ jobs:
   build-image:
     needs: [check-freeze]
     if: |
-      (github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze'))
+      always() &&
+      ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
+       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
     runs-on: depot-ubuntu-24.04
     concurrency:
       group: deploy-staging
