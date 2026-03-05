@@ -10,7 +10,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { PencilIcon, Plus, TrashIcon } from 'lucide-react';
 import { useState } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { Resolver, useForm, UseFormReturn } from 'react-hook-form';
 import * as z from 'zod';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -370,7 +370,7 @@ const CreateReleaseDialog = ({
   diffRequest,
 }: CreateReleaseDialogProps) => {
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema as never) as Resolver<FormData>,
     defaultValues: {
       name: defaultName,
       description: '',

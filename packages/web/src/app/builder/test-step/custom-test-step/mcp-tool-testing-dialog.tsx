@@ -92,8 +92,11 @@ function McpToolTestingDialog({
         return acc;
       }, {} as Record<string, { type: string; message: string }>);
 
+      if (Object.keys(errors).length === 0) {
+        return { values, errors: {} as Record<string, never> };
+      }
       return {
-        values: Object.keys(errors).length === 0 ? values : {},
+        values: {} as Record<string, never>,
         errors,
       };
     },

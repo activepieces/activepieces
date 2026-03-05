@@ -145,14 +145,14 @@ export const flowRunUtils = {
           variant: 'success',
           Icon: CircleCheck,
           text: t('Succeeded'),
-          extraClassName: 'text-green-700 dark:text-green-200',
+          extraClassName: 'text-success-700 dark:text-success-200',
         };
       case StepOutputStatus.FAILED:
         return {
           variant: 'error',
           Icon: CircleAlert,
           text: t('Failed'),
-          extraClassName: 'text-red-700 dark:text-red-200',
+          extraClassName: 'text-destructive-700 dark:text-destructive-200',
         };
     }
   },
@@ -161,9 +161,9 @@ export const flowRunUtils = {
     variant: 'default' | 'success' | 'error' | 'warning',
   ) {
     return cn('text-xs   border rounded-md leading-none', {
-      'text-green-800 bg-green-50 border-green-200 dark:text-green-200 dark:bg-green-900 dark:border-green-800':
+      'text-success-800 bg-success-50 border-success-200 dark:text-success-200 dark:bg-success-900 dark:border-success-800':
         variant === 'success',
-      'text-red-800 bg-red-50  border-red-200 dark:text-red-200 dark:bg-red-900 dark:border-red-800':
+      'text-destructive-800 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800':
         variant === 'error',
       'text-amber-800 bg-amber-50 border-amber-200 dark:text-amber-600 dark:bg-amber-950 dark:border-amber-900':
         variant === 'warning',

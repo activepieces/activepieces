@@ -56,7 +56,6 @@ interface RoleSelectorProps {
   disabled?: boolean;
   placeholder?: string;
   roles?: Array<{ name: string }>;
-  showDescriptionInTrigger?: boolean;
 }
 
 export const RoleSelector = ({
@@ -66,7 +65,6 @@ export const RoleSelector = ({
   disabled = false,
   placeholder,
   roles = [],
-  showDescriptionInTrigger = false,
 }: RoleSelectorProps) => {
   const isPlatform = type === 'platform';
 
@@ -88,18 +86,9 @@ export const RoleSelector = ({
 
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-      <SelectTrigger className="h-auto py-2">
+      <SelectTrigger className="w-full">
         {selectedRole ? (
-          showDescriptionInTrigger ? (
-            <div className="flex flex-col items-start gap-0.5 text-left w-full">
-              <span className="font-normal">{selectedRole.label}</span>
-              <span className="text-xs text-muted-foreground font-normal whitespace-normal">
-                {selectedRole.description}
-              </span>
-            </div>
-          ) : (
-            <span className="font-normal">{selectedRole.label}</span>
-          )
+          <span className="font-normal">{selectedRole.label}</span>
         ) : (
           <SelectValue placeholder={placeholder || t('Select Role')} />
         )}

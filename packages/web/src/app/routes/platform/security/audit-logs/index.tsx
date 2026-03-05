@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   CheckIcon,
+  Eye,
   Folder,
   History,
   Key,
@@ -16,11 +17,11 @@ import {
   Users,
   Wand,
   Workflow,
-  Database,
   FileText,
   User,
   Clock,
 } from 'lucide-react';
+import { Fragment, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -33,6 +34,15 @@ import {
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import {
   Tooltip,
   TooltipContent,
@@ -47,6 +57,10 @@ import { formatUtils } from '@/lib/format-utils';
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
+  const [selectedEvent, setSelectedEvent] = useState<ApplicationEvent | null>(
+    null,
+  );
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
 
@@ -143,37 +157,34 @@ export default function AuditLogsPage() {
           filters={filters}
           columns={[
             {
-              accessorKey: 'resource',
-              size: 120,
+              accessorKey: 'action',
+              size: 180,
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
-                  title={t('Resource')}
-                  icon={Database}
+                  title={t('Action')}
+                  icon={Wand}
                 />
               ),
               cell: ({ row }) => {
                 const icon = convertToIcon(row.original);
-                if (isNil(icon?.icon)) {
-                  return <div className="text-left"></div>;
-                }
                 return (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-left flex items-center gap-2">
-                        {icon.icon} {icon.tooltip}
+                  <div className="text-left flex items-center gap-2">
+                    {!isNil(icon?.icon) && (
+                      <span className="text-muted-foreground shrink-0">
+                        {icon.icon}
                       </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {icon.tooltip}
-                    </TooltipContent>
-                  </Tooltip>
+                    )}
+                    {formatUtils.convertEnumToHumanReadable(
+                      row.original.action,
+                    )}
+                  </div>
                 );
               },
             },
             {
               accessorKey: 'details',
-              size: 200,
+              size: 320,
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
@@ -191,7 +202,7 @@ export default function AuditLogsPage() {
             },
             {
               accessorKey: 'userId',
-              size: 180,
+              size: 200,
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
@@ -206,28 +217,8 @@ export default function AuditLogsPage() {
               },
             },
             {
-              accessorKey: 'action',
-              size: 150,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Action')}
-                  icon={Wand}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    {formatUtils.convertEnumToHumanReadable(
-                      row.original.action,
-                    )}
-                  </div>
-                );
-              },
-            },
-            {
               accessorKey: 'projectId',
-              size: 150,
+              size: 130,
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
@@ -250,7 +241,7 @@ export default function AuditLogsPage() {
             },
             {
               accessorKey: 'created',
-              size: 150,
+              size: 110,
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
@@ -266,10 +257,114 @@ export default function AuditLogsPage() {
                 );
               },
             },
+            {
+              id: 'view',
+              size: 50,
+              cell: ({ row }) => (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => {
+                    setSelectedEvent(row.original);
+                    setIsSheetOpen(true);
+                  }}
+                >
+                  <Eye className="size-4 text-muted-foreground" />
+                </Button>
+              ),
+            },
           ]}
           page={auditLogsData}
           isLoading={isLoading}
         />
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
+            <SheetHeader className="px-6 py-4 border-b shrink-0">
+              <SheetTitle className="text-base">
+                {formatUtils.convertEnumToHumanReadable(
+                  selectedEvent?.action ?? '',
+                )}
+              </SheetTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {selectedEvent && convertToDetails(selectedEvent)}
+              </p>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-6 py-5 flex flex-col gap-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t('Who & When')}
+                </p>
+                <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+                  {selectedEvent?.userEmail && (
+                    <>
+                      <span className="text-muted-foreground">
+                        {t('Performed By')}
+                      </span>
+                      <span className="font-medium">
+                        {selectedEvent.userEmail}
+                      </span>
+                    </>
+                  )}
+                  {selectedEvent?.projectDisplayName && (
+                    <>
+                      <span className="text-muted-foreground">
+                        {t('Project')}
+                      </span>
+                      <span className="font-medium">
+                        {selectedEvent.projectDisplayName}
+                      </span>
+                    </>
+                  )}
+                  {selectedEvent?.ip && (
+                    <>
+                      <span className="text-muted-foreground">
+                        {t('IP Address')}
+                      </span>
+                      <span className="font-medium">{selectedEvent.ip}</span>
+                    </>
+                  )}
+                  <span className="text-muted-foreground">{t('Created')}</span>
+                  <span className="font-medium">
+                    {selectedEvent && (
+                      <FormattedDate date={new Date(selectedEvent.created)} />
+                    )}
+                  </span>
+                </div>
+              </div>
+              {selectedEvent &&
+                extractEventDetails(selectedEvent).length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="px-6 py-5 flex flex-col gap-4">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {t('Event Details')}
+                      </p>
+                      <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+                        {extractEventDetails(selectedEvent).map(
+                          ({ label, value }) => (
+                            <Fragment key={label}>
+                              <span className="text-muted-foreground">
+                                {label}
+                              </span>
+                              <span className="font-medium">{value}</span>
+                            </Fragment>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              <Separator />
+              <div className="px-6 py-5 flex flex-col gap-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t('Full Payload')}
+                </p>
+                <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </LockedFeatureGuard>
   );
@@ -321,4 +416,137 @@ function convertToIcon(event: ApplicationEvent) {
   }
 }
 
-const convertToDetails = summarizeApplicationEvent;
+function convertToDetails(event: ApplicationEvent): string {
+  switch (event.action) {
+    case ApplicationEventName.FLOW_RUN_STARTED:
+      return `Flow run started in ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.environment,
+      )} environment`;
+    case ApplicationEventName.FLOW_RUN_FINISHED:
+      return `Flow run finished — ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.status,
+      )}`;
+    case ApplicationEventName.FLOW_RUN_RESUMED:
+      return `Flow run resumed in ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.environment,
+      )} environment`;
+    case ApplicationEventName.FLOW_CREATED:
+      return t('A new flow was created');
+    case ApplicationEventName.FLOW_DELETED:
+      return `Flow "${event.data.flowVersion.displayName}" was deleted`;
+    default:
+      return summarizeApplicationEvent(event) ?? '';
+  }
+}
+
+function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
+  switch (event.action) {
+    case ApplicationEventName.FLOW_RUN_STARTED:
+    case ApplicationEventName.FLOW_RUN_FINISHED:
+    case ApplicationEventName.FLOW_RUN_RESUMED: {
+      const { flowRun } = event.data;
+      const rows: EventDetailRow[] = [
+        {
+          label: t('Status'),
+          value: formatUtils.convertEnumToHumanReadable(flowRun.status),
+        },
+        {
+          label: t('Environment'),
+          value: formatUtils.convertEnumToHumanReadable(flowRun.environment),
+        },
+      ];
+      if (flowRun.triggeredBy) {
+        rows.push({
+          label: t('Triggered By'),
+          value: formatUtils.convertEnumToHumanReadable(flowRun.triggeredBy),
+        });
+      }
+      if (flowRun.startTime) {
+        rows.push({
+          label: t('Start Time'),
+          value: new Date(flowRun.startTime).toLocaleString(),
+        });
+      }
+      if (flowRun.finishTime) {
+        rows.push({
+          label: t('Finish Time'),
+          value: new Date(flowRun.finishTime).toLocaleString(),
+        });
+      }
+      return rows;
+    }
+    case ApplicationEventName.FLOW_CREATED:
+      return [];
+    case ApplicationEventName.FLOW_DELETED:
+    case ApplicationEventName.FLOW_UPDATED:
+      return [{ label: t('Flow'), value: event.data.flowVersion.displayName }];
+    case ApplicationEventName.CONNECTION_UPSERTED:
+    case ApplicationEventName.CONNECTION_DELETED: {
+      const { connection } = event.data;
+      return [
+        { label: t('Connection'), value: connection.displayName },
+        { label: t('Piece'), value: connection.pieceName },
+        {
+          label: t('Type'),
+          value: formatUtils.convertEnumToHumanReadable(connection.type),
+        },
+        {
+          label: t('Status'),
+          value: formatUtils.convertEnumToHumanReadable(connection.status),
+        },
+      ];
+    }
+    case ApplicationEventName.FOLDER_CREATED:
+    case ApplicationEventName.FOLDER_UPDATED:
+    case ApplicationEventName.FOLDER_DELETED:
+      return [{ label: t('Folder'), value: event.data.folder.displayName }];
+    case ApplicationEventName.USER_SIGNED_IN:
+    case ApplicationEventName.USER_PASSWORD_RESET:
+    case ApplicationEventName.USER_EMAIL_VERIFIED:
+      return [];
+    case ApplicationEventName.USER_SIGNED_UP:
+      return [
+        {
+          label: t('Source'),
+          value: formatUtils.convertEnumToHumanReadable(event.data.source),
+        },
+      ];
+    case ApplicationEventName.SIGNING_KEY_CREATED:
+      return [
+        { label: t('Key Name'), value: event.data.signingKey.displayName },
+      ];
+    case ApplicationEventName.PROJECT_ROLE_CREATED:
+    case ApplicationEventName.PROJECT_ROLE_UPDATED:
+    case ApplicationEventName.PROJECT_ROLE_DELETED: {
+      const { projectRole } = event.data;
+      return [
+        { label: t('Role'), value: projectRole.name },
+        {
+          label: t('Permissions'),
+          value: projectRole.permissions
+            .map((p) => formatUtils.convertEnumToHumanReadable(p))
+            .join(', '),
+        },
+      ];
+    }
+    case ApplicationEventName.PROJECT_RELEASE_CREATED: {
+      const { release } = event.data;
+      const rows: EventDetailRow[] = [
+        { label: t('Release'), value: release.name },
+        {
+          label: t('Type'),
+          value: formatUtils.convertEnumToHumanReadable(release.type),
+        },
+      ];
+      if (release.description) {
+        rows.push({ label: t('Description'), value: release.description });
+      }
+      return rows;
+    }
+  }
+}
+
+type EventDetailRow = {
+  label: string;
+  value: string;
+};

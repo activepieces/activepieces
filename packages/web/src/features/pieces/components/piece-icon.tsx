@@ -2,7 +2,6 @@ import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
 import { ImageWithColorBackground } from '@/components/custom/image-with-color-background';
-import ImageWithFallback from '@/components/custom/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -15,10 +14,6 @@ const pieceIconVariants = cva(
   'flex rounded-md items-center justify-center bg-background  ',
   {
     variants: {
-      circle: {
-        true: 'rounded-full p-1',
-        false: '',
-      },
       size: {
         xxl: 'size-[64px] min-w-[64px] min-h-[64px]',
         xl: 'size-[48px] min-w-[48px] min-h-[48px]',
@@ -48,7 +43,7 @@ const pieceIconVariantsWithPadding = cva('', {
   },
 });
 
-interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
+interface PieceIconProps extends VariantProps<typeof pieceIconVariants> {
   displayName?: string;
   logoUrl?: string;
   showTooltip: boolean;
@@ -61,42 +56,32 @@ const PieceIcon = React.memo(
     logoUrl,
     border,
     size,
-    circle = false,
     showTooltip,
     background,
-  }: PieceIconCircleProps) => {
+  }: PieceIconProps) => {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <div
             className={cn(
-              pieceIconVariants({ border, size, circle }),
+              pieceIconVariants({ border, size }),
               'overflow-hidden',
             )}
             style={background ? { backgroundColor: background } : undefined}
           >
-            {}
             {logoUrl ? (
-              circle ? (
-                <ImageWithFallback
-                  src={logoUrl}
-                  alt={displayName}
-                  className={cn('object-contain w-full h-full p-0.5')}
-                />
-              ) : (
-                <ImageWithColorBackground
-                  src={logoUrl}
-                  alt={displayName}
-                  className={cn(
-                    pieceIconVariantsWithPadding({ size }),
-                    'object-contain w-full h-full',
-                  )}
-                  key={logoUrl}
-                  fallback={<Skeleton className="rounded-full w-full h-full" />}
-                />
-              )
+              <ImageWithColorBackground
+                src={logoUrl}
+                alt={displayName}
+                className={cn(
+                  pieceIconVariantsWithPadding({ size }),
+                  'object-contain w-full h-full',
+                )}
+                key={logoUrl}
+                fallback={<Skeleton className="rounded-md w-full h-full" />}
+              />
             ) : (
-              <Skeleton className="rounded-full w-full h-full" />
+              <Skeleton className="rounded-md w-full h-full" />
             )}
           </div>
         </TooltipTrigger>

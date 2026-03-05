@@ -65,19 +65,19 @@ export const AppSidebarHeader = () => {
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
+  const branding = flagsHooks.useWebsiteBranding();
 
   if (!showSwitcher) {
     return (
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            {state === 'collapsed' ? (
-              <SidebarLogoCollapsed />
-            ) : (
-              <SidebarLogoFull />
-            )}
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="pb-0">
+        <div className="w-full flex items-center gap-2">
+          <SidebarLogoCollapsed linkTo={defaultRoute} />
+          {state !== 'collapsed' && (
+            <h1 className="truncate text-sm font-medium">
+              {branding.websiteName}
+            </h1>
+          )}
+        </div>
       </SidebarHeader>
     );
   }

@@ -23,7 +23,13 @@ import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
-import { FieldErrors, useForm } from 'react-hook-form';
+import {
+  FieldErrors,
+  Resolver,
+  ResolverOptions,
+  ResolverResult,
+  useForm,
+} from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -94,10 +100,18 @@ export const UpsertAIProviderDialogContent = ({
   );
 
   const form = useForm<CreateAIProviderRequest>({
-    resolver: (values, context, options) => {
+    resolver: ((
+      values: CreateAIProviderRequest,
+      context: unknown,
+      options: ResolverOptions<CreateAIProviderRequest>,
+    ) => {
       const originalResolve = typeboxResolver(
         createFormSchema(provider, !isNil(providerId)),
-      );
+      ) as unknown as (
+        values: CreateAIProviderRequest,
+        context: unknown,
+        options: ResolverOptions<CreateAIProviderRequest>,
+      ) => Promise<ResolverResult<CreateAIProviderRequest>>;
       if (values.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         if (
           values.config.models.some((m) =>
@@ -131,13 +145,13 @@ export const UpsertAIProviderDialogContent = ({
           if (Object.keys(errors).length > 0) {
             return {
               errors,
-              values: {},
+              values: {} as Record<string, never>,
             };
           }
         }
       }
       return originalResolve(values, context, options);
-    },
+    }) as Resolver<CreateAIProviderRequest>,
     defaultValues: {
       provider,
       displayName: defaultDisplayName,

@@ -1,162 +1,111 @@
-import {
-  ProjectMemberWithUser,
-  assertNotNullOrUndefined,
-  isNil,
-} from '@activepieces/shared';
+import { ProjectMemberWithUser, ProjectRole } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Ellipsis, User } from 'lucide-react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Loader2, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
-import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from '@/components/custom/item';
+import { UserAvatar } from '@/components/custom/user-avatar';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { projectRoleApi } from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
 
-export const ProjectRoleUsersTable = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { projectRoleId } = useParams();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  const { data: projectRole, isLoading: isProjectRoleLoading } = useQuery({
-    queryKey: ['project-role', projectRoleId],
-    queryFn: () => {
-      assertNotNullOrUndefined(projectRoleId, 'projectRoleId is required');
-      return projectRoleApi.get(projectRoleId);
-    },
-    enabled: platform.plan.projectRolesEnabled && !isNil(projectRoleId),
-  });
-
+export const ProjectRoleUsersSheet = ({
+  projectRole,
+  isOpen,
+  onOpenChange,
+}: ProjectRoleUsersSheetProps) => {
   const { data, isLoading } = useQuery({
-    queryKey: ['users-with-project-roles', projectRoleId],
+    queryKey: ['users-with-project-roles', projectRole?.id],
     queryFn: () => {
-      const cursor = searchParams.get('cursor');
-      const limit = searchParams.get('limit')
-        ? parseInt(searchParams.get('limit')!)
-        : 10;
-      return projectRoleApi.listProjectMembers(projectRoleId!, {
-        cursor: cursor ?? undefined,
-        limit: limit,
+      return projectRoleApi.listProjectMembers(projectRole!.id, {
+        cursor: undefined,
+        limit: 10,
       });
     },
-    enabled: platform.plan.projectRolesEnabled,
+    enabled: isOpen && projectRole !== null,
   });
 
-  const columns: ColumnDef<RowDataWithActions<ProjectMemberWithUser>>[] = [
-    {
-      accessorKey: 'email',
-      accessorFn: (row) => row.user.email,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Email')} />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">{row.original.user.email}</div>
-      ),
-    },
-    {
-      accessorKey: 'project',
-      accessorFn: (row) => row.project.displayName,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Project')} />
-      ),
-      cell: ({ row }) => (
-        <div
-          className="text-left cursor-pointer hover:underline hover:text-primary"
-          onClick={() => {
-            navigate(`/projects/${row.original.project.id}/settings/team`);
-          }}
-        >
-          {row.original.project.displayName}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'projectRole',
-      accessorFn: (row) => row.projectRole.name,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('First Name')}
-          className="text-center"
-        />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">{row.original.projectRole.name}</div>
-      ),
-    },
-    {
-      accessorKey: 'lastName',
-      accessorFn: (row) => row.user.lastName,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Last Name')} />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">{row.original.user.lastName}</div>
-      ),
-    },
-  ];
+  const users = data?.data ?? [];
 
   return (
-    <LockedFeatureGuard
-      featureKey="TEAM"
-      locked={!platform.plan.projectRolesEnabled}
-      lockTitle={t('Project Role Management')}
-      lockDescription={t(
-        'Define custom roles and permissions to control what your team members can access and modify',
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
-    >
-      <div className="flex-colw-full">
-        <DashboardPageHeader
-          title={`${projectRole?.name} ${t('Role')} ${t('Users')}`}
-          description={t('View the users assigned to this role')}
-        />
-        <Breadcrumb className="mb-4">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                onClick={() => navigate('/platform/security/project-roles')}
-                className="cursor-pointer hover:text-primary hover:underline"
-              >
-                {t('Roles')}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              {!isNil(projectRole?.name) ? (
-                <BreadcrumbPage>{projectRole?.name}</BreadcrumbPage>
-              ) : (
-                <BreadcrumbPage>
-                  <Ellipsis className="text-muted-foreground" />
-                </BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
-        <DataTable
-          emptyStateTextTitle={t('No users found')}
-          emptyStateTextDescription={t(
-            'Starting by assigning users to this role',
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[600px] sm:max-w-[600px] flex flex-col p-0">
+        <SheetHeader className="px-6 py-4 border-b shrink-0">
+          <SheetTitle className="text-base">
+            {projectRole?.name} {t('Role')} {t('Users')}
+          </SheetTitle>
+          <SheetDescription>
+            {t('View the users assigned to this role')}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex-1 overflow-hidden">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="size-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : users.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+              <Users className="size-14" />
+              <p className="text-sm font-medium">{t('No users found')}</p>
+              <p className="text-xs">
+                {t('Start by assigning users to this role')}
+              </p>
+            </div>
+          ) : (
+            <VirtualizedScrollArea
+              items={users}
+              estimateSize={() => 64}
+              getItemKey={(index) => users[index].id}
+              renderItem={(member) => renderUserItem(member)}
+            />
           )}
-          emptyStateIcon={<User className="size-14" />}
-          columns={columns}
-          page={data}
-          isLoading={isLoading || isProjectRoleLoading}
-        />
-      </div>
-    </LockedFeatureGuard>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
+};
+
+function renderUserItem(member: ProjectMemberWithUser) {
+  const { user, project } = member;
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+  return (
+    <Item size="sm">
+      <UserAvatar
+        name={fullName}
+        email={user.email}
+        imageUrl={user.imageUrl}
+        size={36}
+        disableTooltip
+      />
+      <ItemContent>
+        <ItemTitle>{fullName}</ItemTitle>
+        <ItemDescription>
+          {user.email}
+          {' · '}
+          <Link to={`/projects/${project.id}/settings/team`}>
+            {project.displayName}
+          </Link>
+        </ItemDescription>
+      </ItemContent>
+    </Item>
+  );
+}
+
+type ProjectRoleUsersSheetProps = {
+  projectRole: ProjectRole | null;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 };
