@@ -3,6 +3,7 @@ import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { PieceTagEntity } from './pieces/piece-tag.entity'
 import { TagEntity } from './tag-entity'
 
 
@@ -34,6 +35,12 @@ export const tagService = {
         }
         await repo().upsert({ id: apId(), name: clonedName, platformId }, ['name', 'platformId'])
         return repo().findOneByOrFail({ name: clonedName, platformId })
+    },
+
+    async delete({ platformId, tagId }: { platformId: string, tagId: string }): Promise<void> {
+        const pieceTagRepo = repoFactory(PieceTagEntity)
+        await pieceTagRepo().delete({ tagId })
+        await repo().delete({ id: tagId, platformId })
     },
 
     async list({ platformId, request }: { platformId: string, request: ListTagsRequest }): Promise<SeekPage<Tag>> {

@@ -18,4 +18,7 @@ export const piecesTagsApi = {
   tagPieces(request: SetPieceTagsRequest) {
     return api.post<void>('/v1/tags/pieces', request);
   },
+  delete(tagID: string) {
+    return api.delete<void>(`/v1/tags/${tagID}`);
+  },
 };
