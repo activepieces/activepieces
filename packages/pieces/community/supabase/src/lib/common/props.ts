@@ -240,6 +240,8 @@ export const supabaseCommon = {
                   dataType = 'uuid';
                 } else if (columnDef.format === 'bigint') {
                   dataType = 'bigint';
+                } else if (columnDef.format === 'json' || columnDef.format === 'jsonb') {
+                  dataType = 'jsonb';
                 }
               }
             }
@@ -463,6 +465,8 @@ export const supabaseCommon = {
                   dataType = 'uuid';
                 } else if (columnDef.format === 'bigint') {
                   dataType = 'bigint';
+                } else if (columnDef.format === 'json' || columnDef.format === 'jsonb') {
+                  dataType = 'jsonb';
                 }
               }
             }
@@ -619,25 +623,40 @@ export const supabaseCommon = {
             const tableDefinition = definitions[table_name as unknown as string];
             
             if (tableDefinition && tableDefinition.properties) {
-              columns = Object.entries(tableDefinition.properties).map(([columnName, columnDef]: [string, any]) => ({
-                column_name: columnName,
-                data_type: columnDef.type || 'text',
-                is_nullable: !tableDefinition.required?.includes(columnName) ? 'YES' : 'NO',
-                column_default: columnDef.default || null
-              }));
+              columns = Object.entries(tableDefinition.properties).map(([columnName, columnDef]: [string, any]) => {
+                let dataType = columnDef.type || 'text';
+                if (columnDef.format === 'json' || columnDef.format === 'jsonb') {
+                  dataType = 'jsonb';
+                }
+                return {
+                  column_name: columnName,
+                  data_type: dataType,
+                  is_nullable: !tableDefinition.required?.includes(columnName) ? 'YES' : 'NO',
+                  column_default: columnDef.default || null
+                };
+              });
             }
           }
         }
 
         for (const column of columns) {
           if (!column.data_type || column.column_name === on_conflict) continue;
-          
+
           const description = `Type: ${column.data_type}`;
-          properties[column.column_name] = Property.LongText({
-            displayName: column.column_name,
-            description,
-            required: false
-          });
+          const dt = column.data_type.toLowerCase();
+          if (dt === 'json' || dt === 'jsonb' || dt === 'object') {
+            properties[column.column_name] = Property.Json({
+              displayName: column.column_name,
+              description,
+              required: false
+            });
+          } else {
+            properties[column.column_name] = Property.LongText({
+              displayName: column.column_name,
+              description,
+              required: false
+            });
+          }
         }
       } catch (error) {
         properties['error'] = Property.MarkDown({
