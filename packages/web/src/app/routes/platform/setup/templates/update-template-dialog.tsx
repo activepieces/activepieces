@@ -5,7 +5,6 @@ import {
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -24,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { templateUtils } from '@/features/flows';
-import { templatesApi } from '@/features/templates';
+import { templatesMutations } from '@/features/templates';
 import { api } from '@/lib/api';
 
 const UpdateFlowTemplateSchema = Type.Object({
@@ -64,12 +63,25 @@ export const UpdateTemplateDialog = ({
     resolver: typeboxResolver(UpdateFlowTemplateSchema),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['update-template', template.id],
-    mutationFn: () => {
-      const formValue = form.getValues();
+  const { mutate, isPending } = templatesMutations.useUpdateTemplate({
+    onDone: () => {
+      onDone();
+      setOpen(false);
+    },
+    onError: (error) => {
+      if (api.isError(error)) {
+        form.setError('template', {
+          message: error.message,
+        });
+      }
+    },
+  });
 
-      return templatesApi.update(template.id, {
+  const onSubmit = () => {
+    const formValue = form.getValues();
+    mutate({
+      templateId: template.id,
+      request: {
         name: formValue.displayName,
         summary: formValue.summary,
         description: formValue.description,
@@ -87,23 +99,8 @@ export const UpdateTemplateDialog = ({
               },
             ]
           : undefined,
-      });
-    },
-    onSuccess: () => {
-      onDone();
-      setOpen(false);
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        form.setError('template', {
-          message: error.message,
-        });
-      }
-    },
-  });
-
-  const onSubmit = () => {
-    mutate();
+      },
+    });
   };
 
   return (

@@ -15,12 +15,9 @@ import {
   OpenAICompatibleProviderConfig,
   OpenAIProviderAuthConfig,
   OpenAIProviderConfig,
-  UpdateAIProviderRequest,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 import {
@@ -51,7 +48,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderApi } from '@/features/platform-admin';
+import { aiProviderMutations } from '@/features/platform-admin';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
@@ -159,28 +156,14 @@ export const UpsertAIProviderDialogContent = ({
     } as CreateAIProviderRequest,
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (data: CreateAIProviderRequest): Promise<void> => {
-      if (providerId) {
-        const updateData: UpdateAIProviderRequest = {
-          displayName: data.displayName,
-          config: data.config,
-          ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
-        };
-        return aiProviderApi.update(providerId, updateData);
-      } else {
-        return aiProviderApi.upsert(data);
-      }
-    },
+  const { mutate, isPending } = aiProviderMutations.useUpsertAiProvider({
+    providerId,
     onSuccess: () => {
       setOpen(false);
       onSave();
     },
-    onError: (
-      error: AxiosError<{ message?: string; params?: { message: string } }>,
-    ) => {
+    onError: (error) => {
       const data = error.response?.data;
-
       form.setError('root.serverError', {
         type: 'manual',
         message:

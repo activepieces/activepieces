@@ -1,5 +1,4 @@
 import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
@@ -27,20 +26,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { apiKeyApi } from '@/features/platform-admin';
+import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 const ApiKeysPage = () => {
-  const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['api-keys'],
-    gcTime: 0,
-    staleTime: 0,
-    queryFn: () => apiKeyApi.list(),
-  });
+  const { data, isLoading, refetch } = apiKeyQueries.useApiKeys();
 
   const keys: ApiKeyResponseWithoutValue[] = data?.data ?? [];
 
@@ -58,11 +51,7 @@ const ApiKeysPage = () => {
         title={t('API Keys')}
         description={t('Manage API keys to access Activepieces APIs.')}
         actions={
-          <NewApiKeyDialog
-            onCreate={() =>
-              queryClient.invalidateQueries({ queryKey: ['api-keys'] })
-            }
-          >
+          <NewApiKeyDialog onCreate={() => refetch()}>
             <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New API Key')}
             </AnimatedIconButton>

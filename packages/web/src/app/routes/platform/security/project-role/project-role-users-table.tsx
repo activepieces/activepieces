@@ -1,5 +1,4 @@
 import { ProjectMemberWithUser, ProjectRole } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Loader2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -19,23 +18,17 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { projectRoleApi } from '@/features/platform-admin';
+import { projectRoleQueries } from '@/features/platform-admin';
 
 export const ProjectRoleUsersSheet = ({
   projectRole,
   isOpen,
   onOpenChange,
 }: ProjectRoleUsersSheetProps) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['users-with-project-roles', projectRole?.id],
-    queryFn: () => {
-      return projectRoleApi.listProjectMembers(projectRole!.id, {
-        cursor: undefined,
-        limit: 10,
-      });
-    },
-    enabled: isOpen && projectRole !== null,
-  });
+  const { data, isLoading } = projectRoleQueries.useProjectRoleMembers(
+    projectRole?.id,
+    isOpen && projectRole !== null,
+  );
 
   const users = data?.data ?? [];
 

@@ -1,13 +1,11 @@
 import { CreateOtpRequestBody, OtpType } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
-import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,7 +18,8 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { HttpError } from '@/lib/api';
+
+import { authMutations } from '../hooks/auth-hooks';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -40,12 +39,7 @@ const ResetPasswordForm = () => {
     },
   });
 
-  const { mutate, isPending } = useMutation<
-    void,
-    HttpError,
-    CreateOtpRequestBody
-  >({
-    mutationFn: authenticationApi.sendOtpEmail,
+  const { mutate, isPending } = authMutations.useSendOtpEmail({
     onSuccess: () => setIsSent(true),
   });
 

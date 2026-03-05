@@ -3,7 +3,6 @@ import {
   AddSigningKeyResponse,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -21,7 +20,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signingKeyApi } from '@/features/platform-admin/api/signing-key-api';
+import { signingKeyMutations } from '@/features/platform-admin/hooks/signing-key-hooks';
 
 type NewSigningKeyDialogProps = {
   children: React.ReactNode;
@@ -40,8 +39,7 @@ export const NewSigningKeyDialog = ({
     resolver: typeboxResolver(AddSigningKeyRequestBody),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => signingKeyApi.create(form.getValues()),
+  const { mutate, isPending } = signingKeyMutations.useCreateSigningKey({
     onSuccess: (key) => {
       setSigningKey(key);
       onCreate();
@@ -88,7 +86,7 @@ export const NewSigningKeyDialog = ({
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={form.handleSubmit(() => mutate())}
+              onSubmit={form.handleSubmit(() => mutate(form.getValues()))}
             >
               <FormField
                 name="displayName"
@@ -122,7 +120,7 @@ export const NewSigningKeyDialog = ({
               <Button
                 disabled={isPending || !form.formState.isValid}
                 loading={isPending}
-                onClick={() => mutate()}
+                onClick={() => mutate(form.getValues())}
               >
                 {t('Save')}
               </Button>

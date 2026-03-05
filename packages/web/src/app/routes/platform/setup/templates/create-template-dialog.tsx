@@ -5,7 +5,6 @@ import {
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -23,7 +22,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { templateUtils } from '@/features/flows';
-import { templatesApi } from '@/features/templates';
+import { templatesMutations } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 
@@ -65,42 +64,14 @@ export const CreateTemplateDialog = ({
     resolver: typeboxResolver(CreateFlowTemplateSchema),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['create-template'],
-    mutationFn: () => {
-      const formValue = form.getValues();
-      const author = currentUser
-        ? `${currentUser.firstName} ${currentUser.lastName}`
-        : 'Unknown User';
-
-      const flowTemplate: FlowVersionTemplate = {
-        ...formValue.template,
-        displayName: formValue.displayName,
-        valid: formValue.template.valid ?? true,
-      };
-
-      return templatesApi.create({
-        flows: [flowTemplate],
-        type: TemplateType.CUSTOM,
-        name: formValue.displayName,
-        summary: formValue.summary,
-        description: formValue.description,
-        tags: formValue.tags || [],
-        blogUrl: formValue.blogUrl,
-        metadata: null,
-        author,
-        categories: formValue.categories || [],
-      });
-    },
-    onSuccess: () => {
+  const { mutate, isPending } = templatesMutations.useCreateTemplate({
+    onDone: () => {
       onDone();
       setOpen(false);
     },
     onError: (error) => {
       if (api.isError(error)) {
-        form.setError('template', {
-          message: error.message,
-        });
+        form.setError('template', { message: error.message });
       }
     },
   });
@@ -113,7 +84,28 @@ export const CreateTemplateDialog = ({
       return;
     }
 
-    mutate();
+    const formValue = form.getValues();
+    const author = currentUser
+      ? `${currentUser.firstName} ${currentUser.lastName}`
+      : 'Unknown User';
+    const flowTemplate: FlowVersionTemplate = {
+      ...formValue.template,
+      displayName: formValue.displayName,
+      valid: formValue.template.valid ?? true,
+    };
+
+    mutate({
+      flows: [flowTemplate],
+      type: TemplateType.CUSTOM,
+      name: formValue.displayName,
+      summary: formValue.summary,
+      description: formValue.description,
+      tags: formValue.tags || [],
+      blogUrl: formValue.blogUrl,
+      metadata: null,
+      author,
+      categories: formValue.categories || [],
+    });
   };
 
   return (

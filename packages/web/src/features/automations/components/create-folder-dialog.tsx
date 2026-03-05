@@ -1,7 +1,5 @@
-import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -18,9 +16,8 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { foldersApi } from '@/features/folders/api/folders-api';
+import { foldersMutations } from '@/features/folders/hooks/folders-hooks';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;
@@ -48,17 +45,7 @@ export const CreateFolderDialog = ({
     resolver: typeboxResolver(CreateFolderFormSchema),
   });
 
-  const { mutate, isPending } = useMutation<
-    FolderDto,
-    Error,
-    CreateFolderFormSchema
-  >({
-    mutationFn: async (data) => {
-      return await foldersApi.create({
-        displayName: data.displayName.trim(),
-        projectId: authenticationSession.getProjectId()!,
-      });
-    },
+  const { mutate, isPending } = foldersMutations.useCreateFolder({
     onSuccess: (folder) => {
       form.reset();
       onOpenChange(false);

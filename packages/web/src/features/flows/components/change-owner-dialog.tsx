@@ -1,7 +1,6 @@
-import { FlowOperationType, PopulatedFlow } from '@activepieces/shared';
+import { PopulatedFlow } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -27,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 
-import { flowsApi } from '../api/flows-api';
+import { flowHooks } from '../hooks/flow-hooks';
 
 const ChangeOwnerFormSchema = Type.Object({
   ownerId: Type.String({
@@ -65,19 +64,7 @@ const ChangeOwnerDialog = ({
       });
     }
   }, [isDialogOpened, flow.ownerId, form]);
-  const { mutate, isPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    ChangeOwnerFormSchema
-  >({
-    mutationFn: async (data) => {
-      return await flowsApi.update(flow.id, {
-        type: FlowOperationType.UPDATE_OWNER,
-        request: {
-          ownerId: data.ownerId,
-        },
-      });
-    },
+  const { mutate: updateOwner, isPending } = flowHooks.useUpdateFlowOwner({
     onSuccess: () => {
       onOwnerChange();
       setIsDialogOpened(false);
@@ -93,7 +80,11 @@ const ChangeOwnerDialog = ({
           <DialogTitle>{t('Change Owner')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+          <form
+            onSubmit={form.handleSubmit((data) =>
+              updateOwner({ flowId: flow.id, ownerId: data.ownerId }),
+            )}
+          >
             <FormField
               control={form.control}
               name="ownerId"

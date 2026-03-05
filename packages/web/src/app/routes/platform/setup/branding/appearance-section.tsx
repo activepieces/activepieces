@@ -1,12 +1,9 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
 import { ColorPicker } from '@/components/custom/color-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { brandingMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const FromSchema = Type.Object({
@@ -46,29 +44,25 @@ export const AppearanceSection = () => {
   const iconRef = useRef<HTMLInputElement>(null);
   const faviconRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: updatePlatform, isPending } = useMutation({
-    mutationFn: async () => {
-      const logo = logoRef.current?.files?.[0];
-      const icon = iconRef.current?.files?.[0];
-      const favicon = faviconRef.current?.files?.[0];
+  const { mutate: updatePlatformBranding, isPending } =
+    brandingMutations.useUpdateAppearance({
+      platformId: platform.id,
+    });
 
-      const formdata = new FormData();
-      formdata.append('name', form.getValues().name);
-      formdata.append('primaryColor', form.getValues().color);
-      if (logo) formdata.append('fullLogo', logo);
-      if (icon) formdata.append('logoIcon', icon);
-      if (favicon) formdata.append('favIcon', favicon);
+  const updatePlatform = () => {
+    const logo = logoRef.current?.files?.[0];
+    const icon = iconRef.current?.files?.[0];
+    const favicon = faviconRef.current?.files?.[0];
 
-      await platformApi.updateWithFormData(formdata, platform.id);
-      window.location.reload();
-    },
-    onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), {
-        duration: 3000,
-      });
-      form.reset(form.getValues());
-    },
-  });
+    const formdata = new FormData();
+    formdata.append('name', form.getValues().name);
+    formdata.append('primaryColor', form.getValues().color);
+    if (logo) formdata.append('fullLogo', logo);
+    if (icon) formdata.append('logoIcon', icon);
+    if (favicon) formdata.append('favIcon', favicon);
+
+    updatePlatformBranding(formdata);
+  };
 
   return (
     <>

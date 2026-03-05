@@ -1,7 +1,5 @@
-import { Template } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -18,10 +16,10 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { flowsApi } from '@/features/flows/api/flows-api';
-import { templatesApi } from '@/features/templates/api/templates-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
+
+import { flowHooks } from '../hooks/flow-hooks';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),
@@ -42,35 +40,7 @@ const ShareTemplateDialog: React.FC<{
   });
   const openNewIndow = useNewWindow();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { mutate, isPending } = useMutation<
-    Template,
-    Error,
-    { flowId: string; description: string }
-  >({
-    mutationFn: async () => {
-      const template = await flowsApi.getTemplate(flowId, {
-        versionId: flowVersionId,
-      });
-
-      const author = currentUser
-        ? `${currentUser.firstName} ${currentUser.lastName}`
-        : 'Unknown User';
-
-      const flowTemplate = await templatesApi.create({
-        name: template.name,
-        description: shareTemplateForm.getValues().description,
-        summary: template.summary,
-        tags: template.tags,
-        blogUrl: template.blogUrl ?? undefined,
-        metadata: template.metadata,
-        author,
-        categories: template.categories,
-        type: template.type,
-        flows: template.flows,
-      });
-
-      return flowTemplate;
-    },
+  const { mutate, isPending } = flowHooks.useCreateTemplateFromFlow({
     onSuccess: (data) => {
       openNewIndow(`/templates/${data.id}`);
       setIsShareDialogOpen(false);
@@ -80,9 +50,14 @@ const ShareTemplateDialog: React.FC<{
   const onShareTemplateSubmit: SubmitHandler<{
     description: string;
   }> = (data) => {
+    const author = currentUser
+      ? `${currentUser.firstName} ${currentUser.lastName}`
+      : 'Unknown User';
     mutate({
       flowId,
+      flowVersionId,
       description: data.description,
+      author,
     });
   };
 

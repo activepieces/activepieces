@@ -1,7 +1,5 @@
-import { FolderDto } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -18,53 +16,35 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { foldersApi } from '@/features/folders/api/folders-api';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 
-type CreateFolderDialogProps = {
-  updateSearchParams: (_folderId?: string) => void;
-  refetchFolders: () => void;
-  className?: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-const CreateFolderFormSchema = Type.Object({
+import { foldersMutations } from '../hooks/folders-hooks';
+
+const RenameFolderFormSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter folder name'),
     pattern: '.*\\S.*',
   }),
 });
 
-type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
+type RenameFolderFormSchema = Static<typeof RenameFolderFormSchema>;
 
-export const CreateFolderDialog = ({
-  updateSearchParams,
+export const RenameFolderDialog = ({
+  folderId,
   refetchFolders,
   open,
   onOpenChange,
-}: CreateFolderDialogProps) => {
-  const form = useForm<CreateFolderFormSchema>({
-    resolver: typeboxResolver(CreateFolderFormSchema),
+}: RenameFolderDialogProps) => {
+  const form = useForm<RenameFolderFormSchema>({
+    resolver: typeboxResolver(RenameFolderFormSchema),
   });
 
-  const { mutate, isPending } = useMutation<
-    FolderDto,
-    Error,
-    CreateFolderFormSchema
-  >({
-    mutationFn: async (data) => {
-      return await foldersApi.create({
-        displayName: data.displayName.trim(),
-        projectId: authenticationSession.getProjectId()!,
-      });
-    },
-    onSuccess: (folder) => {
+  const { mutate, isPending } = foldersMutations.useRenameFolder({
+    onSuccess: () => {
       form.reset();
       onOpenChange(false);
-      updateSearchParams(folder.id);
       refetchFolders();
-      toast.success(t('Added folder successfully'));
+      toast.success(t('Folder renamed successfully'));
     },
     onError: (error) => {
       if (api.isError(error)) {
@@ -88,10 +68,14 @@ export const CreateFolderDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('New Folder')}</DialogTitle>
+          <DialogTitle>{t('Rename Folder')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+          <form
+            onSubmit={form.handleSubmit((data) =>
+              mutate({ folderId, displayName: data.displayName }),
+            )}
+          >
             <FormField
               control={form.control}
               name="displayName"
@@ -130,4 +114,11 @@ export const CreateFolderDialog = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+type RenameFolderDialogProps = {
+  folderId: string;
+  refetchFolders: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };

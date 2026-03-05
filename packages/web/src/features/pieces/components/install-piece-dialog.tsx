@@ -6,7 +6,6 @@ import {
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import pako from 'pako';
@@ -46,7 +45,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { piecesApi } from '../api/pieces-api';
+import { piecesMutations } from '../hooks/pieces-hooks';
 const FormSchema = Type.Object(
   {
     packageType: Type.Enum(PackageType),
@@ -118,28 +117,7 @@ const InstallPieceDialog = ({
     }
   };
 
-  const { mutate, isPending } = useMutation<void, Error, AddPieceRequestBody>({
-    mutationFn: async (data) => {
-      form.clearErrors();
-
-      if (data.packageType === PackageType.REGISTRY) {
-        if (!data.pieceName) {
-          form.setError('pieceName', {
-            message: t('Piece name is required for NPM Registry'),
-          });
-        }
-        if (!data.pieceVersion) {
-          form.setError('pieceVersion', {
-            message: t('Piece version is required for NPM Registry'),
-          });
-        }
-        if (!data.pieceName || !data.pieceVersion) {
-          throw new Error('Validation failed');
-        }
-      }
-
-      await piecesApi.install(data);
-    },
+  const { mutate, isPending } = piecesMutations.useInstallPiece({
     onSuccess: () => {
       setIsOpen(false);
       form.reset();
@@ -189,12 +167,29 @@ const InstallPieceDialog = ({
         <FormProvider {...form}>
           <form
             className="flex flex-col gap-4"
-            onSubmit={form.handleSubmit((data) =>
+            onSubmit={form.handleSubmit((data) => {
+              form.clearErrors();
+              if (data.packageType === PackageType.REGISTRY) {
+                let hasError = false;
+                if (!data.pieceName) {
+                  form.setError('pieceName', {
+                    message: t('Piece name is required for NPM Registry'),
+                  });
+                  hasError = true;
+                }
+                if (!data.pieceVersion) {
+                  form.setError('pieceVersion', {
+                    message: t('Piece version is required for NPM Registry'),
+                  });
+                  hasError = true;
+                }
+                if (hasError) return;
+              }
               mutate({
                 projectId: authenticationSession.getProjectId()!,
                 ...data,
-              } as AddPieceRequestBody),
-            )}
+              } as AddPieceRequestBody);
+            })}
           >
             <FormField
               name="packageType"
