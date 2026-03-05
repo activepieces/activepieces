@@ -106,15 +106,17 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
             method: 'GET',
             namespace: config.namespace,
         }).catch((error) => {
+            let message = error instanceof Error ? error.message : 'Unknown error'
+            message = `[${request.path}] ${message}`
             log.error({
-                message: error.message,
+                message,
                 provider: SecretManagerProviderId.HASHICORP,
                 request,
             }, '[hashicorpProvider#getSecret]')
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 params: {
-                    message: error.message,
+                    message,
                     provider: SecretManagerProviderId.HASHICORP,
                     request: { ...request, url: requestUrl },
                 },
@@ -122,15 +124,16 @@ export const hashicorpProvider = (log: FastifyBaseLogger): SecretManagerProvider
         })
         const data = response.data?.data?.data
         if (!data || !data[secretKey]) {
+            const message = `[${request.path}] No secret found at requested path`
             log.error({
-                message: 'No secret found at requested path',
+                message,
                 provider: SecretManagerProviderId.HASHICORP,
                 request,
             }, '[hashicorpProvider#getSecret]')
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 params: {
-                    message: 'No secret found at requested path',
+                    message,
                     provider: SecretManagerProviderId.HASHICORP,
                     request,
                 },

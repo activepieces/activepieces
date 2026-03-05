@@ -103,7 +103,8 @@ export const awsProvider = (log: FastifyBaseLogger): SecretManagerProvider<Secre
             if (error instanceof ActivepiecesError) {
                 throw error
             }
-            const message = error instanceof Error ? error.message : 'Unknown error'
+            let message = error instanceof Error ? error.message : 'Unknown error'
+            message = `[${request.path}] ${message}`
             log.error({
                 message,
                 provider: SecretManagerProviderId.AWS,

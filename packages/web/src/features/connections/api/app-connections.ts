@@ -1,6 +1,8 @@
 import {
   AppConnectionOwners,
   AppConnectionWithoutSensitiveData,
+  GetOAuth2AuthorizationUrlRequestBody,
+  GetOAuth2AuthorizationUrlResponse,
   ListAppConnectionOwnersRequestQuery,
   ListAppConnectionsRequestQuery,
   ReplaceAppConnectionsRequestBody,
@@ -48,6 +50,14 @@ export const appConnectionsApi = {
   ): Promise<SeekPage<AppConnectionOwners>> {
     return api.get<SeekPage<AppConnectionOwners>>(
       '/v1/app-connections/owners',
+      request,
+    );
+  },
+  getOAuth2AuthorizationUrl(
+    request: GetOAuth2AuthorizationUrlRequestBody,
+  ): Promise<GetOAuth2AuthorizationUrlResponse> {
+    return api.post<GetOAuth2AuthorizationUrlResponse>(
+      '/v1/app-connections/oauth2/authorization-url',
       request,
     );
   },

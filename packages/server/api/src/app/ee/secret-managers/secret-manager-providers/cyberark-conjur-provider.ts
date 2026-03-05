@@ -83,15 +83,17 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
             token,
             method: 'GET',
         }).catch((error) => {
+            let message = error instanceof Error ? error.message : 'Unknown error'
+            message = `[${request.path}] ${message}`
             log.error({
-                message: error.message,
+                message,
                 provider: SecretManagerProviderId.CYBERARK,
                 request,
             }, '[cyberarkConjurProvider#getSecret]')
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 params: {
-                    message: error.message,
+                    message,
                     provider: SecretManagerProviderId.CYBERARK,
                     request,
                 },
@@ -100,15 +102,16 @@ export const cyberarkConjurProvider = (log: FastifyBaseLogger): SecretManagerPro
         const data = response.data
 
         if (!data) {
+            const message = `[${request.path}] No secret found at requested path`
             log.error({
-                message: 'No secret found at requested path',
+                message,
                 provider: SecretManagerProviderId.CYBERARK,
                 request,
             }, '[cyberarkConjurProvider#getSecret]')
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
                 params: {
-                    message: 'No secret found at requested path',
+                    message,
                     provider: SecretManagerProviderId.CYBERARK,
                     request,
                 },

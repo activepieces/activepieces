@@ -5,7 +5,6 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
-  resolveValueFromProps,
   ApFlagId,
   AppConnectionType,
   OAuth2GrantType,
@@ -27,15 +26,19 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
+import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
+
+import { SecretInput } from './secret-input';
 
 function OAuth2ConnectionSettings({
   authProperty,
   oauth2App,
   piece,
   grantType,
+  isGlobalConnection,
 }: OAuth2ConnectionSettingsProps) {
   const form = useFormContext<{
     request:
@@ -87,7 +90,11 @@ function OAuth2ConnectionSettings({
               <FormItem className="flex flex-col">
                 <FormLabel>{t('Client ID')}</FormLabel>
                 <FormControl>
-                  <Input {...field} type="text" placeholder={t('Client ID')} />
+                  <SecretInput
+                    {...field}
+                    type="text"
+                    allowTogglingSecretManagerMode={isGlobalConnection}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -100,10 +107,10 @@ function OAuth2ConnectionSettings({
               <FormItem className="flex flex-col">
                 <FormLabel>{t('Client Secret')}</FormLabel>
                 <FormControl>
-                  <Input
+                  <SecretInput
                     {...field}
                     type="password"
-                    placeholder={t('Client Secret')}
+                    allowTogglingSecretManagerMode={isGlobalConnection}
                   />
                 </FormControl>
                 <FormMessage />
@@ -141,7 +148,8 @@ function OAuth2ConnectionSettings({
                   redirectUrl,
                   form.getValues().request.value.client_id,
                   form.getValues().request.value.props,
-                  authProperty,
+                  oauth2App.oauth2Type,
+                  piece.name,
                   form,
                 );
               } else {
@@ -169,7 +177,11 @@ async function openPopup(
   redirectUrl: string,
   clientId: string,
   props: Record<string, unknown> | undefined,
-  authProperty: OAuth2Property<OAuth2Props>,
+  connectionType:
+    | AppConnectionType.OAUTH2
+    | AppConnectionType.CLOUD_OAUTH2
+    | AppConnectionType.PLATFORM_OAUTH2,
+  pieceName: string,
   form: UseFormReturn<{
     request:
       | UpsertCloudOAuth2Request
@@ -177,21 +189,22 @@ async function openPopup(
       | UpsertPlatformOAuth2Request;
   }>,
 ) {
-  const scope = resolveValueFromProps(props, authProperty.scope.join(' '));
-  const authUrl = resolveValueFromProps(props, authProperty.authUrl);
+  const { authorizationUrl, codeVerifier } =
+    await appConnectionsApi.getOAuth2AuthorizationUrl({
+      pieceName,
+      connectionType,
+      clientId,
+      redirectUrl,
+      props,
+    });
 
-  const { code, codeChallenge } = await oauth2Utils.openOAuth2Popup({
-    authUrl,
-    clientId,
+  const { code } = await oauth2Utils.openOAuth2Popup({
+    authorizationUrl,
     redirectUrl,
-    scope,
-    prompt: authProperty.prompt,
-    pkce: authProperty.pkce ?? false,
-    pkceMethod: authProperty.pkceMethod ?? 'plain',
-    extraParams: authProperty.extra ?? {},
+    codeVerifier,
   });
   form.setValue('request.value.code', code, { shouldValidate: true });
-  form.setValue('request.value.code_challenge', codeChallenge, {
+  form.setValue('request.value.code_challenge', codeVerifier ?? '', {
     shouldValidate: true,
   });
 }
@@ -201,4 +214,5 @@ type OAuth2ConnectionSettingsProps = {
   authProperty: OAuth2Property<OAuth2Props>;
   oauth2App: OAuth2App;
   grantType: OAuth2GrantType;
+  isGlobalConnection: boolean;
 };
