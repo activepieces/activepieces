@@ -473,7 +473,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -4829,7 +4829,7 @@
     },
     "packages/pieces/community/pdfcrowd": {
       "name": "@activepieces/piece-pdfcrowd",
-      "version": "0.0.3",
+      "version": "0.0.4",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7534,7 +7534,7 @@
     },
     "packages/shared": {
       "name": "@activepieces/shared",
-      "version": "0.41.0",
+      "version": "0.41.1",
       "dependencies": {
         "@sinclair/typebox": "0.34.11",
         "deepmerge-ts": "7.1.0",
