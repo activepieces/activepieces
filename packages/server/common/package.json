@@ -32,6 +32,6 @@
     "typeorm": "0.3.26"
   },
   "devDependencies": {
-    "@types/node": "20.19.9"
+    "@types/node": "24.11.0"
   }
 }
