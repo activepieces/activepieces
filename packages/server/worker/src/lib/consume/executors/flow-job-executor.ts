@@ -77,49 +77,48 @@ async function prepareInput(
     }
 }
 
-async function handleMemoryIssueError(
+async function uploadFailedRunStatus(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
+    status: FlowRunStatus,
 ): Promise<void> {
     await sandboxEventHandlers(log).uploadRunLogs({
         finishTime: dayjs().toISOString(),
-        status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
+        status,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
         runId: jobData.runId,
         projectId: jobData.projectId,
     })
+}
+
+async function handleMemoryIssueError(
+    jobData: ExecuteFlowJobData,
+    log: FastifyBaseLogger,
+): Promise<void> {
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.MEMORY_LIMIT_EXCEEDED) 
 }
 
 async function handleTimeoutError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await sandboxEventHandlers(log).uploadRunLogs({
-        finishTime: dayjs().toISOString(),
-        status: FlowRunStatus.TIMEOUT,
-        httpRequestId: jobData.httpRequestId,
-        progressUpdateType: jobData.progressUpdateType,
-        workerHandlerId: jobData.synchronousHandlerId,
-        runId: jobData.runId,
-        projectId: jobData.projectId,
-    })
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.TIMEOUT) 
+}
+
+async function handleLogSizeExceededError(
+    jobData: ExecuteFlowJobData,
+    log: FastifyBaseLogger,
+): Promise<void> {
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.LOG_SIZE_EXCEEDED) 
 }
 
 async function handleInternalError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await sandboxEventHandlers(log).uploadRunLogs({
-        finishTime: dayjs().toISOString(),
-        status: FlowRunStatus.INTERNAL_ERROR,
-        httpRequestId: jobData.httpRequestId,
-        progressUpdateType: jobData.progressUpdateType,
-        workerHandlerId: jobData.synchronousHandlerId,
-        runId: jobData.runId,
-        projectId: jobData.projectId,
-    })
+    await uploadFailedRunStatus(jobData, log, FlowRunStatus.INTERNAL_ERROR) 
 }
 
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({
@@ -212,6 +211,9 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 const isMemoryIssueError =
                     e instanceof ActivepiecesError &&
                     e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE
+                const isLogSizeExceededError =
+                    e instanceof ActivepiecesError &&
+                    e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED
 
                 if (isTimeoutError) {
                     span.setAttribute('error.type', 'timeout')
@@ -225,6 +227,13 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     span.setAttribute('error.type', 'memory')
                     log.warn({ runId: jobData.runId, flowId: jobData.flowId }, 'Flow execution exceeded memory limit')
                     await handleMemoryIssueError(jobData, log)
+                    return {
+                        status: ConsumeJobResponseStatus.OK,
+                    }
+                }
+                else if (isLogSizeExceededError) {
+                    span.setAttribute('error.type', 'logSizeExceeded')
+                    await handleLogSizeExceededError(jobData, log)
                     return {
                         status: ConsumeJobResponseStatus.OK,
                     }
