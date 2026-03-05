@@ -317,10 +317,10 @@ type BaseActionProps = {
 }
 
 export type FlowAction =
-    | (BaseActionProps & { type: FlowActionType.CODE; settings: CodeActionSettings; nextAction?: FlowAction })
-    | (BaseActionProps & { type: FlowActionType.PIECE; settings: PieceActionSettings; nextAction?: FlowAction })
-    | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS; settings: LoopOnItemsActionSettings; nextAction?: FlowAction; firstLoopAction?: FlowAction })
-    | (BaseActionProps & { type: FlowActionType.ROUTER; settings: RouterActionSettings; nextAction?: FlowAction; children: (FlowAction | null)[] })
+    | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
 
 export type RouterAction = BaseActionProps & {
     type: FlowActionType.ROUTER
