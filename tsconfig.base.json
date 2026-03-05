@@ -180,6 +180,9 @@
       "@activepieces/piece-bumpups": [
         "packages/pieces/community/bumpups/src/index.ts"
       ],
+      "@activepieces/piece-buttondown": [
+        "packages/pieces/community/buttondown/src/index.ts"
+      ],
       "@activepieces/piece-cal-com": [
         "packages/pieces/community/cal-com/src/index.ts"
       ],
