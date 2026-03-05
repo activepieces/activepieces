@@ -108,35 +108,7 @@ jobs:
       group: promote-production
       cancel-in-progress: false
     steps:
-      - name: Get current staging version
-        id: staging
-        run: |
-          VERSION=$(curl -s https://stg.activepieces.com/api/v1/flags | jq -r '.body.version // empty')
-          if [ -z "$VERSION" ]; then
-            echo "::error::Could not determine staging version"
-            exit 1
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Get current production version
-        id: production
-        run: |
-          VERSION=$(curl -s https://cloud.activepieces.com/api/v1/flags | jq -r '.body.version // empty')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if promotion needed
-        id: check
-        run: |
-          if [ "${{ steps.staging.outputs.version }}" = "${{ steps.production.outputs.version }}" ]; then
-            echo "Staging and production are on the same version. Nothing to promote."
-            echo "should_promote=false" >> $GITHUB_OUTPUT
-          else
-            echo "Staging (${{ steps.staging.outputs.version }}) differs from production (${{ steps.production.outputs.version }}). Promoting."
-            echo "should_promote=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Configure SSH
-        if: steps.check.outputs.should_promote == 'true'
         run: |
           mkdir -p ~/.ssh/
           echo "$SSH_KEY" > ~/.ssh/ops.key
@@ -154,19 +126,16 @@ jobs:
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
       - name: Get staging image tag from Kamal
-        if: steps.check.outputs.should_promote == 'true'
         id: image
         run: |
           TAG=$(ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal app version 2>/dev/null | tail -1 | tr -d \"[:space:]\"; exit"')
           echo "image_tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Deploy App to production
-        if: steps.check.outputs.should_promote == 'true'
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
 
       - name: Deploy Workers to production
-        if: steps.check.outputs.should_promote == 'true'
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
