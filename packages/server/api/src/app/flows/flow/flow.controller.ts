@@ -34,7 +34,7 @@ import { platformPlanService } from '../../ee/platform/platform-plan/platform-pl
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { applicationEvents } from '../../helper/application-events'
 import { userService } from '../../user/user-service'
-import { migrateFlowVersionTemplate } from '../flow-version/migrations'
+import { migrateFlowVersionTemplate, setLastUpdateDateForAllSteps } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
@@ -82,7 +82,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
                 const migratedFlowTemplate = await migrateFlowVersionTemplate({
                     displayName: request.body.request.displayName,
-                    trigger: request.body.request.trigger,
+                    trigger: setLastUpdateDateForAllSteps(request.body.request.trigger),
                     schemaVersion: request.body.request.schemaVersion,
                     notes: request.body.request.notes ?? [],
                     valid: false,
