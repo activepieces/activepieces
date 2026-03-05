@@ -36,6 +36,14 @@ const tagsController: FastifyPluginAsyncTypebox = async (fastify) => {
         await Promise.all(pieces)
         await reply.status(StatusCodes.CREATED).send({})
     })
+
+    fastify.delete('/:tagId', deleteTagParam, async (req, reply) => {
+        const platformId = req.principal.platform.id
+        assertNotNullOrUndefined(platformId, 'platformId')
+        const { tagId } = req.params
+        await tagService.delete({ platformId, tagId })
+        await reply.status(StatusCodes.OK).send({})
+    })
     
 }
 
@@ -59,6 +67,20 @@ const setPiecesTagsParams = {
         body: SetPieceTagsRequest,
         response: {
             [StatusCodes.CREATED]: Type.Object({}),
+        },
+    },
+}
+
+const deleteTagParam = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        params: Type.Object({
+            tagId: Type.String(),
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Object({}),
         },
     },
 }

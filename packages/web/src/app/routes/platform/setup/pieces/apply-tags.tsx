@@ -1,6 +1,7 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Trash } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ type ApplyTagsProps = {
 };
 
 const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
+  const queryClient = useQueryClient();
   const { data: tags = [] } = useQuery({
     queryKey: ['tags'],
     queryFn: async () => {
@@ -67,6 +69,28 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
     },
   });
 
+  const { mutate: deleteTag } = useMutation({
+    mutationFn: async ({ tagId }: { tagId: string; tagName: string }) => {
+      await piecesTagsApi.delete(tagId);
+    },
+    onSuccess: (_, { tagId, tagName }) => {
+      toast(t(`Tag "${tagName}" has been deleted successfully`), {});
+      setTagOptions((prev) => prev.filter((option) => option.value !== tagId));
+      setSelectedTags((prev) => {
+        const next = new Set(prev);
+        next.delete(tagId);
+        return next;
+      });
+      queryClient.setQueryData(['tags'], (prev: typeof tags) =>
+        prev.filter((tag) => tag.id !== tagId),
+      );
+    },
+    onError: () => {
+      toast.error(t('Failed to delete tag'), {});
+      queryClient.refetchQueries({ queryKey: ['tags'] });
+    },
+  });
+
   const [tagOptions, setTagOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -74,7 +98,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
     setTagOptions(
       tags.map((tag) => ({
         label: tag.name,
-        value: tag.name,
+        value: tag.id,
       })),
     );
   }, [tags]);
@@ -117,6 +141,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
                     return (
                       <CommandItem
                         key={option.value}
+                        className="flex items-center justify-between"
                         onSelect={() => {
                           tagsThatHaveBeenClickedRef.current.add(option.value);
                           const newSelectedTags = new Set(selectedTags);
@@ -128,14 +153,35 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
                           setSelectedTags(newSelectedTags);
                         }}
                       >
-                        <Checkbox
-                          checked={
-                            isIndeterminate ? 'indeterminate' : isSelected
-                          }
-                          className="mr-2"
-                        ></Checkbox>
+                        <div className="flex items-center flex-1">
+                          <Checkbox
+                            checked={
+                              isIndeterminate ? 'indeterminate' : isSelected
+                            }
+                            className="mr-2"
+                          />
+                          <span className="flex-1">{option.label}</span>
+                        </div>
 
-                        <span>{option.label}</span>
+                        <button
+                          type="button"
+                          className="ml-2 text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 focus:outline-none"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            deleteTag({
+                              tagId: option.value,
+                              tagName: option.label,
+                            });
+                          }}
+                          title="Delete tag"
+                        >
+                          <Trash size={14} />
+                        </button>
                       </CommandItem>
                     );
                   })}
@@ -145,12 +191,12 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
 
             <CreateTagDialog
               onTagCreated={(tag) => {
-                if (tagOptions.some((option) => option.value === tag.name)) {
+                if (tagOptions.some((option) => option.value === tag.id)) {
                   return;
                 }
                 setTagOptions([
                   ...tagOptions,
-                  { label: tag.name, value: tag.name },
+                  { label: tag.name, value: tag.id },
                 ]);
               }}
               isOpen={createDialogOpen}
