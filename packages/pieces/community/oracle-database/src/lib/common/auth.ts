@@ -4,11 +4,29 @@ import {
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import oracledb from 'oracledb';
+import fs from 'fs';
 
-try {
-  oracledb.initOracleClient();
-} catch (e) {
-  console.log('Oracle client already initialized or failed to initialize.');
+const ORACLE_BASE_DIR = '/opt/oracle/instantclient_21_13';
+
+function getOracleClientLibDir(): string | null {
+  if (!fs.existsSync(ORACLE_BASE_DIR)) return null;
+  return ORACLE_BASE_DIR;
+}
+
+const oracleClientLibDir = getOracleClientLibDir();
+
+if (oracleClientLibDir) {
+  try {
+    oracledb.initOracleClient({ libDir: oracleClientLibDir });
+    console.log(`Oracle Instant Client loaded from ${oracleClientLibDir}. Thick mode active.`);
+  } catch (e) {
+    const msg = (e as Error)?.message ?? '';
+    if (!msg.includes('NJS-077')) {
+      console.error('Oracle Instant Client failed to load:', msg);
+    }
+  }
+} else {
+  console.log('Oracle Instant Client not found at /opt/oracle. Running in Thin mode.');
 }
 
 export const oracleDbAuth = PieceAuth.CustomAuth({
