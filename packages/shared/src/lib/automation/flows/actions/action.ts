@@ -308,27 +308,43 @@ export const SingleActionSchema = z.union([
     RouterActionSchema,
 ])
 
-export type FlowAction = z.infer<typeof CodeActionSchema> & { nextAction?: FlowAction } |
-z.infer<typeof PieceActionSchema> & { nextAction?: FlowAction } |
-z.infer<typeof LoopOnItemsActionSchema> & { nextAction?: FlowAction, firstLoopAction?: FlowAction } |
-z.infer<typeof RouterActionSchema> & { nextAction?: FlowAction, children: (FlowAction | null)[] }
+// Manually defined to avoid z.infer in recursive types (causes TypeScript OOM)
+type BaseActionProps = {
+    name: string
+    valid: boolean
+    displayName: string
+    skip?: boolean
+}
 
+export type FlowAction =
+    | (BaseActionProps & { type: FlowActionType.CODE; settings: CodeActionSettings; nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.PIECE; settings: PieceActionSettings; nextAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS; settings: LoopOnItemsActionSettings; nextAction?: FlowAction; firstLoopAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.ROUTER; settings: RouterActionSettings; nextAction?: FlowAction; children: (FlowAction | null)[] })
 
-export type RouterAction = z.infer<typeof RouterActionSchema> & {
+export type RouterAction = BaseActionProps & {
+    type: FlowActionType.ROUTER
+    settings: RouterActionSettings
     nextAction?: FlowAction
     children: (FlowAction | null)[]
 }
 
-export type LoopOnItemsAction = z.infer<typeof LoopOnItemsActionSchema> & {
+export type LoopOnItemsAction = BaseActionProps & {
+    type: FlowActionType.LOOP_ON_ITEMS
+    settings: LoopOnItemsActionSettings
     nextAction?: FlowAction
     firstLoopAction?: FlowAction
 }
 
-export type PieceAction = z.infer<typeof PieceActionSchema> & {
+export type PieceAction = BaseActionProps & {
+    type: FlowActionType.PIECE
+    settings: PieceActionSettings
     nextAction?: FlowAction
 }
 
-export type CodeAction = z.infer<typeof CodeActionSchema> & {
+export type CodeAction = BaseActionProps & {
+    type: FlowActionType.CODE
+    settings: CodeActionSettings
     nextAction?: FlowAction
 }
 
