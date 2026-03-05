@@ -851,6 +851,9 @@
       "@activepieces/piece-postgres": [
         "packages/pieces/community/postgres/src/index.ts"
       ],
+      "@activepieces/piece-postmark": [
+        "packages/pieces/community/postmark/src/index.ts"
+      ],
       "@activepieces/piece-posthog": [
         "packages/pieces/community/posthog/src/index.ts"
       ],
