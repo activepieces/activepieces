@@ -349,7 +349,6 @@ const RowItemDetails = ({ item }: { item: TreeItem }) => {
           trigger={flow.version.trigger}
           maxNumberOfIconsToShow={3}
           size="xs"
-          circle={false}
         />
       );
     }

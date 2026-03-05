@@ -64,8 +64,7 @@ const PlatformPiecesPage = () => {
             return (
               <div className="flex items-center gap-2">
                 <PieceIcon
-                  circle={true}
-                  size={'md'}
+                  size={'sm'}
                   border={true}
                   displayName={row.original.displayName}
                   logoUrl={row.original.logoUrl}

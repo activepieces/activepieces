@@ -168,7 +168,6 @@ const SuggestedTemplateCard = ({
             maxNumberOfIconsToShow={4}
             size="md"
             className="flex gap-0.5"
-            circle={false}
             background="white"
             excludeCore={true}
           />

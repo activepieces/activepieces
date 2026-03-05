@@ -73,7 +73,6 @@ export const ExploreTemplateCard = React.memo(
               maxNumberOfIconsToShow={4}
               size="md"
               className="flex gap-0.5"
-              circle={false}
               background="white"
               excludeCore={true}
             />

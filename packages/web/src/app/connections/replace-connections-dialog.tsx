@@ -318,7 +318,6 @@ const ReplaceConnectionsDialog = ({
                                   pieceName={conn!.pieceName}
                                   size="xs"
                                   border={false}
-                                  circle={false}
                                 />
                                 <span>{conn!.displayName}</span>
                               </div>
@@ -361,7 +360,6 @@ const ReplaceConnectionsDialog = ({
                                     pieceName={conn!.pieceName}
                                     size="xs"
                                     border={false}
-                                    circle={false}
                                   />
                                   {conn?.scope ===
                                     AppConnectionScope.PLATFORM && (

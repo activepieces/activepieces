@@ -1,7 +1,7 @@
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Eye, Pencil, Shield, Trash, Users } from 'lucide-react';
+import { Eye, PenLine, Pencil, Shield, ShieldCheck, Trash, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -28,6 +28,19 @@ interface ProjectRolesListProps {
   projectRoles: SeekPage<ProjectRole> | undefined;
   isLoading: boolean;
   refetch: () => void;
+}
+
+function getRoleIcon(roleName: string) {
+  switch (roleName) {
+    case 'Admin':
+      return <ShieldCheck />;
+    case 'Editor':
+      return <PenLine />;
+    case 'Viewer':
+      return <Eye />;
+    default:
+      return <Shield />;
+  }
 }
 
 export const ProjectRolesTable = ({
@@ -73,7 +86,7 @@ export const ProjectRolesTable = ({
       {roles.map((role) => (
         <Item key={role.id} variant="outline" size="sm">
           <ItemMedia variant="icon">
-            <Shield />
+            {getRoleIcon(role.name)}
           </ItemMedia>
           <ItemContent>
             <ItemTitle>{role.name}</ItemTitle>

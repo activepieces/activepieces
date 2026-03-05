@@ -37,8 +37,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
       return (
         <div className="text-left">
           <PieceIcon
-            circle={true}
-            size={'md'}
+            size={'sm'}
             border={true}
             displayName={row.original.displayName}
             logoUrl={row.original.logoUrl}

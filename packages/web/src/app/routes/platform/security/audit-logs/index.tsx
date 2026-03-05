@@ -408,7 +408,7 @@ function convertToDetails(event: ApplicationEvent): string {
     case ApplicationEventName.FLOW_CREATED:
       return t('A new flow was created');
     case ApplicationEventName.FLOW_DELETED:
-      return t('Flow "{{name}}" was deleted', { name: event.data.flowVersion.displayName });
+      return `Flow "${event.data.flowVersion.displayName}" was deleted`;
     default:
       return summarizeApplicationEvent(event) ?? '';
   }

@@ -184,6 +184,7 @@ function AppConnectionsPage() {
                   <PieceIconWithPieceName
                     pieceName={row.original.pieceName}
                     showTooltip={false}
+                    size="sm"
                   />
                   <span className="truncate max-w-[120px] 2xl:max-w-[250px]">
                     {row.original.displayName}

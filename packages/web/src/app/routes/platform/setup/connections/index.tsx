@@ -105,6 +105,7 @@ const GlobalConnectionsTable = () => {
               <PieceIconWithPieceName
                 pieceName={row.original.pieceName}
                 showTooltip={false}
+                size="sm"
               />
               <span>{row.original.displayName}</span>
             </div>
