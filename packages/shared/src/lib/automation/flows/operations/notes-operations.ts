@@ -1,7 +1,7 @@
+import dayjs from 'dayjs'
 import { FlowVersion } from '../flow-version'
 import { Note } from '../note'
 import { AddNoteRequest, DeleteNoteRequest, UpdateNoteRequest } from '.'
-import dayjs from 'dayjs'
 
 const _updateNote = (flowVersion: FlowVersion, request: UpdateNoteRequest): FlowVersion => {
     const newFlowVersion = JSON.parse(JSON.stringify(flowVersion))

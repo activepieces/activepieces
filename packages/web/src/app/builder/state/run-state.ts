@@ -249,14 +249,13 @@ export const createRunState = (
       }
 
       set((state) => {
+        // only update the last test date
         return {
           flowVersion: flowOperations.apply(state.flowVersion, {
             type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
             request: {
               stepName: step.name,
-              sampleDataSettings: {
-                lastTestDate: dayjs().toISOString(),
-              },
+              sampleDataSettings: {},
             },
           }),
         };
@@ -294,13 +293,13 @@ export const createRunState = (
     },
     setErrorLogs: (stepName: string, error: string | null) => {
       set((state) => {
+        // only update the last test date
         return {
           flowVersion: flowOperations.apply(state.flowVersion, {
             type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
             request: {
               stepName: stepName,
               sampleDataSettings: {
-                lastTestDate: dayjs().toISOString(),
               },
             },
           }),

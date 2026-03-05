@@ -10,6 +10,11 @@ import { RouteOff, TriangleAlert } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +27,8 @@ type DraftStepStatus =
   | 'testing'
   | 'failed'
   | 'needs-test'
-  | 'tested';
+  | 'tested'
+  | 'untested';
 
 const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   const [
@@ -55,7 +61,10 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
     if (!isStepValid) return 'invalid';
     if (isBeingTested) return 'testing';
 
-    if (isNil(lastTestDate) || lastUpdatedDate > lastTestDate) {
+    if (isNil(lastTestDate)) {
+      return 'untested';
+    }
+    if (lastUpdatedDate > lastTestDate) {
       return 'needs-test';
     }
     if (hasError) return 'failed';
@@ -78,15 +87,29 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
 
   return (
     <div className="absolute right-[1px] h-[20px] -top-[28px]">
-      <div
-        className={cn(
-          'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center justify-center px-2 py-1',
-          flowRunUtils.getStatusContainerClassName(config.variant),
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center justify-center px-2 py-1',
+              flowRunUtils.getStatusContainerClassName(config.variant),
+            )}
+          >
+            {config.icon}
+            <div>{config.text}</div>
+          </div>
+        </TooltipTrigger>
+        {status === 'untested' && (
+          <TooltipContent>
+            {t('This step has not been tested yet')}
+          </TooltipContent>
         )}
-      >
-        {config.icon}
-        <div>{config.text}</div>
-      </div>
+        {status === 'needs-test' && (
+          <TooltipContent>
+            {t('This step has been updated since the last test')}
+          </TooltipContent>
+        )}
+      </Tooltip>
     </div>
   );
 };
@@ -132,6 +155,11 @@ const draftStatusConfig: Record<
     ),
   },
   'needs-test': {
+    variant: 'default',
+    text: t('Test me'),
+    icon: <TriangleAlert className="size-3" />,
+  },
+  untested: {
     variant: 'default',
     text: t('Test me'),
     icon: <TriangleAlert className="size-3" />,

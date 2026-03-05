@@ -1,10 +1,10 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
+import dayjs from 'dayjs'
 import { isNil } from '../../../core/common'
 import { FlowAction, FlowActionType, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
-import dayjs from 'dayjs'
 
 const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema)
 
@@ -26,44 +26,51 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             },
         }
 
+
         let updatedAction: FlowAction
         switch (request.type) {
             case FlowActionType.CODE: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.CODE ? stepToUpdate.settings.sampleData : undefined
                 updatedAction = {
                     ...baseProps,
-                    settings: request.settings,
+                    settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.CODE,
                     nextAction: stepToUpdate.nextAction,
                 }
                 break
             }
             case FlowActionType.PIECE: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.PIECE ? stepToUpdate.settings.sampleData : undefined
                 updatedAction = {
                     ...baseProps,
-                    settings: request.settings,
+                    settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.PIECE,
                     nextAction: stepToUpdate.nextAction,
                 }
                 break
             }
             case FlowActionType.LOOP_ON_ITEMS: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS ? stepToUpdate.settings.sampleData : undefined
+                const firstLoopAction = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS ? stepToUpdate.firstLoopAction : undefined
                 updatedAction = {
                     ...baseProps,
-                    settings: request.settings,
+                    settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.LOOP_ON_ITEMS,
-                    firstLoopAction: 'firstLoopAction' in stepToUpdate ? stepToUpdate.firstLoopAction : undefined,
+                    firstLoopAction,
                     nextAction: stepToUpdate.nextAction,
                 }
                 break
             }
           
             case FlowActionType.ROUTER: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.ROUTER ? stepToUpdate.settings.sampleData : undefined
+                const children = stepToUpdate.type === FlowActionType.ROUTER ? stepToUpdate.children : [null, null]
                 updatedAction = {
                     ...baseProps,
-                    settings: request.settings,
+                    settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.ROUTER,
                     nextAction: stepToUpdate.nextAction,
-                    children: 'children' in stepToUpdate ? stepToUpdate.children : [null, null],
+                    children,
                 }
                 break
             }

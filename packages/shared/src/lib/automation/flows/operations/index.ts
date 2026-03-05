@@ -1,12 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../../core/common'
 import { Metadata } from '../../../core/common/metadata'
-import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { BranchCondition, CodeActionSchema, CodeActionSettings, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
 import { SampleDataSetting, SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
+import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger, PieceTriggerSettings } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -87,7 +87,7 @@ export type SkipActionRequest = Static<typeof SkipActionRequest>
 
 export const UpdateSampleDataInfoRequest = Type.Object({
     stepName: Type.String(),
-    sampleDataSettings: Type.Optional(SampleDataSetting),
+    sampleDataSettings: Type.Omit(Type.Optional(SampleDataSetting), ['lastTestDate']),
 })
 export type UpdateSampleDataInfoRequest = Static<typeof UpdateSampleDataInfoRequest>
 
@@ -146,10 +146,22 @@ export const DeleteActionRequest = Type.Object({
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
 
 export const UpdateActionRequest = Type.Union([
-    CodeActionSchema,
-    LoopOnItemsActionSchema,
-    PieceActionSchema,
-    RouterActionSchema,
+    Type.Object({
+        ...Type.Omit(CodeActionSchema, ['lastUpdatedDate', 'settings']).properties,
+        settings: Type.Omit(CodeActionSettings, ['sampleData']),
+    }),
+    Type.Object({
+        ...Type.Omit(LoopOnItemsActionSchema, ['lastUpdatedDate', 'settings']).properties,
+        settings: Type.Omit(LoopOnItemsActionSettings, ['sampleData']),
+    }),
+    Type.Object({
+        ...Type.Omit(PieceActionSchema, ['lastUpdatedDate', 'settings']).properties,
+        settings: Type.Omit(PieceActionSettings, ['sampleData']),
+    }),
+    Type.Object({
+        ...Type.Omit(RouterActionSchema, ['lastUpdatedDate', 'settings']).properties,
+        settings: Type.Omit(RouterActionSettings, ['sampleData']),
+    }),
 ])
 
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>
@@ -180,7 +192,13 @@ export const AddActionRequest = Type.Object({
 })
 export type AddActionRequest = Static<typeof AddActionRequest>
 
-export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger])
+export const UpdateTriggerRequest = Type.Union([
+    Type.Omit(EmptyTrigger, ['lastUpdatedDate']),
+    Type.Object({
+        ...Type.Omit(PieceTrigger, ['lastUpdatedDate', 'settings']).properties,
+        settings: Type.Omit(PieceTriggerSettings, ['sampleData']),
+    }),
+])
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>
 
 export const UpdateFlowStatusRequest = Type.Object({

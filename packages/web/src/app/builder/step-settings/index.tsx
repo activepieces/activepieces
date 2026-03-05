@@ -108,8 +108,6 @@ const StepSettingsContainer = () => {
         return result;
       }
       const valid = Object.keys(result.errors).length === 0;
-      const latestSampleData = selectedStepRef.current.settings.sampleData;
-      cleanedNewValues.settings.sampleData = latestSampleData;
       //We need to copy the object because the form is using the same object reference
       currentValuesRef.current = JSON.parse(JSON.stringify(cleanedNewValues));
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
