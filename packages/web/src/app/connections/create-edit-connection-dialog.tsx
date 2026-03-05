@@ -300,6 +300,7 @@ function ConnectionSettings({
           piece={piece}
           grantType={selectedAuth.grantType}
           oauth2App={selectedAuth.oauth2App}
+          isGlobalConnection={isGlobalConnection}
         />
       );
   }

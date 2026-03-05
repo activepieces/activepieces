@@ -195,6 +195,26 @@ export const UpsertGlobalConnectionRequestBody =
     ])
 export type UpsertGlobalConnectionRequestBody = Static<typeof UpsertGlobalConnectionRequestBody>
 
+export const GetOAuth2AuthorizationUrlRequestBody = Type.Object({
+    pieceName: Type.String(),
+    pieceVersion: Type.Optional(Type.String()),
+    connectionType: Type.Union([
+        Type.Literal(AppConnectionType.OAUTH2),
+        Type.Literal(AppConnectionType.CLOUD_OAUTH2),
+        Type.Literal(AppConnectionType.PLATFORM_OAUTH2),
+    ]),
+    clientId: Type.String(),
+    redirectUrl: Type.String(),
+    props: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+})
+export type GetOAuth2AuthorizationUrlRequestBody = Static<typeof GetOAuth2AuthorizationUrlRequestBody>
+
+export const GetOAuth2AuthorizationUrlResponse = Type.Object({
+    authorizationUrl: Type.String(),
+    codeVerifier: Type.Optional(Type.String()),
+})
+export type GetOAuth2AuthorizationUrlResponse = Static<typeof GetOAuth2AuthorizationUrlResponse>
+
 export const ReplaceAppConnectionsRequestBody = Type.Object({
     sourceAppConnectionId: Type.String(),
     targetAppConnectionId: Type.String(),

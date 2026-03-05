@@ -61,7 +61,8 @@ export const onePasswordProvider = (log: FastifyBaseLogger): SecretManagerProvid
         }
         catch (error: unknown) {
             if (error instanceof ActivepiecesError) throw error
-            const message = error instanceof Error ? error.message : 'Unknown error'
+            let message = error instanceof Error ? error.message : 'Unknown error'
+            message = `[${request.path}] ${message}`
             log.error({ message, provider: SecretManagerProviderId.ONEPASSWORD, request }, '[onePasswordProvider#getSecret]')
             throw new ActivepiecesError({
                 code: ErrorCode.SECRET_MANAGER_GET_SECRET_FAILED,
