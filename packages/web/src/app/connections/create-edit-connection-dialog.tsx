@@ -13,10 +13,10 @@ import {
   isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -80,12 +80,7 @@ function CreateOrEditConnectionSection({
   const { data: redirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
-  const form = useForm<{
-    request: UpsertAppConnectionRequestBody & {
-      projectIds: string[];
-      preSelectForNewProjects: boolean;
-    };
-  }>({
+  const form = useForm<ConnectionFormValues>({
     defaultValues: {
       request: {
         ...newConnectionUtils.createDefaultValues({
@@ -104,7 +99,7 @@ function CreateOrEditConnectionSection({
     },
     mode: 'onChange',
     reValidateMode: 'onChange',
-    resolver: typeboxResolver(formSchema),
+    resolver: zodResolver(formSchema),
   });
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -515,4 +510,11 @@ type ConnectionSettingsProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   selectedAuth: AuthListItem;
   isGlobalConnection: boolean;
+};
+
+type ConnectionFormValues = {
+  request: UpsertAppConnectionRequestBody & {
+    projectIds: string[];
+    preSelectForNewProjects: boolean;
+  };
 };

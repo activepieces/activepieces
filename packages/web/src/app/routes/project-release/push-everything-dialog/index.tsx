@@ -5,12 +5,12 @@ import {
   PushGitRepoRequest,
   assertNotNullOrUndefined,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -56,7 +56,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
       type: GitPushOperationType.PUSH_EVERYTHING,
       commitMessage: '',
     },
-    resolver: typeboxResolver(PushEverythingGitRepoRequest),
+    resolver: zodResolver(PushEverythingGitRepoRequest),
   });
 
   const { mutate, isPending } = useMutation({

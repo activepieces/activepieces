@@ -21,7 +21,6 @@ import {
   FlowOperationType,
   isManualPieceTrigger,
 } from '@activepieces/shared';
-import { Value } from '@sinclair/typebox/value';
 import { useRef } from 'react';
 
 import {
@@ -71,7 +70,7 @@ const isStepInitiallyValid = (
         pieceSelectorItem.actionOrTrigger.props,
         pieceSelectorItem.pieceMetadata.auth,
       );
-      const isValid = Value.Errors(schema, input).First() === undefined;
+      const isValid = schema.safeParse(input).success;
       const needsAuth = pieceSelectorItem.actionOrTrigger.requireAuth;
       const hasAuth = !isNil(pieceSelectorItem.pieceMetadata.auth);
       return isValid && (!needsAuth || !hasAuth);
@@ -91,13 +90,9 @@ const isStepInitiallyValid = (
     }
     case FlowActionType.ROUTER: {
       if (overrideDefaultSettings) {
-        const errors = Array.from(
-          Value.Errors(
-            RouterActionSettingsWithValidation,
-            overrideDefaultSettings,
-          ),
-        );
-        return errors.length === 0;
+        return RouterActionSettingsWithValidation.safeParse(
+          overrideDefaultSettings,
+        ).success;
       }
       return false;
     }

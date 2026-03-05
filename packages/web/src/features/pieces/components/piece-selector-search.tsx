@@ -10,7 +10,7 @@ import {
 } from '@/features/pieces/stores/piece-selector-tabs-provider';
 
 type PiecesSearchInputProps = {
-  searchInputRef: React.RefObject<HTMLInputElement>;
+  searchInputRef: React.RefObject<HTMLInputElement | null>;
   onSearchChange: (query: string) => void;
 };
 

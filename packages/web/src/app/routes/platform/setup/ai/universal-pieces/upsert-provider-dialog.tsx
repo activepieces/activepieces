@@ -17,13 +17,19 @@ import {
   OpenAIProviderConfig,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
-import { FieldErrors, useForm } from 'react-hook-form';
+import {
+  FieldErrors,
+  Resolver,
+  ResolverOptions,
+  ResolverResult,
+  useForm,
+} from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -94,10 +100,18 @@ export const UpsertAIProviderDialogContent = ({
   );
 
   const form = useForm<CreateAIProviderRequest>({
-    resolver: (values, context, options) => {
-      const originalResolve = typeboxResolver(
+    resolver: ((
+      values: CreateAIProviderRequest,
+      context: unknown,
+      options: ResolverOptions<CreateAIProviderRequest>,
+    ) => {
+      const originalResolve = zodResolver(
         createFormSchema(provider, !isNil(providerId)),
-      );
+      ) as unknown as (
+        values: CreateAIProviderRequest,
+        context: unknown,
+        options: ResolverOptions<CreateAIProviderRequest>,
+      ) => Promise<ResolverResult<CreateAIProviderRequest>>;
       if (values.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         if (
           values.config.models.some((m) =>
@@ -131,13 +145,13 @@ export const UpsertAIProviderDialogContent = ({
           if (Object.keys(errors).length > 0) {
             return {
               errors,
-              values: {},
+              values: {} as Record<string, never>,
             };
           }
         }
       }
       return originalResolve(values, context, options);
-    },
+    }) as Resolver<CreateAIProviderRequest>,
     defaultValues: {
       provider,
       displayName: defaultDisplayName,
@@ -265,43 +279,43 @@ export const UpsertAIProviderDialogContent = ({
   );
 };
 
-const OptionalAuthSchema = Type.Optional(
-  Type.Object({
-    apiKey: Type.Optional(Type.String()),
-  }),
-);
+const OptionalAuthSchema = z
+  .object({
+    apiKey: z.string().optional(),
+  })
+  .optional();
 
 const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   if (provider === AIProviderName.AZURE) {
-    return Type.Object({
-      provider: Type.Literal(AIProviderName.AZURE),
+    return z.object({
+      provider: z.literal(AIProviderName.AZURE),
       config: AzureProviderConfig,
       auth: editMode ? OptionalAuthSchema : AzureProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
-    return Type.Object({
-      provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
+    return z.object({
+      provider: z.literal(AIProviderName.CLOUDFLARE_GATEWAY),
       config: CloudflareGatewayProviderConfig,
       auth: editMode ? OptionalAuthSchema : CloudflareGatewayProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.CUSTOM) {
-    return Type.Object({
-      provider: Type.Literal(AIProviderName.CUSTOM),
+    return z.object({
+      provider: z.literal(AIProviderName.CUSTOM),
       config: OpenAICompatibleProviderConfig,
       auth: editMode ? OptionalAuthSchema : OpenAICompatibleProviderAuthConfig,
     });
   }
-  const authSchema = Type.Union([
+  const authSchema = z.union([
     AnthropicProviderAuthConfig,
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
   ]);
-  return Type.Object({
-    provider: Type.Literal(provider),
+  return z.object({
+    provider: z.literal(provider),
     auth: editMode ? OptionalAuthSchema : authSchema,
-    config: Type.Union([
+    config: z.union([
       AnthropicProviderConfig,
       GoogleProviderConfig,
       OpenAIProviderConfig,

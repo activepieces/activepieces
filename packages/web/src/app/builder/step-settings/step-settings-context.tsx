@@ -9,7 +9,6 @@ import {
   FlowTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
-import { TObject, Type } from '@sinclair/typebox';
 import {
   createContext,
   ReactNode,
@@ -19,6 +18,7 @@ import {
   useState,
 } from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { z, ZodObject } from 'zod';
 
 import { formUtils } from '@/features/pieces';
 const numberReplacement = 'anyOf[0]items';
@@ -41,7 +41,7 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
 export type StepSettingsContextState = {
   selectedStep: FlowAction | FlowTrigger;
   pieceModel: PieceMetadataModel | undefined;
-  formSchema: TObject<any>;
+  formSchema: ZodObject<any>;
   updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
   updatePropertySettingsSchema: (
     schema: PiecePropertyMap,
@@ -65,8 +65,8 @@ export const StepSettingsProvider = ({
   pieceModel,
   children,
 }: StepSettingsProviderProps) => {
-  const [formSchema, setFormSchema] = useState<TObject<any>>(
-    Type.Object(Type.Unknown()),
+  const [formSchema, setFormSchema] = useState<ZodObject<any>>(
+    z.object({}) as ZodObject<any>,
   );
   const formSchemaInitializedRef = useRef<boolean>(false);
 
@@ -77,7 +77,7 @@ export const StepSettingsProvider = ({
       pieceModel ?? null,
     );
     formSchemaInitializedRef.current = true;
-    setFormSchema(schema as TObject<any>);
+    setFormSchema(schema as ZodObject<any>);
   }
 
   const updateFormSchema = useCallback(

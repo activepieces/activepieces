@@ -1,17 +1,17 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common'
 import { UserWithMetaInformation } from '../../core/user'
 import { ProjectReleaseType } from './project-release.request'
 
-export const ProjectRelease = Type.Object({
+export const ProjectRelease = z.object({
     ...BaseModelSchema,
-    projectId: Type.String(),
-    name: Type.String(),
-    description: Nullable(Type.String()),
-    importedBy: Nullable(Type.String()),
-    fileId: Type.String(),
-    type: Type.Enum(ProjectReleaseType),
-    importedByUser: Type.Optional(UserWithMetaInformation),
+    projectId: z.string(),
+    name: z.string(),
+    description: Nullable(z.string()),
+    importedBy: Nullable(z.string()),
+    fileId: z.string(),
+    type: z.nativeEnum(ProjectReleaseType),
+    importedByUser: UserWithMetaInformation.optional(),
 })
 
-export type ProjectRelease = Static<typeof ProjectRelease>
+export type ProjectRelease = z.infer<typeof ProjectRelease>

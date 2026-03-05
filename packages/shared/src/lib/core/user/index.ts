@@ -1,22 +1,22 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { PlatformRole, UserStatus } from './user'
 
 export * from './user'
 export * from './badges'
 
-export const UpdateUserRequestBody = Type.Object({
-    status: Type.Optional(Type.Enum(UserStatus)),
-    platformRole: Type.Optional(Type.Enum(PlatformRole)),
-    externalId: Type.Optional(Type.String()),
+export const UpdateUserRequestBody = z.object({
+    status: z.nativeEnum(UserStatus).optional(),
+    platformRole: z.nativeEnum(PlatformRole).optional(),
+    externalId: z.string().optional(),
 })
 
-export type UpdateUserRequestBody = Static<typeof UpdateUserRequestBody>
+export type UpdateUserRequestBody = z.infer<typeof UpdateUserRequestBody>
 
 
-export const ListUsersRequestBody = Type.Object({
-    cursor: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Number()),
-    externalId: Type.Optional(Type.String()),
+export const ListUsersRequestBody = z.object({
+    cursor: z.string().optional(),
+    limit: z.coerce.number().optional(),
+    externalId: z.string().optional(),
 })
 
-export type ListUsersRequestBody = Static<typeof ListUsersRequestBody>
+export type ListUsersRequestBody = z.infer<typeof ListUsersRequestBody>

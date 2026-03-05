@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
+import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
@@ -95,12 +94,11 @@ export default function ImpactPage() {
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex items-center justify-between py-2">
-        <div className="flex items-center gap-3">
-          <ApSidebarToggle />
-          <Separator orientation="vertical" className="h-5" />
+      <PageHeader
+        showSidebarToggle={true}
+        title={
           <div className="flex items-center gap-1.5">
-            <span className="text-lg font-medium">{t('Impact')}</span>
+            <span className="text-sm font-medium">{t('Impact')}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
@@ -110,73 +108,75 @@ export default function ImpactPage() {
               </TooltipContent>
             </Tooltip>
           </div>
-        </div>
+        }
+        rightContent={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed rounded-md text-sm text-muted-foreground">
+              <span>
+                {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')}{' '}
+                — {t('Refreshes daily')}
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() =>
+                      refreshAnalytics(undefined, {
+                        onSuccess: () =>
+                          toast.success(t('Data refreshed successfully')),
+                      })
+                    }
+                    disabled={isRefreshing}
+                  >
+                    <RefreshCcw
+                      className={`h-3.5 w-3.5 ${
+                        isRefreshing ? 'animate-spin' : ''
+                      }`}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('Refresh analytics')}</TooltipContent>
+              </Tooltip>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 h-8 py-1 border border-dashed rounded-md text-sm text-muted-foreground">
-            <span>
-              {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
-              {t('Refreshes daily')}
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() =>
-                    refreshAnalytics(undefined, {
-                      onSuccess: () =>
-                        toast.success(t('Data refreshed successfully')),
-                    })
-                  }
-                  disabled={isRefreshing}
-                >
-                  <RefreshCcw
-                    className={`h-3.5 w-3.5 ${
-                      isRefreshing ? 'animate-spin' : ''
-                    }`}
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Refresh analytics')}</TooltipContent>
-            </Tooltip>
+            <Select
+              value={selectedTimePeriod}
+              onValueChange={handleTimePeriodChange}
+            >
+              <SelectTrigger className="w-auto gap-2 h-8">
+                <Calendar className="h-4 w-4" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent side="bottom" align="end">
+                <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                  {t('Last 7 days')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                  {t('Last 30 days')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
+                  {t('Last 3 months')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
+                  {t('Last 6 months')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
+                  {t('Last year')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <ProjectSelect
+              projects={projects ?? []}
+              selectedProjectId={selectedProjectId}
+              onProjectChange={handleProjectChange}
+            />
           </div>
-
-          <Select
-            value={selectedTimePeriod}
-            onValueChange={handleTimePeriodChange}
-          >
-            <SelectTrigger className="w-auto gap-2 h-8">
-              <Calendar className="h-4 w-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent side="bottom" align="end">
-              <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
-                {t('Last 7 days')}
-              </SelectItem>
-              <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
-                {t('Last 30 days')}
-              </SelectItem>
-              <SelectItem value={AnalyticsTimePeriod.LAST_THREE_MONTHS}>
-                {t('Last 3 months')}
-              </SelectItem>
-              <SelectItem value={AnalyticsTimePeriod.LAST_SIX_MONTHS}>
-                {t('Last 6 months')}
-              </SelectItem>
-              <SelectItem value={AnalyticsTimePeriod.LAST_YEAR}>
-                {t('Last year')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <ProjectSelect
-            projects={projects ?? []}
-            selectedProjectId={selectedProjectId}
-            onProjectChange={handleProjectChange}
-          />
-        </div>
-      </div>
+        }
+        className="min-w-full"
+      />
 
       <Tabs
         value={activeTab}

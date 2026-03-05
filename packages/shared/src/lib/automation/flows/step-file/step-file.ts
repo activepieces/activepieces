@@ -1,19 +1,19 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { ApMultipartFile } from '../../../core/common'
 
-export const StepFileUpsertRequest = Type.Object({
-    flowId: Type.String(),
-    stepName: Type.String(),
-    file: Type.Optional(Type.Pick(ApMultipartFile, ['data'])),
-    contentLength: Type.Number(),
-    fileName: Type.String(),
+export const StepFileUpsertRequest = z.object({
+    flowId: z.string(),
+    stepName: z.string(),
+    file: ApMultipartFile.pick({ data: true }).optional(),
+    contentLength: z.number(),
+    fileName: z.string(),
 })
 
-export type StepFileUpsert = Static<typeof StepFileUpsertRequest>
+export type StepFileUpsert = z.infer<typeof StepFileUpsertRequest>
 
-export const StepFileUpsertResponse = Type.Object({
-    uploadUrl: Type.Optional(Type.String()),
-    url: Type.String(),
+export const StepFileUpsertResponse = z.object({
+    uploadUrl: z.string().optional(),
+    url: z.string(),
 })
 
-export type StepFileUpsertResponse = Static<typeof StepFileUpsertResponse>
+export type StepFileUpsertResponse = z.infer<typeof StepFileUpsertResponse>

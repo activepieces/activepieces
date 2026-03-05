@@ -1,5 +1,4 @@
 import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, ConnectionState, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowAction, FlowProjectOperationType, FlowState, FlowStatus, FlowSyncError, isNil, PopulatedFlow, PopulatedTable, ProjectId, ProjectState, TableOperationType, TableState } from '@activepieces/shared'
-import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../../file/file.service'
@@ -215,8 +214,8 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             externalId: flow.externalId ?? flow.id,
             version: await flowMigrations.apply(flow.version),
         }
-        const cleanedFlowState = Value.Clean(FlowState, flowState) as FlowState
-        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : Value.Clean(FlowAction, cleanedFlowState.version.trigger.nextAction)
+        const cleanedFlowState = FlowState.parse(flowState)
+        cleanedFlowState.version.trigger.nextAction = isNil(cleanedFlowState.version.trigger.nextAction) ? undefined : FlowAction.parse(cleanedFlowState.version.trigger.nextAction)
         return cleanedFlowState
     },
     getTableState(table: PopulatedTable): TableState {
@@ -232,7 +231,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             name: table.name,
             fields,
         }
-        return Value.Clean(TableState, tableState) as TableState
+        return TableState.parse(tableState)
     },
 })
 

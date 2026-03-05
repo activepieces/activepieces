@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Search } from 'lucide-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
@@ -40,15 +40,18 @@ const TemplatesPage = () => {
     setSearch(event.target.value);
   };
 
-  const handleTemplateSelect = (template: Template) => {
-    navigate(`/templates/${template.id}`);
-    if (template.type === TemplateType.OFFICIAL) {
-      templatesTelemetryApi.sendEvent({
-        eventType: TemplateTelemetryEventType.VIEW,
-        templateId: template.id,
-      });
-    }
-  };
+  const handleTemplateSelect = useCallback(
+    (template: Template) => {
+      navigate(`/templates/${template.id}`);
+      if (template.type === TemplateType.OFFICIAL) {
+        templatesTelemetryApi.sendEvent({
+          eventType: TemplateTelemetryEventType.VIEW,
+          templateId: template.id,
+        });
+      }
+    },
+    [navigate],
+  );
 
   const templatesByCategory = useMemo(() => {
     const grouped: Record<string, Template[]> = {} as Record<
@@ -95,7 +98,7 @@ const TemplatesPage = () => {
     <div>
       <div>
         <div className="sticky top-0 z-10 bg-background mb-6 pt-4">
-          <div className="flex flex-row w-full justify-between gap-2">
+          <div className="flex flex-row w-full justify-between gap-1">
             <ApSidebarToggle />
             <InputWithIcon
               icon={<Search className="text-gray-500 w-4 h-4" />}

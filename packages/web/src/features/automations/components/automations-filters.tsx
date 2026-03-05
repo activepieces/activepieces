@@ -9,10 +9,8 @@ import {
   Filter,
   FolderIcon,
   FolderPlus,
-  Import,
   Link2,
   Loader2,
-  Plus,
   Search,
   Table2,
   ToggleLeft,
@@ -21,7 +19,10 @@ import {
   X,
 } from 'lucide-react';
 
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
+import { DownloadIcon } from '@/components/icons/download';
+import { PlusIcon } from '@/components/icons/plus';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -236,14 +237,15 @@ export const AutomationsFilters = ({
           {!embedState.hideExportAndImportFlow && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
+                <AnimatedIconButton
+                  icon={DownloadIcon}
+                  iconSize={16}
                   variant="outline"
                   size="sm"
-                  className="h-9 flex items-center gap-2"
+                  className="h-9"
                 >
-                  <Import className="h-4 w-4" />
                   {t('Import')}
-                </Button>
+                </AnimatedIconButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <PermissionNeededTooltip
@@ -276,10 +278,14 @@ export const AutomationsFilters = ({
 
           <DropdownMenu open={isCreatingFlow || isCreatingTable || undefined}>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="h-9 flex items-center gap-2">
-                <Plus className="h-4 w-4" />
+              <AnimatedIconButton
+                icon={PlusIcon}
+                iconSize={16}
+                size="sm"
+                className="h-9"
+              >
                 {t('Create New')}
-              </Button>
+              </AnimatedIconButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <PermissionNeededTooltip

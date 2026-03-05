@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { secretManagersHooks } from '@/features/secret-managers';
@@ -20,11 +20,10 @@ const SecretManagersPage = () => {
       lockTitle={t('Enable Secret Managers')}
       lockDescription={t('Manage your secrets from a single and secure place')}
     >
-      <div className="flex-col w-full">
-        <DashboardPageHeader
-          title={t('Secret Managers')}
-          description={t('Manage Secret Managers')}
-        ></DashboardPageHeader>
+      <CenteredPage
+        title={t('Secret Managers')}
+        description={t('Manage Secret Managers')}
+      >
         <div className="flex flex-col gap-4">
           {isLoading ? (
             <SkeletonList numberOfItems={3} className="w-full h-20" />
@@ -37,7 +36,7 @@ const SecretManagersPage = () => {
             ))
           )}
         </div>
-      </div>
+      </CenteredPage>
     </LockedFeatureGuard>
   );
 };

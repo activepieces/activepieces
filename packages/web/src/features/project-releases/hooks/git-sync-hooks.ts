@@ -1,5 +1,12 @@
-import { GitBranchType, isNil, Permission } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import {
+  ConfigureRepoRequest,
+  GitBranchType,
+  GitRepo,
+  isNil,
+  Permission,
+  PushGitRepoRequest,
+} from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -36,5 +43,45 @@ export const gitSyncHooks = {
       !isNil(gitSync) &&
       gitSync.branchType === GitBranchType.DEVELOPMENT
     );
+  },
+};
+
+export const gitSyncMutations = {
+  usePushToGit: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: async ({
+        gitSyncId,
+        request,
+      }: {
+        gitSyncId: string;
+        request: PushGitRepoRequest;
+      }) => {
+        await gitSyncApi.push(gitSyncId, request);
+      },
+      onSuccess,
+    });
+  },
+  useConfigureGitSync: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (repo: GitRepo) => void;
+    onError: (error: unknown) => void;
+  }) => {
+    return useMutation({
+      mutationFn: (request: ConfigureRepoRequest): Promise<GitRepo> => {
+        return gitSyncApi.configure(request);
+      },
+      onSuccess,
+      onError,
+    });
+  },
+  useDisconnectGitSync: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: (gitSyncId: string) => {
+        return gitSyncApi.disconnect(gitSyncId);
+      },
+      onSuccess,
+    });
   },
 };

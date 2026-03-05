@@ -78,7 +78,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
         try {
             const upcomingInvoice = await stripe.invoices.createPreview({
-                subscription: subscriptionId,
+                subscription: subscriptionId ?? undefined,
             })
 
             return upcomingInvoice.amount_due ? upcomingInvoice.amount_due / 100 : 0
@@ -188,5 +188,5 @@ async function createInitialCustomer(user: UserWithMetaInformation, platformId: 
 }
 
 type GetBillingAmountParams = {
-    subscriptionId?: string
+    subscriptionId?: string | null
 }
