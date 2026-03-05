@@ -62,7 +62,7 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                 },
             })
             if (!isNil(user)) {
-                const project = await projectService.getUserProjectOrThrow(user.id)
+                const project = await projectService(log).getUserProjectOrThrow(user.id)
                 await platformPlanService(log).getOrCreateForPlatform(project.platformId)
 
                 if (action === 'refund') {

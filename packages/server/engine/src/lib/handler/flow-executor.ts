@@ -1,6 +1,7 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, isNil } from '@activepieces/shared'
+import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, LogSizeExceededError, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { loggingUtils } from '../helper/logging-utils'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
@@ -74,16 +75,18 @@ export const flowExecutor = {
             await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: flowExecutionContext,
-                stepNameToUpdate: previousAction?.name,
+                stepNameToUpdate: previousAction!.name,
             }).catch(error => {
                 console.error('Error sending update:', error)
             })
+            await failIfLogSizeExceeded(flowExecutionContext, previousAction!, constants)
 
             flowExecutionContext = await handler.handle({
                 action: currentAction,
                 executionState: flowExecutionContext,
                 constants,
             })
+
             const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
             previousAction = currentAction
             currentAction = currentAction.nextAction
@@ -107,3 +110,34 @@ export const flowExecutor = {
     },
 }
 
+const failIfLogSizeExceeded = async (flowExecutionContext: FlowExecutorContext, action: FlowAction | FlowTrigger, constants: EngineConstants) => {
+    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps) || action.type === FlowActionType.LOOP_ON_ITEMS || action.type === FlowActionType.ROUTER) {
+        return
+    }
+    flowExecutionContext = flowExecutionContext
+        .upsertStep(action.name, GenericStepOutput.create({
+            input: flowExecutionContext.getStepOutput(action.name)?.input,
+            type: action.type,
+            status: StepOutputStatus.FAILED,
+            output: undefined,
+        }))
+        .setVerdict({
+            status: FlowRunStatus.LOG_SIZE_EXCEEDED,
+            failedStep: {
+                name: action.name,
+                displayName: action.displayName,
+                message: 'Flow run logs size exceeded',
+            },
+        })
+
+    await progressService.sendUpdate({
+        engineConstants: constants,
+        flowExecutorContext: flowExecutionContext,
+        stepNameToUpdate: action.name,
+    })
+    await progressService.backup({
+        engineConstants: constants,
+        flowExecutorContext: flowExecutionContext,
+    })
+    throw new LogSizeExceededError()
+}

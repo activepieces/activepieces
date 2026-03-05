@@ -187,6 +187,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
 
         const tables = await tableService.list({
+            folderId: undefined,
             projectId,
             cursor: undefined,
             limit: 1000,

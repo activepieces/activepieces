@@ -129,7 +129,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     return
                 }
                 const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
-                const platformId = await projectService.getPlatformId(listener.projectId)
+                const platformId = await projectService(request.log).getPlatformId(listener.projectId)
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.ONE_TIME,

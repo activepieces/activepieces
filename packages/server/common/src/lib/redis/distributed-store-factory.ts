@@ -32,9 +32,11 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         }, {})
     },
 
-    async delete(key: string): Promise<void> {
+    async delete(keys: string | string[]): Promise<void> {
+        const keysArray = Array.isArray(keys) ? keys : [keys]
+        if (keysArray.length === 0) return
         const redisClient = await getRedisClient()
-        await redisClient.del(key)
+        await redisClient.del(...keysArray)
     },
 
     async putBoolean(key: string, value: boolean): Promise<void> {
