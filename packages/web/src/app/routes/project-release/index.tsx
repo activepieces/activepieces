@@ -3,7 +3,6 @@ import {
   ProjectReleaseType,
   Permission,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -36,7 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-releases';
+import { projectReleaseQueries } from '@/features/project-releases';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -51,13 +50,8 @@ const ProjectReleasesPage = () => {
   const doesUserHavePermissionToWriteRelease = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['project-releases'],
-    queryFn: () =>
-      projectReleaseApi.list({
-        projectId: authenticationSession.getProjectId()!,
-      }),
-  });
+  const { data, isLoading, refetch } =
+    projectReleaseQueries.useProjectReleases();
   const { data: projects } = projectCollectionUtils.useAll();
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {

@@ -3,13 +3,12 @@ import {
   PROFILE_PICTURE_ALLOWED_TYPES,
   UserWithBadges,
 } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Camera, Mail } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 
-import { userApi } from '@/api/user-api';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { UserBadges } from '@/components/custom/user-badges';
 import {
@@ -21,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { userHooks } from '@/hooks/user-hooks';
+import { userHooks, userMutations } from '@/hooks/user-hooks';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
@@ -40,8 +39,7 @@ export function AccountSettingsDialog({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadMutation = useMutation({
-    mutationFn: (file: File) => userApi.updateMe(file),
+  const uploadMutation = userMutations.useUploadProfilePicture({
     onSuccess: () => {
       userHooks.invalidateCurrentUser(queryClient);
       toast.success(t('Profile picture updated successfully'));

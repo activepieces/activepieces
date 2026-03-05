@@ -18,8 +18,8 @@ import {
   projectMembersHooks,
   userInvitationsHooks,
 } from '@/features/members';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { membersTableColumns, MemberRowData } from './columns';

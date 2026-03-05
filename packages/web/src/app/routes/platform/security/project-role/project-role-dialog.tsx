@@ -1,8 +1,6 @@
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, ReactNode } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { projectRoleApi } from '@/features/platform-admin';
+import { projectRoleMutations } from '@/features/platform-admin';
 
 const initialPermissions = [
   {
@@ -123,29 +121,10 @@ export const ProjectRoleDialog = ({
     }
     return projectRole.permissions;
   });
-  const { mutate } = useMutation({
-    mutationFn: async () => {
-      if (mode === 'create') {
-        await projectRoleApi.create({
-          name: roleName,
-          permissions,
-          type: RoleType.CUSTOM,
-        });
-      } else if (mode === 'edit' && projectRole) {
-        await projectRoleApi.update(projectRole.id, {
-          name: roleName,
-          permissions,
-        });
-      }
-    },
-    onSuccess: () => {
+  const { mutate } = projectRoleMutations.useUpsertProjectRole({
+    onSave: () => {
       setIsOpen(false);
       onSave();
-    },
-    onError: () => {
-      toast.error(t('Role name already exists'), {
-        duration: 3000,
-      });
     },
   });
 
@@ -210,7 +189,13 @@ export const ProjectRoleDialog = ({
   };
   const handleSubmit = () => {
     if (!disabled) {
-      mutate();
+      mutate({
+        mode,
+        roleId: projectRole?.id,
+        name: roleName,
+        permissions,
+        type: RoleType.CUSTOM,
+      });
     }
   };
 

@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
 import { userInvitationsHooks } from '@/features/members/hooks/user-invitations-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/format-utils';
 

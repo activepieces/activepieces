@@ -4,7 +4,6 @@ import {
   summarizeApplicationEvent,
   isNil,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   CheckIcon,
@@ -26,12 +25,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import {
-  CURSOR_QUERY_PARAM,
-  DataTable,
-  DataTableFilters,
-  LIMIT_QUERY_PARAM,
-} from '@/components/custom/data-table';
+import { DataTable, DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -48,10 +42,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { auditEventsApi } from '@/features/platform-admin';
+import { auditLogQueries } from '@/features/platform-admin';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 export default function AuditLogsPage() {
@@ -111,27 +105,7 @@ export default function AuditLogsPage() {
     },
   ];
 
-  const { data: auditLogsData, isLoading } = useQuery({
-    queryKey: ['audit-logs', searchParams.toString()],
-    staleTime: 0,
-    gcTime: 0,
-    queryFn: async () => {
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM);
-      const action = searchParams.getAll('action');
-      const projectId = searchParams.getAll('projectId');
-      const userId = searchParams.get('userId');
-      return auditEventsApi.list({
-        cursor: cursor ?? undefined,
-        limit: limit ? parseInt(limit) : undefined,
-        action: action ?? undefined,
-        projectId: projectId ?? undefined,
-        userId: userId ?? undefined,
-        createdBefore: searchParams.get('createdBefore') ?? undefined,
-        createdAfter: searchParams.get('createdAfter') ?? undefined,
-      });
-    },
-  });
+  const { data: auditLogsData, isLoading } = auditLogQueries.useAuditLogs();
 
   const isEnabled = platform.plan.auditLogEnabled;
   return (
