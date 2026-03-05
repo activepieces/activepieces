@@ -57,8 +57,14 @@ WhatsScale uses API key authentication. Get your key from [whatsscale.com/dashbo
 | Send a Poll to a Channel | Broadcast a poll to a WhatsApp Channel (dropdown) |
 | Send a Poll to a CRM Contact | Send a poll to a WhatsScale CRM contact (dropdown) |
 
-### Planned (Sprints 6-10)
-- Set Text/Image/Video Story
+### Set Story
+| Action | Description |
+|--------|-------------|
+| Set a Text Story | Post a text status update to your WhatsApp story with optional background color |
+| Set an Image Story | Post an image to your WhatsApp story with optional caption |
+| Set a Video Story | Post a video to your WhatsApp story with optional caption |
+
+### Planned (Sprints 7-10)
 - CRM: Create, Get, Find, Update, Delete Contact, Add/Remove Tag, List
 - Check WhatsApp Number
 - Make an API Call

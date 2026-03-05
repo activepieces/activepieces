@@ -38,6 +38,11 @@ import { sendPollToGroupAction } from './lib/actions/messaging/send-poll-to-grou
 import { sendPollToChannelAction } from './lib/actions/messaging/send-poll-to-channel';
 import { sendPollToCrmContactAction } from './lib/actions/messaging/send-poll-to-crm-contact';
 
+// Sprint 6: Story actions
+import { setTextStoryAction } from './lib/actions/stories/set-text-story';
+import { setImageStoryAction } from './lib/actions/stories/set-image-story';
+import { setVideoStoryAction } from './lib/actions/stories/set-video-story';
+
 export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
@@ -76,6 +81,10 @@ export const whatsscale = createPiece({
     sendPollToGroupAction,
     sendPollToChannelAction,
     sendPollToCrmContactAction,
+    // Story actions
+    setTextStoryAction,
+    setImageStoryAction,
+    setVideoStoryAction,
   ],
   triggers: [],
 });
