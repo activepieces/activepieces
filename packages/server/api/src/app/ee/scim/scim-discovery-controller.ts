@@ -7,10 +7,10 @@ import {
     SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA,
     SCIM_USER_SCHEMA,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 
-export const scimDiscoveryController: FastifyPluginAsyncTypebox = async (app) => {
+export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/ServiceProviderConfig', ServiceProviderConfigRequest, async (_request, reply) => {
         return reply.status(StatusCodes.OK).send({

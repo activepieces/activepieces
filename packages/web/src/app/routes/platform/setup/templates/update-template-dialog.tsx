@@ -3,11 +3,12 @@ import {
   TemplateTag as TemplateTagType,
   Template,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,22 +24,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { templateUtils } from '@/features/flows';
-import { templatesMutations } from '@/features/templates';
+import { templatesApi } from '@/features/templates';
 import { api } from '@/lib/api';
 
-const UpdateFlowTemplateSchema = Type.Object({
-  displayName: Type.String({
-    minLength: 1,
-    errorMessage: t('Name is required'),
-  }),
-  summary: Type.String(),
-  description: Type.String(),
-  blogUrl: Type.String(),
-  template: Type.Optional(Type.Unknown()),
-  tags: Type.Optional(Type.Array(TemplateTagType)),
-  categories: Type.Optional(Type.Array(Type.String())),
+const UpdateFlowTemplateSchema = z.object({
+  displayName: z.string().min(1, t('Name is required')),
+  summary: z.string(),
+  description: z.string(),
+  blogUrl: z.string(),
+  template: z.unknown().optional(),
+  tags: z.array(TemplateTagType).optional(),
+  categories: z.array(z.string()).optional(),
 });
-type UpdateFlowTemplateSchema = Static<typeof UpdateFlowTemplateSchema>;
+type UpdateFlowTemplateSchema = z.infer<typeof UpdateFlowTemplateSchema>;
 
 export const UpdateTemplateDialog = ({
   children,
@@ -60,28 +58,15 @@ export const UpdateTemplateDialog = ({
       categories: template.categories || [],
       template: undefined,
     },
-    resolver: typeboxResolver(UpdateFlowTemplateSchema),
+    resolver: zodResolver(UpdateFlowTemplateSchema),
   });
 
-  const { mutate, isPending } = templatesMutations.useUpdateTemplate({
-    onDone: () => {
-      onDone();
-      setOpen(false);
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        form.setError('template', {
-          message: error.message,
-        });
-      }
-    },
-  });
+  const { mutate, isPending } = useMutation({
+    mutationKey: ['update-template', template.id],
+    mutationFn: () => {
+      const formValue = form.getValues();
 
-  const onSubmit = () => {
-    const formValue = form.getValues();
-    mutate({
-      templateId: template.id,
-      request: {
+      return templatesApi.update(template.id, {
         name: formValue.displayName,
         summary: formValue.summary,
         description: formValue.description,
@@ -99,8 +84,23 @@ export const UpdateTemplateDialog = ({
               },
             ]
           : undefined,
-      },
-    });
+      });
+    },
+    onSuccess: () => {
+      onDone();
+      setOpen(false);
+    },
+    onError: (error) => {
+      if (api.isError(error)) {
+        form.setError('template', {
+          message: error.message,
+        });
+      }
+    },
+  });
+
+  const onSubmit = () => {
+    mutate();
   };
 
   return (

@@ -1,50 +1,44 @@
 import { PiecePropertyMap } from ".";
 import { PieceAuthProperty } from "./authentication";
 import { PropertyType } from "./input/property-type";
-import { Type, TSchema } from "@sinclair/typebox";
+import { z } from "zod";
 import { AUTHENTICATION_PROPERTY_NAME, isEmpty, isNil } from "@activepieces/shared";
 
 function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAuthProperty[] | undefined, requireAuth: boolean | undefined = true) {
     const entries = Object.entries(props);
-    const nullableType = [Type.Null(), Type.Undefined()];
-    const nonNullableUnknownPropType = Type.Not(
-      Type.Union(nullableType),
-      Type.Unknown(),
-    );
-    const propsSchema: Record<string, TSchema> = {};
+    const propsSchema: Record<string, z.ZodType> = {};
     for (const [name, property] of entries) {
       switch (property.type) {
         case PropertyType.MARKDOWN:
-          propsSchema[name] = Type.Optional(
-            Type.Union([Type.Null(), Type.Undefined(), Type.Never(), Type.Unknown()]),
-          );
+          propsSchema[name] = z.union([z.null(), z.undefined(), z.never(), z.unknown()]).optional();
           break;
         case PropertyType.DATE_TIME:
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
         case PropertyType.COLOR:
         case PropertyType.FILE:
-          propsSchema[name] = Type.String({
-            minLength: property.required ? 1 : undefined,
-          });
+          propsSchema[name] = property.required
+            ? z.string().min(1)
+            : z.string();
           break;
         case PropertyType.CHECKBOX:
-          propsSchema[name] = Type.Union([
-            Type.Boolean({ defaultValue: false }),
-            Type.String({}),
+          propsSchema[name] = z.union([
+            z.boolean(),
+            z.string(),
           ]);
           break;
         case PropertyType.NUMBER:
-          propsSchema[name] = Type.Union([
-            Type.String({
-              minLength: property.required ? 1 : undefined,
-            }),
-            Type.Number(),
+          propsSchema[name] = z.union([
+            property.required ? z.string().min(1) : z.string(),
+            z.number(),
           ]);
           break;
         case PropertyType.STATIC_DROPDOWN:
         case PropertyType.DROPDOWN:
-          propsSchema[name] = nonNullableUnknownPropType;
+          propsSchema[name] = z.unknown().refine(
+            (val) => val !== null && val !== undefined,
+            { message: 'Value must not be null or undefined' },
+          );
           break;
         case PropertyType.BASIC_AUTH:
         case PropertyType.CUSTOM_AUTH:
@@ -53,78 +47,64 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
           break;
         case PropertyType.ARRAY: {
           const arrayItemSchema = isNil(property.properties)
-            ? Type.String({
-                minLength: property.required ? 1 : undefined,
-              })
-            : buildSchema(property.properties,undefined);
-          propsSchema[name] = Type.Union([
-            Type.Array(arrayItemSchema, {
-              minItems: property.required ? 1 : undefined,
-            }),
+            ? (property.required ? z.string().min(1) : z.string())
+            : buildSchema(property.properties, undefined);
+          propsSchema[name] = z.union([
+            property.required
+              ? z.array(arrayItemSchema).min(1)
+              : z.array(arrayItemSchema),
             //for inline items mode
-            Type.Record(Type.String(), Type.Unknown()),
+            z.record(z.string(), z.unknown()),
             //for normal dynamic input mode
-            Type.String({
-              minLength: property.required ? 1 : undefined,
-            }),
+            property.required ? z.string().min(1) : z.string(),
           ]);
           break;
         }
         case PropertyType.OBJECT:
-          propsSchema[name] = Type.Union([
-            Type.Record(Type.String(), Type.Any()),
-            Type.String({
-              minLength: property.required ? 1 : undefined,
-            }),
+          propsSchema[name] = z.union([
+            z.record(z.string(), z.any()),
+            property.required ? z.string().min(1) : z.string(),
           ]);
           break;
         case PropertyType.JSON:
-          propsSchema[name] = Type.Union([
-            Type.Record(Type.String(), Type.Any()),
-            Type.Array(Type.Any()),
-            Type.String({
-              minLength: property.required ? 1 : undefined,
-            }),
+          propsSchema[name] = z.union([
+            z.record(z.string(), z.any()),
+            z.array(z.any()),
+            property.required ? z.string().min(1) : z.string(),
           ]);
           break;
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-          propsSchema[name] = Type.Union([
-            Type.Array(Type.Any(), {
-              minItems: property.required ? 1 : undefined,
-            }),
-            Type.String({
-              minLength: property.required ? 1 : undefined,
-            }),
+          propsSchema[name] = z.union([
+            property.required
+              ? z.array(z.any()).min(1)
+              : z.array(z.any()),
+            property.required ? z.string().min(1) : z.string(),
           ]);
           break;
         case PropertyType.DYNAMIC:
-          propsSchema[name] = Type.Record(Type.String(), Type.Any());
+          propsSchema[name] = z.record(z.string(), z.any());
           break;
         case PropertyType.CUSTOM:
-          propsSchema[name] = Type.Unknown();
+          propsSchema[name] = z.unknown();
           break;
       }
-   
+
       //optional array is checked against its children
       if (!property.required && property.type !== PropertyType.ARRAY) {
-        propsSchema[name] = Type.Optional(
-          Type.Union(
-            isEmpty(propsSchema[name])
-              ? [Type.Any(), ...nullableType]
-              : [propsSchema[name], ...nullableType],
-          ),
-        );
+        propsSchema[name] = z.union(
+          isEmpty(propsSchema[name])
+            ? [z.any(), z.null(), z.undefined()] as [z.ZodType, z.ZodType, z.ZodType]
+            : [propsSchema[name], z.null(), z.undefined()] as [z.ZodType, z.ZodType, z.ZodType],
+        ).optional();
       }
     }
     if(auth && requireAuth)
       {
-       propsSchema[AUTHENTICATION_PROPERTY_NAME] = Type.String({
-         minLength: 1
-       })
+       propsSchema[AUTHENTICATION_PROPERTY_NAME] = z.string().min(1)
       }
-    return Type.Object(propsSchema);
-  } 
+    return z.object(propsSchema);
+  }
 
   export const piecePropertiesUtils = {
     buildSchema

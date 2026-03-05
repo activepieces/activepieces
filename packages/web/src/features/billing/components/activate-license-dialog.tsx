@@ -1,8 +1,8 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,11 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-const LicenseKeySchema = Type.Object({
-  tempLicenseKey: Type.String({
-    errorMessage: t('License key is invalid'),
-  }),
+const LicenseKeySchema = z.object({
+  tempLicenseKey: z.string({ message: t('License key is invalid') }),
 });
 
-type LicenseKeySchema = Static<typeof LicenseKeySchema>;
+type LicenseKeySchema = z.infer<typeof LicenseKeySchema>;
 
 interface ActivateLicenseDialogProps {
   isOpen: boolean;
@@ -39,7 +37,7 @@ export const ActivateLicenseDialog = ({
   const queryClinet = useQueryClient();
 
   const form = useForm<LicenseKeySchema>({
-    resolver: typeboxResolver(LicenseKeySchema),
+    resolver: zodResolver(LicenseKeySchema),
     defaultValues: {
       tempLicenseKey: '',
     },

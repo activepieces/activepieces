@@ -1,11 +1,10 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { OtpType } from './otp-type'
 
 
-export const CreateOtpRequestBody = Type.Object({
-    email: Type.String(),
-    type: Type.Enum(OtpType),
+export const CreateOtpRequestBody = z.object({
+    email: z.string(),
+    type: z.nativeEnum(OtpType),
 })
 
-export type CreateOtpRequestBody = Static<typeof CreateOtpRequestBody>
-
+export type CreateOtpRequestBody = z.infer<typeof CreateOtpRequestBody>

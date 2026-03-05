@@ -1,11 +1,13 @@
 import { CreateOtpRequestBody, OtpType } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type, Static } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import { z } from 'zod';
 
+import { authenticationApi } from '@/api/authentication-api';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,28 +20,30 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
+import { HttpError } from '@/lib/api';
 
-import { authMutations } from '../hooks/auth-hooks';
-
-const FormSchema = Type.Object({
-  email: Type.String({
-    errorMessage: t('Please enter your email'),
-  }),
-  type: Type.Enum(OtpType),
+const FormSchema = z.object({
+  email: z.string().min(1, t('Please enter your email')),
+  type: z.nativeEnum(OtpType),
 });
 
-type FormSchema = Static<typeof FormSchema>;
+type FormSchema = z.infer<typeof FormSchema>;
 
 const ResetPasswordForm = () => {
   const [isSent, setIsSent] = useState<boolean>(false);
   const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       type: OtpType.PASSWORD_RESET,
     },
   });
 
-  const { mutate, isPending } = authMutations.useSendOtpEmail({
+  const { mutate, isPending } = useMutation<
+    void,
+    HttpError,
+    CreateOtpRequestBody
+  >({
+    mutationFn: authenticationApi.sendOtpEmail,
     onSuccess: () => setIsSent(true),
   });
 

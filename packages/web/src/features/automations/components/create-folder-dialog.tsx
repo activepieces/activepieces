@@ -1,9 +1,11 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { FolderDto } from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,8 +19,9 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { foldersMutations } from '@/features/folders/hooks/folders-hooks';
+import { foldersApi } from '@/features/folders/api/folders-api';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 type CreateFolderDialogProps = {
   updateSearchParams: (_folderId?: string) => void;
@@ -27,14 +30,14 @@ type CreateFolderDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-const CreateFolderFormSchema = Type.Object({
-  displayName: Type.String({
-    errorMessage: t('Please enter folder name'),
-    pattern: '.*\\S.*',
-  }),
+
+const CreateFolderFormSchema = z.object({
+  displayName: z
+    .string({ message: t('Please enter folder name') })
+    .regex(/.*\S.*/, t('Please enter folder name')),
 });
 
-type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
+type CreateFolderFormSchema = z.infer<typeof CreateFolderFormSchema>;
 
 export const CreateFolderDialog = ({
   updateSearchParams,
@@ -43,10 +46,20 @@ export const CreateFolderDialog = ({
   onOpenChange,
 }: CreateFolderDialogProps) => {
   const form = useForm<CreateFolderFormSchema>({
-    resolver: typeboxResolver(CreateFolderFormSchema),
+    resolver: zodResolver(CreateFolderFormSchema),
   });
 
-  const { mutate, isPending } = foldersMutations.useCreateFolder({
+  const { mutate, isPending } = useMutation<
+    FolderDto,
+    Error,
+    CreateFolderFormSchema
+  >({
+    mutationFn: async (data) => {
+      return await foldersApi.create({
+        displayName: data.displayName.trim(),
+        projectId: authenticationSession.getProjectId()!,
+      });
+    },
     onSuccess: (folder) => {
       form.reset();
       onOpenChange(false);

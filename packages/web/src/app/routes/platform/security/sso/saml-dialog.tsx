@@ -1,11 +1,17 @@
-import { ApFlagId, PlatformWithoutSensitiveData } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import {
+  ApFlagId,
+  PlatformWithoutSensitiveData,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
+import { platformApi } from '@/api/platforms-api';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +26,6 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ssoMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 type ConfigureSamlDialogProps = {
@@ -29,15 +34,11 @@ type ConfigureSamlDialogProps = {
   refetch: () => Promise<void>;
 };
 
-const Saml2FormValues = Type.Object({
-  idpMetadata: Type.String({
-    minLength: 1,
-  }),
-  idpCertificate: Type.String({
-    minLength: 1,
-  }),
+const Saml2FormValues = z.object({
+  idpMetadata: z.string().min(1),
+  idpCertificate: z.string().min(1),
 });
-type Saml2FormValues = Static<typeof Saml2FormValues>;
+type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
 export const ConfigureSamlDialog = ({
   platform,
@@ -46,17 +47,21 @@ export const ConfigureSamlDialog = ({
 }: ConfigureSamlDialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<Saml2FormValues>({
-    resolver: typeboxResolver(Saml2FormValues),
+    resolver: zodResolver(Saml2FormValues),
   });
 
   const { data: samlAcs } = flagsHooks.useFlag<string>(
     ApFlagId.SAML_AUTH_ACS_URL,
   );
-  const { mutate, isPending } = ssoMutations.useUpdatePlatformSso({
-    platformId: platform.id,
-    refetch,
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (request: UpdatePlatformRequestBody) => {
+      await platformApi.update(request, platform.id);
+      await refetch();
+    },
     onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
+      toast.success(t('Single sign-on settings updated'), {
+        duration: 3000,
+      });
       setOpen(false);
     },
   });

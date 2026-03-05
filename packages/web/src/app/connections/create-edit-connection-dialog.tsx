@@ -13,7 +13,7 @@ import {
   isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
@@ -99,9 +99,7 @@ function CreateOrEditConnectionSection({
     },
     mode: 'onChange',
     reValidateMode: 'onChange',
-    resolver: typeboxResolver(
-      formSchema,
-    ) as unknown as Resolver<ConnectionFormValues>,
+    resolver: zodResolver(formSchema),
   });
 
   const [errorMessage, setErrorMessage] = useState('');

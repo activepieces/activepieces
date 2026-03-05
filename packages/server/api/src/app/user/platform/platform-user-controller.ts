@@ -9,14 +9,12 @@ import {
     UpdateUserRequestBody,
     UserWithMetaInformation,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { userService } from '../user-service'
 
-export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+export const platformUserController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
@@ -76,7 +74,7 @@ const ListUsersRequest = {
 
 const UpdateUserRequest = {
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         body: UpdateUserRequestBody,
@@ -94,13 +92,13 @@ const UpdateUserRequest = {
 
 const DeleteUserRequest = {
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         tags: ['users'],
         description: 'Delete user',
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },

@@ -7,7 +7,8 @@ import {
   PopulatedFlow,
   Table,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 import { Resolver, useForm } from 'react-hook-form';
@@ -33,7 +34,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { gitSyncHooks, gitSyncMutations } from '../hooks/git-sync-hooks';
+import { gitSyncApi } from '../api/git-sync-api';
+import { gitSyncHooks } from '../hooks/git-sync-hooks';
 
 type PushToGitDialogProps =
   | {
@@ -70,14 +72,33 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
           ? props.tables.map((item) => item.externalId)
           : [],
     },
-    resolver: typeboxResolver(
+    resolver: zodResolver(
       props.type === 'flow'
         ? PushFlowsGitRepoRequest
         : PushTablesGitRepoRequest,
     ) as Resolver<PushGitRepoRequest>,
   });
 
-  const { mutate: pushToGit, isPending } = gitSyncMutations.usePushToGit({
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (request: PushGitRepoRequest) => {
+      assertNotNullOrUndefined(gitSync, 'gitSync');
+      switch (props.type) {
+        case 'flow':
+          await gitSyncApi.push(gitSync.id, {
+            type: GitPushOperationType.PUSH_FLOW,
+            commitMessage: request.commitMessage,
+            externalFlowIds: props.flows.map((item) => item.externalId),
+          });
+          break;
+        case 'table':
+          await gitSyncApi.push(gitSync.id, {
+            type: GitPushOperationType.PUSH_TABLE,
+            commitMessage: request.commitMessage,
+            externalTableIds: props.tables.map((item) => item.externalId),
+          });
+          break;
+      }
+    },
     onSuccess: () => {
       toast.success(t('Pushed successfully'), {
         duration: 3000,
@@ -94,30 +115,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) => {
-              assertNotNullOrUndefined(gitSync, 'gitSync');
-              pushToGit({
-                gitSyncId: gitSync.id,
-                request:
-                  props.type === 'flow'
-                    ? {
-                        type: GitPushOperationType.PUSH_FLOW,
-                        commitMessage: data.commitMessage,
-                        externalFlowIds: props.flows.map(
-                          (item) => item.externalId,
-                        ),
-                      }
-                    : {
-                        type: GitPushOperationType.PUSH_TABLE,
-                        commitMessage: data.commitMessage,
-                        externalTableIds: props.tables.map(
-                          (item) => item.externalId,
-                        ),
-                      },
-              });
-            })}
-          >
+          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <DialogHeader>
               <DialogTitle>{t('Push to Git')}</DialogTitle>
             </DialogHeader>
@@ -152,28 +150,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
               <Button
                 type="submit"
                 loading={isPending}
-                onClick={form.handleSubmit((data) => {
-                  assertNotNullOrUndefined(gitSync, 'gitSync');
-                  pushToGit({
-                    gitSyncId: gitSync.id,
-                    request:
-                      props.type === 'flow'
-                        ? {
-                            type: GitPushOperationType.PUSH_FLOW,
-                            commitMessage: data.commitMessage,
-                            externalFlowIds: props.flows.map(
-                              (item) => item.externalId,
-                            ),
-                          }
-                        : {
-                            type: GitPushOperationType.PUSH_TABLE,
-                            commitMessage: data.commitMessage,
-                            externalTableIds: props.tables.map(
-                              (item) => item.externalId,
-                            ),
-                          },
-                  });
-                })}
+                onClick={form.handleSubmit((data) => mutate(data))}
               >
                 {t('Push')}
               </Button>

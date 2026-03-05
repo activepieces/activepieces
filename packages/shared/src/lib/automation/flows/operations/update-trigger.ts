@@ -1,12 +1,9 @@
-import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { isNil } from '../../../core/common'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateTriggerRequest } from '.'
-
-const triggerSchemaValidation = TypeCompiler.Compile(FlowTrigger)
 
 function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined): FlowTrigger {
     const baseProperties = {
@@ -32,7 +29,8 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
             }
             break
     }
-    const valid = (isNil(request.valid) ? true : request.valid) && triggerSchemaValidation.Check(trigger)
+    const parseResult = FlowTrigger.safeParse(trigger)
+    const valid = (isNil(request.valid) ? true : request.valid) && parseResult.success
     return {
         ...trigger,
         valid,

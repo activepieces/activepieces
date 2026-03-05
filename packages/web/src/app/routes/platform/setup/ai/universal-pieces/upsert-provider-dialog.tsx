@@ -15,9 +15,11 @@ import {
   OpenAICompatibleProviderConfig,
   OpenAIProviderAuthConfig,
   OpenAIProviderConfig,
+  UpdateAIProviderRequest,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 import {
@@ -27,6 +29,7 @@ import {
   ResolverResult,
   useForm,
 } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -48,7 +51,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderMutations } from '@/features/platform-admin';
+import { aiProviderApi } from '@/features/platform-admin';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
@@ -102,7 +105,7 @@ export const UpsertAIProviderDialogContent = ({
       context: unknown,
       options: ResolverOptions<CreateAIProviderRequest>,
     ) => {
-      const originalResolve = typeboxResolver(
+      const originalResolve = zodResolver(
         createFormSchema(provider, !isNil(providerId)),
       ) as unknown as (
         values: CreateAIProviderRequest,
@@ -156,14 +159,28 @@ export const UpsertAIProviderDialogContent = ({
     } as CreateAIProviderRequest,
   });
 
-  const { mutate, isPending } = aiProviderMutations.useUpsertAiProvider({
-    providerId,
+  const { mutate, isPending } = useMutation({
+    mutationFn: (data: CreateAIProviderRequest): Promise<void> => {
+      if (providerId) {
+        const updateData: UpdateAIProviderRequest = {
+          displayName: data.displayName,
+          config: data.config,
+          ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
+        };
+        return aiProviderApi.update(providerId, updateData);
+      } else {
+        return aiProviderApi.upsert(data);
+      }
+    },
     onSuccess: () => {
       setOpen(false);
       onSave();
     },
-    onError: (error) => {
+    onError: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => {
       const data = error.response?.data;
+
       form.setError('root.serverError', {
         type: 'manual',
         message:
@@ -262,43 +279,43 @@ export const UpsertAIProviderDialogContent = ({
   );
 };
 
-const OptionalAuthSchema = Type.Optional(
-  Type.Object({
-    apiKey: Type.Optional(Type.String()),
-  }),
-);
+const OptionalAuthSchema = z
+  .object({
+    apiKey: z.string().optional(),
+  })
+  .optional();
 
 const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   if (provider === AIProviderName.AZURE) {
-    return Type.Object({
-      provider: Type.Literal(AIProviderName.AZURE),
+    return z.object({
+      provider: z.literal(AIProviderName.AZURE),
       config: AzureProviderConfig,
       auth: editMode ? OptionalAuthSchema : AzureProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
-    return Type.Object({
-      provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
+    return z.object({
+      provider: z.literal(AIProviderName.CLOUDFLARE_GATEWAY),
       config: CloudflareGatewayProviderConfig,
       auth: editMode ? OptionalAuthSchema : CloudflareGatewayProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.CUSTOM) {
-    return Type.Object({
-      provider: Type.Literal(AIProviderName.CUSTOM),
+    return z.object({
+      provider: z.literal(AIProviderName.CUSTOM),
       config: OpenAICompatibleProviderConfig,
       auth: editMode ? OptionalAuthSchema : OpenAICompatibleProviderAuthConfig,
     });
   }
-  const authSchema = Type.Union([
+  const authSchema = z.union([
     AnthropicProviderAuthConfig,
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
   ]);
-  return Type.Object({
-    provider: Type.Literal(provider),
+  return z.object({
+    provider: z.literal(provider),
     auth: editMode ? OptionalAuthSchema : authSchema,
-    config: Type.Union([
+    config: z.union([
       AnthropicProviderConfig,
       GoogleProviderConfig,
       OpenAIProviderConfig,

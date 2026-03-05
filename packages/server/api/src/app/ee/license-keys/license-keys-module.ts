@@ -1,6 +1,6 @@
 import { exceptionHandler } from '@activepieces/server-common'
 import { isEmpty, isNil } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
@@ -8,7 +8,7 @@ import { platformService } from '../../platform/platform.service'
 import { licenseKeysController } from './license-keys-controller'
 import { licenseKeysService } from './license-keys-service'
 
-export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
+export const licenseKeysModule: FastifyPluginAsyncZod = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, async () => {
         const platforms = await platformService(app.log).getAll()
         for (const platform of platforms) {

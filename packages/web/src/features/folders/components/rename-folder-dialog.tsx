@@ -1,9 +1,11 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { FolderDto } from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,35 +18,53 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { foldersApi } from '@/features/folders/api/folders-api';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
-import { foldersMutations } from '../hooks/folders-hooks';
+type CreateFolderDialogProps = {
+  updateSearchParams: (_folderId?: string) => void;
+  refetchFolders: () => void;
+  className?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
-const RenameFolderFormSchema = Type.Object({
-  displayName: Type.String({
-    errorMessage: t('Please enter folder name'),
-    pattern: '.*\\S.*',
-  }),
+const CreateFolderFormSchema = z.object({
+  displayName: z
+    .string({ message: t('Please enter folder name') })
+    .regex(/.*\S.*/, t('Please enter folder name')),
 });
 
-type RenameFolderFormSchema = Static<typeof RenameFolderFormSchema>;
+type CreateFolderFormSchema = z.infer<typeof CreateFolderFormSchema>;
 
-export const RenameFolderDialog = ({
-  folderId,
+export const CreateFolderDialog = ({
+  updateSearchParams,
   refetchFolders,
   open,
   onOpenChange,
-}: RenameFolderDialogProps) => {
-  const form = useForm<RenameFolderFormSchema>({
-    resolver: typeboxResolver(RenameFolderFormSchema),
+}: CreateFolderDialogProps) => {
+  const form = useForm<CreateFolderFormSchema>({
+    resolver: zodResolver(CreateFolderFormSchema),
   });
 
-  const { mutate, isPending } = foldersMutations.useRenameFolder({
-    onSuccess: () => {
+  const { mutate, isPending } = useMutation<
+    FolderDto,
+    Error,
+    CreateFolderFormSchema
+  >({
+    mutationFn: async (data) => {
+      return await foldersApi.create({
+        displayName: data.displayName.trim(),
+        projectId: authenticationSession.getProjectId()!,
+      });
+    },
+    onSuccess: (folder) => {
       form.reset();
       onOpenChange(false);
+      updateSearchParams(folder.id);
       refetchFolders();
-      toast.success(t('Folder renamed successfully'));
+      toast.success(t('Added folder successfully'));
     },
     onError: (error) => {
       if (api.isError(error)) {
@@ -68,14 +88,10 @@ export const RenameFolderDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Rename Folder')}</DialogTitle>
+          <DialogTitle>{t('New Folder')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) =>
-              mutate({ folderId, displayName: data.displayName }),
-            )}
-          >
+          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <FormField
               control={form.control}
               name="displayName"
@@ -114,11 +130,4 @@ export const RenameFolderDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
-
-type RenameFolderDialogProps = {
-  folderId: string;
-  refetchFolders: () => void;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
 };
