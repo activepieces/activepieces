@@ -31,6 +31,18 @@ export const memberEdited = createTrigger({
     }
   },
   async run(context) {
+    const body = context.payload.body as {
+      member?: { previous?: Record<string, unknown> };
+    };
+    const previous = body?.member?.previous;
+
+    // When a new member is created, Ghost also fires member.edited
+    // with an empty or minimal 'previous' object. Filter these out
+    // so this trigger only fires for genuine edits.
+    if (!previous || Object.keys(previous).length === 0) {
+      return [];
+    }
+
     return [context.payload.body];
   },
 
