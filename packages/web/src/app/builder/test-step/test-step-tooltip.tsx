@@ -13,9 +13,14 @@ import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties
 type TestButtonTooltipProps = {
   children: React.ReactNode;
   invalid: boolean;
+  saving: boolean;
 };
 
-const TestButtonTooltip = ({ children, invalid }: TestButtonTooltipProps) => {
+const TestButtonTooltip = ({
+  children,
+  invalid,
+  saving,
+}: TestButtonTooltipProps) => {
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   return (
     <TooltipProvider>
@@ -32,6 +37,10 @@ const TestButtonTooltip = ({ children, invalid }: TestButtonTooltipProps) => {
           <TooltipContent side="bottom">
             {t('Please wait until all inputs are loaded')}
           </TooltipContent>
+        )}
+
+        {saving && (
+          <TooltipContent side="bottom">{t('Saving...')}</TooltipContent>
         )}
       </Tooltip>
     </TooltipProvider>
