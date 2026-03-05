@@ -40,7 +40,6 @@ export const flowExecutor = {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
-            await failIfLogSizeExceeded(executionState, trigger, constants)
             await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
