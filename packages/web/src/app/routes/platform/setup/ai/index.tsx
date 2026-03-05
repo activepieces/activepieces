@@ -3,7 +3,10 @@ import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderQueries, aiProviderMutations } from '@/features/platform-admin';
+import {
+  aiProviderQueries,
+  aiProviderMutations,
+} from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
@@ -17,9 +20,10 @@ export default function AIProvidersPage() {
   const { data: flags } = flagsHooks.useFlags();
   const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
 
-  const { mutate: deleteProvider, isPending: isDeleting } = aiProviderMutations.useDeleteAiProvider({
-    onSuccess: () => refetch(),
-  });
+  const { mutate: deleteProvider, isPending: isDeleting } =
+    aiProviderMutations.useDeleteAiProvider({
+      onSuccess: () => refetch(),
+    });
 
   return (
     <LockedFeatureGuard

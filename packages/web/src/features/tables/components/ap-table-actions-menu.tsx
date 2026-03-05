@@ -1,5 +1,4 @@
 import { Permission, Table } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Download,
@@ -27,6 +26,7 @@ import { gitSyncHooks } from '@/features/project-releases/hooks/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { tablesApi } from '../api/tables-api';
+import { tableMutations } from '../hooks/table-hooks';
 import { tablesUtils } from '../utils/utils';
 
 import { ImportTableDialog } from './import-table-dialog';
@@ -46,14 +46,16 @@ const ApTableActionsMenu = ({
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState(table.name);
 
-  const { mutate: renameTable, isPending: isRenamePending } = useMutation({
-    mutationFn: async () => tablesApi.update(table.id, { name: renameValue }),
-    onSuccess: () => {
-      setIsRenameOpen(false);
-      refetch?.();
-      toast.success(t('Table renamed'));
-    },
-  });
+  const { mutate: renameTableMutate, isPending: isRenamePending } =
+    tableMutations.useRenameTable({
+      onSuccess: () => {
+        setIsRenameOpen(false);
+        refetch?.();
+        toast.success(t('Table renamed'));
+      },
+    });
+  const renameTable = () =>
+    renameTableMutate({ tableId: table.id, name: renameValue });
 
   const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,

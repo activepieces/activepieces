@@ -20,7 +20,10 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { piecesTagQueries, piecesTagMutations } from '@/features/platform-admin';
+import {
+  piecesTagQueries,
+  piecesTagMutations,
+} from '@/features/platform-admin';
 
 type ApplyTagsProps = {
   selectedPieces: PieceMetadataModelSummary[];

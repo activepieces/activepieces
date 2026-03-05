@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { ssoMutations } from '@/features/platform-admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ssoMutations } from '@/features/platform-admin';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;

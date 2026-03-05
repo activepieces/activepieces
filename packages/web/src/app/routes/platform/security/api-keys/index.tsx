@@ -51,9 +51,7 @@ const ApiKeysPage = () => {
         title={t('API Keys')}
         description={t('Manage API keys to access Activepieces APIs.')}
         actions={
-          <NewApiKeyDialog
-            onCreate={() => refetch()}
-          >
+          <NewApiKeyDialog onCreate={() => refetch()}>
             <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New API Key')}
             </AnimatedIconButton>

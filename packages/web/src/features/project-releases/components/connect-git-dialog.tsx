@@ -6,7 +6,6 @@ import {
   ErrorCode,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -37,8 +36,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { gitSyncApi } from '../api/git-sync-api';
-import { gitSyncHooks } from '../hooks/git-sync-hooks';
+import { gitSyncHooks, gitSyncMutations } from '../hooks/git-sync-hooks';
 
 type ConnectGitProps = {
   open?: boolean;
@@ -67,11 +65,8 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
     platform.plan.environmentsEnabled,
   );
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (request: ConfigureRepoRequest): Promise<GitRepo> => {
-      return gitSyncApi.configure(request);
-    },
-    onSuccess: (repo) => {
+  const { mutate, isPending } = gitSyncMutations.useConfigureGitSync({
+    onSuccess: () => {
       refetch();
       toast.success(t('Connected successfully'), {
         duration: 3000,
@@ -79,7 +74,6 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
     },
     onError: (error) => {
       let message = INTERNAL_ERROR_MESSAGE;
-
       if (api.isError(error)) {
         const responseData = error.response?.data as ApErrorParams;
         if (responseData.code === ErrorCode.INVALID_GIT_CREDENTIALS) {
@@ -89,7 +83,6 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
       form.setError('root.serverError', {
         message: message,
       });
-      return;
     },
   });
 

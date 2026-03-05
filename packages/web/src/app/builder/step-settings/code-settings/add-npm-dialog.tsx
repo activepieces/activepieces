@@ -1,6 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -26,7 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { api } from '@/lib/api';
+import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 
 const formSchema = Type.Object({
   packageName: Type.String({
@@ -52,17 +51,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
     resolver: typeboxResolver(formSchema),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async () => {
-      const { packageName } = form.getValues();
-      const response = await api.get<{ 'dist-tags': { latest: string } }>(
-        `https://registry.npmjs.org/${packageName}`,
-      );
-      return {
-        packageName,
-        packageVersion: response['dist-tags'].latest,
-      };
-    },
+  const { mutate, isPending } = flowHooks.useFetchNpmPackageVersion({
     onSuccess: (response) => {
       onAdd(response);
       setOpen(false);
@@ -89,7 +78,9 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
+            onSubmit={(e) =>
+              form.handleSubmit(() => mutate(form.getValues().packageName))(e)
+            }
             className="flex flex-col gap-4"
           >
             <FormField
@@ -125,7 +116,11 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
               {t('Cancel')}
             </Button>
           </DialogClose>
-          <Button type="submit" loading={isPending} onClick={() => mutate()}>
+          <Button
+            type="submit"
+            loading={isPending}
+            onClick={() => mutate(form.getValues().packageName)}
+          >
             {t('Add')}
           </Button>
         </DialogFooter>

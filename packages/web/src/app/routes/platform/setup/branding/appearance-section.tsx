@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { brandingMutations } from '@/features/platform-admin';
 import { ColorPicker } from '@/components/custom/color-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { brandingMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 const FromSchema = Type.Object({
@@ -44,9 +44,10 @@ export const AppearanceSection = () => {
   const iconRef = useRef<HTMLInputElement>(null);
   const faviconRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: updatePlatformBranding, isPending } = brandingMutations.useUpdateAppearance({
-    platformId: platform.id,
-  });
+  const { mutate: updatePlatformBranding, isPending } =
+    brandingMutations.useUpdateAppearance({
+      platformId: platform.id,
+    });
 
   const updatePlatform = () => {
     const logo = logoRef.current?.files?.[0];

@@ -50,7 +50,8 @@ const ProjectReleasesPage = () => {
   const doesUserHavePermissionToWriteRelease = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
-  const { data, isLoading, refetch } = projectReleaseQueries.useProjectReleases();
+  const { data, isLoading, refetch } =
+    projectReleaseQueries.useProjectReleases();
   const { data: projects } = projectCollectionUtils.useAll();
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {

@@ -1,5 +1,7 @@
 import {
+  ConfigureRepoRequest,
   GitBranchType,
+  GitRepo,
   isNil,
   Permission,
   PushGitRepoRequest,
@@ -56,9 +58,30 @@ export const gitSyncMutations = {
       }) => {
         await gitSyncApi.push(gitSyncId, request);
       },
-      onSuccess: () => {
-        onSuccess();
+      onSuccess,
+    });
+  },
+  useConfigureGitSync: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (repo: GitRepo) => void;
+    onError: (error: unknown) => void;
+  }) => {
+    return useMutation({
+      mutationFn: (request: ConfigureRepoRequest): Promise<GitRepo> => {
+        return gitSyncApi.configure(request);
       },
+      onSuccess,
+      onError,
+    });
+  },
+  useDisconnectGitSync: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: (gitSyncId: string) => {
+        return gitSyncApi.disconnect(gitSyncId);
+      },
+      onSuccess,
     });
   },
 };

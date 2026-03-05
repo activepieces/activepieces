@@ -1,7 +1,4 @@
-import {
-  DiffReleaseRequest,
-  ProjectSyncPlan,
-} from '@activepieces/shared';
+import { DiffReleaseRequest, ProjectSyncPlan } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { internalErrorToast } from '@/components/ui/sonner';
@@ -49,17 +46,11 @@ export const projectReleaseMutations = {
       },
     });
   },
-  useApplyRelease: ({
-    onSuccess,
-  }: {
-    onSuccess: () => void;
-  }) => {
+  useApplyRelease: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
       mutationFn: (request: Parameters<typeof projectReleaseApi.create>[0]) =>
         projectReleaseApi.create(request),
-      onSuccess: () => {
-        onSuccess();
-      },
+      onSuccess,
     });
   },
 };

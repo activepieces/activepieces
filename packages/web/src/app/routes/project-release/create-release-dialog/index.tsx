@@ -26,7 +26,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { projectReleaseMutations, gitSyncHooks } from '@/features/project-releases';
+import {
+  projectReleaseMutations,
+  gitSyncHooks,
+} from '@/features/project-releases';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -75,12 +78,13 @@ const CreateReleaseDialogContent = ({
     platform.plan.environmentsEnabled,
   );
 
-  const { mutate: applyChanges, isPending } = projectReleaseMutations.useApplyRelease({
-    onSuccess: () => {
-      refetch();
-      setOpen(false);
-    },
-  });
+  const { mutate: applyChanges, isPending } =
+    projectReleaseMutations.useApplyRelease({
+      onSuccess: () => {
+        refetch();
+        setOpen(false);
+      },
+    });
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
     new Set(plan?.flows.map((op) => op.flow.id) || []),
   );
@@ -320,10 +324,18 @@ const CreateReleaseDialogContent = ({
                   applyChanges({ ...baseRequest, type: diffRequest.type });
                   break;
                 case ProjectReleaseType.PROJECT:
-                  applyChanges({ ...baseRequest, targetProjectId: diffRequest.targetProjectId, type: diffRequest.type });
+                  applyChanges({
+                    ...baseRequest,
+                    targetProjectId: diffRequest.targetProjectId,
+                    type: diffRequest.type,
+                  });
                   break;
                 case ProjectReleaseType.ROLLBACK:
-                  applyChanges({ ...baseRequest, projectReleaseId: diffRequest.projectReleaseId, type: diffRequest.type });
+                  applyChanges({
+                    ...baseRequest,
+                    projectReleaseId: diffRequest.projectReleaseId,
+                    type: diffRequest.type,
+                  });
                   break;
               }
             }}

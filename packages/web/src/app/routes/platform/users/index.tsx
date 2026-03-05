@@ -14,7 +14,10 @@ import { DataTable } from '@/components/custom/data-table';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { InviteUserDialog } from '@/features/members';
-import { platformUserHooks, platformUserMutations } from '@/hooks/platform-user-hooks';
+import {
+  platformUserHooks,
+  platformUserMutations,
+} from '@/features/platform-admin/hooks/platform-user-hooks';
 
 import { UserActions } from './actions/user-actions';
 import { createUsersTableColumns } from './columns';

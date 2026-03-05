@@ -23,9 +23,7 @@ export const aiProviderMutations = {
   useDeleteAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
       mutationFn: (provider: string) => aiProviderApi.delete(provider),
-      onSuccess: () => {
-        onSuccess();
-      },
+      onSuccess,
     });
   },
   useUpsertAiProvider: ({
@@ -46,9 +44,7 @@ export const aiProviderMutations = {
           return aiProviderApi.upsert(data);
         }
       },
-      onSuccess: () => {
-        onSuccess();
-      },
+      onSuccess,
       onError,
     });
   },

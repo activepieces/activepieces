@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
@@ -8,17 +7,13 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { internalErrorToast } from '@/components/ui/sonner';
 
 import { api } from '../../../lib/api';
-import { userInvitationApi } from '../api/user-invitation';
+import { userInvitationMutations } from '../hooks/user-invitations-hooks';
 
 const AcceptInvitation = () => {
   const [isInvitationLinkValid, setIsInvitationLinkValid] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (token: string) => {
-      const { registered } = await userInvitationApi.accept(token);
-      return registered;
-    },
+  const { mutate, isPending } = userInvitationMutations.useAcceptInvitation({
     onSuccess: (registered) => {
       setIsInvitationLinkValid(true);
       if (!registered) {
@@ -30,7 +25,6 @@ const AcceptInvitation = () => {
         navigate('/sign-in');
       }
     },
-
     onError: (error) => {
       setIsInvitationLinkValid(false);
       if (api.isError(error)) {

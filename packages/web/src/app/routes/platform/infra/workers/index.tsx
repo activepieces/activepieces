@@ -89,7 +89,10 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showDemoData = edition === ApEdition.CLOUD;
-  const { data: workersData, isLoading } = workersQueries.useWorkerMachines(showDemoData, DEMO_WORKERS_DATA);
+  const { data: workersData, isLoading } = workersQueries.useWorkerMachines(
+    showDemoData,
+    DEMO_WORKERS_DATA,
+  );
 
   return (
     <div className="flex flex-col w-full gap-4">

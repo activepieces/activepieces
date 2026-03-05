@@ -10,7 +10,6 @@ import {
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { TSchema, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -36,7 +35,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 
 import { Checkbox } from '../../../components/ui/checkbox';
-import { humanInputApi } from '../api/human-input-api';
+import { formsMutations } from '../hooks/forms-hooks';
 
 type ApFormProps = {
   form: FormResponse;
@@ -147,60 +146,65 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
     resolver: typeboxResolver(schema.properties),
   });
 
-  const { mutate, isPending } = useMutation<HumanInputFormResult | null, Error>(
-    {
-      mutationFn: async () =>
-        humanInputApi.submitForm(
-          form,
-          useDraft,
-          putBackQuotesForInputNames(reactForm.getValues(), inputs.current),
-        ),
-      onSuccess: (formResult) => {
-        switch (formResult?.type) {
-          case HumanInputFormResultTypes.MARKDOWN: {
-            setMarkdownResponse(formResult.value as string);
-            if (formResult.files) {
-              formResult.files.forEach((file) => {
-                handleDownloadFile(file as FileResponseInterface);
-              });
-            }
-            break;
-          }
-          case HumanInputFormResultTypes.FILE:
-            handleDownloadFile(formResult.value as FileResponseInterface);
-            break;
-          default:
-            toast.success(t('Your submission was successfully received.'), {
-              duration: 3000,
-            });
-            break;
-        }
-      },
-      onError: (error) => {
-        if (api.isError(error)) {
-          const status = error.response?.status;
-          if (status === 404) {
-            toast.error(t('Flow not found'), {
-              description: t(
-                'The flow you are trying to submit to does not exist.',
-              ),
-              duration: 3000,
-            });
-          } else {
-            toast.error(t('The flow failed to execute.'), {
-              duration: 3000,
+  const { mutate, isPending } = formsMutations.useSubmitForm({
+    onSuccess: (formResult) => {
+      switch (formResult?.type) {
+        case HumanInputFormResultTypes.MARKDOWN: {
+          setMarkdownResponse(formResult.value as string);
+          if (formResult.files) {
+            formResult.files.forEach((file) => {
+              handleDownloadFile(file as FileResponseInterface);
             });
           }
+          break;
         }
-        console.error(error);
-      },
+        case HumanInputFormResultTypes.FILE:
+          handleDownloadFile(formResult.value as FileResponseInterface);
+          break;
+        default:
+          toast.success(t('Your submission was successfully received.'), {
+            duration: 3000,
+          });
+          break;
+      }
     },
-  );
+    onError: (error) => {
+      if (api.isError(error)) {
+        const status = error.response?.status;
+        if (status === 404) {
+          toast.error(t('Flow not found'), {
+            description: t(
+              'The flow you are trying to submit to does not exist.',
+            ),
+            duration: 3000,
+          });
+        } else {
+          toast.error(t('The flow failed to execute.'), {
+            duration: 3000,
+          });
+        }
+      }
+      console.error(error);
+    },
+  });
   return (
     <div className="w-full h-full flex">
       <div className="container py-20">
         <Form {...reactForm}>
-          <form onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}>
+          <form
+            onSubmit={(e) =>
+              reactForm.handleSubmit(() =>
+                mutate({
+                  form,
+                  useDraft,
+                  data: putBackQuotesForInputNames(
+                    reactForm.getValues(),
+                    inputs.current,
+                  ),
+                }),
+              )(e)
+            }
+          >
             <Card className="w-[500px] mx-auto">
               <CardHeader>
                 <CardTitle className="text-center">{form?.title}</CardTitle>

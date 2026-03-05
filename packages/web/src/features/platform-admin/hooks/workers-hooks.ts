@@ -17,7 +17,6 @@ export const workersQueries = {
       staleTime: 0,
       gcTime: 0,
       refetchInterval: 5000,
-      queryFn: async () =>
-        showDemoData ? demoData : await workersApi.list(),
+      queryFn: async () => (showDemoData ? demoData : await workersApi.list()),
     }),
 };

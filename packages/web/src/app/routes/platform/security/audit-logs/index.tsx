@@ -25,10 +25,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import {
-  DataTable,
-  DataTableFilters,
-} from '@/components/custom/data-table';
+import { DataTable, DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -46,9 +43,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { auditLogQueries } from '@/features/platform-admin';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 export default function AuditLogsPage() {

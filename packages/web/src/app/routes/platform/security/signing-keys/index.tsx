@@ -25,7 +25,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { signingKeyApi, NewSigningKeyDialog, signingKeyQueries } from '@/features/platform-admin';
+import {
+  signingKeyApi,
+  NewSigningKeyDialog,
+  signingKeyQueries,
+} from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
@@ -68,9 +72,7 @@ const SigningKeysPage = () => {
           </>
         }
         actions={
-          <NewSigningKeyDialog
-            onCreate={() => refetch()}
-          >
+          <NewSigningKeyDialog onCreate={() => refetch()}>
             <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New Signing Key')}
             </AnimatedIconButton>

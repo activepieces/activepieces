@@ -58,9 +58,10 @@ export const ProjectRolesTable = ({
   const [selectedRole, setSelectedRole] = useState<ProjectRole | null>(null);
   const [isUsersSheetOpen, setIsUsersSheetOpen] = useState(false);
 
-  const { mutate: deleteProjectRole } = projectRoleMutations.useDeleteProjectRole({
-    onSuccess: () => refetch(),
-  });
+  const { mutate: deleteProjectRole } =
+    projectRoleMutations.useDeleteProjectRole({
+      onSuccess: () => refetch(),
+    });
 
   if (isLoading) {
     return <SkeletonList numberOfItems={3} className="w-full h-[60px]" />;

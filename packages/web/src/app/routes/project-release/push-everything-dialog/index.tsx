@@ -76,7 +76,17 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => mutate({ gitSyncId: gitSync!.id, request: { type: GitPushOperationType.PUSH_EVERYTHING, commitMessage: data.commitMessage } }))}>
+          <form
+            onSubmit={form.handleSubmit((data) =>
+              mutate({
+                gitSyncId: gitSync!.id,
+                request: {
+                  type: GitPushOperationType.PUSH_EVERYTHING,
+                  commitMessage: data.commitMessage,
+                },
+              }),
+            )}
+          >
             <DialogHeader>
               <DialogTitle>{t('Push Everything to Git')}</DialogTitle>
             </DialogHeader>
@@ -123,7 +133,15 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
               <Button
                 type="submit"
                 loading={isPending}
-                onClick={form.handleSubmit((data) => mutate({ gitSyncId: gitSync!.id, request: { type: GitPushOperationType.PUSH_EVERYTHING, commitMessage: data.commitMessage } }))}
+                onClick={form.handleSubmit((data) =>
+                  mutate({
+                    gitSyncId: gitSync!.id,
+                    request: {
+                      type: GitPushOperationType.PUSH_EVERYTHING,
+                      commitMessage: data.commitMessage,
+                    },
+                  }),
+                )}
               >
                 {t('Push')}
               </Button>

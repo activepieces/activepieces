@@ -18,13 +18,11 @@ export const apiKeyQueries = {
 };
 
 export const apiKeyMutations = {
-  useCreateApiKey: ({ onCreate }: { onCreate: () => void }) => {
+  useCreateApiKey: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
       mutationFn: (request: { displayName: string }) =>
         apiKeyApi.create(request),
-      onSuccess: () => {
-        onCreate();
-      },
+      onSuccess,
     });
   },
   useDeleteApiKey: () => {

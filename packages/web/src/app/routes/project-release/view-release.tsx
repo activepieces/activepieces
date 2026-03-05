@@ -48,7 +48,10 @@ const getReleaseSummaryType = (type: ProjectReleaseType) => {
 const ViewRelease = () => {
   const { releaseId } = useParams();
   const navigate = useNavigate();
-  const { data: release, isLoading } = projectReleaseQueries.useProjectRelease(releaseId || '', !!releaseId);
+  const { data: release, isLoading } = projectReleaseQueries.useProjectRelease(
+    releaseId || '',
+    !!releaseId,
+  );
 
   if (!releaseId) {
     return <Navigate to="/releases" replace />;

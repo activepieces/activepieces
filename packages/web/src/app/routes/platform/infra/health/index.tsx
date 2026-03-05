@@ -4,8 +4,8 @@ import { Cpu, HardDrive, MemoryStick, Package } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
-import { healthQueries } from '@/features/platform-admin';
 import { CenteredPage } from '@/app/components/centered-page';
+import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { CheckItem } from './check-item';

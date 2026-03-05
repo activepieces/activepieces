@@ -18,7 +18,9 @@ import { ProjectRolesTable } from './project-roles-table';
 const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data, isLoading, refetch } = projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+  const { data, isLoading, refetch } = projectRoleQueries.useProjectRoles(
+    platform.plan.projectRolesEnabled,
+  );
 
   const newRoleButton = !platform.plan.customRolesEnabled ? (
     <Tooltip>

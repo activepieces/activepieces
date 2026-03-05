@@ -18,16 +18,18 @@ type PieceActionsProps = {
 const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
-  const { mutate: togglePiece, isPending: isTogglePending } = platformPiecesMutations.useTogglePieceVisibility({
-    platformId: platform.id,
-    filteredPieceNames: platform.filteredPieceNames,
-    refetch,
-  });
-  const { mutate: togglePin, isPending: isPinPending } = platformPiecesMutations.useTogglePiecePin({
-    platformId: platform.id,
-    pinnedPieces: platform.pinnedPieces,
-    refetch,
-  });
+  const { mutate: togglePiece, isPending: isTogglePending } =
+    platformPiecesMutations.useTogglePieceVisibility({
+      platformId: platform.id,
+      filteredPieceNames: platform.filteredPieceNames,
+      refetch,
+    });
+  const { mutate: togglePin, isPending: isPinPending } =
+    platformPiecesMutations.useTogglePiecePin({
+      platformId: platform.id,
+      pinnedPieces: platform.pinnedPieces,
+      refetch,
+    });
 
   const filtered = platform.filteredPieceNames.includes(pieceName);
   const pinned = platform.pinnedPieces.includes(pieceName);

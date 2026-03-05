@@ -30,13 +30,14 @@ const SSOPage = () => {
   const samlConnected = !isNil(platform.federatedAuthProviders?.saml);
   const emailAuthEnabled = platform.emailAuthEnabled;
 
-  const { mutate: toggleEmailAuthentication, isPending } = ssoMutations.useUpdatePlatformSso({
-    platformId: platform.id,
-    refetch,
-    onSuccess: () => {
-      toast.success(t('Email authentication updated'), { duration: 3000 });
-    },
-  });
+  const { mutate: toggleEmailAuthentication, isPending } =
+    ssoMutations.useUpdatePlatformSso({
+      platformId: platform.id,
+      refetch,
+      onSuccess: () => {
+        toast.success(t('Email authentication updated'), { duration: 3000 });
+      },
+    });
 
   return (
     <LockedFeatureGuard
@@ -133,7 +134,11 @@ const SSOPage = () => {
             <ItemActions>
               <Switch
                 checked={emailAuthEnabled}
-                onCheckedChange={() => toggleEmailAuthentication({ emailAuthEnabled: !platform.emailAuthEnabled })}
+                onCheckedChange={() =>
+                  toggleEmailAuthentication({
+                    emailAuthEnabled: !platform.emailAuthEnabled,
+                  })
+                }
                 disabled={isPending}
               />
             </ItemActions>

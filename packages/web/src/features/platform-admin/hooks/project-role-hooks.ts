@@ -1,4 +1,8 @@
-import { ProjectMemberWithUser, ProjectRole, SeekPage } from '@activepieces/shared';
+import {
+  ProjectMemberWithUser,
+  ProjectRole,
+  SeekPage,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
@@ -40,14 +44,16 @@ export const projectRoleMutations = {
         type,
       }: UpsertProjectRoleParams) => {
         if (mode === 'create') {
-          await projectRoleApi.create({ name, permissions, type: type as never });
+          await projectRoleApi.create({
+            name,
+            permissions,
+            type: type as never,
+          });
         } else if (mode === 'edit' && roleId) {
           await projectRoleApi.update(roleId, { name, permissions });
         }
       },
-      onSuccess: () => {
-        onSave();
-      },
+      onSuccess: onSave,
       onError: () => {
         toast.error(t('Role name already exists'), {
           duration: 3000,

@@ -9,7 +9,8 @@ const SyncPiecesButton = () => {
   const { data: piecesSyncMode } = flagsHooks.useFlag<string>(
     ApFlagId.PIECES_SYNC_MODE,
   );
-  const { mutate: syncPieces, isPending } = platformPiecesMutations.useSyncPieces();
+  const { mutate: syncPieces, isPending } =
+    platformPiecesMutations.useSyncPieces();
 
   return (
     <>

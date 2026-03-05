@@ -8,7 +8,6 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 
-import { platformUserMutations } from '@/hooks/platform-user-hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,6 +21,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members';
+import { platformUserMutations } from '@/features/platform-admin/hooks/platform-user-hooks';
 
 export const UpdateUserDialog = ({
   children,

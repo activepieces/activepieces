@@ -1,5 +1,5 @@
-import { FormResponse } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { FormResponse, HumanInputFormResult } from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { humanInputApi } from '../api/human-input-api';
 
@@ -16,4 +16,25 @@ export const formsQueries = {
       retry: false,
       staleTime: Infinity,
     }),
+};
+
+export const formsMutations = {
+  useSubmitForm: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (result: HumanInputFormResult | null) => void;
+    onError: (error: Error) => void;
+  }) => {
+    return useMutation<
+      HumanInputFormResult | null,
+      Error,
+      { form: FormResponse; useDraft: boolean; data: Record<string, unknown> }
+    >({
+      mutationFn: ({ form, useDraft, data }) =>
+        humanInputApi.submitForm(form, useDraft, data),
+      onSuccess,
+      onError,
+    });
+  },
 };
