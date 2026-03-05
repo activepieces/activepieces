@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -88,9 +89,10 @@ const RenameConnectionDialog = forwardRef<
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {t('Rename')} {currentName}
-            </DialogTitle>
+            <DialogTitle>{t('Rename Connection')}</DialogTitle>
+            <DialogDescription>
+              {t('Enter a new display name for this connection.')}
+            </DialogDescription>
           </DialogHeader>
           <Form {...renameConnectionForm}>
             <form
@@ -131,7 +133,7 @@ const RenameConnectionDialog = forwardRef<
                   <Button variant={'outline'}>{t('Cancel')}</Button>
                 </DialogClose>
 
-                <Button loading={isPending}>{t('Confirm')}</Button>
+                <Button loading={isPending}>{t('Rename')}</Button>
               </DialogFooter>
             </form>
           </Form>

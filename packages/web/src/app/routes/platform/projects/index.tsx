@@ -228,9 +228,10 @@ export default function ProjectsPage() {
               <ConfirmationDeleteDialog
                 title={t('Delete Projects')}
                 message={t(
-                  'Are you sure you want to delete the selected projects?',
+                  'The selected projects and all their data will be permanently deleted.',
                 )}
                 entityName={t('Projects')}
+                buttonText={t('Delete')}
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
                     (row) =>

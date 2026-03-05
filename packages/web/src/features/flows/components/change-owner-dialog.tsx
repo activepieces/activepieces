@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -77,7 +78,10 @@ const ChangeOwnerDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Change Owner')}</DialogTitle>
+          <DialogTitle>{t('Change Flow Owner')}</DialogTitle>
+          <DialogDescription>
+            {t('Select a team member to take ownership of this flow.')}
+          </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <form
@@ -129,7 +133,7 @@ const ChangeOwnerDialog = ({
             )}
             <DialogFooter>
               <Button type="submit" loading={isPending}>
-                {t('Confirm')}
+                {t('Transfer')}
               </Button>
             </DialogFooter>
           </form>

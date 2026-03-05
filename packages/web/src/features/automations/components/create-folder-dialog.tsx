@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -75,7 +76,10 @@ export const CreateFolderDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('New Folder')}</DialogTitle>
+          <DialogTitle>{t('Create Folder')}</DialogTitle>
+          <DialogDescription>
+            {t('Organize your automations by grouping them into folders.')}
+          </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -109,7 +113,7 @@ export const CreateFolderDialog = ({
                 {t('Cancel')}
               </Button>
               <Button type="submit" loading={isPending}>
-                {t('Confirm')}
+                {t('Create')}
               </Button>
             </DialogFooter>
           </form>

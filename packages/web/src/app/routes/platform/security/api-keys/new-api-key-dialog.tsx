@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -73,6 +74,13 @@ export const NewApiKeyDialog = ({
           <DialogTitle>
             {apiKey ? t('API Key Created') : t('Create API Key')}
           </DialogTitle>
+          {!apiKey && (
+            <DialogDescription>
+              {t(
+                'Create a new API key for programmatic access to the platform.',
+              )}
+            </DialogDescription>
+          )}
         </DialogHeader>
         {apiKey && (
           <>
@@ -140,7 +148,7 @@ export const NewApiKeyDialog = ({
                   {t('Cancel')}
                 </Button>
                 <Button disabled={isPending} loading={isPending}>
-                  {t('Save')}
+                  {t('Create')}
                 </Button>
               </DialogFooter>
             </form>

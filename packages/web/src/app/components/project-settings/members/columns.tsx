@@ -189,11 +189,15 @@ const ActionsCell = ({
   return (
     <PermissionNeededTooltip hasPermission={userHasPermissionToDelete}>
       <ConfirmationDeleteDialog
-        title={removeLabel}
+        title={
+          row.original.type === 'invitation'
+            ? t('Remove Invitation')
+            : t('Remove Member')
+        }
         message={
           row.original.type === 'invitation'
-            ? t('Are you sure you want to remove this invitation?')
-            : t('Are you sure you want to remove this member?')
+            ? t('This invitation will be revoked immediately.')
+            : t('This member will lose access to the project immediately.')
         }
         mutationFn={() => deleteMember()}
         entityName={displayName}

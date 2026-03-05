@@ -115,9 +115,10 @@ const SigningKeysPage = () => {
                       <ConfirmationDeleteDialog
                         title={t('Delete Signing Key')}
                         message={t(
-                          'Are you sure you want to delete this signing key?',
+                          'Deleting this signing key will invalidate any tokens signed with it.',
                         )}
                         entityName={t('Signing Key')}
+                        buttonText={t('Delete')}
                         mutationFn={async () => {
                           await signingKeyApi.delete(signingKey.id);
                           refetch();
