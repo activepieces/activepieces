@@ -15,6 +15,15 @@ import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
 import { gmailNewLabelTrigger } from './lib/triggers/new-label';
 import { gmailSearchMailAction } from './lib/actions/search-email-action';
 import { gmailGetEmailAction } from './lib/actions/get-mail-action';
+import { gmailGetThread } from './lib/actions/get-thread-action';
+import { gmailAddLabelAction } from './lib/actions/add-label-action';
+import { gmailRemoveLabelAction } from './lib/actions/remove-label-action';
+import { gmailCreateLabelAction } from './lib/actions/create-label-action';
+import { gmailArchiveEmailAction } from './lib/actions/archive-email-action';
+import { gmailDeleteEmailAction } from './lib/actions/delete-email-action';
+import { gmailRemoveLabelFromThreadAction } from './lib/actions/remove-label-from-thread-action';
+import { gmailNewStarredEmailTrigger } from './lib/triggers/new-starred-email';
+import { gmailNewConversationTrigger } from './lib/triggers/new-conversation';
 import { gmailAuth } from './lib/auth';
 
 export const gmail = createPiece({
@@ -30,7 +39,14 @@ export const gmail = createPiece({
     gmailReplyToEmailAction,
     gmailCreateDraftReplyAction,
     gmailGetEmailAction,
+    gmailGetThread,
     gmailSearchMailAction,
+    gmailAddLabelAction,
+    gmailRemoveLabelAction,
+    gmailCreateLabelAction,
+    gmailArchiveEmailAction,
+    gmailDeleteEmailAction,
+    gmailRemoveLabelFromThreadAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -61,6 +77,8 @@ export const gmail = createPiece({
     gmailNewLabeledEmailTrigger,
     gmailNewAttachmentTrigger,
     gmailNewLabelTrigger,
+    gmailNewStarredEmailTrigger,
+    gmailNewConversationTrigger,
   ],
   auth: gmailAuth,
 });
