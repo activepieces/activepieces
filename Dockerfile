@@ -1,4 +1,4 @@
-FROM node:20.19-bullseye-slim AS base
+FROM node:24.14.0-bullseye-slim AS base
 
 # Set environment variables early for better layer caching
 ENV LANG=en_US.UTF-8 \
@@ -45,13 +45,13 @@ RUN bun --version
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
     node-gyp \
-    npm@9.9.3 \
+    npm@11.11.0 \
     pm2@6.0.10 \
     typescript@4.9.4
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    cd /usr/src && bun install isolated-vm@5.0.1
+    cd /usr/src && bun install isolated-vm@6.0.2
 
 ### STAGE 1: Build ###
 FROM base AS build

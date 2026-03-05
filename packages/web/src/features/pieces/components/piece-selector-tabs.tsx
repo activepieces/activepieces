@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Tabs, TabsTrigger, TabsList } from '@/components/ui/tabs';
 
 import {
@@ -8,7 +10,7 @@ import {
 type TabType = {
   value: PieceSelectorTabType;
   name: string;
-  icon: JSX.Element;
+  icon: React.ReactNode;
 };
 
 export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {

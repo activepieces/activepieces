@@ -3,8 +3,15 @@ import { t } from 'i18next';
 import { CircleAlert, Pencil, RefreshCcw, Trash } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  Item,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+} from '@/components/custom/item';
+import { ItemMediaImage } from '@/components/custom/item-media-image';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Tooltip,
   TooltipContent,
@@ -27,42 +34,42 @@ const SecretManagerProviderCard = ({
     secretManagersHooks.useClearCache();
 
   return (
-    <Card className="w-full flex justify-between items-center px-4 py-4">
-      <div className="flex gap-8 items-center">
-        <img className="w-10" src={provider.logo} alt={provider.name} />
-        <div>
-          <div className="text-lg flex items-center gap-2">
-            {provider.name}
-            {provider.connection?.configured &&
-              !provider.connection?.connected && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CircleAlert className="size-4 text-destructive" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t(
-                      'Your configuration is not working, please try reconnecting',
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {t('Configure credentials for {managerName} secret manager.', {
-              managerName: provider.name,
-            })}
-          </div>
-        </div>
-      </div>
-      <div className="flex gap-2">
-        <ConnectSecretManagerDialog manager={provider}>
-          <Button variant={'ghost'} size={'sm'}>
-            {provider.connection?.configured ? (
-              <Pencil className="size-4" />
-            ) : (
-              t('Connect')
+    <Item variant="outline">
+      <ItemMediaImage src={provider.logo} alt={provider.name} />
+      <ItemContent>
+        <ItemTitle>
+          {provider.name}
+          {provider.connection?.configured &&
+            !provider.connection?.connected && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CircleAlert className="size-4 text-destructive" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t(
+                    'Your configuration is not working, please try reconnecting',
+                  )}
+                </TooltipContent>
+              </Tooltip>
             )}
-          </Button>
+        </ItemTitle>
+        <ItemDescription>
+          {t('Configure credentials for {managerName} secret manager.', {
+            managerName: provider.name,
+          })}
+        </ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <ConnectSecretManagerDialog manager={provider}>
+          {provider.connection?.configured ? (
+            <Button variant={'ghost'} size={'sm'}>
+              <Pencil className="size-4" />
+            </Button>
+          ) : (
+            <Button variant={'basic'} size={'sm'}>
+              {t('Connect')}
+            </Button>
+          )}
         </ConnectSecretManagerDialog>
         {provider.connection?.configured && (
           <>
@@ -93,8 +100,8 @@ const SecretManagerProviderCard = ({
             </ConfirmationDeleteDialog>
           </>
         )}
-      </div>
-    </Card>
+      </ItemActions>
+    </Item>
   );
 };
 

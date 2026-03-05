@@ -84,7 +84,7 @@ export const ConfigureSamlDialog = ({
         {connected ? (
           <Button
             size={'sm'}
-            className="w-32 text-destructive"
+            className="text-destructive"
             variant={'basic'}
             loading={isPending}
             onClick={(e) => {
@@ -99,12 +99,7 @@ export const ConfigureSamlDialog = ({
             {t('Disable')}
           </Button>
         ) : (
-          <Button
-            size={'sm'}
-            className="w-32"
-            variant={'basic'}
-            onClick={() => setOpen(true)}
-          >
+          <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
             {t('Enable')}
           </Button>
         )}

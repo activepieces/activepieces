@@ -3,7 +3,6 @@ import {
   PROFILE_PICTURE_ALLOWED_TYPES,
   UserWithBadges,
 } from '@activepieces/shared';
-import { DialogTitle } from '@radix-ui/react-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Camera, Mail } from 'lucide-react';
@@ -18,6 +17,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';

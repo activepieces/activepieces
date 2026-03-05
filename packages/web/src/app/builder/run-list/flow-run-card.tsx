@@ -7,10 +7,9 @@ import {
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
-import { StopwatchIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Eye, Repeat } from 'lucide-react';
+import { Eye, Repeat, Timer } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -138,7 +137,7 @@ const FlowRunCard = React.memo(
             ignoreInternalError: false,
           }) && (
             <p className="flex gap-1 text-xs text-muted-foreground">
-              <StopwatchIcon className="h-3.5 w-3.5" />
+              <Timer className="h-3.5 w-3.5" />
               {t('Took')}{' '}
               {formatUtils.formatDuration(
                 run.startTime && run.finishTime

@@ -20,7 +20,7 @@ import { extractPieceNamesAndCoreMetadata } from '../utils/step-utils';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center  bg-background border border-solid text-xs select-none',
+  'flex items-center justify-center rounded-md bg-background border border-solid text-xs select-none',
   {
     variants: {
       size: {
@@ -31,10 +31,6 @@ const extraIconVariants = cva(
         sm: 'size-[25px]',
         xs: 'size-[25px]',
       },
-      circle: {
-        true: 'rounded-full',
-        false: 'rounded-md',
-      },
     },
   },
 );
@@ -44,7 +40,6 @@ export function PieceIconList({
   trigger,
   size,
   className,
-  circle = true,
   background,
   excludeCore = false,
 }: {
@@ -52,7 +47,6 @@ export function PieceIconList({
   maxNumberOfIconsToShow: number;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   className?: string;
-  circle?: boolean;
   background?: string;
   excludeCore?: boolean;
 }) {
@@ -104,7 +98,6 @@ export function PieceIconList({
         <PieceIcon
           logoUrl={metadata.logoUrl}
           showTooltip={true}
-          circle={circle}
           size={size ?? 'md'}
           border={true}
           displayName={metadata.displayName}
@@ -115,7 +108,7 @@ export function PieceIconList({
       {extraPieces > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={extraIconVariants({ size: size ?? 'xs', circle })}>
+            <div className={extraIconVariants({ size: size ?? 'xs' })}>
               +{extraPieces}
             </div>
           </TooltipTrigger>

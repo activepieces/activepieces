@@ -4,9 +4,8 @@ import {
   isNil,
   RouterActionSettings,
 } from '@activepieces/shared';
-import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Trash, CopyPlus, Pencil } from 'lucide-react';
+import { GripVertical, Trash, CopyPlus, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -237,7 +236,7 @@ export const BranchListItem = ({
               disabled={readonly}
               className={'shrink-0 size-7'}
             >
-              <DragHandleDots2Icon className="size-4" aria-hidden="true" />
+              <GripVertical className="size-4" aria-hidden="true" />
             </SortableDragHandle>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Move')}</TooltipContent>

@@ -1,5 +1,4 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { DialogClose, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
@@ -9,10 +8,12 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';

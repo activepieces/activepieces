@@ -74,7 +74,7 @@ const AcceptInvitation = () => {
           </p>
         </>
       ) : (
-        <p className="mt-4 text-lg text-center text-red-500">
+        <p className="mt-4 text-lg text-center text-destructive">
           {t('Invalid invitation token. Please try again.')}
         </p>
       )}
