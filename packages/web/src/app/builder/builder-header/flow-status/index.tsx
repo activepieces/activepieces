@@ -2,8 +2,7 @@ import { FlowVersionState, isNil } from '@activepieces/shared';
 import React from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
-import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
+import { FlowStatusToggle, FlowVersionStateDot } from '@/features/flows';
 
 const BuilderFlowStatusSection = React.memo(() => {
   const [flowVersion, flow] = useBuilderStateContext((state) => [

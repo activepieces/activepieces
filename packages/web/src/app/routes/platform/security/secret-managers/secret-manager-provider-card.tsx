@@ -2,7 +2,7 @@ import { SecretManagerProviderMetaData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CircleAlert, Pencil, RefreshCcw, Trash } from 'lucide-react';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -10,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { secretManagersHooks } from '@/features/secret-managers/lib/secret-managers-hooks';
+import { secretManagersHooks } from '@/features/secret-managers';
 
 import ConnectSecretManagerDialog from './connect-secret-manager-dialog';
 

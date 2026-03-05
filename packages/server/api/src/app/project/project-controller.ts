@@ -7,19 +7,19 @@ import { projectService } from './project-service'
 
 export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post('/:id', UpdateProjectRequest, async (request) => {
-        const project = await projectService.getOneOrThrow(request.params.id)
-        return projectService.update(request.params.id, {
+        const project = await projectService(request.log).getOneOrThrow(request.params.id)
+        return projectService(request.log).update(request.params.id, {
             type: project.type,
             ...request.body,
         })
     })
 
     fastify.get('/:id', GetProjectRequest, async (request) => {
-        return projectService.getOneOrThrow(request.projectId)
+        return projectService(request.log).getOneOrThrow(request.projectId)
     })
 
     fastify.get('/', ListProjectsRequest, async (request) => {
-        return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
+        return paginationHelper.createPage([await projectService(request.log).getUserProjectOrThrow(request.principal.id)], null)
     })
 }
 

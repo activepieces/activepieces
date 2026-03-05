@@ -51,7 +51,7 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
         }), log)
     },
     sendWorkerEvent(projectId: string, params: RawAuditEventParam): void {
-        projectService.getPlatformId(projectId).then((platformId) => {
+        projectService(log).getPlatformId(projectId).then((platformId) => {
             for (const listener of listeners.workerEventListeners) {
                 listener(projectId, {
                     ...params,
@@ -63,20 +63,20 @@ export const applicationEvents = (log: FastifyBaseLogger) => ({
                 })
             }
         }).catch((error) => {
-            log.error(error)
+            log.error({ err: error }, '[applicationEvents#sendWorkerEvent] Failed to send worker event')
         })
     },
 })
 
 
 async function enrichAuditEventParam(requestOrMeta: FastifyRequest | MetaInformation, params: RawAuditEventParam, log: FastifyBaseLogger): Promise<ApplicationEvent | undefined> {
-    const meta = await extractMetaInformation(requestOrMeta)
+    const meta = await extractMetaInformation(requestOrMeta, log)
     if (isNil(meta)) {
         return undefined
     }
-    const user = meta.userId ? await userService.getOneOrFail({ id: meta.userId }) : undefined
+    const user = meta.userId ? await userService(log).getOneOrFail({ id: meta.userId }) : undefined
     const identity = !isNil(user?.identityId) ? await userIdentityService(log).getOneOrFail({ id: user.identityId }) : undefined
-    const project = meta.projectId ? await projectService.getOne(meta.projectId) : undefined
+    const project = meta.projectId ? await projectService(log).getOne(meta.projectId) : undefined
     const eventToSave: unknown = {
         id: apId(),
         created: new Date().toISOString(),
@@ -101,7 +101,7 @@ async function enrichAuditEventParam(requestOrMeta: FastifyRequest | MetaInforma
     return cleanedEvent
 }
 
-async function extractMetaInformation(requestOrMeta: FastifyRequest | MetaInformation): Promise<MetaInformation | undefined> {
+async function extractMetaInformation(requestOrMeta: FastifyRequest | MetaInformation, log: FastifyBaseLogger): Promise<MetaInformation | undefined> {
     const isRequest = 'principal' in requestOrMeta
     if (isRequest) {
         const request = requestOrMeta as FastifyRequest
@@ -109,7 +109,7 @@ async function extractMetaInformation(requestOrMeta: FastifyRequest | MetaInform
         if (!principal || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
             return undefined
         }
-        const extractedUserId = await authenticationUtils.extractUserIdFromRequest(request)
+        const extractedUserId = await authenticationUtils(log).extractUserIdFromRequest(request)
         const meta: MetaInformation = {
             platformId: principal.platform.id,
             projectId: principal.projectId,

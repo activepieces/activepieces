@@ -22,7 +22,7 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        return userService.list({
+        return userService(req.log).list({
             platformId,
             externalId: req.query.externalId,
             cursorRequest: req.query.cursor ?? null,
@@ -34,7 +34,7 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        return userService.update({
+        return userService(req.log).update({
             id: req.params.id,
             platformId,
             platformRole: req.body.platformRole,
@@ -47,7 +47,7 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        await userService.delete({
+        await userService(req.log).delete({
             id: req.params.id,
             platformId,
         })

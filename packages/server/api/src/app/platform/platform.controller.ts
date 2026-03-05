@@ -54,14 +54,14 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             }),
         ])
 
-        await platformService.update({
+        await platformService(req.log).update({
             id: req.params.id,
             ...req.body,
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
         })
-        return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -73,7 +73,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        return platformService.getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
@@ -116,7 +116,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                 await platformRepo(entityManager).delete({
                     id: req.params.id,
                 })
-                const user = await userService.getOneOrFail({
+                const user = await userService(req.log).getOneOrFail({
                     id: req.principal.id,
                 })
                 await userRepo(entityManager).delete({

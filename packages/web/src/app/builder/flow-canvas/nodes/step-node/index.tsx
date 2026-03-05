@@ -11,8 +11,8 @@ import React, { useMemo } from 'react';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
-import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { RightSideBarType } from '@/lib/types';
+import { RightSideBarType } from '@/app/builder/types';
+import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { flowCanvasConsts } from '../../utils/consts';

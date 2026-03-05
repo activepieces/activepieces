@@ -17,6 +17,7 @@ import {
   Trash,
 } from 'lucide-react';
 
+import { Shortcut, ShortcutProps } from '@/components/custom/shortcut';
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -25,7 +26,6 @@ import {
   ContextMenuSubContent,
   ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
-import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { CanvasShortcuts } from '../../shortcuts';

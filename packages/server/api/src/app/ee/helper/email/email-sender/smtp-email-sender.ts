@@ -33,13 +33,13 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
         },
         async send({ emails, platformId, templateData }) {
             try {
-                const platform = await getPlatform(platformId)
+                const platform = await getPlatform(platformId, log)
                 const emailSubject = getEmailSubject(templateData.name, templateData.vars)
                 const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
                 const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
     
                 if (!smtpEmailSender(log).isSmtpConfigured()) {
-                    log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
+                    log.error({ emailSubject }, '[smtpEmailSender#send] SMTP is not configured')
                     return
                 }
     
@@ -80,8 +80,8 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
     }
 }
 
-const getPlatform = async (platformId: string | undefined): Promise<Platform | null> => {
-    return platformId ? platformService.getOne(platformId) : null
+const getPlatform = async (platformId: string | undefined, log: FastifyBaseLogger): Promise<Platform | null> => {
+    return platformId ? platformService(log).getOne(platformId) : null
 }
 
 const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs): Promise<string> => {

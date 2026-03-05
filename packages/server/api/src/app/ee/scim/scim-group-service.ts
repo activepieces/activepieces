@@ -34,10 +34,10 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
     }): Promise<ScimGroupResource> {
         const { platformId, request } = params
 
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService(log).getOneOrThrow(platformId)
 
         // no need for existing check, because SCIM will check if the group already exists and use PUT instead of POST
-        const project = await projectService.create({
+        const project = await projectService(log).create({
             displayName: request.displayName,
             ownerId: platform.ownerId,
             platformId,
@@ -55,9 +55,9 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                         platformId,
                         log,
                     })
-                    const user = await userService.get({ id: member.value })
+                    const user = await userService(log).get({ id: member.value })
                     if (!isNil(user)) {
-                        const identity = await userService.getMetaInformation({ id: user.id })
+                        const identity = await userService(log).getMetaInformation({ id: user.id })
                         return {
                             value: user.id,
                             display: identity.email,
@@ -83,7 +83,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         projectId: string
     }): Promise<ScimGroupResource> {
         const { platformId, projectId } = params
-        const project = await projectService.getOne(projectId)
+        const project = await projectService(log).getOne(projectId)
 
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
             throw new ScimError(
@@ -92,7 +92,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        const members = await getProjectMembers(projectId, platformId)
+        const members = await getProjectMembers(projectId, platformId, log)
         return toScimGroupResource(project.id, project.displayName, project.externalId ?? undefined, members, project.created, project.updated)
     },
 
@@ -107,7 +107,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         const filterDisplayName = parseScimFilter(filter, 'displayName')
 
         if (!isNil(filterDisplayName)) {
-            const project = await projectService.getByPlatformIdAndExternalId({
+            const project = await projectService(log).getByPlatformIdAndExternalId({
                 platformId,
                 externalId: filterDisplayName,
             })
@@ -122,7 +122,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                 }
             }
 
-            const members = await getProjectMembers(project.id, platformId)
+            const members = await getProjectMembers(project.id, platformId, log)
             const resource = toScimGroupResource(project.id, project.displayName, project.externalId ?? undefined, members, project.created, project.updated)
             return {
                 schemas: [SCIM_LIST_RESPONSE_SCHEMA],
@@ -133,7 +133,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const projects = await projectService.getAllForUser({
+        const projects = await projectService(log).getAllForUser({
             platformId,
             userId: '', // We pass isPrivileged=true so userId is not used
             isPrivileged: true,
@@ -145,7 +145,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
 
         const scimGroups: ScimGroupResource[] = await Promise.all(
             paginatedProjects.map(async (project) => {
-                const members = await getProjectMembers(project.id, platformId)
+                const members = await getProjectMembers(project.id, platformId, log)
                 return toScimGroupResource(project.id, project.displayName, project.externalId ?? undefined, members, project.created, project.updated)
             }),
         )
@@ -165,7 +165,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         request: ReplaceScimGroupRequest
     }): Promise<ScimGroupResource> {
         const { platformId, projectId, request } = params
-        const project = await projectService.getOne(projectId)
+        const project = await projectService(log).getOne(projectId)
 
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
             throw new ScimError(
@@ -174,7 +174,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        await projectService.update(projectId, {
+        await projectService(log).update(projectId, {
             type: ProjectType.TEAM,
             displayName: request.displayName,
             externalId: request.externalId,
@@ -187,7 +187,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             log,
         })
 
-        const updatedProject = await projectService.getOneOrThrow(projectId)
+        const updatedProject = await projectService(log).getOneOrThrow(projectId)
         return toScimGroupResource(updatedProject.id, updatedProject.displayName, updatedProject.externalId ?? undefined, members, updatedProject.created, updatedProject.updated)
     },
 
@@ -197,7 +197,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         request: ScimPatchRequest
     }): Promise<ScimGroupResource> {
         const { platformId, projectId, request } = params
-        const project = await projectService.getOne(projectId)
+        const project = await projectService(log).getOne(projectId)
 
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
             throw new ScimError(
@@ -236,7 +236,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             else if (op === 'replace') {
                 // Handle path-based replace (e.g., path: "displayName", value: "New Name")
                 if (operation.path === 'displayName' && !isNil(operation.value)) {
-                    await projectService.update(projectId, {
+                    await projectService(log).update(projectId, {
                         type: ProjectType.TEAM,
                         displayName: operation.value as string,
                     })
@@ -245,7 +245,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                     // Handle value-based replace (e.g., value: { displayName: "New Name", members: [...] })
                     const value = operation.value as Record<string, unknown>
                     if ('displayName' in value) {
-                        await projectService.update(projectId, {
+                        await projectService(log).update(projectId, {
                             type: ProjectType.TEAM,
                             displayName: value.displayName as string,
                         })
@@ -264,8 +264,8 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const updatedProject = await projectService.getOneOrThrow(projectId)
-        const members = await getProjectMembers(projectId, platformId)
+        const updatedProject = await projectService(log).getOneOrThrow(projectId)
+        const members = await getProjectMembers(projectId, platformId, log)
         return toScimGroupResource(updatedProject.id, updatedProject.displayName, updatedProject.externalId ?? undefined, members, updatedProject.created, updatedProject.updated)
     },
 
@@ -274,7 +274,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
         projectId: string
     }): Promise<void> {
         const { platformId, projectId } = params
-        const project = await projectService.getOne(projectId)
+        const project = await projectService(log).getOne(projectId)
        
         if (isNil(project) || project.platformId !== platformId || project.type !== ProjectType.TEAM) {
             throw new ScimError(
@@ -283,7 +283,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        await platformProjectService(log).hardDelete({
+        await platformProjectService(log).markForDeletion({
             id: projectId,
             platformId,
         })
@@ -298,7 +298,7 @@ async function addMemberToProject(params: {
 }): Promise<void> {
     const { userId, projectId, platformId, log } = params
 
-    const user = await userService.get({ id: userId })
+    const user = await userService(log).get({ id: userId })
     if (isNil(user) || user.platformId !== platformId || user.status !== UserStatus.ACTIVE) {
         return
     }
@@ -328,14 +328,14 @@ async function removeMemberFromProject(params: {
     }
 }
 
-async function getProjectMembers(projectId: string, platformId: string): Promise<ScimGroupMember[]> {
+async function getProjectMembers(projectId: string, platformId: string, log: FastifyBaseLogger): Promise<ScimGroupMember[]> {
     const members = await projectMemberRepo().find({
         where: { projectId, platformId },
     })
 
     return Promise.all(
         members.map(async (member) => {
-            const userMeta = await userService.getMetaInformation({ id: member.userId })
+            const userMeta = await userService(log).getMetaInformation({ id: member.userId })
             return {
                 value: member.userId,
                 display: userMeta.email,
@@ -396,9 +396,9 @@ async function replaceMembers(params: {
                 platformId,
                 log,
             })
-            const user = await userService.get({ id: member.value })
+            const user = await userService(log).get({ id: member.value })
             if (!isNil(user)) {
-                const identity = await userService.getMetaInformation({ id: user.id })
+                const identity = await userService(log).getMetaInformation({ id: user.id })
                 return {
                     value: user.id,
                     display: identity.email,

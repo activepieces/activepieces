@@ -18,8 +18,11 @@ import {
 } from 'react-router-dom';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { RightSideBarType } from '@/app/builder/types';
+import EditableText from '@/components/custom/editable-text';
+import { HomeButton } from '@/components/custom/home-button';
 import { PageHeader } from '@/components/custom/page-header';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -29,20 +32,15 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
-import EditableText from '@/components/ui/editable-text';
-import { HomeButton } from '@/components/ui/home-button';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { flowHooks } from '@/features/flows';
+import { foldersHooks } from '@/features/folders';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import {
-  getProjectName,
-  projectCollectionUtils,
-} from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { RightSideBarType } from '@/lib/types';
-import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
+import { cn } from '@/lib/utils';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
@@ -92,7 +90,7 @@ export const BuilderHeader = () => {
 
   const goToFlowsPage = () => {
     navigate({
-      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      pathname: authenticationSession.appendProjectRoutePrefix('/automations'),
       search: createSearchParams({
         folderId: folderData?.id ?? UncategorizedFolderId,
       }).toString(),

@@ -1,4 +1,4 @@
-import { ImageWithColorBackground } from '@/components/ui/image-with-color-background';
+import { ImageWithColorBackground } from '@/components/custom/image-with-color-background';
 import { cn } from '@/lib/utils';
 
 const StepNodeLogo = ({
@@ -22,6 +22,7 @@ const StepNodeLogo = ({
         key={logoUrl + displayName}
         border={true}
         className="w-9 h-9 p-2"
+        roundedCorner={true}
       />
     </div>
   );

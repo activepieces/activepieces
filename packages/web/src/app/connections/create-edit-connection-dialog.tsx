@@ -44,14 +44,16 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { AssignConnectionToProjectsControl } from '@/features/connections/components/assign-global-connection-to-projects';
-import { appConnectionsMutations } from '@/features/connections/lib/app-connections-hooks';
-import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
+import {
+  AssignConnectionToProjectsControl,
+  appConnectionsMutations,
+  oauthAppsQueries,
+  oauth2Utils,
+  PiecesOAuth2AppsMap,
+  newConnectionUtils,
+} from '@/features/connections';
+import { formUtils } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { oauth2Utils, PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
-
-import { newConnectionUtils } from '../../features/connections/lib/utils';
-import { formUtils } from '../../features/pieces/lib/form-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';

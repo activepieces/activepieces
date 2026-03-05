@@ -1,7 +1,7 @@
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 import { useContext, useMemo } from 'react';
 
-import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { RefreshAnalyticsContext } from '@/features/platform-admin';
 
 export type FlowDetailRow = PlatformAnalyticsReport['flows'][number] & {
   id: string;

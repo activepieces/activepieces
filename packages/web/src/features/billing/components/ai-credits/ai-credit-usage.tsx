@@ -21,7 +21,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { isRunningCloudInDevMode } from '@/lib/api';
 
-import { billingMutations } from '../../lib/billing-hooks';
+import { billingMutations } from '../../hooks/billing-hooks';
 
 import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
 import { PurchaseAICreditsDialog } from './purchase-ai-credits-dialog';

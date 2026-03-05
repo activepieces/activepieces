@@ -22,11 +22,11 @@ import {
 import { useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
@@ -40,7 +40,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils } from '@/lib/format-utils';
 
 import { TimeSavedFilterContent } from '../components/time-saved-filter-content';
 import { exportFlowDetailsCsv } from '../lib/impact-utils';
@@ -139,11 +139,12 @@ export function FlowsDetails({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1.5 text-muted-foreground cursor-not-allowed">
-                    <span>{displayValue ?? t('Not set')}</span>
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>{t('Add Estimated Time')}</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  {t("You don't have permission to edit this flow")}
+                  {t("You don't have permission to add")}
                 </TooltipContent>
               </Tooltip>
             );
@@ -158,10 +159,10 @@ export function FlowsDetails({
                     flowId={row.original.flowId}
                     currentValue={timeSavedPerRun}
                   >
-                    <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs text-primary hover:bg-primary/10">
-                      <Pencil className="h-3 w-3" />
+                    <Button variant="link" size="xs">
+                      <Pencil className="size-3! mr-1" />
                       <span>{t('Edit')}</span>
-                    </button>
+                    </Button>
                   </EditTimeSavedPopover>
                 </span>
               </div>
@@ -231,12 +232,7 @@ export function FlowsDetails({
 
           if (userHasAccess) {
             return (
-              <div
-                className="flex items-center gap-1.5 text-foreground hover:underline cursor-pointer"
-                onClick={() =>
-                  window.open(`/projects/${row.original.projectId}`, '_blank')
-                }
-              >
+              <div className="flex items-center gap-1.5 text-foreground">
                 {projectAvatar}
                 {projectName}
               </div>
@@ -282,16 +278,6 @@ export function FlowsDetails({
 
         <TimeSavedFilter filters={filters} />
         <OwnerFilter filters={filters} />
-
-        {filters.hasActiveFilters && (
-          <button
-            onClick={filters.clearAllFilters}
-            className="flex items-center gap-1 text-sm text-primary hover:underline"
-          >
-            <X className="h-3.5 w-3.5" />
-            {t('Clear')}
-          </button>
-        )}
 
         <div className="flex-1" />
 
@@ -385,7 +371,6 @@ function TimeSavedFilter({ filters }: { filters: FiltersReturn }) {
           unitMax={filters.draftTimeSaved.unitMax}
           onCycleUnitMax={filters.cycleDraftTimeUnitMax}
           onApply={filters.applyTimeSavedFilter}
-          onClear={filters.clearTimeSavedFilter}
         />
       </PopoverContent>
     </Popover>

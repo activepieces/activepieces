@@ -152,7 +152,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             VALUES ${valuesPlaceholders}
         `, flattenedValues)
         
-        logger.info(`Finished migration CreateTemplateTable1764777773932, migrated ${flowTemplates.length} flow templates`)
+        logger.info({ migratedCount: flowTemplates.length }, 'Finished migration CreateTemplateTable1764777773932')
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {

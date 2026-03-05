@@ -21,10 +21,10 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { DataList } from '@/components/custom/data-list';
+import { JsonViewer } from '@/components/custom/json-viewer';
 import { ApMarkdown } from '@/components/custom/markdown';
-import { DataList } from '@/components/data-list';
-import { JsonViewer } from '@/components/json-viewer';
-import { SimpleJsonViewer } from '@/components/simple-json-viewer';
+import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import {
   Accordion,
   AccordionItem,

@@ -12,14 +12,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { SearchInput } from '@/components/custom/search-input';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { SearchInput } from '@/components/ui/search-input';
 import {
   Sidebar,
   SidebarContent,
@@ -37,9 +37,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
+import { projectCollectionUtils } from '@/features/projects';
+import { templatesTelemetryApi } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
@@ -107,7 +107,7 @@ export function ProjectDashboardSidebar() {
   const handleProjectSelect = useCallback(
     async (projectId: string) => {
       projectCollectionUtils.setCurrentProject(projectId);
-      navigate(`/projects/${projectId}/flows`);
+      navigate(`/projects/${projectId}/automations`);
       setSearchOpen(false);
     },
     [navigate],

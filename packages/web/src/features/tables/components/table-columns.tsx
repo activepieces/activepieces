@@ -6,8 +6,8 @@ import { Column, RenderCellProps } from 'react-data-grid';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { ClientRecordData } from '../lib/store/ap-tables-client-state';
-import { Row } from '../lib/types';
+import { ClientRecordData } from '../stores/store/ap-tables-client-state';
+import { Row } from '../types/types';
 
 import { ApFieldHeader } from './ap-field-header';
 import { useTableState } from './ap-table-state-provider';

@@ -37,7 +37,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
         appName,
     }: GetOrDeleteConnectionFromTokenRequest): Promise<AppConnectionWithoutSensitiveData | null> {
         const connectionName = await getConnectioName({ projectId, token })
-        const project = await projectService.getOneOrThrow(projectId)
+        const project = await projectService(log).getOneOrThrow(projectId)
 
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = appName.replace('@activepieces/piece-', '')
@@ -63,8 +63,8 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
             request.appCredentialId,
         )
         const projectId = appCredential.projectId
-        const project = await projectService.getOneOrThrow(projectId)
-        
+        const project = await projectService(log).getOneOrThrow(projectId)
+
         const connectionName = await getConnectioName({
             projectId,
             token: request.token,

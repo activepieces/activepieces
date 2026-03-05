@@ -3,18 +3,6 @@ import { DiscriminatedUnion } from '../../core/common'
 
 export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
 
-/**
- * Normalizes a string for use as an agent tool name: safe characters only,
- * collapsed underscores, max 60 chars, lowercase, and appends '_mcp'.
- */
-export function sanitizeToolName(name: string): string {
-    return String(name)
-        .replace(/[^a-zA-Z0-9_-]/g, '_')
-        .replace(/_+/g, '_')
-        .slice(0, 60)
-        .toLowerCase() + '_mcp'
-}
-
 export enum FieldControlMode {
     AGENT_DECIDE = 'agent-decide',
     CHOOSE_YOURSELF = 'choose-yourself',
@@ -103,6 +91,7 @@ export const AgentFlowTool = Type.Object({
     type: Type.Literal(AgentToolType.FLOW),
     ...AgentToolBase,
     externalFlowId: Type.String(),
+    flowDisplayName: Type.Optional(Type.String()),
 })
 export type AgentFlowTool = Static<typeof AgentFlowTool>
 

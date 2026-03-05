@@ -2,7 +2,7 @@ import { LockKeyhole } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { Dot } from '@/components/ui/dot';
+import { Dot } from '@/components/custom/dot';
 import {
   SidebarMenuButton,
   SidebarMenuItem,

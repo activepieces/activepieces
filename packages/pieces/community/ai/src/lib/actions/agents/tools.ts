@@ -2,7 +2,7 @@ import { dynamicTool, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, McpProtocol, sanitizeToolName, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, isNil, isString, McpProtocol, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { ActionContext } from "@activepieces/pieces-framework";
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
@@ -60,7 +60,7 @@ function flattenMcpServers(
       const agentTool = agentMcpTools.find((t) => t.toolName === server.mcpName);
 
       for (const [toolName, fn] of Object.entries(server.tools)) {
-        const key = sanitizeToolName(`${toolName}`);
+        const key = mcpToolNameUtils.createToolName(`${toolName}`);
         tools[key] = fn;
         if (agentTool) {
           keyToAgentTool[key] = agentTool;
@@ -131,7 +131,7 @@ export async function constructAgentTools(
 
     const toolKeyToAgentTool: Record<string, AgentTool> = {};
     for (const agentTool of agentTools.filter(t => t.type !== AgentToolType.MCP)) {
-      const key = agentTool.type === AgentToolType.FLOW ? sanitizeToolName(agentTool.toolName) : agentTool.toolName;
+      const key = agentTool.type === AgentToolType.FLOW ? mcpToolNameUtils.createToolName(agentTool.toolName) : agentTool.toolName;
       toolKeyToAgentTool[key] = agentTool;
     }
     Object.assign(toolKeyToAgentTool, mcpKeyToAgentTool);

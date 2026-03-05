@@ -70,7 +70,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                     type: JobType.ONE_TIME,
                     data: {
                         projectId: pausedRun.projectId,
-                        platformId: await projectService.getPlatformId(pausedRun.projectId),
+                        platformId: await projectService(log).getPlatformId(pausedRun.projectId),
                         environment: pausedRun.environment,
                         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         flowId: pausedRun.flowId,
