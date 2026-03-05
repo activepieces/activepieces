@@ -17,13 +17,12 @@ import { invoicePaidTrigger } from './triggers/invoice-paid';
 import { paymentSucceededTrigger } from './triggers/payment-succeeded';
 
 export const outseta = createPiece({
-  name: 'outseta',
   displayName: 'Outseta',
   description: 'Triggers and actions for Outseta CRM and Billing',
   auth: outsetaAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/outseta.png',
-  authors: ['bst1n'],
+  authors: ['bst1n','sanket-a11y'],
   categories: [PieceCategory.SALES_AND_CRM],
   triggers: [
     accountCreatedTrigger,
@@ -41,12 +40,9 @@ export const outseta = createPiece({
     getSubscriptionAction,
     createCustomApiCallAction({
       auth: outsetaAuth,
-      baseUrl: (auth) => `${(auth as { domain: string }).domain}/api/v1`,
+      baseUrl: (auth) => `${auth.props.domain}/api/v1`,
       authMapping: async (auth) => {
-        const { apiKey, apiSecret } = auth as {
-          apiKey: string;
-          apiSecret: string;
-        };
+        const { apiKey, apiSecret } = auth.props;
         return {
           Authorization: `Outseta ${apiKey}:${apiSecret}`,
         };

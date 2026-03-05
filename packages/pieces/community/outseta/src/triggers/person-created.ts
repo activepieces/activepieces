@@ -2,16 +2,19 @@ import { createManualWebhookTrigger } from './_manual-webhook-trigger';
 
 export const personCreatedTrigger = createManualWebhookTrigger({
   name: 'person_created',
-  displayName: 'Person created',
-  description: 'Triggered when a person is created in Outseta',
-  eventType: 'person.created',
+  displayName: 'Person Created',
+  description: 'Triggers when a new person (contact) is created in Outseta.',
   sampleData: {
-    personUid: 'per_123',
-    accountUid: 'acc_123',
-    person: {
-      email: 'user@example.com',
-      firstName: 'Jane',
-      lastName: 'Doe',
-    },
+    Email: 'user@example.com',
+    FirstName: 'Jane',
+    LastName: 'Doe',
+    FullName: 'Jane Doe',
+    PhoneMobile: '',
+    PhoneWork: '',
+    Title: '',
+    OAuthIntegrationStatus: 0,
+    Uid: 'per_example',
+    Created: '2024-01-01T00:00:00',
+    Updated: '2024-01-01T00:00:00',
   },
 });

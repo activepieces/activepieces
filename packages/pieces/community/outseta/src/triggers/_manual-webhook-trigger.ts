@@ -1,11 +1,10 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 
 type ManualWebhookTriggerArgs = {
   name: string;
   displayName: string;
   description: string;
-  eventType: string;
   sampleData?: Record<string, unknown>;
 };
 
@@ -14,25 +13,22 @@ export function createManualWebhookTrigger(args: ManualWebhookTriggerArgs) {
     name: args.name,
     auth: outsetaAuth,
     displayName: args.displayName,
-    description: args.description,
+    description: `${args.description}`,
     type: TriggerStrategy.WEBHOOK,
-    props: {},
+    props: {
+      instruction: Property.MarkDown({
+        value : `**Setup:** In Outseta go to Settings → Notifications → Add Notification, select the matching activity type, and paste this trigger's webhook URL {{webhookUrl}} as the callback URL.`
+      })
+    }, 
     sampleData: args.sampleData ?? {},
     async onEnable() {
-      // Manual setup in Outseta UI (Settings → Notifications)
+      // Manual setup required in Outseta UI (Settings → Notifications)
     },
     async onDisable() {
       // Manual cleanup in Outseta UI if needed
     },
     async run(context) {
-      const body = context.payload.body as Record<string, unknown>;
-      const eventType = body?.['EventType'] as string | undefined;
-
-      if (eventType && eventType !== args.eventType) {
-        return [];
-      }
-
-      return [body];
+      return [context.payload.body];
     },
   });
 }

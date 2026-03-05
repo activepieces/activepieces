@@ -1,8 +1,10 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { OutsetaClient } from './common/client';
 
-export const outsetaAuth = PieceAuth.Custom({
+export const outsetaAuth = PieceAuth.CustomAuth({
+  displayName: 'Outseta Admin API',
   description: 'Outseta Admin API credentials',
+  required: true,
   props: {
     domain: Property.ShortText({
       displayName: 'Outseta domain',
