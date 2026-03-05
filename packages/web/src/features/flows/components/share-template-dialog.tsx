@@ -110,7 +110,7 @@ const ShareTemplateDialog: React.FC<{
                 {shareTemplateForm.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button loading={isPending}>{t('Confirm')}</Button>
+            <Button loading={isPending}>{t('Share')}</Button>
           </form>
         </Form>
       </DialogContent>

@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -53,7 +54,10 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create New Project')}</DialogTitle>
+          <DialogTitle>{t('Create Project')}</DialogTitle>
+          <DialogDescription>
+            {t('Set up a new project to organize your automations and connections.')}
+          </DialogDescription>
         </DialogHeader>
         {(!isLoadingConnections || !globalConnectionsEnabled) && (
           <NewProjectForm
@@ -195,7 +199,7 @@ const NewProjectForm = ({
             form.handleSubmit(() => mutate(form.getValues()))(e);
           }}
         >
-          {t('Save')}
+          {t('Create Project')}
         </Button>
       </DialogFooter>
     </>

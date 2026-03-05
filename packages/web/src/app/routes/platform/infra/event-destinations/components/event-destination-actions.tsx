@@ -49,8 +49,9 @@ const EventDestinationActions = ({
 
           <ConfirmationDeleteDialog
             title={t('Delete Destination')}
-            message={t('Are you sure you want to delete this destination?')}
+            message={t('Deleting this destination will stop all event notifications to this endpoint.')}
             entityName="destination"
+            buttonText={t('Delete')}
             showToast
             mutationFn={async () => {
               if (destination) {

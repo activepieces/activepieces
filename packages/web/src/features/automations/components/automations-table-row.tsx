@@ -289,11 +289,12 @@ export const AutomationsTableRow = ({
             <ConfirmationDeleteDialog
               title={t('Delete {type}', { type: item.type })}
               message={t(
-                'Are you sure you want to delete "{name}"? This action cannot be undone.',
+                'Deleting "{name}" cannot be undone.',
                 { name: item.name },
               )}
               mutationFn={async () => onDelete()}
               entityName={item.type}
+              buttonText={t('Delete')}
             >
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}

@@ -124,10 +124,10 @@ function McpToolTestingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-xl flex flex-col max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="px-0.5">{t('Tool Sample Data')}</DialogTitle>
+          <DialogTitle className="px-0.5">{t('Set Sample Data')}</DialogTitle>
           <DialogDescription className="px-0.5">
             {t(
-              'Fill in the following fields to use them as sample data for the trigger.',
+              'Provide sample values for testing this tool trigger.',
             )}
           </DialogDescription>
         </DialogHeader>
@@ -196,7 +196,7 @@ function McpToolTestingDialog({
                 {t('Cancel')}
               </Button>
               <Button type="submit" loading={isSavingMockdata}>
-                {t('Save')}
+                {t('Use Sample Data')}
               </Button>
             </DialogFooter>
           </form>

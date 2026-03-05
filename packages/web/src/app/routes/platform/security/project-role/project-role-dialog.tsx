@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
@@ -203,13 +205,20 @@ export const ProjectRoleDialog = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="w-full max-w-3xl">
-        <DialogTitle>
-          {mode === 'create'
-            ? t('Create New Role')
-            : (projectRole?.type === RoleType.DEFAULT
-                ? t('View ')
-                : t('Edit ')) + projectRole?.name}
-        </DialogTitle>
+        <DialogHeader>
+          <DialogTitle>
+            {mode === 'create'
+              ? t('Create Role')
+              : projectRole?.type === RoleType.DEFAULT
+                ? t('View Role: {name}', { name: projectRole?.name })
+                : t('Edit Role: {name}', { name: projectRole?.name })}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === 'create'
+              ? t('Define a custom role with specific permissions for project members.')
+              : t('Review and manage permissions for this role.')}
+          </DialogDescription>
+        </DialogHeader>
         <div className="grid space-y-4 mt-4">
           <div>
             <span className="text-sm font-medium text-foreground">

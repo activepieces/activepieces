@@ -86,8 +86,8 @@ export const UserActions = ({
             title={isInvitation ? t('Delete Invitation') : t('Delete User')}
             message={
               isInvitation
-                ? t('Are you sure you want to delete this invitation?')
-                : t('Are you sure you want to delete this user?')
+                ? t('This invitation will be permanently deleted.')
+                : t('This user and all their data will be permanently deleted.')
             }
             entityName={`${isInvitation ? t('Invitation') : t('User')} ${
               row.data.email

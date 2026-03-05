@@ -180,9 +180,10 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                     <ConfirmationDeleteDialog
                       title={t('Delete Table')}
                       message={t(
-                        'Are you sure you want to delete this table? This action cannot be undone.',
+                        'This will permanently delete the table and all its data.',
                       )}
                       entityName={t('table')}
+                      buttonText={t('Delete')}
                       mutationFn={async () => {
                         await tablesApi.delete(table.id);
                         onBack();
@@ -221,9 +222,10 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
           <ConfirmationDeleteDialog
             title={t('Delete Records')}
             message={t(
-              'Are you sure you want to delete the selected records? This action cannot be undone.',
+              'The selected records will be permanently deleted.',
             )}
             entityName={selectedRecords.size === 1 ? t('record') : t('records')}
+            buttonText={t('Delete')}
             mutationFn={async () => {
               const indices = Array.from(selectedRecords).map((row) =>
                 records.findIndex((r) => r.uuid === row),

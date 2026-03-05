@@ -111,9 +111,10 @@ const ApiKeysPage = () => {
                       <ConfirmationDeleteDialog
                         title={t('Revoke API Key')}
                         message={t(
-                          'Are you sure you want to revoke this API key? Any integrations using it will stop working.',
+                          'Revoking this API key will immediately break any integrations using it. This action cannot be undone.',
                         )}
                         entityName={t('API Key')}
+                        buttonText={t('Revoke')}
                         mutationFn={async () => {
                           await apiKeyApi.delete(apiKey.id);
                           refetch();

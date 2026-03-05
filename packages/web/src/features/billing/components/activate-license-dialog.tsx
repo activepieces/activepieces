@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -66,6 +67,9 @@ export const ActivateLicenseDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Activate License Key')}</DialogTitle>
+          <DialogDescription>
+            {t('Enter your license key to unlock platform features.')}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
