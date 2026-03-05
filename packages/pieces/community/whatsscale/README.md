@@ -42,8 +42,22 @@ WhatsScale uses API key authentication. Get your key from [whatsscale.com/dashbo
 | Send a Document to a Group | Send document to a WhatsApp group (dropdown) |
 | Send a Document to a CRM Contact | Send document to a WhatsScale CRM contact (dropdown) |
 
-### Planned (Sprints 5-10)
-- Send Location, Poll
+### Send Location
+| Action | Description |
+|--------|-------------|
+| Send a Location to a Contact | Send a GPS location pin to a WhatsApp contact (dropdown) |
+| Send a Location to a Group | Send a GPS location pin to a WhatsApp group (dropdown) |
+| Send a Location to a CRM Contact | Send a GPS location pin to a WhatsScale CRM contact (dropdown) |
+
+### Send Poll
+| Action | Description |
+|--------|-------------|
+| Send a Poll to a Contact | Send a poll with options to a WhatsApp contact (dropdown) |
+| Send a Poll to a Group | Send a poll with options to a WhatsApp group (dropdown) |
+| Send a Poll to a Channel | Broadcast a poll to a WhatsApp Channel (dropdown) |
+| Send a Poll to a CRM Contact | Send a poll to a WhatsScale CRM contact (dropdown) |
+
+### Planned (Sprints 6-10)
 - Set Text/Image/Video Story
 - CRM: Create, Get, Find, Update, Delete Contact, Add/Remove Tag, List
 - Check WhatsApp Number

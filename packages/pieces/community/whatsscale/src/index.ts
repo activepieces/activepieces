@@ -27,6 +27,17 @@ import { sendDocumentToContactAction } from './lib/actions/messaging/send-docume
 import { sendDocumentToGroupAction } from './lib/actions/messaging/send-document-to-group';
 import { sendDocumentToCrmContactAction } from './lib/actions/messaging/send-document-to-crm-contact';
 
+// Sprint 5: Location actions
+import { sendLocationToContactAction } from './lib/actions/messaging/send-location-to-contact';
+import { sendLocationToGroupAction } from './lib/actions/messaging/send-location-to-group';
+import { sendLocationToCrmContactAction } from './lib/actions/messaging/send-location-to-crm-contact';
+
+// Sprint 5: Poll actions
+import { sendPollToContactAction } from './lib/actions/messaging/send-poll-to-contact';
+import { sendPollToGroupAction } from './lib/actions/messaging/send-poll-to-group';
+import { sendPollToChannelAction } from './lib/actions/messaging/send-poll-to-channel';
+import { sendPollToCrmContactAction } from './lib/actions/messaging/send-poll-to-crm-contact';
+
 export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
@@ -56,6 +67,15 @@ export const whatsscale = createPiece({
     sendDocumentToContactAction,
     sendDocumentToGroupAction,
     sendDocumentToCrmContactAction,
+    // Location actions
+    sendLocationToContactAction,
+    sendLocationToGroupAction,
+    sendLocationToCrmContactAction,
+    // Poll actions
+    sendPollToContactAction,
+    sendPollToGroupAction,
+    sendPollToChannelAction,
+    sendPollToCrmContactAction,
   ],
   triggers: [],
 });
