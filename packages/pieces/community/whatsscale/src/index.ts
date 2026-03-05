@@ -53,6 +53,11 @@ import { addCrmContactTagAction } from './lib/actions/crm/add-crm-contact-tag';
 import { removeCrmContactTagAction } from './lib/actions/crm/remove-crm-contact-tag';
 import { listCrmContactsAction } from './lib/actions/crm/list-crm-contacts';
 
+// Sprint 8: Info + Utility actions
+import { getGroupInfoAction } from './lib/actions/info/get-group-info';
+import { getChannelInfoAction } from './lib/actions/info/get-channel-info';
+import { checkWhatsappAction } from './lib/actions/utility/check-whatsapp';
+
 export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
@@ -104,6 +109,10 @@ export const whatsscale = createPiece({
     addCrmContactTagAction,
     removeCrmContactTagAction,
     listCrmContactsAction,
+    // Info + Utility actions
+    getGroupInfoAction,
+    getChannelInfoAction,
+    checkWhatsappAction,
   ],
   triggers: [],
 });
