@@ -7,7 +7,8 @@ import { migrateV12FixPieceVersion } from './migrate-v12-fix-piece-version'
 import { migrateV13AddNotes } from './migrate-v13-add-notes'
 import { migrateV14AgentProviderModel } from './migrate-v14-agent-provider-model'
 import { migrateV15AgentProviderModel } from './migrate-v15-agent-provider-model'
-import { migrateV16AddLastUpdatedDate } from './migrate-v16-add-last-updated-date'
+import { migrateV16AgentPieceToolNames } from './migrate-v16-agent-piece-tool-names'
+import { migrateV17AddLastUpdatedDate } from './migrate-v17-add-last-updated-date'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
@@ -39,7 +40,8 @@ const migrations: Migration[] = [
     migrateV13AddNotes,
     migrateV14AgentProviderModel,
     migrateV15AgentProviderModel,
-    migrateV16AddLastUpdatedDate,
+    migrateV16AgentPieceToolNames,
+    migrateV17AddLastUpdatedDate,
 ] as const
 
 export const flowMigrations = {

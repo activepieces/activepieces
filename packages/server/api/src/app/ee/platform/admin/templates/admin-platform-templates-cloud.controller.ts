@@ -11,7 +11,7 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
 ) => {
 
     app.post('/categories', UpdateTemplatesCategoriesFlagRequest, async (request) => {
-        return flagService.save({
+        return flagService(request.log).save({
             id: ApFlagId.TEMPLATES_CATEGORIES,
             value: request.body.value,
         })

@@ -58,7 +58,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
                 break
             }
             case PrincipalType.SERVICE: {
-                const project = await projectService.getOneOrThrow(projectId)
+                const project = await projectService(log).getOneOrThrow(projectId)
                 if (project.platformId !== principal.platform.id) {
                     throw new ActivepiecesError({
                         code: ErrorCode.AUTHORIZATION,

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/shared",
-  "version": "0.41.0",
+  "version": "0.41.1",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -14,12 +14,11 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
-    "serve": "tsc -p tsconfig.lib.json --watch --preserveWatchOutput",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
   "devDependencies": {
-    "@types/node": "20.19.9",
+    "@types/node": "24.11.0",
     "@types/semver": "7.5.6",
     "vitest": "3.0.8"
   }

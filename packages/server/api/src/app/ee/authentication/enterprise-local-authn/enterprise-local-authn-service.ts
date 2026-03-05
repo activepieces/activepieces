@@ -69,7 +69,7 @@ const sendAuditLogForIdentity = async (
     event: Pick<ApplicationEvent, 'action' | 'data'>,
     log: FastifyBaseLogger,
 ): Promise<void> => {
-    const users = await userService.getUsersByIdentityId({ identityId })
+    const users = await userService(log).getUsersByIdentityId({ identityId })
     for (const { id, platformId } of users) {
         if (isNil(platformId)) {
             continue

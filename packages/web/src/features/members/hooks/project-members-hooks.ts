@@ -6,8 +6,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
-import { authenticationSession } from '../../../lib/authentication-session';
 import { projectMembersApi } from '../api/project-members-api';
 
 export const projectMembersHooks = {

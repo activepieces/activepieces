@@ -50,7 +50,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
 
         const pieceVersion: Record<string, string> = {}
-        const platformId = await projectService.getPlatformId(projectId)
+        const platformId = await projectService(log).getPlatformId(projectId)
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         for (const step of steps) {
             const stepTypeIsPiece = [FlowActionType.PIECE, FlowTriggerType.PIECE].includes(
@@ -166,7 +166,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         if (isNil(id)) {
             return null
         }
-        return findOne({
+        return findOne(log, {
             where: {
                 id,
             },
@@ -181,7 +181,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         })
     },
     async getLatestVersion(flowId: FlowId, state: FlowVersionState): Promise<FlowVersion | null> {
-        return findOne({
+        return findOne(log, {
             where: {
                 flowId,
                 state,
@@ -244,7 +244,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         const promises = paginationResult.data.map(async (flowVersion) => {
             return {
                 ...flowVersion,
-                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService.getMetaInformation({
+                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService(log).getMetaInformation({
                     id: flowVersion.updatedBy,
                 }),
             }
@@ -261,7 +261,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        const flowVersion: FlowVersion | null = await findOne({
+        const flowVersion: FlowVersion | null = await findOne(log, {
             where: {
                 flowId,
                 id: versionId,
@@ -339,12 +339,12 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
 
 
 
-async function findOne(options: FindOneOptions, entityManager?: EntityManager): Promise<FlowVersion | null> {
+async function findOne(log: FastifyBaseLogger, options: FindOneOptions, entityManager?: EntityManager): Promise<FlowVersion | null> {
     const flowVersion = await flowVersionRepo(entityManager).findOne(options)
     if (isNil(flowVersion)) {
         return null
     }
-    return flowVersionMigrationService.migrate(flowVersion)
+    return flowVersionMigrationService(log).migrate(flowVersion)
 }
 
 

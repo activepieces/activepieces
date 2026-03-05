@@ -18,7 +18,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
     async updateFlowInProject(originalFlow: FlowState, newFlow: FlowState,
         projectId: string,
     ): Promise<PopulatedFlow> {
-        const project = await projectService.getOneOrThrow(projectId)
+        const project = await projectService(log).getOneOrThrow(projectId)
 
         const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
             const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version.trigger)
@@ -63,7 +63,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             }
         }
         try {
-            const project = await projectService.getOneOrThrow(projectId)
+            const project = await projectService(log).getOneOrThrow(projectId)
             await flowService(log).update({
                 id: flow.id,
                 projectId,

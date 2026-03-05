@@ -92,7 +92,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         return isCloudPlanButNotEnterprise(platformPlan.plan)
     },
     async getUsage(platformId: string): Promise<PlatformUsage> {
-        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
+        const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
         const activeFlowsCount = await flowRepo().count({
             where: {
                 projectId: In(projectIds),
@@ -112,7 +112,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (ApEdition.COMMUNITY === edition) {
             return
         }
-        const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const usage = await platformPlanService(log).getUsage(platformId)
         if (!isNil(platformPlan.activeFlowsLimit) && usage.activeFlows >= platformPlan.activeFlowsLimit) {
             throw new ActivepiecesError({
@@ -149,8 +149,8 @@ function getInitialPlanByEdition(): PlatformPlanWithOnlyLimits {
 }
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformPlan> {
-    const platform = await platformService.getOneOrThrow(platformId)
-    const user = await userService.getMetaInformation({ id: platform.ownerId })
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    const user = await userService(log).getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await createInitialCustomer(user, platformId, log)
 
     const defaultStartDate = apDayjs().startOf('month').unix()

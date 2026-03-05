@@ -299,8 +299,7 @@ export const createRunState = (
             type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
             request: {
               stepName: stepName,
-              sampleDataSettings: {
-              },
+              sampleDataSettings: {},
             },
           }),
           errorLogs: {

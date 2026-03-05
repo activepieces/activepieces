@@ -90,7 +90,7 @@ export const BuilderHeader = () => {
 
   const goToFlowsPage = () => {
     navigate({
-      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      pathname: authenticationSession.appendProjectRoutePrefix('/automations'),
       search: createSearchParams({
         folderId: folderData?.id ?? UncategorizedFolderId,
       }).toString(),

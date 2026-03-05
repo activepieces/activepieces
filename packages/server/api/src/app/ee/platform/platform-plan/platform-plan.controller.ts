@@ -10,7 +10,7 @@ import { stripeHelper } from './stripe-helper'
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.get('/info', InfoRequest, async (request) => {
-        const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const platform = await platformService(request.log).getOneOrThrow(request.principal.platform.id)
         const [platformPlan, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
             platformPlanService(request.log).getUsage(platform.id),
