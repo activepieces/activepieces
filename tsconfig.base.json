@@ -71,6 +71,9 @@
       "@activepieces/piece-amazon-sqs": [
         "packages/pieces/community/amazon-sqs/src/index.ts"
       ],
+      "@activepieces/piece-amazon-textract": [
+        "packages/pieces/community/amazon-textract/src/index.ts"
+      ],
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],

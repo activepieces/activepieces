@@ -31,7 +31,7 @@ const EventDestinationActions = ({
         onOpenChange={setDropdownOpen}
       >
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 text-primary">
+          <Button variant="ghost" className="h-8 w-8 p-0">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -60,7 +60,7 @@ const EventDestinationActions = ({
             isDanger
           >
             <DropdownMenuItem
-              className="text-destructive"
+              variant="destructive"
               onSelect={(e) => {
                 e.preventDefault();
               }}

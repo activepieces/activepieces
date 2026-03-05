@@ -9,13 +9,14 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import pako from 'pako';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -170,10 +171,9 @@ const InstallPieceDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>
-        <Button size="sm" className="flex items-center justify-center gap-2">
-          <Plus className="size-4" />
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
           {t('Install Piece')}
-        </Button>
+        </AnimatedIconButton>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
