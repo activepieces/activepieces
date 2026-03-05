@@ -64,8 +64,19 @@ WhatsScale uses API key authentication. Get your key from [whatsscale.com/dashbo
 | Set an Image Story | Post an image to your WhatsApp story with optional caption |
 | Set a Video Story | Post a video to your WhatsApp story with optional caption |
 
-### Planned (Sprints 7-10)
-- CRM: Create, Get, Find, Update, Delete Contact, Add/Remove Tag, List
+### CRM Contacts
+| Action | Description |
+|--------|-------------|
+| Create a CRM Contact | Create a new contact with phone, name, and tags |
+| Get a CRM Contact | Retrieve a contact by ID (dropdown) |
+| Find a CRM Contact by Phone | Look up a contact by phone number (with country code) |
+| Update a CRM Contact | Update name and/or tags of an existing contact |
+| Delete a CRM Contact | Permanently delete a contact |
+| Add a Tag to a CRM Contact | Add a single tag to a contact |
+| Remove a Tag from a CRM Contact | Remove a single tag from a contact |
+| List CRM Contacts | Retrieve contacts with optional tag filter and pagination |
+
+### Planned (Sprints 8-10)
 - Check WhatsApp Number
 - Make an API Call
 - Triggers: Watch Incoming Messages, Group Messages, Channel Messages

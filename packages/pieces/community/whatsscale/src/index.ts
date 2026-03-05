@@ -43,6 +43,16 @@ import { setTextStoryAction } from './lib/actions/stories/set-text-story';
 import { setImageStoryAction } from './lib/actions/stories/set-image-story';
 import { setVideoStoryAction } from './lib/actions/stories/set-video-story';
 
+// Sprint 7: CRM actions
+import { createCrmContactAction } from './lib/actions/crm/create-crm-contact';
+import { getCrmContactAction } from './lib/actions/crm/get-crm-contact';
+import { findCrmContactByPhoneAction } from './lib/actions/crm/find-crm-contact-by-phone';
+import { updateCrmContactAction } from './lib/actions/crm/update-crm-contact';
+import { deleteCrmContactAction } from './lib/actions/crm/delete-crm-contact';
+import { addCrmContactTagAction } from './lib/actions/crm/add-crm-contact-tag';
+import { removeCrmContactTagAction } from './lib/actions/crm/remove-crm-contact-tag';
+import { listCrmContactsAction } from './lib/actions/crm/list-crm-contacts';
+
 export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
@@ -85,6 +95,15 @@ export const whatsscale = createPiece({
     setTextStoryAction,
     setImageStoryAction,
     setVideoStoryAction,
+    // CRM actions
+    createCrmContactAction,
+    getCrmContactAction,
+    findCrmContactByPhoneAction,
+    updateCrmContactAction,
+    deleteCrmContactAction,
+    addCrmContactTagAction,
+    removeCrmContactTagAction,
+    listCrmContactsAction,
   ],
   triggers: [],
 });
