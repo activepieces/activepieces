@@ -1,10 +1,10 @@
 'use client';
 
 // Used form here https://github.com/shadcn-ui/ui/pull/2773/files
-import { Popover as PopoverPrimitive } from 'radix-ui';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import { t } from 'i18next'; // Use t function from react-i18next
 import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
+import { Popover as PopoverPrimitive } from 'radix-ui';
 import React, { ComponentPropsWithoutRef } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -272,8 +272,7 @@ const MultiSelectTrigger = React.forwardRef<
 
 MultiSelectTrigger.displayName = 'MultiSelectTrigger';
 
-interface MultiSelectValueProps
-  extends ComponentPropsWithoutRef<'div'> {
+interface MultiSelectValueProps extends ComponentPropsWithoutRef<'div'> {
   placeholder?: string;
   maxDisplay?: number;
   maxItemLength?: number;

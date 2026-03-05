@@ -290,10 +290,7 @@ export const ProjectRoleDialog = ({
                           )}
                           <Button
                             className="h-9 px-4"
-                            variant={getButtonVariant(
-                              permission.name,
-                              'Write',
-                            )}
+                            variant={getButtonVariant(permission.name, 'Write')}
                             onClick={() =>
                               handlePermissionChange(permission.name, 'Write')
                             }

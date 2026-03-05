@@ -5,12 +5,11 @@ import {
   ErrorCode,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import { ExternalLink } from 'lucide-react';
-
 import {
   Dialog,
   DialogContent,
@@ -40,7 +39,9 @@ const ConnectSecretManagerDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Connect')} {manager.name}</DialogTitle>
+          <DialogTitle>
+            {t('Connect')} {manager.name}
+          </DialogTitle>
           <DialogDescription>
             <a
               href={`https://activepieces.com/docs/admin-guide/guides/secret-managers/${manager.id}`}

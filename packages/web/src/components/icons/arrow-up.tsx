@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface ArrowUpIconHandle {
   startAnimation: () => void;
@@ -17,9 +17,9 @@ interface ArrowUpIconProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const PATH_VARIANTS: Variants = {
-  normal: { d: "m5 12 7-7 7 7", translateY: 0 },
+  normal: { d: 'm5 12 7-7 7 7', translateY: 0 },
   animate: {
-    d: "m5 12 7-7 7 7",
+    d: 'm5 12 7-7 7 7',
     translateY: [0, 3, 0],
     transition: {
       duration: 0.4,
@@ -28,9 +28,9 @@ const PATH_VARIANTS: Variants = {
 };
 
 const SECOND_PATH_VARIANTS: Variants = {
-  normal: { d: "M12 19V5" },
+  normal: { d: 'M12 19V5' },
   animate: {
-    d: ["M12 19V5", "M12 19V10", "M12 19V5"],
+    d: ['M12 19V5', 'M12 19V10', 'M12 19V5'],
     transition: {
       duration: 0.4,
     },
@@ -46,8 +46,8 @@ const ArrowUpIcon = forwardRef<ArrowUpIconHandle, ArrowUpIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -56,10 +56,10 @@ const ArrowUpIcon = forwardRef<ArrowUpIconHandle, ArrowUpIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -67,10 +67,10 @@ const ArrowUpIcon = forwardRef<ArrowUpIconHandle, ArrowUpIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -104,9 +104,9 @@ const ArrowUpIcon = forwardRef<ArrowUpIconHandle, ArrowUpIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
-ArrowUpIcon.displayName = "ArrowUpIcon";
+ArrowUpIcon.displayName = 'ArrowUpIcon';
 
 export { ArrowUpIcon };

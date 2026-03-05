@@ -57,7 +57,12 @@ const SigningKeysPage = () => {
         description={
           <>
             {t("Show your product's automations inside your own UI.")}
-            <Button variant="link" size="sm" className="h-auto p-0 mt-0.5" asChild>
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 mt-0.5"
+              asChild
+            >
               <a
                 href="https://www.activepieces.com/docs/embedding/overview"
                 target="_blank"

@@ -82,18 +82,12 @@ const StepSettingsContainer = () => {
       keepDirtyValues: true,
     },
     resolver: async (values, context, options) => {
-      const resolverFn = typeboxResolver(
-        formSchema as TObject,
-      ) as unknown as (
+      const resolverFn = typeboxResolver(formSchema as TObject) as unknown as (
         values: FlowAction | FlowTrigger,
         context: unknown,
         options: ResolverOptions<FlowAction | FlowTrigger>,
       ) => Promise<ResolverResult<FlowAction | FlowTrigger>>;
-      const result = await resolverFn(
-        values,
-        context,
-        options,
-      );
+      const result = await resolverFn(values, context, options);
 
       const cleanedNewValues = formUtils.removeUndefinedFromInput(values);
       const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
@@ -290,9 +284,7 @@ const StepSettingsContainer = () => {
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
                   defaultSize={`${height}%`}
-                  onResize={(panelSize) =>
-                    setHeight(panelSize.asPercentage)
-                  }
+                  onResize={(panelSize) => setHeight(panelSize.asPercentage)}
                   className="min-h-[130px]"
                 >
                   <ScrollArea

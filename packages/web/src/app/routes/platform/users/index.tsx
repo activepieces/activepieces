@@ -7,8 +7,6 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { User } from 'lucide-react';
-
-import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -16,6 +14,7 @@ import { platformUserApi } from '@/api/platform-user-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/custom/data-table';
+import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { userInvitationApi, InviteUserDialog } from '@/features/members';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
@@ -187,7 +186,12 @@ export default function UsersPage() {
           hidePagination={true}
           isLoading={isLoading}
           toolbarButtons={[
-            <Button key="invite" className="gap-2" size="sm" onClick={() => setInviteOpen(true)}>
+            <Button
+              key="invite"
+              className="gap-2"
+              size="sm"
+              onClick={() => setInviteOpen(true)}
+            >
               <UserRoundPlusIcon size={16} />
               <span className="text-sm font-medium">{t('Invite')}</span>
             </Button>,

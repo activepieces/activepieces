@@ -10,9 +10,9 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
@@ -243,7 +243,9 @@ export function DataTable<
     getRowId: () => apId(),
     initialState: {
       pagination: {
-        pageSize: virtualizeRows ? tableData.length || 1000 : parseInt(startingLimit),
+        pageSize: virtualizeRows
+          ? tableData.length || 1000
+          : parseInt(startingLimit),
       },
       columnVisibility,
       sorting: initialSorting,
@@ -312,8 +314,15 @@ export function DataTable<
   });
 
   return (
-    <div className={cn('-mx-4', virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined)}>
-      {((filters && filters.length > 0) || (customFilters && customFilters.length > 0) || (toolbarButtons && toolbarButtons.length > 0)) && (
+    <div
+      className={cn(
+        '-mx-4',
+        virtualizeRows ? 'flex flex-col flex-1 min-h-0' : undefined,
+      )}
+    >
+      {((filters && filters.length > 0) ||
+        (customFilters && customFilters.length > 0) ||
+        (toolbarButtons && toolbarButtons.length > 0)) && (
         <DataTableToolbar>
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -349,7 +358,14 @@ export function DataTable<
         })}
       >
         <Table className="table-fixed">
-          <TableHeader className={cn('border-t', virtualizeRows ? 'sticky top-0 z-10 bg-background' : 'bg-background')}>
+          <TableHeader
+            className={cn(
+              'border-t',
+              virtualizeRows
+                ? 'sticky top-0 z-10 bg-background'
+                : 'bg-background',
+            )}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
@@ -457,8 +473,7 @@ export function DataTable<
                               <div
                                 className={cn('flex w-full items-center', {
                                   'justify-end': cell.column.id === 'actions',
-                                  'justify-start':
-                                    cell.column.id !== 'actions',
+                                  'justify-start': cell.column.id !== 'actions',
                                 })}
                               >
                                 <div
@@ -502,8 +517,7 @@ export function DataTable<
                     className={cn(
                       'cursor-pointer',
                       {
-                        'hover:bg-background cursor-default':
-                          isNil(onRowClick),
+                        'hover:bg-background cursor-default': isNil(onRowClick),
                       },
                       getRowClassName?.(row.original, rowIndex),
                     )}
@@ -603,9 +617,7 @@ export function DataTable<
       {!hidePagination && !virtualizeRows && (
         <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">
-              {t('Rows per page')}
-            </span>
+            <span className="text-muted-foreground">{t('Rows per page')}</span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {

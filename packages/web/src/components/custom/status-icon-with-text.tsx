@@ -2,7 +2,10 @@ import React from 'react';
 
 import { Badge } from '@/components/ui/badge';
 
-const variantBadgeMap: Record<StatusVariant, React.ComponentProps<typeof Badge>['variant']> = {
+const variantBadgeMap: Record<
+  StatusVariant,
+  React.ComponentProps<typeof Badge>['variant']
+> = {
   success: 'success',
   error: 'destructive',
   default: 'accent',

@@ -34,6 +34,15 @@ import {
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import {
   Tooltip,
   TooltipContent,
@@ -44,20 +53,13 @@ import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { formatUtils } from '@/lib/format-utils';
-import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
-  const [selectedEvent, setSelectedEvent] = useState<ApplicationEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<ApplicationEvent | null>(
+    null,
+  );
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
@@ -173,7 +175,9 @@ export default function AuditLogsPage() {
                         {icon.icon}
                       </span>
                     )}
-                    {formatUtils.convertEnumToHumanReadable(row.original.action)}
+                    {formatUtils.convertEnumToHumanReadable(
+                      row.original.action,
+                    )}
                   </div>
                 );
               },
@@ -294,19 +298,29 @@ export default function AuditLogsPage() {
                 <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
                   {selectedEvent?.userEmail && (
                     <>
-                      <span className="text-muted-foreground">{t('Performed By')}</span>
-                      <span className="font-medium">{selectedEvent.userEmail}</span>
+                      <span className="text-muted-foreground">
+                        {t('Performed By')}
+                      </span>
+                      <span className="font-medium">
+                        {selectedEvent.userEmail}
+                      </span>
                     </>
                   )}
                   {selectedEvent?.projectDisplayName && (
                     <>
-                      <span className="text-muted-foreground">{t('Project')}</span>
-                      <span className="font-medium">{selectedEvent.projectDisplayName}</span>
+                      <span className="text-muted-foreground">
+                        {t('Project')}
+                      </span>
+                      <span className="font-medium">
+                        {selectedEvent.projectDisplayName}
+                      </span>
                     </>
                   )}
                   {selectedEvent?.ip && (
                     <>
-                      <span className="text-muted-foreground">{t('IP Address')}</span>
+                      <span className="text-muted-foreground">
+                        {t('IP Address')}
+                      </span>
                       <span className="font-medium">{selectedEvent.ip}</span>
                     </>
                   )}
@@ -318,24 +332,29 @@ export default function AuditLogsPage() {
                   </span>
                 </div>
               </div>
-              {selectedEvent && extractEventDetails(selectedEvent).length > 0 && (
-                <>
-                  <Separator />
-                  <div className="px-6 py-5 flex flex-col gap-4">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      {t('Event Details')}
-                    </p>
-                    <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
-                      {extractEventDetails(selectedEvent).map(({ label, value }) => (
-                        <Fragment key={label}>
-                          <span className="text-muted-foreground">{label}</span>
-                          <span className="font-medium">{value}</span>
-                        </Fragment>
-                      ))}
+              {selectedEvent &&
+                extractEventDetails(selectedEvent).length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="px-6 py-5 flex flex-col gap-4">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        {t('Event Details')}
+                      </p>
+                      <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+                        {extractEventDetails(selectedEvent).map(
+                          ({ label, value }) => (
+                            <Fragment key={label}>
+                              <span className="text-muted-foreground">
+                                {label}
+                              </span>
+                              <span className="font-medium">{value}</span>
+                            </Fragment>
+                          ),
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
               <Separator />
               <div className="px-6 py-5 flex flex-col gap-4">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -400,11 +419,17 @@ function convertToIcon(event: ApplicationEvent) {
 function convertToDetails(event: ApplicationEvent): string {
   switch (event.action) {
     case ApplicationEventName.FLOW_RUN_STARTED:
-      return `Flow run started in ${formatUtils.convertEnumToHumanReadable(event.data.flowRun.environment)} environment`;
+      return `Flow run started in ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.environment,
+      )} environment`;
     case ApplicationEventName.FLOW_RUN_FINISHED:
-      return `Flow run finished — ${formatUtils.convertEnumToHumanReadable(event.data.flowRun.status)}`;
+      return `Flow run finished — ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.status,
+      )}`;
     case ApplicationEventName.FLOW_RUN_RESUMED:
-      return `Flow run resumed in ${formatUtils.convertEnumToHumanReadable(event.data.flowRun.environment)} environment`;
+      return `Flow run resumed in ${formatUtils.convertEnumToHumanReadable(
+        event.data.flowRun.environment,
+      )} environment`;
     case ApplicationEventName.FLOW_CREATED:
       return t('A new flow was created');
     case ApplicationEventName.FLOW_DELETED:
@@ -421,17 +446,32 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FLOW_RUN_RESUMED: {
       const { flowRun } = event.data;
       const rows: EventDetailRow[] = [
-        { label: t('Status'), value: formatUtils.convertEnumToHumanReadable(flowRun.status) },
-        { label: t('Environment'), value: formatUtils.convertEnumToHumanReadable(flowRun.environment) },
+        {
+          label: t('Status'),
+          value: formatUtils.convertEnumToHumanReadable(flowRun.status),
+        },
+        {
+          label: t('Environment'),
+          value: formatUtils.convertEnumToHumanReadable(flowRun.environment),
+        },
       ];
       if (flowRun.triggeredBy) {
-        rows.push({ label: t('Triggered By'), value: formatUtils.convertEnumToHumanReadable(flowRun.triggeredBy) });
+        rows.push({
+          label: t('Triggered By'),
+          value: formatUtils.convertEnumToHumanReadable(flowRun.triggeredBy),
+        });
       }
       if (flowRun.startTime) {
-        rows.push({ label: t('Start Time'), value: new Date(flowRun.startTime).toLocaleString() });
+        rows.push({
+          label: t('Start Time'),
+          value: new Date(flowRun.startTime).toLocaleString(),
+        });
       }
       if (flowRun.finishTime) {
-        rows.push({ label: t('Finish Time'), value: new Date(flowRun.finishTime).toLocaleString() });
+        rows.push({
+          label: t('Finish Time'),
+          value: new Date(flowRun.finishTime).toLocaleString(),
+        });
       }
       return rows;
     }
@@ -446,8 +486,14 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [
         { label: t('Connection'), value: connection.displayName },
         { label: t('Piece'), value: connection.pieceName },
-        { label: t('Type'), value: formatUtils.convertEnumToHumanReadable(connection.type) },
-        { label: t('Status'), value: formatUtils.convertEnumToHumanReadable(connection.status) },
+        {
+          label: t('Type'),
+          value: formatUtils.convertEnumToHumanReadable(connection.type),
+        },
+        {
+          label: t('Status'),
+          value: formatUtils.convertEnumToHumanReadable(connection.status),
+        },
       ];
     }
     case ApplicationEventName.FOLDER_CREATED:
@@ -460,24 +506,37 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [];
     case ApplicationEventName.USER_SIGNED_UP:
       return [
-        { label: t('Source'), value: formatUtils.convertEnumToHumanReadable(event.data.source) },
+        {
+          label: t('Source'),
+          value: formatUtils.convertEnumToHumanReadable(event.data.source),
+        },
       ];
     case ApplicationEventName.SIGNING_KEY_CREATED:
-      return [{ label: t('Key Name'), value: event.data.signingKey.displayName }];
+      return [
+        { label: t('Key Name'), value: event.data.signingKey.displayName },
+      ];
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED: {
       const { projectRole } = event.data;
       return [
         { label: t('Role'), value: projectRole.name },
-        { label: t('Permissions'), value: projectRole.permissions.map((p) => formatUtils.convertEnumToHumanReadable(p)).join(', ') },
+        {
+          label: t('Permissions'),
+          value: projectRole.permissions
+            .map((p) => formatUtils.convertEnumToHumanReadable(p))
+            .join(', '),
+        },
       ];
     }
     case ApplicationEventName.PROJECT_RELEASE_CREATED: {
       const { release } = event.data;
       const rows: EventDetailRow[] = [
         { label: t('Release'), value: release.name },
-        { label: t('Type'), value: formatUtils.convertEnumToHumanReadable(release.type) },
+        {
+          label: t('Type'),
+          value: formatUtils.convertEnumToHumanReadable(release.type),
+        },
       ];
       if (release.description) {
         rows.push({ label: t('Description'), value: release.description });

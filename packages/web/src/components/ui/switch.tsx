@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { Switch as SwitchPrimitive } from 'radix-ui';
+import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -35,7 +35,12 @@ function Switch({
         className,
       )}
       onCheckedChange={(checked) =>
-        handleCheckedChange(checked, isControlled, setInternalChecked, onCheckedChange)
+        handleCheckedChange(
+          checked,
+          isControlled,
+          setInternalChecked,
+          onCheckedChange,
+        )
       }
       {...props}
       checked={isChecked}
@@ -73,8 +78,7 @@ const THUMB_SIZE_CLASSES: Record<NonNullable<SwitchProps['size']>, string> = {
 };
 
 const COLOR_CLASSES: Record<NonNullable<SwitchProps['color']>, string> = {
-  default:
-    'data-[state=checked]:bg-primary data-[state=unchecked]:bg-input',
+  default: 'data-[state=checked]:bg-primary data-[state=unchecked]:bg-input',
   secondary:
     'data-[state=checked]:bg-secondary data-[state=unchecked]:bg-input',
 };

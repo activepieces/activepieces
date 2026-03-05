@@ -85,11 +85,7 @@ export const AllowedDomainDialog = ({
       }}
     >
       <DialogTrigger asChild>
-        <Button
-          size={'sm'}
-          variant={'basic'}
-          onClick={() => setOpen(true)}
-        >
+        <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>

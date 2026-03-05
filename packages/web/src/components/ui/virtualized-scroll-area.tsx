@@ -109,5 +109,4 @@ const VirtualizedScrollArea = <T,>({
   );
 };
 
-
 export { VirtualizedScrollArea };

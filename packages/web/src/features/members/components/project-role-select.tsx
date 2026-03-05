@@ -51,7 +51,6 @@ export const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
             onValueChange={field.onChange}
             roles={roles}
             placeholder={t('Select a project role')}
-
           />
           <FormMessage />
         </FormItem>

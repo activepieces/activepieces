@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface FileHeartIconHandle {
   startAnimation: () => void;
@@ -20,7 +20,7 @@ const heartVariants: Variants = {
   normal: { scale: 1 },
   animate: {
     scale: [1, 1.2, 1],
-    transition: { duration: 0.4, ease: "easeInOut" },
+    transition: { duration: 0.4, ease: 'easeInOut' },
   },
 };
 
@@ -32,8 +32,8 @@ const FileHeartIcon = forwardRef<FileHeartIconHandle, FileHeartIconProps>(
     useImperativeHandle(ref, () => {
       isControlledRef.current = true;
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -42,10 +42,10 @@ const FileHeartIcon = forwardRef<FileHeartIconHandle, FileHeartIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -53,10 +53,10 @@ const FileHeartIcon = forwardRef<FileHeartIconHandle, FileHeartIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -87,9 +87,9 @@ const FileHeartIcon = forwardRef<FileHeartIconHandle, FileHeartIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
-FileHeartIcon.displayName = "FileHeartIcon";
+FileHeartIcon.displayName = 'FileHeartIcon';
 
 export { FileHeartIcon };

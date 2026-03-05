@@ -83,7 +83,9 @@ export const FeatureStatus = ({
                 <Lock className="size-4 text-muted-foreground shrink-0" />
               )}
               <span
-                className={`text-sm ${featureEnabled ? '' : 'text-muted-foreground'}`}
+                className={`text-sm ${
+                  featureEnabled ? '' : 'text-muted-foreground'
+                }`}
               >
                 {t(value.label)}
               </span>

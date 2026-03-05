@@ -34,7 +34,10 @@ const AnimatedTab = ({
 }) => {
   const iconRef = useRef<AnimatedIconHandle>(null);
   const IconComponent = tab.icon as React.ForwardRefExoticComponent<
-    { className?: string; size?: number } & React.RefAttributes<AnimatedIconHandle>
+    {
+      className?: string;
+      size?: number;
+    } & React.RefAttributes<AnimatedIconHandle>
   >;
 
   return (

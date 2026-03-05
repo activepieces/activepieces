@@ -219,11 +219,7 @@ export default function TriggerHealthPage() {
       accessorKey: 'last24Hours',
       size: 70,
       header: ({ column }: any) => (
-        <DataTableColumnHeader
-          column={column}
-          title="24H"
-          icon={Clock}
-        />
+        <DataTableColumnHeader column={column} title="24H" icon={Clock} />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last24Hours}%</div>
@@ -233,11 +229,7 @@ export default function TriggerHealthPage() {
       accessorKey: 'last7Days',
       size: 65,
       header: ({ column }: any) => (
-        <DataTableColumnHeader
-          column={column}
-          title="7D"
-          icon={Calendar}
-        />
+        <DataTableColumnHeader column={column} title="7D" icon={Calendar} />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last7Days}%</div>
@@ -247,11 +239,7 @@ export default function TriggerHealthPage() {
       accessorKey: 'last14Days',
       size: 65,
       header: ({ column }: any) => (
-        <DataTableColumnHeader
-          column={column}
-          title="14D"
-          icon={Calendar}
-        />
+        <DataTableColumnHeader column={column} title="14D" icon={Calendar} />
       ),
       cell: ({ row }: any) => (
         <div className={cn('font-medium')}>{row.original.last14Days}%</div>

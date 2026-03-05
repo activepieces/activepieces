@@ -1,5 +1,3 @@
-import React from 'react';
-
 import {
   ApEdition,
   ApFlagId,
@@ -9,7 +7,16 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { InfoIcon, Server, Box, Clock, Cpu, MemoryStick, HardDrive } from 'lucide-react';
+import {
+  InfoIcon,
+  Server,
+  Box,
+  Clock,
+  Cpu,
+  MemoryStick,
+  HardDrive,
+} from 'lucide-react';
+import React from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -162,8 +169,8 @@ function StatBar({ label, value, detail }: StatBarProps) {
     value > 95
       ? 'bg-destructive'
       : value > 80
-        ? 'bg-warning'
-        : 'bg-emerald-500';
+      ? 'bg-warning'
+      : 'bg-emerald-500';
 
   return (
     <div className="flex items-center gap-2">
@@ -192,9 +199,20 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
   const timeAgo = useTimeAgo(new Date(worker.updated));
   const isOnline = worker.status === WorkerMachineStatus.ONLINE;
 
-  const { diskInfo, cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, ip, freeSandboxes, totalSandboxes, workerProps, totalCpuCores } = worker.information;
+  const {
+    diskInfo,
+    cpuUsagePercentage,
+    ramUsagePercentage,
+    totalAvailableRamInBytes,
+    ip,
+    freeSandboxes,
+    totalSandboxes,
+    workerProps,
+    totalCpuCores,
+  } = worker.information;
 
-  const usedRamGb = (totalAvailableRamInBytes * (ramUsagePercentage / 100)) / 1024 ** 3;
+  const usedRamGb =
+    (totalAvailableRamInBytes * (ramUsagePercentage / 100)) / 1024 ** 3;
   const totalRamGb = totalAvailableRamInBytes / 1024 ** 3;
   const usedDiskGb = diskInfo.used / 1024 ** 3;
   const totalDiskGb = diskInfo.total / 1024 ** 3;
@@ -214,8 +232,12 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
               })}
             />
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium truncate">Machine #{index + 1}</span>
-              <span className="text-xs text-muted-foreground font-mono">{ip}</span>
+              <span className="text-sm font-medium truncate">
+                Machine #{index + 1}
+              </span>
+              <span className="text-xs text-muted-foreground font-mono">
+                {ip}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -228,14 +250,33 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-2.5">
-        <StatBar label={<><Cpu className="size-3" /><span>CPU</span></>} value={cpuUsagePercentage} detail={`${totalCpuCores} core${totalCpuCores === 1 ? '' : 's'}`} />
         <StatBar
-          label={<><MemoryStick className="size-3" /><span>RAM</span></>}
+          label={
+            <>
+              <Cpu className="size-3" />
+              <span>CPU</span>
+            </>
+          }
+          value={cpuUsagePercentage}
+          detail={`${totalCpuCores} core${totalCpuCores === 1 ? '' : 's'}`}
+        />
+        <StatBar
+          label={
+            <>
+              <MemoryStick className="size-3" />
+              <span>RAM</span>
+            </>
+          }
           value={ramUsagePercentage}
           detail={`${usedRamGb.toFixed(1)} / ${totalRamGb.toFixed(1)} GB`}
         />
         <StatBar
-          label={<><HardDrive className="size-3" /><span>Disk</span></>}
+          label={
+            <>
+              <HardDrive className="size-3" />
+              <span>Disk</span>
+            </>
+          }
           value={diskInfo.percentage}
           detail={`${usedDiskGb.toFixed(1)} / ${totalDiskGb.toFixed(1)} GB`}
         />
@@ -253,7 +294,9 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
             {t('seen')} {timeAgo}
           </span>
         </div>
-        <span className="text-xs text-muted-foreground font-mono shrink-0">{version}</span>
+        <span className="text-xs text-muted-foreground font-mono shrink-0">
+          {version}
+        </span>
       </CardFooter>
     </Card>
   );

@@ -5,13 +5,7 @@ import {
 import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  Package,
-  Hash,
-  GitBranch,
-  Puzzle,
-} from 'lucide-react';
+import { CheckIcon, Package, Hash, GitBranch, Puzzle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -75,7 +69,13 @@ const PlatformPiecesPage = () => {
                   {row.original.tags && row.original.tags.length > 0 && (
                     <div className="flex gap-1">
                       {row.original.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs py-0 px-1.5">{tag}</Badge>
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          className="text-xs py-0 px-1.5"
+                        >
+                          {tag}
+                        </Badge>
                       ))}
                     </div>
                   )}
@@ -189,13 +189,20 @@ const PlatformPiecesPage = () => {
           bulkActions={[
             {
               render: () => (
-                <ApplyTags selectedPieces={selectedPieces} onApplyTags={() => refetchPieces()} />
+                <ApplyTags
+                  selectedPieces={selectedPieces}
+                  onApplyTags={() => refetchPieces()}
+                />
               ),
             },
           ]}
           toolbarButtons={[
             <SyncPiecesButton key="sync" />,
-            <InstallPieceDialog key="install" onInstallPiece={() => refetchPieces()} scope={PieceScope.PLATFORM} />,
+            <InstallPieceDialog
+              key="install"
+              onInstallPiece={() => refetchPieces()}
+              scope={PieceScope.PLATFORM}
+            />,
           ]}
           selectColumn={true}
           onSelectedRowsChange={setSelectedPieces}

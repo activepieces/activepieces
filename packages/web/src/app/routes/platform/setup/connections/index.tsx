@@ -22,6 +22,7 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
   BulkAction,
@@ -36,7 +37,6 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -238,7 +238,10 @@ const GlobalConnectionsTable = () => {
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
       {
-        render: (_selectedRows: RowDataWithActions<AppConnectionWithoutSensitiveData>[], resetSelection: () => void) => {
+        render: (
+          _selectedRows: RowDataWithActions<AppConnectionWithoutSensitiveData>[],
+          resetSelection: () => void,
+        ) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <ConfirmationDeleteDialog

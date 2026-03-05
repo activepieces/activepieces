@@ -68,8 +68,8 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             {Math.round(creditsRemaining).toLocaleString()}{' '}
             {t('credits available')}
             <span className="ml-2 text-xs">
-              ({t('Total used')}: {Math.round(totalCreditsUsed).toLocaleString()}
-              )
+              ({t('Total used')}:{' '}
+              {Math.round(totalCreditsUsed).toLocaleString()})
             </span>
           </ItemDescription>
         </ItemContent>

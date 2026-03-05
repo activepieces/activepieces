@@ -1,7 +1,7 @@
-import * as React from "react"
-import { Slider as SliderPrimitive } from "radix-ui"
+import { Slider as SliderPrimitive } from 'radix-ui';
+import * as React from 'react';
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
 function Slider({
   className,
@@ -9,19 +9,19 @@ function Slider({
   value,
   min = 0,
   max = 100,
-  orientation = "horizontal",
+  orientation = 'horizontal',
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) {
-  const isVertical = orientation === "vertical";
+  const isVertical = orientation === 'vertical';
   const _values = React.useMemo(
     () =>
       Array.isArray(value)
         ? value
         : Array.isArray(defaultValue)
-          ? defaultValue
-          : [min, max],
-    [value, defaultValue, min, max]
-  )
+        ? defaultValue
+        : [min, max],
+    [value, defaultValue, min, max],
+  );
 
   return (
     <SliderPrimitive.Root
@@ -32,24 +32,24 @@ function Slider({
       max={max}
       orientation={orientation}
       className={cn(
-        "relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50",
-        isVertical && "h-full min-h-44 w-auto flex-col",
-        className
+        'relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50',
+        isVertical && 'h-full min-h-44 w-auto flex-col',
+        className,
       )}
       {...props}
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
         className={cn(
-          "relative grow overflow-hidden rounded-full bg-muted",
-          isVertical ? "h-full w-1.5" : "h-1.5 w-full"
+          'relative grow overflow-hidden rounded-full bg-muted',
+          isVertical ? 'h-full w-1.5' : 'h-1.5 w-full',
         )}
       >
         <SliderPrimitive.Range
           data-slot="slider-range"
           className={cn(
-            "absolute bg-primary",
-            isVertical ? "w-full" : "h-full"
+            'absolute bg-primary',
+            isVertical ? 'w-full' : 'h-full',
           )}
         />
       </SliderPrimitive.Track>
@@ -61,7 +61,7 @@ function Slider({
         />
       ))}
     </SliderPrimitive.Root>
-  )
+  );
 }
 
-export { Slider }
+export { Slider };

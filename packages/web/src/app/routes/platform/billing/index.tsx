@@ -7,7 +7,6 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
-
 import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { LoadingSpinner } from '@/components/custom/spinner';

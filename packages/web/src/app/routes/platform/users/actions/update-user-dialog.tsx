@@ -43,9 +43,10 @@ export const UpdateUserDialog = ({
       role,
       externalId,
     },
-    resolver: typeboxResolver(
-      UpdateUserRequestBody,
-    ) as unknown as Resolver<{ role: PlatformRole; externalId?: string }>,
+    resolver: typeboxResolver(UpdateUserRequestBody) as unknown as Resolver<{
+      role: PlatformRole;
+      externalId?: string;
+    }>,
   });
   const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
     {
@@ -82,7 +83,6 @@ export const UpdateUserDialog = ({
                     type="platform"
                     value={field.value}
                     onValueChange={field.onChange}
-
                   />
                   <FormMessage />
                 </FormItem>

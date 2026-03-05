@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface BotIconHandle {
   startAnimation: () => void;
@@ -20,7 +20,7 @@ const bodyVariants: Variants = {
   normal: { y: 0 },
   animate: {
     y: [0, -1.5, 0],
-    transition: { duration: 0.3, ease: "easeInOut" },
+    transition: { duration: 0.3, ease: 'easeInOut' },
   },
 };
 
@@ -28,7 +28,7 @@ const antennaVariants: Variants = {
   normal: { rotate: 0 },
   animate: {
     rotate: [0, -15, 15, 0],
-    transition: { duration: 0.5, ease: "easeInOut" },
+    transition: { duration: 0.5, ease: 'easeInOut' },
   },
 };
 
@@ -41,8 +41,8 @@ const BotIcon = forwardRef<BotIconHandle, BotIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -51,10 +51,10 @@ const BotIcon = forwardRef<BotIconHandle, BotIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -62,10 +62,10 @@ const BotIcon = forwardRef<BotIconHandle, BotIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -89,7 +89,7 @@ const BotIcon = forwardRef<BotIconHandle, BotIconProps>(
           <motion.g
             animate={controls}
             variants={antennaVariants}
-            style={{ originX: "12px", originY: "8px" }}
+            style={{ originX: '12px', originY: '8px' }}
           >
             <path d="M12 8V4H8" />
           </motion.g>
@@ -103,9 +103,9 @@ const BotIcon = forwardRef<BotIconHandle, BotIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
-BotIcon.displayName = "BotIcon";
+BotIcon.displayName = 'BotIcon';
 
 export { BotIcon };

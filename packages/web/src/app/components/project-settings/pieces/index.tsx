@@ -2,21 +2,11 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { PieceType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Package,
-  Trash,
-  Puzzle,
-  Tag,
-  Hash,
-  GitBranch,
-} from 'lucide-react';
+import { Package, Trash, Puzzle, Tag, Hash, GitBranch } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { RequestTrial } from '@/app/components/request-trial';
-import {
-  DataTable,
-  RowDataWithActions,
-} from '@/components/custom/data-table';
+import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableInputPopover } from '@/components/custom/data-table/data-table-input-popover';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -124,9 +114,7 @@ const PiecesSettings = () => {
   });
 
   const toolbarButtons = useMemo(
-    () => [
-      <ManagePiecesDialog key="manage" onSuccess={() => refetch()} />,
-    ],
+    () => [<ManagePiecesDialog key="manage" onSuccess={() => refetch()} />],
     [refetch],
   );
 

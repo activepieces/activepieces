@@ -28,7 +28,9 @@ const EventDestinationsPage = () => {
 
   const isEnabled = platform.plan.eventStreamingEnabled;
   const { data: destinations, isLoading } =
-    eventDestinationsCollectionUtils.useAll(platform.plan.eventStreamingEnabled);
+    eventDestinationsCollectionUtils.useAll(
+      platform.plan.eventStreamingEnabled,
+    );
 
   return (
     <LockedFeatureGuard
@@ -75,7 +77,9 @@ const EventDestinationsPage = () => {
                     {destination.url}
                   </ItemTitle>
                   <ItemDescription className="text-xs !flex flex-wrap items-center gap-x-1 gap-y-2 overflow-visible [text-wrap:unset] mt-1">
-                    <span className="text-muted-foreground shrink-0 mr-1.5">{t('Events')}</span>
+                    <span className="text-muted-foreground shrink-0 mr-1.5">
+                      {t('Events')}
+                    </span>
                     {destination.events.map((event) => (
                       <Badge key={event} variant="outline" className="text-xs">
                         {event}
@@ -83,7 +87,8 @@ const EventDestinationsPage = () => {
                     ))}
                   </ItemDescription>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {t('Created')} {formatUtils.formatDateToAgo(new Date(destination.created))}
+                    {t('Created')}{' '}
+                    {formatUtils.formatDateToAgo(new Date(destination.created))}
                   </p>
                 </ItemContent>
                 <ItemActions>

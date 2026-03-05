@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface ShieldIconHandle {
   startAnimation: () => void;
@@ -21,7 +21,7 @@ const shieldVariants: Variants = {
   animate: {
     rotate: [0, -8, 8, -4, 0],
     y: [0, -1, 0],
-    transition: { duration: 0.5, ease: "easeInOut" },
+    transition: { duration: 0.5, ease: 'easeInOut' },
   },
 };
 
@@ -33,8 +33,8 @@ const ShieldIcon = forwardRef<ShieldIconHandle, ShieldIconProps>(
     useImperativeHandle(ref, () => {
       isControlledRef.current = true;
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -43,10 +43,10 @@ const ShieldIcon = forwardRef<ShieldIconHandle, ShieldIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -54,10 +54,10 @@ const ShieldIcon = forwardRef<ShieldIconHandle, ShieldIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -81,15 +81,15 @@ const ShieldIcon = forwardRef<ShieldIconHandle, ShieldIconProps>(
           <motion.path
             animate={controls}
             variants={shieldVariants}
-            style={{ originX: "12px", originY: "12px" }}
+            style={{ originX: '12px', originY: '12px' }}
             d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
           />
         </svg>
       </div>
     );
-  }
+  },
 );
 
-ShieldIcon.displayName = "ShieldIcon";
+ShieldIcon.displayName = 'ShieldIcon';
 
 export { ShieldIcon };

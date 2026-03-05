@@ -69,12 +69,16 @@ const ApiKeysPage = () => {
           </NewApiKeyDialog>
         }
       >
-        {isLoading && <SkeletonList numberOfItems={3} className="w-full h-[72px]" />}
+        {isLoading && (
+          <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+        )}
 
         {!isLoading && keys.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
             <Key className="size-10" />
-            <p className="text-sm">{t('No API keys yet. Create one to get started.')}</p>
+            <p className="text-sm">
+              {t('No API keys yet. Create one to get started.')}
+            </p>
           </div>
         )}
 
@@ -87,12 +91,21 @@ const ApiKeysPage = () => {
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle>{apiKey.displayName}</ItemTitle>
-                  <ItemDescription className='text-xs'>
-                    <span className="font-mono">sk-...{apiKey.truncatedValue}</span>
+                  <ItemDescription className="text-xs">
+                    <span className="font-mono">
+                      sk-...{apiKey.truncatedValue}
+                    </span>
                     {' · '}
-                    {t('Created')} {formatUtils.formatDateToAgo(new Date(apiKey.created))}
+                    {t('Created')}{' '}
+                    {formatUtils.formatDateToAgo(new Date(apiKey.created))}
                     {apiKey.lastUsedAt ? (
-                      <> · {t('Last used')} {formatUtils.formatDateToAgo(new Date(apiKey.lastUsedAt))}</>
+                      <>
+                        {' '}
+                        · {t('Last used')}{' '}
+                        {formatUtils.formatDateToAgo(
+                          new Date(apiKey.lastUsedAt),
+                        )}
+                      </>
                     ) : (
                       <> · {t('Never used')}</>
                     )}
@@ -108,7 +121,9 @@ const ApiKeysPage = () => {
                     <DropdownMenuContent align="end">
                       <ConfirmationDeleteDialog
                         title={t('Revoke API Key')}
-                        message={t('Are you sure you want to revoke this API key? Any integrations using it will stop working.')}
+                        message={t(
+                          'Are you sure you want to revoke this API key? Any integrations using it will stop working.',
+                        )}
                         entityName={t('API Key')}
                         mutationFn={async () => {
                           await apiKeyApi.delete(apiKey.id);

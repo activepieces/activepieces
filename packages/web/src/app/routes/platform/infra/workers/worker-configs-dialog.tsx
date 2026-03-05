@@ -22,7 +22,12 @@ export const WorkerConfigsModal: React.FC<Props> = ({ workerProps }) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:text-foreground" title={t('Configs')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground hover:text-foreground"
+          title={t('Configs')}
+        >
           <SlidersHorizontal size={14} />
         </Button>
       </DialogTrigger>

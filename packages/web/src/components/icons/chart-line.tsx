@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface ChartLineIconHandle {
   startAnimation: () => void;
@@ -41,8 +41,8 @@ const ChartLineIcon = forwardRef<ChartLineIconHandle, ChartLineIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -51,10 +51,10 @@ const ChartLineIcon = forwardRef<ChartLineIconHandle, ChartLineIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -62,10 +62,10 @@ const ChartLineIcon = forwardRef<ChartLineIconHandle, ChartLineIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -95,9 +95,9 @@ const ChartLineIcon = forwardRef<ChartLineIconHandle, ChartLineIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
-ChartLineIcon.displayName = "ChartLineIcon";
+ChartLineIcon.displayName = 'ChartLineIcon';
 
 export { ChartLineIcon };

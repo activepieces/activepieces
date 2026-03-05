@@ -32,9 +32,7 @@ export const PageHeader = ({
             title
           )}
           {description && (
-            <span className="text-xs text-muted-foreground">
-              {description}
-            </span>
+            <span className="text-xs text-muted-foreground">{description}</span>
           )}
         </div>
         {leftContent}

@@ -1,6 +1,12 @@
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CircleMinus, MoreVertical, Pencil, RotateCcw, Trash } from 'lucide-react';
+import {
+  CircleMinus,
+  MoreVertical,
+  Pencil,
+  RotateCcw,
+  Trash,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -35,10 +41,8 @@ export const UserActions = ({
 }: UserActionsProps) => {
   const [open, setOpen] = useState(false);
   const isInvitation = row.type === 'invitation';
-  const isAdmin =
-    !isInvitation && row.data.platformRole === PlatformRole.ADMIN;
-  const isActive =
-    !isInvitation && row.data.status === UserStatus.ACTIVE;
+  const isAdmin = !isInvitation && row.data.platformRole === PlatformRole.ADMIN;
+  const isActive = !isInvitation && row.data.status === UserStatus.ACTIVE;
 
   return (
     <div className="flex justify-end">
@@ -85,7 +89,9 @@ export const UserActions = ({
                 ? t('Are you sure you want to delete this invitation?')
                 : t('Are you sure you want to delete this user?')
             }
-            entityName={`${isInvitation ? t('Invitation') : t('User')} ${row.data.email}`}
+            entityName={`${isInvitation ? t('Invitation') : t('User')} ${
+              row.data.email
+            }`}
             mutationFn={async () => {
               onDelete(isInvitation ? row.id : row.data.id, isInvitation);
             }}

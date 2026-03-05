@@ -1,58 +1,59 @@
-import * as React from "react"
-import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"
+import { ScrollArea as ScrollAreaPrimitive } from 'radix-ui';
+import * as React from 'react';
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
 function ScrollArea({
   className,
   children,
   viewPortClassName,
   viewPortRef,
-  orientation = "vertical",
+  orientation = 'vertical',
   showGradient = false,
   gradientClassName,
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & ScrollAreaCustomProps) {
-  const [showBottomGradient, setShowBottomGradient] = React.useState(false)
-  const internalViewPortRef = React.useRef<HTMLDivElement>(null)
-  const viewportRef = viewPortRef || internalViewPortRef
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> &
+  ScrollAreaCustomProps) {
+  const [showBottomGradient, setShowBottomGradient] = React.useState(false);
+  const internalViewPortRef = React.useRef<HTMLDivElement>(null);
+  const viewportRef = viewPortRef || internalViewPortRef;
 
   React.useEffect(() => {
-    if (!showGradient || !viewportRef.current) return
+    if (!showGradient || !viewportRef.current) return;
 
-    const viewport = viewportRef.current
+    const viewport = viewportRef.current;
     const checkScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = viewport
-      const hasScrollableContent = scrollHeight > clientHeight
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1
+      const { scrollTop, scrollHeight, clientHeight } = viewport;
+      const hasScrollableContent = scrollHeight > clientHeight;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
 
-      setShowBottomGradient(hasScrollableContent && !isAtBottom)
-    }
+      setShowBottomGradient(hasScrollableContent && !isAtBottom);
+    };
 
-    checkScroll()
-    viewport.addEventListener("scroll", checkScroll)
+    checkScroll();
+    viewport.addEventListener('scroll', checkScroll);
 
-    const resizeObserver = new ResizeObserver(checkScroll)
+    const resizeObserver = new ResizeObserver(checkScroll);
     if (viewport.firstElementChild) {
-      resizeObserver.observe(viewport.firstElementChild)
+      resizeObserver.observe(viewport.firstElementChild);
     }
 
     return () => {
-      viewport.removeEventListener("scroll", checkScroll)
-      resizeObserver.disconnect()
-    }
-  }, [showGradient, viewportRef])
+      viewport.removeEventListener('scroll', checkScroll);
+      resizeObserver.disconnect();
+    };
+  }, [showGradient, viewportRef]);
 
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
-      className={cn("relative overflow-hidden", className)}
+      className={cn('relative overflow-hidden', className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
         className={cn(
-          "size-full rounded-[inherit] [&>div]:block!",
+          'size-full rounded-[inherit] [&>div]:block!',
           viewPortClassName,
         )}
         ref={viewportRef}
@@ -65,18 +66,18 @@ function ScrollArea({
       {showGradient && showBottomGradient && (
         <div
           className={cn(
-            "pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-linear-to-t from-sidebar to-transparent",
+            'pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-linear-to-t from-sidebar to-transparent',
             gradientClassName,
           )}
         />
       )}
     </ScrollAreaPrimitive.Root>
-  )
+  );
 }
 
 function ScrollBar({
   className,
-  orientation = "vertical",
+  orientation = 'vertical',
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>) {
   return (
@@ -84,11 +85,11 @@ function ScrollBar({
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        "flex touch-none p-px transition-colors select-none",
-        orientation === "vertical" &&
-          "h-full w-2.5 border-l border-l-transparent",
-        orientation === "horizontal" &&
-          "h-2.5 flex-col border-t border-t-transparent",
+        'flex touch-none p-px transition-colors select-none',
+        orientation === 'vertical' &&
+          'h-full w-2.5 border-l border-l-transparent',
+        orientation === 'horizontal' &&
+          'h-2.5 flex-col border-t border-t-transparent',
         className,
       )}
       {...props}
@@ -98,15 +99,15 @@ function ScrollBar({
         className="relative flex-1 rounded-full bg-border"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
-  )
+  );
 }
 
-export { ScrollArea, ScrollBar }
+export { ScrollArea, ScrollBar };
 
 type ScrollAreaCustomProps = {
-  viewPortClassName?: string
-  orientation?: "vertical" | "horizontal"
-  viewPortRef?: React.RefObject<HTMLDivElement | null>
-  showGradient?: boolean
-  gradientClassName?: string
-}
+  viewPortClassName?: string;
+  orientation?: 'vertical' | 'horizontal';
+  viewPortRef?: React.RefObject<HTMLDivElement | null>;
+  showGradient?: boolean;
+  gradientClassName?: string;
+};

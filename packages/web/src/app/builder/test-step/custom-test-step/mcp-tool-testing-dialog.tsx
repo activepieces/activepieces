@@ -78,22 +78,19 @@ function McpToolTestingDialog({
         return acc;
       }, {} as Record<string, any>),
     resolver: (values) => {
-      const errors = formProps.reduce(
-        (acc, field: McpFormField) => {
-          if (
-            field.required &&
-            field.type !== McpPropertyType.BOOLEAN &&
-            !values[field.name]
-          ) {
-            acc[field.name] = {
-              type: 'required',
-              message: t('{field} is required', { field: field.name }),
-            };
-          }
-          return acc;
-        },
-        {} as Record<string, { type: string; message: string }>,
-      );
+      const errors = formProps.reduce((acc, field: McpFormField) => {
+        if (
+          field.required &&
+          field.type !== McpPropertyType.BOOLEAN &&
+          !values[field.name]
+        ) {
+          acc[field.name] = {
+            type: 'required',
+            message: t('{field} is required', { field: field.name }),
+          };
+        }
+        return acc;
+      }, {} as Record<string, { type: string; message: string }>);
 
       if (Object.keys(errors).length === 0) {
         return { values, errors: {} as Record<string, never> };

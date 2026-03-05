@@ -122,10 +122,7 @@ const ArrayInput = React.memo(
                     disabled={disabled}
                     className={cn('shrink-0 size-8', thinInputs && 'size-7')}
                   >
-                    <GripVertical
-                      className="size-4"
-                      aria-hidden="true"
-                    />
+                    <GripVertical className="size-4" aria-hidden="true" />
                   </SortableDragHandle>
 
                   <FormField

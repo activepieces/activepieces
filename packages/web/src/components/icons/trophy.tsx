@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface TrophyIconHandle {
   startAnimation: () => void;
@@ -23,8 +23,8 @@ const TrophyIcon = forwardRef<TrophyIconHandle, TrophyIconProps>(
     useImperativeHandle(ref, () => {
       isControlledRef.current = true;
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -33,10 +33,10 @@ const TrophyIcon = forwardRef<TrophyIconHandle, TrophyIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -44,10 +44,10 @@ const TrophyIcon = forwardRef<TrophyIconHandle, TrophyIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -72,7 +72,7 @@ const TrophyIcon = forwardRef<TrophyIconHandle, TrophyIconProps>(
             normal: { rotate: 0 },
             animate: { rotate: [0, -8, 8, -4, 0] },
           }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
         >
           <path d="M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978" />
           <path d="M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978" />
@@ -83,9 +83,9 @@ const TrophyIcon = forwardRef<TrophyIconHandle, TrophyIconProps>(
         </motion.svg>
       </div>
     );
-  }
+  },
 );
 
-TrophyIcon.displayName = "TrophyIcon";
+TrophyIcon.displayName = 'TrophyIcon';
 
 export { TrophyIcon };

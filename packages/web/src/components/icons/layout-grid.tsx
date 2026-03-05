@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface LayoutGridIconHandle {
   startAnimation: () => void;
@@ -20,7 +20,7 @@ const rectVariants = (delay: number): Variants => ({
   normal: { scale: 1 },
   animate: {
     scale: [1, 0.8, 1],
-    transition: { duration: 0.4, delay, ease: "easeInOut" },
+    transition: { duration: 0.4, delay, ease: 'easeInOut' },
   },
 });
 
@@ -32,8 +32,8 @@ const LayoutGridIcon = forwardRef<LayoutGridIconHandle, LayoutGridIconProps>(
     useImperativeHandle(ref, () => {
       isControlledRef.current = true;
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -42,10 +42,10 @@ const LayoutGridIcon = forwardRef<LayoutGridIconHandle, LayoutGridIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -53,10 +53,10 @@ const LayoutGridIcon = forwardRef<LayoutGridIconHandle, LayoutGridIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -77,16 +77,48 @@ const LayoutGridIcon = forwardRef<LayoutGridIconHandle, LayoutGridIconProps>(
           width={size}
           xmlns="http://www.w3.org/2000/svg"
         >
-          <motion.rect animate={controls} width="7" height="7" x="3" y="3" rx="1" variants={rectVariants(0)} />
-          <motion.rect animate={controls} width="7" height="7" x="14" y="3" rx="1" variants={rectVariants(0.05)} />
-          <motion.rect animate={controls} width="7" height="7" x="14" y="14" rx="1" variants={rectVariants(0.1)} />
-          <motion.rect animate={controls} width="7" height="7" x="3" y="14" rx="1" variants={rectVariants(0.15)} />
+          <motion.rect
+            animate={controls}
+            width="7"
+            height="7"
+            x="3"
+            y="3"
+            rx="1"
+            variants={rectVariants(0)}
+          />
+          <motion.rect
+            animate={controls}
+            width="7"
+            height="7"
+            x="14"
+            y="3"
+            rx="1"
+            variants={rectVariants(0.05)}
+          />
+          <motion.rect
+            animate={controls}
+            width="7"
+            height="7"
+            x="14"
+            y="14"
+            rx="1"
+            variants={rectVariants(0.1)}
+          />
+          <motion.rect
+            animate={controls}
+            width="7"
+            height="7"
+            x="3"
+            y="14"
+            rx="1"
+            variants={rectVariants(0.15)}
+          />
         </svg>
       </div>
     );
-  }
+  },
 );
 
-LayoutGridIcon.displayName = "LayoutGridIcon";
+LayoutGridIcon.displayName = 'LayoutGridIcon';
 
 export { LayoutGridIcon };

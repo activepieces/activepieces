@@ -3,12 +3,11 @@ import { t } from 'i18next';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
+import { BotIcon } from '@/components/icons/bot';
 import {
   ChevronLeftIcon,
   ChevronLeftIconHandle,
 } from '@/components/icons/chevron-left';
-
-import { BotIcon } from '@/components/icons/bot';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
 import { FrameIcon } from '@/components/icons/frame';
@@ -25,7 +24,6 @@ import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bot
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
 import { WebhookIcon } from '@/components/icons/webhook';
-
 import { buttonVariants } from '@/components/ui/button';
 import {
   Sidebar,

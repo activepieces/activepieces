@@ -1,11 +1,9 @@
-import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Slot } from 'radix-ui';
+import * as React from 'react';
+
 import { PanelLeftCloseIcon } from '@/components/icons/panel-left-close';
 import { PanelLeftOpenIcon } from '@/components/icons/panel-left-open';
-import { Slot } from 'radix-ui';
-
-import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -23,6 +21,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -139,9 +139,7 @@ function SidebarProvider({
   }, []);
 
   const toggleSidebar = React.useCallback(() => {
-    return isMobile
-      ? setOpenMobile((open) => !open)
-      : setOpen((open) => !open);
+    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
   }, [isMobile, setOpen, setOpenMobile]);
 
   React.useEffect(() => {
@@ -374,7 +372,11 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      {open ? <PanelLeftCloseIcon size={16} /> : <PanelLeftOpenIcon size={16} />}
+      {open ? (
+        <PanelLeftCloseIcon size={16} />
+      ) : (
+        <PanelLeftOpenIcon size={16} />
+      )}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

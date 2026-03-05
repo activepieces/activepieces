@@ -7,17 +7,16 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Search, Plus } from 'lucide-react';
-
-import { ChartLineIcon } from '@/components/icons/chart-line';
-import { CompassIcon } from '@/components/icons/compass';
-import { ShieldIcon } from '@/components/icons/shield';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { SearchInput } from '@/components/custom/search-input';
+import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
+import { ShieldIcon } from '@/components/icons/shield';
+import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,7 +55,9 @@ import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
-export function ProjectDashboardSidebar({ className }: { className?: string } = {}) {
+export function ProjectDashboardSidebar({
+  className,
+}: { className?: string } = {}) {
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();

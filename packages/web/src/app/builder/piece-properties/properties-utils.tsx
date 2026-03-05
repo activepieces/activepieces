@@ -5,10 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { isNil, PropertySettings } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ControllerRenderProps,
-  UseFormReturn,
-} from 'react-hook-form';
+import { ControllerRenderProps, UseFormReturn } from 'react-hook-form';
 
 import { SecretInput } from '@/app/connections/secret-input';
 import { ColorPicker } from '@/components/custom/color-picker';

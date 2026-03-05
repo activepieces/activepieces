@@ -85,8 +85,12 @@ export const AllCategoriesView = ({
   isLoading = false,
   hideHeader = false,
 }: AllCategoriesViewProps) => {
-  const stableOnCategorySelect = useCallback(onCategorySelect, [onCategorySelect]);
-  const stableOnTemplateSelect = useCallback(onTemplateSelect, [onTemplateSelect]);
+  const stableOnCategorySelect = useCallback(onCategorySelect, [
+    onCategorySelect,
+  ]);
+  const stableOnTemplateSelect = useCallback(onTemplateSelect, [
+    onTemplateSelect,
+  ]);
 
   if (isLoading) {
     return <AllCategoriesViewSkeleton hideHeader={hideHeader} />;

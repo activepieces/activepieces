@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface DownloadIconHandle {
   startAnimation: () => void;
@@ -21,7 +21,7 @@ const ARROW_VARIANTS: Variants = {
   animate: {
     y: 2,
     transition: {
-      type: "spring",
+      type: 'spring',
       stiffness: 200,
       damping: 10,
       mass: 1,
@@ -38,8 +38,8 @@ const DownloadIcon = forwardRef<DownloadIconHandle, DownloadIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -48,10 +48,10 @@ const DownloadIcon = forwardRef<DownloadIconHandle, DownloadIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -59,10 +59,10 @@ const DownloadIcon = forwardRef<DownloadIconHandle, DownloadIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -91,9 +91,9 @@ const DownloadIcon = forwardRef<DownloadIconHandle, DownloadIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
-DownloadIcon.displayName = "DownloadIcon";
+DownloadIcon.displayName = 'DownloadIcon';
 
 export { DownloadIcon };

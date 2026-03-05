@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import type { Transition, Variants } from "motion/react";
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import type { Transition, Variants } from 'motion/react';
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface WebhookIconHandle {
   startAnimation: () => void;
@@ -45,8 +45,8 @@ const WebhookIcon = forwardRef<WebhookIconHandle, WebhookIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -55,10 +55,10 @@ const WebhookIcon = forwardRef<WebhookIconHandle, WebhookIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -66,10 +66,10 @@ const WebhookIcon = forwardRef<WebhookIconHandle, WebhookIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -108,9 +108,9 @@ const WebhookIcon = forwardRef<WebhookIconHandle, WebhookIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
-WebhookIcon.displayName = "WebhookIcon";
+WebhookIcon.displayName = 'WebhookIcon';
 
 export { WebhookIcon };

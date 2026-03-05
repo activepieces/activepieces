@@ -99,11 +99,7 @@ export const ConfigureSamlDialog = ({
             {t('Disable')}
           </Button>
         ) : (
-          <Button
-            size={'sm'}
-            variant={'basic'}
-            onClick={() => setOpen(true)}
-          >
+          <Button size={'sm'} variant={'basic'} onClick={() => setOpen(true)}>
             {t('Enable')}
           </Button>
         )}

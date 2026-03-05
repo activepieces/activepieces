@@ -9,7 +9,6 @@ import {
   createKeyForFormInput,
 } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Separator } from '@/components/ui/separator';
 import { TSchema, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -31,6 +30,7 @@ import {
   FormItem,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';

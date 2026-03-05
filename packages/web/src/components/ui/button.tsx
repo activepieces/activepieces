@@ -1,10 +1,10 @@
-import * as React from 'react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { Slot } from 'radix-ui'
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Slot } from 'radix-ui';
+import * as React from 'react';
 
-import { Shortcut } from '@/components/custom/shortcut'
-import { LoadingSpinner } from '@/components/custom/spinner'
-import { cn } from '@/lib/utils'
+import { Shortcut } from '@/components/custom/shortcut';
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -21,13 +21,11 @@ const buttonVariants = cva(
           'bg-destructive text-white enabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
         outline:
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
-        accent:
-          'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
+        accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
         ghost:
           'hover:bg-gray-300/30 hover:text-accent-foreground dark:hover:bg-gray-300/10',
         link: 'text-primary underline-offset-4 hover:underline',
-        transparent:
-          'text-primary enabled:hover:bg-transparent',
+        transparent: 'text-primary enabled:hover:bg-transparent',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',
@@ -52,7 +50,7 @@ const buttonVariants = cva(
       size: 'default',
     },
   },
-)
+);
 
 function useKeyboardShortcut(
   keyboardShortcut: string | undefined,
@@ -60,31 +58,31 @@ function useKeyboardShortcut(
   onKeyboardShortcut: (() => void) | undefined,
 ) {
   React.useEffect(() => {
-    if (!keyboardShortcut) return
+    if (!keyboardShortcut) return;
 
-    const isMac = /(Mac)/i.test(navigator.userAgent)
-    const isEscape = keyboardShortcut.toLocaleLowerCase() === 'esc'
+    const isMac = /(Mac)/i.test(navigator.userAgent);
+    const isEscape = keyboardShortcut.toLocaleLowerCase() === 'esc';
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      const isEscapePressed = event.key === 'Escape' && isEscape
+      const isEscapePressed = event.key === 'Escape' && isEscape;
       const isCtrlWithShortcut =
         event.key === keyboardShortcut.toLocaleLowerCase() &&
-        (isMac ? event.metaKey : event.ctrlKey)
+        (isMac ? event.metaKey : event.ctrlKey);
 
       if (isEscapePressed || isCtrlWithShortcut) {
-        event.preventDefault()
-        event.stopPropagation()
+        event.preventDefault();
+        event.stopPropagation();
         if (onKeyboardShortcut && !disabled) {
-          onKeyboardShortcut()
+          onKeyboardShortcut();
         }
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [keyboardShortcut, disabled, onKeyboardShortcut])
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [keyboardShortcut, disabled, onKeyboardShortcut]);
 }
 
 function renderButtonContent(
@@ -97,13 +95,11 @@ function renderButtonContent(
     return (
       <LoadingSpinner
         className={cn('size-5', {
-          'stroke-background':
-            variant === 'default' || variant === 'secondary',
-          'stroke-foreground':
-            variant !== 'default' && variant !== 'secondary',
+          'stroke-background': variant === 'default' || variant === 'secondary',
+          'stroke-foreground': variant !== 'default' && variant !== 'secondary',
         })}
       />
-    )
+    );
   }
 
   if (keyboardShortcut) {
@@ -112,10 +108,10 @@ function renderButtonContent(
         {children}
         <Shortcut shortcutKey={keyboardShortcut} withCtrl={true} />
       </div>
-    )
+    );
   }
 
-  return children
+  return children;
 }
 
 function Button({
@@ -130,9 +126,9 @@ function Button({
   children,
   ...props
 }: ButtonProps) {
-  const Comp = asChild ? Slot.Root : 'button'
+  const Comp = asChild ? Slot.Root : 'button';
 
-  useKeyboardShortcut(keyboardShortcut, disabled, onKeyboardShortcut)
+  useKeyboardShortcut(keyboardShortcut, disabled, onKeyboardShortcut);
 
   return (
     <Comp
@@ -144,24 +140,24 @@ function Button({
       {...props}
       onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
         if (loading) {
-          e.stopPropagation()
+          e.stopPropagation();
         } else if (props.onClick) {
-          props.onClick(e)
+          props.onClick(e);
         }
       }}
     >
       {renderButtonContent(loading, variant, keyboardShortcut, children)}
     </Comp>
-  )
+  );
 }
 
-export { Button, buttonVariants }
-export type { ButtonProps }
+export { Button, buttonVariants };
+export type { ButtonProps };
 
 type ButtonProps = React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-    loading?: boolean
-    keyboardShortcut?: string
-    onKeyboardShortcut?: () => void
-  }
+    asChild?: boolean;
+    loading?: boolean;
+    keyboardShortcut?: string;
+    onKeyboardShortcut?: () => void;
+  };

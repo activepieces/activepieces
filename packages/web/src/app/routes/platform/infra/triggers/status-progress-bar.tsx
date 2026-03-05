@@ -30,8 +30,7 @@ export function StatusProgressBar({ days, className }: StatusProgressBarProps) {
                   'w-3 h-6 rounded-sm cursor-pointer transition-colors',
                   'hover:scale-110 hover:shadow-xs',
                   {
-                    'bg-success hover:bg-success-600':
-                      day.status === 'success',
+                    'bg-success hover:bg-success-600': day.status === 'success',
                     'bg-destructive hover:bg-destructive/80':
                       day.status === 'fault',
                     'bg-amber-400 hover:bg-amber-500': day.status === 'warning',

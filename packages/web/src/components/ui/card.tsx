@@ -1,35 +1,27 @@
-import * as React from 'react';
 import { cva } from 'class-variance-authority';
+import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const cardVariants = cva(
-  'rounded-lg border bg-background text-foreground',
-  {
-    variants: {
-      variant: {
-        default: 'shadow-xs',
-        interactive:
-          'cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between',
-      },
-      isSelected: {
-        true: 'border-gray-400',
-        false: '',
-      },
+const cardVariants = cva('rounded-lg border bg-background text-foreground', {
+  variants: {
+    variant: {
+      default: 'shadow-xs',
+      interactive:
+        'cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between',
     },
-    defaultVariants: {
-      variant: 'default',
-      isSelected: false,
+    isSelected: {
+      true: 'border-gray-400',
+      false: '',
     },
   },
-);
+  defaultVariants: {
+    variant: 'default',
+    isSelected: false,
+  },
+});
 
-function Card({
-  className,
-  variant,
-  isSelected,
-  ...props
-}: CardProps) {
+function Card({ className, variant, isSelected, ...props }: CardProps) {
   return (
     <div
       data-slot="card"
@@ -59,10 +51,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function CardDescription({
-  className,
-  ...props
-}: React.ComponentProps<'div'>) {
+function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="card-description"

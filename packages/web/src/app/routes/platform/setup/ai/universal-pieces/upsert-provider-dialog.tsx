@@ -100,7 +100,11 @@ export const UpsertAIProviderDialogContent = ({
   );
 
   const form = useForm<CreateAIProviderRequest>({
-    resolver: ((values: CreateAIProviderRequest, context: unknown, options: ResolverOptions<CreateAIProviderRequest>) => {
+    resolver: ((
+      values: CreateAIProviderRequest,
+      context: unknown,
+      options: ResolverOptions<CreateAIProviderRequest>,
+    ) => {
       const originalResolve = typeboxResolver(
         createFormSchema(provider, !isNil(providerId)),
       ) as unknown as (

@@ -90,13 +90,19 @@ const ConnectIcon = forwardRef<ConnectIconHandle, ConnectIconProps>(
             animate={controls}
             d="M19 5l3 -3"
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            variants={{ normal: { d: 'M19 5l3 -3' }, animate: { d: 'M17 7l5 -5' } }}
+            variants={{
+              normal: { d: 'M19 5l3 -3' },
+              animate: { d: 'M17 7l5 -5' },
+            }}
           />
           <motion.path
             animate={controls}
             d="m2 22 3-3"
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            variants={{ normal: { d: 'm2 22 3-3' }, animate: { d: 'm2 22 6-6' } }}
+            variants={{
+              normal: { d: 'm2 22 3-3' },
+              animate: { d: 'm2 22 6-6' },
+            }}
           />
           <motion.path
             animate={controls}

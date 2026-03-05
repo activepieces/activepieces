@@ -13,13 +13,13 @@ import { toast } from 'sonner';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -214,7 +214,10 @@ export default function ProjectsPage() {
   const bulkActions: BulkAction<ProjectWithLimits>[] = useMemo(
     () => [
       {
-        render: (_: RowDataWithActions<ProjectWithLimits>[], resetSelection: () => void) => {
+        render: (
+          _: RowDataWithActions<ProjectWithLimits>[],
+          resetSelection: () => void,
+        ) => {
           const canDeleteAny = selectedRows.some(
             (row) =>
               row.id !== currentProject?.id &&

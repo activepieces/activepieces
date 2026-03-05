@@ -2,14 +2,7 @@ import { Template, TemplateType } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  FileText,
-  Pencil,
-  Trash,
-  Tag,
-  Clock,
-  Puzzle,
-} from 'lucide-react';
+import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -17,7 +10,6 @@ import { toast } from 'sonner';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { PlusIcon } from '@/components/icons/plus';
 import {
   DataTable,
   RowDataWithActions,
@@ -26,6 +18,7 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -166,7 +159,10 @@ const PlatformTemplatesPage = () => {
   const bulkActions: BulkAction<Template>[] = useMemo(
     () => [
       {
-        render: (_selectedRows: RowDataWithActions<Template>[], resetSelection: () => void) => (
+        render: (
+          _selectedRows: RowDataWithActions<Template>[],
+          resetSelection: () => void,
+        ) => (
           <div onClick={(e) => e.stopPropagation()}>
             <ConfirmationDeleteDialog
               title={t('Delete Templates')}
@@ -183,7 +179,11 @@ const PlatformTemplatesPage = () => {
               }}
             >
               {selectedRows.length > 0 && (
-                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                >
                   <Trash className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}
                 </Button>

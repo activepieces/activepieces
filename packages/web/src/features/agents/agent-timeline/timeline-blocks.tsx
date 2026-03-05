@@ -285,7 +285,9 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
 
 export const DoneBlock = () => {
   return (
-    <TimelineItem icon={<CircleCheckBig className="h-4 w-4 text-success-600" />}>
+    <TimelineItem
+      icon={<CircleCheckBig className="h-4 w-4 text-success-600" />}
+    >
       <div className="border border-success/40 bg-success-50/60 rounded-md p-3 text-sm text-success-700 font-medium flex items-center gap-2">
         <span>{t('Done!')}</span>
       </div>

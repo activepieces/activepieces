@@ -191,11 +191,7 @@ export function ProjectSettingsDialog({
     return (
       <div className="border-t bg-background rounded-br-md">
         <div className="flex items-center justify-end gap-3 px-6 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-          >
+          <Button variant="outline" size="sm" onClick={onClose}>
             {t('Close')}
           </Button>
           <Button

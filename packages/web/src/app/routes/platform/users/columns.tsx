@@ -1,7 +1,16 @@
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Tag, Fingerprint, Shield, Clock, Activity, Info, Mail, Hash } from 'lucide-react';
+import {
+  Tag,
+  Fingerprint,
+  Shield,
+  Clock,
+  Activity,
+  Info,
+  Mail,
+  Hash,
+} from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -33,9 +42,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     cell: ({ row }) => {
       const isInvitation = row.original.type === 'invitation';
       const externalId =
-        row.original.type === 'user'
-          ? row.original.data.externalId
-          : undefined;
+        row.original.type === 'user' ? row.original.data.externalId : undefined;
       const email = row.original.data.email;
       const showEmail = email?.includes('@');
 
@@ -51,17 +58,27 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
               </TooltipContent>
             </Tooltip>
           )}
-          <div className={`flex flex-col gap-0.5 ${isInvitation ? 'text-orange-700' : ''}`}>
+          <div
+            className={`flex flex-col gap-0.5 ${
+              isInvitation ? 'text-orange-700' : ''
+            }`}
+          >
             {showEmail && (
               <div className="flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <TruncatedColumnTextValue value={email} className="max-w-[200px] 2xl:max-w-[280px]" />
+                <TruncatedColumnTextValue
+                  value={email}
+                  className="max-w-[200px] 2xl:max-w-[280px]"
+                />
               </div>
             )}
             {externalId && (
               <div className="flex items-center gap-1.5">
                 <Hash className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <TruncatedColumnTextValue value={externalId} className="max-w-[200px] 2xl:max-w-[280px]" />
+                <TruncatedColumnTextValue
+                  value={externalId}
+                  className="max-w-[200px] 2xl:max-w-[280px]"
+                />
               </div>
             )}
             {!showEmail && !externalId && (

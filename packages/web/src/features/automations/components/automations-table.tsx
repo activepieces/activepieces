@@ -152,9 +152,7 @@ export const AutomationsTable = ({
                         onToggleSelection={() =>
                           onToggleItemSelection(group.item)
                         }
-                        onTogglePin={() =>
-                          onTogglePin(group.item.id)
-                        }
+                        onTogglePin={() => onTogglePin(group.item.id)}
                         onRename={() => onRenameItem(group.item)}
                         onDelete={() => onDeleteItem(group.item)}
                         onDuplicate={onDuplicateFlow}
@@ -184,9 +182,7 @@ export const AutomationsTable = ({
                             onToggleSelection={() =>
                               onToggleItemSelection(child)
                             }
-                            onTogglePin={() =>
-                              onTogglePin(child.id)
-                            }
+                            onTogglePin={() => onTogglePin(child.id)}
                             onRename={() => onRenameItem(child)}
                             onDelete={() => onDeleteItem(child)}
                             onDuplicate={onDuplicateFlow}
@@ -223,9 +219,7 @@ export const AutomationsTable = ({
                     folders={folders}
                     onRowClick={() => onRowClick(group.item)}
                     onToggleSelection={() => onToggleItemSelection(group.item)}
-                    onTogglePin={() =>
-                      onTogglePin(group.item.id)
-                    }
+                    onTogglePin={() => onTogglePin(group.item.id)}
                     onRename={() => onRenameItem(group.item)}
                     onDelete={() => onDeleteItem(group.item)}
                     onDuplicate={onDuplicateFlow}

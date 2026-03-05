@@ -1,12 +1,7 @@
 import { isNil, Permission } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ChevronsUpDown,
-  LogOut,
-  UserCogIcon,
-  UserPlus,
-} from 'lucide-react';
+import { ChevronsUpDown, LogOut, UserCogIcon, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
@@ -145,4 +140,3 @@ export function SidebarUser() {
     </SidebarMenu>
   );
 }
-

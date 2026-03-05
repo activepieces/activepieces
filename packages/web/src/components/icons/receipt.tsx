@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { motion, useAnimation } from "motion/react";
-import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { motion, useAnimation } from 'motion/react';
+import type { HTMLAttributes } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 export interface ReceiptIconHandle {
   startAnimation: () => void;
@@ -23,8 +23,8 @@ const ReceiptIcon = forwardRef<ReceiptIconHandle, ReceiptIconProps>(
     useImperativeHandle(ref, () => {
       isControlledRef.current = true;
       return {
-        startAnimation: () => controls.start("animate"),
-        stopAnimation: () => controls.start("normal"),
+        startAnimation: () => controls.start('animate'),
+        stopAnimation: () => controls.start('normal'),
       };
     });
 
@@ -33,10 +33,10 @@ const ReceiptIcon = forwardRef<ReceiptIconHandle, ReceiptIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e);
         } else {
-          controls.start("animate");
+          controls.start('animate');
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -44,10 +44,10 @@ const ReceiptIcon = forwardRef<ReceiptIconHandle, ReceiptIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e);
         } else {
-          controls.start("normal");
+          controls.start('normal');
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
@@ -72,7 +72,7 @@ const ReceiptIcon = forwardRef<ReceiptIconHandle, ReceiptIconProps>(
             normal: { y: 0 },
             animate: { y: [0, -2, 0] },
           }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
         >
           <path d="M12 17V7" />
           <path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8" />
@@ -80,9 +80,9 @@ const ReceiptIcon = forwardRef<ReceiptIconHandle, ReceiptIconProps>(
         </motion.svg>
       </div>
     );
-  }
+  },
 );
 
-ReceiptIcon.displayName = "ReceiptIcon";
+ReceiptIcon.displayName = 'ReceiptIcon';
 
 export { ReceiptIcon };

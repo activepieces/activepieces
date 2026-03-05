@@ -29,7 +29,9 @@ function Input({
         className="hidden"
         ref={inputRef}
         {...props}
-        onChange={(event) => handleFileChange(event, setFileName, props.onChange)}
+        onChange={(event) =>
+          handleFileChange(event, setFileName, props.onChange)
+        }
       />
       <div
         onClick={() => inputRef.current?.click()}
@@ -37,12 +39,9 @@ function Input({
       >
         <input
           data-slot="input"
-          className={cn(
-            'grow cursor-pointer outline-hidden bg-transparent',
-            {
-              'text-muted-foreground': !fileName,
-            },
-          )}
+          className={cn('grow cursor-pointer outline-hidden bg-transparent', {
+            'text-muted-foreground': !fileName,
+          })}
           value={fileName || defaultFileName || t('Select a file')}
           readOnly
         />
