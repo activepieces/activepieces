@@ -602,6 +602,9 @@
       "@activepieces/piece-knack": [
         "packages/pieces/community/knack/src/index.ts"
       ],
+      "@activepieces/piece-knowbe4": [
+        "packages/pieces/community/knowbe4/src/index.ts"
+      ],
       "@activepieces/piece-kommo": [
         "packages/pieces/community/kommo/src/index.ts"
       ],
