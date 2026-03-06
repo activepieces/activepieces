@@ -1,11 +1,16 @@
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import {
+  PlatformWithoutSensitiveData,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
+import { platformApi } from '@/api/platforms-api';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +24,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ssoMutations } from '@/features/platform-admin';
 
 type NewOAuth2DialogProps = {
   providerName: 'google' | 'github';
@@ -29,15 +33,11 @@ type NewOAuth2DialogProps = {
   refetch: () => Promise<void>;
 };
 
-const OAuth2FormValues = Type.Object({
-  clientId: Type.String({
-    minLength: 1,
-  }),
-  clientSecret: Type.String({
-    minLength: 1,
-  }),
+const OAuth2FormValues = z.object({
+  clientId: z.string().min(1),
+  clientSecret: z.string().min(1),
 });
-type OAuth2FormValues = Static<typeof OAuth2FormValues>;
+type OAuth2FormValues = z.infer<typeof OAuth2FormValues>;
 
 export const NewOAuth2Dialog = ({
   providerDisplayName,
@@ -48,14 +48,18 @@ export const NewOAuth2Dialog = ({
 }: NewOAuth2DialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<OAuth2FormValues>({
-    resolver: typeboxResolver(OAuth2FormValues),
+    resolver: zodResolver(OAuth2FormValues),
   });
 
-  const { mutate, isPending } = ssoMutations.useUpdatePlatformSso({
-    platformId: platform.id,
-    refetch,
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (request: UpdatePlatformRequestBody) => {
+      await platformApi.update(request, platform.id);
+      await refetch();
+    },
     onSuccess: () => {
-      toast.success(t('Single sign on settings updated'), { duration: 3000 });
+      toast.success(t('Single sign on settings updated'), {
+        duration: 3000,
+      });
       setOpen(false);
     },
   });

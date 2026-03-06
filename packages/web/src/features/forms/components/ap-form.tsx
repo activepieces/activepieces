@@ -8,13 +8,14 @@ import {
   HumanInputFormResult,
   createKeyForFormInput,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { TSchema, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { z, ZodType } from 'zod';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ReadMoreDescription } from '@/components/custom/read-more-description';
@@ -35,7 +36,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 
 import { Checkbox } from '../../../components/ui/checkbox';
-import { formsMutations } from '../hooks/forms-hooks';
+import { humanInputApi } from '../api/human-input-api';
 
 type ApFormProps = {
   form: FormResponse;
@@ -62,23 +63,24 @@ const requiredPropertySettings = {
   errorMessage: t('This field is required'),
 };
 
-const createPropertySchema = (input: FormInputWithName) => {
-  const schemaSettings = input.required ? requiredPropertySettings : {};
+const createPropertySchema = (input: FormInputWithName): ZodType => {
   switch (input.type) {
     case FormInputType.TOGGLE:
-      return Type.Boolean(schemaSettings);
+      return z.boolean();
     case FormInputType.TEXT:
     case FormInputType.TEXT_AREA:
-      return Type.String(schemaSettings);
+      return input.required
+        ? z.string().min(1, t('This field is required'))
+        : z.string();
     case FormInputType.FILE:
-      return Type.Unknown(schemaSettings);
+      return z.unknown();
   }
 };
 
 function buildSchema(inputs: FormInputWithName[]) {
   return {
-    properties: Type.Object(
-      inputs.reduce<Record<string, TSchema>>((acc, input) => {
+    properties: z.object(
+      inputs.reduce<Record<string, ZodType>>((acc, input) => {
         acc[input.name] = createPropertySchema(input);
         return acc;
       }, {}),
@@ -143,68 +145,63 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   );
   const reactForm = useForm({
     defaultValues,
-    resolver: typeboxResolver(schema.properties),
+    resolver: zodResolver(schema.properties),
   });
 
-  const { mutate, isPending } = formsMutations.useSubmitForm({
-    onSuccess: (formResult) => {
-      switch (formResult?.type) {
-        case HumanInputFormResultTypes.MARKDOWN: {
-          setMarkdownResponse(formResult.value as string);
-          if (formResult.files) {
-            formResult.files.forEach((file) => {
-              handleDownloadFile(file as FileResponseInterface);
+  const { mutate, isPending } = useMutation<HumanInputFormResult | null, Error>(
+    {
+      mutationFn: async () =>
+        humanInputApi.submitForm(
+          form,
+          useDraft,
+          putBackQuotesForInputNames(reactForm.getValues(), inputs.current),
+        ),
+      onSuccess: (formResult) => {
+        switch (formResult?.type) {
+          case HumanInputFormResultTypes.MARKDOWN: {
+            setMarkdownResponse(formResult.value as string);
+            if (formResult.files) {
+              formResult.files.forEach((file) => {
+                handleDownloadFile(file as FileResponseInterface);
+              });
+            }
+            break;
+          }
+          case HumanInputFormResultTypes.FILE:
+            handleDownloadFile(formResult.value as FileResponseInterface);
+            break;
+          default:
+            toast.success(t('Your submission was successfully received.'), {
+              duration: 3000,
+            });
+            break;
+        }
+      },
+      onError: (error) => {
+        if (api.isError(error)) {
+          const status = error.response?.status;
+          if (status === 404) {
+            toast.error(t('Flow not found'), {
+              description: t(
+                'The flow you are trying to submit to does not exist.',
+              ),
+              duration: 3000,
+            });
+          } else {
+            toast.error(t('The flow failed to execute.'), {
+              duration: 3000,
             });
           }
-          break;
         }
-        case HumanInputFormResultTypes.FILE:
-          handleDownloadFile(formResult.value as FileResponseInterface);
-          break;
-        default:
-          toast.success(t('Your submission was successfully received.'), {
-            duration: 3000,
-          });
-          break;
-      }
+        console.error(error);
+      },
     },
-    onError: (error) => {
-      if (api.isError(error)) {
-        const status = error.response?.status;
-        if (status === 404) {
-          toast.error(t('Flow not found'), {
-            description: t(
-              'The flow you are trying to submit to does not exist.',
-            ),
-            duration: 3000,
-          });
-        } else {
-          toast.error(t('The flow failed to execute.'), {
-            duration: 3000,
-          });
-        }
-      }
-      console.error(error);
-    },
-  });
+  );
   return (
     <div className="w-full h-full flex">
       <div className="container py-20">
         <Form {...reactForm}>
-          <form
-            onSubmit={(e) =>
-              reactForm.handleSubmit(() =>
-                mutate({
-                  form,
-                  useDraft,
-                  data: putBackQuotesForInputNames(
-                    reactForm.getValues(),
-                    inputs.current,
-                  ),
-                }),
-              )(e)
-            }
-          >
+          <form onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}>
             <Card className="w-[500px] mx-auto">
               <CardHeader>
                 <CardTitle className="text-center">{form?.title}</CardTitle>

@@ -1,9 +1,10 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,13 +26,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { flowHooks } from '@/features/flows/hooks/flow-hooks';
+import { api } from '@/lib/api';
 
-const formSchema = Type.Object({
-  packageName: Type.String({
-    minLength: 1,
-    errorMessage: t('The package name is required'),
-  }),
+const formSchema = z.object({
+  packageName: z.string().min(1, t('The package name is required')),
 });
 
 type AddNpmDialogProps = {
@@ -46,12 +44,22 @@ type AddNpmDialogProps = {
 };
 const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<Static<typeof formSchema>>({
+  const form = useForm<z.infer<typeof formSchema>>({
     defaultValues: {},
-    resolver: typeboxResolver(formSchema),
+    resolver: zodResolver(formSchema),
   });
 
-  const { mutate, isPending } = flowHooks.useFetchNpmPackageVersion({
+  const { mutate, isPending } = useMutation({
+    mutationFn: async () => {
+      const { packageName } = form.getValues();
+      const response = await api.get<{ 'dist-tags': { latest: string } }>(
+        `https://registry.npmjs.org/${packageName}`,
+      );
+      return {
+        packageName,
+        packageVersion: response['dist-tags'].latest,
+      };
+    },
     onSuccess: (response) => {
       onAdd(response);
       setOpen(false);
@@ -78,9 +86,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={(e) =>
-              form.handleSubmit(() => mutate(form.getValues().packageName))(e)
-            }
+            onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
             className="flex flex-col gap-4"
           >
             <FormField
@@ -116,11 +122,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
               {t('Cancel')}
             </Button>
           </DialogClose>
-          <Button
-            type="submit"
-            loading={isPending}
-            onClick={() => mutate(form.getValues().packageName)}
-          >
+          <Button type="submit" loading={isPending} onClick={() => mutate()}>
             {t('Add')}
           </Button>
         </DialogFooter>

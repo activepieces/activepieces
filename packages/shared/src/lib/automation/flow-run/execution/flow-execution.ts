@@ -1,5 +1,5 @@
 
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { ProgressUpdateType } from '../../engine/engine-operation'
 
 export enum FlowRunStatus {
@@ -21,44 +21,44 @@ export enum PauseType {
     WEBHOOK = 'WEBHOOK',
 }
 
-export const DelayPauseMetadata = Type.Object({
-    type: Type.Literal(PauseType.DELAY),
-    resumeDateTime: Type.String(),
-    requestIdToReply: Type.Optional(Type.String()),
-    handlerId: Type.Optional(Type.String({})),
-    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
+export const DelayPauseMetadata = z.object({
+    type: z.literal(PauseType.DELAY),
+    resumeDateTime: z.string(),
+    requestIdToReply: z.string().optional(),
+    handlerId: z.string().optional(),
+    progressUpdateType: z.nativeEnum(ProgressUpdateType).optional(),
 })
 
-export type DelayPauseMetadata = Static<typeof DelayPauseMetadata>
+export type DelayPauseMetadata = z.infer<typeof DelayPauseMetadata>
 
-export const RespondResponse = Type.Object({
-    status: Type.Optional(Type.Number()),
-    body: Type.Optional(Type.Unknown()),
-    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
+export const RespondResponse = z.object({
+    status: z.number().optional(),
+    body: z.unknown().optional(),
+    headers: z.record(z.string(), z.string()).optional(),
 })
 
-export type RespondResponse = Static<typeof RespondResponse>
+export type RespondResponse = z.infer<typeof RespondResponse>
 
-export const StopResponse = Type.Object({
-    status: Type.Optional(Type.Number()),
-    body: Type.Optional(Type.Unknown()),
-    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
+export const StopResponse = z.object({
+    status: z.number().optional(),
+    body: z.unknown().optional(),
+    headers: z.record(z.string(), z.string()).optional(),
 })
 
-export type StopResponse = Static<typeof StopResponse>
+export type StopResponse = z.infer<typeof StopResponse>
 
-export const WebhookPauseMetadata = Type.Object({
-    type: Type.Literal(PauseType.WEBHOOK),
-    requestId: Type.String(),
-    requestIdToReply: Type.Optional(Type.String()),
+export const WebhookPauseMetadata = z.object({
+    type: z.literal(PauseType.WEBHOOK),
+    requestId: z.string(),
+    requestIdToReply: z.string().optional(),
     response: RespondResponse,
-    handlerId: Type.Optional(Type.String({})),
-    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
+    handlerId: z.string().optional(),
+    progressUpdateType: z.nativeEnum(ProgressUpdateType).optional(),
 })
-export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
+export type WebhookPauseMetadata = z.infer<typeof WebhookPauseMetadata>
 
-export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
-export type PauseMetadata = Static<typeof PauseMetadata>
+export const PauseMetadata = z.union([DelayPauseMetadata, WebhookPauseMetadata])
+export type PauseMetadata = z.infer<typeof PauseMetadata>
 
 export const isFlowRunStateTerminal = ({ status, ignoreInternalError }: { status: FlowRunStatus, ignoreInternalError: boolean }): boolean => {
     switch (status) {
@@ -87,7 +87,7 @@ export const FAILED_STATES = [
     FlowRunStatus.QUOTA_EXCEEDED,
     FlowRunStatus.TIMEOUT,
     FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
-]   
+]
 export const isFailedState = (status: FlowRunStatus): boolean => {
     return FAILED_STATES.includes(status)
 }

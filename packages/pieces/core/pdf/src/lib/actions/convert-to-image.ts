@@ -92,18 +92,18 @@ export const convertToImage = createAction({
         },
     },
     async run(context) {
+        const file = context.propsValue.file;
+        const returnConcatenatedImage = context.propsValue.imageOutputType === 'single';
+        // To prevent a DOS attack, we limit the file size to 16MB
+        if (file.data.byteLength > MAX_FILE_SIZE) {
+            throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE / (1024 * 1024)} MB.`);
+        }
+
         if (!await isPdftoppmInstalled()) {
             throw new Error(`${pdftoppmPath} is not installed`);
         }
 
-        const file = context.propsValue.file;
-        const returnConcatenatedImage = context.propsValue.imageOutputType === 'single';
-        // To prevent a DOS attack, we limit the file size to 16MB
-        if (file.data.buffer.byteLength > MAX_FILE_SIZE) {
-            throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE / (1024 * 1024)} MB.`);
-        }
-
-        const dataBuffer = Buffer.from(file.data.buffer);
+        const dataBuffer = Buffer.from(file.data);
 
         const imageBuffers = await convertPdfToImages(dataBuffer);
 

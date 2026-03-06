@@ -1,11 +1,12 @@
 import { securityAccess } from '@activepieces/server-common'
 import { ConnectSecretManagerRequestSchema, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { secretManagerCache } from './secret-manager-cache'
 import { secretManagerProvidersMetadata } from './secret-manager-providers/secret-manager-providers'
 import { secretManagersService } from './secret-managers.service'
 
-export const secretManagersController: FastifyPluginAsyncTypebox = async (app) => {
+export const secretManagersController: FastifyPluginAsyncZod = async (app) => {
     const service = secretManagersService(app.log)
 
     app.get('/providers', ListSecretManagerProviders, async (_request) => {
@@ -57,8 +58,8 @@ const ListSecretManagerConnections = {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
-        querystring: Type.Object({
-            projectId: Type.Optional(Type.String()),
+        querystring: z.object({
+            projectId: z.string().optional(),
         }),
     },
 }
@@ -77,8 +78,8 @@ const UpdateSecretManagerConnection = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: ConnectSecretManagerRequestSchema,
     },
@@ -89,8 +90,8 @@ const DeleteSecretManagerConnection = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }
@@ -100,8 +101,8 @@ const ClearSecretManagerCache = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
-        querystring: Type.Object({
-            connectionId: Type.Optional(Type.String()),
+        querystring: z.object({
+            connectionId: z.string().optional(),
         }),
     },
 }

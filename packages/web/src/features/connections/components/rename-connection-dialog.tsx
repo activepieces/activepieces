@@ -1,15 +1,16 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -26,11 +27,11 @@ import {
 
 import { appConnectionsMutations } from '../hooks/app-connections-hooks';
 
-const RenameConnectionSchema = Type.Object({
-  displayName: Type.String(),
+const RenameConnectionSchema = z.object({
+  displayName: z.string(),
 });
 
-type RenameConnectionSchema = Static<typeof RenameConnectionSchema>;
+type RenameConnectionSchema = z.infer<typeof RenameConnectionSchema>;
 
 type RenameConnectionDialogProps = {
   connectionId: string;
@@ -45,7 +46,7 @@ const RenameConnectionDialog = forwardRef<
 >(({ connectionId, currentName, userHasPermissionToRename, onRename }, _) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameConnectionForm = useForm<RenameConnectionSchema>({
-    resolver: typeboxResolver(RenameConnectionSchema),
+    resolver: zodResolver(RenameConnectionSchema),
     defaultValues: {
       displayName: currentName,
     },
@@ -88,9 +89,10 @@ const RenameConnectionDialog = forwardRef<
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {t('Rename')} {currentName}
-            </DialogTitle>
+            <DialogTitle>{t('Rename Connection')}</DialogTitle>
+            <DialogDescription>
+              {t('Enter a new display name for this connection.')}
+            </DialogDescription>
           </DialogHeader>
           <Form {...renameConnectionForm}>
             <form
@@ -131,7 +133,7 @@ const RenameConnectionDialog = forwardRef<
                   <Button variant={'outline'}>{t('Cancel')}</Button>
                 </DialogClose>
 
-                <Button loading={isPending}>{t('Confirm')}</Button>
+                <Button loading={isPending}>{t('Rename')}</Button>
               </DialogFooter>
             </form>
           </Form>

@@ -1,5 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion } from '../../core/common'
+import { z } from 'zod'
 
 export enum SecretManagerProviderId {
     HASHICORP = 'hashicorp',
@@ -17,79 +16,79 @@ export enum SecretManagerConnectionScope {
  * Hashicorp Provider Config
  */
 
-export const HashicorpProviderConfigSchema = Type.Object({
-    url: Type.String(),
-    namespace: Type.Optional(Type.String()),
-    roleId: Type.String(),
-    secretId: Type.String(),
+export const HashicorpProviderConfigSchema = z.object({
+    url: z.string(),
+    namespace: z.string().optional(),
+    roleId: z.string(),
+    secretId: z.string(),
 })
-export type HashicorpProviderConfig = Static<typeof HashicorpProviderConfigSchema>
+export type HashicorpProviderConfig = z.infer<typeof HashicorpProviderConfigSchema>
 
 /**
  * AWS Provider Config
  */
 
-export const AWSProviderConfigSchema = Type.Object({
-    accessKeyId: Type.String(),
-    secretAccessKey: Type.String(),
-    region: Type.String(),
+export const AWSProviderConfigSchema = z.object({
+    accessKeyId: z.string(),
+    secretAccessKey: z.string(),
+    region: z.string(),
 })
-export type AWSProviderConfig = Static<typeof AWSProviderConfigSchema>
+export type AWSProviderConfig = z.infer<typeof AWSProviderConfigSchema>
 
 
 /**
  * Cyberark Conjur Provider Config
  */
 
-export const CyberarkConjurProviderConfigSchema = Type.Object({
-    organizationAccountName: Type.String(),
-    loginId: Type.String(),
-    url: Type.String(),
-    apiKey: Type.String(),
+export const CyberarkConjurProviderConfigSchema = z.object({
+    organizationAccountName: z.string(),
+    loginId: z.string(),
+    url: z.string(),
+    apiKey: z.string(),
 })
-export type CyberarkConjurProviderConfig = Static<typeof CyberarkConjurProviderConfigSchema>
+export type CyberarkConjurProviderConfig = z.infer<typeof CyberarkConjurProviderConfigSchema>
 
 /**
  * 1Password Provider Config
  */
 
-export const OnePasswordProviderConfigSchema = Type.Object({
-    serviceAccountToken: Type.String(),
+export const OnePasswordProviderConfigSchema = z.object({
+    serviceAccountToken: z.string(),
 })
-export type OnePasswordProviderConfig = Static<typeof OnePasswordProviderConfigSchema>
+export type OnePasswordProviderConfig = z.infer<typeof OnePasswordProviderConfigSchema>
 
 const SecretManagerConnectionScopeFields = {
-    name: Type.String(),
-    scope: Type.Enum(SecretManagerConnectionScope),
-    projectIds: Type.Optional(Type.Array(Type.String())),
+    name: z.string(),
+    scope: z.nativeEnum(SecretManagerConnectionScope),
+    projectIds: z.array(z.string()).optional(),
 }
 
-export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId', [
-    Type.Object({
+export const ConnectSecretManagerRequestSchema = z.discriminatedUnion('providerId', [
+    z.object({
         ...SecretManagerConnectionScopeFields,
-        providerId: Type.Literal(SecretManagerProviderId.HASHICORP),
+        providerId: z.literal(SecretManagerProviderId.HASHICORP),
         config: HashicorpProviderConfigSchema,
     }),
-    Type.Object({
+    z.object({
         ...SecretManagerConnectionScopeFields,
-        providerId: Type.Literal(SecretManagerProviderId.AWS),
+        providerId: z.literal(SecretManagerProviderId.AWS),
         config: AWSProviderConfigSchema,
     }),
-    Type.Object({
+    z.object({
         ...SecretManagerConnectionScopeFields,
-        providerId: Type.Literal(SecretManagerProviderId.CYBERARK),
+        providerId: z.literal(SecretManagerProviderId.CYBERARK),
         config: CyberarkConjurProviderConfigSchema,
     }),
-    Type.Object({
+    z.object({
         ...SecretManagerConnectionScopeFields,
-        providerId: Type.Literal(SecretManagerProviderId.ONEPASSWORD),
+        providerId: z.literal(SecretManagerProviderId.ONEPASSWORD),
         config: OnePasswordProviderConfigSchema,
     }),
 ])
 
-export type ConnectSecretManagerRequest = Static<typeof ConnectSecretManagerRequestSchema>
+export type ConnectSecretManagerRequest = z.infer<typeof ConnectSecretManagerRequestSchema>
 
-export const DeleteSecretManagerConnectionRequestSchema = Type.Object({
-    id: Type.String(),
+export const DisconnectSecretManagerRequestSchema = z.object({
+    providerId: z.nativeEnum(SecretManagerProviderId),
 })
-export type DeleteSecretManagerConnectionRequest = Static<typeof DeleteSecretManagerConnectionRequestSchema>
+export type DisconnectSecretManagerRequest = z.infer<typeof DisconnectSecretManagerRequestSchema>

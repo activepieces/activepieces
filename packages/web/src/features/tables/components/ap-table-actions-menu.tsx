@@ -151,11 +151,12 @@ const ApTableActionsMenu = ({
               onClick={(e) => e.stopPropagation()}
             >
               <ConfirmationDeleteDialog
-                title={`${t('Delete')} ${table.name}`}
+                title={t('Delete Table')}
                 message={t(
-                  'Are you sure you want to delete the selected tables? This action cannot be undone.',
+                  'This table and all its data will be permanently deleted.',
                 )}
                 entityName={table.name}
+                buttonText={t('Delete')}
                 mutationFn={async () => {
                   await tablesApi.delete(table.id);
                   onDelete?.();

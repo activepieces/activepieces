@@ -135,13 +135,11 @@ export const ProjectRolesTable = ({
                   isDanger={true}
                   title={t('Delete Role')}
                   message={t(
-                    `Deleting this role will remove ${
-                      role.userCount
-                    } project member${
-                      role.userCount === 1 ? '' : 's'
-                    } and all associated invitations. Are you sure you want to proceed?`,
+                    'Deleting this role will remove {count} project member(s) and all associated invitations.',
+                    { count: role.userCount },
                   )}
                   entityName={`${t('Project Role')} ${role.name}`}
+                  buttonText={t('Delete Role')}
                   mutationFn={async () => deleteProjectRole(role.name)}
                 >
                   <Button variant="ghost" size="sm" className="size-8 p-0">

@@ -2,13 +2,14 @@ import {
   GitBranchType,
   GitPushOperationType,
   PushEverythingGitRepoRequest,
-  PushGitRepoRequest,
+  assertNotNullOrUndefined,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 import React from 'react';
-import { Resolver, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { gitSyncHooks, gitSyncMutations } from '@/features/project-releases';
+import { gitSyncApi, gitSyncHooks } from '@/features/project-releases';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -49,17 +50,22 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
     authenticationSession.getProjectId()!,
     platform.plan.environmentsEnabled,
   );
-  const form = useForm<PushGitRepoRequest>({
+  const form = useForm<PushEverythingGitRepoRequest>({
     defaultValues: {
       type: GitPushOperationType.PUSH_EVERYTHING,
       commitMessage: '',
     },
-    resolver: typeboxResolver(
-      PushEverythingGitRepoRequest,
-    ) as Resolver<PushGitRepoRequest>,
+    resolver: zodResolver(PushEverythingGitRepoRequest),
   });
 
-  const { mutate, isPending } = gitSyncMutations.usePushToGit({
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (request: PushEverythingGitRepoRequest) => {
+      assertNotNullOrUndefined(gitSync, 'gitSync');
+      await gitSyncApi.push(gitSync.id, {
+        type: GitPushOperationType.PUSH_EVERYTHING,
+        commitMessage: request.commitMessage,
+      });
+    },
     onSuccess: () => {
       toast.success(t('Everything is pushed successfully'), {
         duration: 3000,
@@ -76,17 +82,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((data) =>
-              mutate({
-                gitSyncId: gitSync!.id,
-                request: {
-                  type: GitPushOperationType.PUSH_EVERYTHING,
-                  commitMessage: data.commitMessage,
-                },
-              }),
-            )}
-          >
+          <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <DialogHeader>
               <DialogTitle>{t('Push Everything to Git')}</DialogTitle>
             </DialogHeader>
@@ -133,15 +129,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
               <Button
                 type="submit"
                 loading={isPending}
-                onClick={form.handleSubmit((data) =>
-                  mutate({
-                    gitSyncId: gitSync!.id,
-                    request: {
-                      type: GitPushOperationType.PUSH_EVERYTHING,
-                      commitMessage: data.commitMessage,
-                    },
-                  }),
-                )}
+                onClick={form.handleSubmit((data) => mutate(data))}
               >
                 {t('Push')}
               </Button>

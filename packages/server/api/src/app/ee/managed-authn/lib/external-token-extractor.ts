@@ -1,6 +1,6 @@
 import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId, SigningKey, SigningKeyId } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { signingKeyService } from '../../signing-key/signing-key-service'
@@ -118,34 +118,32 @@ async function getProjectRole(payload: ExternalTokenPayload, platformId: Platfor
 }
 
 function externalTokenPayload() {
-    const v1 = Type.Object({
-        externalUserId: Type.String(),
-        externalProjectId: Type.String(),
-        firstName: Type.String(),
-        lastName: Type.String(),
+    const v1 = z.object({
+        externalUserId: z.string(),
+        externalProjectId: z.string(),
+        firstName: z.string(),
+        lastName: z.string(),
     })
-    const v2 = Type.Composite([v1,
-        Type.Object({
-            role: Type.Optional(Type.Enum(DefaultProjectRole)),
-            pieces: Type.Optional(Type.Object({
-                filterType: Type.Enum(PiecesFilterType),
-                tags: Type.Optional(Type.Array(Type.String())),
-            })),
-        }),
-    ])
+    const v2 = v1.extend({
+        role: z.nativeEnum(DefaultProjectRole).optional(),
+        pieces: z.object({
+            filterType: z.nativeEnum(PiecesFilterType),
+            tags: z.array(z.string()).optional(),
+        }).optional(),
+    })
 
-    const v3 = Type.Composite([Type.Omit(v2, ['pieces']), Type.Object({
-        version: Type.Literal('v3'),
-        piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
-        piecesTags: Type.Optional(Type.Array(Type.String())),
-    })])
+    const v3 = v2.omit({ pieces: true }).extend({
+        version: z.literal('v3'),
+        piecesFilterType: z.nativeEnum(PiecesFilterType).optional(),
+        piecesTags: z.array(z.string()).optional(),
+    })
 
-    return Type.Union([v2, v3])
+    return z.union([v2, v3])
 }
 
 export const ExternalTokenPayload = externalTokenPayload()
 
-export type ExternalTokenPayload = Static<typeof ExternalTokenPayload>
+export type ExternalTokenPayload = z.infer<typeof ExternalTokenPayload>
 
 export type ExternalPrincipal = {
     platformId: string

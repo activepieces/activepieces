@@ -16,18 +16,16 @@ import { ApId,
     UpdateConnectionValueRequestBody,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { applicationEvents } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import { oauth2Util } from './app-connection-service/oauth2/oauth2-util'
 import { AppConnectionEntity } from './app-connection.entity'
 
-export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
+export const appConnectionController: FastifyPluginCallbackZod = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
@@ -190,7 +188,7 @@ const UpdateConnectionValueRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Update an app connection value',
         body: UpdateConnectionValueRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
@@ -212,7 +210,7 @@ const ReplaceAppConnectionsRequest = {
         description: 'Replace app connections',
         body: ReplaceAppConnectionsRequestBody,
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
@@ -273,11 +271,11 @@ const DeleteAppConnectionRequest = {
         tags: ['app-connections'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete an app connection',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }

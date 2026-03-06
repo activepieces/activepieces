@@ -1,10 +1,11 @@
-import { ProjectReleaseType } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -17,19 +18,16 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { projectReleaseMutations } from '@/features/project-releases';
+import { projectReleaseApi } from '@/features/project-releases';
 import { projectCollectionUtils } from '@/features/projects';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
 
-const FormSchema = Type.Object({
-  selectedProject: Type.String({
-    errorMessage: t('Please select project'),
-    required: true,
-  }),
+const FormSchema = z.object({
+  selectedProject: z.string({ message: t('Please select project') }),
 });
 
-type FormSchema = Static<typeof FormSchema>;
+type FormSchema = z.infer<typeof FormSchema>;
 
 type ProjectSelectionDialogProps = {
   projectId: string;
@@ -48,29 +46,27 @@ export function ProjectSelectionDialog({
   const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
     useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
-  const { mutate: loadSyncPlan, isPending: isDoingDiff } =
-    projectReleaseMutations.useDiffRelease({
-      onSuccess: (plan) => {
-        if (
-          (!plan.flows || plan.flows.length === 0) &&
-          (!plan.tables || plan.tables.length === 0)
-        ) {
-          toast(t('No Changes Found'), {
-            description: t('There are no differences to apply'),
-          });
-          return;
-        }
-        setSyncPlan(plan);
-        setOpen(false);
-        setIsCreateReleaseDialogOpen(true);
-      },
-      onError: () => {
-        // error toast is handled by the hook
-      },
-    });
+  const { mutate: loadSyncPlan, isPending: isDoingDiff } = useMutation({
+    mutationFn: (request: DiffReleaseRequest) =>
+      projectReleaseApi.diff(request),
+    onSuccess: (plan) => {
+      if (
+        (!plan.flows || plan.flows.length === 0) &&
+        (!plan.tables || plan.tables.length === 0)
+      ) {
+        toast(t('No Changes Found'), {
+          description: t('There are no differences to apply'),
+        });
+        return;
+      }
+      setSyncPlan(plan);
+      setOpen(false);
+      setIsCreateReleaseDialogOpen(true);
+    },
+  });
 
   const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       selectedProject: projects?.find((project) => project.id !== projectId)
         ?.id,

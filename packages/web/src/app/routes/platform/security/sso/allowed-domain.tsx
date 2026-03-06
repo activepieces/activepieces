@@ -1,12 +1,17 @@
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import {
+  PlatformWithoutSensitiveData,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
+import { platformApi } from '@/api/platforms-api';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,23 +23,20 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ssoMutations } from '@/features/platform-admin';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
 };
 
-const AllowedDomainsFormValues = Type.Object({
-  allowedAuthDomains: Type.Array(
-    Type.Object({
-      domain: Type.String({
-        minLength: 1,
-      }),
+const AllowedDomainsFormValues = z.object({
+  allowedAuthDomains: z.array(
+    z.object({
+      domain: z.string().min(1),
     }),
   ),
 });
-type AllowedDomainsFormValues = Static<typeof AllowedDomainsFormValues>;
+type AllowedDomainsFormValues = z.infer<typeof AllowedDomainsFormValues>;
 
 export const AllowedDomainDialog = ({
   platform,
@@ -49,7 +51,7 @@ export const AllowedDomainDialog = ({
         }),
       ),
     },
-    resolver: typeboxResolver(AllowedDomainsFormValues),
+    resolver: zodResolver(AllowedDomainsFormValues),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -57,11 +59,15 @@ export const AllowedDomainDialog = ({
     name: 'allowedAuthDomains',
   });
 
-  const { mutate, isPending } = ssoMutations.useUpdatePlatformSso({
-    platformId: platform.id,
-    refetch,
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (request: UpdatePlatformRequestBody) => {
+      await platformApi.update(request, platform.id);
+      await refetch();
+    },
     onSuccess: () => {
-      toast.success(t('Allowed domains updated'), { duration: 3000 });
+      toast.success(t('Allowed domains updated'), {
+        duration: 3000,
+      });
       setOpen(false);
     },
   });

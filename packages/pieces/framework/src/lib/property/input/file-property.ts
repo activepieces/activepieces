@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { z } from "zod";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
 
@@ -14,10 +14,10 @@ export class ApFile {
     }
 }
 
-export const FileProperty = Type.Composite([
-    BasePropertySchema,
-    TPropertyValue(Type.Unknown(), PropertyType.FILE)
-])
-    
+export const FileProperty = z.object({
+    ...BasePropertySchema.shape,
+    ...TPropertyValue(z.unknown(), PropertyType.FILE).shape,
+})
+
 export type FileProperty<R extends boolean> = BasePropertySchema &
     TPropertyValue<ApFile, PropertyType.FILE, R>;

@@ -1,101 +1,113 @@
-import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, DiscriminatedUnion } from '../../core/common'
+import { z } from 'zod'
+import { BaseModelSchema, Nullable } from '../../core/common'
 import { AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, HashicorpProviderConfigSchema, OnePasswordProviderConfigSchema, SecretManagerConnectionScope, SecretManagerProviderId } from './dto'
 
 export * from './dto'
 
-export const SecretManagerConfigSchema = Type.Union([
+export const SecretManagerConfigSchema = z.union([
     HashicorpProviderConfigSchema,
     AWSProviderConfigSchema,
     CyberarkConjurProviderConfigSchema,
     OnePasswordProviderConfigSchema,
 ])
-export type SecretManagerConfig = Static<typeof SecretManagerConfigSchema>
+export type SecretManagerConfig = z.infer<typeof SecretManagerConfigSchema>
+
+export const SecretManagerEntitySchema = z.object({
+    ...BaseModelSchema,
+    platformId: z.string(),
+    providerId: z.string(),
+    auth: Nullable(SecretManagerConfigSchema),
+})
+
+export type SecretManager = z.infer<typeof SecretManagerEntitySchema>
 
 const SecretManagerConnectionBase = {
     ...BaseModelSchema,
-    platformId: Type.String(),
-    providerId: Type.Enum(SecretManagerProviderId),
-    name: Type.String(),
-    auth: SecretManagerConfigSchema,
+    platformId: z.string(),
+    providerId: z.nativeEnum(SecretManagerProviderId),
+    name: z.string(),
 }
 
-export const SecretManagerConnectionPlatformScopeSchema = Type.Object({
+export const SecretManagerConnectionPlatformScopeSchema = z.object({
     ...SecretManagerConnectionBase,
-    scope: Type.Literal(SecretManagerConnectionScope.PLATFORM),
+    scope: z.literal(SecretManagerConnectionScope.PLATFORM),
 })
 
-export const SecretManagerConnectionProjectScopeSchema = Type.Object({
+export const SecretManagerConnectionProjectScopeSchema = z.object({
     ...SecretManagerConnectionBase,
-    scope: Type.Literal(SecretManagerConnectionScope.PROJECT),
-    projectIds: Type.Array(Type.String()),
+    scope: z.literal(SecretManagerConnectionScope.PROJECT),
+    projectIds: z.array(z.string()),
 })
 
-export const SecretManagerConnectionSchema = DiscriminatedUnion('scope', [
-    Type.Omit(SecretManagerConnectionPlatformScopeSchema, ['auth']),
-    Type.Omit(SecretManagerConnectionProjectScopeSchema, ['auth']),
+export const SecretManagerConnectionSchema = z.discriminatedUnion('scope', [
+    SecretManagerConnectionPlatformScopeSchema,
+    SecretManagerConnectionProjectScopeSchema,
 ])
-export type SecretManagerConnection = Static<typeof SecretManagerConnectionSchema>
+export type SecretManagerConnection = z.infer<typeof SecretManagerConnectionSchema>
 
-export const SecretManagerConnectionWithStatusSchema = Type.Intersect([
+export const SecretManagerConnectionWithStatusSchema = z.intersection(
     SecretManagerConnectionSchema,
-    Type.Object({
-        connection: Type.Object({
-            configured: Type.Boolean(),
-            connected: Type.Boolean(),
+    z.object({
+        connection: z.object({
+            configured: z.boolean(),
+            connected: z.boolean(),
         }),
     }),
+)
+export type SecretManagerConnectionWithStatus = z.infer<typeof SecretManagerConnectionWithStatusSchema>
+
+export const SecretManagerFieldSchema = z.object({
+    displayName: z.string(),
+    placeholder: z.string(),
+    optional: z.boolean().optional(),
+    type: z.union([z.literal('text'), z.literal('password')]),
+})
+
+export const SecretManagerSecretParamSchema = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    placeholder: z.string(),
+    optional: z.boolean().optional(),
+    type: z.union([z.literal('text'), z.literal('password')]),
+})
+
+export const SecretManagerProviderMetaDataBaseSchema = z.object({
+    id: z.nativeEnum(SecretManagerProviderId),
+    name: z.string(),
+    logo: z.string(),
+    connection: z.object({
+        configured: z.boolean(),
+        connected: z.boolean(),
+    }).optional(),
+})
+
+export const SecretManagerProviderMetaDataSchema = z.discriminatedUnion('id', [
+    z.object({
+        ...SecretManagerProviderMetaDataBaseSchema.shape,
+        id: z.literal(SecretManagerProviderId.HASHICORP),
+        fields: z.record(z.enum(Object.keys(HashicorpProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        secretParams: z.array(SecretManagerSecretParamSchema),
+    }),
+    z.object({
+        ...SecretManagerProviderMetaDataBaseSchema.shape,
+        id: z.literal(SecretManagerProviderId.AWS),
+        fields: z.record(z.enum(Object.keys(AWSProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        secretParams: z.array(SecretManagerSecretParamSchema),
+    }),
+    z.object({
+        ...SecretManagerProviderMetaDataBaseSchema.shape,
+        id: z.literal(SecretManagerProviderId.CYBERARK),
+        fields: z.record(z.enum(Object.keys(CyberarkConjurProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        secretParams: z.array(SecretManagerSecretParamSchema),
+    }),
+    z.object({
+        ...SecretManagerProviderMetaDataBaseSchema.shape,
+        id: z.literal(SecretManagerProviderId.ONEPASSWORD),
+        fields: z.record(z.enum(Object.keys(OnePasswordProviderConfigSchema.shape) as [string, ...string[]]), SecretManagerFieldSchema),
+        secretParams: z.array(SecretManagerSecretParamSchema),
+    }),
 ])
-export type SecretManagerConnectionWithStatus = Static<typeof SecretManagerConnectionWithStatusSchema>
 
-export const SecretManagerFieldSchema = Type.Object({
-    displayName: Type.String(),
-    placeholder: Type.String(),
-    optional: Type.Optional(Type.Boolean()),
-    type: Type.Union([Type.Literal('text'), Type.Literal('password')]),
-})
-
-export const SecretManagerSecretParamSchema = Type.Object({
-    name: Type.String(),
-    displayName: Type.String(),
-    placeholder: Type.String(),
-    optional: Type.Optional(Type.Boolean()),
-    type: Type.Union([Type.Literal('text'), Type.Literal('password')]),
-})
-
-export const SecretManagerProviderMetaDataBaseSchema = Type.Object({
-    id: Type.Enum(SecretManagerProviderId),
-    name: Type.String(),
-    logo: Type.String(),
-})
-
-export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [
-    Type.Object({
-        ...SecretManagerProviderMetaDataBaseSchema.properties,
-        id: Type.Literal(SecretManagerProviderId.HASHICORP),
-        fields: Type.Record(Type.KeyOf(HashicorpProviderConfigSchema), SecretManagerFieldSchema),
-        secretParams: Type.Array(SecretManagerSecretParamSchema),
-    }),
-    Type.Object({
-        ...SecretManagerProviderMetaDataBaseSchema.properties,
-        id: Type.Literal(SecretManagerProviderId.AWS),
-        fields: Type.Record(Type.KeyOf(AWSProviderConfigSchema), SecretManagerFieldSchema),
-        secretParams: Type.Array(SecretManagerSecretParamSchema),
-    }),
-    Type.Object({
-        ...SecretManagerProviderMetaDataBaseSchema.properties,
-        id: Type.Literal(SecretManagerProviderId.CYBERARK),
-        fields: Type.Record(Type.KeyOf(CyberarkConjurProviderConfigSchema), SecretManagerFieldSchema),
-        secretParams: Type.Array(SecretManagerSecretParamSchema),
-    }),
-    Type.Object({
-        ...SecretManagerProviderMetaDataBaseSchema.properties,
-        id: Type.Literal(SecretManagerProviderId.ONEPASSWORD),
-        fields: Type.Record(Type.KeyOf(OnePasswordProviderConfigSchema), SecretManagerFieldSchema),
-        secretParams: Type.Array(SecretManagerSecretParamSchema),
-    }),
-])
-
-export type SecretManagerProviderMetaData = Static<typeof SecretManagerProviderMetaDataSchema>
+export type SecretManagerProviderMetaData = z.infer<typeof SecretManagerProviderMetaDataSchema>
 
 export const SecretManagerFieldsSeparator = '|ap_sep_v1|'

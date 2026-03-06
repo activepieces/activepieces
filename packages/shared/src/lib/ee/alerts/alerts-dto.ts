@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 
@@ -7,11 +7,11 @@ export enum AlertChannel {
 }
 
 
-export const Alert = Type.Object({
+export const Alert = z.object({
     ...BaseModelSchema,
     projectId: ApId,
-    channel: Type.Enum(AlertChannel),
-    receiver: Type.String({}),
+    channel: z.nativeEnum(AlertChannel),
+    receiver: z.string(),
 })
 
-export type Alert = Static<typeof Alert>
+export type Alert = z.infer<typeof Alert>

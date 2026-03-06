@@ -8,13 +8,11 @@ import {
     GetAppConnectionForWorkerRequestQuery,
     isNil,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { secretManagersService } from '../ee/secret-managers/secret-managers.service'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
-export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (app) => {
+export const appConnectionWorkerController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
         const enginePrincipal = (request.principal as EnginePrincipal)

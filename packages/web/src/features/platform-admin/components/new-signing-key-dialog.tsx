@@ -2,7 +2,8 @@ import {
   AddSigningKeyRequestBody,
   AddSigningKeyResponse,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -20,7 +21,7 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { signingKeyMutations } from '@/features/platform-admin/hooks/signing-key-hooks';
+import { signingKeyApi } from '@/features/platform-admin/api/signing-key-api';
 
 type NewSigningKeyDialogProps = {
   children: React.ReactNode;
@@ -36,10 +37,11 @@ export const NewSigningKeyDialog = ({
     AddSigningKeyResponse | undefined
   >(undefined);
   const form = useForm<AddSigningKeyRequestBody>({
-    resolver: typeboxResolver(AddSigningKeyRequestBody),
+    resolver: zodResolver(AddSigningKeyRequestBody),
   });
 
-  const { mutate, isPending } = signingKeyMutations.useCreateSigningKey({
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => signingKeyApi.create(form.getValues()),
     onSuccess: (key) => {
       setSigningKey(key);
       onCreate();
@@ -86,7 +88,7 @@ export const NewSigningKeyDialog = ({
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={form.handleSubmit(() => mutate(form.getValues()))}
+              onSubmit={form.handleSubmit(() => mutate())}
             >
               <FormField
                 name="displayName"
@@ -120,7 +122,7 @@ export const NewSigningKeyDialog = ({
               <Button
                 disabled={isPending || !form.formState.isValid}
                 loading={isPending}
-                onClick={() => mutate(form.getValues())}
+                onClick={() => mutate()}
               >
                 {t('Save')}
               </Button>
