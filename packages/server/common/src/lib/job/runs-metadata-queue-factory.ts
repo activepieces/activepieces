@@ -1,6 +1,4 @@
-import { apId, ApId, FlowRun as FlowRunSchema } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
-import { Value } from '@sinclair/typebox/value'
+import { apId, ApId, FlowRunStatus, PauseMetadata, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import Redis from 'ioredis'
@@ -42,7 +40,7 @@ export const runsMetadataQueueFactory = ({
                 throw new Error('Runs metadata queue not initialized')
             }
 
-            const cleanedParams = Value.Clean(RunsMetadataUpsertData, params) as RunsMetadataUpsertData
+            const cleanedParams = stripToRunsMetadataUpsertData(params)
 
             await distributedStore.merge(redisMetadataKey(cleanedParams.id), {
                 ...cleanedParams,
@@ -69,6 +67,23 @@ export const runsMetadataQueueFactory = ({
     }
 }
 
+const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
+    'id', 'projectId', 'created', 'flowId', 'flowVersionId', 'environment',
+    'triggeredBy', 'startTime', 'finishTime', 'status', 'tags', 'pauseMetadata',
+    'failedStep', 'stepNameToTest', 'parentRunId', 'failParentOnFailure',
+    'logsFileId', 'updated', 'stepsCount', 'requestId',
+]
+
+function stripToRunsMetadataUpsertData(params: RunsMetadataUpsertData): RunsMetadataUpsertData {
+    const result: Record<string, unknown> = {}
+    for (const key of RUNS_METADATA_UPSERT_KEYS) {
+        if (key in params) {
+            result[key] = params[key]
+        }
+    }
+    return result as RunsMetadataUpsertData
+}
+
 type RunsMetadataQueueFactoryParams = {
     createRedisConnection: () => Promise<Redis>
     distributedStore: DistributedStore
@@ -85,30 +100,25 @@ export type RunsMetadataQueueConfig = {
     redisFailedJobRetentionMaxCount: number
 }
 
-export const RunsMetadataUpsertData = Type.Composite([
-    Type.Required(Type.Pick(FlowRunSchema, ['id', 'projectId'])),
-    Type.Partial(Type.Pick(FlowRunSchema, [
-        'created',
-        'flowId',
-        'flowVersionId',
-        'environment',
-        'triggeredBy',
-        'startTime',
-        'finishTime',
-        'status',
-        'tags',
-        'pauseMetadata',
-        'failedStep',
-        'stepNameToTest',
-        'parentRunId',
-        'failParentOnFailure',
-        'logsFileId',
-        'updated',
-        'stepsCount',
-    ])),
-    Type.Object({
-        requestId: Type.Optional(Type.String()),
-    }),
-])
-
-export type RunsMetadataUpsertData = Static<typeof RunsMetadataUpsertData>
+export type RunsMetadataUpsertData = {
+    id: string
+    projectId: string
+    created?: string
+    flowId?: string
+    flowVersionId?: string
+    environment?: RunEnvironment
+    triggeredBy?: string
+    startTime?: string
+    finishTime?: string
+    status?: FlowRunStatus
+    tags?: string[]
+    pauseMetadata?: PauseMetadata
+    failedStep?: { name: string, displayName: string }
+    stepNameToTest?: string
+    parentRunId?: string
+    failParentOnFailure?: boolean
+    logsFileId?: string | null
+    updated?: string
+    stepsCount?: number
+    requestId?: string
+}

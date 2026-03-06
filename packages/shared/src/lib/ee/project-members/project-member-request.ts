@@ -1,34 +1,34 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
-export const AcceptInvitationRequest = Type.Object({
-    token: Type.String(),
+export const AcceptInvitationRequest = z.object({
+    token: z.string(),
 })
-export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>
+export type AcceptInvitationRequest = z.infer<typeof AcceptInvitationRequest>
 
-export const ListProjectMembersRequestQuery = Type.Object({
-    projectId: Type.String(),
-    projectRoleId: Type.Optional(Type.String()),
-    cursor: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Number()),
-})
-
-export type ListProjectMembersRequestQuery = Static<typeof ListProjectMembersRequestQuery>
-
-export const AcceptProjectResponse = Type.Object({
-    registered: Type.Boolean(),
+export const ListProjectMembersRequestQuery = z.object({
+    projectId: z.string(),
+    projectRoleId: z.string().optional(),
+    cursor: z.string().optional(),
+    limit: z.coerce.number().optional(),
 })
 
-export type AcceptProjectResponse = Static<typeof AcceptProjectResponse>
+export type ListProjectMembersRequestQuery = z.infer<typeof ListProjectMembersRequestQuery>
 
-
-export const UpdateProjectMemberRoleRequestBody = Type.Object({
-    role: Type.String(),
+export const AcceptProjectResponse = z.object({
+    registered: z.boolean(),
 })
 
-export type UpdateProjectMemberRoleRequestBody = Static<typeof UpdateProjectMemberRoleRequestBody>
+export type AcceptProjectResponse = z.infer<typeof AcceptProjectResponse>
 
-export const GetCurrentProjectMemberRoleQuery = Type.Object({
-    projectId: Type.String(),
+
+export const UpdateProjectMemberRoleRequestBody = z.object({
+    role: z.string(),
 })
 
-export type GetCurrentProjectMemberRoleQuery = Static< typeof GetCurrentProjectMemberRoleQuery>
+export type UpdateProjectMemberRoleRequestBody = z.infer<typeof UpdateProjectMemberRoleRequestBody>
+
+export const GetCurrentProjectMemberRoleQuery = z.object({
+    projectId: z.string(),
+})
+
+export type GetCurrentProjectMemberRoleQuery = z.infer<typeof GetCurrentProjectMemberRoleQuery>

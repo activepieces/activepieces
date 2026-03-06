@@ -1,23 +1,63 @@
 import { Permission } from '@activepieces/shared';
 import { t } from 'i18next';
-import { History, Link2, Package, Table2, Workflow } from 'lucide-react';
+import { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { BoxIcon } from '@/components/icons/box';
+import { ConnectIcon } from '@/components/icons/connect';
+import { HistoryIcon } from '@/components/icons/history';
+import { WorkflowIcon } from '@/components/icons/workflow';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 
 import { ProjectDashboardLayoutHeaderTab } from '.';
 
+type AnimatedIconHandle = {
+  startAnimation: () => void;
+  stopAnimation: () => void;
+};
+
+const AnimatedTab = ({
+  tab,
+  isActive,
+  onClick,
+}: {
+  tab: ProjectDashboardLayoutHeaderTab;
+  isActive: boolean;
+  onClick: () => void;
+}) => {
+  const iconRef = useRef<AnimatedIconHandle>(null);
+  const IconComponent = tab.icon as React.ForwardRefExoticComponent<
+    {
+      className?: string;
+      size?: number;
+    } & React.RefAttributes<AnimatedIconHandle>
+  >;
+
+  return (
+    <TabsTrigger
+      value={tab.to}
+      variant="outline"
+      className="pb-3"
+      onClick={onClick}
+      data-state={isActive ? 'active' : 'inactive'}
+      onMouseEnter={() => iconRef.current?.startAnimation()}
+      onMouseLeave={() => iconRef.current?.stopAnimation()}
+    >
+      <IconComponent ref={iconRef} size={16} className="mr-2" />
+      {tab.label}
+    </TabsTrigger>
+  );
+};
+
 export const ProjectDashboardLayoutHeader = () => {
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const { embedState } = useEmbedding();
   const location = useLocation();
@@ -26,18 +66,11 @@ export const ProjectDashboardLayoutHeader = () => {
 
   const primaryTabs: ProjectDashboardLayoutHeaderTab[] = [
     {
-      to: authenticationSession.appendProjectRoutePrefix('/flows'),
-      label: t('Flows'),
-      icon: Workflow,
+      to: authenticationSession.appendProjectRoutePrefix('/automations'),
+      label: t('Automations'),
+      icon: WorkflowIcon,
       hasPermission: checkAccess(Permission.READ_FLOW),
       show: true,
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/tables'),
-      label: t('Tables'),
-      show: platform.plan.tablesEnabled,
-      icon: Table2,
-      hasPermission: checkAccess(Permission.READ_TABLE),
     },
   ];
 
@@ -45,20 +78,20 @@ export const ProjectDashboardLayoutHeader = () => {
     {
       to: authenticationSession.appendProjectRoutePrefix('/runs'),
       label: t('Runs'),
-      icon: History,
+      icon: HistoryIcon,
       hasPermission: checkAccess(Permission.READ_RUN),
       show: true,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/connections'),
       label: t('Connections'),
-      icon: Link2,
+      icon: ConnectIcon,
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
       show: true,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/releases'),
-      icon: Package,
+      icon: BoxIcon,
       label: t('Releases'),
       hasPermission:
         project.releasesEnabled &&
@@ -75,27 +108,20 @@ export const ProjectDashboardLayoutHeader = () => {
     (tab) => tab.show && tab.hasPermission,
   );
 
-  const renderTab = (tab: ProjectDashboardLayoutHeaderTab) => (
-    <TabsTrigger
-      key={tab.to}
-      value={tab.to}
-      variant="outline"
-      className="pb-3"
-      onClick={() => navigate(tab.to)}
-      data-state={location.pathname.includes(tab.to) ? 'active' : 'inactive'}
-    >
-      <tab.icon className="h-4 w-4 mr-2" />
-      {tab.label}
-    </TabsTrigger>
-  );
-
   return (
     <div className="flex flex-col gap-1">
       {!isEmbedded && <ProjectDashboardPageHeader />}
       <Tabs className="px-4">
         {!embedState.hideSideNav && (
           <TabsList variant="outline">
-            {visiblePrimaryTabs.map(renderTab)}
+            {visiblePrimaryTabs.map((tab) => (
+              <AnimatedTab
+                key={tab.to}
+                tab={tab}
+                isActive={location.pathname.includes(tab.to)}
+                onClick={() => navigate(tab.to)}
+              />
+            ))}
             {visiblePrimaryTabs.length > 0 &&
               visibleSecondaryTabs.length > 0 && (
                 <Separator
@@ -103,7 +129,14 @@ export const ProjectDashboardLayoutHeader = () => {
                   className="mx-2 h-5 self-center mb-2"
                 />
               )}
-            {visibleSecondaryTabs.map(renderTab)}
+            {visibleSecondaryTabs.map((tab) => (
+              <AnimatedTab
+                key={tab.to}
+                tab={tab}
+                isActive={location.pathname.includes(tab.to)}
+                onClick={() => navigate(tab.to)}
+              />
+            ))}
           </TabsList>
         )}
       </Tabs>

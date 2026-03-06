@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common'
 import { JobData } from './job-data'
 
@@ -8,45 +8,45 @@ export enum WorkerMachineStatus {
 }
 
 
-export const MachineInformation = Type.Object({
-    cpuUsagePercentage: Type.Number(),
-    diskInfo: Type.Object({
-        total: Type.Number(),
-        free: Type.Number(),
-        used: Type.Number(),
-        percentage: Type.Number(),
+export const MachineInformation = z.object({
+    cpuUsagePercentage: z.number(),
+    diskInfo: z.object({
+        total: z.number(),
+        free: z.number(),
+        used: z.number(),
+        percentage: z.number(),
     }),
-    workerId: Type.String(),
-    workerProps: Type.Record(Type.String(), Type.String()),
-    ramUsagePercentage: Type.Number(),
-    totalAvailableRamInBytes: Type.Number(),
-    totalCpuCores: Type.Number(),
-    ip: Type.String(),
-    totalSandboxes: Type.Number(),
-    freeSandboxes: Type.Number(),
+    workerId: z.string(),
+    workerProps: z.record(z.string(), z.string()),
+    ramUsagePercentage: z.number(),
+    totalAvailableRamInBytes: z.number(),
+    totalCpuCores: z.number(),
+    ip: z.string(),
+    totalSandboxes: z.number(),
+    freeSandboxes: z.number(),
 })
 
-export type MachineInformation = Static<typeof MachineInformation>
+export type MachineInformation = z.infer<typeof MachineInformation>
 
-export const WorkerMachine = Type.Object({
+export const WorkerMachine = z.object({
     ...BaseModelSchema,
     information: MachineInformation,
 })
 
-export type WorkerMachine = Static<typeof WorkerMachine>
+export type WorkerMachine = z.infer<typeof WorkerMachine>
 
-export const WorkerMachineWithStatus = Type.Composite([WorkerMachine, Type.Object({
-    status: Type.Enum(WorkerMachineStatus),
-})])
+export const WorkerMachineWithStatus = WorkerMachine.extend({
+    status: z.nativeEnum(WorkerMachineStatus),
+})
 
-export type WorkerMachineWithStatus = Static<typeof WorkerMachineWithStatus>
+export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>
 
-export const ConsumeJobRequest = Type.Object({
-    jobId: Type.String(),
+export const ConsumeJobRequest = z.object({
+    jobId: z.string(),
     jobData: JobData,
-    timeoutInSeconds: Type.Number(),
-    attempsStarted: Type.Number(),
-    engineToken: Type.String(),
+    timeoutInSeconds: z.number(),
+    attempsStarted: z.number(),
+    engineToken: z.string(),
 })
 
 export enum ConsumeJobResponseStatus {
@@ -54,67 +54,67 @@ export enum ConsumeJobResponseStatus {
     INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
 
-export type ConsumeJobRequest = Static<typeof ConsumeJobRequest>
+export type ConsumeJobRequest = z.infer<typeof ConsumeJobRequest>
 
-export const ConsumeJobResponse = Type.Object({
-    status: Type.Enum(ConsumeJobResponseStatus),
-    errorMessage: Type.Optional(Type.String()),
-    delayInSeconds: Type.Optional(Type.Number()),
+export const ConsumeJobResponse = z.object({
+    status: z.nativeEnum(ConsumeJobResponseStatus),
+    errorMessage: z.string().optional(),
+    delayInSeconds: z.number().optional(),
 })
 
 
-export type ConsumeJobResponse = Static<typeof ConsumeJobResponse>
+export type ConsumeJobResponse = z.infer<typeof ConsumeJobResponse>
 
 export const WorkerMachineHealthcheckRequest = MachineInformation
 
-export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>
+export type WorkerMachineHealthcheckRequest = z.infer<typeof WorkerMachineHealthcheckRequest>
 
-export const WorkerSettingsResponse = Type.Object({
-    PUBLIC_URL: Type.String(),
-    TRIGGER_TIMEOUT_SECONDS: Type.Number(),
-    TRIGGER_HOOKS_TIMEOUT_SECONDS: Type.Number(),
-    PAUSED_FLOW_TIMEOUT_DAYS: Type.Number(),
-    EXECUTION_MODE: Type.String(),
-    FLOW_TIMEOUT_SECONDS: Type.Number(),
-    WORKER_CONCURRENCY: Type.Number(),
-    LOG_LEVEL: Type.String(),
-    LOG_PRETTY: Type.String(),
-    ENVIRONMENT: Type.String(),
-    APP_WEBHOOK_SECRETS: Type.String(),
-    MAX_FLOW_RUN_LOG_SIZE_MB: Type.Number(),
-    MAX_FILE_SIZE_MB: Type.Number(),
-    SANDBOX_MEMORY_LIMIT: Type.String(),
-    SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
-    DEV_PIECES: Type.Array(Type.String()),
-    SENTRY_DSN: Type.Optional(Type.String()),
-    LOKI_PASSWORD: Type.Optional(Type.String()),
-    LOKI_URL: Type.Optional(Type.String()),
-    LOKI_USERNAME: Type.Optional(Type.String()),
-    OTEL_ENABLED: Type.Boolean(),
-    HYPERDX_TOKEN: Type.Optional(Type.String()),
-    FILE_STORAGE_LOCATION: Type.String(),
-    S3_USE_SIGNED_URLS: Type.String(),
-    QUEUE_MODE: Type.Optional(Type.String()),
-    REDIS_TYPE: Type.String(),
-    REDIS_SSL_CA_FILE: Type.Optional(Type.String()),
-    REDIS_DB: Type.Optional(Type.Number()),
-    REDIS_HOST: Type.Optional(Type.String()),
-    REDIS_PASSWORD: Type.Optional(Type.String()),
-    REDIS_PORT: Type.Optional(Type.String()),
-    REDIS_URL: Type.Optional(Type.String()),
-    REDIS_USER: Type.Optional(Type.String()),
-    REDIS_USE_SSL: Type.Optional(Type.Boolean()),
-    REDIS_SENTINEL_ROLE: Type.Optional(Type.String()),
-    REDIS_SENTINEL_HOSTS: Type.Optional(Type.String()),
-    REDIS_SENTINEL_NAME: Type.Optional(Type.String()),
-    REDIS_FAILED_JOB_RETENTION_DAYS: Type.Number(),
-    REDIS_FAILED_JOB_RETENTION_MAX_COUNT: Type.Number(),
-    PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
-    MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
-    JWT_SECRET: Type.String(),
-    EVENT_DESTINATION_TIMEOUT_SECONDS: Type.Number(),
-    PLATFORM_ID_FOR_DEDICATED_WORKER: Type.Optional(Type.String()),
-    EDITION: Type.String(),
+export const WorkerSettingsResponse = z.object({
+    PUBLIC_URL: z.string(),
+    TRIGGER_TIMEOUT_SECONDS: z.number(),
+    TRIGGER_HOOKS_TIMEOUT_SECONDS: z.number(),
+    PAUSED_FLOW_TIMEOUT_DAYS: z.number(),
+    EXECUTION_MODE: z.string(),
+    FLOW_TIMEOUT_SECONDS: z.number(),
+    WORKER_CONCURRENCY: z.number(),
+    LOG_LEVEL: z.string(),
+    LOG_PRETTY: z.string(),
+    ENVIRONMENT: z.string(),
+    APP_WEBHOOK_SECRETS: z.string(),
+    MAX_FLOW_RUN_LOG_SIZE_MB: z.number(),
+    MAX_FILE_SIZE_MB: z.number(),
+    SANDBOX_MEMORY_LIMIT: z.string(),
+    SANDBOX_PROPAGATED_ENV_VARS: z.array(z.string()),
+    DEV_PIECES: z.array(z.string()),
+    SENTRY_DSN: z.string().optional(),
+    LOKI_PASSWORD: z.string().optional(),
+    LOKI_URL: z.string().optional(),
+    LOKI_USERNAME: z.string().optional(),
+    OTEL_ENABLED: z.boolean(),
+    HYPERDX_TOKEN: z.string().optional(),
+    FILE_STORAGE_LOCATION: z.string(),
+    S3_USE_SIGNED_URLS: z.string(),
+    QUEUE_MODE: z.string().optional(),
+    REDIS_TYPE: z.string(),
+    REDIS_SSL_CA_FILE: z.string().optional(),
+    REDIS_DB: z.number().optional(),
+    REDIS_HOST: z.string().optional(),
+    REDIS_PASSWORD: z.string().optional(),
+    REDIS_PORT: z.string().optional(),
+    REDIS_URL: z.string().optional(),
+    REDIS_USER: z.string().optional(),
+    REDIS_USE_SSL: z.boolean().optional(),
+    REDIS_SENTINEL_ROLE: z.string().optional(),
+    REDIS_SENTINEL_HOSTS: z.string().optional(),
+    REDIS_SENTINEL_NAME: z.string().optional(),
+    REDIS_FAILED_JOB_RETENTION_DAYS: z.number(),
+    REDIS_FAILED_JOB_RETENTION_MAX_COUNT: z.number(),
+    PROJECT_RATE_LIMITER_ENABLED: z.boolean(),
+    MAX_CONCURRENT_JOBS_PER_PROJECT: z.number(),
+    JWT_SECRET: z.string(),
+    EVENT_DESTINATION_TIMEOUT_SECONDS: z.number(),
+    PLATFORM_ID_FOR_DEDICATED_WORKER: z.string().optional(),
+    EDITION: z.string(),
 })
 
-export type WorkerSettingsResponse = Static<typeof WorkerSettingsResponse>
+export type WorkerSettingsResponse = z.infer<typeof WorkerSettingsResponse>

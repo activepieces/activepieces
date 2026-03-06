@@ -1,12 +1,22 @@
 import { isNil, PlatformWithoutSensitiveData } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Shield, AlertTriangle, Check, Zap } from 'lucide-react';
+import { Shield, AlertTriangle, Check, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import {
+  Item,
+  ItemMedia,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+  ItemFooter,
+} from '@/components/custom/item';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { ArrowUpIcon } from '@/components/icons/arrow-up';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { formatUtils } from '@/lib/format-utils';
 
 import { ActivateLicenseDialog } from './activate-license-dialog';
@@ -28,90 +38,103 @@ export const LicenseKey = ({
     !isNil(platform?.plan?.licenseExpiresAt) &&
     dayjs(platform.plan.licenseExpiresAt).isBefore(dayjs().add(7, 'day'));
 
-  const getStatusBadge = () => {
-    if (expired) {
-      return (
-        <StatusIconWithText
-          text={t('Expired')}
-          icon={AlertTriangle}
-          variant="error"
-        />
-      );
-    }
-    if (expiresSoon) {
-      return (
-        <StatusIconWithText
-          text={t('Expires soon')}
-          icon={AlertTriangle}
-          variant="default"
-        />
-      );
-    }
-    return (
-      <StatusIconWithText text={t('Active')} icon={Check} variant="success" />
-    );
-  };
+  const description = platform.plan.licenseKey
+    ? buildLicenseDescription(platform, expired)
+    : t('Activate your license to unlock enterprise features');
 
   return (
-    <Card>
-      <CardHeader className="border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg border">
-              <Shield className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">{t('License Key')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('Activate your platform and unlock enterprise features')}
-              </p>
-            </div>
-          </div>
-          <Button
+    <>
+      <Item variant="outline">
+        <ItemMedia variant="icon">
+          <Shield />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>
+            {t('License Key')}
+            {platform.plan.licenseKey && getStatusBadge(expired, expiresSoon)}
+          </ItemTitle>
+          {description && <ItemDescription>{description}</ItemDescription>}
+        </ItemContent>
+        <ItemActions className="gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <a
+              href="https://www.activepieces.com/pricing"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('View Plans')}
+              <ExternalLink className="size-3" />
+            </a>
+          </Button>
+          <AnimatedIconButton
+            icon={ArrowUpIcon}
+            iconSize={16}
             variant="default"
+            size="sm"
             onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
           >
-            <Zap className="w-4 h-4" />
             {platform.plan.licenseKey
               ? t('Update License')
               : t('Activate License')}
-          </Button>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-6 p-6">
-        {platform.plan.licenseKey && (
-          <div className="flex items-center justify-between p-4 bg-accent/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <div>
-                <p className="text-sm font-medium">{t('License Active')}</p>
-                {!isNil(platform.plan.licenseExpiresAt) && (
-                  <p className="text-xs text-muted-foreground">
-                    {t('Valid until')}{' '}
-                    {formatUtils.formatDateOnly(
-                      dayjs(platform.plan.licenseExpiresAt).toDate(),
-                    )}
-                  </p>
-                )}
-              </div>
-            </div>
-            {getStatusBadge()}
+          </AnimatedIconButton>
+        </ItemActions>
+        <ItemFooter>
+          <div className="flex flex-col gap-2 w-full pt-2">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              {t('Enabled Features')}
+            </h4>
+            <FeatureStatus platform={platform} />
           </div>
-        )}
-        <div>
-          <h3 className="text-base font-semibold mb-4">
-            {t('Enabled Features')}
-          </h3>
-          <FeatureStatus platform={platform} />
-        </div>
-      </CardContent>
+        </ItemFooter>
+      </Item>
+
       <ActivateLicenseDialog
         isOpen={isActivateLicenseKeyDialogOpen}
         onOpenChange={setIsActivateLicenseKeyDialogOpen}
       />
-    </Card>
+    </>
   );
 };
+
+function buildLicenseDescription(
+  platform: PlatformWithoutSensitiveData,
+  expired: boolean,
+) {
+  if (expired) {
+    return t('License expired');
+  }
+  if (!isNil(platform.plan.licenseExpiresAt)) {
+    return t('Valid until {date}', {
+      date: formatUtils.formatDateOnly(
+        dayjs(platform.plan.licenseExpiresAt).toDate(),
+      ),
+    });
+  }
+  return null;
+}
+
+function getStatusBadge(expired: boolean, expiresSoon: boolean) {
+  if (expired) {
+    return (
+      <StatusIconWithText
+        text={t('Expired')}
+        icon={AlertTriangle}
+        variant="error"
+      />
+    );
+  }
+  if (expiresSoon) {
+    return (
+      <StatusIconWithText
+        text={t('Expires soon')}
+        icon={AlertTriangle}
+        variant="default"
+      />
+    );
+  }
+  return (
+    <StatusIconWithText text={t('Active')} icon={Check} variant="success" />
+  );
+}
 
 LicenseKey.displayName = 'LicenseKeys';

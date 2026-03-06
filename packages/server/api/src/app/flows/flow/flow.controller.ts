@@ -21,12 +21,10 @@ import { ActivepiecesError, ApId, ApplicationEventName,
     SERVICE_KEY_SECURITY_OPENAPI,
     SharedTemplate,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
@@ -40,7 +38,7 @@ import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const flowController: FastifyPluginAsyncTypebox = async (app) => {
+export const flowController: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
@@ -74,7 +72,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             description: 'Apply an operation to a flow',
             security: [SERVICE_KEY_SECURITY_OPENAPI],
             body: FlowOperationRequest,
-            params: Type.Object({
+            params: z.object({
                 id: ApId,
             }),
         },
@@ -97,7 +95,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             }
         },
     }, async (request) => {
-        const userId = await authenticationUtils.extractUserIdFromRequest(request)
+        const userId = await authenticationUtils(request.log).extractUserIdFromRequest(request)
         await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
@@ -154,7 +152,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
-        const userMetadata = request.principal.type === PrincipalType.USER ? await userService.getMetaInformation({ id: request.principal.id }) : null
+        const userMetadata = request.principal.type === PrincipalType.USER ? await userService(request.log).getMetaInformation({ id: request.principal.id }) : null
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
             userMetadata,
@@ -324,7 +322,7 @@ const GetFlowTemplateRequestOptions = {
         tags: ['flows'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Export flow as template',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         querystring: GetFlowTemplateRequestQuery,
@@ -347,7 +345,7 @@ const GetFlowRequestOptions = {
         tags: ['flows'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get a flow by id',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         querystring: GetFlowQueryParamsRequest,
@@ -370,11 +368,11 @@ const DeleteFlowRequestOptions = {
         tags: ['flows'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete a flow',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
