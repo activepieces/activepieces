@@ -1,5 +1,5 @@
 import { Template, TemplateType } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
@@ -27,7 +27,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces';
-import { templatesApi } from '@/features/templates';
+import { templatesApi, templatesMutations } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { CreateTemplateDialog } from './create-template-dialog';
@@ -49,10 +49,7 @@ const PlatformTemplatesPage = () => {
 
   const [selectedRows, setSelectedRows] = useState<Template[]>([]);
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => templatesApi.delete(id)));
-    },
+  const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
     onSuccess: () => {
       refetch();
       toast.success(t('Templates deleted successfully'), {

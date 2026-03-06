@@ -1,14 +1,14 @@
 import { securityAccess } from '@activepieces/server-common'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { flagService } from './flag.service'
 import { flagHooks } from './flags.hooks'
 
-export const flagModule: FastifyPluginAsyncTypebox = async (app) => {
+export const flagModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(flagController, { prefix: '/v1/flags' })
 }
 
-export const flagController: FastifyPluginAsyncTypebox = async (app) => {
+export const flagController: FastifyPluginAsyncZod = async (app) => {
     app.get(
         '/',
         {

@@ -6,7 +6,7 @@ import {
   isFlowRunStateTerminal,
   Permission,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   CheckIcon,
@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
+import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -168,28 +169,7 @@ export const RunsTable = () => {
     [flows],
   );
 
-  const retryRuns = useMutation({
-    mutationFn: (retryParams: {
-      runIds: string[];
-      strategy: FlowRetryStrategy;
-    }) => {
-      const status = searchParams.getAll('status') as FlowRunStatus[];
-      const flowId = searchParams.getAll('flowId');
-      const createdAfter = searchParams.get('createdAfter') || undefined;
-      const createdBefore = searchParams.get('createdBefore') || undefined;
-      const failedStepName = searchParams.get('failedStepName') || undefined;
-      return flowRunsApi.bulkRetry({
-        projectId: authenticationSession.getProjectId()!,
-        flowRunIds: selectedAll ? undefined : retryParams.runIds,
-        strategy: retryParams.strategy,
-        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
-        status,
-        flowId,
-        createdAfter,
-        createdBefore,
-        failedStepName,
-      });
-    },
+  const retryRuns = flowRunMutations.useBulkRetryRuns({
     onSuccess: (runs) => {
       const runsIds = runs.map((run) => run.id);
       setRetriedRunsIds(runsIds);
@@ -205,30 +185,7 @@ export const RunsTable = () => {
     },
   });
 
-  const cancelRuns = useMutation({
-    mutationFn: (cancelParams: { runIds: string[] }) => {
-      const status = searchParams.getAll('status') as FlowRunStatus[];
-      const flowId = searchParams.getAll('flowId');
-      const createdAfter = searchParams.get('createdAfter') || undefined;
-      const createdBefore = searchParams.get('createdBefore') || undefined;
-      return flowRunsApi.bulkCancel({
-        projectId: authenticationSession.getProjectId()!,
-        flowRunIds: selectedAll ? undefined : cancelParams.runIds,
-        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
-        status:
-          status.length > 0
-            ? (status.filter(
-                (s) => s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
-              ) as (
-                | typeof FlowRunStatus.PAUSED
-                | typeof FlowRunStatus.QUEUED
-              )[])
-            : undefined,
-        flowId,
-        createdAfter,
-        createdBefore,
-      });
-    },
+  const cancelRuns = flowRunMutations.useBulkCancelRuns({
     onSuccess: () => {
       refetch();
       setSelectedRows([]);
@@ -237,24 +194,7 @@ export const RunsTable = () => {
     },
   });
 
-  const archiveRuns = useMutation({
-    mutationFn: (retryParams: { runIds: string[] }) => {
-      const status = searchParams.getAll('status') as FlowRunStatus[];
-      const flowId = searchParams.getAll('flowId');
-      const createdAfter = searchParams.get('createdAfter') || undefined;
-      const createdBefore = searchParams.get('createdBefore') || undefined;
-      const failedStepName = searchParams.get('failedStepName') || undefined;
-      return flowRunsApi.bulkArchive({
-        projectId: authenticationSession.getProjectId()!,
-        flowRunIds: selectedAll ? undefined : retryParams.runIds,
-        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
-        status,
-        flowId,
-        createdAfter,
-        createdBefore,
-        failedStepName,
-      });
-    },
+  const archiveRuns = flowRunMutations.useBulkArchiveRuns({
     onSuccess: () => {
       refetch();
     },
@@ -275,8 +215,23 @@ export const RunsTable = () => {
                 size="sm"
                 loading={archiveRuns.isPending}
                 onClick={() => {
+                  const runIds = selectedRows.map((row) => row.id);
                   archiveRuns.mutate({
-                    runIds: selectedRows.map((row) => row.id),
+                    projectId,
+                    flowRunIds: selectedAll ? undefined : runIds,
+                    excludeFlowRunIds: selectedAll
+                      ? Array.from(excludedRows)
+                      : undefined,
+                    status:
+                      searchParams.getAll('status').length > 0
+                        ? (searchParams.getAll('status') as FlowRunStatus[])
+                        : undefined,
+                    flowId: searchParams.getAll('flowId'),
+                    createdAfter: searchParams.get('createdAfter') || undefined,
+                    createdBefore:
+                      searchParams.get('createdBefore') || undefined,
+                    failedStepName:
+                      searchParams.get('failedStepName') || undefined,
                   });
                   resetSelection();
                   setSelectedRows([]);
@@ -326,8 +281,32 @@ export const RunsTable = () => {
                     size="sm"
                     loading={cancelRuns.isPending}
                     onClick={() => {
+                      const runIds = selectedRows.map((row) => row.id);
+                      const status = searchParams.getAll(
+                        'status',
+                      ) as FlowRunStatus[];
                       cancelRuns.mutate({
-                        runIds: selectedRows.map((row) => row.id),
+                        projectId,
+                        flowRunIds: selectedAll ? undefined : runIds,
+                        excludeFlowRunIds: selectedAll
+                          ? Array.from(excludedRows)
+                          : undefined,
+                        status:
+                          status.length > 0
+                            ? (status.filter(
+                                (s) =>
+                                  s === FlowRunStatus.PAUSED ||
+                                  s === FlowRunStatus.QUEUED,
+                              ) as (
+                                | typeof FlowRunStatus.PAUSED
+                                | typeof FlowRunStatus.QUEUED
+                              )[])
+                            : undefined,
+                        flowId: searchParams.getAll('flowId'),
+                        createdAfter:
+                          searchParams.get('createdAfter') || undefined,
+                        createdBefore:
+                          searchParams.get('createdBefore') || undefined,
                       });
                       resetSelection();
                     }}
@@ -392,9 +371,24 @@ export const RunsTable = () => {
                       <DropdownMenuItem
                         disabled={!userHasPermissionToRetryRun}
                         onClick={() => {
+                          const runIds = selectedRows.map((row) => row.id);
                           retryRuns.mutate({
-                            runIds: selectedRows.map((row) => row.id),
+                            projectId,
+                            flowRunIds: selectedAll ? undefined : runIds,
                             strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+                            excludeFlowRunIds: selectedAll
+                              ? Array.from(excludedRows)
+                              : undefined,
+                            status: searchParams.getAll(
+                              'status',
+                            ) as FlowRunStatus[],
+                            flowId: searchParams.getAll('flowId'),
+                            createdAfter:
+                              searchParams.get('createdAfter') || undefined,
+                            createdBefore:
+                              searchParams.get('createdBefore') || undefined,
+                            failedStepName:
+                              searchParams.get('failedStepName') || undefined,
                           });
                           resetSelection();
                           setSelectedRows([]);
@@ -418,9 +412,24 @@ export const RunsTable = () => {
                         <DropdownMenuItem
                           disabled={!userHasPermissionToRetryRun || !allFailed}
                           onClick={() => {
+                            const runIds = selectedRows.map((row) => row.id);
                             retryRuns.mutate({
-                              runIds: selectedRows.map((row) => row.id),
+                              projectId,
+                              flowRunIds: selectedAll ? undefined : runIds,
                               strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                              excludeFlowRunIds: selectedAll
+                                ? Array.from(excludedRows)
+                                : undefined,
+                              status: searchParams.getAll(
+                                'status',
+                              ) as FlowRunStatus[],
+                              flowId: searchParams.getAll('flowId'),
+                              createdAfter:
+                                searchParams.get('createdAfter') || undefined,
+                              createdBefore:
+                                searchParams.get('createdBefore') || undefined,
+                              failedStepName:
+                                searchParams.get('failedStepName') || undefined,
                             });
                             resetSelection();
                             setSelectedRows([]);

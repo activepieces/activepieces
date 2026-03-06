@@ -112,4 +112,10 @@ jobs:
               merge_method: 'squash'
             });
 
+            await github.rest.git.deleteRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `heads/${branchName}`
+            });
+
 

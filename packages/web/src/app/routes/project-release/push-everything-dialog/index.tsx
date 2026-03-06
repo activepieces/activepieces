@@ -2,15 +2,14 @@ import {
   GitBranchType,
   GitPushOperationType,
   PushEverythingGitRepoRequest,
-  PushGitRepoRequest,
   assertNotNullOrUndefined,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
 import React from 'react';
-import { Resolver, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -51,18 +50,16 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
     authenticationSession.getProjectId()!,
     platform.plan.environmentsEnabled,
   );
-  const form = useForm<PushGitRepoRequest>({
+  const form = useForm<PushEverythingGitRepoRequest>({
     defaultValues: {
       type: GitPushOperationType.PUSH_EVERYTHING,
       commitMessage: '',
     },
-    resolver: typeboxResolver(
-      PushEverythingGitRepoRequest,
-    ) as Resolver<PushGitRepoRequest>,
+    resolver: zodResolver(PushEverythingGitRepoRequest),
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (request: PushGitRepoRequest) => {
+    mutationFn: async (request: PushEverythingGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
       await gitSyncApi.push(gitSync.id, {
         type: GitPushOperationType.PUSH_EVERYTHING,

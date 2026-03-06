@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -116,6 +117,13 @@ export const EventDestinationDialog = ({
               ? t('Update Event Destination')
               : t('Create Event Destination')}
           </DialogTitle>
+          <DialogDescription>
+            {destination
+              ? t('Update the webhook endpoint and event subscriptions.')
+              : t(
+                  'Configure a webhook endpoint to receive platform event notifications.',
+                )}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -204,10 +212,8 @@ export const EventDestinationDialog = ({
               >
                 {isTesting ? t('Testing...') : t('Test Destination')}
               </Button>
-              <Button type="submit" disabled={isCreating}>
-                {isCreating
-                  ? t('...')
-                  : destination
+              <Button type="submit" disabled={isCreating} loading={isCreating}>
+                {destination
                   ? t('Update Destination')
                   : t('Create Destination')}
               </Button>

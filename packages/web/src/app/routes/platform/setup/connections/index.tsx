@@ -245,11 +245,12 @@ const GlobalConnectionsTable = () => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <ConfirmationDeleteDialog
-                title={t('Confirm Deletion')}
+                title={t('Delete Connections')}
                 message={t(
-                  'Are you sure you want to delete the selected connections? This action cannot be undone.',
+                  'The selected connections will be permanently deleted. Flows using them will stop working.',
                 )}
                 entityName="connections"
+                buttonText={t('Delete')}
                 mutationFn={async () => {
                   try {
                     await bulkDeleteGlobalConnections.mutateAsync(

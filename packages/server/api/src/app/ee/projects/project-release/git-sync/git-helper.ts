@@ -67,7 +67,7 @@ async function createGitRepoAndReturnPaths(
     )
     await fs.mkdir(stateFolderPath, { recursive: true })
     const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
-    await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey })
+    await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey ?? '' })
     const git = await initGitRepo(keyPath, gitRepo.remoteUrl, tmpFolder, gitRepo.branch)
     await git.pull('origin', gitRepo.branch)
 

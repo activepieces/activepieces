@@ -1,60 +1,60 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { ApId } from '../../core/common/id-generator'
 import { FlowRunStatus } from './execution/flow-execution'
 import { FlowRetryStrategy } from './flow-run'
 
-export const TestFlowRunRequestBody = Type.Object({
+export const TestFlowRunRequestBody = z.object({
     flowVersionId: ApId,
 })
 
-export type TestFlowRunRequestBody = Static<typeof TestFlowRunRequestBody>
+export type TestFlowRunRequestBody = z.infer<typeof TestFlowRunRequestBody>
 
-export const RetryFlowRequestBody = Type.Object({
-    strategy: Type.Enum(FlowRetryStrategy),
+export const RetryFlowRequestBody = z.object({
+    strategy: z.nativeEnum(FlowRetryStrategy),
     projectId: ApId,
 })
 
-export type RetryFlowRequestBody = Static<typeof RetryFlowRequestBody>
+export type RetryFlowRequestBody = z.infer<typeof RetryFlowRequestBody>
 
 
-export const BulkActionOnRunsRequestBody = Type.Object({
+export const BulkActionOnRunsRequestBody = z.object({
     projectId: ApId,
-    flowRunIds: Type.Optional(Type.Array(ApId)),
-    excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
-    strategy: Type.Enum(FlowRetryStrategy),
-    status: Type.Optional(Type.Array(Type.Enum(FlowRunStatus))),
-    flowId: Type.Optional(Type.Array(ApId)),
-    createdAfter: Type.Optional(Type.String()),
-    createdBefore: Type.Optional(Type.String()),
-    failedStepName: Type.Optional(Type.String()),
+    flowRunIds: z.array(ApId).optional(),
+    excludeFlowRunIds: z.array(ApId).optional(),
+    strategy: z.nativeEnum(FlowRetryStrategy),
+    status: z.array(z.nativeEnum(FlowRunStatus)).optional(),
+    flowId: z.array(ApId).optional(),
+    createdAfter: z.string().optional(),
+    createdBefore: z.string().optional(),
+    failedStepName: z.string().optional(),
 })
 
-export type BulkActionOnRunsRequestBody = Static<typeof BulkActionOnRunsRequestBody>
+export type BulkActionOnRunsRequestBody = z.infer<typeof BulkActionOnRunsRequestBody>
 
-export const BulkCancelFlowRequestBody = Type.Object({
+export const BulkCancelFlowRequestBody = z.object({
     projectId: ApId,
-    flowRunIds: Type.Optional(Type.Array(ApId)),
-    excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
-    status: Type.Optional(Type.Array(Type.Union([
-        Type.Literal(FlowRunStatus.PAUSED),
-        Type.Literal(FlowRunStatus.QUEUED),
-    ]))),
-    flowId: Type.Optional(Type.Array(ApId)),
-    createdAfter: Type.Optional(Type.String()),
-    createdBefore: Type.Optional(Type.String()),
+    flowRunIds: z.array(ApId).optional(),
+    excludeFlowRunIds: z.array(ApId).optional(),
+    status: z.array(z.union([
+        z.literal(FlowRunStatus.PAUSED),
+        z.literal(FlowRunStatus.QUEUED),
+    ])).optional(),
+    flowId: z.array(ApId).optional(),
+    createdAfter: z.string().optional(),
+    createdBefore: z.string().optional(),
 })
 
-export type BulkCancelFlowRequestBody = Static<typeof BulkCancelFlowRequestBody>
+export type BulkCancelFlowRequestBody = z.infer<typeof BulkCancelFlowRequestBody>
 
-export const BulkArchiveActionOnRunsRequestBody = Type.Object({
+export const BulkArchiveActionOnRunsRequestBody = z.object({
     projectId: ApId,
-    flowRunIds: Type.Optional(Type.Array(ApId)),
-    excludeFlowRunIds: Type.Optional(Type.Array(ApId)),
-    status: Type.Optional(Type.Array(Type.Enum(FlowRunStatus))),
-    flowId: Type.Optional(Type.Array(ApId)),
-    createdAfter: Type.Optional(Type.String()),
-    createdBefore: Type.Optional(Type.String()),
-    failedStepName: Type.Optional(Type.String()),
+    flowRunIds: z.array(ApId).optional(),
+    excludeFlowRunIds: z.array(ApId).optional(),
+    status: z.array(z.nativeEnum(FlowRunStatus)).optional(),
+    flowId: z.array(ApId).optional(),
+    createdAfter: z.string().optional(),
+    createdBefore: z.string().optional(),
+    failedStepName: z.string().optional(),
 })
 
-export type BulkArchiveActionOnRunsRequestBody = Static<typeof BulkArchiveActionOnRunsRequestBody>
+export type BulkArchiveActionOnRunsRequestBody = z.infer<typeof BulkArchiveActionOnRunsRequestBody>

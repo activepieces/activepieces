@@ -72,11 +72,12 @@ export const AutomationsSelectionBar = ({
             <ConfirmationDeleteDialog
               title={t('Delete Selected Items')}
               message={t(
-                'Are you sure you want to delete {count} selected items? This action cannot be undone.',
+                'This will permanently delete {count} selected items. This action cannot be undone.',
                 { count: selectedCount },
               )}
               mutationFn={async () => onDeleteClick()}
               entityName={t('items')}
+              buttonText={t('Delete')}
             >
               <Button
                 variant="ghost"

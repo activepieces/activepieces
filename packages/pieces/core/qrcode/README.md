@@ -1,7 +1,5 @@
 # pieces-qrcode
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-qrcode` to build the library.
+Run `turbo run build --filter=@activepieces/piece-qrcode` to build the library.

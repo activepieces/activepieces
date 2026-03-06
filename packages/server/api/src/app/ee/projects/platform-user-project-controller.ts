@@ -4,19 +4,17 @@ import {
     PrincipalType,
     ProjectWithLimitsWithPlatform,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import Paginator from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
 import { userService } from '../../user/user-service'
 import { platformProjectService } from './platform-project-service'
 
-export const usersProjectController: FastifyPluginAsyncTypebox = async (
+export const usersProjectController: FastifyPluginAsyncZod = async (
     fastify,
 ) => {
 
@@ -60,7 +58,7 @@ const ListProjectsForPlatforms = {
     },
     schema: {
         response: {
-            [StatusCodes.OK]: Type.Array(ProjectWithLimitsWithPlatform),
+            [StatusCodes.OK]: z.array(ProjectWithLimitsWithPlatform),
         },
     },
 }

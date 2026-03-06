@@ -1,14 +1,14 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../common'
 
-export const UserBadge = Type.Object({
+export const UserBadge = z.object({
     ...BaseModelSchema,
-    name: Type.String(),
-    userId: Type.String(),
+    name: z.string(),
+    userId: z.string(),
 
 })
 
-export type UserBadge = Static<typeof UserBadge>
+export type UserBadge = z.infer<typeof UserBadge>
 
 export const BADGES = {
     'first-build': {

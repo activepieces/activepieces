@@ -336,7 +336,7 @@ function AppConnectionsPage() {
                 <ConfirmationDeleteDialog
                   title={t('Delete Connections')}
                   message={t(
-                    'Are you sure you want to delete these connections? This action cannot be undone.',
+                    'The selected connections will be permanently deleted. Flows using them will stop working.',
                   )}
                   warning={
                     <>
@@ -352,6 +352,7 @@ function AppConnectionsPage() {
                     setSelectedRows([]);
                   }}
                   entityName={t('connection')}
+                  buttonText={t('Delete')}
                   open={showDeleteDialog}
                   onOpenChange={setShowDeleteDialog}
                   showToast

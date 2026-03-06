@@ -1,8 +1,8 @@
 import { securityAccess } from '@activepieces/server-common'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { projectService } from './project-service'
 
-export const projectWorkerController: FastifyPluginAsyncTypebox = async (
+export const projectWorkerController: FastifyPluginAsyncZod = async (
     app,
 ) => {
     app.get('/', GetWorkerProjectRequest, async (req) => {

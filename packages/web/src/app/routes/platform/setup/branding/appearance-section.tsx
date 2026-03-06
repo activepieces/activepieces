@@ -1,10 +1,10 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { ColorPicker } from '@/components/custom/color-picker';
@@ -19,15 +19,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-const FromSchema = Type.Object({
-  name: Type.String(),
-  logoUrl: Type.String(),
-  iconUrl: Type.String(),
-  faviconUrl: Type.String(),
-  color: Type.String(),
+const FromSchema = z.object({
+  name: z.string(),
+  logoUrl: z.string(),
+  iconUrl: z.string(),
+  faviconUrl: z.string(),
+  color: z.string(),
 });
 
-type FromSchema = Static<typeof FromSchema>;
+type FromSchema = z.infer<typeof FromSchema>;
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -40,7 +40,7 @@ export const AppearanceSection = () => {
       faviconUrl: platform?.favIconUrl,
       color: platform?.primaryColor,
     },
-    resolver: typeboxResolver(FromSchema),
+    resolver: zodResolver(FromSchema),
   });
   const logoRef = useRef<HTMLInputElement>(null);
   const iconRef = useRef<HTMLInputElement>(null);

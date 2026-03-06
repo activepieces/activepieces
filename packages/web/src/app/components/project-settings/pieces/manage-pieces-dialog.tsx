@@ -1,9 +1,9 @@
 import { PiecesFilterType } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -41,9 +41,9 @@ export const ManagePiecesDialog = React.memo(
     const form = useForm<{
       pieces: string[];
     }>({
-      resolver: typeboxResolver(
-        Type.Object({
-          pieces: Type.Array(Type.String()),
+      resolver: zodResolver(
+        z.object({
+          pieces: z.array(z.string()),
         }),
       ),
       defaultValues: {
