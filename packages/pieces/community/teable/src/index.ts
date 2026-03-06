@@ -8,6 +8,7 @@ import { findRecordsAction } from './lib/actions/find-records';
 import { findRecordAction} from './lib/actions/find-record';
 import {deleteRecordAction } from './lib/actions/delete-record';
 import { updateRecordAction } from './lib/actions/update-record';
+import { uploadAttachmentAction } from './lib/actions/upload-attachment';
 import { TeableAuth } from './lib/auth';
 import { TEABLE_CLOUD_URL } from './lib/common/constants';
 
@@ -27,6 +28,7 @@ export const teable = createPiece({
     findRecordAction,
     updateRecordAction,
     deleteRecordAction,
+    uploadAttachmentAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         return `${auth?.props.baseUrl || TEABLE_CLOUD_URL}/api`;
