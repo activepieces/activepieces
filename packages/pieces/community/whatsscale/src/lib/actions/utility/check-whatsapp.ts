@@ -13,8 +13,7 @@ export const checkWhatsappAction = createAction({
     session: whatsscaleProps.session,
     phone: Property.ShortText({
       displayName: 'Phone Number',
-      description:
-        'Phone number in any format: +31 6 12345678 or 31612345678. Proxy normalizes automatically.',
+      description: 'Phone number with country code (e.g. +31612345678 or 31612345678). Any format accepted.',
       required: true,
     }),
   },

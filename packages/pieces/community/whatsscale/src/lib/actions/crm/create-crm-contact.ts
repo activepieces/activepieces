@@ -16,12 +16,12 @@ export const createCrmContactAction = createAction({
     }),
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'Contact display name',
+      description: 'Full name of the contact (e.g. John Smith)',
       required: false,
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'Comma-separated. Proxy lowercases. e.g. "vip, customer"',
+      description: 'Comma-separated tags (e.g. vip, customer, lead). Tags are automatically lowercased.',
       required: false,
     }),
   },

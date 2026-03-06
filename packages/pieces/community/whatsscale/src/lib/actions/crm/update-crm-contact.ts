@@ -13,12 +13,12 @@ export const updateCrmContactAction = createAction({
     contactId: whatsscaleProps.crmContact,
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'Leave this field completely removed from your flow to keep the value unchanged. Send "" to clear.',
+      description: 'Leave empty to keep the current name unchanged. Set to a blank value to clear it.',
       required: false,
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'REPLACES all tags. Comma-separated. Leave this field completely removed from your flow to keep the value unchanged.',
+      description: 'Replaces all existing tags. Comma-separated (e.g. vip, lead). Leave empty to keep current tags unchanged.',
       required: false,
     }),
   },

@@ -45,7 +45,7 @@ export function buildRecipientBody(
 
     case RecipientType.MANUAL: {
       const suffix = chatType === ChatType.CONTACT ? '@c.us' : '@g.us';
-      return { ...base, chatId: recipientValue + suffix };
+      return { ...base, chatId: recipientValue.includes('@') ? recipientValue : recipientValue + suffix };
     }
 
     case RecipientType.CRM_CONTACT:

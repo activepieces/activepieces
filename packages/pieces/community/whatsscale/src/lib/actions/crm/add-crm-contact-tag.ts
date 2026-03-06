@@ -13,7 +13,7 @@ export const addCrmContactTagAction = createAction({
     contactId: whatsscaleProps.crmContact,
     tag: Property.ShortText({
       displayName: 'Tag',
-      description: 'Free text — user may type a new tag. Lowercased by proxy.',
+      description: 'Tag to add to the contact (e.g. vip). Tags are automatically lowercased.',
       required: true,
     }),
   },

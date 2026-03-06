@@ -1,4 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { whatsscaleAuth } from './lib/auth';
 
 // Sprint 2: Text actions
@@ -68,9 +69,11 @@ import { watchSpecificChannelMessagesTrigger } from './lib/triggers/watch-specif
 export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
-  minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://whatsscale.com/logo.png',
-  authors: ['mahidhark'],
+  minimumSupportedRelease: '0.36.0',
+  logoUrl: 'https://whatsscale.com/whatsscale-icon-only.svg',
+  authors: ['whatsscale'],
+  description: 'Send WhatsApp messages, manage contacts, and automate conversations via WAHA',
+  categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
   actions: [
     // Text actions
     sendTextManualAction,

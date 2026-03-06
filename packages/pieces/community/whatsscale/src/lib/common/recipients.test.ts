@@ -74,4 +74,24 @@ describe('buildRecipientBody', () => {
       buildRecipientBody('unknown' as RecipientType, session, 'anything'),
     ).toThrow('Unknown recipient type: unknown');
   });
+
+  it('MANUAL + group: does NOT double-append @g.us if value already has suffix', () => {
+    const result = buildRecipientBody(
+      RecipientType.MANUAL,
+      session,
+      '120363404919719956@g.us',
+      ChatType.GROUP,
+    );
+    expect(result).toEqual({ session, chatId: '120363404919719956@g.us' });
+  });
+
+  it('MANUAL + contact: does NOT double-append @c.us if value already has suffix', () => {
+    const result = buildRecipientBody(
+      RecipientType.MANUAL,
+      session,
+      '31649931832@c.us',
+      ChatType.CONTACT,
+    );
+    expect(result).toEqual({ session, chatId: '31649931832@c.us' });
+  });
 });
