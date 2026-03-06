@@ -81,7 +81,9 @@ const StepSettingsContainer = () => {
       keepDirtyValues: true,
     },
     resolver: async (values, context, options) => {
-      const result = await (zodResolver(formSchema) as unknown as Resolver<FlowAction | FlowTrigger>)(values, context, options);
+      const result = await (
+        zodResolver(formSchema) as unknown as Resolver<FlowAction | FlowTrigger>
+      )(values, context, options);
 
       const cleanedNewValues = formUtils.removeUndefinedFromInput(values);
       const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
