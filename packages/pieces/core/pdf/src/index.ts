@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { extractText } from './lib/actions/extract-text';
 import { convertToImage } from './lib/actions/convert-to-image';
 import { textToPdf } from './lib/actions/text-to-pdf';
@@ -21,6 +22,7 @@ export const PDF = createPiece({
     'danielpoonwj',
     'bertrandong',
   ],
+  categories: [PieceCategory.CORE],
   actions: [
     extractText,
     convertToImage,
