@@ -28,7 +28,7 @@ export const TeableAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-        try {
+    try {
       const client = makeClient(
         auth as PiecePropValueSchema<typeof TeableAuth>
       );
@@ -42,9 +42,5 @@ export const TeableAuth = PieceAuth.CustomAuth({
         error: 'Invalid Token.',
       };
     }
-    // if (auth.token) {
-    //   return { valid: true };
-    // }
-    // return { valid: false, error: 'Personal Access Token is required.' };
   },
 });

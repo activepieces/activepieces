@@ -1,7 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
-  PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createRecordAction } from './lib/actions/create-record';
@@ -10,6 +9,7 @@ import { findRecordAction} from './lib/actions/find-record';
 import {deleteRecordAction } from './lib/actions/delete-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { TeableAuth } from './lib/auth';
+import { TEABLE_CLOUD_URL } from './lib/common/constants';
 
 export const teable = createPiece({
   displayName: 'Teable',
@@ -29,7 +29,7 @@ export const teable = createPiece({
     deleteRecordAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return (auth?.props.baseUrl?? 'https://app.teable.ai.');
+        return `${auth?.props.baseUrl || TEABLE_CLOUD_URL}/api`;
       },
       auth: TeableAuth,
      authMapping: async (auth) => ({
