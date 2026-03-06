@@ -20,15 +20,50 @@ export const findRecordsAction = createAction({
         'A filter expression for the records. Use the visual query builder at https://app.teable.io/developer/tool/query-builder to build one.',
       required: false,
     }),
+    cellFormat: Property.StaticDropdown({
+      displayName: 'Cell Format',
+      description: 'The format of the cell values in the response.',
+      required: false,
+      defaultValue: 'json',
+      options: {
+        options: [
+          { label: 'JSON', value: 'json' },
+          { label: 'Text', value: 'text' },
+        ],
+      },
+    }),
+    take: Property.Number({
+      displayName: 'Take',
+      description: 'The record count you want to take, maximum is 1000.',
+      required: false,
+      defaultValue: 100,
+    }),
+    skip: Property.Number({
+      displayName: 'Skip',
+      description: 'The records count you want to skip.',
+      required: false,
+      defaultValue: 0,
+    }),
+    selectedRecordIds: Property.Array({
+      displayName: 'Selected Record IDs',
+      description: 'Filter selected records by record ids.',
+      required: false,
+    }),
   },
   async run(context) {
-    const { table_id,  filter } = context.propsValue;
+    const { table_id, filter, cellFormat, take, skip, selectedRecordIds } = context.propsValue;
 
     const client = makeClient(context.auth.props);
 
     return await client.listRecords(
       table_id,
-      prepareQuery({filter })
+      prepareQuery({
+        filter,
+        cellFormat,
+        take,
+        skip,
+        selectedRecordIds,
+      })
     );
   },
 });
