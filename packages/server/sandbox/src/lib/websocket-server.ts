@@ -101,28 +101,33 @@ function handleConnection(
     }
 
     socket.on('command', (msg: { event: EngineSocketEvent, payload: unknown }, callback?: () => void) => {
-        const { event, payload } = msg
-        log.debug({ sandboxId, event }, '[WebSocket] Received message from sandbox')
-        const listener = listeners[sandboxId]
-        if (isNil(listener)) {
-            const socketExists = !isNil(sockets[sandboxId])
-            const socketConnected = sockets[sandboxId]?.connected ?? false
-            log.error({
-                sandboxId,
-                event,
-                socketExists,
-                socketConnected,
-                socketId: socket.id,
-                hasCallback: !isNil(callback),
-            }, '[WebSocket] Received message from sandbox after listener was removed')
-            return
+        try {
+            const { event, payload } = msg
+            log.debug({ sandboxId, event }, '[WebSocket] Received message from sandbox')
+            const listener = listeners[sandboxId]
+            if (isNil(listener)) {
+                const socketExists = !isNil(sockets[sandboxId])
+                const socketConnected = sockets[sandboxId]?.connected ?? false
+                log.error({
+                    sandboxId,
+                    event,
+                    socketExists,
+                    socketConnected,
+                    socketId: socket.id,
+                    hasCallback: !isNil(callback),
+                }, '[WebSocket] Received message from sandbox after listener was removed')
+                return
+            }
+            const promise = listener(event, payload)
+            promise.then(() => {
+                callback?.()
+            }).catch((error: unknown) => {
+                log.error({ error: String(error) }, '[WebSocket] Error in listener callback')
+            })
         }
-        const promise = listener(event, payload)
-        promise.then(() => {
-            callback?.()
-        }).catch((error: unknown) => {
-            log.error({ error: String(error) }, '[WebSocket] Error in listener callback')
-        })
+        catch (error: unknown) {
+            log.error({ error: String(error), sandboxId }, '[WebSocket] Synchronous error in command handler')
+        }
     })
 
     socket.on('disconnect', (reason) => {
