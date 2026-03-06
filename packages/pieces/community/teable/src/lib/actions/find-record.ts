@@ -19,17 +19,28 @@ export const findRecordAction = createAction({
       description: 'The ID of the record to retrieve (e.g. recXXXXXXX).',
       required: true,
     }),
-
+    cellFormat: Property.StaticDropdown({
+      displayName: 'Cell Format',
+      description: 'The format of the cell values in the response.',
+      required: false,
+      defaultValue: 'json',
+      options: {
+        options: [
+          { label: 'JSON', value: 'json' },
+          { label: 'Text', value: 'text' },
+        ],
+      },
+    }),
   },
   async run(context) {
-    const { table_id, recordId, } = context.propsValue;
+    const { table_id, recordId, cellFormat } = context.propsValue;
 
     const client = makeClient(context.auth.props);
 
     return await client.getRecord(
       table_id,
       recordId,
-      prepareQuery()
+      prepareQuery({ cellFormat })
     );
   },
 });
