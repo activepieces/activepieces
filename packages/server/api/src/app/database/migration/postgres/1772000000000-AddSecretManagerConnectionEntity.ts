@@ -16,8 +16,7 @@ export class AddSecretManagerConnectionEntity1772000000000 implements MigrationI
         await queryRunner.query('ALTER TABLE "secret_manager_connection" ADD "name" character varying NOT NULL DEFAULT \'\'')
         // Backfill name from providerId for existing rows
         await queryRunner.query('UPDATE "secret_manager_connection" SET "name" = "providerId" WHERE "name" = \'\'')
-        // Drop defaults so new rows must supply values explicitly
-        await queryRunner.query('ALTER TABLE "secret_manager_connection" ALTER COLUMN "scope" DROP DEFAULT')
+        // Drop default on name so new rows must supply it explicitly; keep default on scope
         await queryRunner.query('ALTER TABLE "secret_manager_connection" ALTER COLUMN "name" DROP DEFAULT')
         // Rename FK constraint
         await queryRunner.query('ALTER TABLE "secret_manager_connection" RENAME CONSTRAINT "fk_secret_manager_platform_id" TO "fk_secret_manager_connection_platform_id"')
@@ -25,7 +24,7 @@ export class AddSecretManagerConnectionEntity1772000000000 implements MigrationI
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('ALTER TABLE "secret_manager_connection" RENAME CONSTRAINT "fk_secret_manager_connection_platform_id" TO "fk_secret_manager_platform_id"')
-        await queryRunner.query('ALTER TABLE "secret_manager_connection" ALTER COLUMN "scope" SET DEFAULT \'PLATFORM\'')
+        await queryRunner.query('ALTER TABLE "secret_manager_connection" ALTER COLUMN "scope" DROP DEFAULT')
         await queryRunner.query('ALTER TABLE "secret_manager_connection" ALTER COLUMN "name" SET DEFAULT \'\'')
         await queryRunner.query('ALTER TABLE "secret_manager_connection" DROP COLUMN "name"')
         await queryRunner.query('ALTER TABLE "secret_manager_connection" DROP COLUMN "projectIds"')
