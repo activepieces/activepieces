@@ -4818,24 +4818,6 @@
         "zod": "4.3.6",
       },
     },
-    "packages/pieces/community/pdf": {
-      "name": "@activepieces/piece-pdf",
-      "version": "0.3.4",
-      "dependencies": {
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "jimp": "^0.22.12",
-        "nanoid": "3.3.8",
-        "pdf-lib": "1.17.1",
-        "pdf-parse": "1.1.1",
-        "tslib": "2.6.2",
-      },
-      "devDependencies": {
-        "@types/pdf-parse": "1.1.4",
-        "vitest": "3.0.8",
-      },
-    },
     "packages/pieces/community/pdf-co": {
       "name": "@activepieces/piece-pdf-co",
       "version": "0.1.3",
@@ -7142,6 +7124,24 @@
         "vitest": "3.0.8",
       },
     },
+    "packages/pieces/core/pdf": {
+      "name": "@activepieces/piece-pdf",
+      "version": "0.3.5",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "jimp": "^0.22.12",
+        "nanoid": "3.3.8",
+        "pdf-lib": "1.17.1",
+        "pdf-parse": "1.1.1",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "@types/pdf-parse": "1.1.4",
+        "vitest": "3.0.8",
+      },
+    },
     "packages/pieces/core/qrcode": {
       "name": "@activepieces/piece-qrcode",
       "version": "0.0.12",
@@ -8537,7 +8537,7 @@
 
     "@activepieces/piece-paywhirl": ["@activepieces/piece-paywhirl@workspace:packages/pieces/community/paywhirl"],
 
-    "@activepieces/piece-pdf": ["@activepieces/piece-pdf@workspace:packages/pieces/community/pdf"],
+    "@activepieces/piece-pdf": ["@activepieces/piece-pdf@workspace:packages/pieces/core/pdf"],
 
     "@activepieces/piece-pdf-co": ["@activepieces/piece-pdf-co@workspace:packages/pieces/community/pdf-co"],
 
