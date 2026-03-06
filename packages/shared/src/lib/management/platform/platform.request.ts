@@ -1,55 +1,53 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { SAFE_STRING_PATTERN } from '../../core/common'
 import { ApId } from '../../core/common/id-generator'
 import { ApMultipartFile } from '../../core/common/multipart-file'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
 import { FilteredPieceBehavior } from './platform.model'
 
-export const Base64EncodedFile = Type.Object({
-    base64: Type.String(),
-    mimetype: Type.String(),
+export const Base64EncodedFile = z.object({
+    base64: z.string(),
+    mimetype: z.string(),
 })
 
-export type Base64EncodedFile = Static<typeof Base64EncodedFile>
+export type Base64EncodedFile = z.infer<typeof Base64EncodedFile>
 
-export const UpdatePlatformRequestBody = Type.Object({
-    name: Type.Optional(Type.String({
-        pattern: SAFE_STRING_PATTERN,
-    })),
-    primaryColor: Type.Optional(Type.String()),
-    logoIcon: Type.Optional(ApMultipartFile),
-    fullLogo: Type.Optional(ApMultipartFile),
-    favIcon: Type.Optional(ApMultipartFile),
-    filteredPieceNames: Type.Optional(Type.Array(Type.String())),
-    filteredPieceBehavior: Type.Optional(Type.Enum(FilteredPieceBehavior)),
-    federatedAuthProviders: Type.Optional(FederatedAuthnProviderConfig),
-    cloudAuthEnabled: Type.Optional(Type.Boolean()),
-    emailAuthEnabled: Type.Optional(Type.Boolean()),
-    allowedAuthDomains: Type.Optional(Type.Array(Type.String())),
-    enforceAllowedAuthDomains: Type.Optional(Type.Boolean()),
-    pinnedPieces: Type.Optional(Type.Array(Type.String())),
+export const UpdatePlatformRequestBody = z.object({
+    name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
+    primaryColor: z.string().optional(),
+    logoIcon: ApMultipartFile.optional(),
+    fullLogo: ApMultipartFile.optional(),
+    favIcon: ApMultipartFile.optional(),
+    filteredPieceNames: z.array(z.string()).optional(),
+    filteredPieceBehavior: z.nativeEnum(FilteredPieceBehavior).optional(),
+    federatedAuthProviders: FederatedAuthnProviderConfig.optional(),
+    cloudAuthEnabled: z.boolean().optional(),
+    emailAuthEnabled: z.boolean().optional(),
+    allowedAuthDomains: z.array(z.string()).optional(),
+    enforceAllowedAuthDomains: z.boolean().optional(),
+    pinnedPieces: z.array(z.string()).optional(),
 })
 
-export type UpdatePlatformRequestBody = Static<typeof UpdatePlatformRequestBody>
+export type UpdatePlatformRequestBody = z.infer<typeof UpdatePlatformRequestBody>
 
-export const AdminRetryRunsRequestBody = Type.Object({
-    runIds: Type.Optional(Type.Array(ApId)),
-    createdAfter: Type.String(),
-    createdBefore: Type.String(),
+export const AdminRetryRunsRequestBody = z.object({
+    runIds: z.array(ApId).optional(),
+    createdAfter: z.string(),
+    createdBefore: z.string(),
 })
 
-export type AdminRetryRunsRequestBody = Static<typeof AdminRetryRunsRequestBody>
+export type AdminRetryRunsRequestBody = z.infer<typeof AdminRetryRunsRequestBody>
 
-export const ApplyLicenseKeyByEmailRequestBody = Type.Object({
-    email: Type.String(),
-    licenseKey: Type.String(),
+export const ApplyLicenseKeyByEmailRequestBody = z.object({
+    email: z.string(),
+    licenseKey: z.string(),
 })
 
-export type ApplyLicenseKeyByEmailRequestBody = Static<typeof ApplyLicenseKeyByEmailRequestBody>
+export type ApplyLicenseKeyByEmailRequestBody = z.infer<typeof ApplyLicenseKeyByEmailRequestBody>
 
-export const IncreaseAICreditsForPlatformRequestBody = Type.Object({
-    platformId: Type.String(),
-    amountInUsd: Type.Number(),
+export const IncreaseAICreditsForPlatformRequestBody = z.object({
+    platformId: z.string(),
+    amountInUsd: z.number(),
 })
 
-export type IncreaseAICreditsForPlatformRequestBody = Static<typeof IncreaseAICreditsForPlatformRequestBody>
+export type IncreaseAICreditsForPlatformRequestBody = z.infer<typeof IncreaseAICreditsForPlatformRequestBody>

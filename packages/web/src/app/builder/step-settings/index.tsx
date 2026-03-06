@@ -6,10 +6,10 @@ import {
   FlowTriggerType,
   isNil,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import deepEqual from 'deep-equal';
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
@@ -81,11 +81,7 @@ const StepSettingsContainer = () => {
       keepDirtyValues: true,
     },
     resolver: async (values, context, options) => {
-      const result = await typeboxResolver(formSchema)(
-        values,
-        context,
-        options,
-      );
+      const result = await (zodResolver(formSchema) as unknown as Resolver<FlowAction | FlowTrigger>)(values, context, options);
 
       const cleanedNewValues = formUtils.removeUndefinedFromInput(values);
       const cleanedCurrentValues = formUtils.removeUndefinedFromInput(
@@ -208,7 +204,7 @@ const StepSettingsContainer = () => {
         <DynamicPropertiesProvider
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
-          <ResizablePanelGroup direction="vertical">
+          <ResizablePanelGroup orientation="vertical">
             <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="w-full my-2 px-3">
@@ -281,8 +277,8 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={height}
-                  onResize={(size) => setHeight(size)}
+                  defaultSize={`${height}%`}
+                  onResize={(panelSize) => setHeight(panelSize.asPercentage)}
                   className="min-h-[130px]"
                 >
                   <ScrollArea

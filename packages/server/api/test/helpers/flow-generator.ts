@@ -1,4 +1,4 @@
-import { apId, FlowAction, FlowActionType, FlowOperationStatus, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow } from '@activepieces/shared'
+import { apId, FlowAction, FlowActionType, FlowOperationStatus, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, PropertyExecutionType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 
@@ -54,10 +54,10 @@ function randomizeTriggerMetadata(trigger: FlowTrigger): FlowTrigger {
         settings: {
             ...trigger.settings,
             propertySettings: {
-                server: faker.internet.url(),
-                port: faker.color.cmyk(),
-                username: faker.internet.userName(),
-                password: faker.internet.password(),
+                server: { type: PropertyExecutionType.MANUAL },
+                port: { type: PropertyExecutionType.MANUAL },
+                username: { type: PropertyExecutionType.DYNAMIC },
+                password: { type: PropertyExecutionType.MANUAL },
             },
         },
     }

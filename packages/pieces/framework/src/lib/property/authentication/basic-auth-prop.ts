@@ -1,29 +1,27 @@
-import { Static, Type } from '@sinclair/typebox';
+import { z } from 'zod';
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { BasePieceAuthSchema } from './common';
 
-export const BasicAuthPropertyValue = Type.Object({
-  username: Type.String(),
-  password: Type.String(),
+export const BasicAuthPropertyValue = z.object({
+  username: z.string(),
+  password: z.string(),
 })
 
-export type BasicAuthPropertyValue = Static<typeof BasicAuthPropertyValue>
+export type BasicAuthPropertyValue = z.infer<typeof BasicAuthPropertyValue>
 
-export const BasicAuthProperty = Type.Composite([
-  BasePieceAuthSchema,
-  Type.Object({
-    username: Type.Object({
-      displayName: Type.String(),
-      description: Type.Optional(Type.String())
-    }),
-    password: Type.Object({
-      displayName: Type.String(),
-      description: Type.Optional(Type.String())
-    })
+export const BasicAuthProperty = z.object({
+  ...BasePieceAuthSchema.shape,
+  username: z.object({
+    displayName: z.string(),
+    description: z.string().optional()
   }),
-  TPropertyValue(BasicAuthPropertyValue, PropertyType.BASIC_AUTH)
-])
+  password: z.object({
+    displayName: z.string(),
+    description: z.string().optional()
+  }),
+  ...TPropertyValue(BasicAuthPropertyValue, PropertyType.BASIC_AUTH).shape,
+})
 
 export type BasicAuthProperty =
   BasePieceAuthSchema<BasicAuthPropertyValue> & {
@@ -41,4 +39,3 @@ export type BasicAuthProperty =
     PropertyType.BASIC_AUTH,
     true
   >;
-

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/shared';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { t } from 'i18next';
+import { Activity, Clock, Info, Type, User } from 'lucide-react';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,7 +28,7 @@ type AutomationsTableProps = {
   folders: FolderDto[];
   selectableCount: number;
   isPinned: (itemId: string) => boolean;
-  onTogglePin: (itemId: string, itemName: string) => void;
+  onTogglePin: (itemId: string) => void;
   onToggleAllSelection: () => void;
   onToggleItemSelection: (item: TreeItem) => void;
   onRowClick: (item: TreeItem) => void;
@@ -75,10 +76,10 @@ export const AutomationsTable = ({
   const groups = groupTreeItemsByFolder(items);
 
   return (
-    <div className="rounded-md border overflow-x-auto">
+    <div className="-mx-4 overflow-x-auto">
       <div className="min-w-[1000px]">
-        <div className="flex items-center h-10 text-sm border-b font-medium text-muted-foreground">
-          <div className="w-10 shrink-0 pl-2 pr-1">
+        <div className="flex items-center h-10 text-xs border-b border-t font-medium text-foreground bg-background">
+          <div className="w-10 shrink-0 pl-4 pr-1">
             <Checkbox
               checked={
                 selectableCount > 0 && selectedItems.size === selectableCount
@@ -87,13 +88,28 @@ export const AutomationsTable = ({
             />
           </div>
           <div className="w-8 shrink-0"></div>
-          <div className="flex-1 min-w-[200px] pl-2">{t('Name')}</div>
+          <div className="flex-1 min-w-[200px] pl-2 flex items-center gap-1.5">
+            <Type className="h-3.5 w-3.5" />
+            {t('Name')}
+          </div>
           {!embedState.isEmbedded && (
-            <div className="w-[230px] shrink-0 px-2">{t('Details')}</div>
+            <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
+              <Info className="h-3.5 w-3.5" />
+              {t('Details')}
+            </div>
           )}
-          <div className="w-[200px] shrink-0 px-2">{t('Last modified')}</div>
-          <div className="w-[170px] shrink-0 px-2">{t('Owner')}</div>
-          <div className="w-[120px] shrink-0 px-2">{t('Status')}</div>
+          <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            {t('Last modified')}
+          </div>
+          <div className="w-[170px] shrink-0 px-2 flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5" />
+            {t('Owner')}
+          </div>
+          <div className="w-[120px] shrink-0 px-2 flex items-center gap-1.5">
+            <Activity className="h-3.5 w-3.5" />
+            {t('Status')}
+          </div>
           <div className="w-[50px] shrink-0 px-2"></div>
         </div>
 
@@ -136,9 +152,7 @@ export const AutomationsTable = ({
                         onToggleSelection={() =>
                           onToggleItemSelection(group.item)
                         }
-                        onTogglePin={() =>
-                          onTogglePin(group.item.id, group.item.name)
-                        }
+                        onTogglePin={() => onTogglePin(group.item.id)}
                         onRename={() => onRenameItem(group.item)}
                         onDelete={() => onDeleteItem(group.item)}
                         onDuplicate={onDuplicateFlow}
@@ -168,9 +182,7 @@ export const AutomationsTable = ({
                             onToggleSelection={() =>
                               onToggleItemSelection(child)
                             }
-                            onTogglePin={() =>
-                              onTogglePin(child.id, child.name)
-                            }
+                            onTogglePin={() => onTogglePin(child.id)}
                             onRename={() => onRenameItem(child)}
                             onDelete={() => onDeleteItem(child)}
                             onDuplicate={onDuplicateFlow}
@@ -207,9 +219,7 @@ export const AutomationsTable = ({
                     folders={folders}
                     onRowClick={() => onRowClick(group.item)}
                     onToggleSelection={() => onToggleItemSelection(group.item)}
-                    onTogglePin={() =>
-                      onTogglePin(group.item.id, group.item.name)
-                    }
+                    onTogglePin={() => onTogglePin(group.item.id)}
                     onRename={() => onRenameItem(group.item)}
                     onDelete={() => onDeleteItem(group.item)}
                     onDuplicate={onDuplicateFlow}

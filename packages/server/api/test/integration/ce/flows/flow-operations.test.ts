@@ -356,6 +356,122 @@ describe('Flow Operations API', () => {
             const body = response?.json()
             expect(body.version.trigger.nextAction.displayName).toBe('Updated Code Step')
         })
+
+        it('should preserve settings.input for CODE action', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: 'trigger',
+                    action: {
+                        type: FlowActionType.CODE,
+                        displayName: 'Code Step',
+                        name: 'step_1',
+                        settings: {
+                            input: {},
+                            sourceCode: {
+                                code: 'export const code = async () => { return true; }',
+                                packageJson: '{}',
+                            },
+                        },
+                        valid: true,
+                        skip: false,
+                    },
+                },
+            })
+
+            const inputData = { key: 'value', nested: { a: 1 } }
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: {
+                    type: FlowActionType.CODE,
+                    displayName: 'Code Step',
+                    name: 'step_1',
+                    settings: {
+                        input: inputData,
+                        sourceCode: {
+                            code: 'export const code = async () => { return true; }',
+                            packageJson: '{}',
+                        },
+                    },
+                    valid: true,
+                    skip: false,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.version.trigger.nextAction.settings.input).toEqual(inputData)
+        })
+
+        it('should preserve settings.input for PIECE action', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockPiece = createMockPieceMetadata({
+                name: '@activepieces/piece-test',
+                version: '0.1.0',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+            })
+            await db.save('piece_metadata', mockPiece)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: 'trigger',
+                    action: {
+                        type: FlowActionType.PIECE,
+                        displayName: 'Piece Step',
+                        name: 'step_1',
+                        settings: {
+                            pieceName: '@activepieces/piece-test',
+                            pieceVersion: '0.1.0',
+                            actionName: 'test_action',
+                            input: {},
+                            propertySettings: {},
+                        },
+                        valid: true,
+                        skip: false,
+                    },
+                },
+            })
+
+            const inputData = { field1: 'hello', field2: '{{ trigger.body }}' }
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: {
+                    type: FlowActionType.PIECE,
+                    displayName: 'Piece Step',
+                    name: 'step_1',
+                    settings: {
+                        pieceName: '@activepieces/piece-test',
+                        pieceVersion: '0.1.0',
+                        actionName: 'test_action',
+                        input: inputData,
+                        propertySettings: {},
+                    },
+                    valid: true,
+                    skip: false,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.version.trigger.nextAction.settings.input).toEqual(inputData)
+        })
     })
 
     describe('POST /v1/flows/:id DELETE_ACTION', () => {

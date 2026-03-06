@@ -1,5 +1,5 @@
-import { Static, Type } from '@sinclair/typebox'
-import { DiscriminatedUnion, Nullable } from '../../core/common'
+import { z } from 'zod'
+import { Nullable } from '../../core/common'
 import { AIProviderName } from '../../management/ai-providers'
 export * from './tools'
 export * from './mcp'
@@ -38,12 +38,12 @@ export enum ToolCallType {
     MCP = 'MCP',
 }
 
-export const AgentOutputField = Type.Object({
-    displayName: Type.String(),
-    description: Type.Optional(Type.String()),
-    type: Type.Enum(AgentOutputFieldType),
+export const AgentOutputField = z.object({
+    displayName: z.string(),
+    description: z.string().optional(),
+    type: z.nativeEnum(AgentOutputFieldType),
 })
-export type AgentOutputField = Static<typeof AgentOutputField>
+export type AgentOutputField = z.infer<typeof AgentOutputField>
 
 export type AgentResult = {
     prompt: string
@@ -65,47 +65,47 @@ export type AgentProviderModel = {
     model: string
 }
 
-export const MarkdownContentBlock = Type.Object({
-    type: Type.Literal(ContentBlockType.MARKDOWN),
-    markdown: Type.String(),
+export const MarkdownContentBlock = z.object({
+    type: z.literal(ContentBlockType.MARKDOWN),
+    markdown: z.string(),
 })
-export type MarkdownContentBlock = Static<typeof MarkdownContentBlock>
+export type MarkdownContentBlock = z.infer<typeof MarkdownContentBlock>
 
-const ToolCallBaseSchema = Type.Object({
-    type: Type.Literal(ContentBlockType.TOOL_CALL),
-    input: Nullable(Type.Record(Type.String(), Type.Unknown())),
-    output: Type.Optional(Type.Unknown()),
-    toolName: Type.String(),
-    status: Type.Enum(ToolCallStatus),
-    toolCallId: Type.String(),
-    startTime: Type.String(),
-    endTime: Type.Optional(Type.String()),
+const ToolCallBaseSchema = z.object({
+    type: z.literal(ContentBlockType.TOOL_CALL),
+    input: Nullable(z.record(z.string(), z.unknown())),
+    output: z.unknown().optional(),
+    toolName: z.string(),
+    status: z.nativeEnum(ToolCallStatus),
+    toolCallId: z.string(),
+    startTime: z.string(),
+    endTime: z.string().optional(),
 })
-export type ToolCallBase = Static<typeof ToolCallBaseSchema>
+export type ToolCallBase = z.infer<typeof ToolCallBaseSchema>
 
-export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
-    Type.Object({
-        ...ToolCallBaseSchema.properties,
-        toolCallType: Type.Literal(ToolCallType.PIECE),
-        pieceName: Type.String(),
-        pieceVersion: Type.String(),
-        actionName: Type.String(),
+export const ToolCallContentBlock = z.discriminatedUnion('toolCallType', [
+    z.object({
+        ...ToolCallBaseSchema.shape,
+        toolCallType: z.literal(ToolCallType.PIECE),
+        pieceName: z.string(),
+        pieceVersion: z.string(),
+        actionName: z.string(),
     }),
-    Type.Object({
-        ...ToolCallBaseSchema.properties,
-        toolCallType: Type.Literal(ToolCallType.FLOW),
-        displayName: Type.String(),
-        externalFlowId: Type.String(),
+    z.object({
+        ...ToolCallBaseSchema.shape,
+        toolCallType: z.literal(ToolCallType.FLOW),
+        displayName: z.string(),
+        externalFlowId: z.string(),
     }),
-    Type.Object({
-        ...ToolCallBaseSchema.properties,
-        toolCallType: Type.Literal(ToolCallType.MCP),
-        displayName: Type.String(),
-        serverUrl: Type.String(),
+    z.object({
+        ...ToolCallBaseSchema.shape,
+        toolCallType: z.literal(ToolCallType.MCP),
+        displayName: z.string(),
+        serverUrl: z.string(),
     }),
 ])
 
-export type ToolCallContentBlock = Static<typeof ToolCallContentBlock>
+export type ToolCallContentBlock = z.infer<typeof ToolCallContentBlock>
 
-export const AgentStepBlock = Type.Union([MarkdownContentBlock, ToolCallContentBlock])
-export type AgentStepBlock = Static<typeof AgentStepBlock>
+export const AgentStepBlock = z.union([MarkdownContentBlock, ToolCallContentBlock])
+export type AgentStepBlock = z.infer<typeof AgentStepBlock>

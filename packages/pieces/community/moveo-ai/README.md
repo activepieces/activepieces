@@ -1,7 +1,5 @@
 # pieces-moveo-ai
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-moveo-ai` to build the library.
+Run `turbo run build --filter=@activepieces/piece-moveo-ai` to build the library.

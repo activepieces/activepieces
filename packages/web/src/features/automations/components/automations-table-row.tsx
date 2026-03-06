@@ -115,7 +115,7 @@ export const AutomationsTableRow = ({
   return (
     <>
       <div
-        className="w-10 shrink-0 pl-2 pr-1 flex items-center"
+        className="w-10 shrink-0 pl-4 pr-1 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
@@ -288,12 +288,12 @@ export const AutomationsTableRow = ({
             <DropdownMenuSeparator />
             <ConfirmationDeleteDialog
               title={t('Delete {type}', { type: item.type })}
-              message={t(
-                'Are you sure you want to delete "{name}"? This action cannot be undone.',
-                { name: item.name },
-              )}
+              message={t('Deleting "{name}" cannot be undone.', {
+                name: item.name,
+              })}
               mutationFn={async () => onDelete()}
               entityName={item.type}
+              buttonText={t('Delete')}
             >
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
@@ -349,7 +349,6 @@ const RowItemDetails = ({ item }: { item: TreeItem }) => {
           trigger={flow.version.trigger}
           maxNumberOfIconsToShow={3}
           size="xs"
-          circle={false}
         />
       );
     }

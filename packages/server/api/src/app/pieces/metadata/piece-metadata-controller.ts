@@ -18,9 +18,7 @@ import {
     SampleDataFileType,
     WorkerJobType,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { EngineHelperPropResult, OperationResponse } from 'worker'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
@@ -28,11 +26,11 @@ import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
 
-export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
+export const pieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
 }
 
-const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
+const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
     app.get(
         '/categories',

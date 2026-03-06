@@ -31,7 +31,9 @@ import { foldersApi } from '@/features/folders/api/folders-api';
 import { piecesApi } from '@/features/pieces/api/pieces-api';
 import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
 import { stepUtils } from '@/features/pieces/utils/step-utils';
+import { templatesApi } from '@/features/templates/api/templates-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/dom-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
@@ -273,6 +275,57 @@ export const flowHooks = {
       staleTime: 0,
     });
   },
+  useUpdateFlowOwner: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation<
+      PopulatedFlow,
+      Error,
+      { flowId: string; ownerId: string }
+    >({
+      mutationFn: async ({ flowId, ownerId }) => {
+        return await flowsApi.update(flowId, {
+          type: FlowOperationType.UPDATE_OWNER,
+          request: { ownerId },
+        });
+      },
+      onSuccess,
+    });
+  },
+  useCreateTemplateFromFlow: ({
+    onSuccess,
+  }: {
+    onSuccess: (template: Template) => void;
+  }) => {
+    return useMutation<
+      Template,
+      Error,
+      {
+        flowId: string;
+        flowVersionId: string;
+        description: string;
+        author: string;
+      }
+    >({
+      mutationFn: async ({ flowId, flowVersionId, description, author }) => {
+        const template = await flowsApi.getTemplate(flowId, {
+          versionId: flowVersionId,
+        });
+        const flowTemplate = await templatesApi.create({
+          name: template.name,
+          description,
+          summary: template.summary,
+          tags: template.tags,
+          blogUrl: template.blogUrl ?? undefined,
+          metadata: template.metadata,
+          author,
+          categories: template.categories,
+          type: template.type,
+          flows: template.flows,
+        });
+        return flowTemplate;
+      },
+      onSuccess,
+    });
+  },
   useTestFlowOrStartManualTrigger: ({
     flowVersionId,
     onUpdateRun,
@@ -447,6 +500,30 @@ export const flowHooks = {
     );
 
     return await Promise.all(importPromises);
+  },
+  useFetchNpmPackageVersion: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (result: {
+      packageName: string;
+      packageVersion: string;
+    }) => void;
+    onError: () => void;
+  }) => {
+    return useMutation({
+      mutationFn: async (packageName: string) => {
+        const response = await api.get<{ 'dist-tags': { latest: string } }>(
+          `https://registry.npmjs.org/${packageName}`,
+        );
+        return {
+          packageName,
+          packageVersion: response['dist-tags'].latest,
+        };
+      },
+      onSuccess,
+      onError,
+    });
   },
 };
 

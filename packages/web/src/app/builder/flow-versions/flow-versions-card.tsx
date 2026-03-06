@@ -3,9 +3,8 @@ import {
   FlowVersionState,
   Permission,
 } from '@activepieces/shared';
-import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Eye, EyeIcon, Pencil } from 'lucide-react';
+import { EllipsisVertical, Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -105,7 +104,7 @@ const FlowVersionDetailsCard = React.memo(
           >
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" disabled={isPending} size={'icon'}>
-                <DotsVerticalIcon />
+                <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">

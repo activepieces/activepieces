@@ -1,7 +1,5 @@
 # pieces-hume-ai
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-hume-ai` to build the library.
+Run `turbo run build --filter=@activepieces/piece-hume-ai` to build the library.

@@ -13,3 +13,4 @@ export { AIModelSelector } from './ai-model';
 export { SUPPORTED_AI_PROVIDERS } from './ai-providers';
 export type { AiProviderInfo } from './ai-providers';
 export { AgentStructuredOutput } from './structured-output';
+export { agentQueries, agentMutations } from './hooks/agent-hooks';

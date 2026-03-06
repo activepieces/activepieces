@@ -433,7 +433,7 @@ const ImportTableDialog = ({
 
             {serverError && (
               <div className=" flex items-center justify-between">
-                <div className="text-red-500">
+                <div className="text-destructive">
                   {t(
                     'An unexpected error occurred while importing the file, please hit the copy error and send it to support',
                   )}
