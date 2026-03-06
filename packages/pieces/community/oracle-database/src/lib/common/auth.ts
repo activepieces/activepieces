@@ -4,30 +4,7 @@ import {
   StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import oracledb from 'oracledb';
-import fs from 'fs';
-
-const ORACLE_BASE_DIR = '/opt/oracle/instantclient_21_13';
-
-function getOracleClientLibDir(): string | null {
-  if (!fs.existsSync(ORACLE_BASE_DIR)) return null;
-  return ORACLE_BASE_DIR;
-}
-
-const oracleClientLibDir = getOracleClientLibDir();
-
-if (oracleClientLibDir) {
-  try {
-    oracledb.initOracleClient({ libDir: oracleClientLibDir });
-    console.log(`Oracle Instant Client loaded from ${oracleClientLibDir}. Thick mode active.`);
-  } catch (e) {
-    const msg = (e as Error)?.message ?? '';
-    if (!msg.includes('NJS-077')) {
-      console.error('Oracle Instant Client failed to load:', msg);
-    }
-  }
-} else {
-  console.log('Oracle Instant Client not found at /opt/oracle. Running in Thin mode.');
-}
+import { ensureOracleClient } from './thick-mode';
 
 export const oracleDbAuth = PieceAuth.CustomAuth({
   description: `Connect to Oracle Database using either Service Name (host/port/service) or a full connection string.`,
@@ -74,6 +51,14 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
       displayName: 'Password',
       required: true,
     }),
+    thickMode: Property.Checkbox({
+      displayName: 'Thick Mode',
+      description:
+        'Enable to support older Oracle Database versions (11g, 10g password verifiers). ' +
+        'Oracle Instant Client will be downloaded and installed automatically if not already present.',
+      required: false,
+      defaultValue: false,
+    }),
   },
 
   validate: async ({ auth }) => {
@@ -87,7 +72,8 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
         if (!typedAuth.host || !typedAuth.port || !typedAuth.serviceName) {
           return {
             valid: false,
-            error: 'Host, Port, and Service Name are required for this connection type.',
+            error:
+              'Host, Port, and Service Name are required for this connection type.',
           };
         }
         connectString = `${typedAuth.host}:${typedAuth.port}/${typedAuth.serviceName}`;
@@ -100,6 +86,8 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
         }
         connectString = typedAuth.connectionString;
       }
+
+      await ensureOracleClient(typedAuth.thickMode as boolean);
 
       connection = await oracledb.getConnection({
         user: typedAuth.user,
@@ -117,8 +105,8 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
       if (connection) {
         try {
           await connection.close();
-        } catch (e) {
-          console.error('Failed to close Oracle DB connection:', e);
+        } catch {
+          // ignore
         }
       }
     }
