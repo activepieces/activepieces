@@ -954,6 +954,9 @@
       "@activepieces/piece-scrapeless": [
         "packages/pieces/community/scrapeless/src/index.ts"
       ],
+      "@activepieces/piece-screenpipe": [
+        "packages/pieces/community/screenpipe/src/index.ts"
+      ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
