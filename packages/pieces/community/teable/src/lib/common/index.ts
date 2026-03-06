@@ -15,14 +15,13 @@ export const TeableCommon = {
 	base_id: Property.Dropdown({
     auth: TeableAuth,
 		displayName: 'Base',
-		description: 'The Teable base (equivalent to a database).',
 		required: true,
 		refreshers: [],
 		options: async ({ auth }) => {
 			if (!auth) {
 				return { disabled: true, options: [], placeholder: 'Connect your account first.' };
 			}
-			const client = makeClient((auth as any).props ?? auth);
+			const client = makeClient(auth.props);
 			const bases = await client.listBases();
 			return {
 				disabled: false,
@@ -40,7 +39,7 @@ export const TeableCommon = {
 			if (!auth || !base_id) {
 				return { disabled: true, options: [], placeholder: 'Select a base first.' };
 			}
-			const client = makeClient((auth as any).props ?? auth);
+			const client = makeClient(auth.props);
 			const tables = await client.listTables(base_id as string);
 			return {
 				disabled: false,
@@ -57,7 +56,7 @@ export const TeableCommon = {
 		props: async ({ auth, table_id }) => {
 			if (!auth || !table_id) return {};
 
-			const client = makeClient((auth as any).props ?? auth);
+			const client = makeClient(auth.props);
 			const fields = await client.listFields(table_id as string);
 
 			const props: DynamicPropsValue = {};

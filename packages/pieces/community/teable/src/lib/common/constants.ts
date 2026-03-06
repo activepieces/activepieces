@@ -41,3 +41,5 @@ export const TeableComputedFieldTypes: string[] = [
 	TeableFieldType.AUTO_NUMBER,
 	TeableFieldType.BUTTON,
 ];
+
+export const TEABLE_CLOUD_URL = 'https://app.teable.ai';

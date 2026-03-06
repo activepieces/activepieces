@@ -5,6 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
+import { TEABLE_CLOUD_URL } from './constants';
 
 
 function emptyValueFilter(
@@ -32,7 +33,6 @@ export function prepareQuery(request?: Record<string, any>): QueryParams {
 }
 
 
-const TEABLE_CLOUD_URL = 'https://app.teable.ai';
 
 export class TeableClient {
   private readonly apiBase: string;
@@ -41,7 +41,7 @@ export class TeableClient {
     private token: string,
     teableUrl: string = TEABLE_CLOUD_URL
   ) {
-    this.apiBase = teableUrl.replace(/\/$/, '') + '/api';
+    this.apiBase =  `${teableUrl}/api`;
   }
 
   async makeRequest<T extends HttpMessageBody>(
