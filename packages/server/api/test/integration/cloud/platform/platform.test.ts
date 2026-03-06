@@ -81,7 +81,11 @@ describe('Platform API', () => {
             ])
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
             expect(responseBody.emailAuthEnabled).toBe(false)
-            expect(responseBody.federatedAuthProviders).toStrictEqual({})
+            expect(responseBody.federatedAuthProviders).toStrictEqual({
+                google: null,
+                github: null,
+                saml: null,
+            })
             expect(responseBody.cloudAuthEnabled).toBe(false)
         }),
 

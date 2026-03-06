@@ -1,39 +1,39 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../common/base-model'
 
-export const Tag = Type.Object({
+export const Tag = z.object({
     ...BaseModelSchema,
-    platformId: Type.String(),
-    name: Type.String(),
+    platformId: z.string(),
+    name: z.string(),
 })
 
-export type Tag = Static<typeof Tag>
+export type Tag = z.infer<typeof Tag>
 
-export const PieceTag = Type.Object({
+export const PieceTag = z.object({
     ...BaseModelSchema,
-    pieceName: Type.String(),
-    tagId: Type.String(),
-    platformId: Type.String(),
+    pieceName: z.string(),
+    tagId: z.string(),
+    platformId: z.string(),
 })
 
-export type PieceTag = Static<typeof PieceTag>
+export type PieceTag = z.infer<typeof PieceTag>
 
-export const ListTagsRequest = Type.Object({
-    limit: Type.Optional(Type.Number()),
-    cursor: Type.Optional(Type.String()),
+export const ListTagsRequest = z.object({
+    limit: z.coerce.number().optional(),
+    cursor: z.string().optional(),
 })
 
-export type ListTagsRequest = Static<typeof ListTagsRequest>
+export type ListTagsRequest = z.infer<typeof ListTagsRequest>
 
-export const SetPieceTagsRequest = Type.Object({
-    piecesName: Type.Array(Type.String()),
-    tags: Type.Array(Type.String()),
+export const SetPieceTagsRequest = z.object({
+    piecesName: z.array(z.string()),
+    tags: z.array(z.string()),
 })
 
-export type SetPieceTagsRequest = Static<typeof SetPieceTagsRequest>
+export type SetPieceTagsRequest = z.infer<typeof SetPieceTagsRequest>
 
-export const UpsertTagRequest = Type.Object({
-    name: Type.String(),
+export const UpsertTagRequest = z.object({
+    name: z.string(),
 })
 
-export type UpsertTagRequest = Static<typeof UpsertTagRequest>
+export type UpsertTagRequest = z.infer<typeof UpsertTagRequest>

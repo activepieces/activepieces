@@ -532,7 +532,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await this.addDeleteJob(flow)
+        await this.addDeleteFlowJob(flow)
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
@@ -641,14 +641,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
         await flowRepo().save(flow)
     },
 
-    addDeleteJob: async (flow: Flow): Promise<void> => {
+    addDeleteFlowJob: async (flow: Flow): Promise<void> => {
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.DELETE_FLOW,
                 data: {
                     flow,
                     preDeleteDone: false,
-                    dbDeleteDone: false,
                 },
                 jobId: `delete-flow-${flow.id}`,
             },
@@ -664,7 +663,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    
+
     addUpdateStatusJob: async (data: Omit<SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>, 'preUpdateDone'>): Promise<void> => {
         await systemJobsSchedule(log).upsertJob({
             job: {
@@ -739,16 +738,14 @@ const lockFlowVersionIfNotLocked = async ({
         flowVersion,
         userOperation: {
             type: FlowOperationType.LOCK_FLOW,
-            request: {
-                flowId: flowVersion.flowId,
-            },
+            request: {},
         },
         entityManager,
     })
 }
 
 
-const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
+export const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
     if (folderId) {
         return folderId
     }

@@ -1,11 +1,11 @@
 import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -23,14 +23,11 @@ import { projectCollectionUtils } from '@/features/projects';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
 
-const FormSchema = Type.Object({
-  selectedProject: Type.String({
-    errorMessage: t('Please select project'),
-    required: true,
-  }),
+const FormSchema = z.object({
+  selectedProject: z.string({ message: t('Please select project') }),
 });
 
-type FormSchema = Static<typeof FormSchema>;
+type FormSchema = z.infer<typeof FormSchema>;
 
 type ProjectSelectionDialogProps = {
   projectId: string;
@@ -69,7 +66,7 @@ export function ProjectSelectionDialog({
   });
 
   const form = useForm<FormSchema>({
-    resolver: typeboxResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       selectedProject: projects?.find((project) => project.id !== projectId)
         ?.id,

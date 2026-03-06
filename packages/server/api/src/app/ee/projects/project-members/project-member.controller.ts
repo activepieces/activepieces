@@ -9,15 +9,15 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateProjectMemberRoleRequestBody } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { ProjectMemberEntity } from './project-member.entity'
 import { projectMemberService } from './project-member.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 
-export const projectMemberController: FastifyPluginAsyncTypebox = async (
+export const projectMemberController: FastifyPluginAsyncZod = async (
     app,
 ) => {
 
@@ -86,8 +86,8 @@ const UpdateProjectMemberRoleRequest = {
         ),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateProjectMemberRoleRequestBody,
     },
@@ -131,10 +131,10 @@ const DeleteProjectMemberRequest = {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }

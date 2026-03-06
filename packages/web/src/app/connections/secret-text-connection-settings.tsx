@@ -1,8 +1,8 @@
 import { SecretTextProperty } from '@activepieces/pieces-framework';
 import { UpsertSecretTextRequest } from '@activepieces/shared';
-import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import { z } from 'zod';
 
 import {
   FormControl,
@@ -20,11 +20,11 @@ type SecretTextConnectionSettingsProps = {
 
 const SecretTextConnectionSettings = React.memo(
   ({ authProperty, isGlobalConnection }: SecretTextConnectionSettingsProps) => {
-    const formSchema = Type.Object({
+    const formSchema = z.object({
       request: UpsertSecretTextRequest,
     });
 
-    const form = useFormContext<Static<typeof formSchema>>();
+    const form = useFormContext<z.infer<typeof formSchema>>();
 
     return (
       <FormField

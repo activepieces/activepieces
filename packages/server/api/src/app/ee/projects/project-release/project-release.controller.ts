@@ -1,13 +1,14 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { ApId, ApplicationEventName, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { applicationEvents } from '../../../helper/application-events'
 import { platformService } from '../../../platform/platform.service'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectReleaseService } from './project-release.service'
 
-export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
+export const projectReleaseController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/:id', GetProjectReleaseRequest, async (req) => {
         const release = await projectReleaseService.getOneOrThrow({
@@ -64,7 +65,7 @@ const GetProjectReleaseRequest = {
         ),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },

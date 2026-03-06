@@ -22,6 +22,7 @@ const StepNodeLogo = ({
         key={logoUrl + displayName}
         border={true}
         className="w-9 h-9 p-2"
+        roundedCorner={true}
       />
     </div>
   );

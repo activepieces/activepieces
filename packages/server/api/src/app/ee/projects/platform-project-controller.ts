@@ -16,9 +16,10 @@ import {
     TeamProjectsLimit,
     UpdateProjectPlatformRequest,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -26,7 +27,7 @@ import { platformProjectService } from './platform-project-service'
 
 const DEFAULT_LIMIT_SIZE = 50
 
-export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
+export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/:id', GetProjectRequest, async (request) => {
         return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
@@ -89,7 +90,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
         await assertProjectToDeleteIsNotPersonalProject(req.params.id, req.log)
-        await platformProjectService(req.log).hardDelete({
+        await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
         })
@@ -189,8 +190,8 @@ const UpdateProjectRequest = {
     schema: {
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
             [StatusCodes.OK]: ProjectWithLimits,
@@ -232,8 +233,8 @@ const DeleteProjectRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
