@@ -1,12 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-	httpClient,
-	HttpMethod,
-	AuthenticationType,
-	HttpRequest,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon, objectToArray } from '../common/common';
+import { excelAuth } from '../auth';
+import { objectToArray } from '../common/common';
+import { commonProps } from '../common/props';
+import { createMSGraphClient, getLastUsedRow, numberToColumnName } from '../common/helpers';
+import { WorkbookRange } from '@microsoft/microsoft-graph-types';
 
 export const appendRowAction = createAction({
 	auth: excelAuth,
@@ -14,53 +11,53 @@ export const appendRowAction = createAction({
 	description: 'Append row of values to a worksheet',
 	displayName: 'Append Row to Worksheet',
 	props: {
-		workbook_id: excelCommon.workbook_id,
-		worksheet_id: excelCommon.worksheet_id,
-		first_row_headers: Property.Checkbox({
-			displayName: 'Does the first row contain headers?',
-			description: 'If the first row is headers',
-			required: true,
-			defaultValue: false,
-		}),
-		values: excelCommon.values,
+		storageSource: commonProps.storageSource,
+		siteId: commonProps.siteId,
+		documentId: commonProps.documentId,
+		workbookId: commonProps.workbookId,
+		worksheetId: commonProps.worksheetId,
+		isFirstRowHeaders: commonProps.isFirstRowHeaders,
+		values: commonProps.worksheetValues,
 	},
 	async run({ propsValue, auth }) {
-		const workbookId = propsValue['workbook_id'];
-		const worksheetId = propsValue['worksheet_id'];
-		const values = propsValue.first_row_headers
+		const { workbookId, worksheetId, storageSource, siteId, documentId } = propsValue;
+		const values = propsValue.isFirstRowHeaders
 			? objectToArray(propsValue['values'])
 			: Object.values(propsValue['values'])[0];
 
-		const lastUsedRow = await excelCommon.getLastUsedRow(
+		if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
+			throw new Error('please select SharePoint site and document library.');
+		}
+
+		const drivePath =
+			storageSource === 'onedrive' ? '/me/drive' : `/sites/${siteId}/drives/${documentId}`;
+
+		const lastUsedRow = await getLastUsedRow(
+			auth.access_token,
+			drivePath,
 			workbookId,
-			worksheetId,
-			auth['access_token'],
+			worksheetId
 		);
-		const lastUsedColumn = excelCommon.numberToColumnName(Object.values(values).length);
+
+		const lastUsedColumn = numberToColumnName(Object.values(values).length);
 
 		const rangeFrom = `A${lastUsedRow + 1}`;
 		const rangeTo = `${lastUsedColumn}${lastUsedRow + 1}`;
+		const insertedRowNumber = lastUsedRow + 1;
 
-		const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
+		const client = createMSGraphClient(auth.access_token);
 
-		const requestBody = {
-			values: [values],
+		const response: WorkbookRange = await client
+			.api(
+				`${drivePath}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`
+			)
+			.patch({
+				values: [values],
+			});
+
+		return {
+			row: insertedRowNumber,
+			...response,
 		};
-
-		const request: HttpRequest = {
-			method: HttpMethod.PATCH,
-			url: url,
-			body: requestBody,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: auth['access_token'],
-			},
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		};
-
-		const response = await httpClient.sendRequest(request);
-		return response.body;
 	},
 });

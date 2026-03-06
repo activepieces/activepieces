@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { hunterApiCall } from './index';
-import { hunterAuth } from '../..';
+import { hunterAuth } from '../auth';
 
 export const campaignIdProp = Property.Dropdown({
     displayName: 'Campaign',

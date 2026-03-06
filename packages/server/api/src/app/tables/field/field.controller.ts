@@ -1,12 +1,13 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { TableEntity } from '../table/table.entity'
 import { FieldEntity } from './field.entity'
 import { fieldService } from './field.service'
 
-export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/', CreateRequest, async (request, reply) => {
         const response = await fieldService.create({ request: request.body, projectId: request.projectId })
@@ -75,8 +76,8 @@ const GetFieldByIdRequest = {
         }),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }
@@ -89,8 +90,8 @@ const DeleteFieldRequest = {
         }),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }
@@ -120,8 +121,8 @@ const UpdateRequest = {
         }),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         body: UpdateFieldRequest,
     },

@@ -1,17 +1,17 @@
 
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
 import {
     ListTriggerEventsRequest,
     PrincipalType,
     SaveTriggerEventRequest,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerEventService } from './trigger-event.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
-export const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const triggerEventController: FastifyPluginAsyncZod = async (fastify) => {
 
 
     fastify.post('/', SaveTriggerEventRequestParams, async (request) => {

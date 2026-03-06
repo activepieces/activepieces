@@ -1,7 +1,5 @@
 # pieces-tarvent
 
-This library was generated with [Nx](https://nx.dev).
-
 ## Building
 
-Run `nx build pieces-tarvent` to build the library.
+Run `turbo run build --filter=@activepieces/piece-tarvent` to build the library.

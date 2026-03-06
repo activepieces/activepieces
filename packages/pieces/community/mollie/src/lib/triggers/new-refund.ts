@@ -12,7 +12,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { mollieCommon } from '../common';
-import { mollieAuth } from '../../index';
+import { mollieAuth } from '../auth';
 import dayjs from 'dayjs';
 
 interface MollieRefundResponse {

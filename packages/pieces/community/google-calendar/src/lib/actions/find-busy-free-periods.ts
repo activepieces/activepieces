@@ -1,6 +1,6 @@
 import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@activepieces/pieces-common';
-import { googleCalendarAuth } from '../../'; 
+import { googleCalendarAuth } from '../auth'; 
 import { googleCalendarCommon } from '../common';
 import { getCalendars } from '../common/helper';
 import dayjs from 'dayjs';

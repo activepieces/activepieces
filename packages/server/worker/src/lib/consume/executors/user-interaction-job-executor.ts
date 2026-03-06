@@ -1,8 +1,8 @@
 import { AppConnectionValue, assertNotNullOrUndefined, UserInteractionJobData, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
-import { operationHandler, OperationResponse, OperationResult } from '../../compute/operation-handler'
-import { sandboxSockerHandler } from '../../compute/sandbox-socket-handlers'
+import { operationHandler, OperationResponse, OperationResult } from '../../execution/operation-handler'
+import { sandboxEventHandlers } from '../../execution/sandbox-event-handlers'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
@@ -62,7 +62,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 })
                 break
         }
-        await sandboxSockerHandler(log).sendUserInteractionResponse({
+        await sandboxEventHandlers(log).sendUserInteractionResponse({
             requestId: jobData.requestId,
             workerServerId: jobData.webserverId,
             response,

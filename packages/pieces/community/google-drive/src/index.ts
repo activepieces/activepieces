@@ -23,14 +23,7 @@ import { setPublicAccess } from './lib/action/set-public-access';
 import { moveFileAction } from './lib/action/move-file';
 import { googleDriveDeleteFile } from './lib/action/delete-file';
 import { googleDriveTrashFile } from './lib/action/send-to-trash';
-
-export const googleDriveAuth = PieceAuth.OAuth2({
-  description: '',
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: ['https://www.googleapis.com/auth/drive'],
-});
+import { googleDriveAuth } from './lib/auth';
 
 export const googleDrive = createPiece({
   minimumSupportedRelease: '0.5.6',

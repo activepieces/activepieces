@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { googleDocsAuth } from '../../index';
+import { googleDocsAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';

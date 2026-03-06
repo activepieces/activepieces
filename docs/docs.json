@@ -75,14 +75,33 @@
                {
                   "group": "Guides",
                   "pages": [
-                     "admin-guide/guides/structure-projects",
-                     "admin-guide/guides/manage-pieces",
-                     "admin-guide/guides/sso",
-                     "admin-guide/guides/manage-oauth2",
-                     "admin-guide/guides/setup-ai-providers",
-                     "admin-guide/guides/permissions",
-                     "admin-guide/guides/event-streaming",
-                     "admin-guide/guides/project-releases"
+                    "admin-guide/guides/structure-projects",
+                    "admin-guide/guides/manage-pieces",
+                    "admin-guide/guides/sso",
+                  {
+                     "group": "SCIM",
+                     "icon": "users",
+                     "pages": [
+                        "admin-guide/guides/scim/overview",
+                        "admin-guide/guides/scim/providers/okta"
+                     ]
+                  },
+                    "admin-guide/guides/manage-oauth2",
+                    "admin-guide/guides/setup-ai-providers",
+                    {
+                      "group": "Secret Managers",
+                      "icon": "key",
+                      "pages": [
+                        "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/aws",
+                        "admin-guide/guides/secret-managers/hashicorp",
+                        "admin-guide/guides/secret-managers/cyberark-conjur",
+                        "admin-guide/guides/secret-managers/onepassword"
+                      ]
+                    },
+                    "admin-guide/guides/permissions",
+                    "admin-guide/guides/event-streaming",
+                    "admin-guide/guides/project-releases"
                   ]
                },
                {
@@ -259,7 +278,9 @@
                      "build-pieces/misc/build-piece",
                      "build-pieces/misc/publish-piece",
                      "build-pieces/misc/pieces-ci-cd",
+                     "build-pieces/misc/migrate-nx-to-turbo",
                      "build-pieces/misc/private-fork",
+                     "build-pieces/misc/testing-pieces",
                      "build-pieces/misc/dev-container",
                      "build-pieces/misc/codespaces"
                   ]
@@ -295,7 +316,8 @@
                         "pages": [
                            "endpoints/users/schema",
                            "endpoints/users/update",
-                           "endpoints/users/list"
+                           "endpoints/users/list",
+                           "endpoints/users/delete"
                         ]
                      },
                      {
@@ -463,7 +485,8 @@
                      "handbook/engineering/onboarding/how-we-work",
                      "handbook/engineering/onboarding/on-call",
                      "handbook/engineering/onboarding/downtime-incident",
-                     "handbook/engineering/onboarding/stack"
+                     "handbook/engineering/onboarding/stack",
+                     "handbook/engineering/onboarding/release-cycle"
                   ]
                },
                {

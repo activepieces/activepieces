@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import {
     ActivepiecesError,
     ApEdition,
@@ -11,11 +11,9 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { transaction } from '../core/db/transaction'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
@@ -29,7 +27,7 @@ import { userRepo, userService } from '../user/user-service'
 import { platformRepo, platformService } from './platform.service'
 
 const edition = system.getEdition()
-export const platformController: FastifyPluginAsyncTypebox = async (app) => {
+export const platformController: FastifyPluginAsyncZod = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
         const platformId = req.principal.platform.id
 
@@ -54,14 +52,14 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             }),
         ])
 
-        await platformService.update({
+        await platformService(req.log).update({
             id: req.params.id,
             ...req.body,
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
         })
-        return platformService.getOneWithPlanAndUsageOrThrow(req.params.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.params.id)
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -73,7 +71,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        return platformService.getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
+        return platformService(req.log).getOneWithPlanAndUsageOrThrow(req.principal.platform.id)
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
@@ -116,7 +114,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                 await platformRepo(entityManager).delete({
                     id: req.params.id,
                 })
-                const user = await userService.getOneOrFail({
+                const user = await userService(req.log).getOneOrFail({
                     id: req.principal.id,
                 })
                 await userRepo(entityManager).delete({
@@ -146,7 +144,7 @@ const UpdatePlatformRequest = {
     },
     schema: {
         body: UpdatePlatformRequestBody,
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -164,7 +162,7 @@ const GetPlatformRequest = {
         tags: ['platforms'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get a platform by id',
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
         response: {
@@ -178,7 +176,7 @@ const DeletePlatformRequest = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
-        params: Type.Object({
+        params: z.object({
             id: ApId,
         }),
     },
@@ -189,8 +187,8 @@ const GetAssetRequest = {
         security: securityAccess.public(),
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
     },
 }

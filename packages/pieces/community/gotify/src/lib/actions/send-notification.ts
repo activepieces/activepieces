@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gotifyAuth } from '../../';
+import { gotifyAuth } from '../auth';
 
 export const sendNotification = createAction({
   auth: gotifyAuth,

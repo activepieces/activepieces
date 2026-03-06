@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { googleDriveAuth } from '../../index';
+import { googleDriveAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import querystring from 'querystring';
 import { common } from '../common';
@@ -39,9 +39,10 @@ async function getFilesRecursively(
 
   const params: Record<string, string> = {
     q: q,
-    fields: 'files(id,kind,mimeType,name,trashed,parents)',
+    fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
     supportsAllDrives: 'true',
     includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+    pageSize: '1000',
   };
 
   let response = await httpClient.sendRequest({

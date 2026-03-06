@@ -1,8 +1,9 @@
-import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, securityAccess, SubmitPayloadsRequest } from '@activepieces/server-shared'
+import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, securityAccess, SubmitPayloadsRequest } from '@activepieces/server-common'
 import { ExecutionType, FileType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { fileService } from '../file/file.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
@@ -13,7 +14,7 @@ import { jobMigrations } from './queue/jobs-migrations'
 
 const tracer = trace.getTracer('worker-controller')
 
-export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
+export const flowWorkerController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/archive/:fileId', GetFileRequestParams, async (request, reply) => {
         const { fileId } = request.params
@@ -137,8 +138,8 @@ const GetFileRequestParams = {
         security: securityAccess.worker(),
     },
     schema: {
-        params: Type.Object({
-            fileId: Type.String(),
+        params: z.object({
+            fileId: z.string(),
         }),
     },
 }

@@ -1,5 +1,6 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-common'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
@@ -10,7 +11,7 @@ import { defaultTheme } from './theme'
 
 const flagRepo = repoFactory(FlagEntity)
 
-export const flagService = {
+export const flagService = (log: FastifyBaseLogger) => ({
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
@@ -165,7 +166,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
+                value: await federatedAuthnService(log).getThirdPartyRedirectUrl(undefined),
                 created,
                 updated,
             },
@@ -305,7 +306,7 @@ export const flagService = {
     aiCreditsEnabled(): boolean {
         return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
     },
-}
+})
 
 
 

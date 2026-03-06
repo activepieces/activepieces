@@ -1,6 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getTaskListsDropdown, getTasksInListDropdown } from '../common';
-import { microsoftToDoAuth } from '../../index';
+import { microsoftToDoAuth } from '../auth';
 import { Client } from '@microsoft/microsoft-graph-client';
 
 export const deleteTaskAction = createAction({
