@@ -30,6 +30,7 @@ export const GenericPropertiesForm = React.memo(
     onValueChange,
     dynamicPropsInfo,
     showSecretInput = false,
+    isGlobalConnection = false,
   }: GenericPropertiesFormProps) => {
     const form = useFormContext();
     return (
@@ -51,6 +52,7 @@ export const GenericPropertiesForm = React.memo(
                 render={({ field }) =>
                   selectGenericFormComponentForProperty({
                     showSecretInput,
+                    isGlobalConnection,
                     field: {
                       ...field,
                       onChange: (value) => {
@@ -100,4 +102,5 @@ type GenericPropertiesFormProps = {
   onValueChange?: (val: { value: unknown; propertyName: string }) => void;
   /**for dynamic dropdowns and dynamic properties */
   dynamicPropsInfo: SelectGenericFormComponentForPropertyParams['dynamicPropsInfo'];
+  isGlobalConnection?: boolean;
 };

@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { SecretInput } from './secret-input';
 
@@ -25,6 +26,9 @@ const BasicAuthConnectionSettings = React.memo(
       request: UpsertBasicAuthRequest,
     });
     const form = useFormContext<Static<typeof forSchema>>();
+    const projectId = isGlobalConnection
+      ? undefined
+      : authenticationSession.getProjectId()!;
 
     return (
       <>
@@ -35,11 +39,7 @@ const BasicAuthConnectionSettings = React.memo(
             <FormItem className="flex flex-col">
               <FormLabel>{authProperty.username.displayName}</FormLabel>
               <FormControl>
-                <SecretInput
-                  {...field}
-                  type="text"
-                  allowTogglingSecretManagerMode={isGlobalConnection}
-                />
+                <SecretInput {...field} type="text" projectId={projectId} />
               </FormControl>
               <FormDescription>
                 {authProperty.username.description}
@@ -54,11 +54,7 @@ const BasicAuthConnectionSettings = React.memo(
             <FormItem className="flex flex-col mt-3.5">
               <FormLabel>{authProperty.password.displayName}</FormLabel>
               <FormControl>
-                <SecretInput
-                  {...field}
-                  type="password"
-                  allowTogglingSecretManagerMode={isGlobalConnection}
-                />
+                <SecretInput {...field} type="password" projectId={projectId} />
               </FormControl>
               <FormDescription>
                 {authProperty.password.description}

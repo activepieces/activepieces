@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, DiscriminatedUnion } from '../../core/common'
-import { AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, HashicorpProviderConfigSchema, OnePasswordProviderConfigSchema, SecretManagerProviderId } from './dto'
+import { AWSProviderConfigSchema, CyberarkConjurProviderConfigSchema, HashicorpProviderConfigSchema, OnePasswordProviderConfigSchema, SecretManagerConnectionScope, SecretManagerProviderId } from './dto'
 
 export * from './dto'
 
@@ -12,17 +12,43 @@ export const SecretManagerConfigSchema = Type.Union([
 ])
 export type SecretManagerConfig = Static<typeof SecretManagerConfigSchema>
 
-
-export const SecretManagerEntitySchema = Type.Object({
+const SecretManagerConnectionBase = {
     ...BaseModelSchema,
     platformId: Type.String(),
-    providerId: Type.String(),
+    providerId: Type.Enum(SecretManagerProviderId),
+    name: Type.String(),
     auth: SecretManagerConfigSchema,
+}
+
+export const SecretManagerConnectionPlatformScopeSchema = Type.Object({
+    ...SecretManagerConnectionBase,
+    scope: Type.Literal(SecretManagerConnectionScope.PLATFORM),
 })
 
-export type SecretManager = Static<typeof SecretManagerEntitySchema>
+export const SecretManagerConnectionProjectScopeSchema = Type.Object({
+    ...SecretManagerConnectionBase,
+    scope: Type.Literal(SecretManagerConnectionScope.PROJECT),
+    projectIds: Type.Array(Type.String()),
+})
 
-export const SecretManagerFieldSchema =  Type.Object({
+export const SecretManagerConnectionSchema = DiscriminatedUnion('scope', [
+    Type.Omit(SecretManagerConnectionPlatformScopeSchema, ['auth']),
+    Type.Omit(SecretManagerConnectionProjectScopeSchema, ['auth']),
+])
+export type SecretManagerConnection = Static<typeof SecretManagerConnectionSchema>
+
+export const SecretManagerConnectionWithStatusSchema = Type.Intersect([
+    SecretManagerConnectionSchema,
+    Type.Object({
+        connection: Type.Object({
+            configured: Type.Boolean(),
+            connected: Type.Boolean(),
+        }),
+    }),
+])
+export type SecretManagerConnectionWithStatus = Static<typeof SecretManagerConnectionWithStatusSchema>
+
+export const SecretManagerFieldSchema = Type.Object({
     displayName: Type.String(),
     placeholder: Type.String(),
     optional: Type.Optional(Type.Boolean()),
@@ -41,10 +67,6 @@ export const SecretManagerProviderMetaDataBaseSchema = Type.Object({
     id: Type.Enum(SecretManagerProviderId),
     name: Type.String(),
     logo: Type.String(),
-    connection: Type.Optional(Type.Object({
-        configured: Type.Boolean(),
-        connected: Type.Boolean(),
-    })),
 })
 
 export const SecretManagerProviderMetaDataSchema = DiscriminatedUnion('id', [

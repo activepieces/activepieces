@@ -17,7 +17,8 @@ const CustomAuthConnectionSettings = React.memo(
         useMentionTextInput={false}
         propertySettings={null}
         dynamicPropsInfo={null}
-        showSecretInput={isGlobalConnection}
+        showSecretInput={true}
+        isGlobalConnection={isGlobalConnection}
       />
     );
   },

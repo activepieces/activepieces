@@ -16,6 +16,7 @@ import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
@@ -42,7 +43,11 @@ export const selectGenericFormComponentForProperty = ({
   hideLabel,
   enableMarkdownForInputWithMention,
   showSecretInput = false,
+  isGlobalConnection = false,
 }: SelectGenericFormComponentForPropertyParams) => {
+  const projectId = isGlobalConnection
+    ? undefined
+    : authenticationSession.getProjectId()!;
   switch (property.type) {
     case PropertyType.ARRAY:
       return (
@@ -245,7 +250,7 @@ export const selectGenericFormComponentForProperty = ({
             ></TextInputWithMentions>
           ) : showSecretInput ? (
             <SecretInput
-              allowTogglingSecretManagerMode={true}
+              projectId={projectId}
               ref={field.ref}
               value={field.value}
               onChange={field.onChange}
@@ -319,6 +324,7 @@ export const selectGenericFormComponentForProperty = ({
 };
 
 export type SelectGenericFormComponentForPropertyParams = {
+  isGlobalConnection?: boolean;
   showSecretInput?: boolean;
   field: ControllerRenderProps<Record<string, any>, string>;
   hideLabel?: boolean;

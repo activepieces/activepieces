@@ -10,6 +10,7 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { SecretInput } from './secret-input';
 
@@ -26,6 +27,10 @@ const SecretTextConnectionSettings = React.memo(
 
     const form = useFormContext<Static<typeof formSchema>>();
 
+    const projectId = isGlobalConnection
+      ? undefined
+      : authenticationSession.getProjectId()!;
+
     return (
       <FormField
         name="request.value.secret_text"
@@ -34,11 +39,7 @@ const SecretTextConnectionSettings = React.memo(
           <FormItem className="flex flex-col gap-2">
             <FormLabel>{authProperty.displayName}</FormLabel>
             <FormControl>
-              <SecretInput
-                {...field}
-                type="password"
-                allowTogglingSecretManagerMode={isGlobalConnection}
-              />
+              <SecretInput {...field} type="password" projectId={projectId} />
             </FormControl>
           </FormItem>
         )}

@@ -8,6 +8,11 @@ export enum SecretManagerProviderId {
     ONEPASSWORD = 'onepassword',
 }
 
+export enum SecretManagerConnectionScope {
+    PLATFORM = 'PLATFORM',
+    PROJECT = 'PROJECT',
+}
+
 /**
  * Hashicorp Provider Config
  */
@@ -53,20 +58,30 @@ export const OnePasswordProviderConfigSchema = Type.Object({
 })
 export type OnePasswordProviderConfig = Static<typeof OnePasswordProviderConfigSchema>
 
+const SecretManagerConnectionScopeFields = {
+    name: Type.String(),
+    scope: Type.Enum(SecretManagerConnectionScope),
+    projectIds: Type.Optional(Type.Array(Type.String())),
+}
+
 export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId', [
     Type.Object({
+        ...SecretManagerConnectionScopeFields,
         providerId: Type.Literal(SecretManagerProviderId.HASHICORP),
         config: HashicorpProviderConfigSchema,
     }),
     Type.Object({
+        ...SecretManagerConnectionScopeFields,
         providerId: Type.Literal(SecretManagerProviderId.AWS),
         config: AWSProviderConfigSchema,
     }),
     Type.Object({
+        ...SecretManagerConnectionScopeFields,
         providerId: Type.Literal(SecretManagerProviderId.CYBERARK),
         config: CyberarkConjurProviderConfigSchema,
     }),
     Type.Object({
+        ...SecretManagerConnectionScopeFields,
         providerId: Type.Literal(SecretManagerProviderId.ONEPASSWORD),
         config: OnePasswordProviderConfigSchema,
     }),
@@ -74,7 +89,7 @@ export const ConnectSecretManagerRequestSchema = DiscriminatedUnion('providerId'
 
 export type ConnectSecretManagerRequest = Static<typeof ConnectSecretManagerRequestSchema>
 
-export const DisconnectSecretManagerRequestSchema = Type.Object({
-    providerId: Type.Enum(SecretManagerProviderId),
+export const DeleteSecretManagerConnectionRequestSchema = Type.Object({
+    id: Type.String(),
 })
-export type DisconnectSecretManagerRequest = Static<typeof DisconnectSecretManagerRequestSchema>
+export type DeleteSecretManagerConnectionRequest = Static<typeof DeleteSecretManagerConnectionRequestSchema>
