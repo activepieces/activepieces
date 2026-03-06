@@ -1,0 +1,72 @@
+import path from 'path'
+import { trace } from '@opentelemetry/api'
+import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION } from '@activepieces/shared'
+import { apiClient } from '../../api/api-client'
+import { system, WorkerSystemProp } from '../../config/configs'
+import { Logger } from 'pino'
+import { cacheState } from '../cache-state'
+import { GLOBAL_CACHE_FLOWS_PATH } from '../cache-paths'
+
+const tracer = trace.getTracer('flow-cache')
+
+export const flowCache = (log: Logger) => ({
+    async getVersion({ flowVersionId }: GetFlowRequest): Promise<FlowVersion | null> {
+        try {
+            const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
+
+            const { state } = await cache.getOrSetCache({
+                key: flowVersionId,
+                cacheMiss: (flow: string) => {
+                    if (isNil(flow)) {
+                        return true
+                    }
+                    const parsedFlow = JSON.parse(flow) as FlowVersion
+                    return parsedFlow.schemaVersion !== LATEST_FLOW_SCHEMA_VERSION
+                },
+                installFn: async () => {
+                    return tracer.startActiveSpan('flowCache.fetchVersion', async (span) => {
+                        try {
+                            span.setAttribute('flow.versionId', flowVersionId)
+                            const apiUrl = system.getOrThrow(WorkerSystemProp.API_URL)
+                            const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
+                            const flowVersion = await apiClient.getFlowVersion(apiUrl, workerToken, {
+                                versionId: flowVersionId,
+                            })
+                            log.info({
+                                flowVersionId,
+                                state: flowVersion?.state,
+                                found: !isNil(flowVersion),
+                            }, 'Fetched flow version')
+                            return JSON.stringify(flowVersion)
+                        }
+                        finally {
+                            span.end()
+                        }
+                    })
+                },
+                skipSave: (flow: string) => {
+                    if (isNil(flow)) {
+                        return true
+                    }
+                    const parsedFlow = JSON.parse(flow) as FlowVersion
+                    return parsedFlow.state !== FlowVersionState.LOCKED
+                },
+            })
+
+            if (isNil(state)) {
+                return null
+            }
+            return JSON.parse(state as string) as FlowVersion
+        }
+        catch (e) {
+            if (e instanceof Error && 'status' in e && (e as unknown as { status: number }).status === 404) {
+                return null
+            }
+            throw e
+        }
+    },
+})
+
+type GetFlowRequest = {
+    flowVersionId: FlowVersionId
+}

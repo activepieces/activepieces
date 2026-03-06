@@ -379,7 +379,6 @@
     "packages/server/api",
     "packages/server/common",
     "packages/server/worker",
-    "packages/server/sandbox",
     "packages/ee/embed-sdk",
     "packages/tests-e2e",
     "packages/pieces/framework",

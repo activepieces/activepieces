@@ -1,6 +1,6 @@
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -96,10 +96,12 @@ export const progressService = {
                     runId: engineConstants.flowRunId,
                     stepName,
                 })
-                await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_STEP_PROGRESS, {
-                    projectId: engineConstants.projectId,
-                    stepResponse,
-                })
+                if (stepResponse) {
+                    await workerSocket.getWorkerClient().updateStepProgress({
+                        projectId: engineConstants.projectId,
+                        stepResponse,
+                    })
+                }
             },
         }
     },
@@ -185,20 +187,20 @@ type CreateOutputContextParams = {
 }
 
 const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
-    const result = await utils.tryCatchAndThrowOnEngineError(() => 
-        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, request),
+    const result = await utils.tryCatchAndThrowOnEngineError(() =>
+        workerSocket.getWorkerClient().updateRunProgress(request),
     )
     if (result.error) {
-        throw new EngineGenericError('ProgressUpdateError', 'Failed to send UPDATE_RUN_PROGRESS event', result.error)
+        throw new EngineGenericError('ProgressUpdateError', 'Failed to send updateRunProgress', result.error)
     }
 }
 
 const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
-    const result = await utils.tryCatchAndThrowOnEngineError(() => 
-        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPLOAD_RUN_LOG, request),
+    const result = await utils.tryCatchAndThrowOnEngineError(() =>
+        workerSocket.getWorkerClient().uploadRunLog(request),
     )
     if (result.error) {
-        throw new EngineGenericError('ProgressUpdateError', 'Failed to send UPLOAD_RUN_LOG event', result.error)
+        throw new EngineGenericError('ProgressUpdateError', 'Failed to send uploadRunLog', result.error)
     }
 }
 
