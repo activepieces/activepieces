@@ -4,6 +4,7 @@ import { newPageTrigger } from "./lib/triggers/new-page";
 import { PieceCategory } from "@activepieces/shared";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { createPageFromTemplateAction } from "./lib/actions/create-page-from-template";
+import { createPageAction } from "./lib/actions/create-page";
 import { confluenceAuth } from './lib/auth';
 
 export const confluence = createPiece({
@@ -12,7 +13,7 @@ export const confluence = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/confluence.png",
   authors: ["geekyme"],
-  actions: [getPageContent,createPageFromTemplateAction,
+  actions: [getPageContent,createPageFromTemplateAction,createPageAction,
     createCustomApiCallAction({
       baseUrl:(auth)=>{
         return `${ auth?.props.confluenceDomain?? ''}/wiki/api/v2`;
