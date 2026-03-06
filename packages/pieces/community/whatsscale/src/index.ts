@@ -58,6 +58,13 @@ import { getGroupInfoAction } from './lib/actions/info/get-group-info';
 import { getChannelInfoAction } from './lib/actions/info/get-channel-info';
 import { checkWhatsappAction } from './lib/actions/utility/check-whatsapp';
 
+// Sprint 9: Triggers
+import { watchIncomingMessagesTrigger } from './lib/triggers/watch-incoming-messages';
+import { watchGroupMessagesTrigger } from './lib/triggers/watch-group-messages';
+import { watchChannelMessagesTrigger } from './lib/triggers/watch-channel-messages';
+import { watchSpecificGroupMessagesTrigger } from './lib/triggers/watch-specific-group-messages';
+import { watchSpecificChannelMessagesTrigger } from './lib/triggers/watch-specific-channel-messages';
+
 export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
@@ -114,5 +121,11 @@ export const whatsscale = createPiece({
     getChannelInfoAction,
     checkWhatsappAction,
   ],
-  triggers: [],
+  triggers: [
+    watchIncomingMessagesTrigger,
+    watchGroupMessagesTrigger,
+    watchChannelMessagesTrigger,
+    watchSpecificGroupMessagesTrigger,
+    watchSpecificChannelMessagesTrigger,
+  ],
 });
