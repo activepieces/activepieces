@@ -153,13 +153,12 @@ export class TeableClient {
     tableId: string,
     query?: QueryParams
   ) {
-    console.log("YOYOYO",tableId)
     return await this.makeRequest<{
       records: {
         id: string;
         fields: Record<string, unknown>;
       }[];
-    }>(HttpMethod.GET, `/table/${tableId}/record`);
+    }>(HttpMethod.GET, `/table/${tableId}/record`, query);
   }
 
   /**
