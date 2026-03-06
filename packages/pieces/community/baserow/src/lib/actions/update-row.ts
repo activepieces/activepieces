@@ -43,17 +43,31 @@ export const updateRowAction = createAction({
     }
 
     Object.keys(tableFieldsInput).forEach((key) => {
+      const value = tableFieldsInput[key];
+
+      // Skip blank values — omitting a field from the PATCH request
+      // means "don't change it", which is the expected behavior when
+      // a user leaves a field empty (especially select fields).
+      if (
+        value === null ||
+        value === undefined ||
+        value === '' ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        return;
+      }
+
       const fieldType: string = fieldIDTypeMap[key];
       if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) =>
+        formattedTableFields[key] = value.map((id: string) =>
           parseInt(id, 10)
         );
       } else if (fieldType === BaserowFieldType.MULTIPLE_COLLABORATORS) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) => ({
+        formattedTableFields[key] = value.map((id: string) => ({
           id: parseInt(id, 10),
         }));
       } else {
-        formattedTableFields[key] = tableFieldsInput[key];
+        formattedTableFields[key] = value;
       }
     });
     return await client.updateRow(table_id, row_id, formattedTableFields);
