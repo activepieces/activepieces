@@ -1,10 +1,10 @@
 import path from 'path'
-import { trace } from '@opentelemetry/api'
 import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
+import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
-import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 import { GLOBAL_CACHE_PIECES_PATH } from '../cache-paths'
+import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
 const tracer = trace.getTracer('piece-cache')
 

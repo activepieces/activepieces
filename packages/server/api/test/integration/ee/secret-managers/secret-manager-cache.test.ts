@@ -1,5 +1,5 @@
 import { SecretManagerProviderId, SecretManagerFieldsSeparator } from '@activepieces/shared'
-import { apAxios } from '@activepieces/server-common'
+import { apAxios } from '../../../../src/app/helper/ap-axios'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

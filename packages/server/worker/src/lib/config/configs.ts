@@ -8,6 +8,7 @@ export enum WorkerSystemProp {
     LOG_LEVEL = 'AP_LOG_LEVEL',
     LOG_PRETTY = 'AP_LOG_PRETTY',
     OTEL_ENABLED = 'AP_OTEL_ENABLED',
+    LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {

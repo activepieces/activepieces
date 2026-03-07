@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-common'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'

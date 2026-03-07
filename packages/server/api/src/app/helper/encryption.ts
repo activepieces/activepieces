@@ -2,7 +2,8 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
-import { AppSystemProp, RedisType } from '@activepieces/server-common'
+import { AppSystemProp } from './system/system-props'
+import { RedisType } from '../database/redis/types'
 import {
     assertNotNullOrUndefined,
     isNil,

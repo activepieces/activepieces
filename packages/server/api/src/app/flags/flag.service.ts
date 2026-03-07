@@ -1,4 +1,5 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-common'
+import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
+import { webhookSecretsUtils } from './webhook-secrets-util'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'

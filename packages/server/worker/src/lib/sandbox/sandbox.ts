@@ -1,4 +1,5 @@
 import { ChildProcess } from 'child_process'
+import { createServer, Server as HttpServer } from 'http'
 import { ActivepiecesError, assertNotNullOrUndefined, createNotifyServer, createRpcClient, createRpcServer, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, ErrorCode, isNil, WorkerContract, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
@@ -12,6 +13,7 @@ export function createSandbox(
     workerHandlers: WorkerContract,
 ): Sandbox {
     let childProcess: ChildProcess | null = null
+    let httpServer: HttpServer | null = null
     let io: SocketIOServer | null = null
     let connectedSocket: Socket | null = null
     let engineClient: EngineContract | null = null
@@ -19,7 +21,8 @@ export function createSandbox(
     let connectionResolve: (() => void) | null = null
 
     function createSocketServer(): number {
-        io = new SocketIOServer({
+        httpServer = createServer()
+        io = new SocketIOServer(httpServer, {
             path: '/worker/ws',
             maxHttpBufferSize: 1e8,
             cors: { origin: '*' },
@@ -44,10 +47,9 @@ export function createSandbox(
             }
         })
 
-        io.listen(0)
+        httpServer.listen(0)
 
-        const httpServer = io.httpServer
-        const address = httpServer?.address()
+        const address = httpServer.address()
         if (typeof address === 'object' && address !== null) {
             return address.port
         }
@@ -114,8 +116,12 @@ export function createSandbox(
                 let stdOut = ''
 
                 createNotifyServer<WorkerNotifyContract>(connectedSocket!, {
-                    stdout: (input: EngineStdout) => { stdOut += input.message },
-                    stderr: (input: EngineStderr) => { stdError += input.message },
+                    stdout: (input: EngineStdout) => {
+                        stdOut += input.message 
+                    },
+                    stderr: (input: EngineStderr) => {
+                        stdError += input.message 
+                    },
                 })
 
                 timeout = setTimeout(async () => {
@@ -178,8 +184,16 @@ export function createSandbox(
             connectedSocket?.disconnect()
             connectedSocket = null
             engineClient = null
-            await io?.close()
+            await new Promise<void>((resolve) => {
+                if (io) {
+                    io.close(() => resolve())
+                }
+                else {
+                    resolve()
+                }
+            })
             io = null
+            httpServer = null
         },
     }
 }

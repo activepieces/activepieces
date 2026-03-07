@@ -1,4 +1,5 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectResourceType, RouteKind } from '@activepieces/server-common'
+import { AuthorizationRouteSecurity } from '../../authorization/authorization'
+import { AuthorizationType, ProjectResourceType, RouteKind } from '../../authorization/common'
 import { isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { authorizeOrThrow } from './authorize'

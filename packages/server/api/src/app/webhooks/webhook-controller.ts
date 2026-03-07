@@ -1,5 +1,5 @@
 
-import { securityAccess } from '@activepieces/server-common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import {
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,

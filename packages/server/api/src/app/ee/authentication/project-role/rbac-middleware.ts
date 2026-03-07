@@ -1,4 +1,5 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-common'
+import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../../core/security/authorization/authorization'
+import { AuthorizationType, RouteKind } from '../../../core/security/authorization/common'
 import {
     ActivepiecesError,
     ApEdition,

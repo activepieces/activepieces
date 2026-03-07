@@ -1,4 +1,5 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ApId, CreateAlertParams, ListAlertsParams, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'

@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-common'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { AIProviderModel, AIProviderName, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'

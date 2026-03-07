@@ -2,7 +2,9 @@ import { assertNotNullOrUndefined, WorkerSettingsResponse } from '@activepieces/
 
 let settings: WorkerSettingsResponse | undefined
 let settingsResolver: (() => void) | null = null
-const settingsReady = new Promise<void>((resolve) => { settingsResolver = resolve })
+const settingsReady = new Promise<void>((resolve) => {
+    settingsResolver = resolve 
+})
 
 export const workerSettings = {
     set(response: WorkerSettingsResponse): void {

@@ -1,5 +1,5 @@
 import https from 'https'
-import { apAxios } from '@activepieces/server-common'
+import { apAxios } from '../../../helper/ap-axios'
 import { ActivepiecesError, ErrorCode, SecretManagerProviderId, SecretManagerProviderMetaData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider } from './secret-manager-providers'

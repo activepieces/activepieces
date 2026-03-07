@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-common'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { assertNotNullOrUndefined, AuthenticationResponse,
     FederatedAuthnLoginResponse,
     isNil,

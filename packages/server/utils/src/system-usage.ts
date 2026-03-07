@@ -2,29 +2,28 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { MachineInformation } from '@activepieces/shared'
+import { MachineInformation, tryCatch } from '@activepieces/shared'
 import { fileSystemUtils } from './file-system-utils'
 
 const execAsync = promisify(exec)
 
-async function calcMemory(memLimitPath: string, memUsagePath: string) {
-    try {
-        const exists = await fileSystemUtils.fileExists(memLimitPath) && await fileSystemUtils.fileExists(memUsagePath)
-        if (!exists) return null
-        const memLimit = await fs.promises.readFile(memLimitPath, 'utf8')
-        if (memLimit.trim() === 'max') return null
-        const memUsage = await fs.promises.readFile(memUsagePath, 'utf8')
-        return {
-            totalRamInBytes: parseInt(memLimit),
-            ramUsage: (parseInt(memUsage) / parseInt(memLimit)) * 100,
-        }
-    }
-    catch {
-        return null
-    }
-}
-
 export const systemUsage = {
+    async calcMemory(memLimitPath: string, memUsagePath: string) {
+        const { data, error } = await tryCatch(async () => {
+            const exists = await fileSystemUtils.fileExists(memLimitPath) && await fileSystemUtils.fileExists(memUsagePath)
+            if (!exists) return null
+            const memLimit = await fs.promises.readFile(memLimitPath, 'utf8')
+            if (memLimit.trim() === 'max') return null
+            const memUsage = await fs.promises.readFile(memUsagePath, 'utf8')
+            return {
+                totalRamInBytes: parseInt(memLimit),
+                ramUsage: (parseInt(memUsage) / parseInt(memLimit)) * 100,
+            }
+        })
+        if (error) return null
+        return data
+    },
+
     async getContainerMemoryUsage() {
         const memLimitPathV1 = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
         const memUsagePathV1 = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
@@ -32,10 +31,10 @@ export const systemUsage = {
         const memLimitPathV2 = '/sys/fs/cgroup/memory.max'
         const memUsagePathV2 = '/sys/fs/cgroup/memory.current'
 
-        const memoryV2 = await calcMemory(memLimitPathV2, memUsagePathV2)
+        const memoryV2 = await systemUsage.calcMemory(memLimitPathV2, memUsagePathV2)
         if (memoryV2) return memoryV2
 
-        const memoryV1 = await calcMemory(memLimitPathV1, memUsagePathV1)
+        const memoryV1 = await systemUsage.calcMemory(memLimitPathV1, memUsagePathV1)
         if (memoryV1) return memoryV1
 
         return {
@@ -47,7 +46,7 @@ export const systemUsage = {
     async getDiskInfo(): Promise<MachineInformation['diskInfo']> {
         const platform = os.platform()
 
-        try {
+        const { data, error } = await tryCatch(async () => {
             if (platform === 'win32') {
                 const { stdout } = await execAsync('wmic logicaldisk get size,freespace,caption')
                 const lines = stdout.trim().split('\n').slice(1)
@@ -84,15 +83,11 @@ export const systemUsage = {
                     percentage: (usedBytes / totalBytes) * 100,
                 }
             }
+        })
+        if (error) {
+            return { total: 0, free: 0, used: 0, percentage: 0 }
         }
-        catch (error) {
-            return {
-                total: 0,
-                free: 0,
-                used: 0,
-                percentage: 0,
-            }
-        }
+        return data
     },
 
     getCpuUsage(): number {
@@ -105,13 +100,11 @@ export const systemUsage = {
     },
 
     async getCpuCores(): Promise<number> {
-        // cgroups v2 path
         const cgroupV2Path = '/sys/fs/cgroup/cpu.max'
-        // cgroups v1 paths
         const quotaPath = '/sys/fs/cgroup/cpu/cpu.cfs_quota_us'
         const periodPath = '/sys/fs/cgroup/cpu/cpu.cfs_period_us'
 
-        try {
+        const { data, error } = await tryCatch(async () => {
             if (await fileSystemUtils.fileExists(cgroupV2Path)) {
                 const content = await fs.promises.readFile(cgroupV2Path, 'utf8')
                 const [quota, period] = content.trim().split(' ')
@@ -126,10 +119,11 @@ export const systemUsage = {
                     return quota / period
                 }
             }
-        }
-        catch {
+            return null
+        })
+        if (error || data === null) {
             return os.cpus().length
         }
-        return os.cpus().length
+        return data
     },
 }

@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ListAuditEventsRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'

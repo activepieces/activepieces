@@ -1,4 +1,5 @@
-import { securityAccess, triggerRunStats } from '@activepieces/server-common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { triggerRunStats } from './trigger-run-stats'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { redisConnections } from '../../database/redis-connections'

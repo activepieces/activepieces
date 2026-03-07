@@ -1,11 +1,6 @@
 import path from 'path'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
-import axios from 'axios'
 import { environmentMigrations } from './env-migrations'
-
-export const systemConstants = {
-    ENGINE_EXECUTABLE_PATH: 'dist/packages/engine/main.js',
-}
 
 export type SystemProp = AppSystemProp | WorkerSystemProp
 
@@ -173,14 +168,15 @@ export const apVersionUtil = {
             if (cachedVersion) {
                 return cachedVersion
             }
-            const response = await axios.get<PackageJson>(
+            const response = await fetch(
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
                 {
-                    timeout: 5000,
+                    signal: AbortSignal.timeout(5000),
                 },
             )
-            cachedVersion = response.data.version
-            return response.data.version
+            const data: PackageJson = await response.json()
+            cachedVersion = data.version
+            return data.version
         }
         catch (ex) {
             return '0.0.0'

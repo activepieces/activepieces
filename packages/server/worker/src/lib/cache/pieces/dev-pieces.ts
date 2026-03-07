@@ -1,12 +1,13 @@
-import { access, copyFile, cp } from 'node:fs/promises'
 import { ChildProcess, spawn } from 'node:child_process'
+import { access, copyFile, cp } from 'node:fs/promises'
 import { join, resolve } from 'path'
-import { filePiecesUtils, memoryLock, ApLock } from '@activepieces/server-common'
+import { type ApLock, memoryLock } from '@activepieces/server-utils'
 import { isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import { Server } from 'socket.io'
 import { logger } from '../../config/logger'
 import { workerSettings } from '../../config/worker-settings'
+import { filePiecesUtils } from '../../utils/file-pieces-utils'
 
 const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 

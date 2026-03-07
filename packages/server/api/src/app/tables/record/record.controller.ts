@@ -1,4 +1,5 @@
-import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-common'
+import { EntitySourceType, ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,

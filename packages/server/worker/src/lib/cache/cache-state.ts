@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils, memoryLock } from '@activepieces/server-common'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-utils'
 import { isNil } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 

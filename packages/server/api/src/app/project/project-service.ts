@@ -1,4 +1,4 @@
-import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-common'
+import { getProjectMaxConcurrentJobsKey } from '../database/redis/keys'
 import {
     ActivepiecesError,
     ApId,

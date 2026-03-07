@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-common'
+import { AppSystemProp } from '../../helper/system/system-props'
 import {
     ExecutionMode,
     isNil,

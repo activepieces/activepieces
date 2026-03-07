@@ -1,4 +1,4 @@
-import { EntitySourceType, ProjectBodyResource, ProjectParamResource, ProjectQueryResource, ProjectTableResource } from '@activepieces/server-common'
+import { EntitySourceType, ProjectBodyResource, ProjectParamResource, ProjectQueryResource, ProjectTableResource } from '../../authorization/common'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, isObject } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../database/database-connection'

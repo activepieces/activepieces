@@ -1,4 +1,4 @@
-import { exceptionHandler } from '@activepieces/server-common'
+import { exceptionHandler } from '../../helper/exception-handler'
 import {
     FileType,
     FlowOperationRequest,

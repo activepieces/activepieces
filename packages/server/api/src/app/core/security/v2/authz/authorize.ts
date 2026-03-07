@@ -1,4 +1,5 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-common'
+import { AuthorizationRouteSecurity, ProjectAuthorizationConfig } from '../../authorization/authorization'
+import { AuthorizationType, RouteKind } from '../../authorization/common'
 import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'

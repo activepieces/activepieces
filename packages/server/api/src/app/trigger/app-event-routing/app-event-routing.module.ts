@@ -3,10 +3,8 @@ import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
-import {
-    rejectedPromiseHandler,
-    securityAccess,
-} from '@activepieces/server-common'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import {
     ActivepiecesError,
     apId,

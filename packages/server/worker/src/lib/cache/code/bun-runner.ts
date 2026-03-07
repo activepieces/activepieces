@@ -1,12 +1,7 @@
-import {
-    apDayjsDuration,
-    CommandOutput,
-    execPromise,
-    fileSystemUtils,
-    spawnWithKill,
-} from '@activepieces/server-common'
+import { apDayjsDuration, fileSystemUtils } from '@activepieces/server-utils'
 import { tryCatch } from '@activepieces/shared'
 import { Logger } from 'pino'
+import { CommandOutput, execPromise, spawnWithKill } from '../../utils/exec'
 
 export const bunRunner = (log: Logger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {

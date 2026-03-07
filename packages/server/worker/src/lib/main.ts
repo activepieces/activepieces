@@ -1,5 +1,5 @@
-import { logger } from './config/logger'
 import { system, WorkerSystemProp } from './config/configs'
+import { logger } from './config/logger'
 import { worker } from './worker'
 
 const apiUrl = system.getOrThrow(WorkerSystemProp.API_URL)

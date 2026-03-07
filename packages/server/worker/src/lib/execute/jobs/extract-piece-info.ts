@@ -3,10 +3,10 @@ import {
     ExecuteExtractPieceMetadataJobData,
     WorkerJobType,
 } from '@activepieces/shared'
-import { workerSettings } from '../../config/worker-settings'
 import { provisioner } from '../../cache/provisioner'
+import { workerSettings } from '../../config/worker-settings'
 import { createSandboxForJob } from '../create-sandbox-for-job'
-import { JobHandler, JobContext, JobResult } from '../types'
+import { JobContext, JobHandler, JobResult } from '../types'
 
 export const extractPieceInfoJob: JobHandler<ExecuteExtractPieceMetadataJobData> = {
     jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,

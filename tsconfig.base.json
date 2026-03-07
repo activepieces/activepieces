@@ -1293,7 +1293,7 @@
       "@activepieces/piece-meistertask": [
         "packages/pieces/community/meistertask/src/index.ts"
       ],
-"@activepieces/server-common": ["packages/server/common/src/index.ts"],
+      "@activepieces/server-utils": ["packages/server/utils/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],

@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import { AppSystemProp, RedisType } from '@activepieces/server-common'
+import { AppSystemProp } from './system/system-props'
+import { RedisType } from '../database/redis/types'
 import {
     ActivepiecesError,
     ErrorCode,

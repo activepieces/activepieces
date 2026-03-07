@@ -1,4 +1,5 @@
-import { AppSystemProp, DatabaseType } from '@activepieces/server-common'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { DatabaseType } from '../../database-type'
 import { ApEnvironment } from '@activepieces/shared'
 import { DataSource, EntityMetadata, MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'

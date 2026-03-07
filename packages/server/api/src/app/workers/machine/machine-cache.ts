@@ -1,4 +1,4 @@
-import { apDayjs } from '@activepieces/server-common'
+import { apDayjs } from '@activepieces/server-utils'
 import { MachineInformation, parseToJsonIfPossible } from '@activepieces/shared'
 import { redisConnections } from '../../database/redis-connections'
 

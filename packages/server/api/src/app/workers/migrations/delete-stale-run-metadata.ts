@@ -1,5 +1,5 @@
 
-import { redisHelper } from '@activepieces/server-common'
+import { redisHelper } from '../../database/redis'
 import { isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'

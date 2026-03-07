@@ -1,5 +1,7 @@
 import { inspect } from 'util'
-import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-common'
+import { AppSystemProp, ContainerType, SystemProp, WorkerSystemProp } from './system/system-props'
+import { DatabaseType } from '../database/database-type'
+import { RedisType } from '../database/redis/types'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { s3Helper } from '../file/s3-helper'

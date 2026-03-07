@@ -1,12 +1,12 @@
-import { nanoid } from 'nanoid'
 import { ExecutionMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
 import { Logger } from 'pino'
-import { createSandbox } from '../sandbox/sandbox'
+import { ENGINE_PATH, GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../cache/cache-paths'
+import { workerSettings } from '../config/worker-settings'
 import { simpleProcess } from '../sandbox/fork'
 import { isolateProcess } from '../sandbox/isolate'
+import { createSandbox } from '../sandbox/sandbox'
 import { Sandbox, SandboxMount } from '../sandbox/types'
-import { workerSettings } from '../config/worker-settings'
-import { ENGINE_PATH, GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../cache/cache-paths'
 
 export function createSandboxForJob(params: {
     log: Logger
@@ -26,7 +26,7 @@ export function createSandboxForJob(params: {
     const memoryLimitMb = parseMemoryLimit(settings.SANDBOX_MEMORY_LIMIT)
     const processMaker = getProcessMaker(settings.EXECUTION_MODE, log)
 
-    const mounts: SandboxMount[] = [
+    const _mounts: SandboxMount[] = [
         { hostPath: GLOBAL_CACHE_COMMON_PATH, sandboxPath: '/root/common' },
         { hostPath: GLOBAL_CODE_CACHE_PATH, sandboxPath: '/root/codes', optional: true },
     ]

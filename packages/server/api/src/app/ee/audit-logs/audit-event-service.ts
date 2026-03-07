@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-common'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import {
     ApplicationEvent,
 

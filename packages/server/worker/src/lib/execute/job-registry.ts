@@ -1,14 +1,14 @@
 import { JobData, WorkerJobType } from '@activepieces/shared'
-import { JobHandler } from './types'
+import { eventDestinationJob } from './jobs/event-destination'
 import { executeFlowJob } from './jobs/execute-flow'
 import { executePollingJob } from './jobs/execute-polling'
-import { executeWebhookJob } from './jobs/execute-webhook'
-import { renewWebhookJob } from './jobs/renew-webhook'
-import { executeTriggerHookJob } from './jobs/execute-trigger-hook'
 import { executePropertyJob } from './jobs/execute-property'
+import { executeTriggerHookJob } from './jobs/execute-trigger-hook'
 import { executeValidationJob } from './jobs/execute-validation'
+import { executeWebhookJob } from './jobs/execute-webhook'
 import { extractPieceInfoJob } from './jobs/extract-piece-info'
-import { eventDestinationJob } from './jobs/event-destination'
+import { renewWebhookJob } from './jobs/renew-webhook'
+import { JobHandler } from './types'
 
 const registry: Record<WorkerJobType, JobHandler> = {
     [WorkerJobType.EXECUTE_FLOW]: executeFlowJob,

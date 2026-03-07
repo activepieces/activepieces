@@ -1,4 +1,5 @@
-import { AppSystemProp, securityAccess } from '@activepieces/server-common'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import {
     ActivepiecesError,
     ErrorCode,

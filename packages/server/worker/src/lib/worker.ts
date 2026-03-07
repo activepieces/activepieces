@@ -1,7 +1,4 @@
-import { trace } from '@opentelemetry/api'
-import { nanoid } from 'nanoid'
-import { io, Socket } from 'socket.io-client'
-import { systemUsage } from '@activepieces/server-common'
+import { systemUsage } from '@activepieces/server-utils'
 import {
     ConsumeJobRequest,
     ConsumeJobResponseStatus,
@@ -13,8 +10,11 @@ import {
     WorkerSettingsResponse,
     WorkerToApiContract,
 } from '@activepieces/shared'
-import { logger } from './config/logger'
+import { trace } from '@opentelemetry/api'
+import { nanoid } from 'nanoid'
+import { io, Socket } from 'socket.io-client'
 import { system, WorkerSystemProp } from './config/configs'
+import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
 import { JobContext, JobResult } from './execute/types'
@@ -39,8 +39,8 @@ export const worker = {
 
         socket.on('connect', () => {
             logger.info('Connected to API server via Socket.IO')
-            fetchAndStoreSettings(socket!, () => {
-                startPollingLoop(apiClient)
+            void fetchAndStoreSettings(socket!, () => {
+                void startPollingLoop(apiClient)
             })
         })
 

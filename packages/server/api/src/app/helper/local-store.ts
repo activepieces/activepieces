@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { AppSystemProp } from '@activepieces/server-common'
+import { AppSystemProp } from './system/system-props'
 import { system } from './system/system'
 
 export const localFileStore = {

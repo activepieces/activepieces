@@ -1,6 +1,6 @@
 import { ExecutionMode } from '@activepieces/shared'
-import { DatabaseType } from './database-type'
-import { RedisType } from './redis/types'
+import { DatabaseType } from '../../database/database-type'
+import { RedisType } from '../../database/redis/types'
 import { AppSystemProp } from './system-props'
 
 const envPrefix = (prop: string): string => `AP_${prop}`

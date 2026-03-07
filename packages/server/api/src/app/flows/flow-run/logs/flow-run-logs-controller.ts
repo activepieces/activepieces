@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-common'
+import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, FileType, isNil, UploadLogsBehavior, UploadLogsQueryParams } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'

@@ -4,10 +4,10 @@ import {
     ExecuteValidateAuthJobData,
     WorkerJobType,
 } from '@activepieces/shared'
-import { workerSettings } from '../../config/worker-settings'
 import { provisioner } from '../../cache/provisioner'
+import { workerSettings } from '../../config/worker-settings'
 import { createSandboxForJob } from '../create-sandbox-for-job'
-import { JobHandler, JobContext, JobResult } from '../types'
+import { JobContext, JobHandler, JobResult } from '../types'
 
 export const executeValidationJob: JobHandler<ExecuteValidateAuthJobData> = {
     jobType: WorkerJobType.EXECUTE_VALIDATION,

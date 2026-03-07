@@ -19,4 +19,3 @@ axiosRetry(apAxios, {
         return !isNil(error.response?.status) && error.response.status >= 500 && error.response.status < 600
     },
 })
-

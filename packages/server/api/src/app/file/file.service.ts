@@ -1,4 +1,6 @@
-import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-common'
+import { AppSystemProp, WorkerSystemProp } from '../helper/system/system-props'
+import { exceptionHandler } from '../helper/exception-handler'
+import { fileCompressor } from './file-compressor'
 import {
     ActivepiecesError,
     apId,

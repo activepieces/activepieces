@@ -1,4 +1,4 @@
-import { FlowActionType, FlowVersion, flowStructureUtil, FlowTriggerType, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import { FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { CodeArtifact } from '../../cache/code/code-builder'
 import { pieceCache } from '../../cache/pieces/piece-cache'

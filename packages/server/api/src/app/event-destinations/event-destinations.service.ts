@@ -1,4 +1,4 @@
-import { WorkerSystemProp } from '@activepieces/server-common'
+import { WorkerSystemProp } from '../helper/system/system-props'
 import {
     ActivepiecesError,
     apId,

@@ -1,4 +1,5 @@
-import { AppSystemProp, QueueName } from '@activepieces/server-common'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { QueueName } from '../job'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'

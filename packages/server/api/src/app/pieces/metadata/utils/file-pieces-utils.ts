@@ -6,7 +6,7 @@ import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-fra
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
-import { AppSystemProp, environmentVariables } from '../system-props'
+import { AppSystemProp, environmentVariables } from '../../../helper/system/system-props'
 
 const SOURCE_PIECES_PATH = resolve(cwd(), 'packages', 'pieces')
 

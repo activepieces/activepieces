@@ -378,7 +378,7 @@
     "packages/server/engine",
     "packages/web",
     "packages/server/api",
-    "packages/server/common",
+    "packages/server/utils",
     "packages/server/worker",
     "packages/ee/embed-sdk",
     "packages/tests-e2e",

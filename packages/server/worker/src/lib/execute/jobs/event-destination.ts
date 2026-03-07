@@ -3,7 +3,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
-import { JobHandler, JobContext, JobResult } from '../types'
+import { JobContext, JobHandler, JobResult } from '../types'
 
 export const eventDestinationJob: JobHandler<EventDestinationJobData> = {
     jobType: WorkerJobType.EVENT_DESTINATION,

@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { AppSystemProp } from '@activepieces/server-common'
+import { AppSystemProp } from '../../../../helper/system/system-props'
 import { ActivepiecesError, ApEnvironment, ConfigureRepoRequest, ErrorCode, GitRepo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'

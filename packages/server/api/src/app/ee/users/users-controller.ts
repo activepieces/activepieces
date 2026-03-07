@@ -1,4 +1,4 @@
-import { securityAccess } from '@activepieces/server-common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import {
     AP_MAXIMUM_PROFILE_PICTURE_SIZE,
     ApId,

@@ -3,9 +3,7 @@ import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
-import {
-    AppSystemProp,
-} from '@activepieces/server-common'
+import { AppSystemProp } from '../../helper/system/system-props'
 import {
     ActivepiecesError,
     ApEnvironment,
