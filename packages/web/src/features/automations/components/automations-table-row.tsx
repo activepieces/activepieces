@@ -122,8 +122,8 @@ export const AutomationsTableRow = ({
       </div>
       <div
         className={cn(
-          'w-8 shrink-0 flex items-center justify-center',
-          item.type === 'folder' && 'mr-1',
+          'w-8 shrink-0 flex items-center justify-center mr-2',
+          item.type === 'folder' && 'mr-3',
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -145,9 +145,7 @@ export const AutomationsTableRow = ({
               </button>
             </TooltipTrigger>
             <TooltipContent side="top">
-              {isPinned
-                ? t('Unpin {type}', { type: item.type })
-                : t('Pin {type}', { type: item.type })}
+              {isPinned ? t('Remove from favorites') : t('Add to favorites')}
             </TooltipContent>
           </Tooltip>
         )}
@@ -171,7 +169,16 @@ export const AutomationsTableRow = ({
           <span className="shrink-0">
             <RowItemIcon item={item} />
           </span>
-          <span className="truncate">{item.name}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="truncate">{item.name}</span>
+            </TooltipTrigger>
+            {item.name.length > 40 && (
+              <TooltipContent side="top">
+                <p>{item.name}</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
         </div>
       </div>
       <div className="w-[230px] shrink-0 px-2 flex items-center">
@@ -186,7 +193,7 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[170px] shrink-0 px-2 flex items-center">
+        <div className="w-[250px] shrink-0 px-2 flex items-center">
           <RowItemOwner item={item} />
         </div>
       )}

@@ -130,9 +130,9 @@ export const AutomationsFilters = ({
   });
 
   return (
-    <div className="overflow-x-auto mb-4">
-      <div className="flex items-center justify-between gap-4 min-w-max">
-        <div className="flex items-center gap-2">
+    <div className="mb-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -142,7 +142,7 @@ export const AutomationsFilters = ({
                 onSearchChange(e.target.value);
                 onFilterChange?.();
               }}
-              className="min-w-[220px] max-w-xs pl-8 pr-8"
+              className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             {searchTerm && (
               <button
