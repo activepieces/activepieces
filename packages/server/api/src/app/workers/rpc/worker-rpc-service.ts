@@ -25,12 +25,12 @@ import { triggerSourceService } from '../../trigger/trigger-source/trigger-sourc
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
-export function createHandlers(log: FastifyBaseLogger): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): WorkerToApiContract {
     return {
         async poll(input) {
-            log.info({ workerId: input.workerId }, '[workerRpc#poll] Poll request received')
+            log.info({ workerId: input.workerId, platformIdForDedicatedWorker }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input)
-            const job = await jobBroker(log).poll()
+            const job = await jobBroker(log).poll(platformIdForDedicatedWorker)
             if (job) {
                 log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')
             }

@@ -9,6 +9,7 @@ export enum WorkerSystemProp {
     LOG_PRETTY = 'AP_LOG_PRETTY',
     OTEL_ENABLED = 'AP_OTEL_ENABLED',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
+    PLATFORM_ID_FOR_DEDICATED_WORKER = 'AP_PLATFORM_ID_FOR_DEDICATED_WORKER',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {

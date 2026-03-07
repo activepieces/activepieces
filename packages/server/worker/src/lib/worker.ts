@@ -31,8 +31,9 @@ const workerId = `worker-${nanoid()}`
 
 export const worker = {
     async start(apiUrl: string, workerToken: string): Promise<void> {
+        const platformIdForDedicatedWorker = system.get(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
         socket = io(apiUrl, {
-            auth: { token: workerToken, workerId },
+            auth: { token: workerToken, workerId, platformIdForDedicatedWorker },
             transports: ['websocket'],
             reconnection: true,
         })

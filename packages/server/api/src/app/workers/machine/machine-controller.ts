@@ -9,9 +9,11 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
-            const response = await machineService(app.log).onConnection(request, socket.handshake.auth?.platformIdForDedicatedWorker)
+            const rawPlatformId = socket.handshake.auth?.platformIdForDedicatedWorker
+            const platformIdForDedicatedWorker = typeof rawPlatformId === 'string' ? rawPlatformId : undefined
+            const response = await machineService(app.log).onConnection(request, platformIdForDedicatedWorker)
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log))
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, platformIdForDedicatedWorker))
         }
     })
 

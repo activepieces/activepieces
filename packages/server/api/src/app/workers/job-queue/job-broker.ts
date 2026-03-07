@@ -1,6 +1,6 @@
 import { memoryLock } from '@activepieces/server-utils'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { QueueName } from '../job'
+import { getPlatformQueueName, QueueName } from '../job'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -32,8 +32,8 @@ async function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
             drainDelay: DRAIN_DELAY_MS,
         },
     )
-    await worker.waitUntilReady()
     bullmqWorkers.set(queueName, worker)
+    await worker.waitUntilReady()
 
     log.info({ queueName }, '[jobBroker] BullMQ worker initialized')
     return worker
@@ -79,11 +79,13 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         log.info('[jobBroker] Job broker initialized')
     },
 
-    async poll(): Promise<ConsumeJobRequest | null> {
+    async poll(platformId?: string): Promise<ConsumeJobRequest | null> {
+        const queueName = platformId ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
+        await ensureBullMQWorker(queueName, log)
         try {
-            const lock = await memoryLock.acquire('job-broker-poll', DRAIN_DELAY_MS)
+            const lock = await memoryLock.acquire(`job-broker-poll-${queueName}`, DRAIN_DELAY_MS)
             try {
-                return await tryDequeue(QueueName.WORKER_JOBS, log)
+                return await tryDequeue(queueName, log)
             }
             finally {
                 await lock.release()
