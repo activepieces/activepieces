@@ -35,6 +35,8 @@ jobs:
           push: true
           tags: |
             ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
 
       - name: Configure SSH
         run: |

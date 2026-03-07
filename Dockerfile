@@ -66,7 +66,9 @@ COPY packages/ ./packages/
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
 
-# Copy remaining source code (turbo config, etc.)
+# Bust Docker layer cache when commit changes so COPY picks up fresh source
+ARG COMMIT_SHA
+# Copy remaining source code (overwrites packages/ with fresh files too)
 COPY . .
 
 # Build frontend, engine, and server API
