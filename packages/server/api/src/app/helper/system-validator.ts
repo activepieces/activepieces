@@ -151,8 +151,6 @@ const systemPropValidators: {
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
 
     // AppSystemProp
-    [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
-
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
     [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,

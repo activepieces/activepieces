@@ -1,3 +1,4 @@
+import { memoryLock } from '@activepieces/server-utils'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { QueueName } from '../job'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil } from '@activepieces/shared'
@@ -8,6 +9,8 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { jobMigrations } from '../migrations/job-data-migrations'
+
+const DRAIN_DELAY_MS = 30
 
 const bullmqWorkers = new Map<string, BullMQWorker>()
 const activeJobs = new Map<string, { job: Job, token: string }>()
@@ -26,7 +29,7 @@ async function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
             concurrency: 10000,
             autorun: false,
             lockDuration: 120_000,
-            drainDelay: 15,
+            drainDelay: DRAIN_DELAY_MS,
         },
     )
     await worker.waitUntilReady()
@@ -77,7 +80,21 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     },
 
     async poll(): Promise<ConsumeJobRequest | null> {
-        return tryDequeue(QueueName.WORKER_JOBS, log)
+        try {
+            const lock = await memoryLock.acquire('job-broker-poll', DRAIN_DELAY_MS)
+            try {
+                return await tryDequeue(QueueName.WORKER_JOBS, log)
+            }
+            finally {
+                await lock.release()
+            }
+        }
+        catch (e) {
+            if (memoryLock.isTimeoutError(e)) {
+                return null
+            }
+            throw e
+        }
     },
 
     async completeJob(input: ConsumeJobResponse & { jobId: string }): Promise<void> {
