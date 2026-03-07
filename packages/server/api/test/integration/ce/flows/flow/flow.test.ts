@@ -1,4 +1,4 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
@@ -16,15 +16,15 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { generateMockToken } from '../../../helpers/auth'
-import { db } from '../../../helpers/db'
+import { generateMockToken } from '../../../../helpers/auth'
+import { db } from '../../../../helpers/db'
 import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
-} from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
+} from '../../../../helpers/mocks'
+import { createTestContext } from '../../../../helpers/test-context'
 
 let app: FastifyInstance | null = null
 

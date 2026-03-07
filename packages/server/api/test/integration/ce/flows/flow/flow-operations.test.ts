@@ -1,4 +1,4 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import {
     FlowActionType,
     FlowOperationType,
@@ -12,15 +12,15 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { db } from '../../../helpers/db'
+import { db } from '../../../../helpers/db'
 import {
     createMockFlow,
     createMockFlowVersion,
     createMockFolder,
     createMockPieceMetadata,
-} from '../../../helpers/mocks'
-import { createTestContext } from '../../../helpers/test-context'
-import { describeWithAuth } from '../../../helpers/describe-with-auth'
+} from '../../../../helpers/mocks'
+import { createTestContext } from '../../../../helpers/test-context'
+import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 
 let app: FastifyInstance | null = null
 

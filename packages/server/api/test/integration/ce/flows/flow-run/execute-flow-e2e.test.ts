@@ -24,17 +24,17 @@ import {
     RunEnvironment,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { flowRunService } from '../../../../src/app/flows/flow-run/flow-run-service'
-import { setupE2eEnvironment } from '../../../helpers/e2e-setup'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { setupE2eEnvironment } from '../../../../helpers/e2e-setup'
 import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
-} from '../../../helpers/mocks'
-import { db } from '../../../helpers/db'
-import { worker } from '../../../../../worker/src/lib/worker'
+} from '../../../../helpers/mocks'
+import { db } from '../../../../helpers/db'
+import { worker } from '../../../../../../worker/src/lib/worker'
 
 let app: FastifyInstance
 

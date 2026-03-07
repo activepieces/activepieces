@@ -1,9 +1,9 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import { apId, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { generateMockToken } from '../../../../helpers/auth'
+import { mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
