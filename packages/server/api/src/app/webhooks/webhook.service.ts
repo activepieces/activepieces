@@ -37,12 +37,11 @@ export const webhookService = {
                 const webhookRequestId = apId()
                 span.setAttribute('webhook.requestId', webhookRequestId)
                 const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-
                 const flowExecutionResult = await flowExecutionCache(pinoLogger).get({
                     flowId,
                     simulate: saveSampleData,
                 })
-                
+
                 if (!flowExecutionResult.exists) {
                     pinoLogger.info('Flow not found, returning GONE')
                     span.setAttribute('webhook.flowFound', false)
@@ -74,7 +73,7 @@ export const webhookService = {
 
                 const response = await handshakeHandler(pinoLogger).handleHandshakeRequest({
                     payload: (payload ?? await data(flow.projectId)) as TriggerPayload,
-                    handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null, 
+                    handshakeConfiguration: flowExecutionResult.handshakeConfiguration ?? null,
                     flowId: flow.id,
                     flowVersionId: flowVersionIdToRun,
                     projectId: flow.projectId,

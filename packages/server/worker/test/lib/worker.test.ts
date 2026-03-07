@@ -90,7 +90,7 @@ describe('worker integration', () => {
     })
 
     afterEach(async () => {
-        worker.stop()
+        await worker.stop()
         mockGetHandler.mockReset()
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())

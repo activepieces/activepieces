@@ -57,6 +57,7 @@ export const workerSocket = {
         createRpcServer<EngineContract>(socket, {
             executeOperation: async ({ operationType, operation }): Promise<EngineResponse<unknown>> => {
                 const result = await utils.tryCatchAndThrowOnEngineError(async () => {
+                    progressService.init()
                     const response = await execute(operationType, operation)
                     await progressService.shutdown()
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>

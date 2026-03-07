@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { createSandboxForJob } from '../create-sandbox-for-job'
+import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 
 export const executePropertyJob: JobHandler<ExecutePropertyJobData> = {
@@ -19,7 +19,7 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData> = {
             codeSteps: [],
         })
 
-        const sandbox = createSandboxForJob({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: undefined,
@@ -54,8 +54,12 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData> = {
                 },
             }
         }
+        catch (e) {
+            await sandboxManager.invalidate(ctx.log)
+            throw e
+        }
         finally {
-            await sandbox.shutdown()
+            await sandboxManager.release(ctx.log)
         }
     },
 }

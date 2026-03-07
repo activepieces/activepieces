@@ -39,7 +39,6 @@ export function createSandboxForJob(params: {
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
-            reusable: false,
         },
         processMaker,
         workerHandlers,

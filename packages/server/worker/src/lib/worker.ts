@@ -17,6 +17,7 @@ import { system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
+import { sandboxManager } from './execute/sandbox-manager'
 import { JobContext, JobResult } from './execute/types'
 
 
@@ -56,8 +57,9 @@ export const worker = {
         logger.info({ apiUrl }, 'Worker started, polling for jobs...')
     },
 
-    stop(): void {
+    async stop(): Promise<void> {
         polling = false
+        await sandboxManager.shutdown(logger)
         socket?.disconnect()
         socket = null
         logger.info('Worker stopped')

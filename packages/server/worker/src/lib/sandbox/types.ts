@@ -30,6 +30,7 @@ export type Sandbox = {
     start: (options: SandboxStartOptions) => Promise<void>
     execute: (operationType: EngineOperationType, operation: EngineOperation, options: SandboxOptions) => Promise<SandboxResult>
     shutdown: () => Promise<void>
+    isReady: () => boolean
 }
 
 export type SandboxStartOptions = {
@@ -43,7 +44,6 @@ export type SandboxInitOptions = {
     memoryLimitMb: number
     cpuMsPerSec: number
     timeLimitSeconds: number
-    reusable: boolean
     command?: string[]
 }
 

@@ -16,7 +16,7 @@ import {
 import { flowCache } from '../../cache/flow/flow-cache'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { createSandboxForJob } from '../create-sandbox-for-job'
+import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
 
@@ -36,7 +36,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
         const codeSteps = extractCodeArtifacts(flowVersion)
         await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
 
-        const sandbox = createSandboxForJob({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
@@ -64,6 +64,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
             return {}
         }
         catch (e) {
+            await sandboxManager.invalidate(ctx.log)
             if (e instanceof ActivepiecesError) {
                 if (e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
                     await reportFlowStatus(ctx, data, FlowRunStatus.TIMEOUT)
@@ -82,7 +83,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData> = {
             throw e
         }
         finally {
-            await sandbox.shutdown()
+            await sandboxManager.release(ctx.log)
         }
     },
 }

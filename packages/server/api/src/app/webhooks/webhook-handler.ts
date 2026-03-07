@@ -148,11 +148,12 @@ export const webhookHandler = {
                 span.setAttribute('webhook.runId', createdRun.id)
                 params.onRunCreated?.(createdRun)
 
-                return await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
+                const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
                     status: StatusCodes.NO_CONTENT,
                     body: {},
                     headers: {},
                 })
+                return listenerResult
             }
             finally {
                 span.end()

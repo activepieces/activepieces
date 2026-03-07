@@ -76,7 +76,6 @@ export function createSandbox(
                 sandboxId,
                 flowVersionId: flowVersionId ?? 'undefined',
                 platformId,
-                reusable: String(options.reusable),
             }, 'Starting sandbox')
 
             const port = createSocketServer()
@@ -102,7 +101,6 @@ export function createSandbox(
                 sandboxId,
                 flowVersionId: flowVersionId ?? 'undefined',
                 platformId,
-                reusable: String(options.reusable),
             }, 'Sandbox started')
         },
         execute: async (operationType: EngineOperationType, operation: EngineOperation, executeOptions: SandboxOptions) => {
@@ -151,7 +149,6 @@ export function createSandbox(
 
                 log.info({ sandboxId, operationType }, '[Sandbox] Executing operation via RPC')
                 engineClient!.executeOperation({ operationType, operation }).then((engineResponse: EngineResponse<unknown>) => {
-                    log.info({ sandboxId, operationType, status: engineResponse.status }, '[Sandbox] ENGINE_RESPONSE received')
                     resolve({ engine: engineResponse, stdOut, stdError })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
@@ -174,6 +171,9 @@ export function createSandbox(
                 childProcess?.removeAllListeners('exit')
                 childProcess?.removeAllListeners('error')
             }
+        },
+        isReady: () => {
+            return !isNil(connectedSocket) && connectedSocket.connected && !isNil(childProcess)
         },
         shutdown: async () => {
             if (!isNil(childProcess)) {

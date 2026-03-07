@@ -11,7 +11,7 @@ import {
 import { flowCache } from '../../cache/flow/flow-cache'
 import { provisioner } from '../../cache/provisioner'
 import { workerSettings } from '../../config/worker-settings'
-import { createSandboxForJob } from '../create-sandbox-for-job'
+import { sandboxManager } from '../sandbox-manager'
 import { JobContext, JobHandler, JobResult } from '../types'
 import { extractCodeArtifacts, extractPiecePackages } from '../utils/flow-helpers'
 import { getWebhookUrl } from '../utils/webhook-url'
@@ -32,7 +32,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
         const codeSteps = extractCodeArtifacts(flowVersion)
         await provisioner(ctx.log, ctx.apiClient).provision({ pieces, codeSteps })
 
-        const sandbox = createSandboxForJob({ log: ctx.log, apiClient: ctx.apiClient })
+        const sandbox = sandboxManager.acquire({ log: ctx.log, apiClient: ctx.apiClient })
         try {
             await sandbox.start({
                 flowVersionId: flowVersion.id,
@@ -112,8 +112,12 @@ export const executeWebhookJob: JobHandler<WebhookJobData> = {
 
             return {}
         }
+        catch (e) {
+            await sandboxManager.invalidate(ctx.log)
+            throw e
+        }
         finally {
-            await sandbox.shutdown()
+            await sandboxManager.release(ctx.log)
         }
     },
 }
