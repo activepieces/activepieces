@@ -43,11 +43,10 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          no-cache: true
           tags: |
             activepieces/activepieces:${{ inputs.tag }}
             ghcr.io/activepieces/activepieces:${{ inputs.tag }}
-          build-args: |
-            COMMIT_SHA=${{ github.sha }}
 
       - name: Create git tag
         run: |

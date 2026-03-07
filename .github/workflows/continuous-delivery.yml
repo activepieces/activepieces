@@ -72,9 +72,8 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
-          build-args: |
-            COMMIT_SHA=${{ github.sha }}
 
   deploy-staging:
     needs: build-image
@@ -225,13 +224,12 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          no-cache: true
           tags: |
             activepieces/activepieces:${{ steps.version.outputs.release }}
             activepieces/activepieces:latest
             ghcr.io/activepieces/activepieces:${{ steps.version.outputs.release }}
             ghcr.io/activepieces/activepieces:latest
-          build-args: |
-            COMMIT_SHA=${{ github.sha }}
 
   # After promotion, deploy latest main to staging (catch-up for merges during freeze)
   catch-up-staging:
