@@ -33,6 +33,5 @@ jobs:
           platforms: |
             linux/amd64
           push: true
-          no-cache: true
           tags: |
             ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta

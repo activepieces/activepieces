@@ -77,6 +77,7 @@ jobs:
 
   deploy-staging:
     needs: build-image
+    if: always() && needs.build-image.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Configure SSH
@@ -224,7 +225,6 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
-          no-cache: true
           tags: |
             activepieces/activepieces:${{ steps.version.outputs.release }}
             activepieces/activepieces:latest
