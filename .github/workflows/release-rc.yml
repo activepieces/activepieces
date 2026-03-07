@@ -46,8 +46,7 @@ jobs:
             linux/amd64
             linux/arm64
           push: true
+          no-cache: true
           tags: |
             ghcr.io/activepieces/activepieces:${{ env.RELEASE }}
             ghcr.io/activepieces/activepieces-cloud:${{ env.CLOUD_RELEASE }}
-          build-args: |
-            COMMIT_SHA=${{ github.sha }}
