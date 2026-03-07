@@ -2,11 +2,10 @@ import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { isNil, LATEST_JOB_DATA_SCHEMA_VERSION, TriggerSourceScheduleType, TriggerStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
-import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { projectService } from '../../../project/project-service'
-import { triggerSourceRepo } from '../../../trigger/trigger-source/trigger-source-service'
-import { jobQueue } from '../job-queue'
-import { JobType } from '../queue-manager'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { projectService } from '../../project/project-service'
+import { triggerSourceRepo } from '../../trigger/trigger-source/trigger-source-service'
+import { jobQueue, JobType } from '../job-queue/job-queue'
 
 export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {

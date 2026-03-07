@@ -7,7 +7,7 @@ import { distributedLock, distributedStore, redisConnections } from '../../datab
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { jobQueue } from '../../workers/queue/job-queue'
+import { jobQueue } from '../../workers/job-queue/job-queue'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'

@@ -1,18 +1,21 @@
 import { assertNotNullOrUndefined, WorkerSettingsResponse } from '@activepieces/shared'
-import { apiClient } from '../api/api-client'
-import { logger } from './logger'
 
 let settings: WorkerSettingsResponse | undefined
+let settingsResolver: (() => void) | null = null
+const settingsReady = new Promise<void>((resolve) => { settingsResolver = resolve })
 
 export const workerSettings = {
-    async init(apiUrl: string, workerToken: string): Promise<void> {
-        logger.info('Fetching worker settings from API...')
-        settings = await apiClient.getWorkerSettings(apiUrl, workerToken)
-        logger.info({ environment: settings.ENVIRONMENT, executionMode: settings.EXECUTION_MODE }, 'Worker settings loaded')
+    set(response: WorkerSettingsResponse): void {
+        settings = response
+        settingsResolver?.()
     },
 
     getSettings(): WorkerSettingsResponse {
-        assertNotNullOrUndefined(settings, 'Worker settings are not initialized. Call workerSettings.init() first.')
+        assertNotNullOrUndefined(settings, 'Worker settings are not initialized. Settings are fetched on socket connect.')
         return settings
+    },
+
+    waitForSettings(): Promise<WorkerSettingsResponse> {
+        return settingsReady.then(() => settings!)
     },
 }

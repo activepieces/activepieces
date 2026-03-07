@@ -14,6 +14,7 @@ import {
     AppConnectionWithoutSensitiveData,
     ConnectionState,
     Cursor,
+    EngineResponse,
     EngineResponseStatus,
     ErrorCode,
     ExecuteValidateAuthResponse,
@@ -35,7 +36,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
-import { OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { secretManagersService } from '../../ee/secret-managers/secret-managers.service'
@@ -512,7 +512,7 @@ const engineValidateAuth = async (
         platformId,
     })
 
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<ExecuteValidateAuthResponse>>({
+    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<ExecuteValidateAuthResponse>>({
         piece: await getPiecePackageWithoutArchive(log, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
@@ -537,7 +537,7 @@ const engineValidateAuth = async (
         })
     }
 
-    const validateAuthResult = engineResponse.result
+    const validateAuthResult = engineResponse.response
 
     if (!validateAuthResult.valid) {
         throw new ActivepiecesError({

@@ -1,6 +1,6 @@
 import { trace } from '@opentelemetry/api'
 import { fileSystemUtils } from '@activepieces/server-common'
-import { getPieceNameFromAlias, PiecePackage, unique } from '@activepieces/shared'
+import { getPieceNameFromAlias, PiecePackage, unique, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { workerSettings } from '../config/worker-settings'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './cache-paths'
@@ -10,7 +10,7 @@ import { pieceInstaller } from './pieces/piece-installer'
 
 const tracer = trace.getTracer('provisioner')
 
-export const provisioner = (log: Logger) => ({
+export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
     async provision({
         pieces,
         codeSteps,
@@ -56,7 +56,7 @@ export const provisioner = (log: Logger) => ({
                     await tracer.startActiveSpan('provisioner.installPieces', async (piecesSpan) => {
                         try {
                             piecesSpan.setAttribute('pieces.count', nonDevPieces.length)
-                            await pieceInstaller(log).install({
+                            await pieceInstaller(log, apiClient).install({
                                 pieces: nonDevPieces,
                                 includeFilters: true,
                             })

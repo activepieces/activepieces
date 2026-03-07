@@ -139,8 +139,6 @@ export const WebhookJobData = z.object({
 export type WebhookJobData = z.infer<typeof WebhookJobData>
 
 export const ExecuteValidateAuthJobData = z.object({
-    requestId: z.string(),
-    webserverId: z.string(),
     jobType: z.literal(WorkerJobType.EXECUTE_VALIDATION),
     projectId: z.string().optional(),
     platformId: z.string(),
@@ -152,7 +150,6 @@ export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobDa
 
 
 export const ExecuteTriggerHookJobData = z.object({
-    requestId: z.string(),
     jobType: z.literal(WorkerJobType.EXECUTE_TRIGGER_HOOK),
     platformId: z.string(),
     projectId: z.string(),
@@ -160,14 +157,12 @@ export const ExecuteTriggerHookJobData = z.object({
     flowId: z.string(),
     flowVersionId: z.string(),
     test: z.boolean(),
-    webserverId: z.string(),
     hookType: z.nativeEnum(TriggerHookType),
     triggerPayload: TriggerPayload.optional(),
 })
 export type ExecuteTriggerHookJobData = z.infer<typeof ExecuteTriggerHookJobData>
 
 export const ExecutePropertyJobData = z.object({
-    requestId: z.string(),
     jobType: z.literal(WorkerJobType.EXECUTE_PROPERTY),
     projectId: z.string(),
     platformId: z.string(),
@@ -177,15 +172,12 @@ export const ExecutePropertyJobData = z.object({
     piece: PiecePackage,
     actionOrTriggerName: z.string(),
     input: z.record(z.string(), z.unknown()),
-    webserverId: z.string(),
     sampleData: z.record(z.string(), z.unknown()),
     searchValue: z.string().optional(),
 })
 export type ExecutePropertyJobData = z.infer<typeof ExecutePropertyJobData>
 
 export const ExecuteExtractPieceMetadataJobData = z.object({
-    requestId: z.string(),
-    webserverId: z.string(),
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION),
     projectId: z.undefined(),
@@ -203,10 +195,10 @@ export const UserInteractionJobData = z.union([
 export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = z.union([
-    ExecuteValidateAuthJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
-    ExecuteTriggerHookJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
-    ExecutePropertyJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
-    ExecuteExtractPieceMetadataJobData.omit({ webserverId: true, requestId: true, schemaVersion: true }),
+    ExecuteValidateAuthJobData.omit({ schemaVersion: true }),
+    ExecuteTriggerHookJobData.omit({ schemaVersion: true }),
+    ExecutePropertyJobData.omit({ schemaVersion: true }),
+    ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true }),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
 

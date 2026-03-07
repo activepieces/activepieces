@@ -434,13 +434,6 @@
                            "endpoints/templates/get",
                            "endpoints/templates/list"
                         ]
-                     },
-                     {
-                        "group": "Queue Metrics",
-                        "icon": "gauge-high",
-                        "pages": [
-                           "endpoints/queue-metrics/metrics"
-                        ]
                      }
                   ]
                }

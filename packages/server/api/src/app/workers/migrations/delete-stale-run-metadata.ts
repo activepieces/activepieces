@@ -3,7 +3,7 @@ import { redisHelper } from '@activepieces/server-common'
 import { isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis-connections'
+import { redisConnections } from '../../database/redis-connections'
 
 const DELETE_STALE_RUN_METADATA_KEY = 'delete_stale_run_metadata'
 

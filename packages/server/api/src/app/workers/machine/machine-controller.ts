@@ -1,7 +1,8 @@
 import { securityAccess } from '@activepieces/server-common'
-import { PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { websocketService } from '../../core/websockets.service'
+import { createHandlers } from '../rpc/worker-rpc-service'
 import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
@@ -10,6 +11,7 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const response = await machineService(app.log).onConnection(request, socket.handshake.auth?.platformIdForDedicatedWorker)
             callback?.(response)
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log))
         }
     })
 
@@ -20,7 +22,7 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
             })
         }
     })
-    
+
     app.get('/', ListWorkersParams, async () => {
         return machineService(app.log).list()
     })

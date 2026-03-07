@@ -1,11 +1,10 @@
 import { ExecuteFlowJobData, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis-connections'
-import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
-import { projectService } from '../../../project/project-service'
-import { jobQueue } from '../job-queue'
-import { JobType } from '../queue-manager'
+import { redisConnections } from '../../database/redis-connections'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
+import { projectService } from '../../project/project-service'
+import { jobQueue, JobType } from '../job-queue/job-queue'
 
 type LegacyOneTimeJobData = Pick<ExecuteFlowJobData, 'runId' | 'projectId' | 'flowVersionId' | 'environment' | 'synchronousHandlerId' | 'httpRequestId' | 'payload' | 'executeTrigger' | 'executionType' | 'progressUpdateType' | 'stepNameToTest' | 'sampleData'>
 type LegacyWebhookJobData = Pick<WebhookJobData, 'projectId' | 'schemaVersion' | 'requestId' | 'payload' | 'runEnvironment' | 'flowId' | 'saveSampleData' | 'flowVersionIdToRun' | 'execute' | 'parentRunId' | 'failParentOnFailure'>

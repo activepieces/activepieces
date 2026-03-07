@@ -16,6 +16,7 @@ import { Level } from 'pino'
 
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
+    [AppSystemProp.API_URL]: 'http://127.0.0.1:3000',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',

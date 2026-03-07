@@ -6,7 +6,7 @@ import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { system, WorkerSystemProp } from './config/configs'
 
-if (system.get(WorkerSystemProp.OTEL_ENABLED)) {
+if (system.getBoolean(WorkerSystemProp.OTEL_ENABLED)) {
     const traceExporter = new OTLPTraceExporter()
 
     const resource = resourceFromAttributes({

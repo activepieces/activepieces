@@ -39,8 +39,7 @@ import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
-import { jobQueue } from '../../workers/queue/job-queue'
-import { JobType } from '../../workers/queue/queue-manager'
+import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -613,7 +612,7 @@ async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogger): Pro
             httpRequestId: params.httpRequestId,
             executionType: params.executionType,
             progressUpdateType: params.progressUpdateType,
-            stepNameToTest: params.flowRun.stepNameToTest,
+            stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
             sampleData: params.sampleData,
             logsUploadUrl,
             logsFileId,

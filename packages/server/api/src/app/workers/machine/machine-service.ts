@@ -1,9 +1,8 @@
-import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-common'
+import { AppSystemProp } from '@activepieces/server-common'
 import {
     ExecutionMode,
     isNil,
     partition,
-    WebsocketServerEvent,
     WorkerMachineHealthcheckRequest,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
@@ -13,11 +12,8 @@ import {
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
-import { websocketService } from '../../core/websockets.service'
-import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
-import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { workerMachineCache } from './machine-cache'
 
@@ -38,15 +34,12 @@ export const machineService = (log: FastifyBaseLogger) => {
                 information: request,
             })
             const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
-            const isDedicatedWorker = !isNil(platformIdForDedicatedWorker)
             return {
-                JWT_SECRET: await jwtUtils.getJwtSecret(),
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: executionMode,
                 TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
                 FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
-                WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.WORKER_CONCURRENCY),
                 LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
                 LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
                 ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
@@ -64,50 +57,14 @@ export const machineService = (log: FastifyBaseLogger) => {
                 PUBLIC_URL: await domainHelper.getPublicUrl({
                     path: '',
                 }),
-                PROJECT_RATE_LIMITER_ENABLED: isDedicatedWorker ? false : system.getBooleanOrThrow(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED),
-                MAX_CONCURRENT_JOBS_PER_PROJECT: system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT),
                 FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
                 S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
-                REDIS_TYPE: redisConnections.getRedisType(),
-                REDIS_SSL_CA_FILE: system.get(AppSystemProp.REDIS_SSL_CA_FILE),
-                REDIS_DB: system.getNumber(AppSystemProp.REDIS_DB) ?? undefined,
-                REDIS_HOST: system.get(AppSystemProp.REDIS_HOST),
-                REDIS_PASSWORD: system.get(AppSystemProp.REDIS_PASSWORD),
-                REDIS_PORT: system.get(AppSystemProp.REDIS_PORT),
-                REDIS_URL: system.get(AppSystemProp.REDIS_URL),
-                REDIS_USER: system.get(AppSystemProp.REDIS_USER),
-                REDIS_USE_SSL: system.get(AppSystemProp.REDIS_USE_SSL) === 'true',
-                REDIS_SENTINEL_ROLE: system.get(AppSystemProp.REDIS_SENTINEL_ROLE),
-                REDIS_SENTINEL_HOSTS: system.get(AppSystemProp.REDIS_SENTINEL_HOSTS),
-                REDIS_SENTINEL_NAME: system.get(AppSystemProp.REDIS_SENTINEL_NAME),
                 EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
-                REDIS_FAILED_JOB_RETENTION_DAYS: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
-                REDIS_FAILED_JOB_RETENTION_MAX_COUNT: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
                 EDITION: system.getOrThrow(AppSystemProp.EDITION),
             }
         },
         async list(): Promise<WorkerMachineWithStatus[]> {
-
-            let allWorkers = await workerMachineCache().find()
-
-            await Promise.all(allWorkers.map(async worker => {
-                const settings = await websocketService.emitWithAck<WorkerMachineHealthcheckRequest[]>( WebsocketServerEvent.WORKER_HEALTHCHECK, worker.id)
-                    .catch(error => {
-                        log.error({
-                            message: 'Failed to get worker healthcheck',
-                            error,
-                            workerId: worker.id,
-                        })
-                    })
-                if (settings && settings[0]) {
-                    await workerMachineCache().upsert({
-                        id: worker.id,
-                        information: settings[0],
-                    })
-                }
-            }))
-
-            allWorkers = await workerMachineCache().find()
+            const allWorkers = await workerMachineCache().find()
 
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
 

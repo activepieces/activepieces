@@ -12,7 +12,6 @@ import { setupApp } from './app'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { system } from './helper/system/system'
-import { setupWorker } from './worker'
 
 
 export let app: FastifyInstance | undefined = undefined
@@ -22,9 +21,6 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
     if (system.isApp()) {
         await setupApp(app)
-    }
-    if (system.isWorker()) {
-        await setupWorker(app)
     }
     return app
 }

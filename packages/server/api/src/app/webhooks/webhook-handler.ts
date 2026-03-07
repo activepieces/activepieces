@@ -8,8 +8,7 @@ import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
-import { jobQueue } from '../workers/queue/job-queue'
-import { JobType } from '../workers/queue/queue-manager'
+import { jobQueue, JobType } from '../workers/job-queue/job-queue'
 
 const tracer = trace.getTracer('webhook-handler')
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000

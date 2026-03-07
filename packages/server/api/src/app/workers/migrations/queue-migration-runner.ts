@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedLock, redisConnections } from '../../../database/redis-connections'
+import { distributedLock, redisConnections } from '../../database/redis-connections'
 import { deleteStaleRunMetadata } from './delete-stale-run-metadata'
 import { refillPausedRuns } from './refill-paused-jobs'
 import { refillPollingJobs } from './refill-polling-jobs'

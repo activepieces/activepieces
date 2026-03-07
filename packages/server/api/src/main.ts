@@ -8,7 +8,6 @@ import { initializeDatabase } from './app/database'
 import { distributedLock } from './app/database/redis-connections'
 import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
-import { workerPostBoot } from './app/worker'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -16,9 +15,6 @@ const start = async (app: FastifyInstance): Promise<void> => {
             host: '0.0.0.0',
             port: 3000,
         })
-        if (system.isWorker()) {
-            await workerPostBoot(app)
-        }
         if (system.isApp()) {
             await appPostBoot(app)
         }

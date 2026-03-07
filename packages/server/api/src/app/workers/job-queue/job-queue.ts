@@ -1,12 +1,11 @@
 import { apDayjsDuration, AppSystemProp, getPlatformQueueName, memoryLock, QueueName } from '@activepieces/server-common'
-import { ApId, getDefaultJobPriority, isNil, JOB_PRIORITY, WorkerJobType } from '@activepieces/shared'
-import { Queue } from 'bullmq'
+import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { Job, Queue, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
-import { AddJobParams, JobType } from './queue-manager'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -14,6 +13,8 @@ const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS
 const CHILD_RUNS_KEY = (parentRunId: ApId) => `child_runs:${parentRunId}`
 
 const dedicatedWorkersQueues = new Map<string, Queue>()
+const dedicatedWorkersQueueEvents = new Map<string, QueueEvents>()
+let queueCreatedCallback: ((queueName: string) => Promise<void>) | null = null
 
 export const jobQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
@@ -47,7 +48,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         await redisConnection.del(CHILD_RUNS_KEY(jobId))
     },
-    async add(params: AddJobParams<JobType>): Promise<void> {
+    async add(params: AddJobParams<JobType>): Promise<Job | null> {
         const { type, data } = params
 
         const platformId = data.platformId
@@ -66,7 +67,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                         priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     },
                 })
-                break
+                return null
             }
             case JobType.ONE_TIME: {
                 const dependOnJobId = params.dependOnJobId
@@ -78,13 +79,12 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     }
                     await redisConnection.sadd(CHILD_RUNS_KEY(dependOnJobId), JSON.stringify(childRunData))
                 }
-                await queue.add(params.id, data, {
+                return queue.add(params.id, data, {
                     priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: !isNil(dependOnJobId) ? apDayjsDuration(1, 'year').asMilliseconds() : params.delay,
                     jobId: params.id,
                     removeOnFail: data.jobType === WorkerJobType.EVENT_DESTINATION,
                 })
-                break
             }
         }
     },
@@ -131,12 +131,31 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
+    async getQueueEvents(platformId: string | null): Promise<QueueEvents> {
+        const queueName = await getQueueName(platformId, log)
+        const existing = dedicatedWorkersQueueEvents.get(queueName)
+        if (!isNil(existing)) {
+            return existing
+        }
+        const queueEvents = new QueueEvents(queueName, {
+            connection: await redisConnections.create(),
+        })
+        await queueEvents.waitUntilReady()
+        dedicatedWorkersQueueEvents.set(queueName, queueEvents)
+        return queueEvents
+    },
+    onQueueCreated(callback: (queueName: string) => Promise<void>): void {
+        queueCreatedCallback = callback
+    },
+
     async close(): Promise<void> {
         log.info('[jobQueue#close] Closing job queue')
         const allQueues = [...dedicatedWorkersQueues.values()].filter(queue => !isNil(queue))
-        await Promise.allSettled(
-            allQueues.map(queue => queue.close()),
-        )
+        const allQueueEvents = [...dedicatedWorkersQueueEvents.values()].filter(qe => !isNil(qe))
+        await Promise.allSettled([
+            ...allQueues.map(queue => queue.close()),
+            ...allQueueEvents.map(qe => qe.close()),
+        ])
     },
 })
 
@@ -180,6 +199,10 @@ async function ensureQueueExists({ log, queueName }: { log: FastifyBaseLogger, q
                 queueName,
             }, '[jobQueue#ensureQueueExists] Queue created')
 
+            if (queueCreatedCallback) {
+                await queueCreatedCallback(queueName)
+            }
+
             return queue
         },
     })
@@ -199,3 +222,22 @@ type ChildRunData = {
     jobId: ApId
     platformId: string
 }
+
+export enum JobType {
+    REPEATING = 'repeating',
+    ONE_TIME = 'one_time',
+}
+
+type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {
+    id: ApId
+    data: JD
+    type: JT
+    delay?: number
+    dependOnJobId?: ApId
+}
+type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
+    scheduleOptions: ScheduleOptions
+}
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData, JobType.ONE_TIME>
+
+export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams

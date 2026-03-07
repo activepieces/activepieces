@@ -15,15 +15,14 @@ import { execute } from './operations'
 import { progressService } from './services/progress.service'
 import { utils } from './utils'
 
-const WS_URL = 'ws://127.0.0.1:12345'
-
 let socket: Socket | undefined
 let workerClient: WorkerContract | undefined
 let notifyClient: WorkerNotifyContract | undefined
 
 export const workerSocket = {
     init: (sandboxId: string): void => {
-        socket = io(WS_URL, {
+        const wsUrl = `ws://127.0.0.1:${process.env.AP_SANDBOX_WS_PORT ?? '12345'}`
+        socket = io(wsUrl, {
             path: '/worker/ws',
             auth: { sandboxId },
             autoConnect: false,

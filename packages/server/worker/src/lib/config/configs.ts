@@ -10,9 +10,15 @@ export enum WorkerSystemProp {
     OTEL_ENABLED = 'AP_OTEL_ENABLED',
 }
 
+const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
+    [WorkerSystemProp.LOG_LEVEL]: 'info',
+    [WorkerSystemProp.LOG_PRETTY]: 'false',
+    [WorkerSystemProp.OTEL_ENABLED]: 'false',
+}
+
 export const system = {
     get(prop: WorkerSystemProp): string | undefined {
-        return env.get(prop).asString()
+        return env.get(prop).asString() ?? defaultValues[prop]
     },
     getOrThrow(prop: WorkerSystemProp): string {
         return env.get(prop).required().asString()

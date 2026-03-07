@@ -30,12 +30,6 @@ export const ApQueueJob = z.object({
 })
 
 export type ApQueueJob = z.infer<typeof ApQueueJob>
-export const SendEngineUpdateRequest = z.object({
-    workerServerId: z.string(),
-    requestId: z.string(),
-    response: z.unknown(),
-})
-export type SendEngineUpdateRequest = z.infer<typeof SendEngineUpdateRequest>
 
 export const MigrateJobsRequest = z.object({
     jobData: z.record(z.string(), z.unknown()),

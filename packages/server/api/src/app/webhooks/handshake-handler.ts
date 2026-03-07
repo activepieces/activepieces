@@ -1,6 +1,5 @@
-import { EngineResponseStatus, FlowId, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, TriggerSource, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
+import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, FlowId, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, TriggerSource, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperTriggerResult, OperationResponse } from 'worker'
 import { projectService } from '../project/project-service'
 import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -16,7 +15,7 @@ export const handshakeHandler = (log: FastifyBaseLogger) => ({
        
         const platformId = await projectService(log).getPlatformId(params.projectId)
 
-        const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<EngineHelperTriggerResult<TriggerHookType.HANDSHAKE>>>({
+        const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>>({
             jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.HANDSHAKE,
             flowId: params.flowId,
@@ -30,7 +29,7 @@ export const handshakeHandler = (log: FastifyBaseLogger) => ({
         if (engineHelperResponse.status !== EngineResponseStatus.OK) {
             return null
         }
-        return engineHelperResponse.result?.response ?? null
+        return engineHelperResponse.response?.response ?? null
     },
     async getWebhookHandshakeConfiguration(triggerSource: TriggerSource | null): Promise<WebhookHandshakeConfiguration | null> {
         if (isNil(triggerSource) || isNil(triggerSource.pieceName) || isNil(triggerSource.pieceVersion) || isNil(triggerSource.triggerName) || isNil(triggerSource.projectId)) {

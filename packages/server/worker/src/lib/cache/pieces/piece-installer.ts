@@ -12,10 +12,9 @@ import {
     PieceType,
     PrivatePiecePackage,
     tryCatch,
+    WorkerToApiContract,
 } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
-import { apiClient } from '../../api/api-client'
-import { system, WorkerSystemProp } from '../../config/configs'
 import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { bunRunner } from '../code/bun-runner'
@@ -27,11 +26,11 @@ const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
-export const pieceInstaller = (log: Logger) => ({
+export const pieceInstaller = (log: Logger, apiClient: WorkerToApiContract) => ({
     async install({ pieces, includeFilters }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, apiClient)
         })
         await Promise.all(installPromises)
     },
@@ -52,7 +51,7 @@ function getCustomPiecesPath(platformId: string): string {
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: Logger): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: Logger, apiClient: WorkerToApiContract): Promise<void> {
     const { piecesToInstall } = await partitionPiecesToInstall(rootWorkspace, pieces)
 
     if (isEmpty(piecesToInstall)) {
@@ -81,7 +80,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 path: rootWorkspace,
             })
 
-            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall)
+            await savePackageArchivesToDiskIfNotCached(rootWorkspace, piecesToInstall, apiClient)
 
             await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
                 rootWorkspace,
@@ -150,9 +149,8 @@ function groupPiecesByPackagePath(pieces: PiecePackage[]): Record<string, PieceP
 async function savePackageArchivesToDiskIfNotCached(
     rootWorkspace: string,
     pieces: PiecePackage[],
+    apiClient: WorkerToApiContract,
 ): Promise<void> {
-    const apiUrl = system.getOrThrow(WorkerSystemProp.API_URL)
-    const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
     const saveToDiskJobs = pieces.map(async (piece) => {
         if (piece.packageType !== PackageType.ARCHIVE) {
             return
@@ -162,7 +160,7 @@ async function savePackageArchivesToDiskIfNotCached(
             return
         }
         await fileSystemUtils.threadSafeMkdir(dirname(archivePath))
-        const archive = await apiClient.getPieceArchive(apiUrl, workerToken, piece.archiveId)
+        const archive = await apiClient.getPieceArchive({ archiveId: piece.archiveId })
         await writeFile(archivePath, archive)
     })
     await Promise.all(saveToDiskJobs)

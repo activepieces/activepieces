@@ -6,6 +6,7 @@
   "typings": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
+    "serve": "cd ../../.. && npx tsx watch --tsconfig packages/server/worker/tsconfig.lib.json packages/server/worker/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "vitest run"
   },
@@ -26,6 +27,8 @@
     "pino": "10.1.0",
     "pino-pretty": "13.0.0",
     "socket.io": "4.7.5",
+    "dotenv": "16.4.7",
+    "socket.io-client": "4.8.1",
     "tree-kill": "1.2.2",
     "tslib": "2.6.2",
     "write-file-atomic": "5.0.1"
@@ -33,7 +36,6 @@
   "devDependencies": {
     "@types/node": "24.11.0",
     "@types/write-file-atomic": "4.0.3",
-    "socket.io-client": "4.8.1",
     "vitest": "3.0.8"
   }
 }

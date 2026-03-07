@@ -1,15 +1,13 @@
 import path from 'path'
 import { trace } from '@opentelemetry/api'
-import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION } from '@activepieces/shared'
-import { apiClient } from '../../api/api-client'
-import { system, WorkerSystemProp } from '../../config/configs'
+import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION, WorkerToApiContract } from '@activepieces/shared'
 import { Logger } from 'pino'
 import { cacheState } from '../cache-state'
 import { GLOBAL_CACHE_FLOWS_PATH } from '../cache-paths'
 
 const tracer = trace.getTracer('flow-cache')
 
-export const flowCache = (log: Logger) => ({
+export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
     async getVersion({ flowVersionId }: GetFlowRequest): Promise<FlowVersion | null> {
         try {
             const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
@@ -27,9 +25,7 @@ export const flowCache = (log: Logger) => ({
                     return tracer.startActiveSpan('flowCache.fetchVersion', async (span) => {
                         try {
                             span.setAttribute('flow.versionId', flowVersionId)
-                            const apiUrl = system.getOrThrow(WorkerSystemProp.API_URL)
-                            const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
-                            const flowVersion = await apiClient.getFlowVersion(apiUrl, workerToken, {
+                            const flowVersion = await apiClient.getFlowVersion({
                                 versionId: flowVersionId,
                             })
                             log.info({

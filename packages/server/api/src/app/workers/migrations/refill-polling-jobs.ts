@@ -1,10 +1,9 @@
 import { FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, TriggerSourceScheduleType, TriggerStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
-import { projectService } from '../../../project/project-service'
-import { triggerSourceRepo } from '../../../trigger/trigger-source/trigger-source-service'
-import { jobQueue } from '../job-queue'
-import { JobType } from '../queue-manager'
+import { projectService } from '../../project/project-service'
+import { triggerSourceRepo } from '../../trigger/trigger-source/trigger-source-service'
+import { jobQueue, JobType } from '../job-queue/job-queue'
 
 export const refillPollingJobs = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
