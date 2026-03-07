@@ -9,7 +9,6 @@ import { t } from 'i18next';
 import {
   InfoIcon,
   Server,
-  Box,
   Clock,
   Cpu,
   MemoryStick,
@@ -47,15 +46,11 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         used: 116704698368,
         percentage: 75.5,
       },
-      workerProps: {
-        WORKER_CONCURRENCY: '8',
-      },
+      workerProps: {},
       cpuUsagePercentage: 78.3,
       ramUsagePercentage: 52.699635773121855,
       totalAvailableRamInBytes: 33364979712,
       ip: '172.16.254.1',
-      totalSandboxes: 8,
-      freeSandboxes: 8,
     },
     status: WorkerMachineStatus.ONLINE,
   },
@@ -72,15 +67,11 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         used: 214748364800,
         percentage: 40.0,
       },
-      workerProps: {
-        WORKER_CONCURRENCY: '8',
-      },
+      workerProps: {},
       cpuUsagePercentage: 82.1,
       ramUsagePercentage: 76.8,
       totalAvailableRamInBytes: 42949672960,
       ip: '192.168.1.100',
-      totalSandboxes: 8,
-      freeSandboxes: 8,
     },
     status: WorkerMachineStatus.ONLINE,
   },
@@ -200,8 +191,6 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
     ramUsagePercentage,
     totalAvailableRamInBytes,
     ip,
-    freeSandboxes,
-    totalSandboxes,
     workerProps,
     totalCpuCores,
   } = worker.information;
@@ -213,7 +202,6 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
   const totalDiskGb = diskInfo.total / 1024 ** 3;
 
   const version = workerProps.version ?? 'v0.39.4';
-  const usedSandboxes = totalSandboxes - freeSandboxes;
 
   return (
     <Card>
@@ -279,11 +267,6 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
 
       <CardFooter className="justify-between pt-0 gap-2">
         <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
-          <span className="flex items-center gap-1 shrink-0">
-            <Box size={12} />
-            {usedSandboxes}/{totalSandboxes} {t('sandboxes')}
-          </span>
-          <span className="text-muted-foreground/50">·</span>
           <span className="flex items-center gap-1 truncate">
             <Clock size={12} className="shrink-0" />
             {t('seen')} {timeAgo}

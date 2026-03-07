@@ -3,7 +3,7 @@ import { getPieceNameFromAlias, PiecePackage, unique, WorkerToApiContract } from
 import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import { workerSettings } from '../config/worker-settings'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION, GLOBAL_CODE_CACHE_PATH } from './cache-paths'
+import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from './cache-paths'
 import { CodeArtifact, codeBuilder } from './code/code-builder'
 import { engineInstaller } from './engine/engine-installer'
 import { pieceInstaller } from './pieces/piece-installer'
@@ -17,19 +17,23 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
     }: ProvisionParams): Promise<void> {
         await tracer.startActiveSpan('provisioner.provision', async (span) => {
             try {
-                await fileSystemUtils.threadSafeMkdir(GLOBAL_CACHE_PATH_LATEST_VERSION)
+                const cachePathLatestVersion = getGlobalCachePathLatestVersion()
+                const codeCachePath = getGlobalCodeCachePath()
+                const commonPath = getGlobalCacheCommonPath()
+
+                await fileSystemUtils.threadSafeMkdir(cachePathLatestVersion)
 
                 await tracer.startActiveSpan('provisioner.installCode', async (codeSpan) => {
                     try {
-                        codeSpan.setAttribute('code.path', GLOBAL_CODE_CACHE_PATH)
-                        await fileSystemUtils.threadSafeMkdir(GLOBAL_CODE_CACHE_PATH)
+                        codeSpan.setAttribute('code.path', codeCachePath)
+                        await fileSystemUtils.threadSafeMkdir(codeCachePath)
                         for (const artifact of codeSteps) {
                             await codeBuilder(log).processCodeStep({
                                 artifact,
-                                codesFolderPath: GLOBAL_CODE_CACHE_PATH,
+                                codesFolderPath: codeCachePath,
                             })
                         }
-                        log.info({ path: GLOBAL_CODE_CACHE_PATH }, 'Installed code in sandbox')
+                        log.info({ path: codeCachePath }, 'Installed code in sandbox')
                     }
                     finally {
                         codeSpan.end()
@@ -38,12 +42,12 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
 
                 await tracer.startActiveSpan('provisioner.installEngine', async (engineSpan) => {
                     try {
-                        engineSpan.setAttribute('engine.path', GLOBAL_CACHE_COMMON_PATH)
+                        engineSpan.setAttribute('engine.path', commonPath)
                         const { cacheHit } = await engineInstaller(log).install({
-                            path: GLOBAL_CACHE_COMMON_PATH,
+                            path: commonPath,
                         })
                         engineSpan.setAttribute('engine.cacheHit', cacheHit)
-                        log.info({ path: GLOBAL_CACHE_COMMON_PATH, cacheHit }, 'Installed engine in sandbox')
+                        log.info({ path: commonPath, cacheHit }, 'Installed engine in sandbox')
                     }
                     finally {
                         engineSpan.end()
@@ -62,7 +66,7 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
                             })
                             log.info({
                                 pieces: nonDevPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
-                                path: GLOBAL_CACHE_COMMON_PATH,
+                                path: commonPath,
                             }, 'Installed pieces in sandbox')
                         }
                         finally {

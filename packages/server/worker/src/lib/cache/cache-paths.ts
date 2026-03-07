@@ -3,14 +3,45 @@ import path from 'path'
 import { logger } from '../config/logger'
 
 export const LATEST_CACHE_VERSION = 'v7'
-export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
-export const GLOBAL_CACHE_PATH_LATEST_VERSION = path.resolve('cache', LATEST_CACHE_VERSION)
-export const GLOBAL_CACHE_COMMON_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'common')
-export const GLOBAL_CODE_CACHE_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'codes')
-export const GLOBAL_CACHE_PIECES_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'pieces-metadata')
-export const GLOBAL_CACHE_FLOWS_PATH = path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'flows')
 
-export const ENGINE_PATH = path.join(GLOBAL_CACHE_COMMON_PATH, 'main.js')
+let workerCacheId: number | null = null
+
+export function initCachePaths(cacheId: number): void {
+    workerCacheId = cacheId
+}
+
+function requireCacheId(): number {
+    if (workerCacheId === null) {
+        throw new Error('Cache paths not initialized. Call initCachePaths() first.')
+    }
+    return workerCacheId
+}
+
+export const GLOBAL_CACHE_ALL_VERSIONS_PATH = path.resolve('cache')
+
+export function getGlobalCachePathLatestVersion(): string {
+    return path.resolve('cache', LATEST_CACHE_VERSION, String(requireCacheId()))
+}
+
+export function getGlobalCacheCommonPath(): string {
+    return path.resolve(getGlobalCachePathLatestVersion(), 'common')
+}
+
+export function getGlobalCodeCachePath(): string {
+    return path.resolve(getGlobalCachePathLatestVersion(), 'codes')
+}
+
+export function getGlobalCachePiecesPath(): string {
+    return path.resolve(getGlobalCachePathLatestVersion(), 'pieces-metadata')
+}
+
+export function getGlobalCacheFlowsPath(): string {
+    return path.resolve(getGlobalCachePathLatestVersion(), 'flows')
+}
+
+export function getEnginePath(): string {
+    return path.join(getGlobalCacheCommonPath(), 'main.js')
+}
 
 export enum CacheState {
     READY = 'READY',

@@ -7,6 +7,7 @@ export type WorkerMachine = {
     updated: string
     created: string
     information: MachineInformation
+    cacheId?: number
 }
 
 const REDIS_KEY = 'workerMachines'

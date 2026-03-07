@@ -16,6 +16,7 @@ import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
 import { workerMachineCache } from './machine-cache'
+import { workerIdGenerator } from './worker-id-generator'
 
 dayjs.extend(utc)
 
@@ -26,15 +27,34 @@ export const machineService = (log: FastifyBaseLogger) => {
                 message: 'Worker disconnected',
                 workerId: request.workerId,
             })
+            const workers = await workerMachineCache().find()
+            const worker = workers.find(w => w.id === request.workerId)
+            if (worker && !isNil(worker.cacheId)) {
+                await workerIdGenerator.release(worker.cacheId)
+            }
             await workerMachineCache().delete([request.workerId])
         },
         async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
+            const workers = await workerMachineCache().find()
+            const existingWorker = workers.find(w => w.id === request.workerId)
+
+            let cacheId: number
+            if (existingWorker && !isNil(existingWorker.cacheId)) {
+                cacheId = existingWorker.cacheId
+                await workerIdGenerator.renew(cacheId)
+            }
+            else {
+                cacheId = await workerIdGenerator.allocate()
+            }
+
             await workerMachineCache().upsert({
                 id: request.workerId,
                 information: request,
+                cacheId,
             })
             const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
             return {
+                WORKER_CACHE_ID: cacheId,
                 TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
                 PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 EXECUTION_MODE: executionMode,

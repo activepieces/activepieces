@@ -17,7 +17,7 @@ import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import writeFileAtomic from 'write-file-atomic'
 import { workerSettings } from '../../config/worker-settings'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../cache-paths'
+import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion } from '../cache-paths'
 import { bunRunner } from '../code/bun-runner'
 
 const tracer = trace.getTracer('piece-installer')
@@ -42,10 +42,10 @@ function getCustomPiecesPath(platformId: string): string {
     switch (workerSettings.getSettings().EXECUTION_MODE) {
         case ExecutionMode.SANDBOX_PROCESS:
         case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
-            return path.resolve(GLOBAL_CACHE_PATH_LATEST_VERSION, 'custom_pieces', platformId)
+            return path.resolve(getGlobalCachePathLatestVersion(), 'custom_pieces', platformId)
         case ExecutionMode.UNSANDBOXED:
         case ExecutionMode.SANDBOX_CODE_ONLY:
-            return GLOBAL_CACHE_COMMON_PATH
+            return getGlobalCacheCommonPath()
         default:
             throw new Error('Invalid execution mode')
     }
@@ -138,7 +138,7 @@ function groupPiecesByPackagePath(pieces: PiecePackage[]): Record<string, PieceP
                 if (piece.pieceType === PieceType.CUSTOM && !isNil(piece.platformId)) {
                     return getCustomPiecesPath(piece.platformId)
                 }
-                return GLOBAL_CACHE_COMMON_PATH
+                return getGlobalCacheCommonPath()
             }
             default:
                 throw new Error('Invalid package type')

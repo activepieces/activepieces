@@ -110,6 +110,7 @@ describe('worker integration', () => {
                     const callback = args[args.length - 1]
                     if (typeof callback === 'function') {
                         callback({
+                            WORKER_CACHE_ID: 0,
                             PUBLIC_URL: 'http://localhost:3000',
                             ENVIRONMENT: 'test',
                             EXECUTION_MODE: 'SANDBOX_CODE_AND_PROCESS',

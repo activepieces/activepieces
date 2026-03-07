@@ -1,7 +1,7 @@
 import { ExecutionMode, WorkerContract, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { Logger } from 'pino'
-import { ENGINE_PATH, GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../cache/cache-paths'
+import { getEnginePath, getGlobalCacheCommonPath, getGlobalCodeCachePath } from '../cache/cache-paths'
 import { workerSettings } from '../config/worker-settings'
 import { simpleProcess } from '../sandbox/fork'
 import { isolateProcess } from '../sandbox/isolate'
@@ -27,8 +27,8 @@ export function createSandboxForJob(params: {
     const processMaker = getProcessMaker(settings.EXECUTION_MODE, log)
 
     const _mounts: SandboxMount[] = [
-        { hostPath: GLOBAL_CACHE_COMMON_PATH, sandboxPath: '/root/common' },
-        { hostPath: GLOBAL_CODE_CACHE_PATH, sandboxPath: '/root/codes', optional: true },
+        { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
+        { hostPath: getGlobalCodeCachePath(), sandboxPath: '/root/codes', optional: true },
     ]
 
     return createSandbox(
@@ -53,7 +53,7 @@ function getProcessMaker(executionMode: string, log: Logger) {
         case ExecutionMode.UNSANDBOXED:
         case ExecutionMode.SANDBOX_CODE_ONLY:
         default:
-            return simpleProcess(ENGINE_PATH, GLOBAL_CODE_CACHE_PATH)
+            return simpleProcess(getEnginePath(), getGlobalCodeCachePath())
     }
 }
 

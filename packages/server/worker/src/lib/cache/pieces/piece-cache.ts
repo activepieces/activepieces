@@ -3,7 +3,7 @@ import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceTyp
 import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
-import { GLOBAL_CACHE_PIECES_PATH } from '../cache-paths'
+import { getGlobalCachePiecesPath } from '../cache-paths'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
 const tracer = trace.getTracer('piece-cache')
@@ -17,7 +17,7 @@ export const pieceCache = (log: Logger, apiClient: WorkerToApiContract) => ({
         }
 
         const cacheKey = `${pieceName}-${pieceVersion}-${platformId}`
-        const cache = cacheState(path.join(GLOBAL_CACHE_PIECES_PATH, cacheKey))
+        const cache = cacheState(path.join(getGlobalCachePiecesPath(), cacheKey))
 
         const { state } = await cache.getOrSetCache({
             key: cacheKey,

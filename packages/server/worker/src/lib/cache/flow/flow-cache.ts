@@ -2,7 +2,7 @@ import path from 'path'
 import { FlowVersion, FlowVersionId, FlowVersionState, isNil, LATEST_FLOW_SCHEMA_VERSION, WorkerToApiContract } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
-import { GLOBAL_CACHE_FLOWS_PATH } from '../cache-paths'
+import { getGlobalCacheFlowsPath } from '../cache-paths'
 import { cacheState } from '../cache-state'
 
 const tracer = trace.getTracer('flow-cache')
@@ -10,7 +10,7 @@ const tracer = trace.getTracer('flow-cache')
 export const flowCache = (log: Logger, apiClient: WorkerToApiContract) => ({
     async getVersion({ flowVersionId }: GetFlowRequest): Promise<FlowVersion | null> {
         try {
-            const cache = cacheState(path.join(GLOBAL_CACHE_FLOWS_PATH, flowVersionId))
+            const cache = cacheState(path.join(getGlobalCacheFlowsPath(), flowVersionId))
 
             const { state } = await cache.getOrSetCache({
                 key: flowVersionId,
