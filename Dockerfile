@@ -68,7 +68,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 # Bust Docker layer cache when commit changes so COPY picks up fresh source
 ARG COMMIT_SHA
-# Copy remaining source code (overwrites packages/ with fresh files too)
+RUN echo "Building commit: ${COMMIT_SHA}"
 COPY . .
 
 # Build frontend, engine, and server API
