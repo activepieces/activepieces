@@ -93,9 +93,19 @@ async function startPollingLoop(apiClient: WorkerToApiContract): Promise<void> {
 
         logger.info({ jobId: job.jobId, jobType: job.jobData.jobType }, 'Job received from poll')
 
+        const lockExtensionInterval = setInterval(() => {
+            void tryCatch(() => apiClient.extendLock({ jobId: job.jobId })).then(({ error }) => {
+                if (error) {
+                    logger.warn({ error, jobId: job.jobId }, 'Failed to extend lock')
+                }
+            })
+        }, 90_000)
+
         const { data: result, error: execError } = await tryCatch(() =>
             executeJob(apiClient, job),
         )
+
+        clearInterval(lockExtensionInterval)
 
         const { error: completeError } = await tryCatch(() =>
             apiClient.completeJob({

@@ -163,6 +163,10 @@ export function createHandlers(log: FastifyBaseLogger): WorkerToApiContract {
             })
         },
 
+        async extendLock(input) {
+            await jobBroker(log).extendLock(input)
+        },
+
         async getPieceArchive(input) {
             const { data } = await fileService(log).getDataOrThrow({
                 fileId: input.archiveId,

@@ -33,6 +33,7 @@ async function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
             telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
             concurrency: queueName === QueueName.WORKER_JOBS ? 10 : 5,
             autorun: false,
+            lockDuration: 120_000,
         },
     )
     await worker.waitUntilReady()
@@ -165,6 +166,17 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         }
 
         await job.moveToCompleted({ response: input.response ?? undefined }, token)
+    },
+
+    async extendLock(input: { jobId: string }): Promise<void> {
+        const entry = activeJobs.get(input.jobId)
+        if (!entry) {
+            log.warn({ jobId: input.jobId }, '[jobBroker] extendLock called for unknown job')
+            return
+        }
+        const { job, token } = entry
+        await job.extendLock(token, 120_000)
+        log.debug({ jobId: input.jobId }, '[jobBroker] Lock extended')
     },
 
     async close(): Promise<void> {
