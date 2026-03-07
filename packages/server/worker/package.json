@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/worker",
+  "name": "worker",
   "version": "0.1.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",

@@ -193,4 +193,117 @@ describe('Execute Flow E2E', () => {
             }),
         )
     }, 120_000)
+
+    it('handles 100 concurrent flow run executions without jobs getting stuck', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece])
+
+        const codeAction = {
+            type: FlowActionType.CODE as const,
+            name: 'step_1',
+            displayName: 'Process',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: `export const code = async (inputs) => {
+                        return { processed: true };
+                    }`,
+                    packageJson: '{}',
+                },
+                input: {},
+                errorHandlingOptions: {},
+            },
+        }
+
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+        })
+        await db.save('flow', mockFlow)
+
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.DRAFT,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '~0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: codeAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const concurrentCount = 100
+
+        const flowRuns = await Promise.all(
+            Array.from({ length: concurrentCount }, (_, i) =>
+                flowRunService(app.log).start({
+                    flowId: mockFlow.id,
+                    payload: { body: { index: i } },
+                    platformId: mockPlatform.id,
+                    executionType: ExecutionType.BEGIN,
+                    environment: RunEnvironment.TESTING,
+                    progressUpdateType: ProgressUpdateType.NONE,
+                    executeTrigger: false,
+                    flowVersionId: mockFlowVersion.id,
+                    projectId: mockProject.id,
+                    synchronousHandlerId: undefined,
+                    httpRequestId: undefined,
+                    failParentOnFailure: undefined,
+                }),
+            ),
+        )
+
+        expect(flowRuns).toHaveLength(concurrentCount)
+
+        const maxWaitMs = 30_000
+        const pollIntervalMs = 500
+        const start = Date.now()
+
+        const results = new Map<string, FlowRunStatus>()
+        for (const run of flowRuns) {
+            results.set(run.id, run.status)
+        }
+
+        while (Date.now() - start < maxWaitMs) {
+            const pending = [...results.entries()].filter(
+                ([, status]) => status === FlowRunStatus.QUEUED || status === FlowRunStatus.RUNNING,
+            )
+            if (pending.length === 0) break
+
+            await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+
+            for (const [id] of pending) {
+                const updated = await flowRunService(app.log).getOnePopulatedOrThrow({
+                    id,
+                    projectId: mockProject.id,
+                })
+                results.set(id, updated.status)
+            }
+        }
+
+        const statuses = [...results.values()]
+        const succeeded = statuses.filter((s) => s === FlowRunStatus.SUCCEEDED).length
+        const stuck = statuses.filter(
+            (s) => s === FlowRunStatus.QUEUED || s === FlowRunStatus.RUNNING,
+        ).length
+
+        expect(stuck).toBe(0)
+        expect(succeeded).toBe(concurrentCount)
+    }, 30_000)
 })

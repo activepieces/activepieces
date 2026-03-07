@@ -1,24 +1,16 @@
 import { AppSystemProp } from '../../helper/system/system-props'
 import { QueueName } from '../job'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil } from '@activepieces/shared'
-import { Worker as BullMQWorker, Job, QueueEvents } from 'bullmq'
+import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
 import { jobMigrations } from '../migrations/job-data-migrations'
-import { jobQueue } from './job-queue'
-
-const LONG_POLL_TIMEOUT_MS = 25_000
 
 const bullmqWorkers = new Map<string, BullMQWorker>()
-const queueEventsMap = new Map<string, QueueEvents>()
 const activeJobs = new Map<string, { job: Job, token: string }>()
-const pendingPollers = new Map<string, Array<{
-    resolve: (job: ConsumeJobRequest | null) => void
-    timer: ReturnType<typeof setTimeout>
-}>>()
 
 async function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
     const existing = bullmqWorkers.get(queueName)
@@ -31,40 +23,17 @@ async function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
         {
             connection: await redisConnections.create(),
             telemetry: isOtelEnabled ? new BullMQOtel(queueName) : undefined,
-            concurrency: queueName === QueueName.WORKER_JOBS ? 10 : 5,
+            concurrency: 10000,
             autorun: false,
             lockDuration: 120_000,
+            drainDelay: 15,
         },
     )
     await worker.waitUntilReady()
     bullmqWorkers.set(queueName, worker)
 
-    const queueEvents = new QueueEvents(queueName, {
-        connection: await redisConnections.create(),
-    })
-    await queueEvents.waitUntilReady()
-    queueEventsMap.set(queueName, queueEvents)
-
-    queueEvents.on('waiting', () => {
-        drainPendingPollers(queueName, log)
-    })
-
-    log.info({ queueName }, '[jobBroker] BullMQ worker and queue events initialized')
+    log.info({ queueName }, '[jobBroker] BullMQ worker initialized')
     return worker
-}
-
-function drainPendingPollers(queueName: string, log: FastifyBaseLogger): void {
-    const pollers = pendingPollers.get(queueName)
-    if (!pollers || pollers.length === 0) return
-
-    const poller = pollers.shift()!
-    clearTimeout(poller.timer)
-    tryDequeue(queueName, log).then((result) => {
-        poller.resolve(result)
-    }).catch((err) => {
-        log.error({ err, queueName }, '[jobBroker] Error dequeuing on waiting event')
-        poller.resolve(null)
-    })
 }
 
 async function tryDequeue(queueName: string, log: FastifyBaseLogger): Promise<ConsumeJobRequest | null> {
@@ -77,7 +46,6 @@ async function tryDequeue(queueName: string, log: FastifyBaseLogger): Promise<Co
     const token = `token-${Date.now()}-${Math.random().toString(36).slice(2)}`
     const job = await worker.getNextJob(token)
     if (isNil(job)) {
-        log.debug({ queueName }, '[jobBroker#tryDequeue] No job available in queue')
         return null
     }
     log.info({ queueName, jobId: job.id, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
@@ -104,45 +72,12 @@ async function tryDequeue(queueName: string, log: FastifyBaseLogger): Promise<Co
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        const allQueues = jobQueue(log).getAllQueues()
-        for (const queue of allQueues) {
-            await ensureBullMQWorker(queue.name, log)
-        }
-        jobQueue(log).onQueueCreated(async (queueName: string) => {
-            await ensureBullMQWorker(queueName, log)
-        })
+        await ensureBullMQWorker(QueueName.WORKER_JOBS, log)
         log.info('[jobBroker] Job broker initialized')
     },
 
     async poll(): Promise<ConsumeJobRequest | null> {
-        const allQueueNames = [...bullmqWorkers.keys()]
-        log.info({ queues: allQueueNames }, '[jobBroker#poll] Polling across queues')
-
-        for (const queueName of allQueueNames) {
-            const result = await tryDequeue(queueName, log)
-            if (result) return result
-        }
-
-        log.debug('[jobBroker#poll] No immediate jobs, waiting for waiting event or timeout')
-        return new Promise<ConsumeJobRequest | null>((resolve) => {
-            const timer = setTimeout(() => {
-                for (const queueName of allQueueNames) {
-                    const pollers = pendingPollers.get(queueName)
-                    if (pollers) {
-                        const idx = pollers.findIndex(p => p.resolve === resolve)
-                        if (idx !== -1) pollers.splice(idx, 1)
-                    }
-                }
-                resolve(null)
-            }, LONG_POLL_TIMEOUT_MS)
-
-            for (const queueName of allQueueNames) {
-                if (!pendingPollers.has(queueName)) {
-                    pendingPollers.set(queueName, [])
-                }
-                pendingPollers.get(queueName)!.push({ resolve, timer })
-            }
-        })
+        return tryDequeue(QueueName.WORKER_JOBS, log)
     },
 
     async completeJob(input: ConsumeJobResponse & { jobId: string }): Promise<void> {
@@ -153,19 +88,26 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         }
 
         const { job, token } = entry
-        activeJobs.delete(input.jobId)
 
-        if (input.delayInSeconds && input.delayInSeconds > 0) {
-            await job.moveToDelayed(Date.now() + input.delayInSeconds * 1000, token)
-            return
+        try {
+            if (input.delayInSeconds && input.delayInSeconds > 0) {
+                await job.moveToDelayed(Date.now() + input.delayInSeconds * 1000, token)
+                return
+            }
+
+            if (input.status === ConsumeJobResponseStatus.INTERNAL_ERROR) {
+                await job.moveToFailed(new Error(input.errorMessage ?? 'Internal error'), token)
+                return
+            }
+
+            await job.moveToCompleted({ response: input.response ?? undefined }, token, false)
         }
-
-        if (input.status === ConsumeJobResponseStatus.INTERNAL_ERROR) {
-            await job.moveToFailed(new Error(input.errorMessage ?? 'Internal error'), token)
-            return
+        catch (error) {
+            log.error({ jobId: input.jobId, error: String(error) }, '[jobBroker] Failed to move job to final state')
         }
-
-        await job.moveToCompleted({ response: input.response ?? undefined }, token)
+        finally {
+            activeJobs.delete(input.jobId)
+        }
     },
 
     async extendLock(input: { jobId: string }): Promise<void> {
@@ -180,20 +122,10 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     },
 
     async close(): Promise<void> {
-        for (const pollers of pendingPollers.values()) {
-            for (const p of pollers) {
-                clearTimeout(p.timer)
-                p.resolve(null)
-            }
-        }
-        pendingPollers.clear()
-
-        await Promise.allSettled([
-            ...[...bullmqWorkers.values()].map(w => w.close()),
-            ...[...queueEventsMap.values()].map(qe => qe.close()),
-        ])
+        await Promise.allSettled(
+            [...bullmqWorkers.values()].map(w => w.close()),
+        )
         bullmqWorkers.clear()
-        queueEventsMap.clear()
         activeJobs.clear()
     },
 })

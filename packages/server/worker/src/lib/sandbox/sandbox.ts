@@ -152,6 +152,7 @@ export function createSandbox(
                     resolve({ engine: engineResponse, stdOut, stdError })
                 }).catch((error: unknown) => {
                     log.error({ sandboxId, error: String(error) }, '[Sandbox] RPC call failed')
+                    reject(error)
                 })
             })
 

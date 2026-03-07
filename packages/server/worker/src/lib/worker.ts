@@ -38,16 +38,15 @@ export const worker = {
 
         const apiClient = createRpcClient<WorkerToApiContract>(socket, 60_000)
 
-        socket.on('connect', () => {
+        socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
-            void fetchAndStoreSettings(socket!, () => {
-                void startPollingLoop(apiClient)
-            })
+            await fetchAndStoreSettings(socket!)
+            void startPollingLoop(apiClient)
         })
 
         socket.on('disconnect', (reason) => {
-            logger.warn({ reason }, 'Disconnected from API server')
             polling = false
+            logger.warn({ reason }, 'Disconnected from API server')
         })
 
         socket.on('connect_error', (error) => {
@@ -173,15 +172,18 @@ function ensurePublicApiUrl(publicUrl: string): string {
     return publicUrl + '/api/'
 }
 
-function fetchAndStoreSettings(sock: Socket, onReady: () => void): void {
-    buildMachineInfo().then((request) => {
+async function fetchAndStoreSettings(sock: Socket): Promise<void> {
+    const { data: request, error } = await tryCatch(buildMachineInfo)
+    if (error) {
+        logger.error({ error }, 'Failed to build machine info for settings fetch')
+        return
+    }
+    return new Promise<void>((resolve) => {
         sock.emit(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request, (response: WorkerSettingsResponse) => {
             workerSettings.set(response)
             logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
-            onReady()
+            resolve()
         })
-    }).catch((err) => {
-        logger.error({ error: err }, 'Failed to build machine info for settings fetch')
     })
 }
 
