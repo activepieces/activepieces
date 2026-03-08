@@ -1,3 +1,4 @@
+import { searchMessages, createDraft } from "./lib/mcp-connector";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
@@ -55,6 +56,7 @@ export const gmail = createPiece({
     'AdamSelene',
     'sanket-a11y',
     'onyedikachi-david',
+    'MCH-Strategies',
   ],
   triggers: [
     gmailNewEmailTrigger,
