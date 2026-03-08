@@ -144,7 +144,7 @@
                      "install/options/docker",
                      "install/options/docker-compose",
                      {
-                        "group": "Others Options",
+                        "group": "Other Options",
                         "pages": [
                            "install/options/helm",
                            "install/options/easypanel",
