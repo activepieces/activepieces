@@ -186,7 +186,7 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[170px] shrink-0 px-2 flex items-center">
+        <div className="w-[170px] shrink-0 px-2 flex items-center overflow-hidden">
           <RowItemOwner item={item} />
         </div>
       )}
