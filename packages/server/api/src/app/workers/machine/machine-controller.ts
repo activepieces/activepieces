@@ -1,7 +1,9 @@
 import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
+import { jobQueue } from '../job-queue/job-queue'
 import { createHandlers } from '../rpc/worker-rpc-service'
 import { machineService } from './machine-service'
 
@@ -28,11 +30,39 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListWorkersParams, async () => {
         return machineService(app.log).list()
     })
+
+    app.get('/queue-metrics', QueueMetricsParams, async () => {
+        const allQueues = jobQueue(app.log).getAllQueues()
+        const counts = await Promise.all(
+            allQueues.map(async (queue) => {
+                const jobCounts = await queue.getJobCounts('waiting', 'active', 'prioritized')
+                return { name: queue.name, waiting: jobCounts.waiting + jobCounts.prioritized, active: jobCounts.active }
+            }),
+        )
+        return { queues: counts }
+    })
 }
 
 
 const ListWorkersParams = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+}
+
+const QueueMetricsParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        response: {
+            200: z.object({
+                queues: z.array(z.object({
+                    name: z.string(),
+                    waiting: z.number(),
+                    active: z.number(),
+                })),
+            }),
+        },
     },
 }

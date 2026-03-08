@@ -434,6 +434,13 @@
                            "endpoints/templates/get",
                            "endpoints/templates/list"
                         ]
+                     },
+                     {
+                        "group": "Worker Machines",
+                        "icon": "server",
+                        "pages": [
+                           "endpoints/worker-machines/queue-metrics"
+                        ]
                      }
                   ]
                }
