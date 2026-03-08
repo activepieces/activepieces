@@ -1,3 +1,4 @@
+import { mkdir } from 'fs/promises'
 import { spawn } from 'child_process'
 import path from 'path'
 import { arch } from 'process'
@@ -24,16 +25,29 @@ function getSandboxNumber(sandboxId: string): number {
     return sandboxIndex[sandboxId]
 }
 
-export function isolateProcess(log: SandboxLogger): SandboxProcessMaker {
+export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
-            const { sandboxId, command, mounts, env } = params
+            const { sandboxId, mounts, env } = params
             const sandboxNumber = getSandboxNumber(sandboxId)
 
             await execPromise(`${isolateBinaryPath} --box-id=${sandboxNumber} --cleanup`)
             await execPromise(`${isolateBinaryPath} --box-id=${sandboxNumber} --init`)
 
-            const envArgs = Object.entries(env)
+            // Pre-create /root and mount subdirs in the sandbox rootfs (isolate doesn't create /root by default)
+            const sandboxRootfs = `/var/local/lib/isolate/${sandboxNumber}/root`
+            await mkdir(`${sandboxRootfs}/root/common`, { recursive: true })
+            await mkdir(`${sandboxRootfs}/root/codes`, { recursive: true })
+
+            // Engine runs at /root/common/<filename> inside the sandbox (common dir is mounted there)
+            const engineSandboxPath = path.join('/root/common', path.basename(enginePath))
+            const sandboxEnv = {
+                ...env,
+                AP_BASE_CODE_DIRECTORY: '/root/codes',
+                SANDBOX_ID: sandboxId,
+            }
+
+            const envArgs = Object.entries(sandboxEnv)
                 .map(([key, value]) => `--env=${key}='${value}'`)
 
             const dirArgs = mounts.map((m) => {
@@ -41,19 +55,21 @@ export function isolateProcess(log: SandboxLogger): SandboxProcessMaker {
                 return `--dir=${m.sandboxPath}=${m.hostPath}${suffix}`
             })
 
-            const [binary, ...scriptArgs] = command
-
             const args = [
                 '--dir=/usr/bin/',
+                '--dir=/usr/local/',
+                '--dir=/etc/',
+                '--dir=/usr/src/node_modules/',
                 ...dirArgs,
                 '--share-net',
                 `--box-id=${sandboxNumber}`,
                 '--processes',
                 '--chdir=/root',
-                '--run',
                 ...envArgs,
-                binary,
-                ...scriptArgs,
+                '--run',
+                '--',
+                process.execPath,
+                engineSandboxPath,
             ]
 
             log.debug({ sandboxId, command: `${isolateBinaryPath} ${args.join(' ')}` }, 'Spawning isolate process')

@@ -83,7 +83,7 @@ export function createSandbox(
             childProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
-                mounts,
+                mounts: [...(options.baseMounts ?? []), ...mounts],
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
