@@ -12,6 +12,14 @@ jobs:
   benchmark:
     runs-on: depot-ubuntu-24.04-16
     timeout-minutes: 30
+    env:
+      AP_FILE_STORAGE_LOCATION: ${{ secrets.AP_FILE_STORAGE_LOCATION }}
+      AP_S3_BUCKET: ${{ secrets.AP_S3_BUCKET }}
+      AP_S3_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
+      AP_S3_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
+      AP_S3_ENDPOINT: ${{ secrets.AP_S3_ENDPOINT }}
+      AP_S3_REGION: ${{ secrets.AP_S3_REGION }}
+      AP_S3_USE_SIGNED_URLS: ${{ secrets.AP_S3_USE_SIGNED_URLS }}
     strategy:
       matrix:
         include:
