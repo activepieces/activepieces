@@ -169,42 +169,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             return savedPiece
         },
 
-        async bulkCreate(params: BulkCreateParams[]): Promise<void> {
-            if (params.length === 0) {
-                return
-            }
-            const names = [...new Set(params.map(p => p.pieceMetadata.name))]
-            const oldestDates = await pieceRepos()
-                .createQueryBuilder('pm')
-                .select(['pm."name"', 'MIN(pm."created") AS "oldestCreated"'])
-                .where('pm."name" IN (:...names)', { names })
-                .groupBy('pm."name"')
-                .getRawMany<{ name: string, oldestCreated: string }>()
-            const oldestDateMap = new Map(oldestDates.map(r => [r.name, r.oldestCreated]))
-
-            const now = dayjs().toISOString()
-            const entities = params.map(p => ({
-                id: apId(),
-                packageType: p.packageType,
-                pieceType: p.pieceType,
-                archiveId: p.archiveId,
-                platformId: p.platformId,
-                created: oldestDateMap.get(p.pieceMetadata.name) ?? now,
-                ...p.pieceMetadata,
-            }))
-
-            await pieceRepos()
-                .createQueryBuilder()
-                .insert()
-                .into(PieceMetadataEntity)
-                .values(entities)
-                .orIgnore()
-                .execute()
-
-            const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
-            await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
-        },
-
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
             const deleted: { name: string, version: string }[] = []
             await Promise.all(pieces.map(async (piece) => {
@@ -457,10 +421,3 @@ type RegistryParams = {
     release: string
 }
 
-type BulkCreateParams = {
-    pieceMetadata: PieceMetadata
-    platformId?: string
-    packageType: PackageType
-    pieceType: PieceType
-    archiveId?: string
-}

@@ -1,12 +1,14 @@
-import { groupBy, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { groupBy, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
+import { pubsub } from '../helper/pubsub'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
@@ -71,24 +73,26 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
 async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
-    const batchSize = 10
+    const batchSize = 5
     for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
         const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
-        const fetchedMetadata = await Promise.all(currentBatch.map(async (piece) => {
+        await Promise.all(currentBatch.map(async (piece) => {
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
             if (!response.ok) {
                 log.warn({ pieceName: piece.name, version: piece.version, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
-                return null
+                return
             }
-            return response.json()
+            const pieceMetadata = await response.json()
+            await pieceMetadataService(log).create({
+                pieceMetadata,
+                packageType: pieceMetadata.packageType,
+                pieceType: pieceMetadata.pieceType,
+                publishCacheRefresh: false,
+            })
         }))
-        const validMetadata = fetchedMetadata.filter((m): m is PieceMetadataFetched => m !== null)
-        await pieceMetadataService(log).bulkCreate(validMetadata.map(pieceMetadata => ({
-            pieceMetadata,
-            packageType: pieceMetadata.packageType,
-            pieceType: pieceMetadata.pieceType,
-        })))
+        const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
+        await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
     }
     return newPiecesToFetch.length
 }
@@ -129,8 +133,3 @@ type PieceRegistryResponse = {
 
 
 type PieceMetadataOnly = Pick<PieceMetadataSchema, 'name' | 'version' | 'pieceType'>
-
-type PieceMetadataFetched = Record<string, unknown> & {
-    packageType: PackageType
-    pieceType: PieceType
-}
