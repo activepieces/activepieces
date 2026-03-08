@@ -7,22 +7,13 @@ on:
         description: 'Total number of requests for hey'
         required: false
         default: '500'
-      execution_mode:
-        description: 'Execution mode for workers'
-        required: false
-        default: 'SANDBOX_CODE_ONLY'
-        type: choice
-        options:
-          - SANDBOX_CODE_ONLY
-          - SANDBOXED
-
 jobs:
   benchmark:
     runs-on: depot-ubuntu-24.04-16
     timeout-minutes: 30
     env:
       AP_FILE_STORAGE_LOCATION: ${{ secrets.AP_FILE_STORAGE_LOCATION }}
-      AP_EXECUTION_MODE: ${{ inputs.execution_mode || 'SANDBOX_CODE_ONLY' }}
+      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
       AP_S3_BUCKET: ${{ secrets.AP_S3_BUCKET }}
       AP_S3_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
       AP_S3_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
