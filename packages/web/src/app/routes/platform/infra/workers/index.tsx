@@ -6,27 +6,29 @@ import {
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Server,
-  Clock,
-  Cpu,
-  MemoryStick,
-  HardDrive,
-  Zap,
-} from 'lucide-react';
+import { Server, Clock, Cpu, MemoryStick, HardDrive, Zap } from 'lucide-react';
 import React from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
@@ -52,10 +54,16 @@ export default function WorkersPage() {
           <Zap size={16} />
           <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
           <AlertDescription className="text-xs">
-            {t('Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.')}
+            {t(
+              'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
+            )}
           </AlertDescription>
           <AlertAction>
-            <RequestTrial featureKey="DEDICATED_WORKERS" buttonVariant="default" buttonSize="xs" />
+            <RequestTrial
+              featureKey="DEDICATED_WORKERS"
+              buttonVariant="default"
+              buttonSize="xs"
+            />
           </AlertAction>
         </Alert>
       )}
@@ -64,7 +72,9 @@ export default function WorkersPage() {
           <Zap size={16} />
           <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
           <AlertDescription className="text-xs">
-            {t('Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.')}
+            {t(
+              'Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.',
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -107,7 +117,12 @@ export default function WorkersPage() {
       {!isLoading && (workersData ?? []).length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {(workersData ?? []).map((worker, index) => (
-            <WorkerCard key={worker.id} worker={worker} index={index} isCloud={isCloud} />
+            <WorkerCard
+              key={worker.id}
+              worker={worker}
+              index={index}
+              isCloud={isCloud}
+            />
           ))}
         </div>
       )}
@@ -192,14 +207,26 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
             {isCloud && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge variant={worker.type === WorkerMachineType.DEDICATED ? 'success' : 'secondary'}>
-                    {worker.type === WorkerMachineType.DEDICATED ? t('Dedicated') : t('Shared')}
+                  <Badge
+                    variant={
+                      worker.type === WorkerMachineType.DEDICATED
+                        ? 'success'
+                        : 'secondary'
+                    }
+                  >
+                    {worker.type === WorkerMachineType.DEDICATED
+                      ? t('Dedicated')
+                      : t('Shared')}
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   {worker.type === WorkerMachineType.DEDICATED
-                    ? t('This worker runs exclusively for your platform with no sandboxing overhead.')
-                    : t('This worker is shared across platforms and uses strict sandboxing for isolation.')}
+                    ? t(
+                        'This worker runs exclusively for your platform with no sandboxing overhead.',
+                      )
+                    : t(
+                        'This worker is shared across platforms and uses strict sandboxing for isolation.',
+                      )}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -260,4 +287,8 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
 }
 
 type StatBarProps = { label: React.ReactNode; value: number; detail?: string };
-type WorkerCardProps = { worker: WorkerMachineWithStatus; index: number; isCloud: boolean };
+type WorkerCardProps = {
+  worker: WorkerMachineWithStatus;
+  index: number;
+  isCloud: boolean;
+};
