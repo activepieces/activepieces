@@ -1,5 +1,3 @@
-import { TypeCompiler } from '@sinclair/typebox/compiler'
-import dayjs from 'dayjs'
 import { isNil } from '../../../core/common'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
@@ -7,8 +5,8 @@ import { SampleDataSettings } from '../sample-data'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateTriggerRequest } from '.'
+import dayjs from 'dayjs'
 
-const triggerSchemaValidation = TypeCompiler.Compile(FlowTrigger)
 
 function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined, existingSampleData: SampleDataSettings | undefined): FlowTrigger {
     const baseProperties = {
@@ -35,7 +33,8 @@ function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: 
             }
             break
     }
-    const valid = (isNil(request.valid) ? true : request.valid) && triggerSchemaValidation.Check(trigger)
+    const parseResult = FlowTrigger.safeParse(trigger)
+    const valid = (isNil(request.valid) ? true : request.valid) && parseResult.success
     return {
         ...trigger,
         valid,

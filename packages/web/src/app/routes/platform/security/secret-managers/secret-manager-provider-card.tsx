@@ -89,9 +89,10 @@ const SecretManagerProviderCard = ({
             <ConfirmationDeleteDialog
               title={t('Disconnect Secret Manager')}
               message={t(
-                'Are you sure you want to disconnect this secret manager?',
+                'Disconnecting this secret manager will stop syncing secrets with the provider.',
               )}
               entityName={provider.name}
+              buttonText={t('Disconnect')}
               mutationFn={async () => disconnect({ providerId: provider.id })}
             >
               <Button variant={'ghost'} size={'sm'} loading={isDisconnecting}>

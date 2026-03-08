@@ -15,7 +15,6 @@
     "@hookform/resolvers": "5.2.2",
     "@radix-ui/react-use-controllable-state": "1.2.2",
     "@segment/analytics-next": "1.72.0",
-    "@sinclair/typebox": "0.34.11",
     "@tanstack/query-db-collection": "1.0.12",
     "@tanstack/react-db": "0.1.60",
     "@tanstack/react-query": "5.51.1",

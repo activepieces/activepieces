@@ -3,13 +3,13 @@ import {
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -34,15 +34,11 @@ type ConfigureSamlDialogProps = {
   refetch: () => Promise<void>;
 };
 
-const Saml2FormValues = Type.Object({
-  idpMetadata: Type.String({
-    minLength: 1,
-  }),
-  idpCertificate: Type.String({
-    minLength: 1,
-  }),
+const Saml2FormValues = z.object({
+  idpMetadata: z.string().min(1),
+  idpCertificate: z.string().min(1),
 });
-type Saml2FormValues = Static<typeof Saml2FormValues>;
+type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
 export const ConfigureSamlDialog = ({
   platform,
@@ -51,7 +47,7 @@ export const ConfigureSamlDialog = ({
 }: ConfigureSamlDialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<Saml2FormValues>({
-    resolver: typeboxResolver(Saml2FormValues),
+    resolver: zodResolver(Saml2FormValues),
   });
 
   const { data: samlAcs } = flagsHooks.useFlag<string>(

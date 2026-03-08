@@ -1,5 +1,4 @@
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Eye,
@@ -11,7 +10,6 @@ import {
   Users,
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
@@ -26,7 +24,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { projectRoleApi } from '@/features/platform-admin';
+import { projectRoleMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -60,16 +58,10 @@ export const ProjectRolesTable = ({
   const [selectedRole, setSelectedRole] = useState<ProjectRole | null>(null);
   const [isUsersSheetOpen, setIsUsersSheetOpen] = useState(false);
 
-  const { mutate: deleteProjectRole } = useMutation({
-    mutationKey: ['delete-project-role'],
-    mutationFn: (name: string) => projectRoleApi.delete(name),
-    onSuccess: () => {
-      refetch();
-      toast.success(t('Project Role entry deleted successfully'), {
-        duration: 3000,
-      });
-    },
-  });
+  const { mutate: deleteProjectRole } =
+    projectRoleMutations.useDeleteProjectRole({
+      onSuccess: () => refetch(),
+    });
 
   if (isLoading) {
     return <SkeletonList numberOfItems={3} className="w-full h-[60px]" />;
@@ -143,13 +135,11 @@ export const ProjectRolesTable = ({
                   isDanger={true}
                   title={t('Delete Role')}
                   message={t(
-                    `Deleting this role will remove ${
-                      role.userCount
-                    } project member${
-                      role.userCount === 1 ? '' : 's'
-                    } and all associated invitations. Are you sure you want to proceed?`,
+                    'Deleting this role will remove {count} project member(s) and all associated invitations.',
+                    { count: role.userCount },
                   )}
                   entityName={`${t('Project Role')} ${role.name}`}
+                  buttonText={t('Delete Role')}
                   mutationFn={async () => deleteProjectRole(role.name)}
                 >
                   <Button variant="ghost" size="sm" className="size-8 p-0">

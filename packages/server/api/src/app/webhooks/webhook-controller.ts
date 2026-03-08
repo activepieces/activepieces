@@ -9,9 +9,9 @@ import {
     WebhookUrlParams,
     WebsocketClientEvent,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import mime from 'mime-types'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
@@ -22,7 +22,7 @@ import { webhookService } from './webhook.service'
 
 const tracer = trace.getTracer('webhook-controller')
 
-export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
+export const webhookController: FastifyPluginAsyncZod = async (app) => {
 
     app.all(
         '/:flowId/sync',

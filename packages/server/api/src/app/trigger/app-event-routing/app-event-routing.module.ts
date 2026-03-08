@@ -18,8 +18,8 @@ import {
     RunEnvironment,
     WorkerJobType,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
@@ -43,11 +43,11 @@ const pieceNames: Record<string, string> = {
     intercom: '@activepieces/piece-intercom',
 }
 
-export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
+export const appEventRoutingModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(appEventRoutingController, { prefix: '/v1/app-events' })
 }
 
-export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
+export const appEventRoutingController: FastifyPluginAsyncZod = async (
     fastify,
 ) => {
     fastify.all(

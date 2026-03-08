@@ -3,7 +3,7 @@ import {
   ApFlagId,
   assertNotNullOrUndefined,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -33,5 +33,22 @@ export const projectMembersHooks = {
       isLoading: query.isLoading,
       refetch: query.refetch,
     };
+  },
+};
+
+export const projectMembersMutations = {
+  useUpdateMemberRole: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: () => void;
+  }) => {
+    return useMutation({
+      mutationFn: ({ memberId, role }: { memberId: string; role: string }) =>
+        projectMembersApi.update(memberId, { role }),
+      onSuccess,
+      onError,
+    });
   },
 };

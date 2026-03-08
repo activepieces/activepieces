@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema, Nullable } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 import { ExecutionState } from './execution/execution-output'
@@ -23,41 +23,41 @@ export type FlowRetryPayload = {
     strategy: FlowRetryStrategy
 }
 
-export const FlowRun = Type.Object({
+export const FlowRun = z.object({
     ...BaseModelSchema,
-    projectId: Type.String(),
-    flowId: Type.String(),
-    parentRunId: Type.Optional(Type.String()),
-    failParentOnFailure: Type.Boolean(),
-    triggeredBy: Type.Optional(Type.String()),
-    tags: Type.Optional(Type.Array(Type.String())),
-    flowVersionId: Type.String(),
-    flowVersion: Type.Optional(Type.Object({
-        displayName: Type.Optional(Type.String()),
-    })),
-    logsFileId: Nullable(Type.String()),
-    status: Type.Enum(FlowRunStatus),
-    startTime: Type.Optional(Type.String()),
-    finishTime: Type.Optional(Type.String()),
-    environment: Type.Enum(RunEnvironment),
-    pauseMetadata: Type.Optional(PauseMetadata),
+    projectId: z.string(),
+    flowId: z.string(),
+    parentRunId: z.string().optional(),
+    failParentOnFailure: z.boolean(),
+    triggeredBy: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    flowVersionId: z.string(),
+    flowVersion: z.object({
+        displayName: z.string().optional(),
+    }).optional(),
+    logsFileId: Nullable(z.string()),
+    status: z.nativeEnum(FlowRunStatus),
+    startTime: z.string().optional(),
+    finishTime: z.string().optional(),
+    environment: z.nativeEnum(RunEnvironment),
+    pauseMetadata: PauseMetadata.optional(),
     // The steps data may be missing if the flow has not started yet,
     // or if the run is older than AP_EXECUTION_DATA_RETENTION_DAYS and its execution data has been purged.
-    steps: Nullable(Type.Record(Type.String(), Type.Unknown())),
-    failedStep: Type.Optional(Type.Object({
-        name: Type.String(),
-        displayName: Type.String(),
-    })),
-    stepNameToTest: Type.Optional(Type.String()),
-    archivedAt: Nullable(Type.String({ default: null })),
-    stepsCount: Type.Optional(Type.Number()),
+    steps: Nullable(z.record(z.string(), z.unknown())),
+    failedStep: z.object({
+        name: z.string(),
+        displayName: z.string(),
+    }).optional(),
+    stepNameToTest: z.string().optional(),
+    archivedAt: Nullable(z.string()),
+    stepsCount: z.number().optional(),
 })
 
-export const FailedStep = Type.Object({
-    name: Type.String(),
-    displayName: Type.String(),
-    message: Type.String(),
+export const FailedStep = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    message: z.string(),
 })
-export type FailedStep = Static<typeof FailedStep>
+export type FailedStep = z.infer<typeof FailedStep>
 
-export type FlowRun = Static<typeof FlowRun> & ExecutionState
+export type FlowRun = z.infer<typeof FlowRun> & ExecutionState

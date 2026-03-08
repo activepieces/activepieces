@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -10,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectRoleApi } from '@/features/platform-admin';
+import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -19,11 +18,9 @@ import { ProjectRolesTable } from './project-roles-table';
 const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['project-roles'],
-    queryFn: () => projectRoleApi.list(),
-    enabled: platform.plan.projectRolesEnabled,
-  });
+  const { data, isLoading, refetch } = projectRoleQueries.useProjectRoles(
+    platform.plan.projectRolesEnabled,
+  );
 
   const newRoleButton = !platform.plan.customRolesEnabled ? (
     <Tooltip>

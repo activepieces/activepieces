@@ -17,10 +17,11 @@ import {
     UserInvitation,
     UserInvitationWithLink,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, projectMustBeTeamType } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
@@ -29,11 +30,11 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from './user-invitation.service'
 
-export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
+export const invitationModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
 }
 
-const invitationController: FastifyPluginAsyncTypebox = async (app) => {
+const invitationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/', UpsertUserInvitationRequestParams, async (request, reply) => {
         const { email, type } = request.body
@@ -200,8 +201,8 @@ const AcceptUserInvitationRequestParams = {
         security: securityAccess.public(),
     },
     schema: {
-        body: Type.Object({
-            invitationToken: Type.String(),
+        body: z.object({
+            invitationToken: z.string(),
         }),
     },
 }
@@ -213,11 +214,11 @@ const DeleteInvitationRequestParams = {
     schema: {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }

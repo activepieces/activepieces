@@ -738,9 +738,7 @@ const lockFlowVersionIfNotLocked = async ({
         flowVersion,
         userOperation: {
             type: FlowOperationType.LOCK_FLOW,
-            request: {
-                flowId: flowVersion.flowId,
-            },
+            request: {},
         },
         entityManager,
     })

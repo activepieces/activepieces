@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -32,6 +33,9 @@ export const RenameDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Rename')}</DialogTitle>
+          <DialogDescription>
+            {t('Enter a new name for this item.')}
+          </DialogDescription>
         </DialogHeader>
         <Input
           value={value}

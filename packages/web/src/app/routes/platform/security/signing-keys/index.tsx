@@ -1,5 +1,4 @@
 import { SigningKey } from '@activepieces/shared';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ExternalLink, Key, MoreHorizontal, Trash } from 'lucide-react';
 
@@ -26,20 +25,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { signingKeyApi, NewSigningKeyDialog } from '@/features/platform-admin';
+import {
+  signingKeyApi,
+  NewSigningKeyDialog,
+  signingKeyQueries,
+} from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
 const SigningKeysPage = () => {
-  const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['signing-keys'],
-    gcTime: 0,
-    staleTime: 0,
-    queryFn: () => signingKeyApi.list(),
-  });
+  const { data, isLoading, refetch } = signingKeyQueries.useSigningKeys();
 
   const signingKeys: SigningKey[] = data?.data ?? [];
 
@@ -75,11 +72,7 @@ const SigningKeysPage = () => {
           </>
         }
         actions={
-          <NewSigningKeyDialog
-            onCreate={() =>
-              queryClient.invalidateQueries({ queryKey: ['signing-keys'] })
-            }
-          >
+          <NewSigningKeyDialog onCreate={() => refetch()}>
             <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
               {t('New Signing Key')}
             </AnimatedIconButton>
@@ -122,14 +115,13 @@ const SigningKeysPage = () => {
                       <ConfirmationDeleteDialog
                         title={t('Delete Signing Key')}
                         message={t(
-                          'Are you sure you want to delete this signing key?',
+                          'Deleting this signing key will invalidate any tokens signed with it.',
                         )}
                         entityName={t('Signing Key')}
+                        buttonText={t('Delete')}
                         mutationFn={async () => {
                           await signingKeyApi.delete(signingKey.id);
-                          queryClient.invalidateQueries({
-                            queryKey: ['signing-keys'],
-                          });
+                          refetch();
                         }}
                         onError={() => internalErrorToast()}
                       >
