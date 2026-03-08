@@ -2,23 +2,25 @@ import {
   ApEdition,
   ApFlagId,
   WorkerMachineStatus,
+  WorkerMachineType,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
-  InfoIcon,
   Server,
   Clock,
   Cpu,
   MemoryStick,
   HardDrive,
+  Zap,
 } from 'lucide-react';
 import React from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RequestTrial } from '@/app/components/request-trial';
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Card,
   CardContent,
@@ -32,75 +34,38 @@ import { cn } from '@/lib/utils';
 
 import { WorkerConfigsModal } from './worker-configs-dialog';
 
-const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
-  {
-    id: 'hbAcAzqbOEQLzvIi6PMCF',
-    created: '2024-11-23T18:51:30.000Z',
-    updated: dayjs().subtract(10, 'seconds').toISOString(),
-    information: {
-      workerId: 'hbAcAzqbOEQLzvIi6PMCF',
-      totalCpuCores: 4,
-      diskInfo: {
-        total: 337374281728,
-        free: 220669583360,
-        used: 116704698368,
-        percentage: 75.5,
-      },
-      workerProps: {},
-      cpuUsagePercentage: 78.3,
-      ramUsagePercentage: 52.699635773121855,
-      totalAvailableRamInBytes: 33364979712,
-      ip: '172.16.254.1',
-    },
-    status: WorkerMachineStatus.ONLINE,
-  },
-  {
-    id: 'kpMnBxRtYuWvZsQi9NLCJ',
-    created: '2024-11-23T19:12:45.000Z',
-    updated: dayjs().subtract(1, 'minute').toISOString(),
-    information: {
-      workerId: 'kpMnBxRtYuWvZsQi9NLCJ',
-      totalCpuCores: 8,
-      diskInfo: {
-        total: 536870912000,
-        free: 322122547200,
-        used: 214748364800,
-        percentage: 40.0,
-      },
-      workerProps: {},
-      cpuUsagePercentage: 82.1,
-      ramUsagePercentage: 76.8,
-      totalAvailableRamInBytes: 42949672960,
-      ip: '192.168.1.100',
-    },
-    status: WorkerMachineStatus.ONLINE,
-  },
-];
-
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const showDemoData = edition === ApEdition.CLOUD;
-  const { data: workersData, isLoading } = workersQueries.useWorkerMachines(
-    showDemoData,
-    DEMO_WORKERS_DATA,
-  );
+  const isCloud = true;
+  const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
+
+  const fleetType = workersData?.[0]?.type;
 
   return (
     <div className="flex flex-col w-full gap-4">
       <DashboardPageHeader
-        description={t('Check the health of your worker machines')}
-        title={t('Workers Machine')}
-      />
-      {showDemoData && (
-        <Alert variant="default">
-          <div className="flex items-center gap-2">
-            <InfoIcon size={16} />
-            <AlertDescription>
-              {t(
-                'This is demo data. In a real environment, this would show your actual worker machines.',
-              )}
-            </AlertDescription>
-          </div>
+        description={t('Check the health of your workers')}
+        title={t('Workers')}
+      ></DashboardPageHeader>
+      {isCloud && fleetType === WorkerMachineType.SHARED && (
+        <Alert variant="primary">
+          <Zap size={16} />
+          <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
+          <AlertDescription className="text-xs">
+            {t('Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.')}
+          </AlertDescription>
+          <AlertAction>
+            <RequestTrial featureKey="DEDICATED_WORKERS" buttonVariant="default" buttonSize="xs" />
+          </AlertAction>
+        </Alert>
+      )}
+      {isCloud && fleetType === WorkerMachineType.DEDICATED && (
+        <Alert variant="success">
+          <Zap size={16} />
+          <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
+          <AlertDescription className="text-xs">
+            {t('Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.')}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -133,7 +98,7 @@ export default function WorkersPage() {
           <p className="font-medium text-foreground">{t('No workers found')}</p>
           <p className="text-sm text-center max-w-sm">
             {t(
-              "You don't have any worker machines yet. Spin up new machines to execute your automations",
+              "You don't have any workers yet. Spin up new workers to execute your automations",
             )}
           </p>
         </div>
@@ -142,7 +107,7 @@ export default function WorkersPage() {
       {!isLoading && (workersData ?? []).length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {(workersData ?? []).map((worker, index) => (
-            <WorkerCard key={worker.id} worker={worker} index={index} />
+            <WorkerCard key={worker.id} worker={worker} index={index} isCloud={isCloud} />
           ))}
         </div>
       )}
@@ -181,7 +146,7 @@ function StatBar({ label, value, detail }: StatBarProps) {
   );
 }
 
-function WorkerCard({ worker, index }: WorkerCardProps) {
+function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
   const timeAgo = useTimeAgo(new Date(worker.updated));
   const isOnline = worker.status === WorkerMachineStatus.ONLINE;
 
@@ -224,6 +189,20 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
+            {isCloud && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant={worker.type === WorkerMachineType.DEDICATED ? 'success' : 'secondary'}>
+                    {worker.type === WorkerMachineType.DEDICATED ? t('Dedicated') : t('Shared')}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  {worker.type === WorkerMachineType.DEDICATED
+                    ? t('This worker runs exclusively for your platform with no sandboxing overhead.')
+                    : t('This worker is shared across platforms and uses strict sandboxing for isolation.')}
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Badge variant={isOnline ? 'success' : 'destructive'}>
               {t(worker.status.toLowerCase())}
             </Badge>
@@ -281,4 +260,4 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
 }
 
 type StatBarProps = { label: React.ReactNode; value: number; detail?: string };
-type WorkerCardProps = { worker: WorkerMachineWithStatus; index: number };
+type WorkerCardProps = { worker: WorkerMachineWithStatus; index: number; isCloud: boolean };

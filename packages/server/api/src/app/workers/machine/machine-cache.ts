@@ -8,6 +8,7 @@ export type WorkerMachine = {
     created: string
     information: MachineInformation
     cacheId?: number
+    type?: 'SHARED' | 'DEDICATED'
 }
 
 const REDIS_KEY = 'workerMachines'

@@ -1,7 +1,7 @@
-import { ProjectResourceType } from '../../core/security/authorization/common'
-import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { CancelTestTriggerRequestBody, PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { testTriggerService } from '../../trigger/test-trigger/test-trigger-service'
 
 export const testTriggerController: FastifyPluginAsyncZod = async (app) => {

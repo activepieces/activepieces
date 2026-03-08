@@ -1,6 +1,6 @@
-import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ListAuditEventsRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { auditLogService } from './audit-event-service'
 

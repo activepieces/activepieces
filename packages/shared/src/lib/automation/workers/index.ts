@@ -7,6 +7,11 @@ export enum WorkerMachineStatus {
     OFFLINE = 'OFFLINE',
 }
 
+export enum WorkerMachineType {
+    SHARED = 'SHARED',
+    DEDICATED = 'DEDICATED',
+}
+
 
 export const MachineInformation = z.object({
     cpuUsagePercentage: z.number(),
@@ -35,6 +40,7 @@ export type WorkerMachine = z.infer<typeof WorkerMachine>
 
 export const WorkerMachineWithStatus = WorkerMachine.extend({
     status: z.nativeEnum(WorkerMachineStatus),
+    type: z.nativeEnum(WorkerMachineType),
 })
 
 export type WorkerMachineWithStatus = z.infer<typeof WorkerMachineWithStatus>

@@ -1,7 +1,4 @@
-import { apDayjsDuration } from '@activepieces/server-utils'
-import { AppSystemProp } from '../../helper/system/system-props'
-import { getPlatformQueueName, QueueName } from '../job'
-import { memoryLock } from '@activepieces/server-utils'
+import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
 import { ApId, EventDestinationJobData, ExecuteFlowJobData, getDefaultJobPriority, isNil, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue, QueueEvents } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -9,6 +6,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { getPlatformQueueName, QueueName } from '../job'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()

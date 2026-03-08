@@ -1,4 +1,3 @@
-import { securityAccess } from '../core/security/authorization/fastify-security'
 import {
     ActivepiecesError,
     ApEdition,
@@ -16,6 +15,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { transaction } from '../core/db/transaction'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'

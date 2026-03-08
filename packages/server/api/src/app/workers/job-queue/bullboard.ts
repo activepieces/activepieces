@@ -1,4 +1,3 @@
-import { AppSystemProp } from '../../helper/system/system-props'
 import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
@@ -7,6 +6,7 @@ import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { systemJobsQueue } from '../../helper/system-jobs/system-job'
 import { jobQueue } from './job-queue'
 

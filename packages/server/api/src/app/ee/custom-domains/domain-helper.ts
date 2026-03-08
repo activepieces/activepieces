@@ -1,7 +1,7 @@
-import { AppSystemProp, WorkerSystemProp } from '../../helper/system/system-props'
-import { networkUtils } from '../../helper/network-utils'
 import { ApEdition, isNil } from '@activepieces/shared'
+import { networkUtils } from '../../helper/network-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp, WorkerSystemProp } from '../../helper/system/system-props'
 import { customDomainService } from './custom-domain.service'
 
 export const domainHelper = {

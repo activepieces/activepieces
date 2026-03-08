@@ -3,7 +3,6 @@ import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
-import { AppSystemProp } from '../../helper/system/system-props'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -23,6 +22,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'

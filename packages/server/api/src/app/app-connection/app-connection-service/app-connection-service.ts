@@ -1,4 +1,3 @@
-import { AppSystemProp } from '../../helper/system/system-props'
 import {
     ActivepiecesError,
     ApEdition,
@@ -44,6 +43,7 @@ import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,

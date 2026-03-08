@@ -1,10 +1,10 @@
-import { AppSystemProp } from '../../helper/system/system-props'
 import {
     ExecutionMode,
     isNil,
     partition,
     WorkerMachineHealthcheckRequest,
     WorkerMachineStatus,
+    WorkerMachineType,
     WorkerMachineWithStatus,
     WorkerSettingsResponse,
 } from '@activepieces/shared'
@@ -15,6 +15,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { workerMachineCache } from './machine-cache'
 import { workerIdGenerator } from './worker-id-generator'
 
@@ -47,10 +48,12 @@ export const machineService = (log: FastifyBaseLogger) => {
                 cacheId = await workerIdGenerator.allocate()
             }
 
+            const type = isNil(platformIdForDedicatedWorker) ? 'SHARED' : 'DEDICATED'
             await workerMachineCache().upsert({
                 id: request.workerId,
                 information: request,
                 cacheId,
+                type,
             })
             const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
             return {
@@ -95,6 +98,7 @@ export const machineService = (log: FastifyBaseLogger) => {
             return onlineWorkers.map(worker => ({
                 ...worker,
                 status: WorkerMachineStatus.ONLINE,
+                type: worker.type === 'DEDICATED' ? WorkerMachineType.DEDICATED : WorkerMachineType.SHARED,
             }))
         },
     }

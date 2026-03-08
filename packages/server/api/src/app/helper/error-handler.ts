@@ -1,7 +1,7 @@
-import { exceptionHandler } from './exception-handler'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { exceptionHandler } from './exception-handler'
 
 
 export const errorHandler = async (

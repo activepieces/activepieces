@@ -1,6 +1,6 @@
-import { securityAccess } from '../core/security/authorization/fastify-security'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../core/security/authorization/fastify-security'
 import { flagService } from './flag.service'
 import { flagHooks } from './flags.hooks'
 

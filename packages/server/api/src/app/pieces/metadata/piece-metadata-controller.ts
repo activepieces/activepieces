@@ -1,6 +1,4 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ProjectResourceType } from '../../core/security/authorization/common'
-import { securityAccess } from '../../core/security/authorization/fastify-security'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -21,6 +19,8 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'

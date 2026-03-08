@@ -1,9 +1,5 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, environmentVariables, SystemProp, WorkerSystemProp } from './system-props'
-import { DatabaseType } from '../../database/database-type'
-import { pinoLogging } from '../logger'
-import { RedisType } from '../../database/redis/types'
 import {
     ActivepiecesError,
     ApEdition,
@@ -15,6 +11,10 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
+import { DatabaseType } from '../../database/database-type'
+import { RedisType } from '../../database/redis/types'
+import { pinoLogging } from '../logger'
+import { AppSystemProp, ContainerType, environmentVariables, SystemProp, WorkerSystemProp } from './system-props'
 
 
 

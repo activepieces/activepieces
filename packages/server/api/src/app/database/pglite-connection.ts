@@ -1,11 +1,11 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { AppSystemProp } from '../helper/system/system-props'
 import { ApEdition, ApEnvironment, spreadIfDefined } from '@activepieces/shared'
 import { types } from '@electric-sql/pglite'
 import { DataSource } from 'typeorm'
 import { PGliteDriver } from 'typeorm-pglite'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { commonProperties } from './database-connection'
 import { getMigrations } from './postgres-connection'
 

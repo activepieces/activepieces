@@ -1,8 +1,8 @@
-import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { ApplicationEventName, AuthenticationResponse,
     ManagedAuthnRequestBody,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { managedAuthnService } from './managed-authn-service'
 

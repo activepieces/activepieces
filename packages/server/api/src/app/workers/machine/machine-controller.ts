@@ -1,6 +1,6 @@
-import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { createRpcServer, PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { websocketService } from '../../core/websockets.service'
 import { createHandlers } from '../rpc/worker-rpc-service'
 import { machineService } from './machine-service'

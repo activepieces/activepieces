@@ -31,7 +31,7 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
     return {
         async poll(input) {
             log.info({ workerId: input.workerId, platformIdForDedicatedWorker }, '[workerRpc#poll] Poll request received')
-            await machineService(log).onConnection(input)
+            await machineService(log).onConnection(input, platformIdForDedicatedWorker)
             const job = await jobBroker(log).poll(platformIdForDedicatedWorker)
             if (job) {
                 log.info({ workerId: input.workerId, jobId: job.jobId, jobType: job.jobData.jobType }, '[workerRpc#poll] Returning job to worker')

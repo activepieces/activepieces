@@ -1,8 +1,8 @@
-import { AppSystemProp } from '../helper/system/system-props'
-import { DatabaseType } from './database-type'
 import { ApEdition } from '@activepieces/shared'
 import { EntitySchemaColumnOptions } from 'typeorm'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
+import { DatabaseType } from './database-type'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
