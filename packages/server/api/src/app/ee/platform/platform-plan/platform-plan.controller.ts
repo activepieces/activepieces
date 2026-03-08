@@ -1,17 +1,17 @@
-import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { securityAccess } from '@activepieces/server-common'
+import { assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { platformService } from '../../../platform/platform.service'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
-export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.get('/info', InfoRequest, async (request) => {
-        const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const platform = await platformService(request.log).getOneOrThrow(request.principal.platform.id)
         const [platformPlan, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
             platformPlanService(request.log).getUsage(platform.id),
@@ -118,8 +118,8 @@ const CreateAICreditCheckoutSessionRequest = {
     schema: {
         body: CreateAICreditCheckoutSessionParamsSchema,
         response: {
-            [StatusCodes.OK]: Type.Object({
-                stripeCheckoutUrl: Type.String(),
+            [StatusCodes.OK]: z.object({
+                stripeCheckoutUrl: z.string(),
             }),
         },
     },
@@ -131,8 +131,8 @@ const CreateAICreditCheckoutSessionRequest = {
 const UpdateAICreditsAutoTopUpRequest = {
     schema: {
         body: UpdateAICreditsAutoTopUpParamsSchema,
-        [StatusCodes.OK]: Type.Object({
-            stripeCheckoutUrl: Type.Optional(Type.String()),
+        [StatusCodes.OK]: z.object({
+            stripeCheckoutUrl: z.string().optional(),
         }),
     },
     config: {

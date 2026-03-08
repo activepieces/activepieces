@@ -1,6 +1,6 @@
 import { access, copyFile, cp } from 'node:fs/promises'
 import { join, resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-common'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import { FSWatcher, watch } from 'chokidar'

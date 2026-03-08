@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-common'
 import {
     File,
     FileCompression,
@@ -31,7 +31,7 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
             size: params.contentLength,
         })
         return {
-            uploadUrl: await constructUploadUrl(log, file.s3Key, params.data, params.contentLength),
+            uploadUrl: await constructUploadUrl(log, file.s3Key ?? undefined, params.data, params.contentLength),
             url: await constructDownloadUrl(params.platformId, file),
         }
     },

@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-common'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
@@ -32,7 +32,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
-        const platform = await platformService.getOneOrThrow(platformId)
+        const platform = await platformService(log).getOneOrThrow(platformId)
         await this.trackUser(platform.ownerId, event)
     },
     async trackProject(
@@ -42,9 +42,9 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         if (!telemetryEnabled) {
             return
         }
-        const project = await projectService.getOne(projectId)
+        const project = await projectService(log).getOne(projectId)
         this.trackUser(project!.ownerId, event).catch((e) =>
-            log.error(e, '[Telemetry#trackProject] this.trackUser'),
+            log.error({ err: e }, '[telemetry#trackProject] Failed to track user'),
         )
     },
     isEnabled: () => telemetryEnabled,
