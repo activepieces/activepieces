@@ -87,7 +87,7 @@ export type SkipActionRequest = z.infer<typeof SkipActionRequest>
 
 export const UpdateSampleDataInfoRequest = z.object({
     stepName: z.string(),
-    sampleDataSettings: SampleDataSetting.omit({lastTestDate:true}),
+    sampleDataSettings: SampleDataSetting.omit({ lastTestDate: true }),
 })
 export type UpdateSampleDataInfoRequest = z.infer<typeof UpdateSampleDataInfoRequest>
 
@@ -147,10 +147,10 @@ export const DeleteActionRequest = z.object({
 export type DeleteActionRequest = z.infer<typeof DeleteActionRequest>
 
 export const UpdateActionRequest = z.union([
-    CodeActionSchema.omit({lastUpdatedDate:true, settings:true}).and(z.object({settings: CodeActionSettings.omit({sampleData:true})})),
-    LoopOnItemsActionSchema.omit({lastUpdatedDate:true, settings:true}).and(z.object({settings: LoopOnItemsActionSettings.omit({sampleData:true})})),
-    PieceActionSchema.omit({lastUpdatedDate:true, settings:true}).and(z.object({settings: PieceActionSettings.omit({sampleData:true})})),
-    RouterActionSchema.omit({lastUpdatedDate:true, settings:true}).and(z.object({settings: RouterActionSettings.omit({sampleData:true})})),
+    CodeActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: CodeActionSettings.omit({ sampleData: true }) })),
+    LoopOnItemsActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: LoopOnItemsActionSettings.omit({ sampleData: true }) })),
+    PieceActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceActionSettings.omit({ sampleData: true }) })),
+    RouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: RouterActionSettings.omit({ sampleData: true }) })),
 ])
 
 
@@ -180,8 +180,8 @@ export const AddActionRequest = z.object({
 export type AddActionRequest = z.infer<typeof AddActionRequest>
 
 export const UpdateTriggerRequest = z.union([
-    EmptyTrigger.omit({lastUpdatedDate:true}),
-    PieceTrigger.omit({lastUpdatedDate:true, settings:true}).and(z.object({settings: PieceTriggerSettings.omit({sampleData:true})})),
+    EmptyTrigger.omit({ lastUpdatedDate: true }),
+    PieceTrigger.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceTriggerSettings.omit({ sampleData: true }) })),
 ])
 export type UpdateTriggerRequest = z.infer<typeof UpdateTriggerRequest>
 

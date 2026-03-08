@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { isNil } from '../../../core/common'
 import { FlowAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
@@ -5,7 +6,6 @@ import { SampleDataSettings } from '../sample-data'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateTriggerRequest } from '.'
-import dayjs from 'dayjs'
 
 
 function createTrigger(name: string, request: UpdateTriggerRequest, nextAction: FlowAction | undefined, existingSampleData: SampleDataSettings | undefined): FlowTrigger {
