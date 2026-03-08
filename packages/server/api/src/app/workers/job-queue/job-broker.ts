@@ -1,5 +1,5 @@
 import { memoryLock } from '@activepieces/server-utils'
-import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil } from '@activepieces/shared'
+import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,11 +9,14 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { getPlatformQueueName, QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
+import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
+import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 
 const DRAIN_DELAY_SECONDS = 30
 
+const interceptors: JobInterceptor[] = [rateLimiterInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
-const activeJobs = new Map<string, { job: Job, token: string }>()
+const activeJobs = new Map<string, { job: Job, token: string, jobData: JobData }>()
 
 function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
     const existing = workerPromises.get(queueName)
@@ -55,7 +58,17 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
     const migratedData = await jobMigrations(log).apply(job.data)
     const jobId = job.id ?? job.name
 
-    activeJobs.set(jobId, { job, token })
+    activeJobs.set(jobId, { job, token, jobData: migratedData })
+
+    const interceptorResult = await runInterceptors({ jobId, jobData: migratedData, job, log })
+    if (interceptorResult !== null) {
+        await job.moveToDelayed(Date.now() + interceptorResult.delayInMs, token)
+        if (interceptorResult.priority !== undefined) {
+            await job.changePriority({ priority: interceptorResult.priority })
+        }
+        activeJobs.delete(jobId)
+        return null
+    }
 
     const engineToken = await accessTokenManager(log).generateEngineToken({
         jobId,
@@ -70,6 +83,24 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         attempsStarted: job.attemptsMade,
         engineToken,
     }
+}
+
+async function runInterceptors({ jobId, jobData, job, log }: { jobId: string, jobData: JobData, job: Job, log: FastifyBaseLogger }): Promise<{ delayInMs: number, priority?: number } | null> {
+    const passed: JobInterceptor[] = []
+    for (const interceptor of interceptors) {
+        const result = await interceptor.preDispatch({ jobId, jobData, job, log })
+        if (result.verdict === InterceptorVerdict.REJECT) {
+            for (const passedInterceptor of passed) {
+                const { error } = await tryCatch(() => passedInterceptor.onJobFinished({ jobId, jobData, log }))
+                if (error) {
+                    log.error({ jobId, error: String(error) }, '[jobBroker] Failed to clean up interceptor on reject')
+                }
+            }
+            return { delayInMs: result.delayInMs, priority: result.priority }
+        }
+        passed.push(interceptor)
+    }
+    return null
 }
 
 export const jobBroker = (log: FastifyBaseLogger) => ({
@@ -107,9 +138,9 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const { job, token } = entry
+        const { job, token, jobData } = entry
 
-        try {
+        const { error } = await tryCatch(async () => {
             if (input.delayInSeconds && input.delayInSeconds > 0) {
                 await job.moveToDelayed(Date.now() + input.delayInSeconds * 1000, token)
                 return
@@ -121,12 +152,17 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, token, false)
-        }
-        catch (error) {
+        })
+        if (error) {
             log.error({ jobId: input.jobId, error: String(error) }, '[jobBroker] Failed to move job to final state')
         }
-        finally {
-            activeJobs.delete(input.jobId)
+
+        activeJobs.delete(input.jobId)
+        for (const interceptor of interceptors) {
+            const { error: interceptorError } = await tryCatch(() => interceptor.onJobFinished({ jobId: input.jobId, jobData, log }))
+            if (interceptorError) {
+                log.error({ jobId: input.jobId, error: String(interceptorError) }, '[jobBroker] Interceptor onJobFinished failed')
+            }
         }
     },
 
