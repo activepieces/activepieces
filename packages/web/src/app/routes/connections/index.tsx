@@ -35,6 +35,7 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { DeleteConnectionWarning } from '@/components/custom/global-connection-utils';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
@@ -336,15 +337,9 @@ function AppConnectionsPage() {
                 <ConfirmationDeleteDialog
                   title={t('Delete Connections')}
                   message={t(
-                    'The selected connections will be permanently deleted. Flows using them will stop working.',
+                    'The selected connections will be permanently deleted.',
                   )}
-                  warning={
-                    <>
-                      {t('Any flows currently using these connections')}{' '}
-                      <strong>{t('will break immediately')}</strong>.{' '}
-                      {t('Please proceed with caution.')}
-                    </>
-                  }
+                  warning={<DeleteConnectionWarning />}
                   mutationFn={async () => {
                     await deleteConnections(selectedRows.map((row) => row.id));
                     refetch();
