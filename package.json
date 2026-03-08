@@ -222,7 +222,7 @@
     "intercom-client": "6.2.0",
     "intl-messageformat": "10.5.14",
     "ioredis": "5.4.1",
-    "isolated-vm": "5.0.1",
+    "isolated-vm": "6.0.2",
     "js-yaml": "4.1.1",
     "jsdom": "23.0.1",
     "jshint": "2.13.6",
