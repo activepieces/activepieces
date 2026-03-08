@@ -69,8 +69,8 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy remaining source code (turbo config, etc.)
 COPY . .
 
-# Build frontend, engine, and server API
-RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api
+# Build frontend, engine, server API, and worker
+RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
 # Remove piece directories not needed at runtime (keeps only the 4 pieces api imports)
 # Then regenerate bun.lock so it matches the trimmed workspace

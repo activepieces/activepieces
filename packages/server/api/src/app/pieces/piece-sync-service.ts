@@ -1,4 +1,4 @@
-import { groupBy, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { pubsub } from '../helper/pubsub'
@@ -84,12 +84,15 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 return
             }
             const pieceMetadata = await response.json()
-            await pieceMetadataService(log).create({
+            const { error } = await tryCatch(() => pieceMetadataService(log).create({
                 pieceMetadata,
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
                 publishCacheRefresh: false,
-            })
+            }))
+            if (error) {
+                log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
+            }
         }))
         const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
         await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
