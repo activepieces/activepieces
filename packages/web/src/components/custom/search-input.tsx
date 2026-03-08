@@ -32,7 +32,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           {...props}
           type={type}
           ref={inputRef}
-          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none p-0 bg-transparent"
+          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none p-0 bg-transparent dark:bg-transparent"
           placeholder={placeholder}
           onChange={(e) => props.onChange(e.target.value)}
         />
