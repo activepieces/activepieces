@@ -85,18 +85,15 @@ export function ProjectDashboardLayout({
       <SidebarProvider hoverMode={true}>
         {!isEmbedded && <ProjectDashboardSidebar />}
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-          <div className="flex-1 flex flex-col p-2 pt-3 pb-3 overflow-hidden">
-            <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border">
+          <div className="flex-1 flex flex-col  overflow-hidden">
+            <div className="flex flex-col h-full bg-background border-l">
               {!hideHeader && (
                 <>
                   <ProjectDashboardLayoutHeader key={currentProjectId} />
                   <Separator className="mb-5" />
                 </>
               )}
-              <div className="flex-1 overflow-auto scrollbar-none px-4">
-                {' '}
-                {children}{' '}
-              </div>
+              <div className="flex-1 overflow-auto  px-4"> {children} </div>
             </div>
           </div>
         </SidebarInset>
