@@ -267,3 +267,14 @@ const extractConnectionIdAndPath = (key: string): { connectionId: string, path: 
     }
     return { connectionId, path }
 }
+
+export function containsSecretManagerReference(value: unknown): boolean {
+    if (typeof value === 'string') {
+        const trimmed = value.trim()
+        return trimmed.startsWith('{{') && trimmed.includes(SecretManagerFieldsSeparator) && trimmed.endsWith('}}')
+    }
+    if (typeof value === 'object' && value !== null) {
+        return Object.values(value as Record<string, unknown>).some(containsSecretManagerReference)
+    }
+    return false
+}

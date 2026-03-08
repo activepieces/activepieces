@@ -38,7 +38,7 @@ import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 
 import { OperationResponse } from 'worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
-import { secretManagersService } from '../../ee/secret-managers/secret-managers.service'
+import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -330,8 +330,11 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     removeSensitiveData: (
         appConnection: AppConnection | AppConnectionSchema,
     ): AppConnectionWithoutSensitiveData => {
-        const { value: _, ...appConnectionWithoutSensitiveData } = appConnection
-        return appConnectionWithoutSensitiveData as AppConnectionWithoutSensitiveData
+        const { value, ...appConnectionWithoutSensitiveData } = appConnection
+        return {
+            ...appConnectionWithoutSensitiveData,
+            usingSecretManager: containsSecretManagerReference(value),
+        } as AppConnectionWithoutSensitiveData
     },
 
     async decryptAndRefreshConnection(
@@ -707,3 +710,4 @@ type ReplaceParams = {
     platformId: string
     userId: UserId
 }
+
