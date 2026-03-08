@@ -170,17 +170,18 @@ curl -s --fail-with-body "$BASE_URL/flows/$FLOW_ID" \
   -H "$AUTH" \
   -d '{"type":"CHANGE_STATUS","request":{"status":"ENABLED"}}' > /dev/null
 
-# Wait for flow to become ENABLED (enabling is async)
-echo "Waiting for flow to become ENABLED..." >&2
-for i in $(seq 1 30); do
+# Wait for flow to become ENABLED (enabling is async; SANDBOXED mode needs longer)
+FLOW_ENABLE_TIMEOUT=${FLOW_ENABLE_TIMEOUT:-30}
+echo "Waiting for flow to become ENABLED (timeout: ${FLOW_ENABLE_TIMEOUT}s)..." >&2
+for i in $(seq 1 "$FLOW_ENABLE_TIMEOUT"); do
   STATUS=$(curl -s "$BASE_URL/flows/$FLOW_ID" \
     -H "$AUTH" | jq -r '.status')
   if [ "$STATUS" = "ENABLED" ]; then
     echo "Flow is ENABLED" >&2
     break
   fi
-  if [ "$i" -eq 30 ]; then
-    echo "WARNING: Flow status is '$STATUS' after 30s, proceeding anyway" >&2
+  if [ "$i" -eq "$FLOW_ENABLE_TIMEOUT" ]; then
+    echo "WARNING: Flow status is '$STATUS' after ${FLOW_ENABLE_TIMEOUT}s, proceeding anyway" >&2
   fi
   sleep 1
 done
