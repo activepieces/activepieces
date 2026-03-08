@@ -1,9 +1,6 @@
 name: Benchmark
 
 on:
-  push:
-    branches:
-      - feat/worker-v2
   workflow_dispatch:
     inputs:
       apps:
@@ -50,7 +47,8 @@ jobs:
 
       - name: Install hey
         run: |
-          go install github.com/rakyll/hey@latest
+          curl -sSL -o /usr/local/bin/hey https://github.com/rakyll/hey/releases/download/v0.1.4/hey_linux_amd64
+          chmod +x /usr/local/bin/hey
 
       - name: Warmup
         run: |
