@@ -32,3 +32,11 @@ export const UpdateMcpServerRequest = z.object({
 })
 
 export type UpdateMcpServerRequest = z.infer<typeof UpdateMcpServerRequest>
+
+/** Tool definition for MCP: inputSchema is a raw Zod shape (same as MCP expects). */
+export type McpToolDefinition = {
+    title: string
+    description: string
+    inputSchema: Record<string, z.ZodTypeAny>
+    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
+}
