@@ -21,7 +21,7 @@
     "chalk": "4.1.2",
     "chokidar": "4.0.3",
     "dayjs": "1.11.9",
-    "fastify": "5.7.3",
+    "fastify": "5.8.1",
     "fetch-retry": "6.0.0",
     "http-status-codes": "2.2.0",
     "ioredis": "5.4.1",
