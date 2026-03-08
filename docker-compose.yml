@@ -4,7 +4,7 @@ services:
     container_name: activepieces-app
     restart: unless-stopped
     ports:
-      - '8080:80'
+      - '8080:3000'
     depends_on:
       - postgres
       - redis

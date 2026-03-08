@@ -91,8 +91,8 @@ export class EngineConstants {
         if (!params.publicApiUrl.endsWith('/api/')) {
             throw new EngineGenericError('PublicUrlNotEndsWithSlashError', `Public URL must end with a slash, got: ${params.publicApiUrl}`)
         }
-        if (!params.internalApiUrl.endsWith('/')) {
-            throw new EngineGenericError('InternalApiUrlNotEndsWithSlashError', `Internal API URL must end with a slash, got: ${params.internalApiUrl}`)
+        if (!params.internalApiUrl.endsWith('/api/')) {
+            throw new EngineGenericError('InternalApiUrlNotEndsWithSlashError', `Internal API URL must end with /api/, got: ${params.internalApiUrl}`)
         }
 
         this.flowId = params.flowId

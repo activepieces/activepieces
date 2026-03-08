@@ -8,10 +8,9 @@ echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
 echo "AP_CLUSTER_MODE: $AP_CLUSTER_MODE"
 echo "AP_WORKERS: $AP_WORKERS"
 
-# Start Nginx for modes that serve frontend
+# Enable frontend serving for modes that include the app
 if [ "$AP_CONTAINER_TYPE" != "WORKER" ]; then
-    nginx -g "daemon off;" &
-    echo "Nginx started"
+    export AP_SERVE_FRONTEND="${AP_SERVE_FRONTEND:-true}"
 fi
 
 # Determine APP instances and exec mode

@@ -1,16 +1,22 @@
-import { apId, ApMultipartFile } from '@activepieces/shared'
+import path from 'path'
+import { apId, ApMultipartFile, spreadIfDefined } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
+import fastifyStatic from '@fastify/static'
 import fastify, { FastifyInstance } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
+import fastifySocketIO from 'fastify-socket'
 import { validatorCompiler } from 'fastify-type-provider-zod'
 import qs from 'qs'
-import { setupApp } from './app'
+import { Socket } from 'socket.io'
+import { getAdapter, setupApp } from './app'
+import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
+import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 
@@ -21,8 +27,46 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
 
     if (system.isApp()) {
-        await setupApp(app)
+        await app.register(async (scopedApp) => {
+            await setupApp(scopedApp)
+            await scopedApp.register(healthModule)
+        }, { prefix: '/api' })
+
+        await app.register(fastifySocketIO, {
+            cors: {
+                origin: '*',
+            },
+            maxHttpBufferSize: 1e8,
+            ...spreadIfDefined('adapter', await getAdapter()),
+            transports: ['websocket'],
+            path: '/api/socket.io',
+        })
+        app.io.use((socket: Socket, next: (err?: Error) => void) => {
+            websocketService
+                .verifyPrincipal(socket)
+                .then(() => next())
+                .catch(() => next(new Error('Authentication error')))
+        })
+        app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app!.log), app!.log))
+        app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app!.log))
     }
+
+    const serveFrontend = system.getBoolean(AppSystemProp.SERVE_FRONTEND) ?? false
+    if (serveFrontend) {
+        const frontendPath = system.get(AppSystemProp.FRONTEND_PATH)
+            ?? path.join(__dirname, '../../../../dist/packages/web')
+
+        await app.register(fastifyStatic, {
+            root: frontendPath,
+            prefix: '/',
+            wildcard: false,
+        })
+
+        app.setNotFoundHandler(async (_request, reply) => {
+            return reply.sendFile('index.html')
+        })
+    }
+
     return app
 }
 
@@ -95,7 +139,6 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         { parseAs: 'string' },
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
-    await app.register(healthModule)
     return app
 }
 

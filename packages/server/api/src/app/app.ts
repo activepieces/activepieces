@@ -1,10 +1,8 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, spreadIfDefined, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, AuthenticationEvent, ConnectionEvent, Flow, FlowCreatedEvent, FlowDeletedEvent, FlowRun, FlowRunEvent, FlowUpdatedEvent, Folder, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import fastifySocketIO from 'fastify-socket'
-import { Socket } from 'socket.io'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
@@ -14,7 +12,6 @@ import { authenticationModule } from './authentication/authentication.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
-import { websocketService } from './core/websockets.service'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -62,7 +59,6 @@ import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { exceptionHandler } from './helper/exception-handler'
 import { openapiModule } from './helper/openapi/openapi.module'
-import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
 import { SystemJobName } from './helper/system-jobs/common'
@@ -243,24 +239,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             }
         },
     )
-    await app.register(fastifySocketIO, {
-        cors: {
-            origin: '*',
-        },
-        maxHttpBufferSize: 1e8,
-        ...spreadIfDefined('adapter', await getAdapter()),
-        transports: ['websocket'],
-    })
-    app.io.use((socket: Socket, next: (err?: Error) => void) => {
-        websocketService
-            .verifyPrincipal(socket)
-            .then(() => next())
-            .catch(() => next(new Error('Authentication error')))
-    })
-
-    app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app.log), app.log))
-    app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app.log))
-
     await validateEnvPropsOnStartup(app.log)
 
     const edition = system.getEdition()
@@ -347,7 +325,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 
-async function getAdapter() {
+export async function getAdapter() {
     const redisConnectionInstance = await redisConnections.useExisting()
     const sub = redisConnectionInstance.duplicate()
     const pub = redisConnectionInstance.duplicate()
