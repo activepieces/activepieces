@@ -191,7 +191,7 @@ export const AutomationsFilters = ({
             searchable
           />
 
-          <MultiSelectFilter
+          {!embedState.isEmbedded && <MultiSelectFilter
             label={t('Owner')}
             icon={<User className="h-4 w-4" />}
             options={ownerOptions}
@@ -201,7 +201,7 @@ export const AutomationsFilters = ({
               onFilterChange?.();
             }}
             searchable
-          />
+          />}
 
           {folderOptions.length > 0 && (
             <MultiSelectFilter
