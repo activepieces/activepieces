@@ -118,8 +118,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY --from=build /usr/src/app/dist/packages/web ./dist/packages/web/
 
 ENV AP_SERVE_FRONTEND=true
+ENV AP_PORT=80
 
 LABEL service=activepieces
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-EXPOSE 3000
+EXPOSE 80
