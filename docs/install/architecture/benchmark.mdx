@@ -9,14 +9,14 @@ The benchmark tests end-to-end webhook flow execution: an HTTP request hits a **
 
 ## Results
 
-| Configuration | Ratio | Throughput (req/s) | Mean Latency | P50 | P99 |
-|---|---|---|---|---|---|
-| 1 App, 2 Workers | 1:2 | 95.1 | 20.8 ms | 15.4 ms | 62.7 ms |
-| 2 Apps, 4 Workers | 1:2 | 167.6 | 23.4 ms | 20.0 ms | 65.1 ms |
-| 3 Apps, 6 Workers | 1:2 | 231.8 | 24.8 ms | 21.2 ms | 71.5 ms |
-| 1 App, 4 Workers | 1:4 | 174.5 | 22.4 ms | 19.0 ms | 56.7 ms |
-| 2 Apps, 8 Workers | 1:4 | 286.5 | 26.0 ms | 22.3 ms | 89.5 ms |
-| 3 Apps, 12 Workers | 1:4 | 336.6 | 35.1 ms | 34.8 ms | 51.5 ms |
+| Configuration | Throughput (req/s) | Mean Latency | P50 | P99 |
+|---|---|---|---|---|
+| 1 App, 2 Workers | 95.1 | 20.8 ms | 15.4 ms | 62.7 ms |
+| 2 Apps, 4 Workers | 167.6 | 23.4 ms | 20.0 ms | 65.1 ms |
+| 3 Apps, 6 Workers | 231.8 | 24.8 ms | 21.2 ms | 71.5 ms |
+| 1 App, 4 Workers | 174.5 | 22.4 ms | 19.0 ms | 56.7 ms |
+| 2 Apps, 8 Workers | 286.5 | 26.0 ms | 22.3 ms | 89.5 ms |
+| 3 Apps, 12 Workers | 336.6 | 35.1 ms | 34.8 ms | 51.5 ms |
 
 ## Test Environment
 
