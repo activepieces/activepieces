@@ -8,6 +8,7 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
+import { GlobalSearchProvider } from './global-search/global-search-context';
 import { PlatformSidebar } from './sidebar/platform';
 
 export function PlatformLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
+      <GlobalSearchProvider>
       {showPlatformAdminDashboard ? (
         <SidebarProvider open={true}>
           <PlatformSidebar />
@@ -33,6 +35,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
         <Navigate to="/" />
       )}
       {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+      </GlobalSearchProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
