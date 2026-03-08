@@ -50,7 +50,7 @@ jobs:
 
       - name: Install hey
         run: |
-          curl -sf https://gobinaries.com/rakyll/hey | sh
+          go install github.com/rakyll/hey@latest
 
       - name: Warmup
         run: |
