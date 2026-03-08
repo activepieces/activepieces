@@ -182,8 +182,8 @@ describe('Branch evaluateConditions', () => {
 
     describe('LIST_IS_EMPTY', () => {
         test.each([
-            [],
-            '[]',
+            [[]],
+            ['[]'],
         ])('should return true when list is empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
@@ -194,8 +194,8 @@ describe('Branch evaluateConditions', () => {
         })
 
         test.each([
-            [1],
-            '[1]',
+            [[1]],
+            ['[1]'],
         ])('should return false when list is not empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
@@ -222,8 +222,8 @@ describe('Branch evaluateConditions', () => {
 
     describe('LIST_IS_NOT_EMPTY', () => {
         test.each([
-            [1],
-            '[1]',
+            [[1]],
+            ['[1]'],
         ])('should return true when list is not empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
@@ -234,8 +234,8 @@ describe('Branch evaluateConditions', () => {
         })
 
         test.each([
-            [],
-            '[]',
+            [[]],
+            ['[]'],
         ])('should return false when list is empty %p', (input: any) => {
             const condition: BranchCondition = {
                 firstValue: input,
