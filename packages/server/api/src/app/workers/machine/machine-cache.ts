@@ -18,19 +18,10 @@ export const workerMachineCache = () => ({
     async find(): Promise<WorkerMachine[]> {
         const redisConnection = await redisConnections.useExisting()
 
-        const keys = await redisConnection.keys(`${REDIS_KEY}:*`)
-        if (!keys || keys.length === 0) {
-            return []
-        }
-
-        const workerMachinesRaw = await redisConnection.mget(keys)
+        const allFields = await redisConnection.hgetall(REDIS_KEY)
         const workers: WorkerMachine[] = []
 
-        for (let i = 0; i < workerMachinesRaw.length; i++) {
-            const raw = workerMachinesRaw[i]
-            if (!raw) {
-                continue
-            }
+        for (const raw of Object.values(allFields)) {
             const parsed = parseToJsonIfPossible(raw) as WorkerMachine
             if (parsed && parsed.id && parsed.information) {
                 workers.push(parsed)
@@ -39,29 +30,39 @@ export const workerMachineCache = () => ({
         return workers
     },
 
+    async findOne(workerId: string): Promise<WorkerMachine | null> {
+        const redisConnection = await redisConnections.useExisting()
+
+        const raw = await redisConnection.hget(REDIS_KEY, workerId)
+        if (!raw) {
+            return null
+        }
+        const parsed = parseToJsonIfPossible(raw) as WorkerMachine
+        if (parsed && parsed.id && parsed.information) {
+            return parsed
+        }
+        return null
+    },
+
     async delete(ids: string[]): Promise<void> {
         const redisConnection = await redisConnections.useExisting()
 
-        const keys = ids.map(id => `${REDIS_KEY}:${id}`)
-        if (keys.length > 0) {
-            await redisConnection.del(...keys)
+        if (ids.length > 0) {
+            await redisConnection.hdel(REDIS_KEY, ...ids)
         }
     },
 
-    async upsert(worker: { id: string } & Partial<Omit<WorkerMachine, 'id'>>): Promise<void> {
+    async upsert(worker: { id: string } & Partial<Omit<WorkerMachine, 'id'>>, existing?: WorkerMachine | null): Promise<void> {
         const redisConnection = await redisConnections.useExisting()
 
-        const key = `${REDIS_KEY}:${worker.id}`
         const now = apDayjs().toISOString()
-        const existingRaw = await redisConnection.get(key)
-        if (existingRaw) {
-            const existing: WorkerMachine = parseToJsonIfPossible(existingRaw) as WorkerMachine
+        if (existing) {
             const updated: WorkerMachine = {
                 ...existing,
                 ...worker,
                 updated: now,
             }
-            await redisConnection.set(key, JSON.stringify(updated))
+            await redisConnection.hset(REDIS_KEY, worker.id, JSON.stringify(updated))
         }
         else {
             const newWorker: WorkerMachine = {
@@ -69,7 +70,7 @@ export const workerMachineCache = () => ({
                 updated: now,
                 created: now,
             } as WorkerMachine
-            await redisConnection.set(key, JSON.stringify(newWorker))
+            await redisConnection.hset(REDIS_KEY, worker.id, JSON.stringify(newWorker))
         }
-    }, 
+    },
 })

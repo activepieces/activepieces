@@ -11,7 +11,7 @@ import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 
-const DRAIN_DELAY_SECONDS = 1
+const DRAIN_DELAY_SECONDS = 15
 
 const interceptors: JobInterceptor[] = [rateLimiterInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
