@@ -9,13 +9,10 @@ import {
     StepLocationRelativeToParent,
     UpdateActionRequest,
 } from '@activepieces/shared'
-import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
-
-const updateActionValidator = TypeCompiler.Compile(UpdateActionRequest)
 
 export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
@@ -35,16 +32,6 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
             const branchIndex = args.branchIndex as number | undefined
             const rawAction = args.action as Record<string, unknown>
 
-            if (!updateActionValidator.Check(rawAction)) {
-                const errors = [...updateActionValidator.Errors(rawAction)].map(e => `${e.path}: ${e.message}`)
-                return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Invalid action: ${errors.join('; ')}. Action must match flow action types (CODE, PIECE, LOOP_ON_ITEMS, ROUTER). Use ap_list_pieces for valid pieceName, pieceVersion, actionName.`,
-                    }],
-                }
-            }
-
             const flow = await flowService(log).getOnePopulated({
                 id: flowId,
                 projectId: mcp.projectId,
@@ -56,11 +43,22 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
             }
 
             const stepName = rawAction.name ?? flowStructureUtil.findUnusedName(flow.version.trigger)
-            const action: UpdateActionRequest = {
-                ...rawAction,
+            const payload = {
+                type: rawAction.type,
+                displayName: rawAction.displayName,
+                settings: rawAction.settings,
                 name: stepName,
-                valid: rawAction.valid ?? true,
+                valid: rawAction.valid,
+                ...(rawAction.skip !== undefined && { skip: rawAction.skip }),
             }
+            const parseResult = UpdateActionRequest.safeParse(payload)
+            if (!parseResult.success) {
+                const message = parseResult.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
+                return {
+                    content: [{ type: 'text', text: `❌ Invalid action: ${message}` }],
+                }
+            }
+            const action = parseResult.data
 
             const operation: FlowOperationRequest = {
                 type: FlowOperationType.ADD_ACTION,
@@ -73,7 +71,7 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
             }
 
             try {
-                const project = await projectService.getOneOrThrow(mcp.projectId)
+                const project = await projectService(log).getOneOrThrow(mcp.projectId)
                 const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
