@@ -42,7 +42,7 @@ echo "Latency distribution:"
 sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep -v "Latency distribution" | sed 's/^/  /'
 
 # Calculate success rate
-TOTAL=$(grep "^\[200\]" "$INPUT_FILE" | awk '{print $2}' || echo "0")
+TOTAL=$(grep '\[200\].*responses' "$INPUT_FILE" | awk '{print $2}' || echo "0")
 TOTAL_REQUESTS=$(grep "^  Total:" "$INPUT_FILE" | head -1 | awk '{print $2}' || echo "0")
 
 if [ -n "$TOTAL" ] && [ "$TOTAL" != "0" ]; then
@@ -56,10 +56,10 @@ echo "========================================="
 # Write JSON output if a second argument was provided
 if [ -n "$JSON_FILE" ]; then
   # Extract latency distribution percentiles
-  P50=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "50%" | awk '{print $2}')
-  P75=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "75%" | awk '{print $2}')
-  P90=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "90%" | awk '{print $2}')
-  P99=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "99%" | awk '{print $2}')
+  P50=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "50%" | awk '{print $3}')
+  P75=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "75%" | awk '{print $3}')
+  P90=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "90%" | awk '{print $3}')
+  P99=$(sed -n '/Latency distribution/,/^$/p' "$INPUT_FILE" | grep "99%" | awk '{print $3}')
 
   cat > "$JSON_FILE" <<JSONEOF
 {
