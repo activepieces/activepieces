@@ -1,17 +1,18 @@
-import { securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-common'
 import { assertNotNullOrUndefined, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, UpsertTagRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { pieceTagService } from './pieces/piece-tag.service'
 import { tagService } from './tag-service'
 
 
-export const tagsModule: FastifyPluginAsyncTypebox = async (app) => {
+export const tagsModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(tagsController, { prefix: '/v1/tags' })
 }
 
 
-const tagsController: FastifyPluginAsyncTypebox = async (fastify) => {
+const tagsController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.get('/', ListTagsParams,
         async (request) => {
@@ -58,7 +59,7 @@ const setPiecesTagsParams = {
     schema: {
         body: SetPieceTagsRequest,
         response: {
-            [StatusCodes.CREATED]: Type.Object({}),
+            [StatusCodes.CREATED]: z.object({}),
         },
     },
 }

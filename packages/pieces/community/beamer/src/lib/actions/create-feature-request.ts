@@ -1,4 +1,4 @@
-import { beamerAuth } from '../../index';
+import { beamerAuth } from '../auth';
 import {
   HttpMethod,
   HttpRequest,

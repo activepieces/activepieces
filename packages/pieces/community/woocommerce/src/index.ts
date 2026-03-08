@@ -12,6 +12,7 @@ import { wooCreateProduct } from './lib/actions/create-product';
 import { wooFindCustomer } from './lib/actions/find-customer';
 import { wooFindProduct } from './lib/actions/find-product';
 import { triggers } from './lib/triggers';
+import { wooAuth } from './lib/auth';
 
 const authDescription = `
 To generate your API credentials, follow the steps below:
@@ -23,39 +24,6 @@ To generate your API credentials, follow the steps below:
 
 Note that the base URL of your WooCommerce instance needs to be on a secure (HTTPS) connection, or the piece will not work even on local instances on the same device.
 `;
-
-export const wooAuth = PieceAuth.CustomAuth({
-  description: authDescription,
-  required: true,
-  props: {
-    baseUrl: Property.ShortText({
-      displayName: 'Base URL',
-      description:
-        'The base URL of your app (e.g https://mystore.com) and it should start with HTTPS only',
-      required: true,
-    }),
-    consumerKey: Property.ShortText({
-      displayName: 'Consumer Key',
-      description: 'The consumer key generated from your app',
-      required: true,
-    }),
-    consumerSecret: PieceAuth.SecretText({
-      displayName: 'Consumer Secret',
-      description: 'The consumer secret generated from your app',
-      required: true,
-    }),
-  },
-  async validate({ auth }) {
-    const baseUrl = auth.baseUrl;
-    if (!baseUrl.match(/^(https):\/\//)) {
-      return {
-        valid: false,
-        error: 'Base URL must start with https (e.g https://mystore.com)',
-      };
-    }
-    return { valid: true };
-  },
-});
 
 export const woocommerce = createPiece({
   displayName: 'WooCommerce',

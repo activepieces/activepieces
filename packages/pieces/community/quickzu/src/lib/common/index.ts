@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../';
+import { quickzuAuth } from '../auth';
 import { QuickzuAPIClient } from './client';
 
 export function makeClient(auth: AppConnectionValueForAuthProperty<typeof quickzuAuth>) {

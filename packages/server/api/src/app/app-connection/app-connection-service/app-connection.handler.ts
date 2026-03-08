@@ -1,4 +1,4 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-common'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -18,7 +18,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         const { appConnection, newAppConnection, userId } = params
 
         await Promise.all(flows.map(async (flow) => {
-            const project = await projectService.getOneOrThrow(flow.projectId)
+            const project = await projectService(log).getOneOrThrow(flow.projectId)
             const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flow.id,
                 versionId: undefined,

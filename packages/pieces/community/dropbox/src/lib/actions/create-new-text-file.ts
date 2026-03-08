@@ -5,7 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { dropboxAuth } from '../auth';
 
 export const dropboxCreateNewTextFile = createAction({
   auth: dropboxAuth,

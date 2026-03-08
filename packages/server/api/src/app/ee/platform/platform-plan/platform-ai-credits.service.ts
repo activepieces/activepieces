@@ -1,6 +1,5 @@
-import { CreateAICreditCheckoutSessionParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
-import { exceptionHandler, sleep } from '@activepieces/server-shared'
-import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan, tryCatch } from '@activepieces/shared'
+import { exceptionHandler, sleep } from '@activepieces/server-common'
+import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, CreateAICreditCheckoutSessionParamsSchema, isNil, PlatformPlan, tryCatch, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -43,7 +42,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     },
 
     isEnabled(): boolean {
-        return flagService.aiCreditsEnabled()
+        return flagService(log).aiCreditsEnabled()
     },
 
     async getUsage(platformId: string): Promise<APIKeyUsage> {
