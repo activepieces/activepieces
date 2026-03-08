@@ -539,16 +539,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
         log.info({ flowId: id, projectId }, 'Flow deletion requested')
     },
 
-    async getAllEnabled(): Promise<PopulatedFlow[]> {
-        const flows = await flowRepo().findBy({
-            status: FlowStatus.ENABLED,
-        })
-        return Promise.all(flows.map(async (flow) => this.getOnePopulatedOrThrow({
-            id: flow.id,
-            projectId: flow.projectId,
-            versionId: flow.publishedVersionId ?? undefined,
-        })))
-    },
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
         const projectIds = await projectService(log).getProjectIdsByPlatform(platformId)
         const flows = await flowRepo().findBy({

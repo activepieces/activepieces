@@ -1,27 +1,29 @@
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { RunsMetadataUpsertData } from '../job'
 import {
     ExecutionType,
     FileType,
     FlowRunStatus,
     isNil,
+    PiecePackage,
     ProgressUpdateType,
     WebsocketClientEvent,
     WorkerToApiContract,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
+import { distributedStore } from '../../database/redis-connections'
 import { fileService } from '../../file/file.service'
+import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../../flows/flow-run/flow-runs-queue'
-import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { pubsub } from '../../helper/pubsub'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { RunsMetadataUpsertData } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
 
@@ -173,6 +175,22 @@ export function createHandlers(log: FastifyBaseLogger, platformIdForDedicatedWor
                 type: FileType.PACKAGE_ARCHIVE,
             })
             return data
+        },
+
+        async getUsedPieces() {
+            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const pieces = await distributedStore.get<PiecePackage[]>(redisKey)
+            return pieces ?? []
+        },
+
+        async markPieceAsUsed(input) {
+            const redisKey = `usedPieces:${platformIdForDedicatedWorker ?? 'shared'}`
+            const existing = await distributedStore.get<PiecePackage[]>(redisKey) ?? []
+            const existingKeys = new Set(existing.map((p) => `${p.pieceName}@${p.pieceVersion}`))
+            const newPieces = input.pieces.filter((p) => !existingKeys.has(`${p.pieceName}@${p.pieceVersion}`))
+            if (newPieces.length > 0) {
+                await distributedStore.put(redisKey, [...existing, ...newPieces])
+            }
         },
     }
 }

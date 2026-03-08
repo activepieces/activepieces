@@ -2,6 +2,7 @@ import { ProgressUpdateType } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
+import { PiecePackage } from '../pieces/piece'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -41,4 +42,6 @@ export type WorkerToApiContract = {
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     extendLock(input: { jobId: string }): Promise<void>
+    getUsedPieces(input: Record<string, never>): Promise<PiecePackage[]>
+    markPieceAsUsed(input: { pieces: PiecePackage[] }): Promise<void>
 }

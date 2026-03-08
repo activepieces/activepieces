@@ -1,6 +1,4 @@
 import { memoryLock } from '@activepieces/server-utils'
-import { AppSystemProp } from '../../helper/system/system-props'
-import { getPlatformQueueName, QueueName } from '../job'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -8,17 +6,25 @@ import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis-connections'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
+import { getPlatformQueueName, QueueName } from '../job'
 import { jobMigrations } from '../migrations/job-data-migrations'
 
-const DRAIN_DELAY_MS = 30
+const DRAIN_DELAY_SECONDS = 30
 
-const bullmqWorkers = new Map<string, BullMQWorker>()
+const workerPromises = new Map<string, Promise<BullMQWorker>>()
 const activeJobs = new Map<string, { job: Job, token: string }>()
 
-async function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
-    const existing = bullmqWorkers.get(queueName)
+function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
+    const existing = workerPromises.get(queueName)
     if (existing) return existing
 
+    const promise = createBullMQWorker(queueName, log)
+    workerPromises.set(queueName, promise)
+    return promise
+}
+
+async function createBullMQWorker(queueName: string, log: FastifyBaseLogger): Promise<BullMQWorker> {
     const isOtelEnabled = system.getBoolean(AppSystemProp.OTEL_ENABLED)
     const worker = new BullMQWorker(
         queueName,
@@ -29,23 +35,16 @@ async function ensureBullMQWorker(queueName: string, log: FastifyBaseLogger): Pr
             concurrency: 10000,
             autorun: false,
             lockDuration: 120_000,
-            drainDelay: DRAIN_DELAY_MS,
+            drainDelay: DRAIN_DELAY_SECONDS,
         },
     )
-    bullmqWorkers.set(queueName, worker)
     await worker.waitUntilReady()
 
     log.info({ queueName }, '[jobBroker] BullMQ worker initialized')
     return worker
 }
 
-async function tryDequeue(queueName: string, log: FastifyBaseLogger): Promise<ConsumeJobRequest | null> {
-    const worker = bullmqWorkers.get(queueName)
-    if (!worker) {
-        log.debug({ queueName }, '[jobBroker#tryDequeue] No BullMQ worker for queue')
-        return null
-    }
-
+async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyBaseLogger): Promise<ConsumeJobRequest | null> {
     const token = `token-${Date.now()}-${Math.random().toString(36).slice(2)}`
     const job = await worker.getNextJob(token)
     if (isNil(job)) {
@@ -81,11 +80,12 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
 
     async poll(platformId?: string): Promise<ConsumeJobRequest | null> {
         const queueName = platformId ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
-        await ensureBullMQWorker(queueName, log)
+        const worker = await ensureBullMQWorker(queueName, log)
+        let result: ConsumeJobRequest | null = null
         try {
-            const lock = await memoryLock.acquire(`job-broker-poll-${queueName}`, DRAIN_DELAY_MS)
+            const lock = await memoryLock.acquire(`job-broker-poll-${queueName}`, DRAIN_DELAY_SECONDS * 1000)
             try {
-                return await tryDequeue(queueName, log)
+                result = await tryDequeue(worker, queueName, log)
             }
             finally {
                 await lock.release()
@@ -97,6 +97,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
             throw e
         }
+        return result
     },
 
     async completeJob(input: ConsumeJobResponse & { jobId: string }): Promise<void> {
@@ -141,10 +142,13 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     },
 
     async close(): Promise<void> {
+        const workers = await Promise.allSettled([...workerPromises.values()])
         await Promise.allSettled(
-            [...bullmqWorkers.values()].map(w => w.close()),
+            workers
+                .filter((r): r is PromiseFulfilledResult<BullMQWorker> => r.status === 'fulfilled')
+                .map(r => r.value.close()),
         )
-        bullmqWorkers.clear()
+        workerPromises.clear()
         activeJobs.clear()
     },
 })

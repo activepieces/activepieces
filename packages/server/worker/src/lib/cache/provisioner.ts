@@ -1,8 +1,7 @@
 import { fileSystemUtils } from '@activepieces/server-utils'
-import { getPieceNameFromAlias, PiecePackage, unique, WorkerToApiContract } from '@activepieces/shared'
+import { PiecePackage, tryCatch, unique, WorkerToApiContract } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { Logger } from 'pino'
-import { workerSettings } from '../config/worker-settings'
 import { getGlobalCacheCommonPath, getGlobalCachePathLatestVersion, getGlobalCodeCachePath } from './cache-paths'
 import { CodeArtifact, codeBuilder } from './code/code-builder'
 import { engineInstaller } from './engine/engine-installer'
@@ -54,18 +53,18 @@ export const provisioner = (log: Logger, apiClient: WorkerToApiContract) => ({
                     }
                 })
 
-                const devPieces = workerSettings.getSettings().DEV_PIECES
-                const nonDevPieces = unique(pieces.filter((p) => !devPieces.includes(getPieceNameFromAlias(p.pieceName))))
-                if (nonDevPieces.length > 0) {
+                const uniquePieces = unique(pieces)
+                if (uniquePieces.length > 0) {
                     await tracer.startActiveSpan('provisioner.installPieces', async (piecesSpan) => {
                         try {
-                            piecesSpan.setAttribute('pieces.count', nonDevPieces.length)
+                            piecesSpan.setAttribute('pieces.count', uniquePieces.length)
                             await pieceInstaller(log, apiClient).install({
-                                pieces: nonDevPieces,
+                                pieces: uniquePieces,
                                 includeFilters: true,
                             })
+                            void tryCatch(() => apiClient.markPieceAsUsed({ pieces: uniquePieces }))
                             log.info({
-                                pieces: nonDevPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
+                                pieces: uniquePieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
                                 path: commonPath,
                             }, 'Installed pieces in sandbox')
                         }

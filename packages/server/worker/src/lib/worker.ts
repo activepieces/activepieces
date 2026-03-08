@@ -14,6 +14,7 @@ import { trace } from '@opentelemetry/api'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { initCachePaths } from './cache/cache-paths'
+import { pieceInstaller } from './cache/pieces/piece-installer'
 import { system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
@@ -43,6 +44,7 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             await fetchAndStoreSettings(socket!)
+            void warmupPiecesOnStartup(apiClient)
             void startPollingLoop(apiClient)
         })
 
@@ -76,14 +78,14 @@ async function startPollingLoop(apiClient: WorkerToApiContract): Promise<void> {
         const { data: machineInfo, error: machineError } = await tryCatch(buildMachineInfo)
         if (machineError) {
             logger.error({ error: machineError }, 'Failed to build machine info')
-            await sleep(5000)
+            await sleep(20000)
             continue
         }
 
         const { data: job, error: pollError } = await tryCatch(() => apiClient.poll(machineInfo))
         if (pollError) {
             logger.error({ error: pollError }, 'Poll failed')
-            await sleep(5000)
+            await sleep(25000)
             continue
         }
 
@@ -204,6 +206,29 @@ async function buildMachineInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalCpuCores: cpuCores,
         ip: '127.0.0.1',
     }
+}
+
+async function warmupPiecesOnStartup(apiClient: WorkerToApiContract): Promise<void> {
+    const { data: pieces, error } = await tryCatch(() => apiClient.getUsedPieces({}))
+    if (error) {
+        logger.error({ error }, 'Failed to fetch used pieces for warmup')
+        return
+    }
+    if (!pieces || pieces.length === 0) {
+        logger.info('No pieces to warm up')
+        return
+    }
+    logger.info({ count: pieces.length }, 'Starting piece cache warmup')
+    const { error: installError } = await tryCatch(() =>
+        pieceInstaller(logger, apiClient).install({ pieces, includeFilters: false }),
+    )
+    if (installError) {
+        logger.error({ error: installError }, 'Failed to install pieces during startup warmup')
+    }
+    else {
+        void tryCatch(() => apiClient.markPieceAsUsed({ pieces }))
+    }
+    logger.info({ count: pieces.length }, 'Piece cache warmup complete')
 }
 
 function sleep(ms: number): Promise<void> {
