@@ -45,10 +45,14 @@ jobs:
           echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
           echo "Flow ID: $FLOW_ID"
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: false
+
       - name: Install hey
-        run: |
-          curl -sSL -o /usr/local/bin/hey https://github.com/rakyll/hey/releases/download/v0.1.4/hey_linux_amd64
-          chmod +x /usr/local/bin/hey
+        run: go install github.com/rakyll/hey@latest
 
       - name: Warmup
         run: |
