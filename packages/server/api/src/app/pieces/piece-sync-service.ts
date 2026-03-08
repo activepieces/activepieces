@@ -1,4 +1,4 @@
-import { groupBy, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { groupBy, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -68,27 +68,27 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
     return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, publishCacheRefresh: boolean): Promise<number> {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
-    const batchSize = 5
+    const batchSize = 10
     for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
         const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
-        await Promise.all(currentBatch.map(async (piece) => {
+        const fetchedMetadata = await Promise.all(currentBatch.map(async (piece) => {
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
             if (!response.ok) {
                 log.warn({ pieceName: piece.name, version: piece.version, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
-                return
+                return null
             }
-            const pieceMetadata = await response.json()
-            await pieceMetadataService(log).create({
-                pieceMetadata,
-                packageType: pieceMetadata.packageType,
-                pieceType: pieceMetadata.pieceType,
-                publishCacheRefresh,
-            })
+            return response.json()
         }))
+        const validMetadata = fetchedMetadata.filter((m): m is PieceMetadataFetched => m !== null)
+        await pieceMetadataService(log).bulkCreate(validMetadata.map(pieceMetadata => ({
+            pieceMetadata,
+            packageType: pieceMetadata.packageType,
+            pieceType: pieceMetadata.pieceType,
+        })))
     }
     return newPiecesToFetch.length
 }
@@ -129,3 +129,8 @@ type PieceRegistryResponse = {
 
 
 type PieceMetadataOnly = Pick<PieceMetadataSchema, 'name' | 'version' | 'pieceType'>
+
+type PieceMetadataFetched = Record<string, unknown> & {
+    packageType: PackageType
+    pieceType: PieceType
+}
