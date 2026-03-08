@@ -8,7 +8,7 @@ import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { deleteEventAction } from './lib/actions/delete-event.action';
 import { getEvents } from './lib/actions/get-events';
 import { updateEventAction } from './lib/actions/update-event.action';
-import { googleCalendarCommon, googleCalendarAuth, getAccessToken } from './lib/common';
+import { googleCalendarCommon, googleCalendarAuth, getAccessToken, type GoogleCalendarAuthValue } from './lib/common';
 import { calendarEventChanged } from './lib/triggers/calendar-event';
 import { addAttendeesToEventAction } from './lib/actions/add-attendees.action';
 import { findFreeBusy } from './lib/actions/find-busy-free-periods';
@@ -62,7 +62,7 @@ export const googleCalendar = createPiece({
       },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${await getAccessToken(auth as any)}`,
+          Authorization: `Bearer ${await getAccessToken(auth as GoogleCalendarAuthValue)}`,
         };
       },
     }),
