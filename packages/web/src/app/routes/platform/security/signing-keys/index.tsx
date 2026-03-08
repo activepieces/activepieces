@@ -93,18 +93,26 @@ const SigningKeysPage = () => {
         {!isLoading && signingKeys.length > 0 && (
           <ItemGroup className="gap-2">
             {signingKeys.map((signingKey) => (
-              <Item key={signingKey.id} variant="outline" size="sm" className="items-center">
+              <Item
+                key={signingKey.id}
+                variant="outline"
+                size="sm"
+                className="items-center"
+              >
                 <ItemMedia variant="icon">
                   <Key />
                 </ItemMedia>
                 <ItemContent className="gap-0">
-                  <ItemTitle className="flex items-center gap-2">{signingKey.displayName} </ItemTitle>
+                  <ItemTitle className="flex items-center gap-2">
+                    {signingKey.displayName}{' '}
+                  </ItemTitle>
                   <ItemDescription className="text-xs">
-                    {' '+t('Created')}{' '}
+                    {' ' + t('Created')}{' '}
                     {formatUtils.formatDateToAgo(new Date(signingKey.created))}
-                    <br/>
-                  <span className="text-xs text-muted-foreground">kid: {signingKey.id}</span>
-
+                    <br />
+                    <span className="text-xs text-muted-foreground">
+                      kid: {signingKey.id}
+                    </span>
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>

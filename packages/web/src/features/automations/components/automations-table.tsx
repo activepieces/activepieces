@@ -92,20 +92,22 @@ export const AutomationsTable = ({
             <Type className="h-3.5 w-3.5" />
             {t('Name')}
           </div>
-        
-            <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5" />
-              {t('Details')}
-            </div>
-       
+
+          <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
+            <Info className="h-3.5 w-3.5" />
+            {t('Details')}
+          </div>
+
           <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
             {t('Last modified')}
           </div>
-          {!embedState.isEmbedded && <div className="w-[170px] shrink-0 px-2 flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5" />
-            {t('Owner')}
-          </div>}
+          {!embedState.isEmbedded && (
+            <div className="w-[170px] shrink-0 px-2 flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              {t('Owner')}
+            </div>
+          )}
           <div className="w-[120px] shrink-0 px-2 flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5" />
             {t('Status')}
