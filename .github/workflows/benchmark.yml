@@ -3,14 +3,6 @@ name: Benchmark
 on:
   workflow_dispatch:
     inputs:
-      apps:
-        description: 'Number of app containers'
-        required: false
-        default: '1'
-      workers:
-        description: 'Number of worker containers'
-        required: false
-        default: '2'
       total_requests:
         description: 'Total number of requests for hey'
         required: false
@@ -20,6 +12,27 @@ jobs:
   benchmark:
     runs-on: depot-ubuntu-24.04-16
     timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          - apps: 1
+            workers: 2
+            label: "1app-2workers"
+          - apps: 2
+            workers: 4
+            label: "2app-4workers"
+          - apps: 3
+            workers: 6
+            label: "3app-6workers"
+          - apps: 1
+            workers: 4
+            label: "1app-4workers"
+          - apps: 2
+            workers: 8
+            label: "2app-8workers"
+          - apps: 3
+            workers: 12
+            label: "3app-12workers"
 
     steps:
       - name: Checkout
@@ -30,8 +43,8 @@ jobs:
 
       - name: Start benchmark stack
         run: |
-          APP_REPLICAS=${{ github.event.inputs.apps }} \
-          WORKER_REPLICAS=${{ github.event.inputs.workers }} \
+          APP_REPLICAS=${{ matrix.apps }} \
+          WORKER_REPLICAS=${{ matrix.workers }} \
             docker compose -f benchmark/docker-compose.yml up -d
           echo "Waiting for containers to start..."
           sleep 5
@@ -56,8 +69,8 @@ jobs:
 
       - name: Warmup
         run: |
-          echo "Running warmup: 500 requests, ${{ github.event.inputs.workers }} concurrency"
-          hey -n 500 -c ${{ github.event.inputs.workers }} -t 60 \
+          echo "Running warmup: 500 requests, ${{ matrix.workers }} concurrency"
+          hey -n 500 -c ${{ matrix.workers }} -t 60 \
               -m POST \
               -H "Content-Type: application/json" \
               -d '{"test":true}' \
@@ -67,10 +80,10 @@ jobs:
 
       - name: Run benchmark
         run: |
-          echo "Running benchmark: ${{ github.event.inputs.total_requests }} requests, ${{ github.event.inputs.workers }} concurrency (= workers), ${{ github.event.inputs.apps }} apps"
+          echo "Running benchmark: ${{ inputs.total_requests }} requests, ${{ matrix.workers }} concurrency (= workers), ${{ matrix.apps }} apps"
           echo "---"
-          hey -n ${{ github.event.inputs.total_requests }} \
-              -c ${{ github.event.inputs.workers }} \
+          hey -n ${{ inputs.total_requests }} \
+              -c ${{ matrix.workers }} \
               -t 60 \
               -m POST \
               -H "Content-Type: application/json" \
@@ -81,14 +94,16 @@ jobs:
       - name: Parse results
         run: |
           chmod +x benchmark/parse.sh
-          benchmark/parse.sh /tmp/hey-output.txt
+          benchmark/parse.sh /tmp/hey-output.txt /tmp/results.json
 
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results
-          path: /tmp/hey-output.txt
+          name: benchmark-results-${{ matrix.label }}
+          path: |
+            /tmp/hey-output.txt
+            /tmp/results.json
 
       - name: Show container logs on failure
         if: failure()
@@ -98,3 +113,42 @@ jobs:
       - name: Teardown
         if: always()
         run: docker compose -f benchmark/docker-compose.yml down -v
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: benchmark
+    if: always()
+    steps:
+      - name: Download all benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-results-*
+          path: /tmp/results
+
+      - name: Generate comparison table
+        run: |
+          echo "## Benchmark Results Comparison" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Configuration | Throughput (req/s) | Mean Latency | P50 | P99 | Fastest | Slowest | 200 OK |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          for dir in /tmp/results/benchmark-results-*/; do
+            label=$(basename "$dir" | sed 's/benchmark-results-//')
+            json="$dir/results.json"
+            if [ -f "$json" ]; then
+              throughput=$(jq -r '.throughput' "$json")
+              mean=$(jq -r '.mean_latency' "$json")
+              p50=$(jq -r '.p50' "$json")
+              p99=$(jq -r '.p99' "$json")
+              fastest=$(jq -r '.fastest' "$json")
+              slowest=$(jq -r '.slowest' "$json")
+              ok=$(jq -r '.ok_count' "$json")
+              echo "| $label | $throughput | ${mean}s | ${p50}s | ${p99}s | ${fastest}s | ${slowest}s | $ok |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $label | N/A | N/A | N/A | N/A | N/A | N/A | N/A |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Total requests per config**: ${{ inputs.total_requests || '500' }}" >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"

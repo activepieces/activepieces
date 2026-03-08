@@ -28,7 +28,7 @@ services:
       AP_JWT_SECRET: benchmark-secret-key-for-testing
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
       AP_FRONTEND_URL: http://nginx:80
-      AP_EXECUTION_MODE: UNSANDBOXED
+      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_ENVIRONMENT: prod
@@ -54,7 +54,7 @@ services:
       AP_API_URL: http://app:3000
       AP_JWT_SECRET: benchmark-secret-key-for-testing
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
-      AP_EXECUTION_MODE: UNSANDBOXED
+      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_POSTGRES_DATABASE: activepieces
