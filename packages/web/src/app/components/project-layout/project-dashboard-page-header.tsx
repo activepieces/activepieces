@@ -178,7 +178,7 @@ export const ProjectDashboardPageHeader = ({
         description={description}
         rightContent={rightContent}
         showSidebarToggle={true}
-        className="min-w-full px-4"
+        className="min-w-full px-3"
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
