@@ -1,6 +1,9 @@
 name: Benchmark
 
 on:
+  push:
+    branches:
+      - feat/worker-v2
   workflow_dispatch:
     inputs:
       apps:
