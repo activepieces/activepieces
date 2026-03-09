@@ -36,13 +36,13 @@ export enum FilterOperator {
     NOT_EXISTS = 'not_exists',
 }
 
-const valueFilter = (op: FilterOperator) => z.object({
+const valueFilter = <T extends FilterOperator>(op: T) => z.object({
     fieldId: z.string(),
     operator: z.literal(op),
     value: z.string(),
 })
 
-const existenceFilter = (op: FilterOperator) => z.object({
+const existenceFilter = <T extends FilterOperator>(op: T) => z.object({
     fieldId: z.string(),
     operator: z.literal(op),
 })

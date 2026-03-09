@@ -486,6 +486,12 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
             return true
         }
         switch (filter.operator) {
+            case FilterOperator.EXISTS: {
+                return cell.value !== null && cell.value !== ''
+            }
+            case FilterOperator.NOT_EXISTS: {
+                return cell.value === null || cell.value === ''
+            }
             case FilterOperator.EQ: {
                 return cell.value === filter.value
             }
@@ -509,12 +515,6 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
                     return cell.value.toLowerCase().includes(filter.value.toLowerCase())
                 }
                 return false
-            }
-            case FilterOperator.EXISTS: {
-                return cell.value !== null && cell.value !== ''
-            }
-            case FilterOperator.NOT_EXISTS: {
-                return cell.value === null || cell.value === ''
             }
         }
     })
