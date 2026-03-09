@@ -15,7 +15,7 @@ import { projectService } from '../../project/project-service'
 const deleteBranchInput = z.object({
     flowId: z.string(),
     routerStepName: z.string(),
-    branchIndex: z.number(),
+    branchIndex: z.number().int().min(0),
 })
 
 export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -49,6 +49,14 @@ export const apDeleteBranchTool = (mcp: McpServer, log: FastifyBaseLogger): McpT
             }
 
             const branches = (routerStep as { settings: { branches: unknown[] } }).settings.branches
+            if (branchIndex < 0 || branchIndex >= branches.length) {
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `❌ branchIndex ${branchIndex} is out of range. Valid indices are 0–${branches.length - 2} (the fallback branch at index ${branches.length - 1} cannot be deleted).`,
+                    }],
+                }
+            }
             if (branchIndex >= branches.length - 1) {
                 return {
                     content: [{
