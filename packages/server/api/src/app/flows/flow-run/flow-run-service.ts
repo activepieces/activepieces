@@ -244,9 +244,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
 
         const pauseMetadata = flowRun.pauseMetadata
-        const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
+        const matchRequestId = !isNil(pauseMetadata) && pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId
         const platformId = await projectService(log).getPlatformId(flowRun.projectId)
         if (matchRequestId || !checkRequestId) {
+            await flowRunSideEffects(log).onResume(flowRun)
             return addToQueue({
                 payload,
                 flowRun,
@@ -258,8 +259,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 executionType,
             }, log)
         }
-        await flowRunSideEffects(log).onResume(flowRun)
-        return flowRun
+        return null
     },
 
     async start({
