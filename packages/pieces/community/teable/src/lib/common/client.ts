@@ -16,7 +16,8 @@ function emptyValueFilter(
     return (
       val !== null &&
       val !== undefined &&
-      (typeof val != 'string' || val.length > 0)
+      (typeof val !== 'string' || val.length > 0) &&
+      (!Array.isArray(val) || val.length > 0)
     );
   };
 }
@@ -42,7 +43,7 @@ export class TeableClient {
     private token: string,
     teableUrl: string = TEABLE_CLOUD_URL
   ) {
-    this.apiBase =  `${teableUrl}/api`;
+    this.apiBase = `${teableUrl}/api`;
   }
 
   async makeRequest<T extends HttpMessageBody>(
