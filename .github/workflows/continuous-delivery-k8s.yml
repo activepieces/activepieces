@@ -100,7 +100,17 @@ jobs:
             --values deploy/stg-values.yaml \
             --values deploy/stg-hetzner-values.yaml \
             --set image.tag=${{ needs.build-image.outputs.image_tag }} \
-            --wait --timeout 5m
+            --wait --timeout 5m \
+            --debug 2>&1 | tee /tmp/helm-app.log || {
+              echo "::error::helm upgrade failed for APP"
+              echo "--- Pod status ---"
+              kubectl get pods -n activepieces
+              echo "--- Failed pod logs ---"
+              kubectl logs -n activepieces -l app.kubernetes.io/instance=activepieces --tail=100 --prefix || true
+              echo "--- Pod events ---"
+              kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+              exit 1
+            }
 
       - name: Deploy WORKER
         run: |
@@ -109,7 +119,17 @@ jobs:
             --values deploy/stg-worker-values.yaml \
             --values deploy/stg-hetzner-worker-values.yaml \
             --set image.tag=${{ needs.build-image.outputs.image_tag }} \
-            --wait --timeout 5m
+            --wait --timeout 5m \
+            --debug 2>&1 | tee /tmp/helm-worker.log || {
+              echo "::error::helm upgrade failed for WORKER"
+              echo "--- Pod status ---"
+              kubectl get pods -n activepieces
+              echo "--- Failed pod logs ---"
+              kubectl logs -n activepieces -l app.kubernetes.io/instance=activepieces-worker --tail=100 --prefix || true
+              echo "--- Pod events ---"
+              kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+              exit 1
+            }
 
       - name: Verify rollout
         run: |
