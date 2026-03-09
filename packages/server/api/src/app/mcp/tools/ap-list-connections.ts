@@ -60,7 +60,7 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
                 displayName: params.displayName,
                 status: params.status,
                 pieceName: params.pieceName,
-                limit: 10000,
+                limit: 200,
                 externalIds: undefined,
             })
             const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status}`)

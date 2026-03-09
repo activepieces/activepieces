@@ -11,18 +11,29 @@ export const apCreateFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             flowName: z.string().describe('The name of the flow'),
         },
         execute: async ({ flowName }) => {
-            const flow = await flowService(log).create({
-                projectId: mcp.projectId,
-                request: {
-                    displayName: flowName as string,
+            try {
+                const flow = await flowService(log).create({
                     projectId: mcp.projectId,
-                },
-            })
-            return {
-                content: [{
-                    type: 'text',
-                    text: `✅ Successfully created flow ${flow.version.displayName} with id ${flow.id}`,
-                }],
+                    request: {
+                        displayName: flowName as string,
+                        projectId: mcp.projectId,
+                    },
+                })
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `✅ Successfully created flow ${flow.version.displayName} with id ${flow.id}`,
+                    }],
+                }
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `❌ Flow creation failed: ${message}`,
+                    }],
+                }
             }
         },
     }

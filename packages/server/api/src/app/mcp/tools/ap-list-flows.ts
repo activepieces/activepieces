@@ -8,14 +8,25 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
         description: 'List all flows in the current project',
         inputSchema: {},
         execute: async () => {
-            const flows = await flowService(log).list({
-                projectIds: [mcp.projectId],
-            })
-            return {
-                content: [{
-                    type: 'text',
-                    text: `✅ Successfully listed flows:\n${flows.data.map((flow) => `- ${flow.version.displayName} (${flow.id})`).join('\n')}`,
-                }],
+            try {
+                const flows = await flowService(log).list({
+                    projectIds: [mcp.projectId],
+                })
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `✅ Successfully listed flows:\n${flows.data.map((flow) => `- ${flow.version.displayName} (${flow.id})`).join('\n')}`,
+                    }],
+                }
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `❌ Failed to list flows: ${message}`,
+                    }],
+                }
             }
         },
     }

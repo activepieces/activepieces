@@ -346,17 +346,28 @@ export const apFlowStructureTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
             flowId: z.string().describe('The id of the flow'),
         },
         execute: async ({ flowId }) => {
-            const flow = await flowService(log).getOnePopulated({
-                id: flowId as string,
-                projectId: mcp.projectId,
-            })
-            if (isNil(flow)) {
-                return { content: [{ type: 'text', text: '❌ Flow not found' }] }
+            try {
+                const flow = await flowService(log).getOnePopulated({
+                    id: flowId as string,
+                    projectId: mcp.projectId,
+                })
+                if (isNil(flow)) {
+                    return { content: [{ type: 'text', text: '❌ Flow not found' }] }
+                }
+                const structure = buildFlowStructure(flow.version.trigger)
+                const positions = computeStepPositions(flow.version.trigger)
+                const text = formatFlowStructure(flow.version.displayName, flow.id, structure, flow.version.trigger, positions, flow.version.notes ?? [])
+                return { content: [{ type: 'text', text }] }
             }
-            const structure = buildFlowStructure(flow.version.trigger)
-            const positions = computeStepPositions(flow.version.trigger)
-            const text = formatFlowStructure(flow.version.displayName, flow.id, structure, flow.version.trigger, positions, flow.version.notes ?? [])
-            return { content: [{ type: 'text', text }] }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `❌ Failed to get flow structure: ${message}`,
+                    }],
+                }
+            }
         },
     }
 }
