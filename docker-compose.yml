@@ -13,7 +13,6 @@ services:
     env_file: .env
     volumes:
       - ./cache:/usr/src/app/cache
-      - oracle_client:/opt/oracle
     networks:
       - activepieces
   postgres:
@@ -40,6 +39,5 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  oracle_client:
 networks:
   activepieces:

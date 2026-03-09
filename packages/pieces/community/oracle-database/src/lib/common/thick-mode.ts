@@ -21,6 +21,13 @@ const ORACLE_TEMP_ZIP = path.join(os.tmpdir(), 'oracle-instantclient.zip');
 const ORACLE_INSTANT_CLIENT_URL =
   'https://download.oracle.com/otn_software/linux/instantclient/2326100/instantclient-basic-linux.x64-23.26.1.0.0.zip';
 
+// patchelf GitHub release — update version here when needed:
+// https://github.com/NixOS/patchelf/releases
+const PATCHELF_VERSION = '0.18.0';
+const PATCHELF_ARCH = process.arch === 'arm64' ? 'aarch64' : 'x86_64';
+const PATCHELF_URL = `https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz`;
+const PATCHELF_BIN = path.join(ORACLE_BASE_DIR, 'bin', 'patchelf');
+
 // Ensures initOracleClient is called at most once per process (NJS-077 guard)
 let oracleClientInitialized = false;
 
@@ -91,6 +98,38 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 }
 
 /**
+ * Returns path to a usable patchelf binary.
+ * Uses system patchelf if available, otherwise downloads the binary from
+ * GitHub releases to ORACLE_BASE_DIR/bin/patchelf (no root required).
+ */
+async function ensurePatchelf(): Promise<string> {
+  // Use system patchelf if already installed (e.g. baked into Docker image)
+  try {
+    console.log('[oracle] Checking for system patchelf...');
+    execSync('patchelf --version', { stdio: 'pipe' });
+    return 'patchelf';
+  } catch {
+    console.log('[oracle] System patchelf not found.');
+  }
+
+  // Use previously downloaded binary
+  if (fs.existsSync(PATCHELF_BIN)) return PATCHELF_BIN;
+
+  console.log(`[oracle] Downloading patchelf ${PATCHELF_VERSION}...`);
+  const tarPath = path.join(os.tmpdir(), 'patchelf.tar.gz');
+  await downloadFile(PATCHELF_URL, tarPath);
+
+  fs.mkdirSync(ORACLE_BASE_DIR, { recursive: true });
+  // tarball has ./bin/patchelf; strip './' → extracts bin/patchelf into ORACLE_BASE_DIR
+  execSync(`tar -xzf "${tarPath}" -C "${ORACLE_BASE_DIR}" --strip-components=1 ./bin/patchelf`, { stdio: 'pipe' });
+  fs.chmodSync(PATCHELF_BIN, 0o755);
+  try { fs.unlinkSync(tarPath); } catch { /* ignore */ }
+
+  console.log(`[oracle] patchelf downloaded to ${PATCHELF_BIN}`);
+  return PATCHELF_BIN;
+}
+
+/**
  * Makes Oracle libs discoverable by the OS dynamic linker.
  *
  * Problem: libDir only tells dlopen where to find libclntsh.so.
@@ -104,15 +143,16 @@ async function downloadFile(url: string, dest: string): Promise<void> {
  * Strategy 2 — symlinks into /usr/local/lib (fallback, root only):
  *   Works in Docker containers running as root.
  */
-function registerOracleLibs(libDir: string): void {
+async function registerOracleLibs(libDir: string): Promise<void> {
   const libclntsh = `${libDir}/libclntsh.so`;
 
   try {
-    execSync(`patchelf --set-rpath '$ORIGIN' "${libclntsh}"`, { stdio: 'pipe' });
+    const patchelf = await ensurePatchelf();
+    execSync(`"${patchelf}" --set-rpath '$ORIGIN' "${libclntsh}"`, { stdio: 'pipe' });
     console.log(`[oracle] Patched RPATH of libclntsh.so to $ORIGIN`);
     return;
-  } catch {
-    // patchelf not available — try symlink fallback
+  } catch (err) {
+    console.log(`[oracle] patchelf strategy failed: ${(err as Error).message}. Trying symlink fallback...`);
   }
 
   try {
@@ -174,7 +214,7 @@ export async function ensureOracleClient(thickMode: boolean): Promise<void> {
   }
 
   if (!oracleClientInitialized) {
-    registerOracleLibs(libDir);
+    await registerOracleLibs(libDir);
     oracledb.initOracleClient({ libDir });
     oracleClientInitialized = true;
     console.log(`[oracle] Instant Client loaded from ${libDir}. Thick mode active.`);

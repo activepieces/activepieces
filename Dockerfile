@@ -22,9 +22,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         unzip \
         curl \
         ca-certificates \
-        libcap-dev \
-        patchelf \
-        libaio1 && \
+        libcap-dev && \
     yarn config set python /usr/bin/python3 && \
     sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen en_US.UTF-8
@@ -82,7 +80,6 @@ RUN rm -rf packages/pieces/core packages/pieces/custom && \
       ! -name square \
       ! -name facebook-leads \
       ! -name intercom \
-      ! -name oracle-database \
       -exec rm -rf {} + && \
     rm -f bun.lock && bun install
 
