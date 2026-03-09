@@ -42,6 +42,5 @@ export const TeableAuth = PieceAuth.CustomAuth({
         error: e instanceof Error ? e.message : 'Invalid credentials. Check your token and Base URL.',
       };
     }
-    }
   },
 });
