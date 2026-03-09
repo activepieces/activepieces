@@ -19,7 +19,7 @@ const lockAndPublishInput = z.object({
 export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_lock_and_publish',
-        description: 'Publish the current draft version of a flow. This locks the draft and sets it as the published version. Returns validation errors if the flow is not ready. After publishing, use ap_change_flow_status to enable the flow.',
+        description: 'Publish and enable the current draft version of a flow. This locks the draft, sets it as the published version, and enables the flow. Returns validation errors if the flow is not ready.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
         },
@@ -61,7 +61,7 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
                     operation,
                 })
                 return {
-                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" published successfully. Use ap_change_flow_status to enable it.` }],
+                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" published and enabled successfully.` }],
                 }
             }
             catch (err) {

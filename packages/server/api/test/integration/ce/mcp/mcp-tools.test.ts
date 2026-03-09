@@ -57,6 +57,7 @@ function makeMcp(projectId: string): McpServer {
         projectId,
         status: McpServerStatus.ENABLED,
         token: apId(),
+        enabledTools: null,
     }
 }
 
