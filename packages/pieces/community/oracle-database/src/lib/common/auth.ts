@@ -94,9 +94,11 @@ export const oracleDbAuth = PieceAuth.CustomAuth({
         password: typedAuth.password,
         connectString: connectString,
       });
+      console.log('Successfully connected to Oracle Database for authentication validation.');
 
       return { valid: true };
     } catch (e) {
+      console.error('Error occurred while validating Oracle Database connection:', (e as Error)?.message);
       return {
         valid: false,
         error: (e as Error)?.message || 'Unknown connection error.',
