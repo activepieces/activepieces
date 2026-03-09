@@ -1,7 +1,6 @@
 import { inspect } from 'node:util'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
 import { assertEqual, AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, isNil, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
-import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
@@ -112,7 +111,7 @@ export const triggerHelper = {
                 },
             },
             setSchedule(request: ScheduleOptions) {
-                if (!isValidCron(request.cronExpression)) {
+                if (!isSimpleValidCron(request.cronExpression)) {
                     throw new InvalidCronExpressionError(request.cronExpression)
                 }
                 scheduleOptions = {
@@ -300,6 +299,14 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
     }
 
     return { piece, pieceTrigger, processedInput }
+}
+
+function isSimpleValidCron(expression: string): boolean {
+    const parts = expression.trim().split(/\s+/)
+    if (parts.length < 5 || parts.length > 6) {
+        return false
+    }
+    return parts.every((part) => /^[\d,\-*/]+$/.test(part))
 }
 
 type PrepareTriggerExecutionParams = {
