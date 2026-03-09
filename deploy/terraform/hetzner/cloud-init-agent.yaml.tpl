@@ -4,6 +4,12 @@ packages:
   - curl
 
 runcmd:
+  # Install Docker (required for sandboxed worker execution)
+  - |
+    %{ if node_label == "role=worker" }
+    curl -fsSL https://get.docker.com | sh
+    systemctl enable --now docker
+    %{ endif }
   # Wait for control plane to be ready before joining
   - sleep 60
   # Install k3s as an agent (worker) node and join the cluster
