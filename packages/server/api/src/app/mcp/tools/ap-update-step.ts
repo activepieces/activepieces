@@ -1,0 +1,132 @@
+import {
+    FlowActionType,
+    FlowOperationRequest,
+    FlowOperationType,
+    flowStructureUtil,
+    isNil,
+    McpServer,
+    McpToolDefinition,
+    UpdateActionRequest,
+} from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
+import { flowService } from '../../flows/flow/flow.service'
+import { projectService } from '../../project/project-service'
+
+const updateStepInput = z.object({
+    flowId: z.string(),
+    stepName: z.string(),
+    displayName: z.string().optional(),
+    input: z.record(z.string(), z.unknown()).optional(),
+    auth: z.string().optional(),
+    actionName: z.string().optional(),
+    loopItems: z.string().optional(),
+    skip: z.boolean().optional(),
+})
+
+export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+    return {
+        title: 'ap_update_step',
+        description: 'Update an existing step\'s settings in a flow. Use ap_flow_structure to get step names. Use ap_list_pieces to get valid pieceName, pieceVersion, actionName. Provide only the fields you want to change.',
+        inputSchema: {
+            flowId: z.string().describe('The id of the flow'),
+            stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),
+            displayName: z.string().optional().describe('New display name for the step'),
+            input: z.record(z.string(), z.unknown()).optional().describe('Input settings for the step (key-value pairs matching the action schema). Use `{{stepName.output.field}}` to reference data from previous steps (e.g. `{{trigger.output.body.email}}`, `{{step_1.output.id}}`).'),
+            auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
+            actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_list_pieces to get valid values.'),
+            loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
+            skip: z.boolean().optional().describe('Whether to skip this step during execution'),
+        },
+        execute: async (args) => {
+            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip } = updateStepInput.parse(args)
+
+            const [flow, project] = await Promise.all([
+                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
+                projectService(log).getOneOrThrow(mcp.projectId),
+            ])
+            if (isNil(flow)) {
+                return { content: [{ type: 'text', text: '❌ Flow not found' }] }
+            }
+
+            const step = flowStructureUtil.getStep(stepName, flow.version.trigger)
+            if (isNil(step)) {
+                const allSteps = flowStructureUtil.getAllSteps(flow.version.trigger).map(s => s.name).join(', ')
+                return {
+                    content: [{ type: 'text', text: `❌ Step "${stepName}" not found. Available steps: ${allSteps}` }],
+                }
+            }
+
+            // Build updated action by merging current step with new values
+            const currentSettings = step.settings as Record<string, unknown>
+            const updatedSettings: Record<string, unknown> = { ...currentSettings }
+
+            if (input !== undefined || auth !== undefined) {
+                updatedSettings.input = {
+                    ...(currentSettings.input as Record<string, unknown> ?? {}),
+                    ...(input ?? {}),
+                    ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
+                }
+            }
+            if (actionName !== undefined && step.type === FlowActionType.PIECE) {
+                updatedSettings.actionName = actionName
+            }
+            if (loopItems !== undefined && step.type === FlowActionType.LOOP_ON_ITEMS) {
+                updatedSettings.items = loopItems
+            }
+
+            const payload = {
+                type: step.type,
+                name: step.name,
+                displayName: displayName ?? step.displayName,
+                valid: step.valid,
+                settings: updatedSettings,
+                ...(skip !== undefined && { skip }),
+            }
+
+            const parseResult = UpdateActionRequest.safeParse(payload)
+            if (!parseResult.success) {
+                const message = parseResult.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
+                return {
+                    content: [{ type: 'text', text: `❌ Invalid step update: ${message}` }],
+                }
+            }
+
+            const operation: FlowOperationRequest = {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: parseResult.data,
+            }
+
+            try {
+                const updatedFlow = await flowService(log).update({
+                    id: flow.id,
+                    projectId: mcp.projectId,
+                    userId: null,
+                    platformId: project.platformId,
+                    operation,
+                })
+                const updatedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
+                if (updatedStep && !updatedStep.valid) {
+                    const hint = step.type === FlowActionType.PIECE
+                        ? ' Use ap_list_pieces to verify pieceName, pieceVersion, actionName and required inputs, then retry.'
+                        : ' Check the step settings and retry.'
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `⚠️ Step "${stepName}" updated but still invalid.${hint}`,
+                        }],
+                    }
+                }
+                return {
+                    content: [{ type: 'text', text: `✅ Successfully updated step "${stepName}".` }],
+                }
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
+                return {
+                    content: [{ type: 'text', text: `❌ Step update failed: ${message}` }],
+                }
+            }
+        },
+    }
+}
