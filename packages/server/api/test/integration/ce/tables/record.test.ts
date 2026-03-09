@@ -241,6 +241,25 @@ describe('Record API', () => {
             expect(body.data[0].id).toBe(record1.id)
         })
 
+        it('EXISTS: should not match record with empty string cell', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const record1 = createMockRecord({ tableId: table.id, projectId: ctx.project.id })
+            await db.save('record', record1)
+            const cell1 = createMockCell({ recordId: record1.id, fieldId: field.id, projectId: ctx.project.id })
+            cell1.value = ''
+            await db.save('cell', cell1)
+
+            const response = await ctx.inject({
+                method: 'GET',
+                url: `/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EXISTS }] })}`,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data.length).toBe(0)
+        })
+
         it('NOT_EXISTS: should match record without a cell for the field', async () => {
             const ctx = await setup()
             const { table, field } = await createTableWithField(ctx)
