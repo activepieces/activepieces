@@ -25,6 +25,7 @@ const commonActionProps = {
     valid: z.boolean(),
     displayName: z.string(),
     skip: z.boolean().optional(),
+    lastUpdatedDate: z.string(),
 }
 const commonActionSettings = {
     sampleData: SampleDataSetting.optional(),
@@ -314,6 +315,7 @@ type BaseActionProps = {
     valid: boolean
     displayName: string
     skip?: boolean
+    lastUpdatedDate: string
 }
 
 export type FlowAction =
