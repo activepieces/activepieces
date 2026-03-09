@@ -24,7 +24,7 @@ type McpToolsProps = {
 
 export function McpTools({ mcpServer }: McpToolsProps) {
   const currentProjectId = authenticationSession.getProjectId();
-  const { mutate: updateMcpServer } = mcpHooks.useUpdateMcpServer(
+  const { mutate: updateMcpServer, isPending } = mcpHooks.useUpdateMcpServer(
     currentProjectId!,
   );
 
@@ -33,8 +33,10 @@ export function McpTools({ mcpServer }: McpToolsProps) {
   );
 
   useEffect(() => {
-    setEnabledTools(mcpServer.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES);
-  }, [mcpServer.enabledTools]);
+    if (!isPending) {
+      setEnabledTools(mcpServer.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES);
+    }
+  }, [mcpServer.enabledTools, isPending]);
 
   const saveEnabledTools = useDebouncedCallback((tools: string[]) => {
     updateMcpServer({ enabledTools: tools });
