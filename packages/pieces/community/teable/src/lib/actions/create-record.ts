@@ -20,7 +20,9 @@ export const createRecordAction = createAction({
     const dynamicFields: DynamicPropsValue = context.propsValue.fields;
 
     const fields: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(dynamicFields)) {
       if (value !== undefined && value !== null && value !== '') {
+        fields[key] = value;
       }
     }
 
