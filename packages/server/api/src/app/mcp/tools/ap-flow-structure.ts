@@ -260,7 +260,6 @@ function formatFlowStructure(
         const canvasLabel = pos ? ` | canvas: (${Math.round(pos.x)}, ${Math.round(pos.y)})` : ''
 
         if (step.relationship === 'trigger') {
-            // Include trigger piece info if configured
             let triggerDetail = ''
             if (trigger.type === FlowTriggerType.PIECE) {
                 const s = trigger.settings as { pieceName?: string, triggerName?: string }
@@ -277,7 +276,6 @@ function formatFlowStructure(
                     ? 'inside_loop'
                     : `branch ${step.branchIndex}${step.branchName ? ` "${step.branchName}"` : ''}`
 
-        // For PIECE steps show action name
         let stepDetail = ''
         if (step.type === FlowActionType.PIECE) {
             const fullStep = flowStructureUtil.getStep(step.name, trigger)
@@ -287,7 +285,6 @@ function formatFlowStructure(
 
         lines.push(`- ${step.name} | ${step.type} | "${step.displayName}"${stepDetail} | parent: ${step.parentName} | ${rel} | ${step.configStatus}${skipLabel}${canvasLabel}`)
 
-        // For ROUTER steps: show branch summary
         if (step.type === FlowActionType.ROUTER) {
             const fullStep = flowStructureUtil.getStep(step.name, trigger)
             const branches = (fullStep as { settings?: { branches?: { branchName?: string, branchType?: string }[] } } | undefined)?.settings?.branches ?? []

@@ -34,7 +34,6 @@ export const apLockAndPublishTool = (mcp: McpServer, log: FastifyBaseLogger): Mc
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
             }
 
-            // Check flow validity before publishing
             const allSteps = flowStructureUtil.getAllSteps(flow.version.trigger)
             const invalidSteps = allSteps.filter(s => !s.valid && !(s as { skip?: boolean }).skip)
             if (invalidSteps.length > 0) {

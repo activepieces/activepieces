@@ -57,7 +57,18 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
-            // Build updated action by merging current step with new values
+            if (flowStructureUtil.isTrigger(step.type)) {
+                return {
+                    content: [{ type: 'text', text: `❌ "${stepName}" is a trigger step. Use ap_update_trigger to configure triggers.` }],
+                }
+            }
+
+            if (auth !== undefined && auth.includes("'")) {
+                return {
+                    content: [{ type: 'text', text: `❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.` }],
+                }
+            }
+
             const currentSettings = step.settings as Record<string, unknown>
             const updatedSettings: Record<string, unknown> = { ...currentSettings }
 

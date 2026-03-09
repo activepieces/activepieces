@@ -127,6 +127,12 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                     }
             }
 
+            if (stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && branchIndex === undefined) {
+                return {
+                    content: [{ type: 'text', text: '❌ branchIndex is required when stepLocationRelativeToParent is INSIDE_BRANCH. Use ap_flow_structure to get valid branch indices.' }],
+                }
+            }
+
             const parseResult = UpdateActionRequest.safeParse(skeletonAction)
             if (!parseResult.success) {
                 const message = parseResult.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')

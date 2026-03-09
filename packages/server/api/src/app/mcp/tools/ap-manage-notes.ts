@@ -104,6 +104,10 @@ export const apManageNotesTool = (mcp: McpServer, log: FastifyBaseLogger): McpTo
                     if (!noteId) {
                         return { content: [{ type: 'text', text: '❌ noteId is required for DELETE operation' }] }
                     }
+                    const noteToDelete = flow.version.notes?.find((n: { id: string }) => n.id === noteId)
+                    if (!noteToDelete) {
+                        return { content: [{ type: 'text', text: `❌ Note "${noteId}" not found` }] }
+                    }
                     operation = {
                         type: FlowOperationType.DELETE_NOTE,
                         request: { id: noteId },

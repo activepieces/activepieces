@@ -50,7 +50,6 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
-            // Fetch full details for each piece when includeActions or includeTriggers is requested
             const piecesToEnrich = pieces.slice(0, 50)
             const enrichedPieces = await Promise.all(piecesToEnrich.map(async (piece) => {
                 const base: Record<string, unknown> = {
