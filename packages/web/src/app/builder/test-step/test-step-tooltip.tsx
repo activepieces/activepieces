@@ -28,19 +28,14 @@ const TestButtonTooltip = ({
         <TooltipTrigger asChild className="disabled:pointer-events-auto">
           {children}
         </TooltipTrigger>
-        {invalid && (
+        {(invalid || isLoadingDynamicProperties || saving) && (
           <TooltipContent side="bottom">
-            {t('Please fix inputs first')}
+            {invalid
+              ? t('Please fix inputs first')
+              : isLoadingDynamicProperties
+              ? t('Please wait until all inputs are loaded')
+              : t('Saving...')}
           </TooltipContent>
-        )}
-        {isLoadingDynamicProperties && (
-          <TooltipContent side="bottom">
-            {t('Please wait until all inputs are loaded')}
-          </TooltipContent>
-        )}
-
-        {saving && (
-          <TooltipContent side="bottom">{t('Saving...')}</TooltipContent>
         )}
       </Tooltip>
     </TooltipProvider>

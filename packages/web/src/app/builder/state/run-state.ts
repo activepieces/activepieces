@@ -178,6 +178,21 @@ export const createRunState = (
               stepName,
               response.standardError === '' ? null : response.standardError,
             );
+            set((state) => {
+              const failedStep = flowStructureUtil.getStep(
+                stepName,
+                state.flowVersion.trigger,
+              );
+              return {
+                flowVersion: flowOperations.apply(state.flowVersion, {
+                  type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+                  request: {
+                    stepName,
+                    sampleDataSettings: failedStep?.settings.sampleData ?? {},
+                  },
+                }),
+              };
+            });
           }
           if (step.type === FlowActionType.CODE) {
             get().setConsoleLogs(
@@ -293,19 +308,7 @@ export const createRunState = (
     },
     setErrorLogs: (stepName: string, error: string | null) => {
       set((state) => {
-        // only update the last test date
-        const step = flowStructureUtil.getStep(
-          stepName,
-          state.flowVersion.trigger,
-        );
         return {
-          flowVersion: flowOperations.apply(state.flowVersion, {
-            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-            request: {
-              stepName: stepName,
-              sampleDataSettings: step?.settings.sampleData ?? {},
-            },
-          }),
           errorLogs: {
             ...state.errorLogs,
             [stepName]: error,
