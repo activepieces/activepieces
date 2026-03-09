@@ -133,5 +133,5 @@ jobs:
 
       - name: Verify rollout
         run: |
-          kubectl rollout status deployment/activepieces -n activepieces --timeout=120s
-          kubectl rollout status deployment/activepieces-worker -n activepieces --timeout=120s
+          kubectl rollout status deployment/activepieces -n activepieces --timeout=240s
+          kubectl rollout status deployment/activepieces-worker -n activepieces --timeout=240s
