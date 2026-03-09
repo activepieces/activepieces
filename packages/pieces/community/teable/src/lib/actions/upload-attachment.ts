@@ -71,9 +71,6 @@ export const uploadAttachmentAction = createAction({
       method: HttpMethod.POST,
       url: `${baseUrl}/api/table/${table_id}/record/${record_id}/${field_id}/uploadAttachment`,
       body: form,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.props.token,

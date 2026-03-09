@@ -27,7 +27,8 @@ export function prepareQuery(request?: Record<string, any>): QueryParams {
   Object.keys(request)
     .filter(emptyValueFilter((k) => request[k]))
     .forEach((k: string) => {
-      params[k] = (request as Record<string, any>)[k].toString();
+      const val = (request as Record<string, any>)[k];
+      params[k] = Array.isArray(val) ? val : val.toString();
     });
   return params;
 }
