@@ -118,7 +118,6 @@ export const createDeployment = createAction({
     } = context.propsValue;
 
     const body: Record<string, unknown> = {
-      name: String(project),
       project: String(project),
       target: target ?? 'preview',
     };

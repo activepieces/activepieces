@@ -83,7 +83,7 @@ export type VercelProject = {
 export async function listAllProjects(auth: VercelAuthValue, search?: string): Promise<VercelProject[]> {
   const projects: VercelProject[] = [];
   let nextFrom: string | undefined = undefined;
-  const MAX_PAGES = 50;
+  const MAX_PAGES = 10;
   let pageCount = 0;
 
   while (pageCount < MAX_PAGES) {
