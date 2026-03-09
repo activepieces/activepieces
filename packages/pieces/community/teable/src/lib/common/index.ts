@@ -1,12 +1,12 @@
 import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { TeableAuth } from '../auth';
 import { TeableClient } from './client';
-import { TeableComputedFieldTypes, TeableFieldType, TeableNumericFieldTypes } from './constants';
+import { TEABLE_CLOUD_URL, TeableComputedFieldTypes, TeableFieldType, TeableNumericFieldTypes } from './constants';
 
 export function makeClient(auth: PiecePropValueSchema<typeof TeableAuth>) {
 	const client = new TeableClient(
 		auth.token,
-		auth.baseUrl || 'https://app.teable.ai'
+		auth.baseUrl || TEABLE_CLOUD_URL
 	);
 	return client;
 }
