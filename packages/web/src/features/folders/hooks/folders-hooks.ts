@@ -1,5 +1,5 @@
-import { UncategorizedFolderId } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
+import { FolderDto, UncategorizedFolderId } from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -22,6 +22,48 @@ export const foldersHooks = {
       queryKey: ['folder', folderId],
       queryFn: () => foldersApi.get(folderId),
       enabled: folderId !== UncategorizedFolderId,
+    });
+  },
+};
+
+export const foldersMutations = {
+  useRenameFolder: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError?: (error: unknown) => void;
+  }) => {
+    return useMutation({
+      mutationFn: async ({
+        folderId,
+        displayName,
+      }: {
+        folderId: string;
+        displayName: string;
+      }) => {
+        return await foldersApi.renameFolder(folderId, { displayName });
+      },
+      onSuccess,
+      onError,
+    });
+  },
+  useCreateFolder: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (folder: FolderDto) => void;
+    onError?: (error: unknown) => void;
+  }) => {
+    return useMutation<FolderDto, Error, { displayName: string }>({
+      mutationFn: async (data) => {
+        return await foldersApi.create({
+          displayName: data.displayName.trim(),
+          projectId: authenticationSession.getProjectId()!,
+        });
+      },
+      onSuccess,
+      onError,
     });
   },
 };

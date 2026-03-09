@@ -1,11 +1,11 @@
 import { FolderDto } from '@activepieces/shared';
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,14 +29,14 @@ type CreateFolderDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-const CreateFolderFormSchema = Type.Object({
-  displayName: Type.String({
-    errorMessage: t('Please enter folder name'),
-    pattern: '.*\\S.*',
-  }),
+
+const CreateFolderFormSchema = z.object({
+  displayName: z
+    .string({ message: t('Please enter folder name') })
+    .regex(/.*\S.*/, t('Please enter folder name')),
 });
 
-type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
+type CreateFolderFormSchema = z.infer<typeof CreateFolderFormSchema>;
 
 export const CreateFolderDialog = ({
   updateSearchParams,
@@ -45,7 +45,7 @@ export const CreateFolderDialog = ({
   onOpenChange,
 }: CreateFolderDialogProps) => {
   const form = useForm<CreateFolderFormSchema>({
-    resolver: typeboxResolver(CreateFolderFormSchema),
+    resolver: zodResolver(CreateFolderFormSchema),
   });
 
   const { mutate, isPending } = useMutation<

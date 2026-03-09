@@ -6,10 +6,9 @@ import {
   supportUrl,
   UncategorizedFolderId,
 } from '@activepieces/shared';
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, HistoryIcon } from 'lucide-react';
+import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -106,7 +105,7 @@ export const BuilderHeader = () => {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   onClick={goToFlowsPage}
-                  className="cursor-pointer text-base"
+                  className="cursor-pointer text-sm"
                 >
                   {getProjectName(project)}
                 </BreadcrumbLink>
@@ -118,7 +117,7 @@ export const BuilderHeader = () => {
             <BreadcrumbItem>
               <BreadcrumbPage>
                 <div
-                  className={cn('flex items-center gap-1 text-base', {
+                  className={cn('flex items-center gap-1 text-sm', {
                     'max-w-[500px]': !isEditingFlowName,
                   })}
                 >
@@ -182,7 +181,7 @@ export const BuilderHeader = () => {
           className="gap-2 px-2"
           onClick={() => openNewWindow(supportUrl)}
         >
-          <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
+          <CircleHelp className="w-4 h-4"></CircleHelp>
           {t('Support')}
         </Button>
       )}

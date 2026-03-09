@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { BaseModelSchema } from '../../core/common/base-model'
 import { ApId } from '../../core/common/id-generator'
 
@@ -8,13 +8,13 @@ export enum KeyAlgorithm {
 
 export type SigningKeyId = ApId
 
-export const SigningKey = Type.Object({
+export const SigningKey = z.object({
     ...BaseModelSchema,
     platformId: ApId,
-    publicKey: Type.String(),
-    displayName: Type.String(),
+    publicKey: z.string(),
+    displayName: z.string(),
     /* algorithm used to generate this key pair */
-    algorithm: Type.Enum(KeyAlgorithm),
+    algorithm: z.nativeEnum(KeyAlgorithm),
 })
 
-export type SigningKey = Static<typeof SigningKey>
+export type SigningKey = z.infer<typeof SigningKey>

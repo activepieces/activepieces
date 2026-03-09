@@ -6,7 +6,6 @@ import {
   isNil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
-import { DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { CopyPlus, EllipsisVertical, Trash2 } from 'lucide-react';
@@ -17,6 +16,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '../../../../components/ui/dropdown-menu';
 import { cn } from '../../../../lib/utils';
 import { useBuilderStateContext } from '../../builder-hooks';

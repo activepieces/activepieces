@@ -362,12 +362,12 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 hasPermission={userHasPermissionToUpdateFlow}
               >
                 <ConfirmationDeleteDialog
-                  title={`${t('Delete')} ${flowVersion.displayName}`}
+                  title={t('Delete Flow')}
                   message={
                     <>
                       <div>
                         {t(
-                          'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
+                          'This will permanently delete the flow, all its data, and any background runs.',
                         )}
                       </div>
                       {isDevelopmentBranch && (
@@ -384,6 +384,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     onDelete();
                   }}
                   entityName={t('flow')}
+                  buttonText={t('Delete')}
                 >
                   <DropdownMenuItem
                     disabled={!userHasPermissionToUpdateFlow}

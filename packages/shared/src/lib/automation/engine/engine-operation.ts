@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { PlatformId } from '../../management/platform'
 import { ProjectId } from '../../management/project/project'
 import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
@@ -46,17 +46,17 @@ export const enum EngineSocketEvent {
 }
 
 
-export const EngineStdout = Type.Object({
-    message: Type.String(),
+export const EngineStdout = z.object({
+    message: z.string(),
 })
 
-export const EngineStderr = Type.Object({
-    message: Type.String(),
+export const EngineStderr = z.object({
+    message: z.string(),
 })
 
 
-export type EngineStdout = Static<typeof EngineStdout>
-export type EngineStderr = Static<typeof EngineStderr>
+export type EngineStdout = z.infer<typeof EngineStdout>
+export type EngineStderr = z.infer<typeof EngineStderr>
 
 
 export type BaseEngineOperation = {
@@ -139,11 +139,11 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
 }
 
 
-export const TriggerPayload = Type.Object({
-    body: Type.Unknown(),
-    rawBody: Type.Optional(Type.Unknown()),
-    headers: Type.Record(Type.String(), Type.String()),
-    queryParams: Type.Record(Type.String(), Type.String()),
+export const TriggerPayload = z.object({
+    body: z.unknown(),
+    rawBody: z.unknown().optional(),
+    headers: z.record(z.string(), z.string()),
+    queryParams: z.record(z.string(), z.string()),
 })
 
 export type TriggerPayload<T = unknown> = {
@@ -197,13 +197,13 @@ type ExecuteOnEnableTriggerResponse = {
     scheduleOptions?: ScheduleOptions
 }
 
-export const EngineHttpResponse = Type.Object({
-    status: Type.Number(),
-    body: Type.Unknown(),
-    headers: Type.Record(Type.String(), Type.String()),
+export const EngineHttpResponse = z.object({
+    status: z.number(),
+    body: z.unknown(),
+    headers: z.record(z.string(), z.string()),
 })
 
-export type EngineHttpResponse = Static<typeof EngineHttpResponse>
+export type EngineHttpResponse = z.infer<typeof EngineHttpResponse>
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :

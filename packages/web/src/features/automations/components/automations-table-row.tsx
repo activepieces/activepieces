@@ -25,6 +25,7 @@ import { ApAvatar } from '@/components/custom/ap-avatar';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -115,7 +116,7 @@ export const AutomationsTableRow = ({
   return (
     <>
       <div
-        className="w-10 shrink-0 pl-2 pr-1 flex items-center"
+        className="w-10 shrink-0 pl-4 pr-1 flex items-center"
         onClick={(e) => e.stopPropagation()}
       >
         <Checkbox checked={isSelected} onCheckedChange={onToggleSelection} />
@@ -171,7 +172,9 @@ export const AutomationsTableRow = ({
           <span className="shrink-0">
             <RowItemIcon item={item} />
           </span>
-          <span className="truncate">{item.name}</span>
+          <TextWithTooltip tooltipMessage={item.name}>
+            <span>{item.name}</span>
+          </TextWithTooltip>
         </div>
       </div>
       <div className="w-[230px] shrink-0 px-2 flex items-center">
@@ -186,7 +189,7 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[170px] shrink-0 px-2 flex items-center">
+        <div className="w-[170px] shrink-0 px-2 flex items-center overflow-hidden">
           <RowItemOwner item={item} />
         </div>
       )}
@@ -288,12 +291,12 @@ export const AutomationsTableRow = ({
             <DropdownMenuSeparator />
             <ConfirmationDeleteDialog
               title={t('Delete {type}', { type: item.type })}
-              message={t(
-                'Are you sure you want to delete "{name}"? This action cannot be undone.',
-                { name: item.name },
-              )}
+              message={t('Deleting "{name}" cannot be undone.', {
+                name: item.name,
+              })}
               mutationFn={async () => onDelete()}
               entityName={item.type}
+              buttonText={t('Delete')}
             >
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
@@ -349,7 +352,6 @@ const RowItemDetails = ({ item }: { item: TreeItem }) => {
           trigger={flow.version.trigger}
           maxNumberOfIconsToShow={3}
           size="xs"
-          circle={false}
         />
       );
     }

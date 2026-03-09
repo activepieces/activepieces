@@ -18,6 +18,21 @@ import { tablesApi } from '../api/tables-api';
 const queryKeys = (searchParams: URLSearchParams, projectId: string) => {
   return ['tables', searchParams.toString(), projectId];
 };
+export const tableMutations = {
+  useRenameTable: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: async ({
+        tableId,
+        name,
+      }: {
+        tableId: string;
+        name: string;
+      }) => tablesApi.update(tableId, { name }),
+      onSuccess,
+    });
+  },
+};
+
 export const tableHooks = {
   useTables: (limit?: number) => {
     const projectId = authenticationSession.getProjectId() ?? '';
