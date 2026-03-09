@@ -262,11 +262,14 @@ export function DataTable<
     });
   }, []);
 
-  useDeepCompareEffect(() => {
-    onSelectedRowsChange?.(
-      table.getSelectedRowModel().rows.map((row) => row.original),
-    );
-  }, [table.getSelectedRowModel().rows]);
+  const rowSelection = table.getState().rowSelection;
+  const selectedRowOriginals = React.useMemo(
+    () => table.getSelectedRowModel().rows.map((row) => row.original),
+    [rowSelection],
+  );
+  useEffect(() => {
+    onSelectedRowsChange?.(selectedRowOriginals);
+  }, [selectedRowOriginals]);
 
   useEffect(() => {
     if (hidePagination) {
@@ -683,9 +686,7 @@ export function DataTable<
       )}
       {bulkActions.length > 0 && (
         <DataTableBulkActions
-          selectedRows={table
-            .getSelectedRowModel()
-            .rows.map((row) => row.original)}
+          selectedRows={selectedRowOriginals}
           actions={bulkActions}
           resetSelection={resetSelection}
         />

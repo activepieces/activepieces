@@ -16,8 +16,20 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider hoverMode={true} defaultOpen={false}>
       {!embedState.isEmbedded && <ProjectDashboardSidebar />}
       <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div className={cn("flex-1 flex flex-col overflow-hidden", !embedState.isEmbedded && "p-1.5")}>
-          <div className={cn("flex flex-col h-full bg-background overflow-hidden", embedState.isEmbedded ? "border-l" : "rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border")}>
+        <div
+          className={cn(
+            'flex-1 flex flex-col overflow-hidden',
+            !embedState.isEmbedded && 'p-1.5',
+          )}
+        >
+          <div
+            className={cn(
+              'flex flex-col h-full bg-background overflow-hidden',
+              embedState.isEmbedded
+                ? 'border-l'
+                : 'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+            )}
+          >
             {children}
           </div>
         </div>
