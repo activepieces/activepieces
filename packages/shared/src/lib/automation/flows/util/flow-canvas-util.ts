@@ -1,8 +1,6 @@
 import { FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
 import { FlowTrigger } from '../triggers/trigger'
 
-// Layout constants shared between backend (MCP ap_flow_structure) and frontend canvas.
-// If these values change, both consumers are updated automatically.
 export const FLOW_CANVAS_STEP_HEIGHT = 60
 export const FLOW_CANVAS_STEP_WIDTH = 232
 export const FLOW_CANVAS_VSPACE = 60
@@ -133,7 +131,6 @@ export const flowCanvasUtils = {
     /**
      * Compute canvas (x, y) positions for every step in a flow.
      * Positions match the frontend canvas layout algorithm.
-     * SOURCE: packages/web/src/app/builder/flow-canvas/utils/flow-canvas-utils.ts
      */
     computeStepPositions(trigger: FlowTrigger): Map<string, { x: number, y: number }> {
         const positions = new Map<string, { x: number, y: number }>()
