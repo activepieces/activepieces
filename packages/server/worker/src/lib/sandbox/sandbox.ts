@@ -185,14 +185,9 @@ export function createSandbox(
             connectedSocket?.disconnect()
             connectedSocket = null
             engineClient = null
-            await new Promise<void>((resolve) => {
-                if (io) {
-                    io.close(() => resolve())
-                }
-                else {
-                    resolve()
-                }
-            })
+            if (io) {
+                await io.close()
+            }
             io = null
             httpServer = null
         },
