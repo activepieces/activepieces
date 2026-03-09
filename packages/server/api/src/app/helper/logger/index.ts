@@ -1,13 +1,13 @@
 import { FastifyBaseLogger } from 'fastify'
 import pino, { Level, Logger } from 'pino'
-import 'pino-loki'
-import { createHyperDXTransport, HyperDXCredentials } from './hyperdx-pino'
-import { createLokiTransport, LokiCredentials } from './loki-pino'
+import { AppSystemProp, environmentVariables } from '../system/system-props'
+import { transportProviders } from './transports'
+import { resolveTransport } from './transports/transport-provider'
 
 export const pinoLogging = {
-    initLogger: (loggerLevel: Level | undefined, logPretty: boolean, loki: LokiCredentials, hyperdx: HyperDXCredentials): Logger => {
-        const level: Level = loggerLevel ?? 'info'
-        const pretty = logPretty ?? false
+    initLogger: (): Logger => {
+        const level: Level = (environmentVariables.getEnvironment(AppSystemProp.LOG_LEVEL) as Level) ?? 'info'
+        const pretty = environmentVariables.getEnvironment(AppSystemProp.LOG_PRETTY) === 'true'
 
         if (pretty) {
             return pino({
@@ -22,7 +22,7 @@ export const pinoLogging = {
                 },
             })
         }
-        
+
         const defaultTargets = [
             {
                 target: 'pino/file',
@@ -31,17 +31,11 @@ export const pinoLogging = {
             },
         ]
 
-        const hyperdxLogger = createHyperDXTransport(level, defaultTargets, hyperdx)
-        if (hyperdxLogger) {
-            return hyperdxLogger
+        const transportLogger = resolveTransport(transportProviders, level, defaultTargets)
+        if (transportLogger) {
+            return transportLogger
         }
 
-        const lokiLogger = createLokiTransport(level, defaultTargets, loki)
-        if (lokiLogger) {
-            return lokiLogger
-        }
-
-        // Default logger
         return pino({
             level,
             transport: {

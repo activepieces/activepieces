@@ -95,6 +95,8 @@ export const WorkerSettingsResponse = z.object({
     LOKI_PASSWORD: z.string().optional(),
     LOKI_URL: z.string().optional(),
     LOKI_USERNAME: z.string().optional(),
+    BETTERSTACK_HOST: z.string().optional(),
+    BETTERSTACK_TOKEN: z.string().optional(),
     OTEL_ENABLED: z.boolean(),
     HYPERDX_TOKEN: z.string().optional(),
     FILE_STORAGE_LOCATION: z.string(),
