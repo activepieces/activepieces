@@ -27,6 +27,14 @@ export const vercel = createPiece({
     createCustomApiCallAction({
       auth: vercelAuth,
       baseUrl: () => 'https://api.vercel.com',
+      description:
+        'Make a custom API call to Vercel. The Authorization header is injected automatically. If your connection uses Team ID or Team Slug, add `teamId` or `slug` manually in the URL or Query Parameters for team-scoped requests.',
+      props: {
+        queryParams: {
+          description:
+            'Optional query parameters. For team-scoped requests, manually include `teamId` or `slug` here when needed.',
+        },
+      },
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.props.token}`,
       }),
