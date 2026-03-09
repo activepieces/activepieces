@@ -16,7 +16,6 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { StepStatusIcon, flowRunUtils } from '@/features/flow-runs';
-import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
@@ -151,9 +150,9 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn(
-              'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center justify-center px-2 py-1',
-              flowRunUtils.getStatusContainerClassName(config.variant),
+            className={flowRunUtils.getStatusContainerClassName(
+              config.variant,
+              true,
             )}
           >
             {config.icon}
