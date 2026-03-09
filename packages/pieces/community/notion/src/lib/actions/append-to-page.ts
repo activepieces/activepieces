@@ -1,12 +1,11 @@
 import {
   createAction,
-  OAuth2PropertyValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 
 import { notionAuth } from '../auth';
-import { notionCommon } from '../common';
+import { getNotionToken, notionCommon } from '../common';
 import { markdownToBlocks } from '@tryfabric/martian';
 import { BlockObjectRequest } from '@notionhq/client/build/src/api-endpoints';
 
@@ -28,7 +27,7 @@ export const appendToPage = createAction({
     const { pageId, content } = context.propsValue;
 
     const notion = new Client({
-      auth: (context.auth as OAuth2PropertyValue).access_token,
+      auth: getNotionToken(context.auth),
       notionVersion: '2022-02-22',
     });
 
