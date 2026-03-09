@@ -4,18 +4,17 @@ import { projectService } from '../project/project-service'
 import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 
-export const handshakeHandler = (log: FastifyBaseLogger) => ({
+export const webhookHandshake = {
     async handleHandshakeRequest(params: HandleHandshakeRequestParams): Promise<WebhookHandshakeResponse | null> {
-        const { payload, handshakeConfiguration } = params
+        const { payload, handshakeConfiguration, logger } = params
 
         if (!isHandshakeRequest({ payload, handshakeConfiguration })) {
             return null
         }
 
-       
-        const platformId = await projectService(log).getPlatformId(params.projectId)
+        const platformId = await projectService(logger).getPlatformId(params.projectId)
 
-        const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>>({
+        const engineHelperResponse = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.HANDSHAKE>>>({
             jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.HANDSHAKE,
             flowId: params.flowId,
@@ -31,11 +30,12 @@ export const handshakeHandler = (log: FastifyBaseLogger) => ({
         }
         return engineHelperResponse.response?.response ?? null
     },
-    async getWebhookHandshakeConfiguration(triggerSource: TriggerSource | null): Promise<WebhookHandshakeConfiguration | null> {
+    async getWebhookHandshakeConfiguration(params: GetWebhookHandshakeConfigurationParams): Promise<WebhookHandshakeConfiguration | null> {
+        const { triggerSource, logger } = params
         if (isNil(triggerSource) || isNil(triggerSource.pieceName) || isNil(triggerSource.pieceVersion) || isNil(triggerSource.triggerName) || isNil(triggerSource.projectId)) {
             return null
         }
-        const pieceTrigger = await triggerUtils(log).getPieceTriggerByName({
+        const pieceTrigger = await triggerUtils(logger).getPieceTriggerByName({
             pieceName: triggerSource.pieceName,
             pieceVersion: triggerSource.pieceVersion,
             triggerName: triggerSource.triggerName,
@@ -46,10 +46,9 @@ export const handshakeHandler = (log: FastifyBaseLogger) => ({
         }
         return pieceTrigger?.handshakeConfiguration ?? null
     },
-})  
+}
 
-
-function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
+export function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
     const { payload, handshakeConfiguration } = params
 
     if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy) || isNil(handshakeConfiguration.paramName)) {
@@ -87,6 +86,12 @@ type HandleHandshakeRequestParams = {
     flowVersionId: FlowVersionId
     projectId: ProjectId
     handshakeConfiguration: WebhookHandshakeConfiguration | null
+    logger: FastifyBaseLogger
+}
+
+type GetWebhookHandshakeConfigurationParams = {
+    triggerSource: TriggerSource | null
+    logger: FastifyBaseLogger
 }
 
 type IsHandshakeRequestParams = {

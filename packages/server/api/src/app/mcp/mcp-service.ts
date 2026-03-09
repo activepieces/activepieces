@@ -6,8 +6,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
-import { WebhookFlowVersionToRun } from '../webhooks/webhook-handler'
-import { webhookService } from '../webhooks/webhook.service'
+import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpServerEntity } from './mcp-entity'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
