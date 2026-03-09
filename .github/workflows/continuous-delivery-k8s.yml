@@ -2,7 +2,7 @@ name: Continuous Delivery — K8s (Hetzner)
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/worker-v2]
   workflow_dispatch:
     inputs:
       action:
