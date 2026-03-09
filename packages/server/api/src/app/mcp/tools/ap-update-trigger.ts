@@ -55,6 +55,7 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
                 name: flow.version.trigger.name,
                 displayName,
                 valid: false,
+                lastUpdatedDate: new Date().toISOString(),
                 type: FlowTriggerType.PIECE,
                 settings: {
                     pieceName,
