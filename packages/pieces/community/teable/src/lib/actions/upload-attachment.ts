@@ -64,7 +64,7 @@ export const uploadAttachmentAction = createAction({
       form.append('fileUrl', file);
     } else {
       const apFile = file as ApFile;
-      form.append('file', new Blob([new Uint8Array(apFile.data)]), apFile.filename);
+      form.append('file', new Blob([new Uint8Array(apFile.data)], { type: apFile.extension }), apFile.filename);
     }
 
     const result = await httpClient.sendRequest({
