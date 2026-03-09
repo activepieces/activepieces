@@ -21,6 +21,11 @@ const ORACLE_TEMP_ZIP = path.join(os.tmpdir(), 'oracle-instantclient.zip');
 const ORACLE_INSTANT_CLIENT_URL =
   'https://download.oracle.com/otn_software/linux/instantclient/2326100/instantclient-basic-linux.x64-23.26.1.0.0.zip';
 
+// libaio1 Debian package — update version/hash when needed:
+// https://packages.debian.org/bullseye/libaio1
+const LIBAIO_DEB_ARCH = process.arch === 'arm64' ? 'arm64' : 'amd64';
+const LIBAIO_DEB_URL = `https://ftp.debian.org/debian/pool/main/liba/libaio/libaio1_0.3.112-9_${LIBAIO_DEB_ARCH}.deb`;
+
 // patchelf GitHub release — update version here when needed:
 // https://github.com/NixOS/patchelf/releases
 const PATCHELF_VERSION = '0.18.0';
@@ -130,6 +135,60 @@ async function ensurePatchelf(): Promise<string> {
 }
 
 /**
+ * Ensures libaio.so.1 is present in libDir — required by Oracle Instant Client.
+ * Uses system libaio if available, otherwise downloads the Debian package and
+ * extracts libaio.so.1 directly into libDir (no root required).
+ * Works together with the RPATH=$ORIGIN patchelf strategy.
+ */
+async function ensureLibaio(libDir: string): Promise<void> {
+  // Already present in the Oracle lib dir (previously extracted)
+  if (fs.existsSync(path.join(libDir, 'libaio.so.1'))) return;
+
+  // Use system libaio if already installed
+  const systemPaths = [
+    '/usr/lib/x86_64-linux-gnu/libaio.so.1',
+    '/usr/lib/aarch64-linux-gnu/libaio.so.1',
+    '/lib/x86_64-linux-gnu/libaio.so.1',
+    '/lib/aarch64-linux-gnu/libaio.so.1',
+    '/usr/lib64/libaio.so.1',
+    '/lib64/libaio.so.1',
+  ];
+  const systemLib = systemPaths.find((p) => fs.existsSync(p));
+  if (systemLib) {
+    console.log(`[oracle] libaio.so.1 found at ${systemLib}. Symlinking into libDir...`);
+    fs.symlinkSync(systemLib, path.join(libDir, 'libaio.so.1'));
+    return;
+  }
+
+  // Download the Debian package and extract libaio.so.1 (no root needed)
+  console.log('[oracle] libaio.so.1 not found. Downloading Debian package...');
+  const debPath = path.join(os.tmpdir(), 'libaio1.deb');
+  const extractDir = path.join(os.tmpdir(), 'libaio1-extract');
+
+  await downloadFile(LIBAIO_DEB_URL, debPath);
+
+  fs.mkdirSync(extractDir, { recursive: true });
+  execSync(`dpkg-deb --extract "${debPath}" "${extractDir}"`, { stdio: 'pipe' });
+
+  const extracted = [
+    `${extractDir}/usr/lib/x86_64-linux-gnu/libaio.so.1`,
+    `${extractDir}/usr/lib/aarch64-linux-gnu/libaio.so.1`,
+    `${extractDir}/lib/x86_64-linux-gnu/libaio.so.1`,
+    `${extractDir}/lib/aarch64-linux-gnu/libaio.so.1`,
+  ].find((p) => fs.existsSync(p));
+
+  if (!extracted) {
+    throw new Error('[oracle] libaio.so.1 not found in downloaded package.');
+  }
+
+  fs.copyFileSync(extracted, path.join(libDir, 'libaio.so.1'));
+  console.log('[oracle] libaio.so.1 extracted into Oracle lib dir.');
+
+  try { fs.rmSync(extractDir, { recursive: true }); } catch { /* ignore */ }
+  try { fs.unlinkSync(debPath); } catch { /* ignore */ }
+}
+
+/**
  * Makes Oracle libs discoverable by the OS dynamic linker.
  *
  * Problem: libDir only tells dlopen where to find libclntsh.so.
@@ -214,6 +273,7 @@ export async function ensureOracleClient(thickMode: boolean): Promise<void> {
   }
 
   if (!oracleClientInitialized) {
+    await ensureLibaio(libDir);
     await registerOracleLibs(libDir);
     oracledb.initOracleClient({ libDir });
     oracleClientInitialized = true;
