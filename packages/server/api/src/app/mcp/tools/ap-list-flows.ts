@@ -11,6 +11,8 @@ export const apListFlowsTool = (mcp: McpServer, log: FastifyBaseLogger): McpTool
             try {
                 const flows = await flowService(log).list({
                     projectIds: [mcp.projectId],
+                    cursorRequest: null,
+                    limit: 1000000,
                 })
                 return {
                     content: [{

@@ -50,6 +50,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
+            const totalCount = pieces.length
             const piecesToEnrich = pieces.slice(0, 50)
             const enrichedPieces = await Promise.all(piecesToEnrich.map(async (piece) => {
                 const base: Record<string, unknown> = {
@@ -84,7 +85,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             }))
 
             return {
-                content: [{ type: 'text', text: `✅ Successfully listed pieces:\n${JSON.stringify(enrichedPieces)}` }],
+                content: [{ type: 'text', text: `✅ Successfully listed pieces (showing ${piecesToEnrich.length} of ${totalCount} — use searchQuery to narrow results):\n${JSON.stringify(enrichedPieces)}` }],
             }
         },
     }
