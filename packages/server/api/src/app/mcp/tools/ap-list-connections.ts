@@ -50,25 +50,33 @@ export const apListConnectionsTool = (mcp: McpServer, log: FastifyBaseLogger): M
             status: listConnectionsSchema.shape.status,
         },
         execute: async (args) => {
-            const params = listConnectionsSchema.parse(args ?? {})
-            const project = await projectService(log).getOneOrThrow(mcp.projectId)
-            const connections = await appConnectionService(log).list({
-                projectId: params.onlyProjectConnections ? mcp.projectId : null,
-                platformId: project.platformId,
-                cursorRequest: null,
-                scope: params.onlyProjectConnections ? AppConnectionScope.PROJECT : undefined,
-                displayName: params.displayName,
-                status: params.status,
-                pieceName: params.pieceName,
-                limit: 200,
-                externalIds: undefined,
-            })
-            const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status}`)
-            return {
-                content: [{
-                    type: 'text',
-                    text: `✅ Listed ${lines.length} connection(s):\n${lines.join('\n')}`,
-                }],
+            try {
+                const params = listConnectionsSchema.parse(args ?? {})
+                const project = await projectService(log).getOneOrThrow(mcp.projectId)
+                const connections = await appConnectionService(log).list({
+                    projectId: params.onlyProjectConnections ? mcp.projectId : null,
+                    platformId: project.platformId,
+                    cursorRequest: null,
+                    scope: params.onlyProjectConnections ? AppConnectionScope.PROJECT : undefined,
+                    displayName: params.displayName,
+                    status: params.status,
+                    pieceName: params.pieceName,
+                    limit: 200,
+                    externalIds: undefined,
+                })
+                const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status}`)
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `✅ Listed ${lines.length} connection(s):\n${lines.join('\n')}`,
+                    }],
+                }
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
+                return {
+                    content: [{ type: 'text', text: `❌ Failed to list connections: ${message}` }],
+                }
             }
         },
     }

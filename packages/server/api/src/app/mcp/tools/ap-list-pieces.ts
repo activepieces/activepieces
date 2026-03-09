@@ -89,7 +89,7 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }))
 
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully listed pieces (showing ${piecesToEnrich.length} of ${totalCount} — use searchQuery to narrow results):\n${JSON.stringify(enrichedPieces)}` }],
+                    content: [{ type: 'text', text: `✅ Successfully listed pieces${totalCount > piecesToEnrich.length ? ` (showing ${piecesToEnrich.length} of ${totalCount} — use searchQuery to narrow results)` : ''}:\n${JSON.stringify(enrichedPieces)}` }],
                 }
             }
             catch (err) {

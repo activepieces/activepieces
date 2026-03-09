@@ -8,6 +8,9 @@ export class AddEnabledToolsToMcpServer1772027509096 implements MigrationInterfa
             ALTER TABLE "mcp_server"
             ADD "enabledTools" jsonb
         `)
+        // Existing rows will have enabledTools = null.
+        // The runtime treats null as "all tools enabled" for backward compatibility
+        // (see mcp-service.ts: mcp.enabledTools ?? ALL_CONTROLLABLE_TOOL_NAMES).
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
