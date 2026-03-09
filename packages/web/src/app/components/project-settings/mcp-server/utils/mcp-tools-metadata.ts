@@ -1,5 +1,9 @@
-export type ToolMeta = { name: string; description: string }
-export type ToolCategory = { label: string; tools: ToolMeta[]; locked?: boolean }
+export type ToolMeta = { name: string; description: string };
+export type ToolCategory = {
+  label: string;
+  tools: ToolMeta[];
+  locked?: boolean;
+};
 
 export const TOOL_CATEGORIES: ToolCategory[] = [
   {
@@ -91,8 +95,8 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
       },
     ],
   },
-]
+];
 
 export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = TOOL_CATEGORIES.filter(
   (c) => !c.locked,
-).flatMap((c) => c.tools.map((t) => t.name))
+).flatMap((c) => c.tools.map((t) => t.name));

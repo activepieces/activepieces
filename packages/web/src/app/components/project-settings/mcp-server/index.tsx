@@ -1,8 +1,6 @@
 import { McpServerStatus } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { Badge } from '@/components/ui/badge';
-
 import {
   Field,
   FieldContent,
@@ -10,6 +8,7 @@ import {
   FieldLabel,
 } from '@/components/custom/field';
 import { LoadingSpinner } from '@/components/custom/spinner';
+import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -74,11 +73,17 @@ export const McpServerSettings = () => {
               <McpCredentials mcpServer={mcpServer} />
             </TabsContent>
 
-            <TabsContent value="tools" className="mt-4 space-y-6 pb-6" tabIndex={-1}>
+            <TabsContent
+              value="tools"
+              className="mt-4 space-y-6 pb-6"
+              tabIndex={-1}
+            >
               <div>
                 <h3 className="font-semibold text-base mb-1 flex items-center gap-2">
                   {t('Internal Tools')}
-                  <Badge variant="outline" className="text-xs">{t('Beta')}</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {t('Beta')}
+                  </Badge>
                 </h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   {t(

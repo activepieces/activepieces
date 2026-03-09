@@ -5,14 +5,18 @@ import { useEffect, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { mcpHooks } from './utils/mcp-hooks';
 import {
   ALL_CONTROLLABLE_TOOL_NAMES,
   TOOL_CATEGORIES,
 } from './utils/mcp-tools-metadata';
-import { mcpHooks } from './utils/mcp-hooks';
 
 type McpToolsProps = {
   mcpServer: PopulatedMcpServer;
@@ -82,10 +86,10 @@ export function McpTools({ mcpServer }: McpToolsProps) {
                 </Tooltip>
               ) : (
                 <Checkbox
-                  checked={allChecked ? true : someChecked ? 'indeterminate' : false}
-                  onCheckedChange={(v) =>
-                    toggleCategory(toolNames, v === true)
+                  checked={
+                    allChecked ? true : someChecked ? 'indeterminate' : false
                   }
+                  onCheckedChange={(v) => toggleCategory(toolNames, v === true)}
                   aria-label={t('Select all in {{category}}', {
                     category: category.label,
                   })}
@@ -123,7 +127,9 @@ export function McpTools({ mcpServer }: McpToolsProps) {
                     )}
                     <label
                       htmlFor={category.locked ? undefined : tool.name}
-                      className={`flex flex-col gap-0.5 ${!category.locked ? 'cursor-pointer' : ''}`}
+                      className={`flex flex-col gap-0.5 ${
+                        !category.locked ? 'cursor-pointer' : ''
+                      }`}
                     >
                       <span className="text-sm font-mono font-medium">
                         {tool.name}
