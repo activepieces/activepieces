@@ -236,7 +236,7 @@ export const reportFieldChanged = createTrigger({
                         employeeId,
                         employeeName,
                         fieldName: fieldToMonitor,
-                        oldValue: removed[i] ?? '',
+                        oldValue: removed[i] ?? lastValues[lastValues.length - 1] ?? '',
                         newValue: added[i],
                         changedAt: dayjs().toISOString(),
                         employee,
