@@ -1,11 +1,24 @@
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
   Property,
   DynamicPropsValue,
 } from '@activepieces/pieces-framework';
+import { AppConnectionType } from '@activepieces/shared';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from './models';
 import { notionAuth } from '../auth';
+
+export type NotionAuthValue = AppConnectionValueForAuthProperty<
+  typeof notionAuth
+>;
+
+export function getNotionToken(auth: NotionAuthValue): string {
+  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+    return auth.props.accessToken;
+  }
+  return getAccessTokenOrThrow(auth);
+}
 
 export const notionCommon = {
   baseUrl: 'https://api.notion.com/v1',
@@ -25,7 +38,7 @@ export const notionCommon = {
         };
       }
       const notion = new Client({
-        auth: (auth as OAuth2PropertyValue).access_token,
+        auth: getNotionToken(auth as NotionAuthValue),
         notionVersion: '2022-02-22',
       });
       const databases = await notion.search({
@@ -61,7 +74,7 @@ export const notionCommon = {
         };
       }
       const notion = new Client({
-        auth: (auth as OAuth2PropertyValue).access_token,
+        auth: getNotionToken(auth as NotionAuthValue),
         notionVersion: '2022-02-22',
       });
       const { results } = await notion.databases.query({
@@ -99,7 +112,7 @@ export const notionCommon = {
 
       try {
         const notion = new Client({
-          auth: (auth as OAuth2PropertyValue).access_token,
+          auth: getNotionToken(auth as NotionAuthValue),
           notionVersion: '2022-02-22',
         });
 
@@ -156,7 +169,7 @@ export const notionCommon = {
       const fields: DynamicPropsValue = {};
       try {
         const notion = new Client({
-          auth: (auth as OAuth2PropertyValue).access_token,
+          auth: getNotionToken(auth as NotionAuthValue),
           notionVersion: '2022-02-22',
         });
         const { properties } = await notion.databases.retrieve({
@@ -237,7 +250,7 @@ export const notionCommon = {
       const fields: DynamicPropsValue = {};
       try {
         const notion = new Client({
-          auth: (auth as OAuth2PropertyValue).access_token,
+          auth: getNotionToken(auth as NotionAuthValue),
           notionVersion: '2022-02-22',
         });
         const { properties } = await notion.databases.retrieve({
@@ -291,7 +304,7 @@ export const notionCommon = {
           options: [],
         };
       }
-      const pages = await getPages(auth as OAuth2PropertyValue);
+      const pages = await getPages(auth as NotionAuthValue);
 
       return {
         placeholder: 'Select a page',
@@ -308,7 +321,7 @@ export const notionCommon = {
 };
 
 export async function getPages(
-  auth: OAuth2PropertyValue,
+  auth: NotionAuthValue,
   search?: {
     editedAfter?: Date;
     createdAfter?: Date;
@@ -319,7 +332,7 @@ export async function getPages(
   }
 ): Promise<any[]> {
   const notion = new Client({
-    auth: auth.access_token,
+    auth: getNotionToken(auth),
     notionVersion: '2022-02-22',
   });
 
