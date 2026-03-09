@@ -1,0 +1,88 @@
+name: Continuous Delivery — K8s (Hetzner)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - deploy-staging
+          - deploy-staging-skip-freeze
+
+jobs:
+  check-freeze:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      frozen: ${{ steps.check.outputs.frozen }}
+    steps:
+      - name: Check staging freeze window (5 PM - 9 AM UTC)
+        id: check
+        run: |
+          HOUR=$(date -u +%H)
+          if [ "$HOUR" -ge 17 ] || [ "$HOUR" -lt 9 ]; then
+            echo "Staging is frozen (current UTC hour: $HOUR). Skipping deploy."
+            echo "frozen=true" >> $GITHUB_OUTPUT
+          else
+            echo "frozen=false" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-hetzner:
+    needs: [check-freeze]
+    if: |
+      always() &&
+      ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
+       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-hetzner
+      cancel-in-progress: false   # never cancel mid-flight helm upgrade
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: set-tag
+        run: |
+          RELEASE=$(node --print "require('./package.json').version")
+          echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.HETZNER_KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Update Helm dependencies
+        run: helm dependency update deploy/activepieces-helm/
+
+      - name: Deploy APP
+        run: |
+          helm upgrade --install activepieces deploy/activepieces-helm/ \
+            --namespace activepieces \
+            --values deploy/stg-values.yaml \
+            --values deploy/stg-hetzner-values.yaml \
+            --set image.tag=${{ steps.set-tag.outputs.image_tag }} \
+            --wait --timeout 5m
+
+      - name: Deploy WORKER
+        run: |
+          helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
+            --namespace activepieces \
+            --values deploy/stg-worker-values.yaml \
+            --values deploy/stg-hetzner-worker-values.yaml \
+            --set image.tag=${{ steps.set-tag.outputs.image_tag }} \
+            --wait --timeout 5m
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/activepieces -n activepieces --timeout=120s
+          kubectl rollout status deployment/activepieces-worker -n activepieces --timeout=120s

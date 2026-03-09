@@ -138,7 +138,15 @@ activepieces:
   # Execution mode for flows - see: https://www.activepieces.com/docs/install/architecture/workers
   # Options: SANDBOX_CODE_ONLY, UNSANDBOXED
   executionMode: "SANDBOX_CODE_ONLY"
-  
+
+  # Container type: WORKER_AND_APP (default), APP, or WORKER
+  # Use APP + separate WORKER releases for independent scaling
+  containerType: ""
+
+  # Enable cluster mode for multiple API replicas sharing the same Redis/Postgres
+  # Required when running APP and WORKER as separate deployments
+  clusterMode: false
+
   # Environment: prod or dev
   environment: "prod"
   

@@ -1,0 +1,90 @@
+# ============================================================================
+# Activepieces — Cloud-agnostic staging base (APP)
+# Apply before cloud-specific overrides:
+#   helm upgrade --install activepieces deploy/activepieces-helm/ \
+#     --values deploy/stg-values.yaml \
+#     --values deploy/stg-hetzner-values.yaml
+# ============================================================================
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/activepieces/activepieces-cloud
+  tag: "0.79.2"       # reference only — CI always overrides via --set image.tag=
+  pullPolicy: Always  # always pull so new digests are fetched even on same tag
+
+imagePullSecrets:
+  - name: ghcr-pull-secret
+
+activepieces:
+  edition: "ce"
+  executionMode: "UNSANDBOXED"
+  containerType: "APP"
+  clusterMode: true
+  environment: "prod"
+  logLevel: "info"
+  logPretty: false
+  enableFlowOnPublish: true
+  telemetryEnabled: true
+  # frontendUrl set in cloud-specific override
+
+# External PostgreSQL (bundled subchart disabled)
+postgresql:
+  enabled: false
+  port: 5432
+  useSSL: false
+  auth:
+    database: "activepieces"
+    username: "postgres"
+    externalSecret:
+      name: "activepieces-db-secret"
+      key: "password"
+  # host set in cloud-specific override
+
+# External Redis (bundled subchart disabled)
+redis:
+  enabled: false
+  port: 6379
+  type: "standalone"
+  auth:
+    enabled: true
+    externalSecret:
+      name: "activepieces-redis-secret"
+      key: "password"
+  # host set in cloud-specific override
+
+# JWT and encryption keys managed by kubernetes-secret-generator subchart
+kubernetes-secret-generator:
+  enabled: true
+
+# S3 file storage
+s3:
+  enabled: true
+  useSignedUrls: true
+  # bucket, region, accessKeyId, secretAccessKey set in cloud-specific override
+
+# nginx-ingress with cert-manager TLS
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  # hosts and tls set in cloud-specific override
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "2"
+    memory: "2Gi"

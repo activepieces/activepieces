@@ -67,7 +67,7 @@ spec:
               value: {{ .Values.activepieces.devPieces | quote }}
             {{- end }}
             {{- if .Values.activepieces.internalUrl }}
-            - name: AP_INTERNAL_URL
+            - name: AP_API_URL
               value: {{ .Values.activepieces.internalUrl | quote }}
             {{- end }}
             {{- if .Values.activepieces.maxConcurrentJobsPerProject }}
@@ -145,12 +145,12 @@ spec:
             - name: AP_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "activepieces.fullname" . }}-secrets
+                  name: {{ .Values.activepieces.encryptionSecretName | default (printf "%s-secrets" (include "activepieces.fullname" .)) }}
                   key: encryption-key
             - name: AP_JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "activepieces.fullname" . }}-jwt-secret
+                  name: {{ .Values.activepieces.jwtSecretName | default (printf "%s-jwt-secret" (include "activepieces.fullname" .)) }}
                   key: jwt-secret
             {{- if .Values.activepieces.environment }}
             - name: AP_ENVIRONMENT
@@ -163,6 +163,14 @@ spec:
             {{- if .Values.activepieces.executionMode }}
             - name: AP_EXECUTION_MODE
               value: {{ .Values.activepieces.executionMode | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.containerType }}
+            - name: AP_CONTAINER_TYPE
+              value: {{ .Values.activepieces.containerType | quote }}
+            {{- end }}
+            {{- if .Values.activepieces.clusterMode }}
+            - name: AP_CLUSTER_MODE
+              value: {{ .Values.activepieces.clusterMode | quote }}
             {{- end }}
             {{- if .Values.activepieces.telemetryEnabled }}
             - name: AP_TELEMETRY_ENABLED
@@ -367,6 +375,18 @@ spec:
             {{- end }}
             {{- if .Values.s3.enabled }}
             # S3 configuration
+            {{- if .Values.s3.externalSecret }}
+            - name: AP_S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.externalSecret.name | quote }}
+                  key: {{ .Values.s3.externalSecret.accessKeyIdKey | default "accessKeyId" | quote }}
+            - name: AP_S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.externalSecret.name | quote }}
+                  key: {{ .Values.s3.externalSecret.secretAccessKeyKey | default "secretAccessKey" | quote }}
+            {{- else }}
             {{- if .Values.s3.accessKeyId }}
             - name: AP_S3_ACCESS_KEY_ID
               value: {{ .Values.s3.accessKeyId | quote }}
@@ -374,6 +394,7 @@ spec:
             {{- if .Values.s3.secretAccessKey }}
             - name: AP_S3_SECRET_ACCESS_KEY
               value: {{ .Values.s3.secretAccessKey | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.s3.bucket }}
             - name: AP_S3_BUCKET
