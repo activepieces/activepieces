@@ -10,7 +10,6 @@ import {
     PieceSyncMode,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Level } from 'pino'
 import { DatabaseType } from '../../database/database-type'
 import { RedisType } from '../../database/redis/types'
 import { pinoLogging } from '../logger'
@@ -23,7 +22,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
-    [AppSystemProp.CLUSTER_MODE]: 'false',
     [AppSystemProp.WORKERS]: '1',
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
     [AppSystemProp.CLOUD_AUTH_ENABLED]: 'true',
@@ -70,19 +68,7 @@ let globalLogger: FastifyBaseLogger
 export const system = {
     globalLogger(): FastifyBaseLogger {
         if (isNil(globalLogger)) {
-            const logLevel: Level = this.get(AppSystemProp.LOG_LEVEL) ?? 'info'
-            const logPretty = this.getBoolean(AppSystemProp.LOG_PRETTY) ?? false
-            const lokiUrl = this.get(AppSystemProp.LOKI_URL)
-            const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
-            const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
-            const hyperdxToken = this.get(AppSystemProp.HYPERDX_TOKEN)
-            globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
-                url: lokiUrl,
-                password: lokiPassword,
-                username: lokiUsername,
-            }, {
-                token: hyperdxToken,
-            })
+            globalLogger = pinoLogging.initLogger()
         }
         return globalLogger
     },
