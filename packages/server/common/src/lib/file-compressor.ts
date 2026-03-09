@@ -1,11 +1,9 @@
 import { promisify } from 'node:util'
-import { gzip as gzipCallback, unzip as unzipCallback, zstdCompress as zstdCompressCallback, zstdDecompress as zstdDecompressCallback } from 'node:zlib'
+import { gzip as gzipCallback, unzip as unzipCallback } from 'node:zlib'
 import { FileCompression } from '@activepieces/shared'
 
 const gzip = promisify(gzipCallback)
 const unzip = promisify(unzipCallback)
-const zstdCompress = promisify(zstdCompressCallback)
-const zstdDecompress = promisify(zstdDecompressCallback)
 
 export const fileCompressor = {
     async compress({ data, compression }: Params): Promise<Buffer> {
@@ -14,8 +12,6 @@ export const fileCompressor = {
                 return data
             case FileCompression.GZIP:
                 return gzip(data)
-            case FileCompression.ZSTD:
-                return zstdCompress(data)
         }
     },
 
@@ -25,8 +21,6 @@ export const fileCompressor = {
                 return data
             case FileCompression.GZIP:
                 return unzip(data)
-            case FileCompression.ZSTD:
-                return zstdDecompress(data)
         }
     },
 }

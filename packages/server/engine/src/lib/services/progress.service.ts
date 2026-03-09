@@ -1,5 +1,3 @@
-import { promisify } from 'node:util'
-import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { OutputContext } from '@activepieces/pieces-framework'
 import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, RunEnvironment, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
@@ -12,7 +10,6 @@ import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 
 
-const zstdCompress = promisify(zstdCompressCallback)
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
@@ -113,13 +110,12 @@ export const progressService = {
         }
         await lock.runExclusive(async () => {
             const { flowExecutorContext, engineConstants } = updateParams
-            const serialized = await logSerializer.serialize({
-                executionState: {
+            const executionState = await logSerializer.serialize({
+                executionState: {   
                     steps: flowExecutorContext.steps,
                     tags: Array.from(flowExecutorContext.tags),
                 },
             })
-            const executionState = await zstdCompress(serialized)
            
             const logsUploadUrl = engineConstants.logsUploadUrl
             if (isNil(logsUploadUrl)) {
