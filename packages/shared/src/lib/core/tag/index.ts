@@ -37,3 +37,9 @@ export const UpsertTagRequest = z.object({
 })
 
 export type UpsertTagRequest = z.infer<typeof UpsertTagRequest>
+
+export const DeleteTagRequest = z.object({
+    id: z.string(),
+})
+
+export type DeleteTagRequest = z.infer<typeof DeleteTagRequest>
