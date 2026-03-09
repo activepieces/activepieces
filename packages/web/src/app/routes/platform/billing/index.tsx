@@ -31,8 +31,10 @@ export default function Billing() {
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={t('Unlock Billing Page')}
       lockDescription={t(
-        'Upgrade to the Enterprise edition to access billing and usage management.',
+        'Switch to the Enterprise edition to access billing and usage management.',
       )}
+      lockDocumentationUrl="https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional"
+      showContactSales={false}
     >
       <BillingPageDetails />
     </LockedFeatureGuard>

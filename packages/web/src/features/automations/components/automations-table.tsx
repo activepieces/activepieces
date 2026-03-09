@@ -76,7 +76,7 @@ export const AutomationsTable = ({
   const groups = groupTreeItemsByFolder(items);
 
   return (
-    <div className="-mx-4 overflow-x-auto">
+    <div className="-mx-3 overflow-x-auto">
       <div className="min-w-[1000px]">
         <div className="flex items-center h-10 text-xs border-b border-t font-medium text-foreground bg-background">
           <div className="w-10 shrink-0 pl-4 pr-1">
@@ -92,20 +92,22 @@ export const AutomationsTable = ({
             <Type className="h-3.5 w-3.5" />
             {t('Name')}
           </div>
-          {!embedState.isEmbedded && (
-            <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5" />
-              {t('Details')}
-            </div>
-          )}
+
+          <div className="w-[230px] shrink-0 px-2 flex items-center gap-1.5">
+            <Info className="h-3.5 w-3.5" />
+            {t('Details')}
+          </div>
+
           <div className="w-[200px] shrink-0 px-2 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
             {t('Last modified')}
           </div>
-          <div className="w-[170px] shrink-0 px-2 flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5" />
-            {t('Owner')}
-          </div>
+          {!embedState.isEmbedded && (
+            <div className="w-[170px] shrink-0 px-2 flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              {t('Owner')}
+            </div>
+          )}
           <div className="w-[120px] shrink-0 px-2 flex items-center gap-1.5">
             <Activity className="h-3.5 w-3.5" />
             {t('Status')}
@@ -114,10 +116,10 @@ export const AutomationsTable = ({
         </div>
 
         {isLoading ? (
-          <div>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center h-10 px-2">
-                <Skeleton className="h-6 w-full" />
+          <div className="p-2">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="w-full h-10 mb-4 rounded-sm">
+                <Skeleton className="w-full min-h-10" />
               </div>
             ))}
           </div>
