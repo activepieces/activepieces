@@ -63,9 +63,9 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 }
             }
 
-            if (auth !== undefined && auth.includes("'")) {
+            if (auth !== undefined && auth.includes('\'')) {
                 return {
-                    content: [{ type: 'text', text: `❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.` }],
+                    content: [{ type: 'text', text: '❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.' }],
                 }
             }
 

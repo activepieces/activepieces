@@ -38,9 +38,9 @@ export const apUpdateTriggerTool = (mcp: McpServer, log: FastifyBaseLogger): Mcp
         execute: async (args) => {
             const { flowId, pieceName, pieceVersion, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
 
-            if (auth !== undefined && auth.includes("'")) {
+            if (auth !== undefined && auth.includes('\'')) {
                 return {
-                    content: [{ type: 'text', text: `❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.` }],
+                    content: [{ type: 'text', text: '❌ auth value must not contain single quotes. Use the exact externalId from ap_list_connections.' }],
                 }
             }
 
