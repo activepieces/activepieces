@@ -1,5 +1,4 @@
-import { flowStructureUtil, FlowTrigger, FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateV10AiPiecesProviderId } from './migrate-v10-ai-pieces-provider-id'
@@ -80,12 +79,3 @@ export const migrateFlowVersionTemplateList = async (flowVersions: FlowVersionTe
     }))
 }
 
-export const setLastUpdateDateForAllSteps = (trigger: FlowTrigger): FlowTrigger => {
-    const now = dayjs().toISOString()
-    return flowStructureUtil.transferStep(trigger, (step) => {
-        return {
-            ...step,
-            lastUpdatedDate: now,
-        }
-    }) as FlowTrigger
-}
