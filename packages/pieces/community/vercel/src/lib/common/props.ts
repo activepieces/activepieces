@@ -36,7 +36,6 @@ export const deploymentTargetProperty = Property.StaticDropdown({
     options: [
       { label: 'Preview', value: 'preview' },
       { label: 'Production', value: 'production' },
-      { label: 'Staging', value: 'staging' },
     ],
   },
 });
