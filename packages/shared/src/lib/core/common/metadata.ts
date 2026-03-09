@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 /**
  * Flexible key-value record type for storing arbitrary data
@@ -18,5 +18,5 @@ import { Static, Type } from '@sinclair/typebox'
  *   customField: "customValue"
  * }
  */
-export const Metadata = Type.Record(Type.String(), Type.Unknown())
-export type Metadata = Static<typeof Metadata>
+export const Metadata = z.record(z.string(), z.unknown())
+export type Metadata = z.infer<typeof Metadata>

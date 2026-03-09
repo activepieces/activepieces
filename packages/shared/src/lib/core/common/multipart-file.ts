@@ -1,14 +1,14 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 
 
-export const ApMultipartFile = Type.Object({
-    filename: Type.String(),
-    data: Type.Unknown(),
-    type: Type.Literal('file'),
-    mimetype: Type.Optional(Type.String()),
+export const ApMultipartFile = z.object({
+    filename: z.string(),
+    data: z.unknown(),
+    type: z.literal('file'),
+    mimetype: z.string().optional(),
 })
 
-export type ApMultipartFile = Static<typeof ApMultipartFile> & {
+export type ApMultipartFile = z.infer<typeof ApMultipartFile> & {
     data: Buffer
 }
 

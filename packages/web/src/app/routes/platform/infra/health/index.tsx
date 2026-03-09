@@ -1,12 +1,11 @@
 import { ApFlagId } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Cpu, HardDrive, MemoryStick, Package } from 'lucide-react';
 import React from 'react';
 import semver from 'semver';
 
-import { healthApi } from '@/api/health-api';
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
+import { healthQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { CheckItem } from './check-item';
@@ -18,10 +17,7 @@ export default function SettingsHealthPage() {
   const { data: latestVersion } = flagsHooks.useFlag<string>(
     ApFlagId.LATEST_VERSION,
   );
-  const { data: systemHealth, isPending } = useQuery({
-    queryKey: ['system-health'],
-    queryFn: () => healthApi.getSystemHealthChecks(),
-  });
+  const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
 
   const isVersionUpToDate = React.useMemo(() => {
     if (!currentVersion || !latestVersion) return false;
@@ -131,23 +127,24 @@ export default function SettingsHealthPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full gap-4">
-      <DashboardPageHeader
-        title={t('System Health Status')}
-        description={t('Check the status of your platform and its components')}
-      />
-      {technicalChecks.map((check) => (
-        <CheckItem
-          key={check.id}
-          id={check.id}
-          title={check.title}
-          isChecked={check.isChecked ?? false}
-          message={check.message}
-          loading={check.loading ?? false}
-          link={check.link}
-          icon={check.icon}
-        />
-      ))}
-    </div>
+    <CenteredPage
+      title={t('System Health Status')}
+      description={t('Check the status of your platform and its components')}
+    >
+      <div className="flex flex-col gap-4">
+        {technicalChecks.map((check) => (
+          <CheckItem
+            key={check.id}
+            id={check.id}
+            title={check.title}
+            isChecked={check.isChecked ?? false}
+            message={check.message}
+            loading={check.loading ?? false}
+            link={check.link}
+            icon={check.icon}
+          />
+        ))}
+      </div>
+    </CenteredPage>
   );
 }

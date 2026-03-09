@@ -1,14 +1,15 @@
 import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-common'
 import { ApplicationEventName, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { applicationEvents } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { authnSsoSamlService } from './authn-sso-saml-service'
 
-export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
+export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
         const { saml, platformId } = await getSamlConfigOrThrow(req, req.log)
         const loginResponse = await authnSsoSamlService(req.log).login(platformId, saml)
@@ -55,8 +56,8 @@ const AcsRequest = {
         security: securityAccess.public(),
     },
     schema: {
-        body: Type.Record(Type.String(), Type.Unknown()),
-        querystring: Type.Record(Type.String(), Type.Unknown()),
+        body: z.record(z.string(), z.unknown()),
+        querystring: z.record(z.string(), z.unknown()),
     },
 }
 

@@ -95,7 +95,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         return payload as Buffer
     })
 
-    await app.register(swagger, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await app.register(swagger as any, {
         hideUntagged: true,
         openapi: {
             servers: [

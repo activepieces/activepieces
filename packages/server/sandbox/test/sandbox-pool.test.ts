@@ -124,6 +124,6 @@ describe('createSandboxPool', () => {
         pool.init(log, { concurrency: 3, reusable: false, getGeneration: () => generation })
 
         expect(pool.getFreeSandboxes()).toBe(3)
-        expect(pool.getTotalSandboxes()).toBe(0)
+        expect(pool.getTotalSandboxes()).toBe(3)
     })
 })

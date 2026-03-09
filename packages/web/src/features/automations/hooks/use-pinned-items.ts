@@ -1,7 +1,5 @@
-import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -66,16 +64,14 @@ export function usePinnedItems() {
   );
 
   const togglePin = useCallback(
-    (itemId: string, itemName: string) => {
+    (itemId: string) => {
       setPinnedList((prev) => {
         const idx = prev.indexOf(itemId);
         let next: string[];
         if (idx !== -1) {
           next = prev.filter((id) => id !== itemId);
-          toast.success(t('"{name}" unpinned', { name: itemName }));
         } else {
           next = [itemId, ...prev];
-          toast.success(t('"{name}" pinned', { name: itemName }));
         }
         writePinnedList(projectId, userId, next);
         return next;

@@ -15,10 +15,10 @@ import {
     TemplateType,
     UpdateTemplateRequestBody,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Static, Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
@@ -29,7 +29,7 @@ import { templateService } from './template.service'
 
 const edition = system.getEdition()
 
-export const templateController: FastifyPluginAsyncTypebox = async (app) => {
+export const templateController: FastifyPluginAsyncZod = async (app) => {
     app.get('/:id', GetParams, async (request) => {
         const template = await templateService(app.log).getOne({ id: request.params.id })
         if (!isNil(template)) {
@@ -122,10 +122,10 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     
 }
 
-const GetIdParams = Type.Object({
-    id: Type.String(),
+const GetIdParams = z.object({
+    id: z.string(),
 })
-type GetIdParams = Static<typeof GetIdParams>
+type GetIdParams = z.infer<typeof GetIdParams>
 
 const GetCategoriesParams = {
     config: {

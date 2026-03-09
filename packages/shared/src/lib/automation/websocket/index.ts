@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { TriggerUpdateStatusErrorParams } from '../../core/common/activepieces-error'
 import { PopulatedFlow } from '../flows/flow'
 import { StepRunResponse } from '../flows/sample-data'
@@ -20,12 +20,12 @@ export type FlowStatusUpdatedResponse = {
     error: TriggerUpdateStatusErrorParams | undefined
 }
 
-export const BadgeAwarded = Type.Object({
-    badge: Type.String(),
-    userId: Type.String(),
+export const BadgeAwarded = z.object({
+    badge: z.string(),
+    userId: z.string(),
 })
 
-export type BadgeAwarded = Static<typeof BadgeAwarded>
+export type BadgeAwarded = z.infer<typeof BadgeAwarded>
 
 export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
 
