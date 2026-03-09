@@ -1,4 +1,3 @@
-import { memoryLock } from '@activepieces/server-utils'
 import { ConsumeJobRequest, ConsumeJobResponse, ConsumeJobResponseStatus, isNil, JobData, tryCatch } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { BullMQOtel } from 'bullmq-otel'
@@ -12,7 +11,7 @@ import { jobMigrations } from '../migrations/job-data-migrations'
 import { rateLimiterInterceptor } from './interceptors/rate-limiter-interceptor'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
 
-const DRAIN_DELAY_SECONDS = 30
+const DRAIN_DELAY_SECONDS = 15
 
 const interceptors: JobInterceptor[] = [rateLimiterInterceptor]
 const workerPromises = new Map<string, Promise<BullMQWorker>>()
@@ -112,23 +111,7 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
     async poll(platformId?: string): Promise<ConsumeJobRequest | null> {
         const queueName = platformId ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
         const worker = await ensureBullMQWorker(queueName, log)
-        let result: ConsumeJobRequest | null = null
-        try {
-            const lock = await memoryLock.acquire(`job-broker-poll-${queueName}`, DRAIN_DELAY_SECONDS * 1000)
-            try {
-                result = await tryDequeue(worker, queueName, log)
-            }
-            finally {
-                await lock.release()
-            }
-        }
-        catch (e) {
-            if (memoryLock.isTimeoutError(e)) {
-                return null
-            }
-            throw e
-        }
-        return result
+        return tryDequeue(worker, queueName, log)
     },
 
     async completeJob(input: ConsumeJobResponse & { jobId: string }): Promise<void> {

@@ -26,7 +26,7 @@ export function createSandboxForJob(params: {
     const memoryLimitMb = parseMemoryLimit(settings.SANDBOX_MEMORY_LIMIT)
     const processMaker = getProcessMaker(settings.EXECUTION_MODE, log)
 
-    const _mounts: SandboxMount[] = [
+    const baseMounts: SandboxMount[] = [
         { hostPath: getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
         { hostPath: getGlobalCodeCachePath(), sandboxPath: '/root/codes', optional: true },
     ]
@@ -39,6 +39,7 @@ export function createSandboxForJob(params: {
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
+            baseMounts,
         },
         processMaker,
         workerHandlers,
@@ -49,7 +50,7 @@ function getProcessMaker(executionMode: string, log: Logger) {
     switch (executionMode) {
         case ExecutionMode.SANDBOX_PROCESS:
         case ExecutionMode.SANDBOX_CODE_AND_PROCESS:
-            return isolateProcess(log)
+            return isolateProcess(log, getEnginePath(), getGlobalCodeCachePath())
         case ExecutionMode.UNSANDBOXED:
         case ExecutionMode.SANDBOX_CODE_ONLY:
         default:
@@ -65,6 +66,7 @@ function parseMemoryLimit(memoryLimit: string): number {
 function buildSandboxEnv(settings: ReturnType<typeof workerSettings.getSettings>): Record<string, string> {
     const env: Record<string, string> = {
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
+        NODE_PATH: '/usr/src/node_modules',
     }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {

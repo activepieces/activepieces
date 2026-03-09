@@ -45,6 +45,7 @@ export type SandboxInitOptions = {
     cpuMsPerSec: number
     timeLimitSeconds: number
     command?: string[]
+    baseMounts?: SandboxMount[]
 }
 
 export type SandboxResult = {

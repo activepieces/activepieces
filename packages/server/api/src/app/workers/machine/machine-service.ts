@@ -21,6 +21,49 @@ import { workerIdGenerator } from './worker-id-generator'
 
 dayjs.extend(utc)
 
+const settingsCache = new Map<string, Omit<WorkerSettingsResponse, 'WORKER_CACHE_ID'>>()
+
+async function buildSettingsResponse(log: FastifyBaseLogger, platformIdForDedicatedWorker?: string): Promise<Omit<WorkerSettingsResponse, 'WORKER_CACHE_ID'>> {
+    const cacheKey = platformIdForDedicatedWorker ?? '__shared__'
+    const cached = settingsCache.get(cacheKey)
+    if (cached) {
+        return cached
+    }
+    const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
+    const settings = {
+        TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+        PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+        EXECUTION_MODE: executionMode,
+        TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
+        FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+        LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
+        LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
+        ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
+        APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
+        MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
+        MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
+        SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+        SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
+        DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
+        SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
+        LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
+        LOKI_URL: system.get(AppSystemProp.LOKI_URL),
+        LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
+        BETTERSTACK_HOST: system.get(AppSystemProp.BETTERSTACK_HOST),
+        BETTERSTACK_TOKEN: system.get(AppSystemProp.BETTERSTACK_TOKEN),
+        OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
+        PUBLIC_URL: await domainHelper.getPublicUrl({
+            path: '',
+        }),
+        FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
+        S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+        EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
+        EDITION: system.getOrThrow(AppSystemProp.EDITION),
+    }
+    settingsCache.set(cacheKey, settings)
+    return settings
+}
+
 export const machineService = (log: FastifyBaseLogger) => {
     return {
         async onDisconnect(request: OnDisconnectParams): Promise<void> {
@@ -28,16 +71,14 @@ export const machineService = (log: FastifyBaseLogger) => {
                 message: 'Worker disconnected',
                 workerId: request.workerId,
             })
-            const workers = await workerMachineCache().find()
-            const worker = workers.find(w => w.id === request.workerId)
+            const worker = await workerMachineCache().findOne(request.workerId)
             if (worker && !isNil(worker.cacheId)) {
                 await workerIdGenerator.release(worker.cacheId)
             }
             await workerMachineCache().delete([request.workerId])
         },
         async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
-            const workers = await workerMachineCache().find()
-            const existingWorker = workers.find(w => w.id === request.workerId)
+            const existingWorker = await workerMachineCache().findOne(request.workerId)
 
             let cacheId: number
             if (existingWorker && !isNil(existingWorker.cacheId)) {
@@ -54,36 +95,11 @@ export const machineService = (log: FastifyBaseLogger) => {
                 information: request,
                 cacheId,
                 type,
-            })
-            const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
+            }, existingWorker)
+            const settings = await buildSettingsResponse(log, platformIdForDedicatedWorker)
             return {
+                ...settings,
                 WORKER_CACHE_ID: cacheId,
-                TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
-                PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
-                EXECUTION_MODE: executionMode,
-                TRIGGER_HOOKS_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS),
-                FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
-                LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
-                LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
-                ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
-                APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
-                MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
-                MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
-                SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
-                SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
-                DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
-                SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
-                LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
-                LOKI_URL: system.get(AppSystemProp.LOKI_URL),
-                LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
-                OTEL_ENABLED: system.get(AppSystemProp.OTEL_ENABLED) === 'true',
-                PUBLIC_URL: await domainHelper.getPublicUrl({
-                    path: '',
-                }),
-                FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
-                S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
-                EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
-                EDITION: system.getOrThrow(AppSystemProp.EDITION),
             }
         },
         async list(): Promise<WorkerMachineWithStatus[]> {

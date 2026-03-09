@@ -10,7 +10,7 @@ icon: "hammer"
 - The `GET /v1/queue-metrics` endpoint has been removed and replaced by `GET /v1/worker-machines`, which returns a list of connected workers along with their status, CPU, RAM, and disk usage.
 - `AP_WORKER_CONCURRENCY` and `AP_AGENTS_WORKER_CONCURRENCY` environment variables have been removed. Scaling is now done by adding more worker replicas.
 - The `AP_CONTAINER_TYPE` environment variable now controls which services run: `APP` (API server only), `WORKER` (worker only), or `WORKER_AND_APP` (both, default).
-- New environment variables: `AP_CLUSTER_MODE` (enables one API instance per CPU core) and `AP_WORKERS` (number of worker PM2 instances per container).
+- `AP_CLUSTER_MODE` environment variable has been removed. Use Kubernetes replicas for scaling app instead.
 
 ### Do you need to take action?
 - If you are using the `GET /v1/queue-metrics` endpoint, switch to `GET /v1/worker-machines`.

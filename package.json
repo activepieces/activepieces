@@ -73,6 +73,7 @@
     "@hookform/resolvers": "5.2.2",
     "@hyperdx/node-opentelemetry": "0.8.2",
     "@keyv/sqlite": "^3.0.0",
+    "@logtail/pino": "0.5.6",
     "@modelcontextprotocol/sdk": "1.27.1",
     "@octokit/rest": "21.1.1",
     "@openrouter/ai-sdk-provider": "2.1.1",

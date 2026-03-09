@@ -83,7 +83,7 @@ export function createSandbox(
             childProcess = await processMaker.create({
                 sandboxId,
                 command: options.command ?? [],
-                mounts,
+                mounts: [...(options.baseMounts ?? []), ...mounts],
                 env: {
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
@@ -185,14 +185,9 @@ export function createSandbox(
             connectedSocket?.disconnect()
             connectedSocket = null
             engineClient = null
-            await new Promise<void>((resolve) => {
-                if (io) {
-                    io.close(() => resolve())
-                }
-                else {
-                    resolve()
-                }
-            })
+            if (io) {
+                await io.close()
+            }
             io = null
             httpServer = null
         },

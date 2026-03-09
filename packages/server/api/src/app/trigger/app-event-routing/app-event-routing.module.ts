@@ -22,7 +22,7 @@ import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
-import { WebhookFlowVersionToRun, webhookHandler } from '../../webhooks/webhook-handler'
+import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { triggerSourceService } from '../trigger-source/trigger-source-service'
 import { appEventRoutingService } from './app-event-routing.service'
@@ -125,7 +125,7 @@ export const appEventRoutingController: FastifyPluginAsyncZod = async (
                 if (isNil(flow)) {
                     return
                 }
-                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
+                const flowVersionIdToRun = await webhookService.getFlowVersionIdToRun(WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST, flow)
                 const platformId = await projectService(request.log).getPlatformId(listener.projectId)
                 return jobQueue(request.log).add({
                     id: requestId,
