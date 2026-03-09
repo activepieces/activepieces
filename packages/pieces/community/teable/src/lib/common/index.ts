@@ -115,5 +115,5 @@ export const TeableCommon = {
 };
 
 // Re-export for convenience
-export { TeableFieldType, TeableNumericFieldTypes, TeableComputedFieldTypes };
+export { TeableFieldType, TeableComputedFieldTypes };
 
