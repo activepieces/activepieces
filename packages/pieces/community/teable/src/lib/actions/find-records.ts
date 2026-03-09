@@ -17,7 +17,7 @@ export const findRecordsAction = createAction({
     filter: Property.LongText({
       displayName: 'Filter',
       description:
-        'A filter expression for the records. Use the visual query builder at https://app.teable.io/developer/tool/query-builder to build one.',
+        'A filter expression for the records. Use the visual query builder at https://app.teable.ai/developer/tool/query-builder to build one.',
       required: false,
     }),
     cellFormat: Property.StaticDropdown({
