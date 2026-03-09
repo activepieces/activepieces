@@ -185,6 +185,8 @@ export const createDeployment = createAction({
         } else {
           throw new Error('For Bitbucket deployments, provide either Repository UUID or both Organization / Workspace and Repository Name / Slug.');
         }
+      } else {
+        throw new Error(`Unsupported Git Provider: ${String(git_type)}. Please select a valid provider.`);
       }
     }
 

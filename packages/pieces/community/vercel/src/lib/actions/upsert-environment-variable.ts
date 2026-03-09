@@ -32,7 +32,6 @@ export const upsertEnvironmentVariable = createAction({
           { label: 'Plain', value: 'plain' },
           { label: 'Sensitive', value: 'sensitive' },
           { label: 'Encrypted', value: 'encrypted' },
-          { label: 'System', value: 'system' },
         ],
       },
     }),
