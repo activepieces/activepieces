@@ -168,6 +168,10 @@ export const reportFieldChanged = createTrigger({
 
     const fieldId = fieldMap[fieldToMonitor];
 
+    if (isNil(fieldId)) {
+      throw new Error(`Field "${fieldToMonitor}" not found in report.`);
+    }
+
     // Store all field values per employee (employee may appear multiple times due to duplicate records)
     const currentState: Record<string, string[]> = {};
 
@@ -235,8 +239,28 @@ export const reportFieldChanged = createTrigger({
       for (const [employeeId, currentValues] of Object.entries(currentState)) {
         const lastValues = lastKnownState[employeeId];
 
-        // Skip new employees not seen in the previous poll
-        if (isEmpty(lastValues) || lastValues.length === 0) continue;
+        const employee = employeeMap[employeeId];
+        const employeeName =
+          employee['displayName'] ||
+          (employee['firstName'] && employee['lastName']
+            ? `${employee['firstName']} ${employee['lastName']}`
+            : 'Unknown');
+
+        // New record not seen in the previous poll — fire for each value
+        if (isEmpty(lastValues)) {
+          for (const newValue of currentValues) {
+            changes.push({
+              employeeId,
+              employeeName,
+              fieldName: fieldToMonitor,
+              oldValue: '',
+              newValue,
+              changedAt: dayjs().toISOString(),
+              employee,
+            });
+          }
+          continue;
+        }
 
         const lastSet = new Set(lastValues);
         const currentSet = new Set(currentValues);
@@ -247,13 +271,6 @@ export const reportFieldChanged = createTrigger({
 
         // Only trigger when a new value appeared
         if (added.length === 0) continue;
-
-        const employee = employeeMap[employeeId];
-        const employeeName =
-          employee['displayName'] ||
-          (employee['firstName'] && employee['lastName']
-            ? `${employee['firstName']} ${employee['lastName']}`
-            : 'Unknown');
 
         // Fire one event per new value, paired with old value if available
         for (let i = 0; i < added.length; i++) {
