@@ -78,7 +78,7 @@ export const AppearanceSection = () => {
             className="grid space-y-4 mt-4"
             onSubmit={form.handleSubmit(() => updatePlatform())}
           >
-            <div className="max-w-[600px] grid space-y-4">
+            <div className="grid space-y-4">
               <FormField
                 name="name"
                 render={({ field }) => (
