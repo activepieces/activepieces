@@ -46,10 +46,13 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
         },
         update: async ({ projectId, status, enabledTools }: UpdateParams) => {
             const mcp = await mcpServerService(log).getByProjectId(projectId)
-            await mcpServerRepository().update(mcp.id, {
+            const patch = {
                 ...spreadIfNotUndefined('status', status),
                 ...spreadIfNotUndefined('enabledTools', enabledTools),
-            })
+            }
+            if (Object.keys(patch).length > 0) {
+                await mcpServerRepository().update(mcp.id, patch)
+            }
             return mcpServerService(log).getPopulatedByProjectId(projectId)
         },
         buildServer: async ({ mcp }: BuildServerRequest): Promise<McpServer> => {
