@@ -1,6 +1,4 @@
-import {
-  createAction,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { getNotionToken, notionCommon } from '../common';
