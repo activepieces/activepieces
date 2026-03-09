@@ -246,9 +246,9 @@ export const reportFieldChanged = createTrigger({
             ? `${employee['firstName']} ${employee['lastName']}`
             : 'Unknown');
 
-        // New record not seen in the previous poll — fire for each value
+        // New record not seen in the previous poll — fire for each unique value
         if (isEmpty(lastValues)) {
-          for (const newValue of currentValues) {
+          for (const newValue of new Set(currentValues)) {
             changes.push({
               employeeId,
               employeeName,
