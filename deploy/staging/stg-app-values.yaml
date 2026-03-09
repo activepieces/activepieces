@@ -1,17 +1,16 @@
 # ============================================================================
-# Activepieces — Cloud-agnostic staging base (APP)
-# Apply before cloud-specific overrides:
+# Activepieces — Staging APP (Hetzner)
 #   helm upgrade --install activepieces deploy/activepieces-helm/ \
-#     --values deploy/stg-values.yaml \
-#     --values deploy/stg-hetzner-values.yaml
+#     --values deploy/staging/stg-app-values.yaml \
+#     --set image.tag=<tag>
 # ============================================================================
 
-replicaCount: 2
+replicaCount: 4
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
   tag: "0.79.2"       # reference only — CI always overrides via --set image.tag=
-  pullPolicy: Always  # always pull so new digests are fetched even on same tag
+  pullPolicy: Always
 
 imagePullSecrets:
   - name: ghcr-pull-secret
@@ -26,32 +25,32 @@ activepieces:
   logPretty: false
   enableFlowOnPublish: true
   telemetryEnabled: true
-  # frontendUrl set in cloud-specific override
+  frontendUrl: "https://stg.activepieces.dev"
 
 # External PostgreSQL (bundled subchart disabled)
 postgresql:
   enabled: false
   port: 5432
   useSSL: false
+  host: "10.0.1.4"
   auth:
     database: "activepieces"
     username: "postgres"
     externalSecret:
       name: "activepieces-db-secret"
       key: "password"
-  # host set in cloud-specific override
 
 # External Redis (bundled subchart disabled)
 redis:
   enabled: false
   port: 6379
   type: "standalone"
+  host: "10.0.1.5"
   auth:
     enabled: true
     externalSecret:
       name: "activepieces-redis-secret"
       key: "password"
-  # host set in cloud-specific override
 
 # JWT and encryption keys managed by kubernetes-secret-generator subchart
 kubernetes-secret-generator:
@@ -61,7 +60,13 @@ kubernetes-secret-generator:
 s3:
   enabled: true
   useSignedUrls: true
-  # bucket, region, accessKeyId, secretAccessKey set in cloud-specific override
+  bucket: "activepiecesstagingbucket"
+  region: "eu-central-1"
+  endpoint: "https://fsn1.your-objectstorage.com"
+  externalSecret:
+    name: "activepieces-s3-secret"
+    accessKeyIdKey: "accessKeyId"
+    secretAccessKeyKey: "secretAccessKey"
 
 # nginx-ingress with cert-manager TLS
 ingress:
@@ -69,13 +74,18 @@ ingress:
   className: "nginx"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  # hosts and tls set in cloud-specific override
+  hosts:
+    - host: stg.activepieces.dev
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: activepieces-tls
+      hosts:
+        - stg.activepieces.dev
 
 autoscaling:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 6
-  targetCPUUtilizationPercentage: 70
+  enabled: false
 
 persistence:
   enabled: true
@@ -84,7 +94,7 @@ persistence:
 resources:
   requests:
     cpu: "500m"
-    memory: "512Mi"
+    memory: "1Gi"
   limits:
-    cpu: "2"
+    cpu: "1"
     memory: "2Gi"

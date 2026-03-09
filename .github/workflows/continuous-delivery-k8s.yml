@@ -97,8 +97,7 @@ jobs:
         run: |
           helm upgrade --install activepieces deploy/activepieces-helm/ \
             --namespace activepieces \
-            --values deploy/stg-values.yaml \
-            --values deploy/stg-hetzner-values.yaml \
+            --values deploy/staging/stg-app-values.yaml \
             --set image.tag=${{ needs.build-image.outputs.image_tag }} \
             --wait --timeout 5m \
             --debug 2>&1 | tee /tmp/helm-app.log || {
@@ -116,8 +115,7 @@ jobs:
         run: |
           helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
             --namespace activepieces \
-            --values deploy/stg-worker-values.yaml \
-            --values deploy/stg-hetzner-worker-values.yaml \
+            --values deploy/staging/stg-worker-values.yaml \
             --set image.tag=${{ needs.build-image.outputs.image_tag }} \
             --wait --timeout 5m \
             --debug 2>&1 | tee /tmp/helm-worker.log || {

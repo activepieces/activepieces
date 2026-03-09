@@ -1,17 +1,16 @@
 # ============================================================================
-# Activepieces — Cloud-agnostic staging base (WORKER)
-# Apply before cloud-specific overrides:
+# Activepieces — Staging WORKER (Hetzner)
 #   helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
-#     --values deploy/stg-worker-values.yaml \
-#     --values deploy/stg-hetzner-worker-values.yaml
+#     --values deploy/staging/stg-worker-values.yaml \
+#     --set image.tag=<tag>
 # ============================================================================
 
-replicaCount: 3
+replicaCount: 4
 
 image:
   repository: ghcr.io/activepieces/activepieces-cloud
   tag: "0.79.2"       # reference only — CI always overrides via --set image.tag=
-  pullPolicy: Always  # always pull so new digests are fetched even on same tag
+  pullPolicy: Always
 
 imagePullSecrets:
   - name: ghcr-pull-secret
@@ -25,35 +24,35 @@ activepieces:
   logLevel: "info"
   logPretty: false
   # Workers share JWT and encryption keys with the APP release
-  # These secret names must match what the APP release generated
   jwtSecretName: "activepieces-jwt-secret"
   encryptionSecretName: "activepieces-secrets"
-  # frontendUrl set in cloud-specific override (internal K8s URL)
+  # Workers connect to APP via internal K8s service name
+  frontendUrl: "http://activepieces"
 
 # External PostgreSQL (bundled subchart disabled)
 postgresql:
   enabled: false
   port: 5432
   useSSL: false
+  host: "10.0.1.4"
   auth:
     database: "activepieces"
     username: "postgres"
     externalSecret:
       name: "activepieces-db-secret"
       key: "password"
-  # host set in cloud-specific override
 
 # External Redis (bundled subchart disabled)
 redis:
   enabled: false
   port: 6379
   type: "standalone"
+  host: "10.0.1.5"
   auth:
     enabled: true
     externalSecret:
       name: "activepieces-redis-secret"
       key: "password"
-  # host set in cloud-specific override
 
 # Workers do not generate their own secrets (use APP's)
 kubernetes-secret-generator:
@@ -63,27 +62,29 @@ kubernetes-secret-generator:
 s3:
   enabled: true
   useSignedUrls: true
-  # bucket, region, credentials set in cloud-specific override
+  bucket: "activepiecesstagingbucket"
+  region: "eu-central-1"
+  endpoint: "https://fsn1.your-objectstorage.com"
+  externalSecret:
+    name: "activepieces-s3-secret"
+    accessKeyIdKey: "accessKeyId"
+    secretAccessKeyKey: "secretAccessKey"
 
 # Workers are not exposed externally
 ingress:
   enabled: false
 
 autoscaling:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 70
+  enabled: false
 
 persistence:
   enabled: true
   size: 5Gi
 
-# Workers need more CPU/memory for flow execution
 resources:
   requests:
-    cpu: "1"
-    memory: "1Gi"
+    cpu: "250m"
+    memory: "512Mi"
   limits:
-    cpu: "4"
-    memory: "4Gi"
+    cpu: "500m"
+    memory: "1Gi"

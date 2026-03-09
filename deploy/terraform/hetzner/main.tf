@@ -102,6 +102,15 @@ resource "hcloud_firewall" "main" {
 # Also runs app pods since it's small and we want to use resources efficiently.
 # ============================================================================
 
+# Static primary IP — persists across server destroy/recreate
+resource "hcloud_primary_ip" "control_plane" {
+  name          = "${var.cluster_name}-control-plane-ip"
+  datacenter    = "${var.location}-dc3"
+  type          = "ipv4"
+  assignee_type = "server"
+  auto_delete   = false   # retained in Hetzner project even if server is deleted
+}
+
 resource "hcloud_server" "control_plane" {
   name        = "${var.cluster_name}-control-plane"
   server_type = var.control_plane_server_type   # e.g. cx22
@@ -109,6 +118,12 @@ resource "hcloud_server" "control_plane" {
   location    = var.location                    # e.g. "nbg1"
   ssh_keys    = [hcloud_ssh_key.default.id]
   firewall_ids = [hcloud_firewall.main.id]
+
+  public_net {
+    ipv4_enabled = true
+    ipv4         = hcloud_primary_ip.control_plane.id
+    ipv6_enabled = false
+  }
 
   network {
     network_id = hcloud_network.main.id

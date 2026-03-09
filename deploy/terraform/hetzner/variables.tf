@@ -43,7 +43,7 @@ variable "control_plane_server_type" {
 variable "app_server_type" {
   description = "Server type for APP nodes"
   type        = string
-  default     = "cx23"   # 2 vCPU, 4GB RAM — ~€4.15/mo
+  default     = "cx33"   # 2 vCPU, 4GB RAM — ~€4.15/mo
 }
 
 variable "app_node_count" {
@@ -55,13 +55,13 @@ variable "app_node_count" {
 variable "worker_server_type" {
   description = "Server type for WORKER nodes (more CPU for flow execution)"
   type        = string
-  default     = "cx33"   # 4 vCPU, 8GB RAM — ~€8.50/mo
+  default     = "cx43"   # 4 vCPU, 8GB RAM — ~€8.50/mo
 }
 
 variable "worker_node_count" {
   description = "Number of WORKER nodes"
   type        = number
-  default     = 2
+  default     = 4
 }
 
 variable "db_server_type" {
