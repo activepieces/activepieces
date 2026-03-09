@@ -23,6 +23,9 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_connections',
 ]
 
+// NOTE: Keep this list in sync with TOOL_CATEGORIES in
+// packages/web/src/app/components/project-settings/mcp-server/utils/mcp-tools-metadata.ts
+// Any tool added here must also be added there so it appears in the UI settings panel.
 export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_create_flow',
     'ap_rename_flow',

@@ -5,6 +5,9 @@ export type ToolCategory = {
   locked?: boolean;
 };
 
+// NOTE: Keep this list in sync with ALL_CONTROLLABLE_TOOL_NAMES and LOCKED_TOOL_NAMES in
+// packages/server/api/src/app/mcp/tools/index.ts
+// Any tool added to the backend index must also be added here so it appears in the UI settings panel.
 export const TOOL_CATEGORIES: ToolCategory[] = [
   {
     label: 'Discovery',
