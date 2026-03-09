@@ -1,26 +1,15 @@
 #!/bin/sh
 
 export AP_CONTAINER_TYPE="${AP_CONTAINER_TYPE:-WORKER_AND_APP}"
-export AP_CLUSTER_MODE="${AP_CLUSTER_MODE:-false}"
 export AP_WORKERS="${AP_WORKERS:-1}"
 
 echo "AP_CONTAINER_TYPE: $AP_CONTAINER_TYPE"
-echo "AP_CLUSTER_MODE: $AP_CLUSTER_MODE"
 echo "AP_WORKERS: $AP_WORKERS"
 
 # Start Nginx for modes that serve frontend
 if [ "$AP_CONTAINER_TYPE" != "WORKER" ]; then
     nginx -g "daemon off;" &
     echo "Nginx started"
-fi
-
-# Determine APP instances and exec mode
-if [ "$AP_CLUSTER_MODE" = "true" ]; then
-    APP_INSTANCES="max"
-    APP_EXEC_MODE="cluster"
-else
-    APP_INSTANCES=1
-    APP_EXEC_MODE="fork"
 fi
 
 # For WORKER_AND_APP, default API URL to localhost
@@ -52,8 +41,8 @@ if [ "$AP_CONTAINER_TYPE" = "APP" ] || [ "$AP_CONTAINER_TYPE" = "WORKER_AND_APP"
         name: 'activepieces-app',
         script: 'packages/server/api/dist/src/bootstrap.js',
         node_args: '--enable-source-maps',
-        instances: '${APP_INSTANCES}',
-        exec_mode: '${APP_EXEC_MODE}',
+        instances: 1,
+        exec_mode: 'fork',
         env: { AP_CONTAINER_TYPE: 'APP' }
     },"
 fi
