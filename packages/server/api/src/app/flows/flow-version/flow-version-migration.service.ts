@@ -16,18 +16,15 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { system } from '../../helper/system/system'
-import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { SystemJobData, SystemJobName } from 'src/app/helper/system-jobs/common'
+import { systemJobsSchedule } from 'src/app/helper/system-jobs/system-job'
 import { flowExecutionCache } from '../flow/flow-execution-cache'
 import { flowRepo } from '../flow/flow.repo'
 import { flowVersionBackupService } from './flow-version-backup.service'
 import { flowVersionRepo } from './flow-version.service'
 import { flowMigrations } from './migrations'
 
-const log = system.globalLogger()
-
-export const flowVersionMigrationService = {
+export const flowVersionMigrationService = (log: FastifyBaseLogger) => ({
     async migrate(flowVersion: FlowVersion): Promise<FlowVersion> {
         // Early exit if already at latest version
         if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
@@ -38,7 +35,7 @@ export const flowVersionMigrationService = {
 
         const backupFiles = flowVersion.backupFiles ?? {}
         if (!isNil(flowVersion.schemaVersion)) {
-            backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
+            backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService(log).store(flowVersion)
         }
 
         const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion)
@@ -166,4 +163,4 @@ export const flowVersionMigrationService = {
             await job.updateData({ ...data, updatedFlows })
         }
     },
-}
+})

@@ -1,12 +1,15 @@
 import { PlatformRole, ApFlagId } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowLeftRight } from 'lucide-react';
 
+import { CenteredPage } from '@/app/components/centered-page';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderApi } from '@/features/platform-admin';
+import {
+  aiProviderQueries,
+  aiProviderMutations,
+} from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
@@ -16,20 +19,15 @@ import { MigrateFlowsDialog } from './model-migration/migrate-flows-dialog';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 export default function AIProvidersPage() {
-  const { data: providers, refetch } = useQuery({
-    queryKey: ['ai-providers'],
-    queryFn: () => aiProviderApi.list(),
-  });
+  const { data: providers, refetch } = aiProviderQueries.useAiProviders();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
   const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
 
-  const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
-    mutationFn: (provider: string) => aiProviderApi.delete(provider),
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  const { mutate: deleteProvider, isPending: isDeleting } =
+    aiProviderMutations.useDeleteAiProvider({
+      onSuccess: () => refetch(),
+    });
 
   return (
     <LockedFeatureGuard

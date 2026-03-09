@@ -67,13 +67,17 @@ export default defineConfig(({ command, mode }) => {
         title: AP_TITLE,
         icon: AP_FAVICON,
       }),
-      checker({
-        typescript: {
-          buildMode: true,
-          tsconfigPath: './tsconfig.json',
-          root: __dirname,
-        },
-      }),
+      ...(isDev
+        ? [
+            checker({
+              typescript: {
+                buildMode: true,
+                tsconfigPath: './tsconfig.json',
+                root: __dirname,
+              },
+            }),
+          ]
+        : []),
     ],
 
     build: {

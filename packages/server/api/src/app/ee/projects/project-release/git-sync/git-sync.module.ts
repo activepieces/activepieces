@@ -4,12 +4,10 @@ import {
     GitRepoWithoutSensitiveData,
     Permission,
     PrincipalType, PushGitRepoRequest, SeekPage } from '@activepieces/shared'
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
 import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { entitiesMustBeOwnedByCurrentProject } from '../../../../authentication/authorization'
 import { platformMustHaveFeatureEnabled } from '../../../authentication/ee-authorization'
 import { GitRepoEntity } from './git-sync.entity'
@@ -21,7 +19,7 @@ export const gitRepoModule: FastifyPluginAsync = async (app) => {
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
-export const gitRepoController: FastifyPluginCallbackTypebox = (
+export const gitRepoController: FastifyPluginCallbackZod = (
     app,
     _options,
     done,
@@ -70,11 +68,11 @@ const DeleteRepoRequestSchema = {
     },
     schema: {
         description: 'Delete a git repository information for a project.',
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Never(),
+            [StatusCodes.NO_CONTENT]: z.never(),
         },
     },
 }
@@ -91,11 +89,11 @@ const PushRepoRequestSchema = {
         description:
             'Push single flow to the git repository',
         body: PushGitRepoRequest,
-        params: Type.Object({
-            id: Type.String(),
+        params: z.object({
+            id: z.string(),
         }),
         response: {
-            [StatusCodes.OK]: Type.Never(),
+            [StatusCodes.OK]: z.never(),
         },
     },
 }
@@ -123,8 +121,8 @@ const ListRepoRequestSchema = {
         }),
     },
     schema: {
-        querystring: Type.Object({
-            projectId: Type.String(),
+        querystring: z.object({
+            projectId: z.string(),
         }),
         response: {
             [StatusCodes.OK]: SeekPage(GitRepoWithoutSensitiveData),

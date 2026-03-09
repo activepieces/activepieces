@@ -1,22 +1,15 @@
 import { Template, TemplateType } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  FileText,
-  Pencil,
-  Plus,
-  Trash,
-  Tag,
-  Clock,
-  Puzzle,
-} from 'lucide-react';
+import { FileText, Pencil, Trash, Tag, Clock, Puzzle } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,
   RowDataWithActions,
@@ -25,6 +18,7 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -33,7 +27,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces';
-import { templatesApi } from '@/features/templates';
+import { templatesApi, templatesMutations } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { CreateTemplateDialog } from './create-template-dialog';
@@ -55,10 +49,7 @@ const PlatformTemplatesPage = () => {
 
   const [selectedRows, setSelectedRows] = useState<Template[]>([]);
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => templatesApi.delete(id)));
-    },
+  const bulkDeleteMutation = templatesMutations.useBulkDeleteTemplates({
     onSuccess: () => {
       refetch();
       toast.success(t('Templates deleted successfully'), {
@@ -165,7 +156,10 @@ const PlatformTemplatesPage = () => {
   const bulkActions: BulkAction<Template>[] = useMemo(
     () => [
       {
-        render: (_, resetSelection) => (
+        render: (
+          _selectedRows: RowDataWithActions<Template>[],
+          resetSelection: () => void,
+        ) => (
           <div onClick={(e) => e.stopPropagation()}>
             <ConfirmationDeleteDialog
               title={t('Delete Templates')}
@@ -182,8 +176,12 @@ const PlatformTemplatesPage = () => {
               }}
             >
               {selectedRows.length > 0 && (
-                <Button className="w-full mr-2" size="sm" variant="destructive">
-                  <Trash className="mr-2 w-4" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}
                 </Button>
               )}
@@ -193,6 +191,17 @@ const PlatformTemplatesPage = () => {
       },
     ],
     [selectedRows, bulkDeleteMutation],
+  );
+
+  const toolbarButtons = useMemo(
+    () => [
+      <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+          {t('New Template')}
+        </AnimatedIconButton>
+      </CreateTemplateDialog>,
+    ],
+    [refetch],
   );
 
   const isEnabled = platform.plan.manageTemplatesEnabled;
@@ -212,17 +221,7 @@ const PlatformTemplatesPage = () => {
             'Convert the most common automations into reusable templates',
           )}
           title={t('Templates')}
-        >
-          <CreateTemplateDialog onDone={() => refetch()}>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
-              {t('New Template')}
-            </Button>
-          </CreateTemplateDialog>
-        </DashboardPageHeader>
+        />
         <DataTable
           emptyStateTextTitle={t('No templates found')}
           emptyStateTextDescription={t(
@@ -234,6 +233,7 @@ const PlatformTemplatesPage = () => {
           hidePagination={true}
           isLoading={isLoading}
           bulkActions={bulkActions}
+          toolbarButtons={toolbarButtons}
           actions={[
             (row) => {
               return (

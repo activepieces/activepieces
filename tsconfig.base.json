@@ -71,6 +71,9 @@
       "@activepieces/piece-amazon-sqs": [
         "packages/pieces/community/amazon-sqs/src/index.ts"
       ],
+      "@activepieces/piece-amazon-textract": [
+        "packages/pieces/community/amazon-textract/src/index.ts"
+      ],
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
@@ -811,7 +814,7 @@
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
       ],
-      "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-pdf": ["packages/pieces/core/pdf/src/index.ts"],
       "@activepieces/piece-pdf-co": [
         "packages/pieces/community/pdf-co/src/index.ts"
       ],
@@ -1815,6 +1818,9 @@
       "@activepieces/piece-validatedmails": [
         "packages/pieces/community/validatedmails/src/index.ts"
       ],
+      "@activepieces/piece-coralogix": [
+        "packages/pieces/community/coralogix/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },

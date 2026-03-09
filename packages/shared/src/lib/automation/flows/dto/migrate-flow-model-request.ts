@@ -1,15 +1,15 @@
-import { Static, Type } from '@sinclair/typebox'
+import { z } from 'zod'
 import { AIProviderName } from '../../../management/ai-providers'
 
-export const AgentProviderModelSchema = Type.Object({
-    provider: Type.Enum(AIProviderName),
-    model: Type.String(),
+export const AgentProviderModelSchema = z.object({
+    provider: z.nativeEnum(AIProviderName),
+    model: z.string(),
 })
-export type AgentProviderModelSchema = Static<typeof AgentProviderModelSchema>
+export type AgentProviderModelSchema = z.infer<typeof AgentProviderModelSchema>
 
-export const MigrateFlowsModelRequest = Type.Object({
-    projectIds: Type.Optional(Type.Array(Type.String())),
+export const MigrateFlowsModelRequest = z.object({
+    projectIds: z.array(z.string()).optional(),
     sourceModel: AgentProviderModelSchema,
     targetModel: AgentProviderModelSchema,
 })
-export type MigrateFlowsModelRequest = Static<typeof MigrateFlowsModelRequest>
+export type MigrateFlowsModelRequest = z.infer<typeof MigrateFlowsModelRequest>
