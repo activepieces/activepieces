@@ -1,6 +1,6 @@
-import crypto from 'node:crypto'
 import { assertEqual, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -35,7 +35,7 @@ export class FlowExecutorContext {
     constructor(copyFrom?: FlowExecutorContext) {
         this.tags = copyFrom?.tags ?? []
         this.steps = copyFrom?.steps ?? {}
-        this.pauseRequestId = copyFrom?.pauseRequestId ?? crypto.randomUUID()
+        this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
         this.duration = copyFrom?.duration ?? -1
         this.verdict = copyFrom?.verdict ?? { status: FlowRunStatus.RUNNING }
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
