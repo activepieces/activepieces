@@ -1,6 +1,7 @@
 import {
     FlowOperationRequest,
     FlowOperationType,
+    FlowStatus,
     isNil,
     McpServer,
     McpToolDefinition,
@@ -10,21 +11,21 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 
-const deleteStepInput = z.object({
+const changeFlowStatusInput = z.object({
     flowId: z.string(),
-    stepName: z.string(),
+    status: z.enum(Object.values(FlowStatus) as [FlowStatus, ...FlowStatus[]]),
 })
 
-export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apChangeFlowStatusTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
-        title: 'ap_delete_step',
-        description: 'Delete a step from a flow. Use ap_flow_structure to get valid step names.',
+        title: 'ap_change_flow_status',
+        description: 'Enable or disable a flow. The flow must be published first (use ap_lock_and_publish). Use ap_list_flows to get flow IDs.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
-            stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
+            status: z.enum([FlowStatus.ENABLED, FlowStatus.DISABLED]).describe('The new status: ENABLED to activate the flow, DISABLED to pause it'),
         },
         execute: async (args) => {
-            const { flowId, stepName } = deleteStepInput.parse(args)
+            const { flowId, status } = changeFlowStatusInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -34,11 +35,18 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                 return { content: [{ type: 'text', text: '❌ Flow not found' }] }
             }
 
+            if (status === FlowStatus.ENABLED && isNil(flow.publishedVersionId)) {
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `❌ Flow "${flow.version.displayName}" has no published version. Use ap_lock_and_publish first.`,
+                    }],
+                }
+            }
+
             const operation: FlowOperationRequest = {
-                type: FlowOperationType.DELETE_ACTION,
-                request: {
-                    names: [stepName],
-                },
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status },
             }
 
             try {
@@ -49,17 +57,15 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     platformId: project.platformId,
                     operation,
                 })
+                const action = status === FlowStatus.ENABLED ? 'enabled' : 'disabled'
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.` }],
+                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" ${action} successfully.` }],
                 }
             }
             catch (err) {
                 const message = err instanceof Error ? err.message : String(err)
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step delete failed: ${message}`,
-                    }],
+                    content: [{ type: 'text', text: `❌ Status change failed: ${message}` }],
                 }
             }
         },

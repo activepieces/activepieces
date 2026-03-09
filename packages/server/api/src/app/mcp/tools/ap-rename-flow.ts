@@ -10,21 +10,21 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 
-const deleteStepInput = z.object({
+const renameFlowInput = z.object({
     flowId: z.string(),
-    stepName: z.string(),
+    displayName: z.string(),
 })
 
-export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apRenameFlowTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
-        title: 'ap_delete_step',
-        description: 'Delete a step from a flow. Use ap_flow_structure to get valid step names.',
+        title: 'ap_rename_flow',
+        description: 'Rename a flow. Use ap_list_flows to get valid flow IDs.',
         inputSchema: {
-            flowId: z.string().describe('The id of the flow'),
-            stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
+            flowId: z.string().describe('The id of the flow to rename'),
+            displayName: z.string().describe('The new display name for the flow'),
         },
         execute: async (args) => {
-            const { flowId, stepName } = deleteStepInput.parse(args)
+            const { flowId, displayName } = renameFlowInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -35,10 +35,8 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             }
 
             const operation: FlowOperationRequest = {
-                type: FlowOperationType.DELETE_ACTION,
-                request: {
-                    names: [stepName],
-                },
+                type: FlowOperationType.CHANGE_NAME,
+                request: { displayName },
             }
 
             try {
@@ -50,16 +48,13 @@ export const apDeleteStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     operation,
                 })
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully deleted step "${stepName}" from flow.` }],
+                    content: [{ type: 'text', text: `✅ Flow renamed to "${displayName}".` }],
                 }
             }
             catch (err) {
                 const message = err instanceof Error ? err.message : String(err)
                 return {
-                    content: [{
-                        type: 'text',
-                        text: `❌ Step delete failed: ${message}`,
-                    }],
+                    content: [{ type: 'text', text: `❌ Flow rename failed: ${message}` }],
                 }
             }
         },

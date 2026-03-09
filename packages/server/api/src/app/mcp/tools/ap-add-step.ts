@@ -1,4 +1,5 @@
 import {
+    BranchExecutionType,
     FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
@@ -6,6 +7,7 @@ import {
     isNil,
     McpServer,
     McpToolDefinition,
+    RouterExecutionType,
     StepLocationRelativeToParent,
     UpdateActionRequest,
 } from '@activepieces/shared'
@@ -14,51 +16,124 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 
+const addStepInput = z.object({
+    flowId: z.string(),
+    parentStepName: z.string(),
+    stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [StepLocationRelativeToParent, ...StepLocationRelativeToParent[]]),
+    branchIndex: z.number().optional(),
+    stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
+    displayName: z.string(),
+    pieceName: z.string().optional(),
+    pieceVersion: z.string().optional(),
+    actionName: z.string().optional(),
+})
+
 export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_step',
-        description: `Add a new step (code, piece, loop, or router) to a flow. Use ap_flow_structure to get valid parentStepName and insert locations. **Before adding a piece action you must call ap_list_pieces** to get available piece names, piece versions, and action names; use that output to build a valid action so the step is accepted. If the add fails due to invalid config, the error message will indicate what to fix so you can iterate.`,
+        description: 'Add a new step to a flow (skeleton only - configure it afterwards with ap_update_step or ap_update_trigger). Use ap_flow_structure to get valid parentStepName and insert locations. Use ap_list_pieces to get pieceName, pieceVersion, and actionName for PIECE steps.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),
-            stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent)).describe('The location of the step relative to the parent step'),
-            branchIndex: z.number().describe('The index of the branch, only required if the parent step is a router branch').optional(),
-            action: z.record(z.string(), z.unknown()).describe('Action object: same shape as UpdateActionRequest (type CODE | PIECE | LOOP_ON_ITEMS | ROUTER, displayName, name?, valid?, skip?, settings). For PIECE use pieceName, pieceVersion, actionName from ap_list_pieces.'),
+            stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]]).describe('Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BRANCH = first action inside a router branch'),
+            branchIndex: z.number().optional().describe('Branch index (required when stepLocationRelativeToParent is INSIDE_BRANCH)'),
+            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).describe('The type of step to add'),
+            displayName: z.string().describe('Display name for the step'),
+            pieceName: z.string().optional().describe('For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_list_pieces to get valid values.'),
+            pieceVersion: z.string().optional().describe('For PIECE steps: the piece version (e.g. "~0.1.0"). Use ap_list_pieces to get valid values.'),
+            actionName: z.string().optional().describe('For PIECE steps: the action name within the piece. Use ap_list_pieces with includeActions=true to get valid values.'),
         },
         execute: async (args) => {
-            const flowId = args.flowId as string
-            const parentStepName = args.parentStepName as string
-            const stepLocationRelativeToParent = args.stepLocationRelativeToParent as StepLocationRelativeToParent
-            const branchIndex = args.branchIndex as number | undefined
-            const rawAction = args.action as Record<string, unknown>
+            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, pieceVersion, actionName } = addStepInput.parse(args)
 
-            const flow = await flowService(log).getOnePopulated({
-                id: flowId,
-                projectId: mcp.projectId,
-            })
+            const [flow, project] = await Promise.all([
+                flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
+                projectService(log).getOneOrThrow(mcp.projectId),
+            ])
             if (isNil(flow)) {
-                return {
-                    content: [{ type: 'text', text: '❌ Flow not found' }],
-                }
+                return { content: [{ type: 'text', text: '❌ Flow not found' }] }
             }
 
-            const stepName = rawAction.name ?? flowStructureUtil.findUnusedName(flow.version.trigger)
-            const payload = {
-                type: rawAction.type,
-                displayName: rawAction.displayName,
-                settings: rawAction.settings,
-                name: stepName,
-                valid: rawAction.valid,
-                ...(rawAction.skip !== undefined && { skip: rawAction.skip }),
+            const stepName = flowStructureUtil.findUnusedName(flow.version.trigger)
+
+            let skeletonAction: Record<string, unknown>
+            switch (stepType) {
+                case FlowActionType.CODE:
+                    skeletonAction = {
+                        type: FlowActionType.CODE,
+                        name: stepName,
+                        displayName,
+                        valid: false,
+                        settings: {
+                            sourceCode: { code: 'export const run = async (inputs) => { return {} }', packageJson: '{}' },
+                            input: {},
+                            errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+                        },
+                    }
+                    break
+                case FlowActionType.PIECE:
+                    if (!pieceName || !pieceVersion) {
+                        return {
+                            content: [{
+                                type: 'text',
+                                text: '❌ pieceName and pieceVersion are required for PIECE steps. Use ap_list_pieces to get valid values.',
+                            }],
+                        }
+                    }
+                    skeletonAction = {
+                        type: FlowActionType.PIECE,
+                        name: stepName,
+                        displayName,
+                        valid: false,
+                        settings: {
+                            pieceName,
+                            pieceVersion,
+                            actionName: actionName ?? '',
+                            input: {},
+                            propertySettings: {},
+                            errorHandlingOptions: { continueOnFailure: { value: false }, retryOnFailure: { value: false } },
+                        },
+                    }
+                    break
+                case FlowActionType.LOOP_ON_ITEMS:
+                    skeletonAction = {
+                        type: FlowActionType.LOOP_ON_ITEMS,
+                        name: stepName,
+                        displayName,
+                        valid: false,
+                        settings: {
+                            items: '',
+                        },
+                    }
+                    break
+                case FlowActionType.ROUTER:
+                    skeletonAction = {
+                        type: FlowActionType.ROUTER,
+                        name: stepName,
+                        displayName,
+                        valid: false,
+                        settings: {
+                            branches: [
+                                { branchName: 'Branch 1', branchType: BranchExecutionType.CONDITION, conditions: [[]] },
+                                { branchName: 'Otherwise', branchType: BranchExecutionType.FALLBACK },
+                            ],
+                            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                        },
+                    }
+                    break
+                default:
+                    return {
+                        content: [{ type: 'text', text: `❌ Unknown step type: ${stepType}` }],
+                    }
             }
-            const parseResult = UpdateActionRequest.safeParse(payload)
+
+            const parseResult = UpdateActionRequest.safeParse(skeletonAction)
             if (!parseResult.success) {
                 const message = parseResult.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
                 return {
-                    content: [{ type: 'text', text: `❌ Invalid action: ${message}` }],
+                    content: [{ type: 'text', text: `❌ Invalid step: ${message}` }],
                 }
             }
-            const action = parseResult.data
 
             const operation: FlowOperationRequest = {
                 type: FlowOperationType.ADD_ACTION,
@@ -66,43 +141,31 @@ export const apAddStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToolDe
                     parentStep: parentStepName,
                     stepLocationRelativeToParent,
                     ...(branchIndex !== undefined && { branchIndex }),
-                    action,
+                    action: parseResult.data,
                 },
             }
 
             try {
-                const project = await projectService(log).getOneOrThrow(mcp.projectId)
-                const updatedFlow = await flowService(log).update({
+                await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId: null,
                     platformId: project.platformId,
                     operation,
                 })
-                const addedStep = flowStructureUtil.getAllSteps(updatedFlow.version.trigger).find(s => s.name === stepName)
-                if (addedStep && !addedStep.valid) {
-                    const hint = action.type === FlowActionType.PIECE
-                        ? ' Use ap_list_pieces to get valid pieceName, pieceVersion, and actionName; fix the action and call ap_add_step again.'
-                        : ' Fix the action settings and call ap_add_step again.'
-                    return {
-                        content: [{
-                            type: 'text',
-                            text: `❌ Step "${action.displayName}" (${stepName}) was added but is invalid.${hint}`,
-                        }],
-                    }
-                }
-                return {
-                    content: [{ type: 'text', text: `✅ Successfully added step "${action.displayName}" (${stepName}) to flow.` }],
-                }
-            } catch (err) {
-                const message = err instanceof Error ? err.message : String(err)
-                const hint = action.type === FlowActionType.PIECE
-                    ? ' Call ap_list_pieces to get valid pieceName, pieceVersion, and actionName; fix the action and retry.'
-                    : ' Fix the action payload and retry.'
                 return {
                     content: [{
                         type: 'text',
-                        text: `❌ Step add failed: ${message}.${hint}`,
+                        text: `✅ Step "${displayName}" (${stepName}) added. Now use ap_update_step with stepName="${stepName}" to configure its settings.`,
+                    }],
+                }
+            }
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `❌ Step add failed: ${message}`,
                     }],
                 }
             }
