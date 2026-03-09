@@ -79,11 +79,21 @@ export const apUpdateStepTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
                     ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
                 }
             }
-            if (actionName !== undefined && step.type === FlowActionType.PIECE) {
-                updatedSettings.actionName = actionName
+            if (actionName !== undefined) {
+                if (step.type === FlowActionType.PIECE) {
+                    updatedSettings.actionName = actionName
+                }
+                else {
+                    return { content: [{ type: 'text', text: `❌ actionName can only be set on PIECE steps, but "${stepName}" is type ${step.type}.` }] }
+                }
             }
-            if (loopItems !== undefined && step.type === FlowActionType.LOOP_ON_ITEMS) {
-                updatedSettings.items = loopItems
+            if (loopItems !== undefined) {
+                if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+                    updatedSettings.items = loopItems
+                }
+                else {
+                    return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS steps, but "${stepName}" is type ${step.type}.` }] }
+                }
             }
 
             const payload = {

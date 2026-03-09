@@ -33,59 +33,70 @@ export const apListPiecesTool = (mcp: McpServer, log: FastifyBaseLogger): McpToo
             includeTriggers: z.boolean().optional().describe('When true, include trigger names and descriptions for each piece'),
         },
         execute: async (args) => {
-            const params = listPiecesSchema.parse(args ?? {})
-            const pieces = await pieceMetadataService(log).list({
-                projectId: mcp.projectId,
-                includeHidden: true,
-                categories: params.categories as PieceCategory[] | undefined,
-                tags: params.tags,
-                searchQuery: params.searchQuery,
-                suggestionType: params.suggestionType as SuggestionType | undefined,
-                locale: params.locale as LocalesEnum | undefined,
-            })
+            try {
+                const params = listPiecesSchema.parse(args ?? {})
+                const pieces = await pieceMetadataService(log).list({
+                    projectId: mcp.projectId,
+                    includeHidden: true,
+                    categories: params.categories as PieceCategory[] | undefined,
+                    tags: params.tags,
+                    searchQuery: params.searchQuery,
+                    suggestionType: params.suggestionType as SuggestionType | undefined,
+                    locale: params.locale as LocalesEnum | undefined,
+                })
 
-            if (!params.includeActions && !params.includeTriggers) {
+                if (!params.includeActions && !params.includeTriggers) {
+                    const totalCount = pieces.length
+                    const capped = pieces.slice(0, 50)
+                    const hint = totalCount > 50 ? ` (showing 50 of ${totalCount} — use searchQuery to narrow results)` : ''
+                    return {
+                        content: [{ type: 'text', text: `✅ Successfully listed pieces${hint}:\n${JSON.stringify(capped)}` }],
+                    }
+                }
+
+                const totalCount = pieces.length
+                const piecesToEnrich = pieces.slice(0, 50)
+                const enrichedPieces = await Promise.all(piecesToEnrich.map(async (piece) => {
+                    const base: Record<string, unknown> = {
+                        name: piece.name,
+                        displayName: piece.displayName,
+                        version: piece.version,
+                        description: piece.description,
+                    }
+                    const fullPiece = await pieceMetadataService(log).get({
+                        name: piece.name,
+                        version: piece.version,
+                        projectId: mcp.projectId,
+                        platformId: undefined,
+                    })
+                    if (fullPiece) {
+                        if (params.includeActions) {
+                            base.actions = Object.values(fullPiece.actions).map(a => ({
+                                name: a.name,
+                                displayName: a.displayName,
+                                description: a.description,
+                            }))
+                        }
+                        if (params.includeTriggers) {
+                            base.triggers = Object.values(fullPiece.triggers).map(t => ({
+                                name: t.name,
+                                displayName: t.displayName,
+                                description: t.description,
+                            }))
+                        }
+                    }
+                    return base
+                }))
+
                 return {
-                    content: [{ type: 'text', text: `✅ Successfully listed pieces:\n${JSON.stringify(pieces)}` }],
+                    content: [{ type: 'text', text: `✅ Successfully listed pieces (showing ${piecesToEnrich.length} of ${totalCount} — use searchQuery to narrow results):\n${JSON.stringify(enrichedPieces)}` }],
                 }
             }
-
-            const totalCount = pieces.length
-            const piecesToEnrich = pieces.slice(0, 50)
-            const enrichedPieces = await Promise.all(piecesToEnrich.map(async (piece) => {
-                const base: Record<string, unknown> = {
-                    name: piece.name,
-                    displayName: piece.displayName,
-                    version: piece.version,
-                    description: piece.description,
+            catch (err) {
+                const message = err instanceof Error ? err.message : String(err)
+                return {
+                    content: [{ type: 'text', text: `❌ Failed to list pieces: ${message}` }],
                 }
-                const fullPiece = await pieceMetadataService(log).get({
-                    name: piece.name,
-                    version: piece.version,
-                    projectId: mcp.projectId,
-                    platformId: undefined,
-                })
-                if (fullPiece) {
-                    if (params.includeActions) {
-                        base.actions = Object.values(fullPiece.actions).map(a => ({
-                            name: a.name,
-                            displayName: a.displayName,
-                            description: a.description,
-                        }))
-                    }
-                    if (params.includeTriggers) {
-                        base.triggers = Object.values(fullPiece.triggers).map(t => ({
-                            name: t.name,
-                            displayName: t.displayName,
-                            description: t.description,
-                        }))
-                    }
-                }
-                return base
-            }))
-
-            return {
-                content: [{ type: 'text', text: `✅ Successfully listed pieces (showing ${piecesToEnrich.length} of ${totalCount} — use searchQuery to narrow results):\n${JSON.stringify(enrichedPieces)}` }],
             }
         },
     }
