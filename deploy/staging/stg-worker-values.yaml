@@ -28,6 +28,7 @@ activepieces:
   encryptionSecretName: "activepieces-secrets"
   # Workers connect to APP via internal K8s service name
   frontendUrl: "http://activepieces"
+  internalUrl: "http://activepieces"
 
 # External PostgreSQL (bundled subchart disabled)
 postgresql:

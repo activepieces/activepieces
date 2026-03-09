@@ -74,3 +74,9 @@ variable "s3_bucket_name" {
   description = "Name for the Hetzner Object Storage bucket (must be globally unique)"
   type        = string
 }
+
+variable "load_balancer_type" {
+  description = "Hetzner load balancer type (lb11=5 targets ~€5/mo, lb21=25 targets ~€20/mo)"
+  type        = string
+  default     = "lb11"
+}

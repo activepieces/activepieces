@@ -102,15 +102,6 @@ resource "hcloud_firewall" "main" {
 # Also runs app pods since it's small and we want to use resources efficiently.
 # ============================================================================
 
-# Static primary IP — persists across server destroy/recreate
-resource "hcloud_primary_ip" "control_plane" {
-  name          = "${var.cluster_name}-control-plane-ip"
-  datacenter    = "${var.location}-dc3"
-  type          = "ipv4"
-  assignee_type = "server"
-  auto_delete   = false   # retained in Hetzner project even if server is deleted
-}
-
 resource "hcloud_server" "control_plane" {
   name        = "${var.cluster_name}-control-plane"
   server_type = var.control_plane_server_type   # e.g. cx22
@@ -119,22 +110,21 @@ resource "hcloud_server" "control_plane" {
   ssh_keys    = [hcloud_ssh_key.default.id]
   firewall_ids = [hcloud_firewall.main.id]
 
-  public_net {
-    ipv4_enabled = true
-    ipv4         = hcloud_primary_ip.control_plane.id
-    ipv6_enabled = false
-  }
-
   network {
     network_id = hcloud_network.main.id
     ip         = "10.0.1.1"
   }
 
-  # cloud-init: installs k3s server on first boot
+  # cloud-init: installs k3s server on first boot + bootstraps the cluster
   user_data = templatefile("${path.module}/cloud-init-control-plane.yaml.tpl", {
-    k3s_token = random_string.k3s_token.result
-    node_ip   = "10.0.1.1"
+    k3s_token            = random_string.k3s_token.result
+    node_ip              = "10.0.1.1"
   })
+
+  lifecycle {
+    ignore_changes  = [user_data]
+    prevent_destroy = true
+  }
 
   depends_on = [hcloud_network_subnet.main]
 }
@@ -151,6 +141,7 @@ resource "hcloud_server" "app_nodes" {
   location    = var.location
   ssh_keys    = [hcloud_ssh_key.default.id]
   firewall_ids = [hcloud_firewall.main.id]
+  labels      = { role = "app" }
 
   network {
     network_id = hcloud_network.main.id
@@ -162,6 +153,10 @@ resource "hcloud_server" "app_nodes" {
     control_plane_ip   = "10.0.1.1"
     node_label         = "role=app"
   })
+
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 
   depends_on = [hcloud_server.control_plane]
 }
@@ -258,6 +253,74 @@ resource "hcloud_server" "postgres" {
 #   3. Go to Security → S3 Credentials → Generate credentials
 #   4. Use those credentials in the kubectl create secret command (see outputs)
 # ============================================================================
+
+# ============================================================================
+# Random secrets
+# ============================================================================
+
+# ============================================================================
+# Load Balancer — single static public IP for all app nodes
+# ============================================================================
+
+resource "hcloud_load_balancer" "main" {
+  name               = "${var.cluster_name}-lb"
+  load_balancer_type = var.load_balancer_type
+  location           = var.location
+  labels             = { cluster = var.cluster_name }
+
+  lifecycle {
+    prevent_destroy = true   # preserves the static public IP — do not delete manually
+  }
+}
+
+# Attach LB to the private network so it reaches nodes via 10.0.x.x
+resource "hcloud_load_balancer_network" "main" {
+  load_balancer_id = hcloud_load_balancer.main.id
+  network_id       = hcloud_network.main.id
+  ip               = "10.0.1.254"
+}
+
+# Target all servers labelled role=app — auto-includes future app nodes
+resource "hcloud_load_balancer_target" "app_nodes" {
+  type             = "label_selector"
+  load_balancer_id = hcloud_load_balancer.main.id
+  label_selector   = "role=app"
+  use_private_ip   = true
+
+  depends_on = [hcloud_load_balancer_network.main]
+}
+
+# HTTP service (port 80 → 80)
+resource "hcloud_load_balancer_service" "http" {
+  load_balancer_id = hcloud_load_balancer.main.id
+  protocol         = "tcp"
+  listen_port      = 80
+  destination_port = 80
+
+  health_check {
+    protocol = "tcp"
+    port     = 80
+    interval = 15
+    timeout  = 5
+    retries  = 3
+  }
+}
+
+# HTTPS service (port 443 → 443, TCP passthrough — TLS handled by nginx-ingress)
+resource "hcloud_load_balancer_service" "https" {
+  load_balancer_id = hcloud_load_balancer.main.id
+  protocol         = "tcp"
+  listen_port      = 443
+  destination_port = 443
+
+  health_check {
+    protocol = "tcp"
+    port     = 443
+    interval = 15
+    timeout  = 5
+    retries  = 3
+  }
+}
 
 # ============================================================================
 # Random secrets
