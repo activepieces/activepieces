@@ -106,7 +106,7 @@ export function ProjectDashboardLayout({
                   <Separator className="mb-5" />
                 </>
               )}
-              <div className="flex-1 overflow-auto px-3"> {children} </div>
+              <div className="flex-1 overflow-auto"> {children} </div>
             </div>
           </div>
         </SidebarInset>
