@@ -17,6 +17,7 @@ export const McpServer = z.object({
     projectId: ApId,
     status: z.nativeEnum(McpServerStatus),
     token: ApId,
+    enabledTools: z.array(z.string()).nullable(),
 })
 
 export const PopulatedMcpServer = McpServer.extend({
@@ -28,7 +29,16 @@ export type McpServer = z.infer<typeof McpServer>
 
 
 export const UpdateMcpServerRequest = z.object({
-    status: z.nativeEnum(McpServerStatus),
+    status: z.nativeEnum(McpServerStatus).optional(),
+    enabledTools: z.array(z.string()).optional(),
 })
 
 export type UpdateMcpServerRequest = z.infer<typeof UpdateMcpServerRequest>
+
+/** Tool definition for MCP: inputSchema is a raw Zod shape (same as MCP expects). */
+export type McpToolDefinition = {
+    title: string
+    description: string
+    inputSchema: Record<string, z.ZodTypeAny>
+    execute: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text', text: string }> }>
+}

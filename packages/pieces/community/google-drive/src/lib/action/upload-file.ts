@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
-import { googleDriveAuth } from '../auth';
+import { googleDriveAuth, getAccessToken } from '../auth';
 import mime from 'mime-types';
 import { common } from '../common';
 
@@ -62,7 +62,7 @@ export const googleDriveUploadFile = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
+        token: await getAccessToken(context.auth),
       },
     });
 
