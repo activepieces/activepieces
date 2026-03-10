@@ -20,6 +20,10 @@ Follow these 5 steps every time:
 
 ### Step 2: PLAN
 
+-   **Determine piece location from the user's request:**
+    -   If the user says **"custom piece"** → use `packages/pieces/custom/` (no need to ask)
+    -   Otherwise → default to `packages/pieces/community/`
+    -   See the Piece Types table below for full reference
 -   Choose the correct auth type -- see Quick Auth Reference below
 -   Select the most useful actions (CRUD, search, list)
 -   Select triggers (webhook if API supports it, polling otherwise)
@@ -174,6 +178,16 @@ AP_DEV_PIECES=<name>
 Start the dev server (`npm start`), open `localhost:4200`, sign in with `dev@ap.com` / `12345678`, and find your piece in the flow builder.
 
 ---
+
+## Piece Types
+
+| Location | Purpose |
+|---|---|
+| `packages/pieces/community/` | Third-party integrations (Slack, Stripe, etc.) -- use this for almost all work |
+| `packages/pieces/core/` | Built-in platform utilities (HTTP, Store, Math, etc.) -- do NOT recreate these |
+| `packages/pieces/custom/` | Private customer-specific pieces |
+
+Full reference: [piece-types.md](piece-types.md) -- includes all `PieceCategory` values and the list of existing core pieces.
 
 ## Folder Structure
 
