@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { ArrowLeftRight } from 'lucide-react';
 
 import { CenteredPage } from '@/app/components/centered-page';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
@@ -37,28 +38,28 @@ export default function AIProvidersPage() {
         'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
-      <CenteredPage
-        title={t('AI Providers')}
-        description={
-          allowWrite
-            ? t(
-                'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
-              )
-            : t(
-                'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
-              )
-        }
-        actions={
-          allowWrite && providers && providers.length > 0 ? (
+      <div className="flex flex-col w-full gap-4">
+        <DashboardPageHeader
+          title={t('AI Providers')}
+          description={
+            allowWrite
+              ? t(
+                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
+                )
+              : t(
+                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
+                )
+          }
+        >
+          {allowWrite && providers && providers.length > 0 && (
             <MigrateFlowsDialog providers={providers}>
               <Button variant="outline" size="sm">
                 <ArrowLeftRight className="w-4 h-4 mr-2" />
                 {t('Migrate Flows')}
               </Button>
             </MigrateFlowsDialog>
-          ) : undefined
-        }
-      >
+          )}
+        </DashboardPageHeader>
         <div className="flex flex-col gap-4">
           {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
             const config = providers?.find(
@@ -78,7 +79,7 @@ export default function AIProvidersPage() {
             );
           })}
         </div>
-      </CenteredPage>
+      </div>
     </LockedFeatureGuard>
   );
 }

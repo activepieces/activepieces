@@ -26,7 +26,7 @@ export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/versions/migrate-ai-model', MigrateAIModel, async (request, reply) => {
         const platformId = request.principal.platform.id
-        await flowVersionMigrationService.enqueueMigrateFlowsModel(platformId, request.body, request.log)
+        await flowVersionMigrationService(request.log).enqueueMigrateFlowsModel(platformId, request.body, request.log)
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 

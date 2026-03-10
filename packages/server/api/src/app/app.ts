@@ -217,8 +217,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformAnalyticsModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
+    systemJobHandlers.registerJobHandler(SystemJobName.MIGRATE_FLOWS_MODEL, (data) => flowVersionMigrationService(app.log).migrateFlowsModelHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
-    systemJobHandlers.registerJobHandler(SystemJobName.MIGRATE_FLOWS_MODEL, (data) => flowVersionMigrationService.migrateFlowsModelHandler(data))
 
     app.get(
         '/redirect',
