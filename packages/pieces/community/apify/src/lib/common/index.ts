@@ -414,11 +414,22 @@ export const createActorInputProperty = () => Property.DynamicProperties({
   required: true,
   refreshers: ['auth', 'actorid'],
   props: async (propsValue) => {
-    const apiKey = propsValue['auth'] as ApifyAuth;
-    const actorId = propsValue['actorid'] as unknown as string;
-    const defaultBuild = await fetchActorInputSchema(apiKey.props.apikey, actorId);
+    const auth = propsValue['auth'] as ApifyAuth | undefined;
+    const actorId = propsValue['actorid'] as unknown as string | undefined;
 
-    const defaultInputs = defaultBuild ? getDefaultValuesFromBuild(defaultBuild as ActorBuild) : undefined;
+    if (!auth?.props?.apikey || !actorId) {
+      return {
+        body: createInputBodyProperty(RunType.ACTOR)
+      };
+    }
+
+    let defaultInputs: Dictionary | undefined;
+    try {
+      const defaultBuild = await fetchActorInputSchema(auth.props.apikey, actorId);
+      defaultInputs = defaultBuild ? getDefaultValuesFromBuild(defaultBuild as ActorBuild) : undefined;
+    } catch {
+      defaultInputs = undefined;
+    }
 
     return {
       body: createInputBodyProperty(

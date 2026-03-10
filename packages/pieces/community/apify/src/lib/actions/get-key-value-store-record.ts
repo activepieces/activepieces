@@ -50,13 +50,13 @@ export const getKeyValueStoreRecord = createAction({
 
     const client = createApifyClient(apifyToken);
 
+    const record = await client.keyValueStore(store).getRecord(recordKey);
+
+    if (!record) {
+      throw new Error(`Record with key "${recordKey}" not found in store "${store}"`);
+    }
+
     try {
-      const record = await client.keyValueStore(store).getRecord(recordKey);
-
-      if (!record) {
-        throw new Error(`Record with key "${recordKey}" not found`);
-      }
-
       const isBinary = isBinaryContentType(record.contentType!);
       const isJson = record.contentType?.includes('application/json');
 
@@ -94,12 +94,8 @@ export const getKeyValueStoreRecord = createAction({
         contentType: record.contentType,
         dataType: 'text'
       };
-
     } catch (error: any) {
-      if (error.message.includes('not found')) {
-        throw new Error(`Record "${recordKey}" not found in store`);
-      }
-      throw new Error(`Failed to get key-value store item: ${error.message}`);
+      throw new Error(`Failed to process key-value store record: ${error.message}`);
     }
   }
 });
