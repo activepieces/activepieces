@@ -143,7 +143,7 @@ export const AutomationsFilters = ({
                 onSearchChange(e.target.value);
                 onFilterChange?.();
               }}
-              className="min-w-[220px] max-w-xs pl-8 pr-8"
+              className="min-w-[300px] max-w-xs pl-8 pr-8 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             {searchTerm && (
               <button
