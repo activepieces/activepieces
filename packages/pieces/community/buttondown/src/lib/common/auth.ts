@@ -15,7 +15,7 @@ interface ButtondownError {
 export const buttondownAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description:
-    'Create an API key from https://buttondown.com/settings/api and paste it here. The key should start with `bd_`.',
+    'Create an API key from https://buttondown.com/keys and paste it here.',
   required: true,
   validate: async ({ auth }) => {
     if (!auth) {
