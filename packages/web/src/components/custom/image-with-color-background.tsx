@@ -8,11 +8,13 @@ interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
   border?: boolean;
+  roundedCorner?: boolean;
 }
 const ImageWithColorBackground = ({
   src,
   alt,
   fallback,
+  roundedCorner,
   ...props
 }: ImageWithColorBackgroundProps) => {
   const [hasError, setHasError] = useState(false);
@@ -47,19 +49,16 @@ const ImageWithColorBackground = ({
     setIsLoading(false);
   }, []);
 
-  const { className, ...rest } = props;
+  const { className, border, ...rest } = props;
 
   return (
     <span
-      className={cn(
-        'relative inline-block h-full w-full rounded-lg',
-        className,
-        {
-          'bg-background': backgroundColor === null,
-          'border border-border/50 dark:bg-foreground/10':
-            backgroundColor === null && props.border,
-        },
-      )}
+      className={cn('relative inline-block h-full w-full', className, {
+        'bg-background': backgroundColor === null,
+        'border border-border/50 dark:bg-foreground/10':
+          backgroundColor === null && border,
+        'rounded-lg': roundedCorner,
+      })}
       style={
         backgroundColor
           ? {
@@ -73,7 +72,7 @@ const ImageWithColorBackground = ({
           {fallback ?? <Skeleton className="w-full h-full" />}
         </span>
       )}
-      {!hasError ? (
+      {!hasError && src ? (
         <img
           src={src}
           alt={alt}

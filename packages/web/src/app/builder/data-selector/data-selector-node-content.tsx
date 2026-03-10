@@ -91,7 +91,6 @@ const DataSelectorNodeContent = ({
               displayName={stepMetadata.displayName}
               logoUrl={stepMetadata.logoUrl}
               showTooltip={false}
-              circle={false}
               border={false}
               size="sm"
             ></PieceIcon>

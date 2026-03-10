@@ -1,10 +1,12 @@
 import { PlatformRole, ApFlagId } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { aiProviderApi } from '@/features/platform-admin';
+import {
+  aiProviderQueries,
+  aiProviderMutations,
+} from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
@@ -13,20 +15,15 @@ import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 export default function AIProvidersPage() {
-  const { data: providers, refetch } = useQuery({
-    queryKey: ['ai-providers'],
-    queryFn: () => aiProviderApi.list(),
-  });
+  const { data: providers, refetch } = aiProviderQueries.useAiProviders();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
   const allowWrite = flags?.[ApFlagId.CAN_CONFIGURE_AI_PROVIDER] === true;
 
-  const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
-    mutationFn: (provider: string) => aiProviderApi.delete(provider),
-    onSuccess: () => {
-      refetch();
-    },
-  });
+  const { mutate: deleteProvider, isPending: isDeleting } =
+    aiProviderMutations.useDeleteAiProvider({
+      onSuccess: () => refetch(),
+    });
 
   return (
     <LockedFeatureGuard
@@ -37,19 +34,18 @@ export default function AIProvidersPage() {
         'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
-      <div className="flex flex-col w-full gap-4">
-        <DashboardPageHeader
-          title={t('AI Providers')}
-          description={
-            allowWrite
-              ? t(
-                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
-                )
-              : t(
-                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
-                )
-          }
-        ></DashboardPageHeader>
+      <CenteredPage
+        title={t('AI Providers')}
+        description={
+          allowWrite
+            ? t(
+                'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
+              )
+            : t(
+                'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
+              )
+        }
+      >
         <div className="flex flex-col gap-4">
           {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
             const config = providers?.find(
@@ -69,7 +65,7 @@ export default function AIProvidersPage() {
             );
           })}
         </div>
-      </div>
+      </CenteredPage>
     </LockedFeatureGuard>
   );
 }

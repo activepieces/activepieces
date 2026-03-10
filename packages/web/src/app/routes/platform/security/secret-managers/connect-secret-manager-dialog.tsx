@@ -5,6 +5,7 @@ import {
   ErrorCode,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -37,17 +39,20 @@ const ConnectSecretManagerDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {t('Connect')}
+          <DialogTitle>
+            {t('Connect')} {manager.name}
+          </DialogTitle>
+          <DialogDescription>
             <a
               href={`https://activepieces.com/docs/admin-guide/guides/secret-managers/${manager.id}`}
               target="_blank"
-              className="text-primary underline"
               rel="noreferrer"
+              className="text-primary inline-flex items-center gap-1 hover:underline"
             >
-              {manager.name}
+              <ExternalLink className="size-3" />
+              {t('View docs')}
             </a>
-          </DialogTitle>
+          </DialogDescription>
         </DialogHeader>
 
         <ConnectSecretManagerForm
@@ -118,23 +123,21 @@ const ConnectSecretManagerForm = ({
             rules={{ required: !field.optional }}
             name={`config.${fieldId}`}
             render={({ field: formField }) => (
-              <FormItem className="grid space-y-3">
-                <Label htmlFor="fieldName">
+              <FormItem className="grid space-y-4">
+                <Label htmlFor={fieldId}>
                   {field.displayName}
                   {!field.optional && (
-                    <span className="text-red-500 ml-1">*</span>
+                    <span className="text-destructive-300 ml-1">*</span>
                   )}
                 </Label>
-                <div className="flex gap-2 items-center justify-center">
-                  <Input
-                    {...formField}
-                    required={!field.optional}
-                    id={fieldId}
-                    placeholder={field.placeholder}
-                    className="rounded-sm"
-                    type={field.type}
-                  />
-                </div>
+                <Input
+                  {...formField}
+                  required={!field.optional}
+                  id={fieldId}
+                  placeholder={field.placeholder}
+                  className="rounded-sm"
+                  type={field.type}
+                />
                 <FormMessage />
               </FormItem>
             )}

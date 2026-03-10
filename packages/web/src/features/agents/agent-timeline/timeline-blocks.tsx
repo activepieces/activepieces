@@ -285,8 +285,10 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
 
 export const DoneBlock = () => {
   return (
-    <TimelineItem icon={<CircleCheckBig className="h-4 w-4 text-green-600" />}>
-      <div className="border border-green-500/40 bg-green-50/60 rounded-md p-3 text-sm text-green-700 font-medium flex items-center gap-2">
+    <TimelineItem
+      icon={<CircleCheckBig className="h-4 w-4 text-success-600" />}
+    >
+      <div className="border border-success/40 bg-success-50/60 rounded-md p-3 text-sm text-success-700 font-medium flex items-center gap-2">
         <span>{t('Done!')}</span>
       </div>
     </TimelineItem>
@@ -295,8 +297,8 @@ export const DoneBlock = () => {
 
 export const FailedBlock = () => {
   return (
-    <TimelineItem icon={<CircleX className="h-4 w-4 text-red-600" />}>
-      <div className="border border-red-500/40 bg-red-50/60 rounded-md p-3 text-sm text-red-700 font-medium flex items-center gap-2">
+    <TimelineItem icon={<CircleX className="h-4 w-4 text-destructive-600" />}>
+      <div className="border border-destructive/40 bg-destructive-50/60 rounded-md p-3 text-sm text-destructive-700 font-medium flex items-center gap-2">
         <span>{t('Failed')}</span>
       </div>
     </TimelineItem>

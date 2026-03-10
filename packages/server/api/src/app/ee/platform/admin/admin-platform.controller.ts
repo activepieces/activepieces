@@ -1,10 +1,10 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
 import { AppSystemProp, securityAccess } from '@activepieces/server-common'
 import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
@@ -25,12 +25,12 @@ async function checkCertainKeyPreHandler(
     }
 }
 
-export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
+export const adminPlatformModule: FastifyPluginAsyncZod = async (app) => {
     app.addHook('preHandler', checkCertainKeyPreHandler)
     await app.register(adminPlatformController, { prefix: '/v1/admin/' })
 }
 
-const adminPlatformController: FastifyPluginAsyncTypebox = async (
+const adminPlatformController: FastifyPluginAsyncZod = async (
     app,
 ) => {
 
@@ -71,10 +71,10 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
 const ConfigureDedicatedWorkersRequest = {
     schema: {
-        body: Type.Object({
-            operation: Type.Union([Type.Literal('enable'), Type.Literal('disable')]),
-            platformId: Type.String(),
-            trustedEnvironment: Type.Boolean(),
+        body: z.object({
+            operation: z.union([z.literal('enable'), z.literal('disable')]),
+            platformId: z.string(),
+            trustedEnvironment: z.boolean(),
         }),
     },
     config: {
@@ -111,42 +111,39 @@ const IncreaseAICreditsForPlatformRequest = {
 }
 
 
-const Action = Type.Object({
-    name: Type.String(),
-    displayName: Type.String(),
-    description: Type.String(),
-    requireAuth: Type.Boolean(),
-    props: Type.Unknown(),
-    errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
+const Action = z.object({
+    name: z.string(),
+    displayName: z.string(),
+    description: z.string(),
+    requireAuth: z.boolean(),
+    props: z.unknown(),
+    errorHandlingOptions: ErrorHandlingOptionsParam.optional(),
 })
 
-const Trigger = Type.Composite([
-    Action,
-    Type.Object({
-        renewConfiguration: Type.Optional(WebhookRenewConfiguration),
-        handshakeConfiguration: WebhookHandshakeConfiguration,
-        sampleData: Type.Optional(Type.Unknown()),
-        type: Type.Enum(TriggerStrategy),
-        testStrategy: Type.Enum(TriggerTestStrategy),
-    }),
-])
+const Trigger = Action.extend({
+    renewConfiguration: WebhookRenewConfiguration.optional(),
+    handshakeConfiguration: WebhookHandshakeConfiguration,
+    sampleData: z.unknown().optional(),
+    type: z.nativeEnum(TriggerStrategy),
+    testStrategy: z.nativeEnum(TriggerTestStrategy),
+})
 
 const CreatePieceRequest = {
     schema: {
-        body: Type.Object({
-            name: Type.String(),
-            displayName: Type.String(),
-            logoUrl: Type.String(),
-            description: Type.Optional(Type.String()),
+        body: z.object({
+            name: z.string(),
+            displayName: z.string(),
+            logoUrl: z.string(),
+            description: z.string().optional(),
             version: ExactVersionType,
-            auth: Type.Optional(Type.Any()),
-            authors: Type.Array(Type.String()),
-            categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
+            auth: z.unknown().optional(),
+            authors: z.array(z.string()),
+            categories: z.array(z.nativeEnum(PieceCategory)).optional(),
             minimumSupportedRelease: ExactVersionType,
             maximumSupportedRelease: ExactVersionType,
-            actions: Type.Record(Type.String(), Action),
-            triggers: Type.Record(Type.String(), Trigger),
-            i18n: Type.Optional(Type.Record(Type.String(), Type.Record(Type.String(), Type.String()))),
+            actions: z.record(z.string(), Action),
+            triggers: z.record(z.string(), Trigger),
+            i18n: z.record(z.string(), z.record(z.string(), z.string())).optional(),
         }),
     },
     config: {

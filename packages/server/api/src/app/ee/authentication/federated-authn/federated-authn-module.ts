@@ -4,22 +4,20 @@ import {
 
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { applicationEvents } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 
-export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
+export const federatedAuthModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(federatedAuthnController, {
         prefix: '/v1/authn/federated',
     })
 }
 
-const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
+const federatedAuthnController: FastifyPluginAsyncZod = async (app) => {
     app.get('/login', LoginRequestSchema, async (req) => {
         const platformId = await platformUtils.getPlatformIdForRequest(req)
         return federatedAuthnService(req.log).login({
@@ -53,8 +51,8 @@ const LoginRequestSchema = {
         security: securityAccess.public(),
     },
     schema: {
-        querystring: Type.Object({
-            providerName: Type.Enum(ThirdPartyAuthnProviderEnum),
+        querystring: z.object({
+            providerName: z.nativeEnum(ThirdPartyAuthnProviderEnum),
         }),
     },
 }

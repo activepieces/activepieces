@@ -34,10 +34,11 @@ export const DeleteUserAction = ({
             title={isInvitation ? t('Delete Invitation') : t('Delete User')}
             message={
               isInvitation
-                ? t('Are you sure you want to delete this invitation?')
-                : t('Are you sure you want to delete this user?')
+                ? t('This invitation will be permanently deleted.')
+                : t('This user and all their data will be permanently deleted.')
             }
             entityName={`${entityType} ${email}`}
+            buttonText={t('Delete')}
             mutationFn={async () => {
               onDelete(isInvitation ? row.id : row.data.id, isInvitation);
             }}
