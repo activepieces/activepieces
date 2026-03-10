@@ -136,13 +136,13 @@ function GlobalSearchDialogContent({
   const hasQuery = debouncedSearch.length > 0;
   const noResults = hasQuery && !isLoading && groups.length === 0;
 
-const TYPE_CATEGORIES = [
-  { type: 'flow', heading: t('Flows') },
-  { type: 'table', heading: t('Tables') },
-  { type: 'folder', heading: t('Folders') },
-  { type: 'project', heading: t('Projects') },
-  { type: 'page', heading: t('Pages') },
-] as const;
+  const TYPE_CATEGORIES = [
+    { type: 'flow', heading: t('Flows') },
+    { type: 'table', heading: t('Tables') },
+    { type: 'folder', heading: t('Folders') },
+    { type: 'project', heading: t('Projects') },
+    { type: 'page', heading: t('Pages') },
+  ] as const;
 
   const mergedGroups = !hasQuery
     ? TYPE_CATEGORIES.map(({ type, heading }) => {
@@ -236,11 +236,13 @@ const TYPE_CATEGORIES = [
             <p className="text-sm text-muted-foreground">
               {t('No results found.')}
             </p>
-              <button
-                type="button"
-                className="text-xs text-primary underline hover:no-underline"
-                onClick={() => setSearch('')}
-              >
+            <button
+              type="button"
+              className="text-xs text-primary underline hover:no-underline"
+              onClick={() => setSearch('')}
+            >
+              {t('Clear search')}
+            </button>
           </div>
         )}
 
