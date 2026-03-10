@@ -46,6 +46,7 @@ export const flowExecutor = {
                 stepNameToUpdate: trigger.name,
                 startTime: dayjs().toISOString(),
             })
+            await failIfLogSizeExceeded(executionState, trigger, constants)
         }
         return flowExecutor.execute({
             action: trigger.nextAction,

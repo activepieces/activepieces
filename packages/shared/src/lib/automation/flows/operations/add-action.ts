@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { isNil } from '../../../core/common'
 import { ActivepiecesError, ErrorCode } from '../../../core/common/activepieces-error'
 import { FlowAction, FlowActionType, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
@@ -17,6 +18,7 @@ function createAction(request: UpdateActionRequest, {
         name: request.name,
         valid: false,
         skip: request.skip,
+        lastUpdatedDate: dayjs().toISOString(),
         settings: {
             ...request.settings,
             customLogoUrl: request.settings.customLogoUrl,
