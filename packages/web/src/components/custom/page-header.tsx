@@ -1,22 +1,14 @@
 import { ReactNode } from 'react';
 
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { useEmbedding } from '@/components/providers/embed-provider';
-
-interface PageHeaderProps {
-  title: ReactNode;
-  description?: ReactNode;
-  leftContent?: ReactNode;
-  rightContent?: ReactNode;
-  showBorder?: boolean;
-  className?: string;
-}
-
 export const PageHeader = ({
   title,
   description,
   leftContent,
   rightContent,
   showBorder = false,
+  showSidebarToggle = false,
   className = '',
 }: PageHeaderProps) => {
   const { embedState } = useEmbedding();
@@ -31,28 +23,31 @@ export const PageHeader = ({
         showBorder ? 'border-b' : ''
       } ${className}`}
     >
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              {typeof title === 'string' ? (
-                <h1 className="text-base font-normal">{title}</h1>
-              ) : (
-                title
-              )}
-            </div>
-            {description && (
-              <span className="text-xs text-muted-foreground">
-                {description}
-              </span>
-            )}
-          </div>
-
-          {leftContent}
+      <div className="flex items-center gap-1">
+        {showSidebarToggle && <ApSidebarToggle />}
+        <div>
+          {typeof title === 'string' ? (
+            <h1 className="text-sm font-medium">{title}</h1>
+          ) : (
+            title
+          )}
+          {description && (
+            <span className="text-xs text-muted-foreground">{description}</span>
+          )}
         </div>
-
-        {rightContent}
+        {leftContent}
       </div>
+      {rightContent}
     </div>
   );
 };
+
+interface PageHeaderProps {
+  title: ReactNode;
+  description?: ReactNode;
+  leftContent?: ReactNode;
+  rightContent?: ReactNode;
+  showBorder?: boolean;
+  showSidebarToggle?: boolean;
+  className?: string;
+}

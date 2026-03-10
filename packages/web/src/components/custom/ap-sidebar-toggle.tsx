@@ -1,6 +1,7 @@
 import { t } from 'i18next';
-import { PanelRightClose, PanelRightOpen } from 'lucide-react';
 
+import { PanelLeftCloseIcon } from '@/components/icons/panel-left-close';
+import { PanelLeftOpenIcon } from '@/components/icons/panel-left-open';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import {
@@ -13,9 +14,13 @@ export const ApSidebarToggle = () => {
   const { open, setOpen } = useSidebar();
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
-          {open ? <PanelRightOpen /> : <PanelRightClose />}
+          {open ? (
+            <PanelLeftCloseIcon size={16} />
+          ) : (
+            <PanelLeftOpenIcon size={16} />
+          )}
         </Button>
       </TooltipTrigger>
       <TooltipContent>

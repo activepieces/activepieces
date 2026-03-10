@@ -1,4 +1,4 @@
-import { Static, Type } from '@sinclair/typebox';
+import { z } from 'zod';
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
@@ -19,20 +19,20 @@ type OnStartRunner<PieceAuth extends PieceAuthProperty | undefined, TriggerProps
 
 
 
-export const WebhookRenewConfiguration = Type.Union([
-  Type.Object({
-    strategy: Type.Literal(WebhookRenewStrategy.CRON),
-    cronExpression: Type.String(),
+export const WebhookRenewConfiguration = z.union([
+  z.object({
+    strategy: z.literal(WebhookRenewStrategy.CRON),
+    cronExpression: z.string(),
   }),
-  Type.Object({
-    strategy: Type.Literal(WebhookRenewStrategy.NONE),
+  z.object({
+    strategy: z.literal(WebhookRenewStrategy.NONE),
   }),
 ])
-export type WebhookRenewConfiguration = Static<typeof WebhookRenewConfiguration>
+export type WebhookRenewConfiguration = z.infer<typeof WebhookRenewConfiguration>
 
 export interface WebhookResponse {
   status: number,
-  body?: any,
+  body?: unknown,
   headers?: Record<string, string>
 }
 
@@ -101,6 +101,7 @@ export class ITrigger<
   ) { }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Trigger<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = any,
   TriggerProps extends InputPropertyMap = any,

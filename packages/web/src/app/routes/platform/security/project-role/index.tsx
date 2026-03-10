@@ -1,16 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { CenteredPage } from '@/app/components/centered-page';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { Button } from '@/components/ui/button';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { PlusIcon } from '@/components/icons/plus';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectRoleApi } from '@/features/platform-admin';
+import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -19,11 +18,32 @@ import { ProjectRolesTable } from './project-roles-table';
 const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['project-roles'],
-    queryFn: () => projectRoleApi.list(),
-    enabled: platform.plan.projectRolesEnabled,
-  });
+  const { data, isLoading, refetch } = projectRoleQueries.useProjectRoles(
+    platform.plan.projectRolesEnabled,
+  );
+
+  const newRoleButton = !platform.plan.customRolesEnabled ? (
+    <Tooltip>
+      <TooltipTrigger>
+        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm" disabled>
+          {t('New Role')}
+        </AnimatedIconButton>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        {t('Contact sales to unlock custom roles')}
+      </TooltipContent>
+    </Tooltip>
+  ) : (
+    <ProjectRoleDialog
+      mode="create"
+      onSave={() => refetch()}
+      platformId={platform.id}
+    >
+      <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+        {t('New Role')}
+      </AnimatedIconButton>
+    </ProjectRoleDialog>
+  );
 
   return (
     <LockedFeatureGuard
@@ -35,46 +55,19 @@ const ProjectRolePage = () => {
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
-      <div className="flex-col w-full">
-        <DashboardPageHeader
-          title={t('Project Role Management')}
-          description={t(
-            'Define custom roles and permissions that can be assigned to your team members',
-          )}
-        >
-          {!platform.plan.customRolesEnabled && (
-            <Tooltip>
-              <TooltipTrigger>
-                <Button size="sm" className="flex items-center gap-2" disabled>
-                  <Plus className="size-4" />
-                  {t('New Role')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Contact sales to unlock custom roles')}
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {platform.plan.customRolesEnabled && (
-            <ProjectRoleDialog
-              mode="create"
-              onSave={() => refetch()}
-              platformId={platform.id}
-            >
-              <Button size="sm" className="flex items-center gap-2">
-                <Plus className="size-4" />
-                {t('New Role')}
-              </Button>
-            </ProjectRoleDialog>
-          )}
-        </DashboardPageHeader>
-
+      <CenteredPage
+        title={t('Project Role Management')}
+        description={t(
+          'Define custom roles and permissions that can be assigned to your team members',
+        )}
+        actions={newRoleButton}
+      >
         <ProjectRolesTable
           projectRoles={data}
           isLoading={isLoading}
           refetch={refetch}
         />
-      </div>
+      </CenteredPage>
     </LockedFeatureGuard>
   );
 };

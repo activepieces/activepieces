@@ -1,10 +1,10 @@
 import { securityAccess } from '@activepieces/server-common'
 import { ActivepiecesError, ErrorCode, isNil, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
+import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { z } from 'zod'
 import { licenseKeysService } from './license-keys-service'
 
-export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
+export const licenseKeysController: FastifyPluginAsyncZod = async (app) => {
 
 
     app.get('/:licenseKey', GetLicenseKeyRequest, async (req) => {
@@ -45,8 +45,8 @@ const GetLicenseKeyRequest = {
         security: securityAccess.public(),
     },
     schema: {
-        params: Type.Object({
-            licenseKey: Type.String(),
+        params: z.object({
+            licenseKey: z.string(),
         }),
     },
 }

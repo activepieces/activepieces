@@ -1,8 +1,8 @@
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import { UpsertBasicAuthRequest } from '@activepieces/shared';
-import { Static, Type } from '@sinclair/typebox';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import { z } from 'zod';
 
 import {
   FormControl,
@@ -21,10 +21,10 @@ type BasicAuthConnectionSettingsProps = {
 
 const BasicAuthConnectionSettings = React.memo(
   ({ authProperty, isGlobalConnection }: BasicAuthConnectionSettingsProps) => {
-    const forSchema = Type.Object({
+    const forSchema = z.object({
       request: UpsertBasicAuthRequest,
     });
-    const form = useFormContext<Static<typeof forSchema>>();
+    const form = useFormContext<z.infer<typeof forSchema>>();
 
     return (
       <>

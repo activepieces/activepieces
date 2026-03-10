@@ -17,10 +17,6 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
         return packageJson.name
     },
 
-    getProjectJsonFromFolderPath: async (folderPath: string): Promise<string> => {
-        return join(folderPath, 'project.json')
-    },
-
     getPieceDependencies: async (folderPath: string): Promise<Record<string, string> | null> => {
         try {
             const packageJson =  await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)

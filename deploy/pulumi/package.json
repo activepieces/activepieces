@@ -2,7 +2,7 @@
   "name": "pulumi",
   "main": "index.ts",
   "devDependencies": {
-    "@types/node": "^18"
+    "@types/node": "^24"
   },
   "dependencies": {
     "@pulumi/pulumi": "^3.0.0",

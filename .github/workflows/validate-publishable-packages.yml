@@ -17,6 +17,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+
       - name: Cache dependencies
         id: cache-npm
         uses: actions/cache@v3

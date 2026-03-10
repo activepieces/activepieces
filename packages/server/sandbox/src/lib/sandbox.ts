@@ -159,6 +159,8 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
         killedByTimeout: String(killedByTimeout),
     }, '[Sandbox] Process exit event fired')
     const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
+    const isLogSizeExceeded = stdError.includes('Flow run data size exceeded the maximum allowed size')
+
     if (killedByTimeout) {
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
@@ -171,6 +173,15 @@ function handleProcessExit(log: SandboxLogger, params: ProcessExitParams): void 
     else if (isRamIssue) {
         reject(new ActivepiecesError({
             code: ErrorCode.SANDBOX_MEMORY_ISSUE,
+            params: {
+                standardOutput: stdOut,
+                standardError: stdError,
+            },
+        }))
+    }
+    else if (isLogSizeExceeded) {
+        reject(new ActivepiecesError({
+            code: ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED,
             params: {
                 standardOutput: stdOut,
                 standardError: stdError,
