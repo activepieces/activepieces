@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-common'
-import { FlowStatus, FlowVersionState, FlowTriggerType, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, mcpToolNameUtils, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, FlowTriggerType, FlowVersionState, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, mcpToolNameUtils, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -46,10 +46,10 @@ export async function registerFlowTools(
             })
             const isOkay = Math.floor(response.status / 100) === 2
 
-            rejectedPromiseHandler(telemetry(log).trackProject(mcp.projectId, {
+            rejectedPromiseHandler(telemetry(log).trackProject(flow.projectId, {
                 name: TelemetryEventName.MCP_TOOL_CALLED,
                 payload: {
-                    mcpId: mcp.projectId,
+                    mcpId: mcp.id,
                     toolName,
                 },
             }), log)
@@ -76,9 +76,12 @@ export async function registerFlowTools(
     }
 }
 
-export async function listFlows(mcp: McpServerSchema, logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
+export async function listFlows(projectIds: string[], logger: FastifyBaseLogger): Promise<PopulatedFlow[]> {
+    if (projectIds.length === 0) {
+        return []
+    }
     const flows = await flowService(logger).list({
-        projectIds: [mcp.projectId],
+        projectIds,
         limit: 1000000,
         cursorRequest: null,
         versionState: FlowVersionState.DRAFT,

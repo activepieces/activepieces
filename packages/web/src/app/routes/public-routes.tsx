@@ -10,6 +10,7 @@ import NotFoundPage from './404-page';
 import AuthenticatePage from './authenticate';
 import { EmbedPage } from './embed';
 import { EmbeddedConnectionDialog } from './embed/embedded-connection-dialog';
+import { OAuthConsentPage } from './oauth-consent';
 import { RedirectPage } from './redirect';
 
 const ChatPage = React.lazy(() =>
@@ -72,6 +73,14 @@ export const publicRoutes = [
         <SuspenseWrapper>
           <ChatPage />
         </SuspenseWrapper>
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/oauth/consent',
+    element: (
+      <PageTitle title="Authorize Application">
+        <OAuthConsentPage />
       </PageTitle>
     ),
   },

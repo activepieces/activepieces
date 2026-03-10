@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, UserCogIcon, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
@@ -30,9 +31,11 @@ import { cn } from '@/lib/utils';
 
 import AccountSettingsDialog from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
+import { McpServerDialog } from '../project-settings/mcp-server/mcp-dialog';
 
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [mcpDialogOpen, setMcpDialogOpen] = useState(false);
   const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -115,6 +118,10 @@ export function SidebarUser() {
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setMcpDialogOpen(true)}>
+                <McpSvg className="w-4 h-4 mr-2" />
+                {t('MCP')}
+              </DropdownMenuItem>
               {canInviteUsers && (
                 <DropdownMenuItem onClick={() => setInviteUserOpen(true)}>
                   <UserPlus className="w-4 h-4 mr-2" />
@@ -135,6 +142,10 @@ export function SidebarUser() {
       <AccountSettingsDialog
         open={accountSettingsOpen}
         onClose={() => setAccountSettingsOpen(false)}
+      />
+      <McpServerDialog
+        open={mcpDialogOpen}
+        onClose={() => setMcpDialogOpen(false)}
       />
       <InviteUserDialog open={inviteUserOpen} setOpen={setInviteUserOpen} />
     </SidebarMenu>

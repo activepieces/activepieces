@@ -25,10 +25,9 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        const records = await recordService.create({
+        const records = await recordService(request.log).create({
             request: request.body,
             projectId: request.projectId,
-            logger: request.log,
         })
         await reply.status(StatusCodes.CREATED).send(records)
         await recordSideEffects(fastify.log).handleRecordsEvent({
@@ -41,14 +40,14 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.get('/:id', GetRecordByIdRequest, async (request) => {
-        return recordService.getById({
+        return recordService(request.log).getById({
             id: request.params.id,
             projectId: request.projectId,
         })
     })
 
     fastify.post('/:id', UpdateRequest, async (request, reply) => {
-        const record = await recordService.update({
+        const record = await recordService(request.log).update({
             id: request.params.id,
             request: request.body,
             projectId: request.projectId,
@@ -65,7 +64,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
-        const deletedRecords = await recordService.delete({
+        const deletedRecords = await recordService(request.log).delete({
             ids: request.body.ids,
             projectId: request.projectId,
         })
@@ -80,7 +79,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.get('/', ListRequest, async (request) => {
-        return recordService.list({
+        return recordService(request.log).list({
             tableId: request.query.tableId,
             projectId: request.projectId,
             cursorRequest: request.query.cursor ?? null,

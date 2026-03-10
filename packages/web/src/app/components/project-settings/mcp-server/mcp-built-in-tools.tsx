@@ -1,6 +1,6 @@
 import { PopulatedFlow } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Table2 } from 'lucide-react';
+import { LayoutGrid, Table2 } from 'lucide-react';
 
 import {
   Item,
@@ -25,9 +25,11 @@ const TABLE_TOOLS = [
   'list_records',
   'create_records',
   'get_record',
-  'update_record',
+  'update_records',
   'delete_records',
 ];
+
+const PROJECT_TOOLS = ['list_projects'];
 
 export function McpTools({ flows }: McpToolsProps) {
   return (
@@ -40,6 +42,17 @@ export function McpTools({ flows }: McpToolsProps) {
           <ItemTitle>{t('Tables')}</ItemTitle>
           <ItemDescription className="text-xs">
             {TABLE_TOOLS.join(', ')}
+          </ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item variant="outline">
+        <ItemMedia variant="icon">
+          <LayoutGrid />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>{t('Projects')}</ItemTitle>
+          <ItemDescription className="text-xs">
+            {PROJECT_TOOLS.join(', ')}
           </ItemDescription>
         </ItemContent>
       </Item>

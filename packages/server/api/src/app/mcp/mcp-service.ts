@@ -2,43 +2,39 @@ import { apId, isNil, McpServer as McpServerSchema, McpServerStatus, PopulatedMc
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
+import { projectService } from '../project/project-service'
 import { McpServerEntity } from './mcp-entity'
 import { listFlows, registerFlowTools } from './tools/flow-tools'
+import { registerProjectTools } from './tools/project-tools'
 import { registerTableTools } from './tools/table-tools'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
 
 export const mcpServerService = (log: FastifyBaseLogger) => {
     return {
-        getPopulatedByProjectId: async (projectId: string): Promise<PopulatedMcpServer> => {
-            const mcp = await mcpServerService(log).getByProjectId(projectId)
-            const flows = await listFlows(mcp, log)
+        getPopulatedByUserId: async (userId: string, platformId: string): Promise<PopulatedMcpServer> => {
+            const mcp = await mcpServerService(log).getByUserId(userId)
+            const projects = await projectService(log).getAllForUser({ userId, platformId, isPrivileged: false })
+            const projectIds = projects.map((p) => p.id)
+            const flows = await listFlows(projectIds, log)
             return {
                 ...mcp,
                 flows,
             }
         },
-        getByProjectId: async (projectId: string): Promise<McpServerSchema> => {
-            const mcpServer = await mcpServerRepository().findOneBy({ projectId })
+        getByUserId: async (userId: string): Promise<McpServerSchema> => {
+            const mcpServer = await mcpServerRepository().findOneBy({ userId })
             if (isNil(mcpServer)) {
                 await mcpServerRepository().upsert({
                     id: apId(),
                     status: McpServerStatus.ENABLED,
-                    projectId,
-                    token: apId(72),
-                }, ['projectId'])
-                return mcpServerRepository().findOneByOrFail({ projectId })
+                    userId,
+                }, ['userId'])
+                return mcpServerRepository().findOneByOrFail({ userId })
             }
             return mcpServer
         },
-        rotateToken: async ({ projectId }: RotateTokenRequest): Promise<PopulatedMcpServer> => {
-            const mcp = await mcpServerService(log).getByProjectId(projectId)
-            await mcpServerRepository().update(mcp.id, {
-                token: apId(72),
-            })
-            return mcpServerService(log).getPopulatedByProjectId(projectId)
-        },
-        buildServer: async ({ mcp }: BuildServerRequest): Promise<McpServer> => {
+        buildServer: async ({ mcp, projects }: BuildServerRequest): Promise<McpServer> => {
             const server = new McpServer({
                 name: 'Activepieces',
                 title: 'Activepieces',
@@ -55,7 +51,8 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             })
 
             await registerFlowTools(server, mcp, log)
-            await registerTableTools(server, mcp.projectId, log)
+            registerProjectTools(server, projects)
+            await registerTableTools(server, projects, log)
             registerEmptyResourcesAndPrompts(server)
 
             return server
@@ -85,9 +82,5 @@ function registerEmptyResourcesAndPrompts(server: McpServer): void {
 
 type BuildServerRequest = {
     mcp: PopulatedMcpServer
+    projects: Array<{ id: string, displayName: string }>
 }
-
-type RotateTokenRequest = {
-    projectId: string
-}
-

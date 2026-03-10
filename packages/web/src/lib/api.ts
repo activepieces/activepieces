@@ -28,6 +28,9 @@ const disallowedRoutes = [
   '/v1/authn/local/reset-password',
   '/v1/user-invitations/accept',
   '/v1/webhooks',
+  '/v1/oauth/token',
+  '/v1/oauth/register',
+  '/v1/oauth/revoke',
 ];
 //This is important to avoid redirecting to sign-in page when the user is deleted for embedding scenarios
 const ignroedGlobalErrorHandlerRoutes = ['/v1/users/me'];

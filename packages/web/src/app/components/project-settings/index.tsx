@@ -11,7 +11,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -29,17 +28,10 @@ import { ProjectAvatar } from '../project-avatar';
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
-import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
 
-type TabId =
-  | 'general'
-  | 'members'
-  | 'alerts'
-  | 'pieces'
-  | 'environment'
-  | 'mcp';
+type TabId = 'general' | 'members' | 'alerts' | 'pieces' | 'environment';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -98,7 +90,7 @@ export function ProjectSettingsDialog({
         icon: project.icon,
       });
       const tabExists = tabs.some((tab) => tab.id === initialTab);
-      setActiveTab(tabExists ? initialTab : tabs[0]?.id ?? 'mcp');
+      setActiveTab(tabExists ? initialTab : tabs[0]?.id ?? 'general');
     }
     previousOpenRef.current = open;
   }, [open, project]);
@@ -133,12 +125,6 @@ export function ProjectSettingsDialog({
         !showAlerts,
     },
     {
-      id: 'mcp' as TabId,
-      label: t('MCP Server'),
-      icon: <McpSvg className="w-4 h-4" />,
-      disabled: false,
-    },
-    {
       id: 'pieces' as TabId,
       label: t('Pieces'),
       icon: <Puzzle className="w-4 h-4" />,
@@ -164,8 +150,6 @@ export function ProjectSettingsDialog({
         return <PiecesSettings />;
       case 'environment':
         return <EnvironmentSettings />;
-      case 'mcp':
-        return <McpServerSettings />;
       default:
         return null;
     }

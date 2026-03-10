@@ -53,7 +53,7 @@ export const securityAccess = {
      * @param projectResource - Optional resource configuration for extracting projectId from the request
      * @returns Security configuration for public platform routes
      */
-    publicPlatform: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[], projectResource?: ProjectResource) => {
+    publicPlatform: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE | PrincipalType.OAUTH)[], projectResource?: ProjectResource) => {
         return {
             kind: RouteKind.AUTHENTICATED,
             authorization: {

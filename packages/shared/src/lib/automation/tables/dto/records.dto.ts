@@ -23,6 +23,18 @@ export const UpdateRecordRequest = z.object({
 
 export type UpdateRecordRequest = z.infer<typeof UpdateRecordRequest>
 
+export const UpdateRecordsRequest = z.object({
+    tableId: z.string(),
+    records: z.array(z.object({
+        recordId: z.string(),
+        cells: z.array(z.object({
+            fieldId: z.string(),
+            value: z.string(),
+        })),
+    })),
+})
+
+export type UpdateRecordsRequest = z.infer<typeof UpdateRecordsRequest>
 
 export enum FilterOperator {
     EQ = 'eq',

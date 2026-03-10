@@ -1,14 +1,15 @@
 import { AppSystemProp } from '@activepieces/server-common'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, UpdateFieldRequest } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
-export const fieldService = {
+export const fieldService = (_log: FastifyBaseLogger) => ({
     async create({ request, projectId }: CreateParams): Promise<Field> {
-        await this.validateCount({ projectId, tableId: request.tableId })
+        await fieldService(_log).validateCount({ projectId, tableId: request.tableId })
         const field = await fieldRepo().save({
             ...request,
             projectId,
@@ -22,7 +23,7 @@ export const fieldService = {
         switch (field.type) {
             case FieldType.STATIC_DROPDOWN: {
                 assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
-                return this.create({
+                return fieldService(_log).create({
                     projectId,
                     request: {
                         name: field.name,
@@ -36,7 +37,7 @@ export const fieldService = {
             case FieldType.DATE:
             case FieldType.NUMBER:
             case FieldType.TEXT: {
-                return this.create({
+                return fieldService(_log).create({
                     projectId,
                     request: {
                         name: field.name,
@@ -98,7 +99,7 @@ export const fieldService = {
         }, {
             name: request.name,
         })
-        return this.getById({ id, projectId })
+        return fieldService(_log).getById({ id, projectId })
     },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {
@@ -107,7 +108,7 @@ export const fieldService = {
         })
     },
     async validateCount(params: CountParams): Promise<void> {
-        const countRes = await this.count(params)
+        const countRes = await fieldService(_log).count(params)
         if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -116,7 +117,7 @@ export const fieldService = {
             })
         }
     },
-}
+})
 
 type CreateParams = {
     projectId: string

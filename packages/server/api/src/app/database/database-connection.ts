@@ -7,6 +7,7 @@ import {
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
+import { OAuthAuthorizationCodeEntity, OAuthClientEntity, OAuthRefreshTokenEntity } from '../authentication/oauth/oauth-entities'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
@@ -87,6 +88,9 @@ function getEntities(): EntitySchema<unknown>[] {
         TableWebhookEntity,
         UserIdentityEntity,
         McpServerEntity,
+        OAuthClientEntity,
+        OAuthAuthorizationCodeEntity,
+        OAuthRefreshTokenEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
         // Enterprise

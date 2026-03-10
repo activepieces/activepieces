@@ -39,6 +39,14 @@ export type EnginePrincipal = {
     }
 }
 
+export type OAuthPrincipal = {
+    id: ApId
+    type: PrincipalType.OAUTH
+    platform: {
+        id: ApId
+    }
+}
+
 
 export type PrincipalForType<T extends PrincipalType> = Extract<Principal, { type: T }>
 
@@ -50,3 +58,4 @@ export type Principal =
     | ServicePrincipal
     | UserPrincipal
     | EnginePrincipal
+    | OAuthPrincipal

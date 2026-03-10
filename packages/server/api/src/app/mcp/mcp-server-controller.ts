@@ -1,45 +1,30 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-common'
-import { AgentMcpTool, ApId, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-common'
+import { AgentMcpTool, buildAuthHeaders, isNil, McpAuthConfig, McpProtocol, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { projectService } from '../project/project-service'
 import { mcpServerService } from './mcp-service'
 
-export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
+export const mcpStreamableController: FastifyPluginAsyncZod = async (app) => {
 
-
-    app.get('/', GetMcpRequest, async (req) => {
-        return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
-    })
-
-    app.post('/rotate', RotateTokenRequest, async (req) => {
-        return mcpServerService(req.log).rotateToken({
-            projectId: req.projectId,
-        })
-    })
-
-    app.get('/http', StreamableHttpRequestRequest, async (_req, reply) => {
+    app.get('/', StreamableHttpRequest, async (_req, reply) => {
         return reply.status(405).send({
             error: 'Method Not Allowed',
             message: 'Use POST with Authorization: Bearer <token> for MCP requests.',
         })
     })
 
-    app.post('/http', StreamableHttpRequestRequest, async (req, reply) => {
-        const mcp = await mcpServerService(req.log).getPopulatedByProjectId(req.params.projectId)
-        const authHeader = req.headers['authorization']
-        const tokenFromHeader = validateAuthorizationHeader(authHeader, mcp)
-        const tokenFromQuery = validateTokenFromQuery(req.query, mcp)
-        if (!tokenFromHeader && !tokenFromQuery) {
-            return reply.status(401).send({
-                error: 'Unauthorized',
-                message: 'Missing or invalid token. Use Authorization: Bearer <token> or add ?token=<token> to the URL (for clients that cannot send headers).',
-            })
-        }
+    app.post('/', StreamableHttpRequest, async (req, reply) => {
+        const userId = req.principal.id
+        const platformId = req.principal.platform.id
+        const mcp = await mcpServerService(req.log).getPopulatedByUserId(userId, platformId)
+        const projects = await projectService(req.log).getAllForUser({ userId, platformId, isPrivileged: false })
         const mcpServer = await mcpServerService(req.log).buildServer({
             mcp,
+            projects: projects.map((p) => ({ id: p.id, displayName: p.displayName })),
         })
 
         const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
@@ -53,6 +38,13 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
 
         await mcpServer.connect(transport)
         await transport.handleRequest(req.raw, reply.raw, req.body)
+    })
+}
+
+export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
+
+    app.get('/', GetMcpRequest, async (req) => {
+        return mcpServerService(req.log).getPopulatedByUserId(req.principal.id, req.principal.platform.id)
     })
 
     app.post('/validate-agent-mcp-tool', AddMcpServerToolRequest, async (req) => {
@@ -69,7 +61,7 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             })
             const mcpTools = await mcpClient.tools()
 
-            return { toolNames: Object.keys(mcpTools).map(toolName => toolName), error: null }
+            return { toolNames: Object.keys(mcpTools), error: null }
         }
         catch (error) {
             return { toolNames: null, error: `Error connecting to mcp server ${tool.toolName}, Error: ${error}` }
@@ -80,17 +72,6 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             }
         }
     })
-}
-
-function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
-    const [type, token] = authHeader?.split(' ') ?? []
-    return type === 'Bearer' && token === mcp.token
-}
-
-function validateTokenFromQuery(query: unknown, mcp: PopulatedMcpServer) {
-    const queryParams = query as Record<string, string | undefined>
-    const token = queryParams.token
-    return token === mcp.token
 }
 
 function createTransportConfig(
@@ -127,34 +108,21 @@ function createTransportConfig(
     }
 }
 
-const StreamableHttpRequestRequest = {
+const StreamableHttpRequest = {
     config: {
-        security: securityAccess.public(),
-        skipAuth: true,
+        security: securityAccess.unscoped([PrincipalType.OAUTH]),
     },
     schema: {
-        params: z.object({
-            projectId: ApId,
-        }),
     },
 }
 
 export const AddMcpServerToolRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_FLOW,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         tags: ['agent'],
         description: 'Validate agent MCP tool',
-        params: z.object({
-            projectId: ApId,
-        }),
         body: AgentMcpTool.omit({ auth: true }).merge(
             z.object({
                 auth: z.unknown(),
@@ -165,41 +133,13 @@ export const AddMcpServerToolRequest = {
 
 const GetMcpRequest = {
     config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.READ_MCP,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.OAUTH]),
     },
     schema: {
         tags: ['mcp'],
-        description: 'Get an MCP server by ID',
+        description: 'Get an MCP server for the current user',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: z.object({
-            projectId: ApId,
-        }),
     },
-}
-
-const RotateTokenRequest = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER],
-            Permission.WRITE_MCP,
-            {
-                type: ProjectResourceType.PARAM,
-            },
-        ),
-    },
-    schema: {
-        tags: ['mcp'],
-        description: 'Rotate the MCP server token',
-    },
-    params: z.object({
-        projectId: ApId,
-    }),
 }
 
 type McpToolValidationBody = Omit<AgentMcpTool, 'auth'> & { auth: unknown }

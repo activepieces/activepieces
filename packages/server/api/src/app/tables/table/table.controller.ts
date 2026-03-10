@@ -15,14 +15,14 @@ const DEFAULT_PAGE_SIZE = 10
 export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.post('/', CreateRequest, async (request) => {
-        return tableService.create({
+        return tableService(request.log).create({
             projectId: request.projectId,
             request: request.body,
         })
     })
 
     fastify.post('/:id', UpdateRequest, async (request) => {
-        return tableService.update({
+        return tableService(request.log).update({
             projectId: request.projectId,
             id: request.params.id,
             request: request.body,
@@ -31,7 +31,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.get('/', GetTablesRequest, async (request) => {
-        return tableService.list({
+        return tableService(request.log).list({
             projectId: request.projectId,
             cursor: request.query.cursor,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
@@ -43,16 +43,15 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
 
     fastify.get('/:id/template', GetTableTemplateRequestOptions, async (request) => {
         const userMetadata = request.principal.type === PrincipalType.USER ? await userService(request.log).getMetaInformation({ id: request.principal.id }) : null
-        return tableService.getTemplate({
+        return tableService(request.log).getTemplate({
             tableId: request.params.id,
             userMetadata,
             projectId: request.projectId,
-            log: request.log,
         })
     })
 
     fastify.delete('/:id', DeleteRequest, async (request, reply) => {
-        const table = await tableService.getOneOrThrow({
+        const table = await tableService(request.log).getOneOrThrow({
             projectId: request.projectId,
             id: request.params.id,
         })
@@ -64,7 +63,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
             platformId: request.principal.platform.id,
             log: request.log,
         })
-        await tableService.delete({
+        await tableService(request.log).delete({
             projectId: request.projectId,
             id: request.params.id,
         })
@@ -72,28 +71,28 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.get('/count', CountTablesRequestOptions, async (request) => {
-        return tableService.count({
+        return tableService(request.log).count({
             projectId: request.projectId,
             folderId: request.query.folderId,
         })
     })
 
     fastify.get('/:id', GetTableByIdRequest, async (request) => {
-        return tableService.getOneOrThrow({
+        return tableService(request.log).getOneOrThrow({
             projectId: request.projectId,
             id: request.params.id,
         })
     })
 
     fastify.get('/:id/export', ExportTableRequest, async (request) => {
-        return tableService.exportTable({
+        return tableService(request.log).exportTable({
             projectId: request.projectId,
             id: request.params.id,
         })
     })
 
     fastify.post('/:id/webhooks', CreateTableWebhook, async (request) => {
-        return tableService.createWebhook({
+        return tableService(request.log).createWebhook({
             projectId: request.projectId,
             id: request.params.id,
             request: request.body,
@@ -101,7 +100,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.delete('/:id/webhooks/:webhookId', DeleteTableWebhook, async (request) => {
-        return tableService.deleteWebhook({
+        return tableService(request.log).deleteWebhook({
             projectId: request.projectId,
             id: request.params.id,
             webhookId: request.params.webhookId,
@@ -109,7 +108,7 @@ export const tablesController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.post('/:id/clear', ClearTableRequest, async (request, reply) => {
-        const deletedRecords = await recordService.deleteAll({
+        const deletedRecords = await recordService(request.log).deleteAll({
             tableId: request.params.id,
             projectId: request.projectId,
         })

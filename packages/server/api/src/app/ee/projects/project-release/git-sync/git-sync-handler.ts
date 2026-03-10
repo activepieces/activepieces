@@ -81,7 +81,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
             const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
 
-            const populatedTables: PopulatedTable[] = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
+            const populatedTables: PopulatedTable[] = await listTablesByExternalIds(log, gitRepo.projectId, request.externalTableIds)
 
             for (const table of populatedTables) {
                 const tableName = table.externalId || table.id
@@ -99,7 +99,7 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
             const gitRepo = await gitRepoService(log).getOrThrow({ id })
             const { git, tablesFolderPath } = await gitHelper.createGitRepoAndReturnPaths(log, gitRepo, userId)
 
-            const populatedTables = await listTablesByExternalIds(gitRepo.projectId, request.externalTableIds)
+            const populatedTables = await listTablesByExternalIds(log, gitRepo.projectId, request.externalTableIds)
             for (const table of populatedTables) {
                 await gitSyncHelper(log).deleteFromGit({
                     fileName: table.externalId,
@@ -112,8 +112,8 @@ export const gitSyncHandler = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function listTablesByExternalIds(projectId: string, externalIds: string[]): Promise<PopulatedTable[]> {
-    const tables = await tableService.list({
+async function listTablesByExternalIds(log: FastifyBaseLogger, projectId: string, externalIds: string[]): Promise<PopulatedTable[]> {
+    const tables = await tableService(log).list({
         folderId: undefined,
         projectId,
         limit: 10000,
@@ -123,7 +123,7 @@ async function listTablesByExternalIds(projectId: string, externalIds: string[])
     }).then((page) => page.data.filter((table) => externalIds.includes(table.externalId)))
 
     const populatedTables = await Promise.all(tables.map(async (table) => {
-        const fields = await fieldService.getAll({
+        const fields = await fieldService(log).getAll({
             projectId,
             tableId: table.id,
         })
