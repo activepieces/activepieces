@@ -34,7 +34,7 @@ export const flowVersionController: FastifyPluginAsyncZod = async (fastify) => {
 
 const MigrateAIModel = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: MigrateFlowsModelRequest,

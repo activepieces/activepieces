@@ -305,7 +305,7 @@ const MigrateFlowsDialogContent = ({
               buttonText={t('Migrate')}
               entityName={t('Migration')}
             >
-              <Button loading={isPending} disabled={isPending}>
+              <Button type="button" loading={isPending} disabled={isPending}>
                 {t('Migrate')}
               </Button>
             </ConfirmationDeleteDialog>

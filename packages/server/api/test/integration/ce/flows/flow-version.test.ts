@@ -112,7 +112,6 @@ describe('Flow Version API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect(response?.json().jobId).toMatch(/^migrate-flow-model-/)
         })
     })
 
