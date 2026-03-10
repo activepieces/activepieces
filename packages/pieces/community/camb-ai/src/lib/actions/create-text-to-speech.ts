@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, HttpResponse } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, listSourceLanguagesDropdown, listVoicesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS } from '../common';
-import { listFoldersDropdown } from '../common';
+import { API_BASE_URL, listSourceLanguagesDropdown, listVoicesDropdown, POLLING_INTERVAL_MS, MAX_POLLING_ATTEMPTS, pollTaskUntilComplete, listFoldersDropdown } from '../common';
 
 export const createTextToSpeech = createAction({
     auth: cambaiAuth,
@@ -58,7 +57,6 @@ export const createTextToSpeech = createAction({
         if (project_description) payload['project_description'] = project_description;
         if (folder_id) payload['folder_id'] = folder_id;
 
-
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/tts`,
@@ -67,43 +65,21 @@ export const createTextToSpeech = createAction({
         });
         const taskId = initialResponse.body.task_id;
 
-        let attempts = 0;
-        let run_id: string | null = null;
-        while (attempts < MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
-                method: HttpMethod.GET,
-                url: `${API_BASE_URL}/tts/${taskId}`,
-                headers: { 'x-api-key': auth.secret_text },
-            });
+        const runId = await pollTaskUntilComplete(
+            auth.secret_text,
+            `${API_BASE_URL}/tts/${taskId}`,
+            MAX_POLLING_ATTEMPTS,
+            POLLING_INTERVAL_MS,
+        );
 
-            if (statusResponse.body.status === 'SUCCESS') {
-
-                run_id = statusResponse.body.run_id ?? null;
-                break;
-            }
-            if (statusResponse.body.status === 'FAILED') {
-
-                throw new Error(`Text-to-Speech task failed: ${JSON.stringify(statusResponse.body)}`);
-            }
-
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
-        }
-
-
-        if (!run_id) {
-            throw new Error("Text-to-Speech task timed out or failed to return a run_id.");
-        }
-
-
-        const audioResponse: HttpResponse = await httpClient.sendRequest({
+        const audioResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `${API_BASE_URL}/tts-result/${run_id}`,
+            url: `${API_BASE_URL}/tts-result/${runId}`,
             headers: { 'x-api-key': auth.secret_text },
             responseType: 'arraybuffer',
         });
-        
-        const fileName = `speech_${run_id}.wav`;
+
+        const fileName = `speech_${runId}.wav`;
         const fileData = Buffer.from(audioResponse.body as ArrayBuffer);
         const fileUrl = await context.files.write({
             fileName,
@@ -111,9 +87,9 @@ export const createTextToSpeech = createAction({
         });
 
         return {
-            message: "Speech generated successfully.",
+            message: 'Speech generated successfully.',
             audio_url: fileUrl,
-            run_id: run_id,
+            run_id: runId,
         };
     },
 });

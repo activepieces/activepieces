@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, MAX_POLLING_ATTEMPTS, POLLING_INTERVAL_MS } from '../common';
-import { listFoldersDropdown } from '../common';
+import { API_BASE_URL, MAX_POLLING_ATTEMPTS, POLLING_INTERVAL_MS, pollTaskUntilComplete, listFoldersDropdown } from '../common';
 
 export const createTextToSound = createAction({
     auth: cambaiAuth,
@@ -42,7 +41,6 @@ export const createTextToSound = createAction({
         if (project_description) payload['project_description'] = project_description;
         if (folder_id) payload['folder_id'] = folder_id;
 
-
         const initialResponse = await httpClient.sendRequest<{ task_id: string }>({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/text-to-sound`,
@@ -52,51 +50,33 @@ export const createTextToSound = createAction({
             },
             body: payload,
         });
-
         const taskId = initialResponse.body.task_id;
-        let attempts = 0;
-        let run_id: string | null = null;
-        while (attempts < MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{
-                status: string, run_id?: string
-            }>({
-                method: HttpMethod.GET,
-                url: `${API_BASE_URL}/text-to-sound/${taskId}`,
-                headers: {
-                    'x-api-key': auth.secret_text,
-                },
-            });
 
-            const status = statusResponse.body.status;
+        const runId = await pollTaskUntilComplete(
+            auth.secret_text,
+            `${API_BASE_URL}/text-to-sound/${taskId}`,
+            MAX_POLLING_ATTEMPTS,
+            POLLING_INTERVAL_MS,
+        );
 
-            if (status === 'SUCCESS') {
-
-                run_id = statusResponse.body.run_id ?? null;
-                break;
-            }
-
-            if (status === 'FAILED') {
-
-                throw new Error(`Sound generation task failed: ${JSON.stringify(statusResponse.body)}`);
-            }
-
-
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
-        }
-
-
-        if (!run_id) {
-            throw new Error("Sound generation task timed out or failed to return a run_id.");
-        }
         const audioResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `${API_BASE_URL}/text-to-sound-result/${run_id}`,
+            url: `${API_BASE_URL}/text-to-sound-result/${runId}`,
             headers: { 'x-api-key': auth.secret_text },
             responseType: 'arraybuffer',
         });
 
-        return { audio: audioResponse.body };
+        const fileName = `sound_${runId}.wav`;
+        const fileData = Buffer.from(audioResponse.body as ArrayBuffer);
+        const fileUrl = await context.files.write({
+            fileName,
+            data: fileData,
+        });
 
+        return {
+            message: 'Sound generated successfully.',
+            audio_url: fileUrl,
+            run_id: runId,
+        };
     },
 });

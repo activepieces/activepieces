@@ -124,6 +124,81 @@ export const listTargetLanguagesDropdown = Property.Dropdown({
     },
 });
 
+export async function pollTaskUntilComplete(
+    apiKey: string,
+    pollUrl: string,
+    maxAttempts: number,
+    intervalMs: number,
+): Promise<string> {
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+        const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
+            method: HttpMethod.GET,
+            url: pollUrl,
+            headers: { 'x-api-key': apiKey },
+        });
+
+        const status = statusResponse.body.status;
+
+        if (status === 'SUCCESS') {
+            const runId = statusResponse.body.run_id;
+            if (!runId) {
+                throw new Error('Task succeeded but no run_id was returned.');
+            }
+            return runId;
+        }
+
+        if (status === 'ERROR' || status === 'FAILED') {
+            throw new Error(`Task failed: ${JSON.stringify(statusResponse.body)}`);
+        }
+
+        if (status === 'TIMEOUT') {
+            throw new Error('Task timed out on the server side.');
+        }
+
+        if (status === 'PAYMENT_REQUIRED') {
+            throw new Error('Insufficient credits or payment required to complete this task.');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+        attempts++;
+    }
+
+    throw new Error('Polling timed out: task did not complete within the maximum number of attempts.');
+}
+
+export const listTargetLanguagesMultiSelectDropdown = Property.MultiSelectDropdown({
+    displayName: 'Target Languages',
+    description: 'Select one or more target languages.',
+    auth: cambaiAuth,
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+        if (!auth) {
+            return {
+                disabled: true,
+                options: [],
+                placeholder: 'Please authenticate first',
+            };
+        }
+        const response = await httpClient.sendRequest<Language[]>({
+            method: HttpMethod.GET,
+            url: `${API_BASE_URL}/target-languages`,
+            headers: {
+                'x-api-key': auth.secret_text,
+            },
+        });
+        const languages = response.body ?? [];
+        return {
+            disabled: false,
+            options: languages.map((lang) => ({
+                label: `${lang.language} (${lang.short_name})`,
+                value: lang.id,
+            })),
+        };
+    },
+});
+
 export const listFoldersDropdown = Property.Dropdown({
     displayName: 'Folder',
     auth: cambaiAuth,

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { cambaiAuth } from '../auth';
-import { API_BASE_URL, listSourceLanguagesDropdown, listTargetLanguagesDropdown ,POLLING_INTERVAL_MS,MAX_POLLING_ATTEMPTS} from '../common';
+import { API_BASE_URL, listSourceLanguagesDropdown, listTargetLanguagesDropdown, POLLING_INTERVAL_MS, MAX_POLLING_ATTEMPTS, pollTaskUntilComplete } from '../common';
 
 export const createTranslation = createAction({
     auth: cambaiAuth,
@@ -72,42 +72,20 @@ export const createTranslation = createAction({
             body: payload,
         });
         const taskId = initialResponse.body.task_id;
-        let run_id: string | null = null;
-        
-        let attempts = 0;
-        while (attempts < MAX_POLLING_ATTEMPTS) {
-            const statusResponse = await httpClient.sendRequest<{ status: string; run_id?: string }>({
-                method: HttpMethod.GET,
-                url: `${API_BASE_URL}/translate/${taskId}`,
-                headers: { 'x-api-key': auth.secret_text },
-            });
-          
-            if (statusResponse.body.status === 'SUCCESS') {
 
-                run_id = statusResponse.body.run_id ?? null;
-                break;
-            }
-            if (statusResponse.body.status === 'ERROR' || statusResponse.body.status === 'FAILED') {
-
-                throw new Error(`Translation task failed: ${JSON.stringify(statusResponse.body)}`);
-            }
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            attempts++;
-        }
-        
-
-        if (!run_id) {
-            throw new Error("Translation task timed out or failed to return a task_id.");
-        }
+        const runId = await pollTaskUntilComplete(
+            auth.secret_text,
+            `${API_BASE_URL}/translate/${taskId}`,
+            MAX_POLLING_ATTEMPTS,
+            POLLING_INTERVAL_MS,
+        );
 
         const resultResponse = await httpClient.sendRequest<{ translations: string[] }>({
             method: HttpMethod.GET,
-            url: `${API_BASE_URL}/translation-result/${run_id}`,
+            url: `${API_BASE_URL}/translation-result/${runId}`,
             headers: { 'x-api-key': auth.secret_text },
-        }); 
+        });
 
         return resultResponse.body;
-
-        
     },
 });
