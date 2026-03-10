@@ -1,6 +1,5 @@
 export const orderCreateData = {
-  event: 'create',
-  channel: 'order',
+  topic: 'order.create',
   eventData: {
     data: {
       type: 'orders',
@@ -205,11 +204,11 @@ export const orderCreateData = {
     included: []
   },
   timestamp: 1771530026,
+  messageId: '7206ba9b-c9da-4867-ab5a-c307a59f6381'
 };
 
 export const orderUpdateData = {
-  event: 'update',
-  channel: 'order',
+  topic: 'order.update',
   eventData: {
     data: {
       type: 'orders',
@@ -420,14 +419,14 @@ export const orderUpdateData = {
         },
       },
     },
-    included: []
+    included: [],
   },
   timestamp: 1771527786,
+  messageId: '7206ba9b-c9da-4867-ab5a-c307a59f6381'
 };
 
 export const orderDeleteData = {
-  event: 'delete',
-  channel: 'order',
+  topic: 'order.delete',
   eventData: {
     data: {
       type: 'orders',
@@ -631,7 +630,8 @@ export const orderDeleteData = {
         },
       },
     },
-    included: []
+    included: [],
   },
   timestamp: 1771527301,
+  messageId: '7206ba9b-c9da-4867-ab5a-c307a59f6381'
 };

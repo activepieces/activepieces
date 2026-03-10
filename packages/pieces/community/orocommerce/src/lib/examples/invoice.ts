@@ -91,27 +91,27 @@ const invoiceData = {
         },
       },
     },
-    included: []
   },
+  included: []
 };
 
 export const invoiceCreateData = {
-  event: 'create',
-  channel: 'invoice',
+  topic: 'invoice.create',
   eventData: invoiceData,
   timestamp: 1771523549,
+  messageId: '7206ba9b-c9da-4867-ab5a-c307a59f6381'
 };
 
 export const invoiceUpdateData = {
-  event: 'update',
-  channel: 'invoice',
+  topic: 'invoice.update',
   eventData: invoiceData,
   timestamp: 1771527786,
+  messageId: '7206ba9b-c9da-4867-ab5a-c307a59f6381'
 };
 
 export const invoiceDeleteData = {
-  event: 'delete',
-  channel: 'invoice',
+  topic: 'invoice.delete',
   eventData: invoiceData,
   timestamp: 1771527301,
+  messageId: '7206ba9b-c9da-4867-ab5a-c307a59f6381'
 };
