@@ -84,6 +84,9 @@ jobs:
         with:
           version: v3.14.0
 
+      - name: Update Helm dependencies                                                     
+        run: helm dependency update deploy/activepieces-helm/
+
       - name: Install kubectl-argo-rollouts plugin
         run: |
           curl -fsSL https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64 \
