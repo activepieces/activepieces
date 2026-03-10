@@ -115,15 +115,13 @@ export const recordService = {
             if (!filters || filters.length === 0) {
                 return true
             }
-
-            const relevantCells = record.cells.filter(cell => 
-                filters.some(filter => filter.fieldId === cell.fieldId),
-            )
-
-            if (relevantCells.length === 0) {
-                return false
-            }
-            return relevantCells.every((cell) => doesCellValueMatchFilters(cell, filters))
+            return filters.every((filter) => {
+                const cell = record.cells.find(c => c.fieldId === filter.fieldId)
+                if (!cell) {
+                    return filter.operator === FilterOperator.NOT_EXISTS
+                }
+                return doesCellValueMatchFilters(cell, [filter])
+            })
         })
 
         const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
@@ -487,10 +485,13 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
         if (filter.fieldId !== cell.fieldId) {
             return true
         }
-        if (filter.operator === undefined) {
-            return true
-        }
         switch (filter.operator) {
+            case FilterOperator.EXISTS: {
+                return cell.value !== null && cell.value !== ''
+            }
+            case FilterOperator.NOT_EXISTS: {
+                return cell.value === null || cell.value === ''
+            }
             case FilterOperator.EQ: {
                 return cell.value === filter.value
             }
@@ -515,7 +516,6 @@ function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
                 }
                 return false
             }
-
         }
     })
 
