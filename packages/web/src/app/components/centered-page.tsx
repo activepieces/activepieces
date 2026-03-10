@@ -14,7 +14,7 @@ export const CenteredPage = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="max-w-[40rem] mx-auto py-6">
+    <div className="w-full max-w-[40rem] mx-auto py-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-medium">{title}</h1>

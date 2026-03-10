@@ -55,7 +55,7 @@ const RetestButton = React.forwardRef<HTMLButtonElement, RetestButtonProps>(
   ({ isValid, isSaving, isTesting, onRetest }, ref) => {
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
     return (
-      <TestButtonTooltip invalid={!isValid}>
+      <TestButtonTooltip saving={isSaving} invalid={!isValid}>
         <Button
           ref={ref}
           variant="outline"
@@ -64,7 +64,7 @@ const RetestButton = React.forwardRef<HTMLButtonElement, RetestButtonProps>(
           keyboardShortcut="G"
           onKeyboardShortcut={onRetest}
           onClick={onRetest}
-          loading={isTesting}
+          loading={isTesting || isSaving}
         >
           {t('Test')}
         </Button>
@@ -163,7 +163,7 @@ export const TestSampleDataViewer = React.memo(
             </div>
 
             {!isTesting && (
-              <TestButtonTooltip invalid={!isValid}>
+              <TestButtonTooltip saving={isSaving} invalid={!isValid}>
                 <RetestButton
                   isValid={isValid}
                   isSaving={isSaving}

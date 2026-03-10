@@ -25,6 +25,7 @@ import { ApAvatar } from '@/components/custom/ap-avatar';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { LoadingSpinner } from '@/components/custom/spinner';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -169,16 +170,9 @@ export const AutomationsTableRow = ({
           <span className="shrink-0">
             <RowItemIcon item={item} />
           </span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="truncate">{item.name}</span>
-            </TooltipTrigger>
-            {item.name.length > 40 && (
-              <TooltipContent side="top">
-                <p>{item.name}</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
+          <TextWithTooltip tooltipMessage={item.name}>
+            <span>{item.name}</span>
+          </TextWithTooltip>
         </div>
       </div>
       <div className="w-[230px] shrink-0 px-2 flex items-center">
@@ -193,7 +187,7 @@ export const AutomationsTableRow = ({
         )}
       </div>
       {!embedState.isEmbedded && (
-        <div className="w-[250px] shrink-0 px-2 flex items-center">
+        <div className="w-[250px] shrink-0 px-2 flex items-center overflow-hidden">
           <RowItemOwner item={item} />
         </div>
       )}

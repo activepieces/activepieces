@@ -1,5 +1,6 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-common'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -55,7 +56,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.TEMPLATES_CATEGORIES,
             ]),
         })
-        const now = new Date().toISOString()
+        const now = dayjs().toISOString()
         const created = now
         const updated = now
         const currentVersion = await apVersionUtil.getCurrentRelease()
