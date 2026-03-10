@@ -171,7 +171,11 @@ export function ProjectDashboardSidebar({
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar collapsible="icon" className={cn('max-h-[100vh]', className)}>
+      <Sidebar
+        collapsible="icon"
+        id={SIDEBAR_ID}
+        className={cn('max-h-[100vh]', className)}
+      >
         <AppSidebarHeader />
 
         <SidebarContent className="overflow-x-hidden">
@@ -363,3 +367,5 @@ function SidebarPlatformAdminLink() {
     </SidebarMenu>
   );
 }
+
+export const SIDEBAR_ID = 'project-sidebar';
