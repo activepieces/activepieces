@@ -93,41 +93,42 @@ jobs:
       - name: Update Helm dependencies
         run: helm dependency update deploy/activepieces-helm/
 
-      - name: Deploy APP
+      - name: Deploy APP and WORKER in parallel
         run: |
+          IMAGE_TAG=${{ needs.build-image.outputs.image_tag }}
+
           helm upgrade --install activepieces deploy/activepieces-helm/ \
             --namespace activepieces \
             --values deploy/staging/stg-app-values.yaml \
-            --set image.tag=${{ needs.build-image.outputs.image_tag }} \
+            --set image.tag=$IMAGE_TAG \
             --wait --timeout 5m \
-            --debug 2>&1 | tee /tmp/helm-app.log || {
-              echo "::error::helm upgrade failed for APP"
-              echo "--- Pod status ---"
-              kubectl get pods -n activepieces
-              echo "--- Failed pod logs ---"
-              kubectl logs -n activepieces -l app.kubernetes.io/instance=activepieces --tail=100 --prefix || true
-              echo "--- Pod events ---"
-              kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-              exit 1
-            }
+            --debug > /tmp/helm-app.log 2>&1 &
+          APP_PID=$!
 
-      - name: Deploy WORKER
-        run: |
           helm upgrade --install activepieces-worker deploy/activepieces-helm/ \
             --namespace activepieces \
             --values deploy/staging/stg-worker-values.yaml \
-            --set image.tag=${{ needs.build-image.outputs.image_tag }} \
+            --set image.tag=$IMAGE_TAG \
             --wait --timeout 5m \
-            --debug 2>&1 | tee /tmp/helm-worker.log || {
-              echo "::error::helm upgrade failed for WORKER"
-              echo "--- Pod status ---"
-              kubectl get pods -n activepieces
-              echo "--- Failed pod logs ---"
-              kubectl logs -n activepieces -l app.kubernetes.io/instance=activepieces-worker --tail=100 --prefix || true
-              echo "--- Pod events ---"
-              kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
-              exit 1
-            }
+            --debug > /tmp/helm-worker.log 2>&1 &
+          WORKER_PID=$!
+
+          APP_EXIT=0; WORKER_EXIT=0
+          wait $APP_PID    || APP_EXIT=$?
+          wait $WORKER_PID || WORKER_EXIT=$?
+
+          if [ $APP_EXIT -ne 0 ] || [ $WORKER_EXIT -ne 0 ]; then
+            echo "::error::Deploy failed — rolling back both releases"
+            cat /tmp/helm-app.log
+            cat /tmp/helm-worker.log
+            echo "--- Pod status ---"
+            kubectl get pods -n activepieces
+            echo "--- Events ---"
+            kubectl get events -n activepieces --sort-by='.lastTimestamp' | tail -30
+            helm rollback activepieces -n activepieces || true
+            helm rollback activepieces-worker -n activepieces || true
+            exit 1
+          fi
 
       - name: Verify rollout
         run: |
