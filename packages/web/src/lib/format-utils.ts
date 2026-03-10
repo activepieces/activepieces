@@ -93,9 +93,14 @@ export const formatUtils = {
         return t('Just now');
       }
       if (diffInMinutes < 60) {
-        return `${diffInMinutes} mins ago`;
+      if (diffInMinutes < 60) {
+        return diffInMinutes === 1
+          ? t('1 min ago')
+          : t('{count} mins ago', { count: diffInMinutes });
       }
-      return `${diffInHours} hours ago`;
+      return diffInHours === 1
+        ? t('1 hour ago')
+        : t('{count} hours ago', { count: diffInHours });
     }
 
     if (isYesterday) {
