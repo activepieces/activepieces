@@ -12,6 +12,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
@@ -85,18 +86,27 @@ export function ProjectDashboardLayout({
       <SidebarProvider hoverMode={true}>
         {!isEmbedded && <ProjectDashboardSidebar />}
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-          <div className="flex-1 flex flex-col p-2 pt-3 pb-3 overflow-hidden">
-            <div className="flex flex-col h-full bg-background rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border">
+          <div
+            className={cn(
+              'flex-1 flex flex-col overflow-hidden',
+              !isEmbedded && 'p-1.5',
+            )}
+          >
+            <div
+              className={cn(
+                'flex flex-col h-full bg-background overflow-hidden',
+                isEmbedded
+                  ? 'border-l'
+                  : 'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              )}
+            >
               {!hideHeader && (
                 <>
                   <ProjectDashboardLayoutHeader key={currentProjectId} />
                   <Separator className="mb-5" />
                 </>
               )}
-              <div className="flex-1 overflow-auto scrollbar-none px-4">
-                {' '}
-                {children}{' '}
-              </div>
+              <div className="flex-1 overflow-auto px-3"> {children} </div>
             </div>
           </div>
         </SidebarInset>

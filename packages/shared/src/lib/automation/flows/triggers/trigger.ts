@@ -30,6 +30,7 @@ const commonProps = {
     valid: z.boolean(),
     displayName: z.string(),
     nextAction: z.any().optional(),
+    lastUpdatedDate: z.string(),
 }
 
 
