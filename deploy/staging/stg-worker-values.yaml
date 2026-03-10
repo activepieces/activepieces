@@ -96,6 +96,11 @@ volumes:
 autoscaling:
   enabled: false
 
+rollout:
+  blueGreen:
+    autoPromotionEnabled: false
+    scaleDownDelaySeconds: 30
+    
 persistence:
   enabled: true
   size: 5Gi
