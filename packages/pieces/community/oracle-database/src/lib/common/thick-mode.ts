@@ -59,7 +59,7 @@ async function downloadFile(url: string, dest: string, redirectDepth = 0): Promi
     console.log(`[oracle] Downloading: ${url}`);
     const file = fs.createWriteStream(dest);
 
-    https
+    const req = https
       .get(url, (response) => {
         const { statusCode, headers } = response;
         console.log(`[oracle] HTTP ${statusCode} from ${url}`);
@@ -74,6 +74,7 @@ async function downloadFile(url: string, dest: string, redirectDepth = 0): Promi
         }
 
         if (statusCode !== 200) {
+          response.resume(); // drain socket so it can be reused
           file.close();
           fs.unlink(dest, () => {});
           reject(new Error(`Download failed: HTTP ${statusCode}`));
@@ -101,6 +102,11 @@ async function downloadFile(url: string, dest: string, redirectDepth = 0): Promi
         fs.unlink(dest, () => {});
         reject(err);
       });
+
+    // Abort and reject if the server stalls mid-response (e.g. CDN hang)
+    req.setTimeout(120_000, () => {
+      req.destroy(new Error(`[oracle] Download timed out: ${url}`));
+    });
   });
 }
 
